@@ -1,0 +1,22 @@
+{
+  "knife": {
+    "type": "projectile",
+    "damage": 10,
+    "cooldown": 1.0,
+    "projectileSpeed": 8,
+    "pierce": 1
+  },
+  "garlic": {
+    "type": "aura",
+    "damage": 3,
+    "cooldown": 0.2,
+    "radius": 2.5
+  },
+  "bible": {
+    "type": "orbit",
+    "damage": 8,
+    "cooldown": 1.0,
+    "radius": 3,
+    "orbitSpeed": 180
+  }
+}
