@@ -1,0 +1,17 @@
+[
+  {
+    "id": "damage_up",
+    "name": "Damage Up",
+    "description": "+10% weapon damage"
+  },
+  {
+    "id": "cooldown_up",
+    "name": "Cooldown Up",
+    "description": "-10% cooldown"
+  },
+  {
+    "id": "speed_up",
+    "name": "Speed Up",
+    "description": "+10% move speed"
+  }
+]
