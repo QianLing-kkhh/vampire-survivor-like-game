@@ -1,0 +1,20 @@
+{
+  "slime": {
+    "hp": 10,
+    "moveSpeed": 1.2,
+    "damage": 5,
+    "exp": 1
+  },
+  "bat": {
+    "hp": 6,
+    "moveSpeed": 2.5,
+    "damage": 3,
+    "exp": 1
+  },
+  "golem": {
+    "hp": 40,
+    "moveSpeed": 0.8,
+    "damage": 10,
+    "exp": 5
+  }
+}
