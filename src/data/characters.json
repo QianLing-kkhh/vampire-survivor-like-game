@@ -1,0 +1,8 @@
+{
+  "default": {
+    "maxHp": 100,
+    "moveSpeed": 5,
+    "pickupRange": 1,
+    "expMultiplier": 1
+  }
+}
