@@ -1,0 +1,28 @@
+[
+  {
+    "id": "spinach",
+    "name": "Spinach",
+    "description": "All weapon damage +10%"
+  },
+  {
+    "id": "empty_tome",
+    "name": "Empty Tome",
+    "description": "All weapon cooldown -8%"
+  },
+  {
+    "id": "bracer",
+    "name": "Bracer",
+    "description": "Projectile speed +15%"
+  },
+  {
+    "id": "clover",
+    "name": "Clover",
+    "description": "Treasure chest drop chance +1%"
+  },
+  {
+    "id": "pummarola",
+    "name": "Pummarola",
+    "description": "Recover 1 HP every 5 seconds"
+  }
+]
+

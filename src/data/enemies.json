@@ -1,20 +1,48 @@
 {
   "slime": {
-    "hp": 10,
-    "moveSpeed": 1.2,
-    "damage": 5,
+    "hp": 18,
+    "moveSpeed": 85,
+    "damage": 6,
     "exp": 1
+  },
+  "slime_boss": {
+    "hp": 240,
+    "moveSpeed": 85,
+    "damage": 10,
+    "exp": 20,
+    "scale": 2.2
   },
   "bat": {
-    "hp": 6,
-    "moveSpeed": 2.5,
-    "damage": 3,
-    "exp": 1
+    "hp": 38,
+    "moveSpeed": 90,
+    "damage": 9,
+    "exp": 3
+  },
+  "bat_boss": {
+    "hp": 420,
+    "moveSpeed": 90,
+    "damage": 15,
+    "exp": 35,
+    "scale": 2.3
   },
   "golem": {
-    "hp": 40,
-    "moveSpeed": 0.8,
-    "damage": 10,
-    "exp": 5
+    "hp": 95,
+    "moveSpeed": 95,
+    "damage": 20,
+    "exp": 7
+  },
+  "golem_boss": {
+    "hp": 850,
+    "moveSpeed": 95,
+    "damage": 26,
+    "exp": 60,
+    "scale": 2.6
+  },
+  "boss": {
+    "hp": 1200,
+    "moveSpeed": 75,
+    "damage": 30,
+    "exp": 0,
+    "scale": 4
   }
 }

@@ -4,19 +4,82 @@
     "damage": 10,
     "cooldown": 1.0,
     "projectileSpeed": 8,
-    "pierce": 1
+    "pierce": 2,
+    "projectileCount": 3,
+    "spreadAngle": 20
   },
   "garlic": {
     "type": "aura",
-    "damage": 3,
-    "cooldown": 0.2,
+    "damage": 2,
+    "cooldown": 0.35,
     "radius": 2.5
   },
   "bible": {
     "type": "orbit",
-    "damage": 8,
-    "cooldown": 1.0,
-    "radius": 3,
-    "orbitSpeed": 180
+    "damage": 10,
+    "cooldown": 0.5,
+    "radius": 3.2,
+    "orbitSpeed": 240,
+    "orbitCount": 3
+  },
+  "magic_wand": {
+    "type": "magic_wand",
+    "damage": 14,
+    "cooldown": 1.2,
+    "projectileSpeed": 280,
+    "projectileCount": 1
+  },
+  "axe": {
+    "type": "axe",
+    "damage": 24,
+    "cooldown": 2.2,
+    "projectileSpeed": 260,
+    "projectileCount": 1,
+    "hitRadius": 32,
+    "lifetime": 2.0,
+    "arcHeight": 220
+  },
+  "thousand_edge": {
+    "type": "projectile",
+    "damage": 14,
+    "cooldown": 0.25,
+    "projectileSpeed": 900,
+    "pierce": 3,
+    "projectileCount": 5,
+    "spreadAngle": 25
+  },
+  "unholy_vespers": {
+    "type": "orbit",
+    "damage": 14,
+    "cooldown": 0.35,
+    "radius": 3.2,
+    "orbitSpeed": 320,
+    "orbitCount": 6,
+    "hitRadius": 42
+  },
+  "holy_wand": {
+    "type": "projectile",
+    "damage": 18,
+    "cooldown": 0.3,
+    "projectileSpeed": 1000,
+    "pierce": 1,
+    "projectileCount": 2,
+    "spreadAngle": 8
+  },
+  "death_spiral": {
+    "type": "axe",
+    "damage": 28,
+    "cooldown": 1.2,
+    "projectileSpeed": 620,
+    "projectileCount": 5,
+    "spreadAngle": 360,
+    "pierce": 3,
+    "arcHeight": 260
+  },
+  "soul_eater": {
+    "type": "aura",
+    "damage": 5,
+    "cooldown": 0.3,
+    "radius": 4.0
   }
 }

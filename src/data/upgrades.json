@@ -1,17 +1,102 @@
 [
   {
-    "id": "damage_up",
-    "name": "Damage Up",
-    "description": "+10% weapon damage"
-  },
-  {
-    "id": "cooldown_up",
-    "name": "Cooldown Up",
-    "description": "-10% cooldown"
-  },
-  {
     "id": "speed_up",
     "name": "Speed Up",
     "description": "+10% move speed"
+  },
+  {
+    "id": "pickup_range_up",
+    "name": "Pickup Range Up",
+    "description": "+10% pickup range"
+  },
+  {
+    "id": "max_hp_up",
+    "name": "Max HP Up",
+    "description": "+10% max HP"
+  },
+  {
+    "id": "add_garlic",
+    "name": "Garlic",
+    "description": "Add a damaging aura around the player"
+  },
+  {
+    "id": "knife_damage_up",
+    "name": "Knife Damage Up",
+    "description": "+10% knife damage"
+  },
+  {
+    "id": "knife_cooldown_up",
+    "name": "Knife Cooldown Up",
+    "description": "-10% knife cooldown"
+  },
+  {
+    "id": "garlic_damage_up",
+    "name": "Garlic Damage Up",
+    "description": "+10% garlic damage"
+  },
+  {
+    "id": "garlic_radius_up",
+    "name": "Garlic Radius Up",
+    "description": "+10% garlic radius"
+  },
+  {
+    "id": "add_bible",
+    "name": "Bible",
+    "description": "Add an orbiting weapon around the player"
+  },
+  {
+    "id": "bible_damage_up",
+    "name": "Bible Damage Up",
+    "description": "+10% bible damage"
+  },
+  {
+    "id": "bible_orbit_count_up",
+    "name": "Bible Count Up",
+    "description": "Add one more orbiting Bible projectile"
+  },
+  {
+    "id": "bible_orbit_speed_up",
+    "name": "Bible Orbit Speed Up",
+    "description": "+10% bible orbit speed"
+  },
+  {
+    "id": "add_magic_wand",
+    "name": "Magic Wand",
+    "description": "Add a homing magic projectile weapon"
+  },
+  {
+    "id": "magic_wand_damage_up",
+    "name": "Magic Wand Damage Up",
+    "description": "+10% magic wand damage"
+  },
+  {
+    "id": "magic_wand_cooldown_up",
+    "name": "Magic Wand Cooldown Up",
+    "description": "-10% magic wand cooldown"
+  },
+  {
+    "id": "magic_wand_projectile_count_up",
+    "name": "Magic Wand Projectile Count Up",
+    "description": "Increase the number of Magic Wand projectiles fired each attack"
+  },
+  {
+    "id": "add_axe",
+    "name": "Axe",
+    "description": "Add a slow high-damage arcing area weapon"
+  },
+  {
+    "id": "axe_damage_up",
+    "name": "Axe Damage Up",
+    "description": "+10% axe damage"
+  },
+  {
+    "id": "axe_cooldown_up",
+    "name": "Axe Cooldown Up",
+    "description": "-10% axe cooldown"
+  },
+  {
+    "id": "axe_projectile_count_up",
+    "name": "Axe Projectile Count Up",
+    "description": "Add one more axe projectile per attack"
   }
 ]

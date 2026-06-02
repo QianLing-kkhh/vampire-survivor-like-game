@@ -1,0 +1,143 @@
+import Phaser from 'phaser';
+
+import { DamageCalculator } from '../combat/DamageCalculator';
+import { DamageType } from '../combat/DamageType';
+import { HitResult } from '../combat/HitResult';
+import { Enemy } from '../enemy/Enemy';
+import { RunStats } from '../stats/RunStats';
+
+export type WeaponType = 'projectile' | 'aura' | 'orbit' | 'magic_wand' | 'axe';
+
+export interface WeaponConfig {
+  type: WeaponType | string;
+  damage: number;
+  cooldown: number;
+  projectileSpeed?: number;
+  projectileCount?: number;
+  spreadAngle?: number;
+  pierce?: number;
+  radius?: number;
+  orbitSpeed?: number;
+  orbitCount?: number;
+  hitRadius?: number;
+  lifetime?: number;
+  arcHeight?: number;
+}
+
+export interface WeaponUpdateContext {
+  player: Phaser.GameObjects.GameObject & { x: number; y: number };
+  enemies: readonly Enemy[];
+  deltaMs: number;
+}
+
+export abstract class Weapon {
+  private elapsedCooldownMs = 0;
+  private totalDamage = 0;
+  protected damage: number;
+  protected cooldownSeconds: number;
+  protected radius: number;
+  protected projectileSpeed: number;
+  private runStats?: RunStats;
+  private passiveDamageMultiplier = 1;
+  private passiveCooldownMultiplier = 1;
+  private passiveProjectileSpeedMultiplier = 1;
+
+  protected constructor(
+    protected readonly scene: Phaser.Scene,
+    readonly id: string,
+    protected readonly config: WeaponConfig,
+    private readonly damageCalculator = new DamageCalculator(),
+  ) {
+    this.damage = config.damage;
+    this.cooldownSeconds = config.cooldown;
+    this.radius = config.radius ?? 0;
+    this.projectileSpeed = config.projectileSpeed ?? 0;
+  }
+
+  update(context: WeaponUpdateContext): void {
+    this.elapsedCooldownMs += context.deltaMs;
+
+    if (this.elapsedCooldownMs < this.cooldownMs) {
+      return;
+    }
+
+    this.elapsedCooldownMs = 0;
+    this.activate(context);
+  }
+
+  applyUpgrade(_upgradeId: string): boolean {
+    return false;
+  }
+
+  setRunStats(runStats: RunStats): void {
+    this.runStats = runStats;
+  }
+
+  setPassiveModifiers(modifiers: {
+    damageMultiplier: number;
+    cooldownMultiplier: number;
+    projectileSpeedMultiplier: number;
+  }): void {
+    this.passiveDamageMultiplier = modifiers.damageMultiplier;
+    this.passiveCooldownMultiplier = modifiers.cooldownMultiplier;
+    this.passiveProjectileSpeedMultiplier = modifiers.projectileSpeedMultiplier;
+  }
+
+  get totalDamageDealt(): number {
+    return this.totalDamage;
+  }
+
+  protected createHitResult(): HitResult {
+    return this.damageCalculator.calculateDamage(
+      this.modifiedDamage,
+      DamageType.Normal,
+    );
+  }
+
+  protected get modifiedDamage(): number {
+    return this.damage * this.passiveDamageMultiplier;
+  }
+
+  protected get cooldownMs(): number {
+    return this.cooldownSeconds * this.passiveCooldownMultiplier * 1000;
+  }
+
+  protected get modifiedProjectileSpeed(): number {
+    return this.projectileSpeed * this.passiveProjectileSpeedMultiplier;
+  }
+
+  protected increaseDamage(rate: number): void {
+    this.damage *= 1 + rate;
+  }
+
+  protected reduceCooldown(rate: number, minimumSeconds: number): void {
+    this.cooldownSeconds = Math.max(
+      minimumSeconds,
+      this.cooldownSeconds * (1 - rate),
+    );
+  }
+
+  protected increaseRadius(rate: number): void {
+    this.radius *= 1 + rate;
+  }
+
+  protected recordDamageDealt(damage: number): void {
+    this.totalDamage += Math.max(0, damage);
+    this.runStats?.recordWeaponDamage(this.id, damage);
+  }
+
+  protected recordEnemyHit(enemy: Enemy, damage: number): void {
+    if (damage <= 0) {
+      return;
+    }
+
+    this.recordDamageDealt(damage);
+    this.runStats?.recordWeaponHit(this.id);
+
+    if (enemy.isDead) {
+      this.runStats?.recordWeaponKill(this.id);
+    }
+  }
+
+  protected abstract activate(context: WeaponUpdateContext): void;
+}

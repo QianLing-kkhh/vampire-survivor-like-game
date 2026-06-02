@@ -6,9 +6,9 @@ export interface PlayerStatsData {
 }
 
 export class PlayerStats {
-  readonly maxHp: number;
-  readonly moveSpeed: number;
-  readonly pickupRange: number;
+  maxHp: number;
+  moveSpeed: number;
+  pickupRange: number;
   readonly expMultiplier: number;
 
   constructor(data: PlayerStatsData) {
@@ -20,5 +20,17 @@ export class PlayerStats {
 
   static fromConfig(data: PlayerStatsData): PlayerStats {
     return new PlayerStats(data);
+  }
+
+  increaseMaxHp(rate: number): void {
+    this.maxHp = Math.round(this.maxHp * (1 + rate));
+  }
+
+  increaseMoveSpeed(rate: number): void {
+    this.moveSpeed *= 1 + rate;
+  }
+
+  increasePickupRange(rate: number): void {
+    this.pickupRange *= 1 + rate;
   }
 }
