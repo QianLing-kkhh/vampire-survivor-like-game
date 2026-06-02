@@ -22,7 +22,7 @@ export class EnemyFactory {
     }
 
     const enemy = new Enemy(this.scene, enemyId, stats, x, y);
-    const textureKey = enemyId === 'boss' ? 'golem' : enemyId;
+    const textureKey = enemyId === 'boss' ? 'boss_lava_beast' : enemyId;
 
     if (!this.scene.textures.exists(textureKey)) {
       return enemy;

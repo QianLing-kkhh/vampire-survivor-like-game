@@ -242,6 +242,17 @@ export class AxeWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): AxeProjectileBody {
+    const textureKey = this.id === 'death_spiral'
+      ? 'death_spiral_projectile'
+      : 'axe_projectile';
+
+    if (this.scene.textures.exists(textureKey)) {
+      const body = this.scene.add.image(x, y, textureKey);
+      body.setDisplaySize(this.id === 'death_spiral' ? 26 : 22, this.id === 'death_spiral' ? 26 : 18);
+
+      return body;
+    }
+
     const body = this.scene.add.rectangle(x, y, 18, 10, 0xf97316);
 
     body.setStrokeStyle(2, 0xffedd5, 0.8);

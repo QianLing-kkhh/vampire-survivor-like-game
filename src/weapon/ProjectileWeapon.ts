@@ -257,13 +257,26 @@ export class ProjectileWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): ProjectileBody {
-    if (!this.scene.textures.exists('knife_projectile')) {
+    const textureKey = this.getProjectileTextureKey();
+
+    if (!this.scene.textures.exists(textureKey)) {
       return this.scene.add.circle(x, y, 5, 0xfacc15);
     }
 
-    const body = this.scene.add.image(x, y, 'knife_projectile');
+    const body = this.scene.add.image(x, y, textureKey);
     body.setDisplaySize(14, 14);
 
     return body;
+  }
+
+  private getProjectileTextureKey(): string {
+    switch (this.id) {
+      case 'thousand_edge':
+        return 'thousand_edge_projectile';
+      case 'holy_wand':
+        return 'holy_wand_projectile';
+      default:
+        return 'knife_projectile';
+    }
   }
 }

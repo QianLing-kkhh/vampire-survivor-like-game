@@ -33,6 +33,12 @@ export class AutoUpgradeSelector {
       return undefined;
     }
 
+    const completionOption = this.selectEvolutionCompletionOption(options, context);
+
+    if (completionOption) {
+      return completionOption;
+    }
+
     const focusRule = this.getFocusEvolutionRule(context);
 
     if (focusRule && !this.isEvolutionRequirementComplete(focusRule, context)) {
@@ -60,6 +66,78 @@ export class AutoUpgradeSelector {
     }
 
     return this.selectWeighted(options, context);
+  }
+
+  private selectEvolutionCompletionOption(
+    options: readonly UpgradeOption[],
+    context?: AutoUpgradeSelectionContext,
+  ): UpgradeOption | undefined {
+    if (!context) {
+      return undefined;
+    }
+
+    const missingPassiveRules = this.getEligibleCompletionRules(context)
+      .filter((rule) => (
+        context.getWeaponUpgradeTotal(rule.baseWeaponId) >= rule.requiredWeaponUpgradeTotal
+        && context.getPassiveLevel(rule.requiredPassiveId) < rule.requiredPassiveLevel
+        && options.some((option) => option.id === rule.requiredPassiveId)
+      ));
+    const missingPassiveRule = this.selectHighestUpgradeTotalRule(
+      missingPassiveRules,
+      context,
+    );
+
+    if (missingPassiveRule) {
+      return options.find((option) => option.id === missingPassiveRule.requiredPassiveId);
+    }
+
+    const missingWeaponRules = this.getEligibleCompletionRules(context)
+      .filter((rule) => (
+        context.getPassiveLevel(rule.requiredPassiveId) >= rule.requiredPassiveLevel
+        && context.getWeaponUpgradeTotal(rule.baseWeaponId) < rule.requiredWeaponUpgradeTotal
+        && options.some((option) => this.getWeaponIdForUpgrade(option.id) === rule.baseWeaponId)
+      ));
+    const missingWeaponRule = this.selectHighestUpgradeTotalRule(
+      missingWeaponRules,
+      context,
+    );
+
+    if (!missingWeaponRule) {
+      return undefined;
+    }
+
+    const weaponUpgradeCandidates = options.filter((option) => (
+      this.getWeaponIdForUpgrade(option.id) === missingWeaponRule.baseWeaponId
+    ));
+
+    return this.selectWeighted(weaponUpgradeCandidates, context);
+  }
+
+  private getEligibleCompletionRules(context: AutoUpgradeSelectionContext): EvolutionRule[] {
+    return EVOLUTION_RULES.filter((rule) => (
+      context.weaponIds.includes(rule.baseWeaponId)
+      && !context.weaponIds.includes(rule.evolvedWeaponId)
+      && !this.isEvolutionRequirementComplete(rule, context)
+    ));
+  }
+
+  private selectHighestUpgradeTotalRule(
+    rules: readonly EvolutionRule[],
+    context: AutoUpgradeSelectionContext,
+  ): EvolutionRule | undefined {
+    if (rules.length === 0) {
+      return undefined;
+    }
+
+    const highestUpgradeTotal = Math.max(
+      ...rules.map((rule) => context.getWeaponUpgradeTotal(rule.baseWeaponId)),
+    );
+    const highestRules = rules.filter((rule) => (
+      context.getWeaponUpgradeTotal(rule.baseWeaponId) === highestUpgradeTotal
+    ));
+    const randomIndex = Math.floor(Math.random() * highestRules.length);
+
+    return highestRules[randomIndex];
   }
 
   private selectMissingEvolutionRequirement(

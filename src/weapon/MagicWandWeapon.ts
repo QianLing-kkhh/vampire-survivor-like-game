@@ -171,7 +171,14 @@ export class MagicWandWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): MagicProjectileBody {
-    return this.scene.add.circle(x, y, 6, 0x38bdf8);
+    if (!this.scene.textures.exists('magic_wand_projectile')) {
+      return this.scene.add.circle(x, y, 6, 0x38bdf8);
+    }
+
+    const body = this.scene.add.image(x, y, 'magic_wand_projectile');
+    body.setDisplaySize(14, 14);
+
+    return body;
   }
 
   private destroyProjectile(index: number): void {

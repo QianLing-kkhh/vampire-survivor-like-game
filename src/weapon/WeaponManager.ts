@@ -35,7 +35,7 @@ export interface WeaponAutoContext {
 }
 
 export class WeaponManager {
-  private static readonly DEFAULT_WEAPON_UPGRADE_LIMIT = 8;
+  private static readonly DEFAULT_WEAPON_UPGRADE_LIMIT = 6;
   private static readonly EVOLVED_WEAPON_IDS = new Set([
     'thousand_edge',
     'unholy_vespers',
