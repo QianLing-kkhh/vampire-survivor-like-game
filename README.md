@@ -45,6 +45,8 @@ npm.cmd exec tsc
 npm.cmd run build
 ```
 
+GitHub Pages deployment is configured through GitHub Actions. In GitHub, set Repository Settings -> Pages -> Source to GitHub Actions.
+
 ## Controls
 
 - WASD / Arrow Keys: Move
