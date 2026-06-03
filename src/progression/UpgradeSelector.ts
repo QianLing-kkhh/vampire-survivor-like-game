@@ -16,6 +16,8 @@ export interface UpgradeSelectionContext {
   isWeaponUpgradeLimitReached?(weaponId: string): boolean;
   hasWeaponOrEvolution?(baseWeaponId: string): boolean;
   isBaseWeaponEvolved?(baseWeaponId: string): boolean;
+  getPlayerStat?(stat: 'moveSpeed' | 'pickupRange' | 'maxHp'): number;
+  getPlayerStatLimit?(stat: 'moveSpeed' | 'pickupRange' | 'maxHp'): number;
 }
 
 export class UpgradeSelector {
@@ -56,34 +58,31 @@ export class UpgradeSelector {
     const hasBible = context.hasWeapon('bible');
     const hasMagicWand = context.hasWeapon('magic_wand');
     const hasAxe = context.hasWeapon('axe');
+    const hasKnife = context.hasWeapon('knife');
+    const hasKnifeOrEvolution = context.hasWeaponOrEvolution?.('knife') ?? hasKnife;
     const hasGarlicOrEvolution = context.hasWeaponOrEvolution?.('garlic') ?? hasGarlic;
     const hasBibleOrEvolution = context.hasWeaponOrEvolution?.('bible') ?? hasBible;
     const hasMagicWandOrEvolution = context.hasWeaponOrEvolution?.('magic_wand') ?? hasMagicWand;
     const hasAxeOrEvolution = context.hasWeaponOrEvolution?.('axe') ?? hasAxe;
-    const isGarlicEvolved = context.isBaseWeaponEvolved?.('garlic') ?? false;
-    const isBibleEvolved = context.isBaseWeaponEvolved?.('bible') ?? false;
-    const isMagicWandEvolved = context.isBaseWeaponEvolved?.('magic_wand') ?? false;
-    const isAxeEvolved = context.isBaseWeaponEvolved?.('axe') ?? false;
-    const isKnifeEvolved = context.isBaseWeaponEvolved?.('knife') ?? false;
 
     return this.upgrades.filter((upgrade) => {
-      if ((!hasGarlic || isGarlicEvolved) && this.isGarlicUpgrade(upgrade.id)) {
+      if (!hasGarlicOrEvolution && this.isGarlicUpgrade(upgrade.id)) {
         return false;
       }
 
-      if ((!hasBible || isBibleEvolved) && this.isBibleUpgrade(upgrade.id)) {
+      if (!hasBibleOrEvolution && this.isBibleUpgrade(upgrade.id)) {
         return false;
       }
 
-      if ((!hasMagicWand || isMagicWandEvolved) && this.isMagicWandUpgrade(upgrade.id)) {
+      if (!hasMagicWandOrEvolution && this.isMagicWandUpgrade(upgrade.id)) {
         return false;
       }
 
-      if ((!hasAxe || isAxeEvolved) && this.isAxeUpgrade(upgrade.id)) {
+      if (!hasAxeOrEvolution && this.isAxeUpgrade(upgrade.id)) {
         return false;
       }
 
-      if (isKnifeEvolved && this.isKnifeUpgrade(upgrade.id)) {
+      if (!hasKnifeOrEvolution && this.isKnifeUpgrade(upgrade.id)) {
         return false;
       }
 
@@ -104,7 +103,7 @@ export class UpgradeSelector {
       }
 
       if (
-        hasBible
+        hasBibleOrEvolution
         && upgrade.id === 'bible_orbit_count_up'
         && (context.getWeaponStat?.('bible', 'orbitCount') ?? 0) >= 6
       ) {
@@ -112,7 +111,7 @@ export class UpgradeSelector {
       }
 
       if (
-        hasMagicWand
+        hasMagicWandOrEvolution
         && upgrade.id === 'magic_wand_projectile_count_up'
         && (context.getWeaponStat?.('magic_wand', 'projectileCount') ?? 0) >= 4
       ) {
@@ -120,7 +119,7 @@ export class UpgradeSelector {
       }
 
       if (
-        hasAxe
+        hasAxeOrEvolution
         && upgrade.id === 'axe_projectile_count_up'
         && (context.getWeaponStat?.('axe', 'projectileCount') ?? 0) >= 4
       ) {
@@ -131,7 +130,7 @@ export class UpgradeSelector {
 
       if (
         weaponUpgradeId
-        && context.hasWeapon(weaponUpgradeId)
+        && (context.hasWeaponOrEvolution?.(weaponUpgradeId) ?? context.hasWeapon(weaponUpgradeId))
         && context.isWeaponUpgradeLimitReached?.(weaponUpgradeId)
       ) {
         return false;
@@ -144,8 +143,47 @@ export class UpgradeSelector {
         return false;
       }
 
+      if (this.isCappedPlayerStatUpgrade(upgrade.id, context)) {
+        return false;
+      }
+
       return true;
     });
+  }
+
+  private isCappedPlayerStatUpgrade(
+    upgradeId: string,
+    context: UpgradeSelectionContext,
+  ): boolean {
+    const stat = this.getPlayerStatForUpgrade(upgradeId);
+
+    if (!stat) {
+      return false;
+    }
+
+    const currentValue = context.getPlayerStat?.(stat);
+    const limit = context.getPlayerStatLimit?.(stat);
+
+    if (currentValue === undefined || limit === undefined) {
+      return false;
+    }
+
+    return currentValue >= limit;
+  }
+
+  private getPlayerStatForUpgrade(
+    upgradeId: string,
+  ): 'moveSpeed' | 'pickupRange' | 'maxHp' | undefined {
+    switch (upgradeId) {
+      case 'speed_up':
+        return 'moveSpeed';
+      case 'pickup_range_up':
+        return 'pickupRange';
+      case 'max_hp_up':
+        return 'maxHp';
+      default:
+        return undefined;
+    }
   }
 
   private isGarlicUpgrade(upgradeId: string): boolean {

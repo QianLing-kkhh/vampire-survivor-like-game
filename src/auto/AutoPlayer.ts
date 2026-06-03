@@ -10,6 +10,7 @@ export interface AutoPlayerContext {
   enemyPositions: readonly AutoPosition[];
   pickupPositions: readonly AutoPosition[];
   treasurePositions?: readonly AutoPosition[];
+  pickupRangePx?: number;
   weaponContext?: {
     weaponIds: readonly string[];
     garlicRadiusPx?: number;
@@ -38,7 +39,11 @@ export class AutoPlayer {
       ? danger.direction.clone().normalize()
       : new Phaser.Math.Vector2(0, 0);
     const tangentDirection = this.getTangentDirection(fleeDirection, context);
-    const pickupDirection = this.getPickupDirection(context, danger.nearestDistance);
+    const pickupDirection = this.getPickupDirection(
+      context,
+      danger.nearestDistance,
+      fleeDirection,
+    );
     const treasureDirection = this.getTreasureDirection(context, danger.nearestDistance);
     const centerDirection = this.getCenterDirection(context);
     const borderDirection = this.getBorderCorrectionDirection(context);
@@ -305,19 +310,21 @@ export class AutoPlayer {
   private getPickupDirection(
     context: AutoPlayerContext,
     nearestEnemyDistance: number,
+    preferredDirection: Phaser.Math.Vector2,
   ): Phaser.Math.Vector2 {
     let bestPickup: AutoPosition | undefined;
     let bestScore = 0;
 
     for (const pickupPosition of context.pickupPositions) {
-      const distance = Phaser.Math.Distance.Between(
+      const rawDistance = Phaser.Math.Distance.Between(
         context.playerPosition.x,
         context.playerPosition.y,
         pickupPosition.x,
         pickupPosition.y,
       );
+      const effectiveDistance = this.getEffectivePickupDistance(context, rawDistance);
 
-      if (distance > AutoPlayer.PICKUP_SEEK_RADIUS) {
+      if (effectiveDistance > AutoPlayer.PICKUP_SEEK_RADIUS) {
         continue;
       }
 
@@ -328,7 +335,12 @@ export class AutoPlayer {
         continue;
       }
 
-      const score = this.getPickupClusterScore(context, pickupPosition, distance);
+      const score = this.getPickupClusterScore(
+        context,
+        pickupPosition,
+        effectiveDistance,
+        preferredDirection,
+      );
 
       if (score <= bestScore) {
         continue;
@@ -454,7 +466,8 @@ export class AutoPlayer {
   private getPickupClusterScore(
     context: AutoPlayerContext,
     pickupPosition: AutoPosition,
-    playerDistance: number,
+    effectiveDistance: number,
+    preferredDirection: Phaser.Math.Vector2,
   ): number {
     let clusterCount = 0;
 
@@ -471,42 +484,91 @@ export class AutoPlayer {
       }
     }
 
-    const distanceScore = 1 - (playerDistance / AutoPlayer.PICKUP_SEEK_RADIUS);
-    const enemySafetyMultiplier = this.getPickupEnemySafetyMultiplier(
+    const clusterScore = clusterCount * 1.5;
+    const distanceScore = 600 / (effectiveDistance + 60);
+    const nearBonus = effectiveDistance <= 80
+      ? 6
+      : effectiveDistance <= 160
+        ? 3
+        : 0;
+    const directionBonus = this.getPickupDirectionBonus(
       context,
       pickupPosition,
+      preferredDirection,
     );
+    const dangerPenalty = this.getPickupDangerPenalty(context, pickupPosition);
 
-    return ((clusterCount * 10) + (distanceScore * 4)) * enemySafetyMultiplier;
+    return clusterScore + nearBonus + distanceScore + directionBonus - dangerPenalty;
   }
 
-  private getPickupEnemySafetyMultiplier(
+  private getEffectivePickupDistance(
+    context: AutoPlayerContext,
+    rawDistance: number,
+  ): number {
+    const pickupRangePx = Math.max(0, context.pickupRangePx ?? 0);
+
+    return Math.max(0, rawDistance - pickupRangePx);
+  }
+
+  private getPickupDirectionBonus(
+    context: AutoPlayerContext,
+    pickupPosition: AutoPosition,
+    preferredDirection: Phaser.Math.Vector2,
+  ): number {
+    if (preferredDirection.lengthSq() === 0) {
+      return 0;
+    }
+
+    const pickupDirection = new Phaser.Math.Vector2(
+      pickupPosition.x - context.playerPosition.x,
+      pickupPosition.y - context.playerPosition.y,
+    );
+
+    if (pickupDirection.lengthSq() === 0) {
+      return 1.5;
+    }
+
+    const alignment = pickupDirection.normalize().dot(preferredDirection);
+
+    if (alignment > 0.65) {
+      return 1.5;
+    }
+
+    if (alignment > 0.35) {
+      return 0.75;
+    }
+
+    return 0;
+  }
+
+  private getPickupDangerPenalty(
     context: AutoPlayerContext,
     pickupPosition: AutoPosition,
   ): number {
-    let nearestEnemyDistance = Number.POSITIVE_INFINITY;
+    let penalty = 0;
 
     for (const enemyPosition of context.enemyPositions) {
-      nearestEnemyDistance = Math.min(
-        nearestEnemyDistance,
-        Phaser.Math.Distance.Between(
-          pickupPosition.x,
-          pickupPosition.y,
-          enemyPosition.x,
-          enemyPosition.y,
-        ),
+      const distance = Phaser.Math.Distance.Between(
+        pickupPosition.x,
+        pickupPosition.y,
+        enemyPosition.x,
+        enemyPosition.y,
       );
+
+      if (distance < AutoPlayer.PANIC_DISTANCE) {
+        penalty += 8 + ((AutoPlayer.PANIC_DISTANCE - distance) / AutoPlayer.PANIC_DISTANCE) * 8;
+      } else if (distance < AutoPlayer.SAFE_DISTANCE) {
+        penalty += 2 + ((AutoPlayer.SAFE_DISTANCE - distance) / AutoPlayer.SAFE_DISTANCE) * 4;
+      } else if (distance < AutoPlayer.DANGER_RADIUS) {
+        penalty += 1;
+      }
+
+      if (penalty >= 20) {
+        return penalty;
+      }
     }
 
-    if (nearestEnemyDistance < AutoPlayer.PANIC_DISTANCE) {
-      return 0.15;
-    }
-
-    if (nearestEnemyDistance < AutoPlayer.SAFE_DISTANCE) {
-      return 0.55;
-    }
-
-    return 1;
+    return penalty;
   }
 
   private isPickupInHighDanger(

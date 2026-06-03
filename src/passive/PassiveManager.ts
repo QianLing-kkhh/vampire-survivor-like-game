@@ -2,6 +2,17 @@ import { PlayerHealth } from '../player/PlayerHealth';
 
 import { PassiveEffects, PassiveItem, PassiveLevel } from './PassiveItem';
 
+export interface PassiveDetailInfo {
+  passiveId: string;
+  displayName: string;
+  iconKey: string;
+  level: number;
+  maxLevel: number;
+  effectLabel: string;
+  effectValue: string;
+  relatedWeaponIds: string[];
+}
+
 export class PassiveManager {
   private static readonly DEFAULT_MAX_LEVEL = 5;
   private static readonly PUMMAROLA_HEAL_INTERVAL_MS = 5000;
@@ -49,6 +60,20 @@ export class PassiveManager {
     return this.levels.get(passiveId) ?? 0;
   }
 
+  getPassiveLevel(passiveId: string): number {
+    return this.getLevel(passiveId);
+  }
+
+  getPassiveName(passiveId: string): string {
+    return this.getPassive(passiveId)?.name ?? this.formatName(passiveId);
+  }
+
+  getPassiveMaxLevel(passiveId: string): number {
+    const passive = this.getPassive(passiveId);
+
+    return passive ? this.getMaxLevel(passive) : PassiveManager.DEFAULT_MAX_LEVEL;
+  }
+
   isPassive(passiveId: string): boolean {
     return this.passives.some((passive) => passive.id === passiveId);
   }
@@ -71,6 +96,30 @@ export class PassiveManager {
         level: this.getLevel(passive.id),
       }))
       .filter((passive) => passive.level > 0);
+  }
+
+  getPassiveHudInfo(): PassiveLevel[] {
+    return this.getPassiveLevels();
+  }
+
+  getPassiveDetailInfo(params: {
+    getRelatedWeaponIds(passiveId: string): string[];
+  }): PassiveDetailInfo[] {
+    return this.passives
+      .map((passive) => ({
+        passive,
+        level: this.getLevel(passive.id),
+      }))
+      .filter(({ level }) => level > 0)
+      .map(({ passive, level }) => ({
+        passiveId: passive.id,
+        displayName: passive.name,
+        iconKey: this.getPassiveIconKey(passive.id),
+        level,
+        maxLevel: this.getMaxLevel(passive),
+        ...this.getEffectDetail(passive.id, level),
+        relatedWeaponIds: params.getRelatedWeaponIds(passive.id),
+      }));
   }
 
   getEffects(): PassiveEffects {
@@ -127,6 +176,61 @@ export class PassiveManager {
     }
   }
 
+  private getEffectDetail(
+    passiveId: string,
+    level: number,
+  ): { effectLabel: string; effectValue: string } {
+    switch (passiveId) {
+      case 'spinach':
+        return {
+          effectLabel: 'Damage Multiplier',
+          effectValue: this.formatMultiplier(this.getDamageMultiplier(level)),
+        };
+      case 'empty_tome':
+        return {
+          effectLabel: 'Cooldown Multiplier',
+          effectValue: this.formatMultiplier(this.getCooldownMultiplier(level)),
+        };
+      case 'bracer':
+        return {
+          effectLabel: 'Projectile Speed',
+          effectValue: this.formatMultiplier(this.getProjectileSpeedMultiplier(level)),
+        };
+      case 'clover':
+        return {
+          effectLabel: 'Chest Drop Bonus',
+          effectValue: this.formatPercent(this.getTreasureDropBonus(level)),
+        };
+      case 'pummarola':
+        return {
+          effectLabel: 'Heal',
+          effectValue: `${level} HP / 5s`,
+        };
+      default:
+        return {
+          effectLabel: 'Effect',
+          effectValue: '',
+        };
+    }
+  }
+
+  private getPassiveIconKey(passiveId: string): string {
+    switch (passiveId) {
+      case 'spinach':
+        return 'art_passives_spinach_icon';
+      case 'empty_tome':
+        return 'art_passives_empty_tome_icon';
+      case 'bracer':
+        return 'art_passives_bracer_icon';
+      case 'clover':
+        return 'art_passives_clover_icon';
+      case 'pummarola':
+        return 'art_passives_pummarola_icon';
+      default:
+        return passiveId;
+    }
+  }
+
   private getDamageMultiplier(level: number): number {
     return 1 + level * 0.10;
   }
@@ -157,5 +261,12 @@ export class PassiveManager {
 
   private getMaxLevel(passive: PassiveItem): number {
     return passive.maxLevel ?? PassiveManager.DEFAULT_MAX_LEVEL;
+  }
+
+  private formatName(passiveId: string): string {
+    return passiveId
+      .split('_')
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join(' ');
   }
 }

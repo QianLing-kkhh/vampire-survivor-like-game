@@ -9,7 +9,7 @@ export class AuraWeapon extends Weapon {
   private static readonly GARLIC_PERCENT_DAMAGE = 0.003;
 
   private auraBody?: Phaser.GameObjects.Arc;
-  private auraIcon?: Phaser.GameObjects.Image;
+  private auraIcon?: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
 
   constructor(scene: Phaser.Scene, id: string, config: WeaponConfig) {
     super(scene, id, config);
@@ -76,19 +76,38 @@ export class AuraWeapon extends Weapon {
       this.auraBody.setStrokeStyle(2, 0x86efac, 0.55);
     }
 
-    if (
-      this.id === 'soul_eater'
-      && !this.auraIcon
-      && this.scene.textures.exists('soul_eater_core')
-    ) {
-      this.auraIcon = this.scene.add.image(context.player.x, context.player.y, 'soul_eater_core');
-      this.auraIcon.setDisplaySize(30, 30);
-      this.auraIcon.setDepth(24);
-    }
+    this.ensureAuraIcon(context);
 
     this.auraBody.setPosition(context.player.x, context.player.y);
     this.auraBody.setRadius(this.radiusPixels);
     this.auraIcon?.setPosition(context.player.x, context.player.y);
+  }
+
+  private ensureAuraIcon(context: WeaponUpdateContext): void {
+    if (this.auraIcon) {
+      return;
+    }
+
+    const artTextureKey = this.id === 'soul_eater'
+      ? 'art_weapons_soul_eater_core_sheet'
+      : 'art_weapons_garlic_core_sheet';
+
+    if (this.scene.textures.exists(artTextureKey)) {
+      const icon = this.scene.add.sprite(context.player.x, context.player.y, artTextureKey);
+      icon.setDisplaySize(34, 34);
+      icon.setDepth(24);
+      icon.play(this.id === 'soul_eater' ? 'art_soul_eater_core' : 'art_garlic_core');
+      this.auraIcon = icon;
+      return;
+    }
+
+    if (this.id !== 'soul_eater' || !this.scene.textures.exists('soul_eater_core')) {
+      return;
+    }
+
+    this.auraIcon = this.scene.add.image(context.player.x, context.player.y, 'soul_eater_core');
+    this.auraIcon.setDisplaySize(30, 30);
+    this.auraIcon.setDepth(24);
   }
 
   private isEnemyInRange(

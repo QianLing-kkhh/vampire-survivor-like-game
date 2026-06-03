@@ -193,6 +193,20 @@ export class OrbitWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): OrbitProjectileBody {
+    const artTextureKey = this.id === 'unholy_vespers'
+      ? 'art_weapons_unholy_vespers_orbit_book_sheet'
+      : 'art_weapons_bible_orbit_book_sheet';
+
+    if (this.scene.textures.exists(artTextureKey)) {
+      const body = this.scene.add.sprite(x, y, artTextureKey);
+      body.setDisplaySize(this.id === 'unholy_vespers' ? 34 : 28, this.id === 'unholy_vespers' ? 34 : 28);
+      body.play(this.id === 'unholy_vespers'
+        ? 'art_unholy_vespers_orbit_book_spin'
+        : 'art_bible_orbit_book_spin');
+
+      return body;
+    }
+
     const textureKey = this.id === 'unholy_vespers'
       ? 'unholy_vespers_orbit_book'
       : 'bible_orbit_projectile';

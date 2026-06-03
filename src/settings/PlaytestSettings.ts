@@ -1,8 +1,12 @@
+import { DEFAULT_LOCALE, SupportedLocale, isSupportedLocale } from '../i18n/Locale';
+
 export interface PlaytestSettingsState {
   autoMode: boolean;
   fastMode: boolean;
   autoTimeScale: number;
   soundEnabled: boolean;
+  locale: SupportedLocale;
+  endlessMode: boolean;
 }
 
 export class PlaytestSettings {
@@ -12,6 +16,8 @@ export class PlaytestSettings {
     fastMode: false,
     autoTimeScale: 3,
     soundEnabled: false,
+    locale: DEFAULT_LOCALE,
+    endlessMode: false,
   };
 
   static get(): PlaytestSettingsState {
@@ -41,6 +47,20 @@ export class PlaytestSettings {
     });
   }
 
+  static setLocale(locale: SupportedLocale): PlaytestSettingsState {
+    return this.save({
+      ...this.get(),
+      locale,
+    });
+  }
+
+  static setEndlessMode(endlessMode: boolean): PlaytestSettingsState {
+    return this.save({
+      ...this.get(),
+      endlessMode,
+    });
+  }
+
   static toggleAutoMode(): PlaytestSettingsState {
     const state = this.get();
 
@@ -59,12 +79,20 @@ export class PlaytestSettings {
     return this.setSoundEnabled(!state.soundEnabled);
   }
 
+  static toggleEndlessMode(): PlaytestSettingsState {
+    const state = this.get();
+
+    return this.setEndlessMode(!state.endlessMode);
+  }
+
   private static save(state: PlaytestSettingsState): PlaytestSettingsState {
     const nextState = {
       autoMode: state.autoMode,
       fastMode: state.fastMode,
       autoTimeScale: state.autoTimeScale,
       soundEnabled: state.soundEnabled,
+      locale: state.locale,
+      endlessMode: state.endlessMode,
     };
 
     this.memoryState = nextState;
@@ -100,6 +128,10 @@ export class PlaytestSettings {
         soundEnabled: parsedState.soundEnabled === undefined
           ? false
           : Boolean(parsedState.soundEnabled),
+        locale: isSupportedLocale(parsedState.locale)
+          ? parsedState.locale
+          : DEFAULT_LOCALE,
+        endlessMode: Boolean(parsedState.endlessMode),
       };
     } catch {
       return undefined;

@@ -15,7 +15,10 @@ export class TreasureChest {
     this.body = this.createBody(scene, x, y);
     this.body.setDepth(12);
 
-    if (!scene.textures.exists('treasure_chest')) {
+    if (
+      !scene.textures.exists('art_pickups_treasure_chest')
+      && !scene.textures.exists('treasure_chest')
+    ) {
       const lid = scene.add.rectangle(x, y - 8, 32, 8, 0xb45309, 0.95);
       lid.setStrokeStyle(1, 0xfef3c7, 0.8);
       lid.setDepth(13);
@@ -44,6 +47,13 @@ export class TreasureChest {
     x: number,
     y: number,
   ): TreasureChest['body'] {
+    if (scene.textures.exists('art_pickups_treasure_chest')) {
+      const body = scene.add.image(x, y, 'art_pickups_treasure_chest');
+      body.setDisplaySize(36, 32);
+
+      return body;
+    }
+
     if (scene.textures.exists('treasure_chest')) {
       const body = scene.add.image(x, y, 'treasure_chest');
       body.setDisplaySize(32, 28);

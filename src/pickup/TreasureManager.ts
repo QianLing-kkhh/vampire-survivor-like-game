@@ -3,12 +3,7 @@ import Phaser from 'phaser';
 import { AudioManager } from '../audio/AudioManager';
 import { EventBus } from '../core/EventBus';
 import { GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
-import { EvolutionManager } from '../evolution/EvolutionManager';
-import { EVOLUTION_RULES, EvolutionResult } from '../evolution/EvolutionRule';
-import { UpgradeApplier } from '../progression/UpgradeApplier';
-import { UpgradeOption } from '../progression/UpgradeOption';
-import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
-import { WeaponManager } from '../weapon/WeaponManager';
+import { UpgradeFlow } from '../progression/UpgradeFlow';
 
 import { TreasureChest } from './TreasureChest';
 
@@ -27,16 +22,9 @@ export class TreasureManager {
   constructor(
     private readonly scene: Phaser.Scene,
     eventBus: EventBus<GameEventMap>,
-    private readonly upgradeSelector: UpgradeSelector,
-    private readonly upgradeApplier: UpgradeApplier,
-    private readonly upgradeSelectionContext: UpgradeSelectionContext,
-    private readonly weaponManager: WeaponManager,
-    private readonly onChestUpgradeApplied: (option: UpgradeOption) => void,
+    private readonly upgradeFlow: UpgradeFlow,
     private readonly onChestDropped?: () => void,
     private readonly onChestOpened?: () => void,
-    private readonly evolutionManager?: EvolutionManager,
-    private readonly onEvolutionApplied?: (result: EvolutionResult) => void,
-    private readonly onInvalidUpgradeSelected?: (option: UpgradeOption) => void,
   ) {
     this.unsubscribeEnemyKilled = eventBus.subscribe('EnemyKilled', (event) => {
       if (!isEnemyKilledEvent(event)) {
@@ -131,83 +119,10 @@ export class TreasureManager {
   private applyRandomUpgrade(): void {
     this.onChestOpened?.();
     AudioManager.play(this.scene, 'treasure_open');
+    const result = this.upgradeFlow.applyTreasureReward();
 
-    if (this.tryApplyEvolution()) {
-      return;
-    }
-
-    const options = this.getFilteredTreasureUpgradeOptions();
-
-    if (options.length === 0) {
-      console.warn('Treasure chest opened, but no upgrade options were available');
-      return;
-    }
-
-    const option = options[Math.floor(Math.random() * options.length)];
-
-    if (!this.upgradeApplier.apply(option)) {
-      this.onInvalidUpgradeSelected?.(option);
-      console.warn(`Treasure chest selected invalid upgrade: ${option.id}`);
-      return;
-    }
-
-    this.onChestUpgradeApplied(option);
-    console.log('Treasure chest upgrade:', option.id);
-    this.tryApplyEvolution();
-  }
-
-  private tryApplyEvolution(): boolean {
-    const evolutionResult = this.evolutionManager?.tryEvolve({
-      weaponManager: this.weaponManager,
-      getPassiveLevel: (passiveId) => (
-        this.upgradeSelectionContext.getPassiveLevel?.(passiveId) ?? 0
-      ),
-    });
-
-    if (!evolutionResult) {
-      return false;
-    }
-
-    this.onEvolutionApplied?.(evolutionResult);
-    console.log(
-      `Treasure chest evolution: ${evolutionResult.baseWeaponId} -> ${evolutionResult.evolvedWeaponId}`,
-    );
-
-    return true;
-  }
-
-  private getFilteredTreasureUpgradeOptions(): UpgradeOption[] {
-    return this.upgradeSelector
-      .selectOptions(3, this.upgradeSelectionContext)
-      .filter((option) => !this.isDuplicateAddWeaponAfterEvolution(option.id));
-  }
-
-  private isDuplicateAddWeaponAfterEvolution(upgradeId: string): boolean {
-    const baseWeaponId = this.getBaseWeaponIdForAddUpgrade(upgradeId);
-
-    if (!baseWeaponId) {
-      return false;
-    }
-
-    const evolutionRule = EVOLUTION_RULES.find((rule) => rule.baseWeaponId === baseWeaponId);
-
-    return evolutionRule === undefined
-      ? false
-      : this.weaponManager.hasWeapon(evolutionRule.evolvedWeaponId);
-  }
-
-  private getBaseWeaponIdForAddUpgrade(upgradeId: string): string | undefined {
-    switch (upgradeId) {
-      case 'add_garlic':
-        return 'garlic';
-      case 'add_bible':
-        return 'bible';
-      case 'add_magic_wand':
-        return 'magic_wand';
-      case 'add_axe':
-        return 'axe';
-      default:
-        return undefined;
+    if (result.type === 'none') {
+      console.warn('Treasure chest opened, but no reward was applied');
     }
   }
 }

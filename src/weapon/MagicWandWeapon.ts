@@ -171,6 +171,14 @@ export class MagicWandWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): MagicProjectileBody {
+    if (this.scene.textures.exists('art_weapons_magic_wand_projectile_sheet')) {
+      const body = this.scene.add.sprite(x, y, 'art_weapons_magic_wand_projectile_sheet');
+      body.setDisplaySize(18, 18);
+      body.play('art_magic_wand_projectile');
+
+      return body;
+    }
+
     if (!this.scene.textures.exists('magic_wand_projectile')) {
       return this.scene.add.circle(x, y, 6, 0x38bdf8);
     }

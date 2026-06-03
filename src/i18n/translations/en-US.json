@@ -1,0 +1,93 @@
+{
+  "common": {
+    "resume": "Resume",
+    "restart": "Restart",
+    "returnToTitle": "Return to Title",
+    "close": "Close",
+    "help": "Help",
+    "on": "ON",
+    "off": "OFF",
+    "sound": "Sound",
+    "autoMode": "Auto Mode",
+    "fastMode": "Fast Mode",
+    "language": "Language",
+    "timeScale": "Time Scale",
+    "none": "None"
+  },
+  "title": {
+    "gameTitle": "Vampire Survivor Prototype",
+    "startGame": "Start Game",
+    "startAutoTest": "Start Auto Test",
+    "autoStartCountdown": "Auto test starts in {seconds}s",
+    "autoTestCanceled": "Auto test canceled",
+    "toggleAutoMode": "Toggle Auto Mode",
+    "toggleFastMode": "Toggle Fast Mode",
+    "toggleLanguage": "Language"
+  },
+  "pause": {
+    "title": "Paused",
+    "resume": "Resume",
+    "restart": "Restart",
+    "returnToTitle": "Return to Title"
+  },
+  "result": {
+    "victory": "Victory",
+    "gameOver": "Game Over",
+    "result": "Result",
+    "survivalTime": "Survival Time",
+    "finalLevel": "Final Level",
+    "finalExp": "Final EXP",
+    "killCount": "Kill Count",
+    "weapons": "Weapons",
+    "passives": "Passives",
+    "evolutionPath": "Evolution Path",
+    "treasureDrops": "Treasure Drops",
+    "treasureOpens": "Treasure Opens",
+    "chestUpgrades": "Chest Upgrades",
+    "chestEvolutions": "Chest Evolutions",
+    "totalRewards": "Total Rewards",
+    "restart": "Restart",
+    "downloadCurrentCsv": "Download Current CSV",
+    "copyCurrentCsv": "Copy Current CSV",
+    "downloadAllCsv": "Download All CSV",
+    "csvHidden": "CSV hidden. Use buttons to copy or download.",
+    "bufferedRunsCount": "Buffered Runs Count",
+    "toggleAutoMode": "Toggle Auto Mode",
+    "toggleFastMode": "Toggle Fast Mode",
+    "clearCsvBuffer": "Clear CSV Buffer",
+    "autoRestart": "Auto Restart in {seconds}s",
+    "autoRestartCanceled": "Auto Restart: canceled",
+    "bossDashes": "Boss Dashes",
+    "bossDashHits": "Boss Dash Hits"
+  },
+  "help": {
+    "title": "Help",
+    "moveKeyboard": "WASD / Arrow Keys: Move",
+    "moveMouse": "Hold Left Mouse: Move toward cursor",
+    "pause": "ESC: Pause",
+    "collectExp": "Collect EXP gems to level up",
+    "chooseUpgrade": "Choose upgrades to strengthen weapons and passives",
+    "openTreasure": "Open treasure chests for bonus upgrades or evolution",
+    "evolution": "Weapon + matching passive can evolve through treasure chests",
+    "surviveBoss": "Survive until the Boss appears",
+    "defeatBoss": "Defeat the Boss to win"
+  },
+  "levelUp": {
+    "title": "Level Up",
+    "chooseUpgrade": "Choose one upgrade"
+  },
+  "hud": {
+    "weapons": "Weapons",
+    "passives": "Passives",
+    "bossComing": "Boss Coming",
+    "bossActive": "Boss Active",
+    "evolutionDebug": "Evolution Debug",
+    "time": "Time",
+    "hp": "HP",
+    "exp": "EXP",
+    "level": "Lv",
+    "bossIn": "Boss in {time}",
+    "goalDefeatBoss": "Goal Defeat Boss",
+    "evolved": "Evo"
+  }
+}

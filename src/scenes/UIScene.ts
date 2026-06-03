@@ -5,6 +5,7 @@ import { HUD, HUDState } from '../ui/HUD';
 import { HelpPanel } from '../ui/HelpPanel';
 import { LevelUpPanel, LevelUpPanelConfig } from '../ui/LevelUpPanel';
 import { PauseMenu } from '../ui/PauseMenu';
+import { PauseMenuStatsData } from '../ui/PauseMenu';
 
 type LevelUpOptionsPayload = UpgradeOption[] | {
   options: UpgradeOption[];
@@ -55,7 +56,7 @@ export class UIScene extends Phaser.Scene {
     }, config);
   }
 
-  private showPauseMenu(): void {
+  private showPauseMenu(statsData?: PauseMenuStatsData): void {
     if (this.levelUpPanel) {
       return;
     }
@@ -63,6 +64,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseMenu?.destroy();
     this.pauseMenu = new PauseMenu(
       this,
+      statsData ?? this.getEmptyPauseStatsData(),
       () => {
         this.events.emit('PauseResume');
       },
@@ -76,6 +78,30 @@ export class UIScene extends Phaser.Scene {
         this.showHelpPanel();
       },
     );
+  }
+
+  private getEmptyPauseStatsData(): PauseMenuStatsData {
+    return {
+      character: {
+        currentHp: 0,
+        maxHp: 0,
+        moveSpeed: 0,
+        pickupRange: 0,
+        expMultiplier: 1,
+        level: 1,
+        currentExp: 0,
+        requiredExp: 1,
+        damageTaken: 0,
+        killCount: 0,
+        treasureOpenCount: 0,
+        bossPhaseDamageTaken: 0,
+        endlessMode: false,
+        endlessStarted: false,
+        endlessTimeSeconds: 0,
+      },
+      weapons: [],
+      passives: [],
+    };
   }
 
   private hidePauseMenu(): void {
@@ -107,6 +133,7 @@ export class UIScene extends Phaser.Scene {
     this.pauseMenu = undefined;
     this.helpPanel?.destroy();
     this.helpPanel = undefined;
+    this.hud?.destroy();
     this.hud = undefined;
   }
 }

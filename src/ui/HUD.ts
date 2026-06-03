@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 
+import { I18n } from '../i18n/I18n';
+import { LayoutConfig } from '../responsive/LayoutConfig';
+import { ScreenManager } from '../responsive/ScreenManager';
 import { UITheme } from './UITheme';
 
 interface WorldPosition {
@@ -17,10 +20,29 @@ export interface HUDState {
   targetTimeSeconds: number;
   weaponIds: string[];
   autoMode?: boolean;
+  endlessMode?: boolean;
+  endlessStarted?: boolean;
+  endlessTimeSeconds?: number;
   evolutionCandidateStats?: string;
   weaponHudInfo?: Array<{
     weaponId: string;
     upgradeSummary: string;
+  }>;
+  weaponBuildHudInfo?: Array<{
+    weaponId: string;
+    baseWeaponId: string;
+    evolvedWeaponId?: string;
+    weaponName: string;
+    weaponIconKey: string;
+    weaponLevel: number;
+    weaponLevelMax: number;
+    evolved: boolean;
+    evolutionReady?: boolean;
+    passiveId?: string;
+    passiveName?: string;
+    passiveIconKey?: string;
+    passiveLevel?: number;
+    passiveLevelMax?: number;
   }>;
   passiveItems?: Array<{
     id: string;
@@ -46,7 +68,18 @@ type IconEntry = {
   visualKey?: string;
 };
 
+type BuildEntry = {
+  container: Phaser.GameObjects.Container;
+  weaponIcon?: Phaser.GameObjects.Image;
+  weaponFallback?: Phaser.GameObjects.Text;
+  passiveIcon?: Phaser.GameObjects.Image;
+  passiveFallback?: Phaser.GameObjects.Text;
+  label: Phaser.GameObjects.Text;
+  visualKey?: string;
+};
+
 export class HUD {
+  private static readonly SHOW_DEBUG_OVERLAY = false;
   private static readonly MINIMAP_WIDTH = 130;
   private static readonly MINIMAP_HEIGHT = 82;
   private static readonly MAX_MINIMAP_ENEMIES = 50;
@@ -55,7 +88,12 @@ export class HUD {
   private static readonly ICON_SIZE = 28;
 
   private readonly scene: Phaser.Scene;
+  private readonly screenManager: ScreenManager;
   private readonly hpText: Phaser.GameObjects.Text;
+  private readonly statsPanelBg: Phaser.GameObjects.Rectangle;
+  private readonly statsPanelImage?: Phaser.GameObjects.Image;
+  private readonly buildPanelBg: Phaser.GameObjects.Rectangle;
+  private readonly buildPanelImage?: Phaser.GameObjects.Image;
   private readonly hpBarBg: Phaser.GameObjects.Rectangle;
   private readonly hpBarFill: Phaser.GameObjects.Rectangle;
   private readonly expText: Phaser.GameObjects.Text;
@@ -65,16 +103,27 @@ export class HUD {
   private readonly goalText: Phaser.GameObjects.Text;
   private readonly messageText: Phaser.GameObjects.Text;
   private readonly evolutionDebugText: Phaser.GameObjects.Text;
+  private readonly buildEntries: BuildEntry[] = [];
   private readonly weaponEntries: IconEntry[] = [];
   private readonly passiveEntries: IconEntry[] = [];
   private readonly minimapBackground: Phaser.GameObjects.Rectangle;
+  private readonly minimapImage?: Phaser.GameObjects.Image;
   private readonly minimapPlayer: Phaser.GameObjects.Arc;
   private readonly minimapEnemies: Phaser.GameObjects.Arc[] = [];
   private minimapX: number;
   private minimapY = 14;
+  private minimapWidth = HUD.MINIMAP_WIDTH;
+  private minimapHeight = HUD.MINIMAP_HEIGHT;
+  private barWidth = HUD.BAR_WIDTH;
+  private maxIconRows = 6;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    this.screenManager = new ScreenManager(scene);
+    this.statsPanelBg = this.createPanelBackground(12, 8, 250, 126);
+    this.statsPanelImage = this.createPanelImage();
+    this.buildPanelBg = this.createPanelBackground(12, 148, 330, 214);
+    this.buildPanelImage = this.createPanelImage();
     this.hpText = this.createText(16, 12, UITheme.smallFontSize);
     this.hpBarBg = this.createBarBackground(16, 34, HUD.BAR_WIDTH, HUD.BAR_HEIGHT);
     this.hpBarFill = this.createBarFill(16, 34, UITheme.hpBarColor);
@@ -99,6 +148,7 @@ export class HUD {
     this.minimapBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.65);
     this.minimapBackground.setDepth(900);
     this.minimapBackground.setScrollFactor(0);
+    this.minimapImage = this.createPanelImage();
 
     for (let index = 0; index < HUD.MAX_MINIMAP_ENEMIES; index += 1) {
       const enemyDot = scene.add.circle(0, 0, 2, 0xef4444, 0.85);
@@ -133,30 +183,63 @@ export class HUD {
     });
   }
 
+  destroy(): void {
+    this.screenManager.dispose();
+    this.hpText.destroy();
+    this.statsPanelBg.destroy();
+    this.statsPanelImage?.destroy();
+    this.buildPanelBg.destroy();
+    this.buildPanelImage?.destroy();
+    this.hpBarBg.destroy();
+    this.hpBarFill.destroy();
+    this.expText.destroy();
+    this.expBarBg.destroy();
+    this.expBarFill.destroy();
+    this.timeText.destroy();
+    this.goalText.destroy();
+    this.messageText.destroy();
+    this.evolutionDebugText.destroy();
+    this.minimapBackground.destroy();
+    this.minimapImage?.destroy();
+    this.minimapPlayer.destroy();
+    this.minimapEnemies.forEach((enemyDot) => {
+      enemyDot.destroy();
+    });
+    this.buildEntries.forEach((entry) => {
+      entry.container.destroy(true);
+    });
+    this.weaponEntries.forEach((entry) => {
+      entry.container.destroy(true);
+    });
+    this.passiveEntries.forEach((entry) => {
+      entry.container.destroy(true);
+    });
+  }
+
   update(state: HUDState): void {
+    this.applyLayout();
     const currentHp = this.formatInteger(state.currentHp);
     const maxHp = this.formatInteger(state.playerMaxHp ?? state.maxHp);
     const exp = Math.floor(state.currentExp);
     const requiredExp = Math.max(1, Math.floor(state.requiredExp));
 
-    this.hpText.setText(`HP ${currentHp} / ${maxHp}`);
+    this.hpText.setText(`${I18n.t('hud.hp')} ${currentHp} / ${maxHp}`);
     this.setBarRatio(this.hpBarFill, state.currentHp / Math.max(state.playerMaxHp ?? state.maxHp, 1));
-    this.expText.setText(`Lv.${state.level}  EXP ${exp} / ${requiredExp}`);
+    this.expText.setText(`${I18n.t('hud.level')}.${state.level}  ${I18n.t('hud.exp')} ${exp} / ${requiredExp}`);
     this.setBarRatio(this.expBarFill, state.currentExp / requiredExp);
-    this.timeText.setText(`Time ${this.formatTime(state.timeSeconds)}`);
+    this.timeText.setText(`${I18n.t('hud.time')} ${this.formatTime(state.timeSeconds)}`);
     this.goalText.setText(this.getGoalText(state));
     this.messageText.setText(state.message ?? '');
     this.updateIconList(
-      this.weaponEntries,
-      this.getWeaponIconItems(state),
-      16,
-      168,
-    );
-    this.updateIconList(
       this.passiveEntries,
-      this.getPassiveIconItems(state),
-      16,
-      168 + this.getWeaponIconItems(state).length * 34 + 14,
+      this.getOtherPassiveIconItems(state),
+      LayoutConfig.getHudLayout(this.screenManager).passivesPosition.x,
+      LayoutConfig.getHudLayout(this.screenManager).passivesPosition.y,
+    );
+    this.updateBuildList(
+      this.getBuildItems(state),
+      LayoutConfig.getHudLayout(this.screenManager).weaponsPosition.x,
+      LayoutConfig.getHudLayout(this.screenManager).weaponsPosition.y,
     );
     this.evolutionDebugText.setText(this.getEvolutionDebugText(state));
     this.updateMinimap(state);
@@ -191,12 +274,14 @@ export class HUD {
     x: number,
     y: number,
   ): void {
-    while (entries.length < items.length) {
+    const visibleItems = this.getVisibleIconItems(items);
+
+    while (entries.length < visibleItems.length) {
       entries.push(this.createIconEntry());
     }
 
     entries.forEach((entry, index) => {
-      const item = items[index];
+      const item = visibleItems[index];
 
       if (!item) {
         entry.container.setVisible(false);
@@ -261,6 +346,120 @@ export class HUD {
     return { container, background, label };
   }
 
+  private updateBuildList(
+    items: Array<{
+      id: string;
+      weaponIconKey?: string;
+      weaponFallback: string;
+      passiveIconKey?: string;
+      passiveFallback?: string;
+      label: string;
+    }>,
+    x: number,
+    y: number,
+  ): void {
+    const visibleItems = this.getVisibleBuildItems(items);
+
+    while (this.buildEntries.length < visibleItems.length) {
+      this.buildEntries.push(this.createBuildEntry());
+    }
+
+    this.buildEntries.forEach((entry, index) => {
+      const item = visibleItems[index];
+
+      if (!item) {
+        entry.container.setVisible(false);
+        return;
+      }
+
+      entry.container.setPosition(x, y + index * 34);
+      entry.container.setVisible(true);
+      entry.label.setText(item.label);
+
+      const visualKey = [
+        item.weaponIconKey && this.scene.textures.exists(item.weaponIconKey)
+          ? `w:${item.weaponIconKey}`
+          : `wf:${item.weaponFallback}`,
+        item.passiveIconKey && this.scene.textures.exists(item.passiveIconKey)
+          ? `p:${item.passiveIconKey}`
+          : `pf:${item.passiveFallback ?? ''}`,
+      ].join('|');
+
+      if (entry.visualKey === visualKey) {
+        return;
+      }
+
+      entry.weaponIcon?.destroy();
+      entry.weaponFallback?.destroy();
+      entry.passiveIcon?.destroy();
+      entry.passiveFallback?.destroy();
+      entry.weaponIcon = undefined;
+      entry.weaponFallback = undefined;
+      entry.passiveIcon = undefined;
+      entry.passiveFallback = undefined;
+      entry.visualKey = visualKey;
+      this.addBuildIcon(entry, item.weaponIconKey, item.weaponFallback, 0);
+
+      if (item.passiveIconKey || item.passiveFallback) {
+        this.addBuildIcon(entry, item.passiveIconKey, item.passiveFallback ?? '', 34, true);
+      }
+    });
+  }
+
+  private createBuildEntry(): BuildEntry {
+    const container = this.scene.add.container(0, 0);
+    container.setDepth(900);
+    container.setScrollFactor(0);
+    const weaponBackground = this.scene.add.rectangle(0, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0.78);
+    weaponBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
+    const passiveBackground = this.scene.add.rectangle(34, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0.56);
+    passiveBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
+    const label = this.scene.add.text(72, -8, '', {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: '12px',
+    });
+
+    container.add([weaponBackground, passiveBackground, label]);
+    return { container, label };
+  }
+
+  private addBuildIcon(
+    entry: BuildEntry,
+    textureKey: string | undefined,
+    fallback: string,
+    x: number,
+    isPassive = false,
+  ): void {
+    if (textureKey && this.scene.textures.exists(textureKey)) {
+      const icon = this.scene.add.image(x, 0, textureKey);
+      icon.setDisplaySize(HUD.ICON_SIZE - 6, HUD.ICON_SIZE - 6);
+      entry.container.addAt(icon, isPassive ? 3 : 2);
+
+      if (isPassive) {
+        entry.passiveIcon = icon;
+      } else {
+        entry.weaponIcon = icon;
+      }
+      return;
+    }
+
+    const fallbackText = this.scene.add.text(x, 0, fallback, {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: '11px',
+      fontStyle: 'bold',
+    });
+    fallbackText.setOrigin(0.5);
+    entry.container.addAt(fallbackText, isPassive ? 3 : 2);
+
+    if (isPassive) {
+      entry.passiveFallback = fallbackText;
+    } else {
+      entry.weaponFallback = fallbackText;
+    }
+  }
+
   private getWeaponIconItems(state: HUDState): Array<{
     id: string;
     textureKey?: string;
@@ -279,6 +478,72 @@ export class HUD {
     }));
   }
 
+  private getBuildItems(state: HUDState): Array<{
+    id: string;
+    weaponIconKey?: string;
+    weaponFallback: string;
+    passiveIconKey?: string;
+    passiveFallback?: string;
+    label: string;
+  }> {
+    if (!state.weaponBuildHudInfo || state.weaponBuildHudInfo.length === 0) {
+      return this.getWeaponIconItems(state).map((weapon) => ({
+        id: weapon.id,
+        weaponIconKey: weapon.textureKey,
+        weaponFallback: weapon.fallback,
+        label: weapon.label,
+      }));
+    }
+
+    return state.weaponBuildHudInfo.map((info) => ({
+      id: info.weaponId,
+      weaponIconKey: info.weaponIconKey,
+      weaponFallback: this.getInitials(info.weaponId),
+      passiveIconKey: info.passiveIconKey,
+      passiveFallback: info.passiveId ? this.getInitials(info.passiveId) : undefined,
+      label: this.getBuildLabel(info),
+    }));
+  }
+
+  private getBuildLabel(info: NonNullable<HUDState['weaponBuildHudInfo']>[number]): string {
+    const baseLabel = `${info.weaponName} Lv.${info.weaponLevel} / ${info.weaponLevelMax}`
+      + (info.passiveName
+        ? ` + ${info.passiveName} Lv.${info.passiveLevel ?? 0} / ${info.passiveLevelMax ?? 5}`
+        : '');
+
+    if (info.evolved) {
+      return `${baseLabel}  ${I18n.t('hud.evolved')}`;
+    }
+
+    if (info.evolutionReady) {
+      return `${baseLabel}  Ready for evolution`;
+    }
+
+    return baseLabel;
+  }
+
+  private getOtherPassiveIconItems(state: HUDState): Array<{
+    id: string;
+    textureKey?: string;
+    label: string;
+    fallback: string;
+  }> {
+    const matchedPassiveIds = new Set(
+      (state.weaponBuildHudInfo ?? [])
+        .map((info) => info.passiveId)
+        .filter((passiveId): passiveId is string => passiveId !== undefined),
+    );
+
+    return (state.passiveItems ?? [])
+      .filter((passive) => !matchedPassiveIds.has(passive.id))
+      .map((passive) => ({
+        id: passive.id,
+        textureKey: this.getPassiveIconTextureKey(passive.id),
+        label: `Other ${passive.name} Lv.${passive.level}`,
+        fallback: this.getInitials(passive.id),
+      }));
+  }
+
   private getPassiveIconItems(state: HUDState): Array<{
     id: string;
     textureKey?: string;
@@ -287,7 +552,7 @@ export class HUD {
   }> {
     return (state.passiveItems ?? []).map((passive) => ({
       id: passive.id,
-      textureKey: undefined,
+      textureKey: this.getPassiveIconTextureKey(passive.id),
       label: `Lv.${passive.level}`,
       fallback: this.getInitials(passive.id),
     }));
@@ -298,31 +563,56 @@ export class HUD {
       case 'knife':
         return 'knife_icon';
       case 'garlic':
-        return 'garlic_icon';
+        return this.getExistingTextureKey('art_weapons_garlic_core_sheet', 'garlic_icon');
       case 'bible':
-        return 'bible_icon';
+        return this.getExistingTextureKey('art_weapons_bible_orbit_book_sheet', 'bible_icon');
       case 'axe':
-        return 'axe_projectile';
+        return this.getExistingTextureKey('art_weapons_axe_icon', 'axe_projectile');
       case 'magic_wand':
-        return 'magic_wand_projectile';
+        return this.getExistingTextureKey('art_weapons_magic_wand_icon', 'magic_wand_projectile');
       case 'thousand_edge':
-        return 'thousand_edge_projectile';
+        return this.getExistingTextureKey('art_weapons_thousand_edge_icon', 'thousand_edge_projectile');
       case 'holy_wand':
-        return 'holy_wand_projectile';
+        return this.getExistingTextureKey('art_weapons_holy_wand_icon', 'holy_wand_projectile');
       case 'death_spiral':
-        return 'death_spiral_projectile';
+        return this.getExistingTextureKey('art_weapons_death_spiral_icon', 'death_spiral_projectile');
       case 'unholy_vespers':
-        return 'unholy_vespers_orbit_book';
+        return this.getExistingTextureKey('art_weapons_unholy_vespers_icon', 'unholy_vespers_orbit_book');
       case 'soul_eater':
-        return 'soul_eater_core';
+        return this.getExistingTextureKey('art_weapons_soul_eater_icon', 'soul_eater_core');
       default:
         return undefined;
     }
   }
 
+  private getPassiveIconTextureKey(passiveId: string): string | undefined {
+    switch (passiveId) {
+      case 'spinach':
+        return 'art_passives_spinach_icon';
+      case 'empty_tome':
+        return 'art_passives_empty_tome_icon';
+      case 'bracer':
+        return 'art_passives_bracer_icon';
+      case 'clover':
+        return 'art_passives_clover_icon';
+      case 'pummarola':
+        return 'art_passives_pummarola_icon';
+      default:
+        return undefined;
+    }
+  }
+
+  private getExistingTextureKey(primaryKey: string, fallbackKey: string): string | undefined {
+    if (this.scene.textures.exists(primaryKey)) {
+      return primaryKey;
+    }
+
+    return this.scene.textures.exists(fallbackKey) ? fallbackKey : undefined;
+  }
+
   private getCompactWeaponLabel(weapon: { weaponId: string; upgradeSummary: string }): string {
     if (weapon.upgradeSummary === 'Evolved') {
-      return 'Evo';
+      return I18n.t('hud.evolved');
     }
 
     const match = /Total Lv\.(\d+) \/ (\d+)/.exec(weapon.upgradeSummary);
@@ -335,12 +625,12 @@ export class HUD {
   }
 
   private getEvolutionDebugText(state: HUDState): string {
-    if (!state.autoMode || !state.evolutionCandidateStats) {
+    if (!HUD.SHOW_DEBUG_OVERLAY || !state.autoMode || !state.evolutionCandidateStats) {
       return '';
     }
 
     return [
-      'Evolution Debug',
+      I18n.t('hud.evolutionDebug'),
       ...state.evolutionCandidateStats
         .split('|')
         .slice(0, 5)
@@ -353,10 +643,16 @@ export class HUD {
 
   private getGoalText(state: HUDState): string {
     if (state.timeSeconds >= state.targetTimeSeconds) {
-      return 'Goal Defeat Boss';
+      if (state.endlessStarted) {
+        return `Endless ${this.formatTime(state.endlessTimeSeconds ?? 0)}`;
+      }
+
+      return I18n.t('hud.goalDefeatBoss');
     }
 
-    return `Boss in ${this.formatTime(Math.max(0, state.targetTimeSeconds - state.timeSeconds))}`;
+    return I18n.t('hud.bossIn', {
+      time: this.formatTime(Math.max(0, state.targetTimeSeconds - state.timeSeconds)),
+    });
   }
 
   private createText(
@@ -394,7 +690,7 @@ export class HUD {
     y: number,
     color: number,
   ): Phaser.GameObjects.Rectangle {
-    const bar = this.scene.add.rectangle(x, y, HUD.BAR_WIDTH, HUD.BAR_HEIGHT, color, 0.92);
+    const bar = this.scene.add.rectangle(x, y, this.barWidth, HUD.BAR_HEIGHT, color, 0.92);
     bar.setOrigin(0, 0);
     bar.setDepth(901);
     bar.setScrollFactor(0);
@@ -402,17 +698,171 @@ export class HUD {
   }
 
   private setBarRatio(bar: Phaser.GameObjects.Rectangle, ratio: number): void {
-    bar.displayWidth = HUD.BAR_WIDTH * Phaser.Math.Clamp(ratio, 0, 1);
+    bar.displayWidth = this.barWidth * Phaser.Math.Clamp(ratio, 0, 1);
   }
 
   private toMinimapX(worldX: number, worldWidth: number): number {
     return this.minimapX
-      + Phaser.Math.Clamp(worldX / Math.max(worldWidth, 1), 0, 1) * HUD.MINIMAP_WIDTH;
+      + Phaser.Math.Clamp(worldX / Math.max(worldWidth, 1), 0, 1) * this.minimapWidth;
   }
 
   private toMinimapY(worldY: number, worldHeight: number): number {
     return this.minimapY
-      + Phaser.Math.Clamp(worldY / Math.max(worldHeight, 1), 0, 1) * HUD.MINIMAP_HEIGHT;
+      + Phaser.Math.Clamp(worldY / Math.max(worldHeight, 1), 0, 1) * this.minimapHeight;
+  }
+
+  private applyLayout(): void {
+    const layout = LayoutConfig.getHudLayout(this.screenManager);
+    const stats = layout.statsPosition;
+
+    this.barWidth = layout.barWidth;
+    this.maxIconRows = layout.maxIconRows;
+    this.minimapWidth = layout.minimapSize.width;
+    this.minimapHeight = layout.minimapSize.height;
+    this.minimapX = layout.minimapPosition.x;
+    this.minimapY = layout.minimapPosition.y;
+
+    this.hpText.setPosition(stats.x, stats.y);
+    this.hpText.setFontSize(layout.fontSize);
+    this.hpBarBg.setPosition(stats.x, stats.y + 22);
+    this.hpBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
+    this.hpBarFill.setPosition(stats.x, stats.y + 22);
+    this.expText.setPosition(stats.x, stats.y + 42);
+    this.expText.setFontSize(layout.fontSize);
+    this.expBarBg.setPosition(stats.x, stats.y + 64);
+    this.expBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
+    this.expBarFill.setPosition(stats.x, stats.y + 64);
+    this.timeText.setPosition(stats.x, stats.y + 86);
+    this.timeText.setFontSize(layout.fontSize);
+    this.goalText.setPosition(stats.x, stats.y + 106);
+    this.goalText.setFontSize(layout.fontSize);
+    this.messageText.setPosition(layout.bossTextPosition.x, layout.bossTextPosition.y);
+    this.messageText.setOrigin(0.5);
+    this.messageText.setFontSize(layout.fontSize);
+    this.evolutionDebugText.setPosition(stats.x, this.screenManager.height - 96);
+    this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
+    this.minimapBackground.setPosition(this.minimapX, this.minimapY);
+    this.minimapBackground.setSize(this.minimapWidth, this.minimapHeight);
+    this.layoutPanelBackground(
+      this.statsPanelBg,
+      this.statsPanelImage,
+      stats.x - 8,
+      stats.y - 8,
+      this.barWidth + 16,
+      132,
+    );
+    this.layoutPanelBackground(
+      this.buildPanelBg,
+      this.buildPanelImage,
+      layout.weaponsPosition.x - 8,
+      layout.weaponsPosition.y - 14,
+      Math.min(this.screenManager.width - layout.weaponsPosition.x - 16, 360),
+      this.maxIconRows * 34 + 24,
+    );
+    this.layoutPanelBackground(
+      this.minimapBackground,
+      this.minimapImage,
+      this.minimapX,
+      this.minimapY,
+      this.minimapWidth,
+      this.minimapHeight,
+    );
+  }
+
+  private createPanelBackground(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): Phaser.GameObjects.Rectangle {
+    const panel = this.scene.add.rectangle(x, y, width, height, UITheme.panelBgColor, UITheme.hudPanelAlpha);
+    panel.setOrigin(0, 0);
+    panel.setStrokeStyle(1, UITheme.panelBorderColor, 0.35);
+    panel.setDepth(890);
+    panel.setScrollFactor(0);
+    return panel;
+  }
+
+  private createPanelImage(): Phaser.GameObjects.Image | undefined {
+    if (!this.scene.textures.exists('art_ui_hud_panel_bg')) {
+      return undefined;
+    }
+
+    const image = this.scene.add.image(0, 0, 'art_ui_hud_panel_bg');
+    image.setOrigin(0, 0);
+    image.setDepth(891);
+    image.setScrollFactor(0);
+    image.setAlpha(UITheme.hudPanelAlpha);
+    return image;
+  }
+
+  private layoutPanelBackground(
+    rectangle: Phaser.GameObjects.Rectangle,
+    image: Phaser.GameObjects.Image | undefined,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): void {
+    rectangle.setPosition(x, y);
+    rectangle.setSize(width, height);
+
+    if (!image) {
+      return;
+    }
+
+    const frame = image.texture.get();
+    image.setPosition(x, y);
+    image.setScale(Math.max(width / frame.width, height / frame.height));
+    image.setDepth(rectangle.depth + 0.1);
+  }
+
+  private getVisibleIconItems(
+    items: Array<{ id: string; textureKey?: string; label: string; fallback: string }>,
+  ): Array<{ id: string; textureKey?: string; label: string; fallback: string }> {
+    if (items.length <= this.maxIconRows) {
+      return items;
+    }
+
+    return [
+      ...items.slice(0, Math.max(0, this.maxIconRows - 1)),
+      {
+        id: 'more',
+        label: `+${items.length - this.maxIconRows + 1}`,
+        fallback: '+',
+      },
+    ];
+  }
+
+  private getVisibleBuildItems(
+    items: Array<{
+      id: string;
+      weaponIconKey?: string;
+      weaponFallback: string;
+      passiveIconKey?: string;
+      passiveFallback?: string;
+      label: string;
+    }>,
+  ): Array<{
+    id: string;
+    weaponIconKey?: string;
+    weaponFallback: string;
+    passiveIconKey?: string;
+    passiveFallback?: string;
+    label: string;
+  }> {
+    if (items.length <= this.maxIconRows) {
+      return items;
+    }
+
+    return [
+      ...items.slice(0, Math.max(0, this.maxIconRows - 1)),
+      {
+        id: 'more',
+        weaponFallback: '+',
+        label: `+${items.length - this.maxIconRows + 1} more`,
+      },
+    ];
   }
 
   private getInitials(value: string): string {

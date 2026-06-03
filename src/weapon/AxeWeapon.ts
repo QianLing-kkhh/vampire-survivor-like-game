@@ -242,6 +242,20 @@ export class AxeWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): AxeProjectileBody {
+    const artTextureKey = this.id === 'death_spiral'
+      ? 'art_weapons_death_spiral_projectile_sheet'
+      : 'art_weapons_axe_projectile_sheet';
+
+    if (this.scene.textures.exists(artTextureKey)) {
+      const body = this.scene.add.sprite(x, y, artTextureKey);
+      body.setDisplaySize(this.id === 'death_spiral' ? 30 : 24, this.id === 'death_spiral' ? 30 : 24);
+      body.play(this.id === 'death_spiral'
+        ? 'art_death_spiral_projectile_spin'
+        : 'art_axe_projectile_spin');
+
+      return body;
+    }
+
     const textureKey = this.id === 'death_spiral'
       ? 'death_spiral_projectile'
       : 'axe_projectile';

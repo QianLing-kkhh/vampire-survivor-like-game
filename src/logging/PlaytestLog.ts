@@ -34,9 +34,20 @@ export interface PlaytestLogData {
   bossDashCount: number;
   bossDashHitCount: number;
   totalUpgradeCount: number;
+  totalRewardCount: number;
   levelUpUpgradeCount: number;
   chestUpgradeCount: number;
+  chestEvolutionCount: number;
   duplicateOrInvalidUpgradeCount: number;
+  endlessMode: boolean;
+  endlessStarted: boolean;
+  endlessSurvivalTime: number;
+  endlessEnemyKills: number;
+  endlessDamageTaken: number;
+  endlessLeaderboardRank: number;
+  finalMoveSpeed: number;
+  finalPickupRange: number;
+  finalMaxHp: number;
   weaponIds: readonly string[];
   passiveItems: readonly PassiveLevel[];
   upgradePath: readonly string[];
@@ -79,9 +90,20 @@ export class PlaytestLog {
     'bossDashCount',
     'bossDashHitCount',
     'totalUpgradeCount',
+    'totalRewardCount',
     'levelUpUpgradeCount',
     'chestUpgradeCount',
+    'chestEvolutionCount',
     'duplicateOrInvalidUpgradeCount',
+    'endlessMode',
+    'endlessStarted',
+    'endlessSurvivalTime',
+    'endlessEnemyKills',
+    'endlessDamageTaken',
+    'endlessLeaderboardRank',
+    'finalMoveSpeed',
+    'finalPickupRange',
+    'finalMaxHp',
     'weaponIds',
     'passiveItems',
     'upgradePath',
@@ -132,9 +154,20 @@ export class PlaytestLog {
       data.bossDashCount.toString(),
       data.bossDashHitCount.toString(),
       data.totalUpgradeCount.toString(),
+      data.totalRewardCount.toString(),
       data.levelUpUpgradeCount.toString(),
       data.chestUpgradeCount.toString(),
+      data.chestEvolutionCount.toString(),
       data.duplicateOrInvalidUpgradeCount.toString(),
+      data.endlessMode ? 'true' : 'false',
+      data.endlessStarted ? 'true' : 'false',
+      Math.floor(data.endlessSurvivalTime).toString(),
+      data.endlessEnemyKills.toString(),
+      Math.floor(data.endlessDamageTaken).toString(),
+      data.endlessLeaderboardRank.toString(),
+      PlaytestLog.formatNumber(data.finalMoveSpeed),
+      PlaytestLog.formatNumber(data.finalPickupRange),
+      PlaytestLog.formatNumber(data.finalMaxHp),
       data.weaponIds.join('|'),
       data.passiveItems
         .map((passive) => `${passive.id}:${passive.level}`)
@@ -188,5 +221,11 @@ export class PlaytestLog {
     }
 
     return `"${value.replace(/"/g, '""')}"`;
+  }
+
+  private static formatNumber(value: number): string {
+    return Number.isInteger(value)
+      ? value.toString()
+      : value.toFixed(2).replace(/\.?0+$/, '');
   }
 }

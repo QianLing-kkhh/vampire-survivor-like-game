@@ -9,13 +9,13 @@ import { ResultScene } from '../scenes/ResultScene';
 export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'app',
-  width: 1280,
-  height: 720,
+  width: globalThis.innerWidth || 1280,
+  height: globalThis.innerHeight || 720,
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 1280,
-    height: 720
+    width: globalThis.innerWidth || 1280,
+    height: globalThis.innerHeight || 720
   },
   backgroundColor: '#101018',
   physics: {

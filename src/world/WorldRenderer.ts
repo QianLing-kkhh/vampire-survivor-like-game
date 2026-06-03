@@ -17,6 +17,19 @@ export class WorldRenderer {
   }
 
   private renderBackground(): void {
+    if (this.scene.textures.exists('art_world_ground_tile')) {
+      const background = this.scene.add.tileSprite(
+        WorldConfig.width / 2,
+        WorldConfig.height / 2,
+        WorldConfig.width,
+        WorldConfig.height,
+        'art_world_ground_tile',
+      );
+
+      background.setDepth(-100);
+      return;
+    }
+
     const background = this.scene.add.rectangle(
       WorldConfig.width / 2,
       WorldConfig.height / 2,
@@ -80,6 +93,13 @@ export class WorldRenderer {
   }
 
   private renderTree(x: number, y: number): void {
+    if (this.scene.textures.exists('art_world_tree_landmark')) {
+      const tree = this.scene.add.image(x, y, 'art_world_tree_landmark');
+      tree.setDisplaySize(80, 80);
+      tree.setDepth(-79);
+      return;
+    }
+
     const trunk = this.scene.add.rectangle(x, y + 12, 10, 24, 0x7c2d12);
     const leaves = this.scene.add.circle(x, y - 4, 24, 0x166534, 0.9);
 
@@ -88,6 +108,13 @@ export class WorldRenderer {
   }
 
   private renderRock(x: number, y: number): void {
+    if (this.scene.textures.exists('art_world_rock_landmark')) {
+      const rockImage = this.scene.add.image(x, y, 'art_world_rock_landmark');
+      rockImage.setDisplaySize(72, 72);
+      rockImage.setDepth(-80);
+      return;
+    }
+
     const rock = this.scene.add.ellipse(x, y, 44, 30, 0x64748b, 0.9);
 
     rock.setStrokeStyle(2, 0x94a3b8, 0.5);
@@ -95,6 +122,13 @@ export class WorldRenderer {
   }
 
   private renderGrave(x: number, y: number): void {
+    if (this.scene.textures.exists('art_world_grave_landmark')) {
+      const graveImage = this.scene.add.image(x, y, 'art_world_grave_landmark');
+      graveImage.setDisplaySize(72, 72);
+      graveImage.setDepth(-80);
+      return;
+    }
+
     const grave = this.scene.add.rectangle(x, y, 30, 44, 0x6b7280, 0.9);
     const top = this.scene.add.circle(x, y - 20, 15, 0x6b7280, 0.9);
 
@@ -104,4 +138,3 @@ export class WorldRenderer {
     top.setDepth(-79);
   }
 }
-

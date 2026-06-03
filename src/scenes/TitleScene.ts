@@ -1,35 +1,51 @@
 import Phaser from 'phaser';
 
+import { I18n } from '../i18n/I18n';
+import { LayoutConfig } from '../responsive/LayoutConfig';
+import { ScreenManager } from '../responsive/ScreenManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { HelpOverlay } from '../ui/HelpOverlay';
-import { UITheme, toCssColor } from '../ui/UITheme';
+import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
 export class TitleScene extends Phaser.Scene {
   private static readonly AUTO_START_SECONDS = 10;
 
   private statusText?: Phaser.GameObjects.Text;
+  private titleText?: Phaser.GameObjects.Text;
+  private startButton?: Phaser.GameObjects.Text;
+  private autoTestButton?: Phaser.GameObjects.Text;
+  private toggleAutoButton?: Phaser.GameObjects.Text;
+  private toggleFastButton?: Phaser.GameObjects.Text;
+  private toggleEndlessButton?: Phaser.GameObjects.Text;
   private soundButton?: Phaser.GameObjects.Text;
+  private languageButton?: Phaser.GameObjects.Text;
+  private helpButton?: Phaser.GameObjects.Text;
+  private backgroundImage?: Phaser.GameObjects.Image;
   private autoStartText?: Phaser.GameObjects.Text;
   private autoStartTimer?: Phaser.Time.TimerEvent;
   private autoStartRemainingSeconds = TitleScene.AUTO_START_SECONDS;
   private autoStartCanceled = false;
   private helpOverlay?: HelpOverlay;
+  private screenManager?: ScreenManager;
+  private unsubscribeResize?: () => void;
 
   constructor() {
     super('TitleScene');
   }
 
   create(): void {
-    const centerX = this.scale.width / 2;
-    const centerY = this.scale.height / 2;
+    this.screenManager = new ScreenManager(this);
+    const centerX = this.screenManager.centerX;
+    const centerY = this.screenManager.centerY;
+    this.backgroundImage = this.createBackgroundImage();
 
-    const title = this.add.text(centerX, centerY - 170, 'Vampire Survivor Prototype', {
+    this.titleText = this.add.text(centerX, centerY - 170, I18n.t('title.gameTitle'), {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
       fontSize: UITheme.titleFontSize,
       fontStyle: 'bold',
     });
-    title.setOrigin(0.5);
+    this.titleText.setOrigin(0.5);
 
     this.statusText = this.add.text(centerX, centerY - 92, this.formatStatus(), {
       color: UITheme.mutedTextColor,
@@ -48,7 +64,7 @@ export class TitleScene extends Phaser.Scene {
     });
     this.autoStartText.setOrigin(0.5);
 
-    this.createButton(centerX, centerY - 8, 'Start Game', () => {
+    this.startButton = this.createButton(centerX, centerY - 8, I18n.t('title.startGame'), () => {
       this.cancelAutoStartCountdown();
       PlaytestSettings.setAutoMode(false);
       PlaytestSettings.setFastMode(false);
@@ -56,7 +72,7 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('GameScene');
     });
 
-    this.createButton(centerX, centerY + 58, 'Start Auto Test', () => {
+    this.autoTestButton = this.createButton(centerX, centerY + 58, I18n.t('title.startAutoTest'), () => {
       this.cancelAutoStartCountdown();
       PlaytestSettings.setAutoMode(true);
       PlaytestSettings.setFastMode(true);
@@ -64,29 +80,48 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('GameScene');
     });
 
-    this.createButton(centerX - 150, centerY + 132, 'Toggle Auto Mode', () => {
+    this.toggleAutoButton = this.createButton(centerX - 150, centerY + 132, I18n.t('title.toggleAutoMode'), () => {
       this.cancelAutoStartCountdown();
       PlaytestSettings.toggleAutoMode();
       this.refreshStatus();
     });
 
-    this.createButton(centerX + 150, centerY + 132, 'Toggle Fast Mode', () => {
+    this.toggleFastButton = this.createButton(centerX + 150, centerY + 132, I18n.t('title.toggleFastMode'), () => {
       this.cancelAutoStartCountdown();
       PlaytestSettings.toggleFastMode();
       this.refreshStatus();
     });
 
-    this.soundButton = this.createButton(centerX, centerY + 190, this.formatSoundLabel(), () => {
+    this.toggleEndlessButton = this.createButton(centerX, centerY + 190, this.formatEndlessLabel(), () => {
+      this.cancelAutoStartCountdown();
+      PlaytestSettings.toggleEndlessMode();
+      this.refreshStatus();
+      this.refreshEndlessButton();
+    });
+
+    this.soundButton = this.createButton(centerX, centerY + 246, this.formatSoundLabel(), () => {
       this.cancelAutoStartCountdown();
       PlaytestSettings.toggleSoundEnabled();
       this.refreshSoundButton();
     });
 
-    this.createButton(centerX, centerY + 254, 'Help', () => {
+    this.languageButton = this.createButton(centerX - 140, centerY + 312, this.formatLanguageLabel(), () => {
+      this.cancelAutoStartCountdown();
+      I18n.cycleLocale();
+      this.refreshTexts();
+    });
+
+    this.helpButton = this.createButton(centerX + 140, centerY + 312, I18n.t('common.help'), () => {
       this.cancelAutoStartCountdown();
       this.showHelpOverlay();
     });
 
+    this.applyLayout();
+    this.unsubscribeResize = this.screenManager.onResize(() => {
+      this.applyLayout();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
+    this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
     this.startAutoStartCountdown();
   }
 
@@ -96,14 +131,21 @@ export class TitleScene extends Phaser.Scene {
     label: string,
     onClick: () => void,
   ): Phaser.GameObjects.Text {
+    const fontSize = this.screenManager
+      ? LayoutConfig.getTitleLayout(this.screenManager).fontSize
+      : '22px';
+    const metrics = getButtonMetrics(this.scale.width, this.scale.height);
     const button = this.add.text(x, y, label, {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '22px',
+      fontSize,
+      align: 'center',
+      fixedWidth: metrics.width,
+      fixedHeight: metrics.height,
       padding: {
-        x: 22,
-        y: 12,
+        x: 0,
+        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
       },
     });
 
@@ -120,12 +162,105 @@ export class TitleScene extends Phaser.Scene {
     return button;
   }
 
+  private applyLayout(): void {
+    if (!this.screenManager) {
+      return;
+    }
+
+    const layout = LayoutConfig.getTitleLayout(this.screenManager);
+    const buttons = [
+      this.startButton,
+      this.autoTestButton,
+      this.toggleAutoButton,
+      this.toggleFastButton,
+      this.toggleEndlessButton,
+      this.soundButton,
+      this.languageButton,
+      this.helpButton,
+    ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
+    const buttonLayout = LayoutConfig.getButtonLayout(this.screenManager, buttons.length, {
+      startY: layout.buttonStartY + (buttons.length > 5 ? 78 : 0),
+      mode: layout.buttonColumns === 1 ? 'vertical' : 'twoColumn',
+      maxColumns: layout.buttonColumns,
+    });
+    this.layoutBackground();
+
+    this.titleText?.setPosition(layout.titlePosition.x, layout.titlePosition.y);
+    this.titleText?.setFontSize(this.screenManager.isPortrait() ? '30px' : UITheme.titleFontSize);
+    this.statusText?.setPosition(layout.statusPosition.x, layout.statusPosition.y);
+    this.statusText?.setFontSize(this.screenManager.isPortrait() ? '13px' : UITheme.bodyFontSize);
+    this.autoStartText?.setPosition(layout.countdownPosition.x, layout.countdownPosition.y);
+
+    buttons.forEach((button, index) => {
+      const position = buttonLayout.positions[index];
+      button.setFontSize(buttonLayout.fontSize);
+      button.setFixedSize(buttonLayout.width, buttonLayout.height);
+      button.setPosition(position.x, position.y);
+    });
+  }
+
+  private createBackgroundImage(): Phaser.GameObjects.Image | undefined {
+    if (!this.textures.exists('art_ui_title_bg')) {
+      this.cameras.main.setBackgroundColor('#020617');
+      return undefined;
+    }
+
+    const image = this.add.image(this.scale.width / 2, this.scale.height / 2, 'art_ui_title_bg');
+    image.setDepth(-1000);
+    this.coverImage(image, this.scale.width, this.scale.height);
+    return image;
+  }
+
+  private layoutBackground(): void {
+    if (!this.backgroundImage) {
+      return;
+    }
+
+    this.backgroundImage.setPosition(this.scale.width / 2, this.scale.height / 2);
+    this.coverImage(this.backgroundImage, this.scale.width, this.scale.height);
+  }
+
+  private coverImage(
+    image: Phaser.GameObjects.Image,
+    width: number,
+    height: number,
+  ): void {
+    const texture = image.texture;
+    const frame = texture.get();
+    const scale = Math.max(width / frame.width, height / frame.height);
+    image.setScale(scale);
+  }
+
   private refreshStatus(): void {
     this.statusText?.setText(this.formatStatus());
   }
 
   private refreshSoundButton(): void {
     this.soundButton?.setText(this.formatSoundLabel());
+  }
+
+  private refreshEndlessButton(): void {
+    this.toggleEndlessButton?.setText(this.formatEndlessLabel());
+  }
+
+  private refreshTexts(): void {
+    this.titleText?.setText(I18n.t('title.gameTitle'));
+    this.startButton?.setText(I18n.t('title.startGame'));
+    this.autoTestButton?.setText(I18n.t('title.startAutoTest'));
+    this.toggleAutoButton?.setText(I18n.t('title.toggleAutoMode'));
+    this.toggleFastButton?.setText(I18n.t('title.toggleFastMode'));
+    this.helpButton?.setText(I18n.t('common.help'));
+    this.refreshEndlessButton();
+    this.refreshSoundButton();
+    this.languageButton?.setText(this.formatLanguageLabel());
+    this.refreshStatus();
+
+    if (this.autoStartCanceled) {
+      this.autoStartText?.setText(I18n.t('title.autoTestCanceled'));
+      return;
+    }
+
+    this.updateAutoStartText();
   }
 
   private startAutoStartCountdown(): void {
@@ -157,12 +292,12 @@ export class TitleScene extends Phaser.Scene {
     this.autoStartCanceled = true;
     this.autoStartTimer?.remove(false);
     this.autoStartTimer = undefined;
-    this.autoStartText?.setText('Auto test canceled');
+    this.autoStartText?.setText(I18n.t('title.autoTestCanceled'));
   }
 
   private updateAutoStartText(): void {
     this.autoStartText?.setText(
-      `Auto test starts in ${this.autoStartRemainingSeconds}s`,
+      I18n.t('title.autoStartCountdown', { seconds: this.autoStartRemainingSeconds }),
     );
   }
 
@@ -186,14 +321,23 @@ export class TitleScene extends Phaser.Scene {
     const settings = PlaytestSettings.get();
 
     return [
-      `Auto Mode: ${settings.autoMode ? 'ON' : 'OFF'}`,
-      `Fast Mode: ${settings.fastMode ? 'ON' : 'OFF'}`,
-      `Time Scale: ${this.getDisplayedTimeScale(settings)}x`,
+      `${I18n.t('common.autoMode')}: ${settings.autoMode ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `${I18n.t('common.fastMode')}: ${settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `Endless Mode: ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `${I18n.t('common.timeScale')}: ${this.getDisplayedTimeScale(settings)}x`,
     ].join('\n');
   }
 
+  private formatEndlessLabel(): string {
+    return `Toggle Endless Mode: ${PlaytestSettings.get().endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`;
+  }
+
   private formatSoundLabel(): string {
-    return `Sound: ${PlaytestSettings.get().soundEnabled ? 'ON' : 'OFF'}`;
+    return `${I18n.t('common.sound')}: ${PlaytestSettings.get().soundEnabled ? I18n.t('common.on') : I18n.t('common.off')}`;
+  }
+
+  private formatLanguageLabel(): string {
+    return `${I18n.t('common.language')}: ${I18n.getLocaleDisplayName()}`;
   }
 
   private getDisplayedTimeScale(settings: PlaytestSettingsState): number {
@@ -202,5 +346,16 @@ export class TitleScene extends Phaser.Scene {
     }
 
     return settings.autoTimeScale;
+  }
+
+  private cleanup(): void {
+    this.autoStartTimer?.remove(false);
+    this.autoStartTimer = undefined;
+    this.unsubscribeResize?.();
+    this.unsubscribeResize = undefined;
+    this.screenManager?.dispose();
+    this.screenManager = undefined;
+    this.helpOverlay?.destroy();
+    this.helpOverlay = undefined;
   }
 }

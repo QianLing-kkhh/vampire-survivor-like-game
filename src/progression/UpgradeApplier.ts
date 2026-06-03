@@ -4,7 +4,18 @@ import { PassiveManager } from '../passive/PassiveManager';
 import { WeaponFactory } from '../weapon/WeaponFactory';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { RunStats } from '../stats/RunStats';
+import { EvolutionManager } from '../evolution/EvolutionManager';
 import { UpgradeOption } from './UpgradeOption';
+
+export interface UpgradeDisplayRow {
+  iconKey?: string;
+  fallback: string;
+  text: string;
+}
+
+export interface UpgradeDisplayInfo {
+  rows: UpgradeDisplayRow[];
+}
 
 export class UpgradeApplier {
   constructor(
@@ -20,16 +31,13 @@ export class UpgradeApplier {
     let applied = false;
     switch (option.id) {
       case 'speed_up':
-        this.playerStats.increaseMoveSpeed(0.1);
-        applied = true;
+        applied = this.applyMoveSpeedUpgrade();
         break;
       case 'pickup_range_up':
-        this.playerStats.increasePickupRange(0.1);
-        applied = true;
+        applied = this.applyPickupRangeUpgrade();
         break;
       case 'max_hp_up':
-        this.applyMaxHpUpgrade();
-        applied = true;
+        applied = this.applyMaxHpUpgrade();
         break;
       case 'add_garlic':
         applied = this.addGarlic();
@@ -83,13 +91,13 @@ export class UpgradeApplier {
         return this.formatChange(
           'Move Speed',
           this.playerStats.moveSpeed,
-          this.playerStats.moveSpeed * 1.1,
+          Math.min(this.playerStats.maxMoveSpeed, this.playerStats.moveSpeed * 1.1),
         );
       case 'pickup_range_up':
         return this.formatChange(
           'Pickup Range',
           this.playerStats.pickupRange,
-          this.playerStats.pickupRange * 1.1,
+          Math.min(this.playerStats.maxPickupRange, this.playerStats.pickupRange * 1.1),
         );
       case 'max_hp_up':
         return this.formatMaxHpPreview();
@@ -100,33 +108,33 @@ export class UpgradeApplier {
       case 'pummarola':
         return this.getPassiveUpgradePreview(option.id);
       case 'knife_damage_up':
-        return this.formatWeaponChange('knife', 'damage', 'Knife Damage', 1.1);
+        return this.formatWeaponChange('knife', 'damage', 'Damage', 1.1);
       case 'knife_cooldown_up':
         return this.formatWeaponChange(
           'knife',
           'cooldown',
-          'Knife Cooldown',
+          'Cooldown',
           0.9,
           0.3,
           true,
         );
       case 'garlic_damage_up':
-        return this.formatWeaponChange('garlic', 'damage', 'Garlic Damage', 1.1);
+        return this.formatWeaponChange('garlic', 'damage', 'Damage', 1.1);
       case 'garlic_radius_up':
-        return this.formatWeaponChange('garlic', 'radius', 'Garlic Radius', 1.1, 4.0);
+        return this.formatWeaponChange('garlic', 'radius', 'Radius', 1.1, 4.0);
       case 'bible_damage_up':
-        return this.formatWeaponChange('bible', 'damage', 'Bible Damage', 1.1);
+        return this.formatWeaponChange('bible', 'damage', 'Damage', 1.1);
       case 'bible_orbit_speed_up':
-        return this.formatWeaponChange('bible', 'orbitSpeed', 'Bible Orbit Speed', 1.1, 360);
+        return this.formatWeaponChange('bible', 'orbitSpeed', 'Orbit Speed', 1.1, 360);
       case 'bible_orbit_count_up':
-        return this.formatWeaponChange('bible', 'orbitCount', 'Bible Count', 1, 6, false, true);
+        return this.formatWeaponChange('bible', 'orbitCount', 'Count', 1, 6, false, true);
       case 'magic_wand_damage_up':
-        return this.formatWeaponChange('magic_wand', 'damage', 'Magic Wand Damage', 1.1);
+        return this.formatWeaponChange('magic_wand', 'damage', 'Damage', 1.1);
       case 'magic_wand_cooldown_up':
         return this.formatWeaponChange(
           'magic_wand',
           'cooldown',
-          'Magic Wand Cooldown',
+          'Cooldown',
           0.9,
           0.35,
           true,
@@ -135,19 +143,19 @@ export class UpgradeApplier {
         return this.formatWeaponChange(
           'magic_wand',
           'projectileCount',
-          'Magic Wand Count',
+          'Count',
           1,
           4,
           false,
           true,
         );
       case 'axe_damage_up':
-        return this.formatWeaponChange('axe', 'damage', 'Axe Damage', 1.1);
+        return this.formatWeaponChange('axe', 'damage', 'Damage', 1.1);
       case 'axe_cooldown_up':
         return this.formatWeaponChange(
           'axe',
           'cooldown',
-          'Axe Cooldown',
+          'Cooldown',
           0.9,
           0.6,
           true,
@@ -156,7 +164,7 @@ export class UpgradeApplier {
         return this.formatWeaponChange(
           'axe',
           'projectileCount',
-          'Axe Count',
+          'Count',
           1,
           4,
           false,
@@ -165,6 +173,23 @@ export class UpgradeApplier {
       default:
         return undefined;
     }
+  }
+
+  getUpgradeDisplayInfo(
+    option: UpgradeOption,
+    evolutionManager?: EvolutionManager,
+  ): UpgradeDisplayInfo | undefined {
+    const weaponId = this.getWeaponIdForUpgradeId(option.id);
+
+    if (weaponId) {
+      return this.getWeaponUpgradeDisplayInfo(weaponId, evolutionManager);
+    }
+
+    if (this.isPassiveUpgrade(option.id)) {
+      return this.getPassiveUpgradeDisplayInfo(option.id, evolutionManager);
+    }
+
+    return undefined;
   }
 
   private addGarlic(): boolean {
@@ -182,15 +207,44 @@ export class UpgradeApplier {
     return true;
   }
 
-  private applyMaxHpUpgrade(): void {
+  private applyMoveSpeedUpgrade(): boolean {
+    if (!this.playerStats.increaseMoveSpeed(0.1)) {
+      console.warn('Move speed is already at max cap');
+      return false;
+    }
+
+    return true;
+  }
+
+  private applyPickupRangeUpgrade(): boolean {
+    if (!this.playerStats.increasePickupRange(0.1)) {
+      console.warn('Pickup range is already at max cap');
+      return false;
+    }
+
+    return true;
+  }
+
+  private applyMaxHpUpgrade(): boolean {
     const previousMaxHp = this.playerStats.maxHp;
 
     this.playerStats.increaseMaxHp(0.1);
-    this.playerHealth?.increaseMaxHp(this.playerStats.maxHp - previousMaxHp, true);
+    const maxHpIncrease = this.playerStats.maxHp - previousMaxHp;
+
+    if (maxHpIncrease <= 0) {
+      console.warn('Max HP is already at max cap');
+      return false;
+    }
+
+    this.playerHealth?.increaseMaxHp(maxHpIncrease, true, this.playerStats.maxHpLimit);
+    return true;
   }
 
   private formatMaxHpPreview(): string {
-    const nextMaxHp = Math.round(this.playerStats.maxHp * 1.1);
+    const nextMaxHp = Math.min(
+      this.playerStats.maxHpLimit,
+      Math.round(this.playerStats.maxHp * 1.1),
+    );
     const maxHpIncrease = nextMaxHp - this.playerStats.maxHp;
     const currentHp = this.playerHealth?.currentHp ?? this.playerStats.maxHp;
     const nextHp = Math.min(currentHp + maxHpIncrease, nextMaxHp);
@@ -278,6 +332,71 @@ export class UpgradeApplier {
     return this.passiveManager?.getPreview(passiveId);
   }
 
+  private getWeaponUpgradeDisplayInfo(
+    weaponId: string,
+    evolutionManager?: EvolutionManager,
+  ): UpgradeDisplayInfo | undefined {
+    if (!this.weaponManager) {
+      return undefined;
+    }
+
+    const displayWeaponId = this.weaponManager.getUpgradeTargetWeaponId(weaponId);
+    const rows: UpgradeDisplayRow[] = [
+      {
+        iconKey: this.getWeaponIconKey(displayWeaponId),
+        fallback: this.getInitials(displayWeaponId),
+        text: `${this.formatName(displayWeaponId)} Lv.${this.weaponManager.getWeaponUpgradeTotal(weaponId)} / ${this.weaponManager.getWeaponUpgradeLimit(weaponId)}`,
+      },
+    ];
+    const rule = evolutionManager?.getRequiredPassiveForWeapon(weaponId);
+
+    if (rule) {
+      rows.push({
+        iconKey: this.getPassiveIconKey(rule.requiredPassiveId),
+        fallback: this.getInitials(rule.requiredPassiveId),
+        text: `${this.passiveManager?.getPassiveName(rule.requiredPassiveId) ?? this.formatName(rule.requiredPassiveId)} Lv.${this.passiveManager?.getPassiveLevel(rule.requiredPassiveId) ?? 0} / ${this.passiveManager?.getPassiveMaxLevel(rule.requiredPassiveId) ?? rule.requiredPassiveLevel}`,
+      });
+    }
+
+    return { rows };
+  }
+
+  private getPassiveUpgradeDisplayInfo(
+    passiveId: string,
+    evolutionManager?: EvolutionManager,
+  ): UpgradeDisplayInfo {
+    const rows: UpgradeDisplayRow[] = [
+      {
+        iconKey: this.getPassiveIconKey(passiveId),
+        fallback: this.getInitials(passiveId),
+        text: `${this.passiveManager?.getPassiveName(passiveId) ?? this.formatName(passiveId)} Lv.${this.passiveManager?.getPassiveLevel(passiveId) ?? 0} / ${this.passiveManager?.getPassiveMaxLevel(passiveId) ?? 5}`,
+      },
+    ];
+    const ownedWeaponRules = evolutionManager
+      ?.getWeaponsForPassive(passiveId)
+      .filter((rule) => this.weaponManager?.hasWeaponOrEvolution(rule.baseWeaponId)) ?? [];
+
+    if (ownedWeaponRules.length === 0) {
+      rows.push({
+        fallback: '-',
+        text: 'No matching weapon owned',
+      });
+      return { rows };
+    }
+
+    for (const rule of ownedWeaponRules) {
+      const displayWeaponId = this.weaponManager?.getUpgradeTargetWeaponId(rule.baseWeaponId)
+        ?? rule.baseWeaponId;
+      rows.push({
+        iconKey: this.getWeaponIconKey(displayWeaponId),
+        fallback: this.getInitials(displayWeaponId),
+        text: `${this.formatName(displayWeaponId)} Lv.${this.weaponManager?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0} / ${this.weaponManager?.getWeaponUpgradeLimit(rule.baseWeaponId) ?? rule.requiredWeaponUpgradeTotal}`,
+      });
+    }
+
+    return { rows };
+  }
+
   private formatWeaponChange(
     weaponId: string,
     stat: 'damage'
@@ -331,5 +450,98 @@ export class UpgradeApplier {
     return Number.isInteger(value)
       ? value.toString()
       : value.toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  private getWeaponIdForUpgradeId(upgradeId: string): string | undefined {
+    if (upgradeId.startsWith('knife_')) {
+      return 'knife';
+    }
+
+    if (upgradeId.startsWith('garlic_')) {
+      return 'garlic';
+    }
+
+    if (upgradeId.startsWith('bible_')) {
+      return 'bible';
+    }
+
+    if (upgradeId.startsWith('magic_wand_')) {
+      return 'magic_wand';
+    }
+
+    if (upgradeId.startsWith('axe_')) {
+      return 'axe';
+    }
+
+    return undefined;
+  }
+
+  private isPassiveUpgrade(upgradeId: string): boolean {
+    return (
+      upgradeId === 'spinach'
+      || upgradeId === 'empty_tome'
+      || upgradeId === 'bracer'
+      || upgradeId === 'clover'
+      || upgradeId === 'pummarola'
+    );
+  }
+
+  private getWeaponIconKey(weaponId: string): string {
+    switch (weaponId) {
+      case 'knife':
+        return 'knife_icon';
+      case 'garlic':
+        return 'art_weapons_garlic_core_sheet';
+      case 'bible':
+        return 'art_weapons_bible_orbit_book_sheet';
+      case 'axe':
+        return 'art_weapons_axe_icon';
+      case 'magic_wand':
+        return 'art_weapons_magic_wand_icon';
+      case 'thousand_edge':
+        return 'art_weapons_thousand_edge_icon';
+      case 'holy_wand':
+        return 'art_weapons_holy_wand_icon';
+      case 'death_spiral':
+        return 'art_weapons_death_spiral_icon';
+      case 'unholy_vespers':
+        return 'art_weapons_unholy_vespers_icon';
+      case 'soul_eater':
+        return 'art_weapons_soul_eater_icon';
+      default:
+        return weaponId;
+    }
+  }
+
+  private getPassiveIconKey(passiveId: string): string {
+    switch (passiveId) {
+      case 'spinach':
+        return 'art_passives_spinach_icon';
+      case 'empty_tome':
+        return 'art_passives_empty_tome_icon';
+      case 'bracer':
+        return 'art_passives_bracer_icon';
+      case 'clover':
+        return 'art_passives_clover_icon';
+      case 'pummarola':
+        return 'art_passives_pummarola_icon';
+      default:
+        return passiveId;
+    }
+  }
+
+  private getInitials(value: string): string {
+    return value
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2);
+  }
+
+  private formatName(value: string): string {
+    return value
+      .split('_')
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join(' ');
   }
 }

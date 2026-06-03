@@ -24,6 +24,13 @@ export class Pickup {
   }
 
   private createBody(scene: Phaser.Scene, x: number, y: number): PickupBody {
+    if (scene.textures.exists('art_pickups_exp_gem')) {
+      const body = scene.add.image(x, y, 'art_pickups_exp_gem');
+      body.setDisplaySize(16, 16);
+
+      return body;
+    }
+
     if (!scene.textures.exists('exp_gem')) {
       return scene.add.circle(x, y, 6, 0x38bdf8);
     }

@@ -36,14 +36,16 @@ export class PlayerHealth {
     return Math.max(0, previousHp - this.hp);
   }
 
-  increaseMaxHp(amount: number, healSameAmount: boolean): number {
+  increaseMaxHp(amount: number, healSameAmount: boolean, maxHpLimit = Infinity): number {
     const increaseAmount = Math.max(0, Math.round(amount));
+    const previousMaxHp = this.maximumHp;
 
-    this.maximumHp += increaseAmount;
+    this.maximumHp = Math.min(maxHpLimit, this.maximumHp + increaseAmount);
+    const actualIncreaseAmount = Math.max(0, this.maximumHp - previousMaxHp);
 
-    if (healSameAmount) {
+    if (healSameAmount && actualIncreaseAmount > 0) {
       const previousHp = this.hp;
-      this.setCurrentHp(this.hp + increaseAmount);
+      this.setCurrentHp(this.hp + actualIncreaseAmount);
       return Math.max(0, this.hp - previousHp);
     }
 

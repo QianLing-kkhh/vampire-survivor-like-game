@@ -1,0 +1,93 @@
+{
+  "common": {
+    "resume": "再開",
+    "restart": "リスタート",
+    "returnToTitle": "タイトルへ戻る",
+    "close": "閉じる",
+    "help": "ヘルプ",
+    "on": "オン",
+    "off": "オフ",
+    "sound": "サウンド",
+    "autoMode": "オートモード",
+    "fastMode": "高速モード",
+    "language": "言語",
+    "timeScale": "時間倍率",
+    "none": "なし"
+  },
+  "title": {
+    "gameTitle": "Vampire Survivor プロトタイプ",
+    "startGame": "ゲーム開始",
+    "startAutoTest": "自動テスト開始",
+    "autoStartCountdown": "{seconds}秒後に自動テスト開始",
+    "autoTestCanceled": "自動テストのカウントダウンを停止",
+    "toggleAutoMode": "オートモード切替",
+    "toggleFastMode": "高速モード切替",
+    "toggleLanguage": "言語"
+  },
+  "pause": {
+    "title": "一時停止",
+    "resume": "再開",
+    "restart": "リスタート",
+    "returnToTitle": "タイトルへ戻る"
+  },
+  "result": {
+    "victory": "勝利",
+    "gameOver": "ゲームオーバー",
+    "result": "結果",
+    "survivalTime": "生存時間",
+    "finalLevel": "最終レベル",
+    "finalExp": "最終EXP",
+    "killCount": "撃破数",
+    "weapons": "武器",
+    "passives": "パッシブ",
+    "evolutionPath": "進化ルート",
+    "treasureDrops": "宝箱ドロップ",
+    "treasureOpens": "宝箱オープン",
+    "chestUpgrades": "宝箱アップグレード",
+    "chestEvolutions": "宝箱進化",
+    "totalRewards": "総報酬",
+    "restart": "リスタート",
+    "downloadCurrentCsv": "現在のCSVをダウンロード",
+    "copyCurrentCsv": "現在のCSVをコピー",
+    "downloadAllCsv": "全CSVをダウンロード",
+    "csvHidden": "CSVは非表示です。ボタンでコピーまたはダウンロードできます。",
+    "bufferedRunsCount": "保存済みラン数",
+    "toggleAutoMode": "オートモード切替",
+    "toggleFastMode": "高速モード切替",
+    "clearCsvBuffer": "CSVバッファをクリア",
+    "autoRestart": "{seconds}秒後に自動リスタート",
+    "autoRestartCanceled": "自動リスタート：停止",
+    "bossDashes": "Bossダッシュ",
+    "bossDashHits": "Bossダッシュ命中"
+  },
+  "help": {
+    "title": "ヘルプ",
+    "moveKeyboard": "WASD / 矢印キー：移動",
+    "moveMouse": "左クリック長押し：カーソル方向へ移動",
+    "pause": "ESC：一時停止",
+    "collectExp": "EXPジェムを集めてレベルアップ",
+    "chooseUpgrade": "アップグレードで武器とパッシブを強化",
+    "openTreasure": "宝箱に近づくと追加強化または進化",
+    "evolution": "武器 + 対応パッシブは宝箱で進化可能",
+    "surviveBoss": "Boss出現まで生き残る",
+    "defeatBoss": "Bossを倒して勝利"
+  },
+  "levelUp": {
+    "title": "レベルアップ",
+    "chooseUpgrade": "アップグレードを1つ選択"
+  },
+  "hud": {
+    "weapons": "武器",
+    "passives": "パッシブ",
+    "bossComing": "Boss接近中",
+    "bossActive": "Boss戦",
+    "evolutionDebug": "進化デバッグ",
+    "time": "時間",
+    "hp": "HP",
+    "exp": "EXP",
+    "level": "Lv",
+    "bossIn": "Bossまで {time}",
+    "goalDefeatBoss": "目標 Bossを倒す",
+    "evolved": "進化"
+  }
+}

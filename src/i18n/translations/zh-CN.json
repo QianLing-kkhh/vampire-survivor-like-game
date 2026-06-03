@@ -1,0 +1,93 @@
+{
+  "common": {
+    "resume": "继续",
+    "restart": "重新开始",
+    "returnToTitle": "返回标题",
+    "close": "关闭",
+    "help": "帮助",
+    "on": "开启",
+    "off": "关闭",
+    "sound": "声音",
+    "autoMode": "自动模式",
+    "fastMode": "加速模式",
+    "language": "语言",
+    "timeScale": "时间倍率",
+    "none": "无"
+  },
+  "title": {
+    "gameTitle": "Vampire Survivor 原型",
+    "startGame": "开始游戏",
+    "startAutoTest": "开始自动测试",
+    "autoStartCountdown": "{seconds} 秒后开始自动测试",
+    "autoTestCanceled": "自动测试倒计时已取消",
+    "toggleAutoMode": "切换自动模式",
+    "toggleFastMode": "切换加速模式",
+    "toggleLanguage": "语言"
+  },
+  "pause": {
+    "title": "已暂停",
+    "resume": "继续",
+    "restart": "重新开始",
+    "returnToTitle": "返回标题"
+  },
+  "result": {
+    "victory": "胜利",
+    "gameOver": "游戏结束",
+    "result": "结果",
+    "survivalTime": "生存时间",
+    "finalLevel": "最终等级",
+    "finalExp": "最终经验",
+    "killCount": "击杀数",
+    "weapons": "武器",
+    "passives": "被动",
+    "evolutionPath": "进化路线",
+    "treasureDrops": "宝箱掉落",
+    "treasureOpens": "宝箱开启",
+    "chestUpgrades": "宝箱升级",
+    "chestEvolutions": "宝箱进化",
+    "totalRewards": "总奖励",
+    "restart": "重新开始",
+    "downloadCurrentCsv": "下载当前 CSV",
+    "copyCurrentCsv": "复制当前 CSV",
+    "downloadAllCsv": "下载全部 CSV",
+    "csvHidden": "CSV 已隐藏。使用按钮复制或下载。",
+    "bufferedRunsCount": "缓存局数",
+    "toggleAutoMode": "切换自动模式",
+    "toggleFastMode": "切换加速模式",
+    "clearCsvBuffer": "清空 CSV 缓存",
+    "autoRestart": "{seconds} 秒后自动重开",
+    "autoRestartCanceled": "自动重开：已取消",
+    "bossDashes": "Boss 冲刺",
+    "bossDashHits": "Boss 冲刺命中"
+  },
+  "help": {
+    "title": "帮助",
+    "moveKeyboard": "WASD / 方向键：移动",
+    "moveMouse": "按住鼠标左键：朝光标移动",
+    "pause": "ESC：暂停",
+    "collectExp": "收集 EXP 宝石来升级",
+    "chooseUpgrade": "选择升级来强化武器和被动",
+    "openTreasure": "靠近宝箱获得额外升级或触发进化",
+    "evolution": "武器 + 对应被动可通过宝箱进化",
+    "surviveBoss": "生存到 Boss 出现",
+    "defeatBoss": "击败 Boss 获胜"
+  },
+  "levelUp": {
+    "title": "升级",
+    "chooseUpgrade": "选择一个升级"
+  },
+  "hud": {
+    "weapons": "武器",
+    "passives": "被动",
+    "bossComing": "Boss 即将出现",
+    "bossActive": "Boss 战",
+    "evolutionDebug": "进化调试",
+    "time": "时间",
+    "hp": "生命",
+    "exp": "经验",
+    "level": "Lv",
+    "bossIn": "Boss 倒计时 {time}",
+    "goalDefeatBoss": "目标 击败 Boss",
+    "evolved": "进化"
+  }
+}

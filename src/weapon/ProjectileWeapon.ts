@@ -257,6 +257,16 @@ export class ProjectileWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): ProjectileBody {
+    const artTextureKey = this.getArtProjectileTextureKey();
+
+    if (artTextureKey && this.scene.textures.exists(artTextureKey)) {
+      const body = this.scene.add.sprite(x, y, artTextureKey);
+      body.setDisplaySize(18, 18);
+      body.play(this.getArtProjectileAnimationKey());
+
+      return body;
+    }
+
     const textureKey = this.getProjectileTextureKey();
 
     if (!this.scene.textures.exists(textureKey)) {
@@ -267,6 +277,28 @@ export class ProjectileWeapon extends Weapon {
     body.setDisplaySize(14, 14);
 
     return body;
+  }
+
+  private getArtProjectileTextureKey(): string | undefined {
+    switch (this.id) {
+      case 'thousand_edge':
+        return 'art_weapons_thousand_edge_projectile_sheet';
+      case 'holy_wand':
+        return 'art_weapons_holy_wand_projectile_sheet';
+      default:
+        return 'art_weapons_knife_projectile_sheet';
+    }
+  }
+
+  private getArtProjectileAnimationKey(): string {
+    switch (this.id) {
+      case 'thousand_edge':
+        return 'art_thousand_edge_projectile_spin';
+      case 'holy_wand':
+        return 'art_holy_wand_projectile';
+      default:
+        return 'art_knife_projectile_spin';
+    }
   }
 
   private getProjectileTextureKey(): string {

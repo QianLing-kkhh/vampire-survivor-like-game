@@ -1,10 +1,14 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
+import { EndlessLeaderboardEntry } from '../endless/EndlessLeaderboard';
+import { I18n } from '../i18n/I18n';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { PassiveLevel } from '../passive/PassiveItem';
+import { LayoutConfig } from '../responsive/LayoutConfig';
+import { ScreenManager } from '../responsive/ScreenManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
-import { UITheme, toCssColor } from '../ui/UITheme';
+import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
 interface ResultSceneData {
   runId?: string;
@@ -19,6 +23,9 @@ interface ResultSceneData {
   treasureDropCount?: number;
   treasureOpenCount?: number;
   treasureUpgradePath?: string[];
+  chestUpgradeCount?: number;
+  chestEvolutionCount?: number;
+  totalRewardCount?: number;
   evolutionPath?: string[];
   bossSpawned?: boolean;
   bossKilled?: boolean;
@@ -27,6 +34,13 @@ interface ResultSceneData {
   bossFightDuration?: number;
   bossDashCount?: number;
   bossDashHitCount?: number;
+  endlessMode?: boolean;
+  endlessStarted?: boolean;
+  endlessSurvivalTime?: number;
+  endlessEnemyKills?: number;
+  endlessDamageTaken?: number;
+  endlessLeaderboardRank?: number;
+  endlessLeaderboardEntries?: EndlessLeaderboardEntry[];
   weaponIds?: string[];
   passiveItems?: PassiveLevel[];
   upgradePath?: string[];
@@ -45,80 +59,104 @@ export class ResultScene extends Phaser.Scene {
   private autoRestartRemainingSeconds = ResultScene.AUTO_RESTART_SECONDS;
   private autoRestartCanceled = false;
   private settings = PlaytestSettings.get();
+  private screenManager?: ScreenManager;
+  private resizeTimer?: Phaser.Time.TimerEvent;
+  private currentData?: ResultSceneData;
+  private backgroundImage?: Phaser.GameObjects.Image;
 
   constructor() {
     super('ResultScene');
   }
 
   create(data: ResultSceneData): void {
+    this.currentData = data;
+    this.screenManager = new ScreenManager(this);
+    this.backgroundImage = this.createBackgroundImage();
     this.hasRestarted = false;
     this.settings = PlaytestSettings.get();
-    const centerX = this.scale.width / 2;
-    const centerY = this.scale.height / 2;
+    const layout = LayoutConfig.getResultLayout(this.screenManager);
+    const centerX = layout.panelCenter.x;
+    const centerY = layout.panelCenter.y;
+    const isPortrait = this.screenManager.isPortrait();
     const survivalTimeSeconds = data.survivalTime ?? data.survivalTimeSeconds ?? 0;
     const isVictory = data.resultType === 'victory';
+    const isEndlessResult = data.endlessStarted === true;
     const weaponText = data.weaponIds && data.weaponIds.length > 0
       ? data.weaponIds.join(', ')
-      : 'None';
+      : I18n.t('common.none');
     const passiveText = data.passiveItems && data.passiveItems.length > 0
       ? data.passiveItems
         .map((passive) => `${passive.name} Lv${passive.level}`)
         .join(', ')
-      : 'None';
+      : I18n.t('common.none');
     const evolutionPathText = data.evolutionPath && data.evolutionPath.length > 0
       ? data.evolutionPath.join(' > ')
-      : 'None';
+      : I18n.t('common.none');
     const playtestCsv = data.playtestCsv ?? '';
 
-    const title = this.add.text(centerX, centerY - 140, isVictory ? 'Victory' : 'Game Over', {
+    const resultTitle = isEndlessResult
+      ? 'Endless Victory'
+      : isVictory ? I18n.t('result.victory') : I18n.t('result.gameOver');
+    const title = this.add.text(centerX, layout.titleY, resultTitle, {
       color: isVictory ? UITheme.successTextColor : UITheme.dangerTextColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.titleFontSize,
+      fontSize: isPortrait ? '30px' : UITheme.titleFontSize,
       fontStyle: 'bold',
     });
     title.setOrigin(0.5);
 
     const result = this.add.text(
       centerX,
-      centerY - 56,
+      layout.contentStartY,
       [
-        `Result: ${isVictory ? 'Victory' : 'Game Over'}`,
-        `Survival Time: ${this.formatTime(survivalTimeSeconds)}`,
-        `Final Level: ${data.finalLevel ?? 1}`,
-        `Kill Count: ${data.killCount ?? 0}`,
-        `Weapons: ${weaponText}`,
-        `Passives: ${passiveText}`,
-        `Evolution Path: ${evolutionPathText}`,
-        `Treasure Drops: ${data.treasureDropCount ?? 0}`,
-        `Treasure Opens: ${data.treasureOpenCount ?? 0}`,
-        `Boss Dashes: ${data.bossDashCount ?? 0}`,
-        `Boss Dash Hits: ${data.bossDashHitCount ?? 0}`,
+        `${I18n.t('result.result')}: ${resultTitle}`,
+        `${I18n.t('result.survivalTime')}: ${this.formatTime(survivalTimeSeconds)}`,
+        ...(isEndlessResult ? [
+          `Endless Survival Time: ${this.formatTime(data.endlessSurvivalTime ?? 0)}`,
+          `Endless Kills: ${data.endlessEnemyKills ?? 0}`,
+          `Endless Damage Taken: ${Math.floor(data.endlessDamageTaken ?? 0)}`,
+          `Endless Rank: ${data.endlessLeaderboardRank ? `#${data.endlessLeaderboardRank}` : 'None'}`,
+        ] : []),
+        `${I18n.t('result.finalLevel')}: ${data.finalLevel ?? 1}`,
+        `${I18n.t('result.killCount')}: ${data.killCount ?? 0}`,
+        `${I18n.t('result.weapons')}: ${weaponText}`,
+        `${I18n.t('result.passives')}: ${passiveText}`,
+        `${I18n.t('result.evolutionPath')}: ${evolutionPathText}`,
+        `${I18n.t('result.treasureDrops')}: ${data.treasureDropCount ?? 0}`,
+        `${I18n.t('result.treasureOpens')}: ${data.treasureOpenCount ?? 0}`,
+        `${I18n.t('result.chestUpgrades')}: ${data.chestUpgradeCount ?? 0}`,
+        `${I18n.t('result.chestEvolutions')}: ${data.chestEvolutionCount ?? 0}`,
+        `${I18n.t('result.totalRewards')}: ${data.totalRewardCount ?? 0}`,
+        `${I18n.t('result.bossDashes')}: ${data.bossDashCount ?? 0}`,
+        `${I18n.t('result.bossDashHits')}: ${data.bossDashHitCount ?? 0}`,
+        ...(isEndlessResult ? this.formatLeaderboardLines(data.endlessLeaderboardEntries ?? []) : []),
       ],
       {
         color: UITheme.textColor,
         fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.bodyFontSize,
+        fontSize: layout.fontSize,
         align: 'center',
         lineSpacing: 5,
+        wordWrap: { width: Math.min(this.scale.width - 24, 760) },
       },
     );
-    result.setOrigin(0.5);
+    result.setOrigin(0.5, isPortrait ? 0 : 0.5);
 
     this.csvLogText = this.add.text(
       centerX,
-      centerY + 78,
+      isPortrait ? this.scale.height - 238 : centerY + 78,
       this.formatCsvLogText(),
       {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '12px',
+      fontSize: isPortrait ? '11px' : '12px',
       align: 'center',
-      wordWrap: { width: 720 },
+      wordWrap: { width: Math.min(this.scale.width - 24, 720) },
       },
     );
     this.csvLogText.setOrigin(0.5);
 
-    this.settingsText = this.add.text(centerX, centerY + 130, this.formatSettingsText(), {
+    this.settingsText = this.add.text(centerX, isPortrait ? this.scale.height - 210 : centerY + 130, this.formatSettingsText(), {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
       fontSize: UITheme.smallFontSize,
@@ -126,7 +164,7 @@ export class ResultScene extends Phaser.Scene {
     });
     this.settingsText.setOrigin(0.5);
 
-    this.autoRestartText = this.add.text(centerX, centerY + 154, '', {
+    this.autoRestartText = this.add.text(centerX, isPortrait ? this.scale.height - 188 : centerY + 154, '', {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
       fontSize: UITheme.smallFontSize,
@@ -134,7 +172,7 @@ export class ResultScene extends Phaser.Scene {
     });
     this.autoRestartText.setOrigin(0.5);
 
-    const toggleAutoButton = this.add.text(centerX - 300, centerY + 190, 'Toggle Auto Mode', {
+    const toggleAutoButton = this.add.text(centerX - 300, centerY + 190, I18n.t('result.toggleAutoMode'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -154,7 +192,7 @@ export class ResultScene extends Phaser.Scene {
       this.updateSettingsText();
     });
 
-    const toggleFastButton = this.add.text(centerX - 112, centerY + 190, 'Toggle Fast Mode', {
+    const toggleFastButton = this.add.text(centerX - 112, centerY + 190, I18n.t('result.toggleFastMode'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -174,7 +212,7 @@ export class ResultScene extends Phaser.Scene {
       this.updateSettingsText();
     });
 
-    const copyButton = this.add.text(centerX + 80, centerY + 190, 'Copy Current CSV', {
+    const copyButton = this.add.text(centerX + 80, centerY + 190, I18n.t('result.copyCurrentCsv'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -193,7 +231,7 @@ export class ResultScene extends Phaser.Scene {
       this.copyCsv(playtestCsv);
     });
 
-    const downloadAllButton = this.add.text(centerX + 258, centerY + 190, 'Download All CSV', {
+    const downloadAllButton = this.add.text(centerX + 258, centerY + 190, I18n.t('result.downloadAllCsv'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -212,7 +250,7 @@ export class ResultScene extends Phaser.Scene {
       this.downloadAllCsv();
     });
 
-    const clearBufferButton = this.add.text(centerX, centerY + 232, 'Clear CSV Buffer', {
+    const clearBufferButton = this.add.text(centerX, centerY + 232, I18n.t('result.clearCsvBuffer'), {
       backgroundColor: '#7f1d1d',
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -232,7 +270,7 @@ export class ResultScene extends Phaser.Scene {
       this.updateCsvLogText();
     });
 
-    const restartButton = this.add.text(centerX - 130, centerY + 276, 'Restart', {
+    const restartButton = this.add.text(centerX - 130, centerY + 276, I18n.t('result.restart'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -251,7 +289,7 @@ export class ResultScene extends Phaser.Scene {
       this.restartGame();
     });
 
-    const titleButton = this.add.text(centerX + 130, centerY + 276, 'Return to Title', {
+    const titleButton = this.add.text(centerX + 130, centerY + 276, I18n.t('common.returnToTitle'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -272,6 +310,21 @@ export class ResultScene extends Phaser.Scene {
       this.scene.start('TitleScene');
     });
 
+    this.layoutButtons([
+      toggleAutoButton,
+      toggleFastButton,
+      copyButton,
+      downloadAllButton,
+      clearBufferButton,
+      restartButton,
+      titleButton,
+    ]);
+    this.screenManager.onResize(() => {
+      this.scheduleResponsiveRestart();
+    });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
+    this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
+
     if (data.autoMode) {
       this.startAutoRestartCountdown();
     }
@@ -283,6 +336,19 @@ export class ResultScene extends Phaser.Scene {
     const seconds = totalSeconds % 60;
 
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private formatLeaderboardLines(entries: EndlessLeaderboardEntry[]): string[] {
+    if (entries.length === 0) {
+      return ['Endless Leaderboard: None'];
+    }
+
+    return [
+      'Endless Leaderboard Top 10',
+      ...entries.slice(0, 10).map((entry, index) => (
+        `#${index + 1} ${this.formatTime(entry.endlessSurvivalTime)}  Lv.${entry.finalLevel}  Kills ${entry.killCount}`
+      )),
+    ];
   }
 
   private addButtonHover(
@@ -300,9 +366,9 @@ export class ResultScene extends Phaser.Scene {
 
   private formatSettingsText(): string {
     return [
-      `Auto Mode: ${this.settings.autoMode ? 'ON' : 'OFF'}`,
-      `Fast Mode: ${this.settings.fastMode ? 'ON' : 'OFF'}`,
-      `Time Scale: ${this.getDisplayedTimeScale(this.settings)}x`,
+      `${I18n.t('common.autoMode')}: ${this.settings.autoMode ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `${I18n.t('common.fastMode')}: ${this.settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `${I18n.t('common.timeScale')}: ${this.getDisplayedTimeScale(this.settings)}x`,
     ].join('   ');
   }
 
@@ -320,8 +386,8 @@ export class ResultScene extends Phaser.Scene {
 
   private formatCsvLogText(): string[] {
     return [
-      'CSV hidden. Use buttons to copy or download.',
-      `Buffered Runs Count: ${PlaytestLogBuffer.getCount()}`,
+      I18n.t('result.csvHidden'),
+      `${I18n.t('result.bufferedRunsCount')}: ${PlaytestLogBuffer.getCount()}`,
     ];
   }
 
@@ -358,12 +424,12 @@ export class ResultScene extends Phaser.Scene {
     this.autoRestartCanceled = true;
     this.autoRestartTimer?.remove(false);
     this.autoRestartTimer = undefined;
-    this.autoRestartText?.setText('Auto Restart: canceled');
+    this.autoRestartText?.setText(I18n.t('result.autoRestartCanceled'));
   }
 
   private updateAutoRestartText(): void {
     this.autoRestartText?.setText(
-      `Auto Restart in ${this.autoRestartRemainingSeconds}s`,
+      I18n.t('result.autoRestart', { seconds: this.autoRestartRemainingSeconds }),
     );
   }
 
@@ -422,5 +488,77 @@ export class ResultScene extends Phaser.Scene {
     this.autoRestartTimer = undefined;
     this.scene.stop('UIScene');
     this.scene.start('GameScene');
+  }
+
+  private layoutButtons(buttons: Phaser.GameObjects.Text[]): void {
+    if (!this.screenManager) {
+      return;
+    }
+
+    const layout = LayoutConfig.getResultLayout(this.screenManager);
+    const buttonLayout = LayoutConfig.getButtonLayout(this.screenManager, buttons.length, {
+      centerX: layout.buttonArea.x,
+      startY: layout.buttonArea.y + (this.screenManager.isPortrait() ? 0 : 42),
+      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
+    });
+    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
+
+    this.layoutBackground();
+
+    buttons.forEach((button, index) => {
+      const position = buttonLayout.positions[index];
+      button.setFontSize(metrics.fontSize);
+      button.setFixedSize(metrics.width, metrics.height);
+      button.setAlign('center');
+      button.setPosition(position.x, position.y);
+    });
+  }
+
+  private createBackgroundImage(): Phaser.GameObjects.Image | undefined {
+    if (!this.textures.exists('art_ui_result_bg')) {
+      this.cameras.main.setBackgroundColor('#020617');
+      return undefined;
+    }
+
+    const image = this.add.image(this.scale.width / 2, this.scale.height / 2, 'art_ui_result_bg');
+    image.setDepth(-1000);
+    this.coverImage(image, this.scale.width, this.scale.height);
+    return image;
+  }
+
+  private layoutBackground(): void {
+    if (!this.backgroundImage) {
+      return;
+    }
+
+    this.backgroundImage.setPosition(this.scale.width / 2, this.scale.height / 2);
+    this.coverImage(this.backgroundImage, this.scale.width, this.scale.height);
+  }
+
+  private coverImage(
+    image: Phaser.GameObjects.Image,
+    width: number,
+    height: number,
+  ): void {
+    const frame = image.texture.get();
+    image.setScale(Math.max(width / frame.width, height / frame.height));
+  }
+
+  private scheduleResponsiveRestart(): void {
+    if (!this.currentData) {
+      return;
+    }
+
+    this.resizeTimer?.remove(false);
+    this.resizeTimer = this.time.delayedCall(80, () => {
+      this.scene.restart(this.currentData);
+    });
+  }
+
+  private cleanup(): void {
+    this.resizeTimer?.remove(false);
+    this.resizeTimer = undefined;
+    this.screenManager?.dispose();
+    this.screenManager = undefined;
   }
 }
