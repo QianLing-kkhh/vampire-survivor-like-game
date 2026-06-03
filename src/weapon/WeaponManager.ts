@@ -158,6 +158,12 @@ export class WeaponManager {
     return baseWeaponId;
   }
 
+  getActualUpgradeTargetWeaponId(upgradeId: string): string | undefined {
+    const baseWeaponId = this.getBaseWeaponIdForUpgrade(upgradeId);
+
+    return baseWeaponId ? this.getUpgradeTargetWeaponId(baseWeaponId) : undefined;
+  }
+
   getWeaponHudInfo(): WeaponHudInfo[] {
     return this.weapons.map((weapon) => ({
       weaponId: weapon.id,
@@ -278,12 +284,20 @@ export class WeaponManager {
     );
   }
 
+  getWeaponRouteLevel(baseWeaponId: string): number {
+    return this.getWeaponUpgradeTotal(baseWeaponId);
+  }
+
   getWeaponUpgradeLimit(weaponId: string): number {
     const baseWeaponId = this.getBaseWeaponId(weaponId);
 
     return this.isBaseWeaponEvolved(baseWeaponId)
       ? WeaponManager.EVOLVED_WEAPON_UPGRADE_LIMIT
       : WeaponManager.DEFAULT_WEAPON_UPGRADE_LIMIT;
+  }
+
+  getWeaponRouteMaxLevel(baseWeaponId: string): number {
+    return this.getWeaponUpgradeLimit(baseWeaponId);
   }
 
   isWeaponUpgradeLimitReached(weaponId: string): boolean {
@@ -572,7 +586,7 @@ export class WeaponManager {
     ));
   }
 
-  private getBaseWeaponId(weaponId: string): string {
+  getBaseWeaponId(weaponId: string): string {
     return WeaponManager.EVOLVED_TO_BASE_WEAPON_IDS.get(weaponId) ?? weaponId;
   }
 

@@ -10,6 +10,7 @@ export type HudLayout = {
   passivesPosition: Phaser.Math.Vector2;
   minimapPosition: Phaser.Math.Vector2;
   minimapSize: { width: number; height: number };
+  pauseButtonPosition: Phaser.Math.Vector2;
   bossTextPosition: Phaser.Math.Vector2;
   barWidth: number;
   maxIconRows: number;
@@ -126,16 +127,23 @@ export class LayoutConfig {
   static getHudLayout(screen: ScreenManager): HudLayout {
     const safe = SafeArea.getInsets(screen);
     const portrait = screen.isPortrait();
-    const minimapWidth = portrait ? 116 : 150;
-    const minimapHeight = portrait ? 96 : 104;
+    const minimapWidth = portrait ? 108 : 150;
+    const minimapHeight = portrait ? 86 : 104;
     const barWidth = Math.min(portrait ? screen.width * 0.48 : 230, 250);
+    const pauseButtonPosition = portrait
+      ? new Phaser.Math.Vector2(screen.width - safe.right - 80, safe.top + 28)
+      : new Phaser.Math.Vector2(screen.width - safe.right - 80, safe.top + 28);
+    const minimapPosition = portrait
+      ? new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top + 84)
+      : new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top + 56);
 
     return {
       statsPosition: new Phaser.Math.Vector2(safe.left, safe.top),
       weaponsPosition: new Phaser.Math.Vector2(safe.left, safe.top + 132),
       passivesPosition: new Phaser.Math.Vector2(portrait ? safe.left + 136 : safe.left, portrait ? safe.top + 132 : safe.top + 250),
-      minimapPosition: new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top),
+      minimapPosition,
       minimapSize: { width: minimapWidth, height: minimapHeight },
+      pauseButtonPosition,
       bossTextPosition: new Phaser.Math.Vector2(screen.centerX, safe.top + 92),
       barWidth,
       maxIconRows: portrait ? 4 : 6,

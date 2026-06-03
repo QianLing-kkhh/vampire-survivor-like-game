@@ -121,9 +121,11 @@ export class HUD {
     this.scene = scene;
     this.screenManager = new ScreenManager(scene);
     this.statsPanelBg = this.createPanelBackground(12, 8, 250, 126);
-    this.statsPanelImage = this.createPanelImage();
+    this.statsPanelBg.setVisible(false);
+    this.statsPanelImage = undefined;
     this.buildPanelBg = this.createPanelBackground(12, 148, 330, 214);
-    this.buildPanelImage = this.createPanelImage();
+    this.buildPanelBg.setVisible(false);
+    this.buildPanelImage = undefined;
     this.hpText = this.createText(16, 12, UITheme.smallFontSize);
     this.hpBarBg = this.createBarBackground(16, 34, HUD.BAR_WIDTH, HUD.BAR_HEIGHT);
     this.hpBarFill = this.createBarFill(16, 34, UITheme.hpBarColor);
@@ -148,7 +150,7 @@ export class HUD {
     this.minimapBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.65);
     this.minimapBackground.setDepth(900);
     this.minimapBackground.setScrollFactor(0);
-    this.minimapImage = this.createPanelImage();
+    this.minimapImage = undefined;
 
     for (let index = 0; index < HUD.MAX_MINIMAP_ENEMIES; index += 1) {
       const enemyDot = scene.add.circle(0, 0, 2, 0xef4444, 0.85);
@@ -333,7 +335,7 @@ export class HUD {
       HUD.ICON_SIZE,
       HUD.ICON_SIZE,
       UITheme.iconBgColor,
-      0.78,
+      0,
     );
     background.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
     const label = this.scene.add.text(22, -8, '', {
@@ -410,9 +412,9 @@ export class HUD {
     const container = this.scene.add.container(0, 0);
     container.setDepth(900);
     container.setScrollFactor(0);
-    const weaponBackground = this.scene.add.rectangle(0, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0.78);
+    const weaponBackground = this.scene.add.rectangle(0, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0);
     weaponBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
-    const passiveBackground = this.scene.add.rectangle(34, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0.56);
+    const passiveBackground = this.scene.add.rectangle(34, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0);
     passiveBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
     const label = this.scene.add.text(72, -8, '', {
       color: UITheme.textColor,
@@ -743,22 +745,6 @@ export class HUD {
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
     this.minimapBackground.setPosition(this.minimapX, this.minimapY);
     this.minimapBackground.setSize(this.minimapWidth, this.minimapHeight);
-    this.layoutPanelBackground(
-      this.statsPanelBg,
-      this.statsPanelImage,
-      stats.x - 8,
-      stats.y - 8,
-      this.barWidth + 16,
-      132,
-    );
-    this.layoutPanelBackground(
-      this.buildPanelBg,
-      this.buildPanelImage,
-      layout.weaponsPosition.x - 8,
-      layout.weaponsPosition.y - 14,
-      Math.min(this.screenManager.width - layout.weaponsPosition.x - 16, 360),
-      this.maxIconRows * 34 + 24,
-    );
     this.layoutPanelBackground(
       this.minimapBackground,
       this.minimapImage,

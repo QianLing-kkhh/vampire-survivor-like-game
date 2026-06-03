@@ -49,6 +49,14 @@ export class EvolutionManager {
     return this.rules.filter((rule) => rule.requiredPassiveId === passiveId);
   }
 
+  getEvolvedWeaponId(baseWeaponId: string): string | undefined {
+    return this.rules.find((rule) => rule.baseWeaponId === baseWeaponId)?.evolvedWeaponId;
+  }
+
+  getBaseWeaponId(evolvedWeaponId: string): string | undefined {
+    return this.rules.find((rule) => rule.evolvedWeaponId === evolvedWeaponId)?.baseWeaponId;
+  }
+
   private canEvolve(rule: EvolutionRule, context: EvolutionContext): boolean {
     return (
       context.weaponManager.hasWeapon(rule.baseWeaponId)

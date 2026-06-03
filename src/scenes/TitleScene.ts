@@ -5,6 +5,7 @@ import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { HelpOverlay } from '../ui/HelpOverlay';
+import { SettingsMenu } from '../ui/SettingsMenu';
 import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
 export class TitleScene extends Phaser.Scene {
@@ -14,11 +15,7 @@ export class TitleScene extends Phaser.Scene {
   private titleText?: Phaser.GameObjects.Text;
   private startButton?: Phaser.GameObjects.Text;
   private autoTestButton?: Phaser.GameObjects.Text;
-  private toggleAutoButton?: Phaser.GameObjects.Text;
-  private toggleFastButton?: Phaser.GameObjects.Text;
-  private toggleEndlessButton?: Phaser.GameObjects.Text;
-  private soundButton?: Phaser.GameObjects.Text;
-  private languageButton?: Phaser.GameObjects.Text;
+  private settingsButton?: Phaser.GameObjects.Text;
   private helpButton?: Phaser.GameObjects.Text;
   private backgroundImage?: Phaser.GameObjects.Image;
   private autoStartText?: Phaser.GameObjects.Text;
@@ -26,6 +23,7 @@ export class TitleScene extends Phaser.Scene {
   private autoStartRemainingSeconds = TitleScene.AUTO_START_SECONDS;
   private autoStartCanceled = false;
   private helpOverlay?: HelpOverlay;
+  private settingsMenu?: SettingsMenu;
   private screenManager?: ScreenManager;
   private unsubscribeResize?: () => void;
 
@@ -80,38 +78,12 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('GameScene');
     });
 
-    this.toggleAutoButton = this.createButton(centerX - 150, centerY + 132, I18n.t('title.toggleAutoMode'), () => {
+    this.settingsButton = this.createButton(centerX - 140, centerY + 132, this.t('title.settings', 'Settings'), () => {
       this.cancelAutoStartCountdown();
-      PlaytestSettings.toggleAutoMode();
-      this.refreshStatus();
+      this.showSettingsMenu();
     });
 
-    this.toggleFastButton = this.createButton(centerX + 150, centerY + 132, I18n.t('title.toggleFastMode'), () => {
-      this.cancelAutoStartCountdown();
-      PlaytestSettings.toggleFastMode();
-      this.refreshStatus();
-    });
-
-    this.toggleEndlessButton = this.createButton(centerX, centerY + 190, this.formatEndlessLabel(), () => {
-      this.cancelAutoStartCountdown();
-      PlaytestSettings.toggleEndlessMode();
-      this.refreshStatus();
-      this.refreshEndlessButton();
-    });
-
-    this.soundButton = this.createButton(centerX, centerY + 246, this.formatSoundLabel(), () => {
-      this.cancelAutoStartCountdown();
-      PlaytestSettings.toggleSoundEnabled();
-      this.refreshSoundButton();
-    });
-
-    this.languageButton = this.createButton(centerX - 140, centerY + 312, this.formatLanguageLabel(), () => {
-      this.cancelAutoStartCountdown();
-      I18n.cycleLocale();
-      this.refreshTexts();
-    });
-
-    this.helpButton = this.createButton(centerX + 140, centerY + 312, I18n.t('common.help'), () => {
+    this.helpButton = this.createButton(centerX + 140, centerY + 132, I18n.t('common.help'), () => {
       this.cancelAutoStartCountdown();
       this.showHelpOverlay();
     });
@@ -171,15 +143,11 @@ export class TitleScene extends Phaser.Scene {
     const buttons = [
       this.startButton,
       this.autoTestButton,
-      this.toggleAutoButton,
-      this.toggleFastButton,
-      this.toggleEndlessButton,
-      this.soundButton,
-      this.languageButton,
+      this.settingsButton,
       this.helpButton,
     ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
     const buttonLayout = LayoutConfig.getButtonLayout(this.screenManager, buttons.length, {
-      startY: layout.buttonStartY + (buttons.length > 5 ? 78 : 0),
+      startY: layout.buttonStartY,
       mode: layout.buttonColumns === 1 ? 'vertical' : 'twoColumn',
       maxColumns: layout.buttonColumns,
     });
@@ -235,24 +203,12 @@ export class TitleScene extends Phaser.Scene {
     this.statusText?.setText(this.formatStatus());
   }
 
-  private refreshSoundButton(): void {
-    this.soundButton?.setText(this.formatSoundLabel());
-  }
-
-  private refreshEndlessButton(): void {
-    this.toggleEndlessButton?.setText(this.formatEndlessLabel());
-  }
-
   private refreshTexts(): void {
     this.titleText?.setText(I18n.t('title.gameTitle'));
     this.startButton?.setText(I18n.t('title.startGame'));
     this.autoTestButton?.setText(I18n.t('title.startAutoTest'));
-    this.toggleAutoButton?.setText(I18n.t('title.toggleAutoMode'));
-    this.toggleFastButton?.setText(I18n.t('title.toggleFastMode'));
+    this.settingsButton?.setText(this.t('title.settings', 'Settings'));
     this.helpButton?.setText(I18n.t('common.help'));
-    this.refreshEndlessButton();
-    this.refreshSoundButton();
-    this.languageButton?.setText(this.formatLanguageLabel());
     this.refreshStatus();
 
     if (this.autoStartCanceled) {
@@ -317,6 +273,15 @@ export class TitleScene extends Phaser.Scene {
     });
   }
 
+  private showSettingsMenu(): void {
+    this.settingsMenu?.destroy();
+    this.settingsMenu = new SettingsMenu(this, () => {
+      this.settingsMenu?.destroy();
+      this.settingsMenu = undefined;
+      this.refreshTexts();
+    }, () => this.refreshTexts());
+  }
+
   private formatStatus(): string {
     const settings = PlaytestSettings.get();
 
@@ -326,18 +291,6 @@ export class TitleScene extends Phaser.Scene {
       `Endless Mode: ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`,
       `${I18n.t('common.timeScale')}: ${this.getDisplayedTimeScale(settings)}x`,
     ].join('\n');
-  }
-
-  private formatEndlessLabel(): string {
-    return `Toggle Endless Mode: ${PlaytestSettings.get().endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`;
-  }
-
-  private formatSoundLabel(): string {
-    return `${I18n.t('common.sound')}: ${PlaytestSettings.get().soundEnabled ? I18n.t('common.on') : I18n.t('common.off')}`;
-  }
-
-  private formatLanguageLabel(): string {
-    return `${I18n.t('common.language')}: ${I18n.getLocaleDisplayName()}`;
   }
 
   private getDisplayedTimeScale(settings: PlaytestSettingsState): number {
@@ -357,5 +310,13 @@ export class TitleScene extends Phaser.Scene {
     this.screenManager = undefined;
     this.helpOverlay?.destroy();
     this.helpOverlay = undefined;
+    this.settingsMenu?.destroy();
+    this.settingsMenu = undefined;
+  }
+
+  private t(key: string, fallback: string): string {
+    const value = I18n.t(key);
+
+    return value === key ? fallback : value;
   }
 }

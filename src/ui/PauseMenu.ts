@@ -8,6 +8,7 @@ import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { PassiveDetailInfo } from '../passive/PassiveManager';
 import { WeaponDetailInfo } from '../weapon/WeaponManager';
 import { HelpOverlay } from './HelpOverlay';
+import { SettingsMenu } from './SettingsMenu';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 export interface PauseMenuStatsData {
@@ -43,6 +44,7 @@ export class PauseMenu {
   private readonly pageItems: Phaser.GameObjects.GameObject[] = [];
   private unsubscribeResize?: () => void;
   private helpOverlay?: HelpOverlay;
+  private settingsMenu?: SettingsMenu;
   private page: MenuPage = 'main';
 
   constructor(
@@ -98,6 +100,8 @@ export class PauseMenu {
   destroy(): void {
     this.helpOverlay?.destroy();
     this.helpOverlay = undefined;
+    this.settingsMenu?.destroy();
+    this.settingsMenu = undefined;
     this.clearPageItems();
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
@@ -109,53 +113,21 @@ export class PauseMenu {
     this.page = 'main';
     this.clearPageItems();
     this.title.setText(I18n.t('pause.title'));
-    const settings = PlaytestSettings.get();
     const buttons = [
       { label: I18n.t('pause.resume'), action: this.onResume },
       { label: I18n.t('pause.restart'), action: this.onRestart },
       { label: I18n.t('pause.returnToTitle'), action: this.onBackToTitle },
       {
-        label: `${I18n.t('common.autoMode')}: ${settings.autoMode ? I18n.t('common.on') : I18n.t('common.off')}`,
-        action: () => {
-          PlaytestSettings.toggleAutoMode();
-          this.renderMainPage();
-        },
+        label: 'Stats / Build',
+        action: () => this.renderStatsPage(),
       },
       {
-        label: `${I18n.t('common.fastMode')}: ${settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')}`,
-        action: () => {
-          PlaytestSettings.toggleFastMode();
-          this.renderMainPage();
-        },
-      },
-      {
-        label: `Endless Mode: ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`,
-        action: () => {
-          PlaytestSettings.toggleEndlessMode();
-          this.renderMainPage();
-        },
-      },
-      {
-        label: `${I18n.t('common.sound')}: ${settings.soundEnabled ? I18n.t('common.on') : I18n.t('common.off')}`,
-        action: () => {
-          PlaytestSettings.toggleSoundEnabled();
-          this.renderMainPage();
-        },
-      },
-      {
-        label: `${I18n.t('common.language')}: ${I18n.getLocaleDisplayName()}`,
-        action: () => {
-          I18n.cycleLocale();
-          this.renderMainPage();
-        },
+        label: this.t('pause.settings', 'Settings'),
+        action: () => this.showSettingsMenu(),
       },
       {
         label: I18n.t('common.help'),
         action: () => this.showHelpOverlay(),
-      },
-      {
-        label: 'Stats / Build',
-        action: () => this.renderStatsPage(),
       },
     ];
 
@@ -245,7 +217,13 @@ export class PauseMenu {
     this.addStatRow(passive.effectLabel, passive.effectValue);
 
     if (passive.relatedWeaponIds.length > 0) {
-      this.addMutedText(`Related: ${passive.relatedWeaponIds.map((id) => this.formatName(id)).join(', ')}`);
+      for (const weaponId of passive.relatedWeaponIds) {
+        this.addIconText(
+          this.getWeaponIconKey(weaponId),
+          this.getInitials(weaponId),
+          `Related: ${this.formatName(weaponId)}`,
+        );
+      }
     }
   }
 
@@ -283,6 +261,41 @@ export class PauseMenu {
     });
     this.pageItems.push(text);
     this.container.add(text);
+  }
+
+  private getWeaponIconKey(weaponId: string): string | undefined {
+    switch (weaponId) {
+      case 'knife':
+        return 'knife_icon';
+      case 'garlic':
+        return this.getExistingTextureKey('art_weapons_garlic_core_sheet', 'garlic_icon');
+      case 'bible':
+        return this.getExistingTextureKey('art_weapons_bible_orbit_book_sheet', 'bible_icon');
+      case 'axe':
+        return this.getExistingTextureKey('art_weapons_axe_icon', 'axe_projectile');
+      case 'magic_wand':
+        return this.getExistingTextureKey('art_weapons_magic_wand_icon', 'magic_wand_projectile');
+      case 'thousand_edge':
+        return this.getExistingTextureKey('art_weapons_thousand_edge_icon', 'thousand_edge_projectile');
+      case 'holy_wand':
+        return this.getExistingTextureKey('art_weapons_holy_wand_icon', 'holy_wand_projectile');
+      case 'death_spiral':
+        return this.getExistingTextureKey('art_weapons_death_spiral_icon', 'death_spiral_projectile');
+      case 'unholy_vespers':
+        return this.getExistingTextureKey('art_weapons_unholy_vespers_icon', 'unholy_vespers_orbit_book');
+      case 'soul_eater':
+        return this.getExistingTextureKey('art_weapons_soul_eater_icon', 'soul_eater_core');
+      default:
+        return undefined;
+    }
+  }
+
+  private getExistingTextureKey(primaryKey: string, fallbackKey: string): string | undefined {
+    if (this.scene.textures.exists(primaryKey)) {
+      return primaryKey;
+    }
+
+    return this.scene.textures.exists(fallbackKey) ? fallbackKey : undefined;
   }
 
   private addIconText(
@@ -430,6 +443,19 @@ export class PauseMenu {
     });
   }
 
+  private showSettingsMenu(): void {
+    this.settingsMenu?.destroy();
+    this.settingsMenu = new SettingsMenu(this.scene, () => {
+      this.settingsMenu?.destroy();
+      this.settingsMenu = undefined;
+      this.renderMainPage();
+    }, () => {
+      if (this.page === 'main') {
+        this.renderMainPage();
+      }
+    });
+  }
+
   private coverImage(
     image: Phaser.GameObjects.Image | undefined,
     width: number,
@@ -474,5 +500,11 @@ export class PauseMenu {
       .split('_')
       .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
       .join(' ');
+  }
+
+  private t(key: string, fallback: string): string {
+    const value = I18n.t(key);
+
+    return value === key ? fallback : value;
   }
 }

@@ -8,6 +8,7 @@ import { PassiveLevel } from '../passive/PassiveItem';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { SettingsMenu } from '../ui/SettingsMenu';
 import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
 interface ResultSceneData {
@@ -63,6 +64,7 @@ export class ResultScene extends Phaser.Scene {
   private resizeTimer?: Phaser.Time.TimerEvent;
   private currentData?: ResultSceneData;
   private backgroundImage?: Phaser.GameObjects.Image;
+  private settingsMenu?: SettingsMenu;
 
   constructor() {
     super('ResultScene');
@@ -172,7 +174,7 @@ export class ResultScene extends Phaser.Scene {
     });
     this.autoRestartText.setOrigin(0.5);
 
-    const toggleAutoButton = this.add.text(centerX - 300, centerY + 190, I18n.t('result.toggleAutoMode'), {
+    const currentCsvButton = this.add.text(centerX + 80, centerY + 190, I18n.t('result.downloadCurrentCsv'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -182,53 +184,13 @@ export class ResultScene extends Phaser.Scene {
         y: 8,
       },
     });
-    toggleAutoButton.setOrigin(0.5);
-    toggleAutoButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(toggleAutoButton);
-    toggleAutoButton.on('pointerdown', () => {
+    currentCsvButton.setOrigin(0.5);
+    currentCsvButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(currentCsvButton);
+    currentCsvButton.on('pointerdown', () => {
       AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
-      this.settings = PlaytestSettings.toggleAutoMode();
-      this.updateSettingsText();
-    });
-
-    const toggleFastButton = this.add.text(centerX - 112, centerY + 190, I18n.t('result.toggleFastMode'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '16px',
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    toggleFastButton.setOrigin(0.5);
-    toggleFastButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(toggleFastButton);
-    toggleFastButton.on('pointerdown', () => {
-      AudioManager.play(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.settings = PlaytestSettings.toggleFastMode();
-      this.updateSettingsText();
-    });
-
-    const copyButton = this.add.text(centerX + 80, centerY + 190, I18n.t('result.copyCurrentCsv'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '16px',
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    copyButton.setOrigin(0.5);
-    copyButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(copyButton);
-    copyButton.on('pointerdown', () => {
-      AudioManager.play(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.copyCsv(playtestCsv);
+      this.downloadCsv(this.createCurrentCsvFilename(), playtestCsv);
     });
 
     const downloadAllButton = this.add.text(centerX + 258, centerY + 190, I18n.t('result.downloadAllCsv'), {
@@ -250,8 +212,8 @@ export class ResultScene extends Phaser.Scene {
       this.downloadAllCsv();
     });
 
-    const clearBufferButton = this.add.text(centerX, centerY + 232, I18n.t('result.clearCsvBuffer'), {
-      backgroundColor: '#7f1d1d',
+    const settingsButton = this.add.text(centerX, centerY + 232, this.t('result.settings', 'Settings'), {
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
       fontSize: '16px',
@@ -260,14 +222,13 @@ export class ResultScene extends Phaser.Scene {
         y: 8,
       },
     });
-    clearBufferButton.setOrigin(0.5);
-    clearBufferButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(clearBufferButton, '#7f1d1d', '#991b1b');
-    clearBufferButton.on('pointerdown', () => {
+    settingsButton.setOrigin(0.5);
+    settingsButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(settingsButton);
+    settingsButton.on('pointerdown', () => {
       AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
-      PlaytestLogBuffer.clear();
-      this.updateCsvLogText();
+      this.showSettingsMenu();
     });
 
     const restartButton = this.add.text(centerX - 130, centerY + 276, I18n.t('result.restart'), {
@@ -311,13 +272,11 @@ export class ResultScene extends Phaser.Scene {
     });
 
     this.layoutButtons([
-      toggleAutoButton,
-      toggleFastButton,
-      copyButton,
+      currentCsvButton,
       downloadAllButton,
-      clearBufferButton,
       restartButton,
       titleButton,
+      settingsButton,
     ]);
     this.screenManager.onResize(() => {
       this.scheduleResponsiveRestart();
@@ -478,6 +437,28 @@ export class ResultScene extends Phaser.Scene {
     return `playtest_results_${stamp}.csv`;
   }
 
+  private createCurrentCsvFilename(): string {
+    const stamp = new Date().toISOString()
+      .replace(/[-:]/g, '')
+      .replace(/\..+/, '')
+      .replace('T', '_');
+
+    return `playtest_current_${stamp}.csv`;
+  }
+
+  private showSettingsMenu(): void {
+    this.settingsMenu?.destroy();
+    this.settingsMenu = new SettingsMenu(this, () => {
+      this.settingsMenu?.destroy();
+      this.settingsMenu = undefined;
+      this.settings = PlaytestSettings.get();
+      this.updateSettingsText();
+    }, () => {
+      this.settings = PlaytestSettings.get();
+      this.updateSettingsText();
+    });
+  }
+
   private restartGame(): void {
     if (this.hasRestarted) {
       return;
@@ -558,7 +539,15 @@ export class ResultScene extends Phaser.Scene {
   private cleanup(): void {
     this.resizeTimer?.remove(false);
     this.resizeTimer = undefined;
+    this.settingsMenu?.destroy();
+    this.settingsMenu = undefined;
     this.screenManager?.dispose();
     this.screenManager = undefined;
+  }
+
+  private t(key: string, fallback: string): string {
+    const value = I18n.t(key);
+
+    return value === key ? fallback : value;
   }
 }
