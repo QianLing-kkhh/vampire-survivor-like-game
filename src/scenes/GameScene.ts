@@ -21,6 +21,7 @@ import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyMovement } from '../enemy/EnemyMovement';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
+import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PlaytestLog } from '../logging/PlaytestLog';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { PickupManager } from '../pickup/PickupManager';
@@ -87,6 +88,7 @@ export class GameScene extends Phaser.Scene {
   private bossAttackController?: BossAttackController;
   private enemyFactory?: EnemyFactory;
   private floatingTextManager?: FloatingTextManager;
+  private virtualJoystick?: VirtualJoystick;
   private readonly timeManager = new TimeManager();
   private readonly contactDamageCooldowns = new Map<Enemy, number>();
   private readonly centerMessages = new Set<Phaser.GameObjects.Text>();
@@ -161,6 +163,7 @@ export class GameScene extends Phaser.Scene {
     this.bossAttackController = undefined;
     this.enemyFactory = undefined;
     this.floatingTextManager = undefined;
+    this.virtualJoystick = undefined;
     this.weaponManager = undefined;
     this.pickupManager = undefined;
     this.treasureManager = undefined;
@@ -202,6 +205,10 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('UIScene');
 
     this.player = new PlayerController(this, playerStats, centerX, centerY);
+    this.virtualJoystick = new VirtualJoystick(this, () => {
+      this.handleEscapePressed();
+    });
+    this.virtualJoystick.setGameplayActive(!this.playtestSettings.autoMode);
     this.playerHitRange = this.add.circle(
       this.player.body.x,
       this.player.body.y,
@@ -365,11 +372,16 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.isGameplayPaused) {
+      this.virtualJoystick?.setGameplayActive(false);
       this.emitHUDState();
       return;
     }
 
     const effectiveDelta = delta * this.getGameplayTimeScale();
+
+    this.virtualJoystick?.setGameplayActive(
+      !this.isLevelUpSelectionActive && !this.playtestSettings.autoMode,
+    );
 
     this.timeManager.update(effectiveDelta);
     this.passiveManager?.update(effectiveDelta, this.playerHealth);
@@ -377,6 +389,8 @@ export class GameScene extends Phaser.Scene {
 
     if (this.playtestSettings.autoMode) {
       this.updateAutoPlayer(effectiveDelta);
+    } else if (this.virtualJoystick?.hasInput()) {
+      this.updatePlayerFromVirtualJoystick(effectiveDelta);
     } else {
       this.player?.update(effectiveDelta);
     }
@@ -853,6 +867,32 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
+  private updatePlayerFromVirtualJoystick(deltaMs: number): void {
+    if (!this.player || !this.playerStats || !this.virtualJoystick) {
+      return;
+    }
+
+    const direction = this.virtualJoystick.getDirection();
+
+    if (direction.lengthSq() === 0) {
+      return;
+    }
+
+    const distance = this.playerStats.moveSpeed * (deltaMs / 1000);
+    const radius = this.player.body.radius;
+
+    this.player.body.x = Phaser.Math.Clamp(
+      this.player.body.x + direction.x * distance,
+      radius,
+      GameScene.WORLD_WIDTH - radius,
+    );
+    this.player.body.y = Phaser.Math.Clamp(
+      this.player.body.y + direction.y * distance,
+      radius,
+      GameScene.WORLD_HEIGHT - radius,
+    );
+  }
+
   private getPickupPositions(): Array<{ x: number; y: number }> {
     const pickupManager = this.pickupManager as unknown as {
       pickups?: Array<{
@@ -1143,6 +1183,7 @@ export class GameScene extends Phaser.Scene {
     this.playerPickupRange = (this.playerStats?.pickupRange ?? 0) * 48;
     this.isLevelUpSelectionActive = false;
     this.isGameplayPaused = false;
+    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMode);
   }
 
   private handleEscapePressed(): void {
@@ -1157,6 +1198,7 @@ export class GameScene extends Phaser.Scene {
 
     this.isPauseMenuOpen = true;
     this.isGameplayPaused = true;
+    this.virtualJoystick?.setGameplayActive(false);
     this.scene.get('UIScene').events.emit('ShowPauseMenu');
   }
 
@@ -1167,17 +1209,20 @@ export class GameScene extends Phaser.Scene {
 
     this.isPauseMenuOpen = false;
     this.isGameplayPaused = false;
+    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMode);
     this.scene.get('UIScene').events.emit('HidePauseMenu');
   }
 
   private restartFromPauseMenu(): void {
     this.isPauseMenuOpen = false;
+    this.virtualJoystick?.setGameplayActive(false);
     this.scene.stop('UIScene');
     this.scene.restart();
   }
 
   private backToTitleFromPauseMenu(): void {
     this.isPauseMenuOpen = false;
+    this.virtualJoystick?.setGameplayActive(false);
     this.scene.stop('UIScene');
     this.scene.start('TitleScene');
   }
@@ -1301,6 +1346,8 @@ export class GameScene extends Phaser.Scene {
     this.bossAttackController = undefined;
     this.bossSpawnDirector = undefined;
     this.enemyFactory = undefined;
+    this.virtualJoystick?.destroy();
+    this.virtualJoystick = undefined;
     this.floatingTextManager?.destroy();
     this.floatingTextManager = undefined;
     this.evolutionManager = undefined;

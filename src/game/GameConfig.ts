@@ -11,6 +11,12 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   parent: 'app',
   width: 1280,
   height: 720,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1280,
+    height: 720
+  },
   backgroundColor: '#101018',
   physics: {
     default: 'arcade',

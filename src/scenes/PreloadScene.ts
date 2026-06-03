@@ -8,52 +8,52 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.image('player', '/assets/player/player_placeholder.png');
-    this.load.image('slime', '/assets/enemy/slime_placeholder.png');
-    this.load.image('bat', '/assets/enemy/bat_placeholder.png');
-    this.load.image('golem', '/assets/enemy/golem_placeholder.png');
-    this.load.image('exp_gem', '/assets/pickup/exp_gem_placeholder.png');
-    this.load.image('knife_projectile', '/assets/effects/knife_projectile.png');
-    this.load.image('hit_flash', '/assets/effects/hit_flash.png');
+    this.load.image('player', 'assets/player/player_placeholder.png');
+    this.load.image('slime', 'assets/enemy/slime_placeholder.png');
+    this.load.image('bat', 'assets/enemy/bat_placeholder.png');
+    this.load.image('golem', 'assets/enemy/golem_placeholder.png');
+    this.load.image('exp_gem', 'assets/pickup/exp_gem_placeholder.png');
+    this.load.image('knife_projectile', 'assets/effects/knife_projectile.png');
+    this.load.image('hit_flash', 'assets/effects/hit_flash.png');
     this.load.image(
       'bible_orbit_projectile',
-      '/assets/effects/bible_orbit_projectile.png',
+      'assets/effects/bible_orbit_projectile.png',
     );
-    this.load.image('axe_projectile', '/assets/images/axe_projectile.png');
-    this.load.image('magic_wand_projectile', '/assets/images/magic_wand_projectile.png');
-    this.load.image('treasure_chest', '/assets/images/treasure_chest.png');
-    this.load.image('boss_lava_beast', '/assets/images/boss_lava_beast.png');
+    this.load.image('axe_projectile', 'assets/images/axe_projectile.png');
+    this.load.image('magic_wand_projectile', 'assets/images/magic_wand_projectile.png');
+    this.load.image('treasure_chest', 'assets/images/treasure_chest.png');
+    this.load.image('boss_lava_beast', 'assets/images/boss_lava_beast.png');
     this.load.image(
       'thousand_edge_projectile',
-      '/assets/images/thousand_edge_projectile.png',
+      'assets/images/thousand_edge_projectile.png',
     );
-    this.load.image('holy_wand_projectile', '/assets/images/holy_wand_projectile.png');
+    this.load.image('holy_wand_projectile', 'assets/images/holy_wand_projectile.png');
     this.load.image(
       'death_spiral_projectile',
-      '/assets/images/death_spiral_projectile.png',
+      'assets/images/death_spiral_projectile.png',
     );
     this.load.image(
       'unholy_vespers_orbit_book',
-      '/assets/images/unholy_vespers_orbit_book.png',
+      'assets/images/unholy_vespers_orbit_book.png',
     );
-    this.load.image('soul_eater_core', '/assets/images/soul_eater_core.png');
-    this.load.image('hp_icon', '/assets/ui/hp_icon.png');
-    this.load.image('exp_icon', '/assets/ui/exp_icon.png');
-    this.load.image('time_icon', '/assets/ui/time_icon.png');
-    this.load.image('knife_icon', '/assets/weapons/knife_icon.png');
-    this.load.image('garlic_icon', '/assets/weapons/garlic_icon.png');
-    this.load.image('bible_icon', '/assets/weapons/bible_icon.png');
-    this.load.audio('enemy_hit', '/assets/audio/enemy_hit.wav');
-    this.load.audio('enemy_killed', '/assets/audio/enemy_killed.wav');
-    this.load.audio('player_hit', '/assets/audio/player_hit.wav');
-    this.load.audio('level_up', '/assets/audio/level_up.wav');
-    this.load.audio('upgrade_selected', '/assets/audio/upgrade_selected.wav');
-    this.load.audio('treasure_open', '/assets/audio/treasure_open.wav');
-    this.load.audio('boss_spawn', '/assets/audio/boss_spawn.wav');
-    this.load.audio('boss_dash', '/assets/audio/boss_dash.wav');
-    this.load.audio('victory', '/assets/audio/victory.wav');
-    this.load.audio('game_over', '/assets/audio/game_over.wav');
-    this.load.audio('ui_click', '/assets/audio/ui_click.wav');
+    this.load.image('soul_eater_core', 'assets/images/soul_eater_core.png');
+    this.load.image('hp_icon', 'assets/ui/hp_icon.png');
+    this.load.image('exp_icon', 'assets/ui/exp_icon.png');
+    this.load.image('time_icon', 'assets/ui/time_icon.png');
+    this.load.image('knife_icon', 'assets/weapons/knife_icon.png');
+    this.load.image('garlic_icon', 'assets/weapons/garlic_icon.png');
+    this.load.image('bible_icon', 'assets/weapons/bible_icon.png');
+    this.load.audio('enemy_hit', 'assets/audio/enemy_hit.wav');
+    this.load.audio('enemy_killed', 'assets/audio/enemy_killed.wav');
+    this.load.audio('player_hit', 'assets/audio/player_hit.wav');
+    this.load.audio('level_up', 'assets/audio/level_up.wav');
+    this.load.audio('upgrade_selected', 'assets/audio/upgrade_selected.wav');
+    this.load.audio('treasure_open', 'assets/audio/treasure_open.wav');
+    this.load.audio('boss_spawn', 'assets/audio/boss_spawn.wav');
+    this.load.audio('boss_dash', 'assets/audio/boss_dash.wav');
+    this.load.audio('victory', 'assets/audio/victory.wav');
+    this.load.audio('game_over', 'assets/audio/game_over.wav');
+    this.load.audio('ui_click', 'assets/audio/ui_click.wav');
   }
 
   create(): void {
