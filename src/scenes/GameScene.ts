@@ -89,6 +89,7 @@ export class GameScene extends Phaser.Scene {
   private enemyFactory?: EnemyFactory;
   private floatingTextManager?: FloatingTextManager;
   private virtualJoystick?: VirtualJoystick;
+  private orientationOverlay?: Phaser.GameObjects.Container;
   private readonly timeManager = new TimeManager();
   private readonly contactDamageCooldowns = new Map<Enemy, number>();
   private readonly centerMessages = new Set<Phaser.GameObjects.Text>();
@@ -164,6 +165,7 @@ export class GameScene extends Phaser.Scene {
     this.enemyFactory = undefined;
     this.floatingTextManager = undefined;
     this.virtualJoystick = undefined;
+    this.orientationOverlay = undefined;
     this.weaponManager = undefined;
     this.pickupManager = undefined;
     this.treasureManager = undefined;
@@ -209,6 +211,8 @@ export class GameScene extends Phaser.Scene {
       this.handleEscapePressed();
     });
     this.virtualJoystick.setGameplayActive(!this.playtestSettings.autoMode);
+    this.createOrientationOverlay();
+    this.scale.on('resize', this.handleResize, this);
     this.playerHitRange = this.add.circle(
       this.player.body.x,
       this.player.body.y,
@@ -368,6 +372,12 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     if (this.isGameOver) {
+      return;
+    }
+
+    if (this.updateOrientationOverlay()) {
+      this.virtualJoystick?.setGameplayActive(false);
+      this.emitHUDState();
       return;
     }
 
@@ -1202,6 +1212,77 @@ export class GameScene extends Phaser.Scene {
     this.scene.get('UIScene').events.emit('ShowPauseMenu');
   }
 
+  private createOrientationOverlay(): void {
+    const overlay = this.add.container(0, 0);
+    overlay.setDepth(20000);
+    overlay.setScrollFactor(0);
+    const background = this.add.rectangle(
+      0,
+      0,
+      this.scale.width,
+      this.scale.height,
+      0x020617,
+      0.86,
+    );
+    background.setOrigin(0, 0);
+    background.setScrollFactor(0);
+    const text = this.add.text(
+      this.scale.width / 2,
+      this.scale.height / 2,
+      'Rotate your device for better play',
+      {
+        color: '#f8fafc',
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        fontSize: '30px',
+        align: 'center',
+        wordWrap: { width: 520 },
+      },
+    );
+    text.setOrigin(0.5);
+    text.setScrollFactor(0);
+    overlay.add([background, text]);
+    overlay.setVisible(false);
+    this.orientationOverlay = overlay;
+  }
+
+  private updateOrientationOverlay(): boolean {
+    const shouldShow = this.shouldShowOrientationOverlay();
+
+    this.orientationOverlay?.setVisible(shouldShow);
+    return shouldShow;
+  }
+
+  private handleResize(): void {
+    const overlayChildren = this.orientationOverlay?.list ?? [];
+    const background = overlayChildren[0] as Phaser.GameObjects.Rectangle | undefined;
+    const text = overlayChildren[1] as Phaser.GameObjects.Text | undefined;
+
+    background?.setSize(this.scale.width, this.scale.height);
+    text?.setPosition(this.scale.width / 2, this.scale.height / 2);
+    this.updateOrientationOverlay();
+  }
+
+  private shouldShowOrientationOverlay(): boolean {
+    if (!this.isTouchOrNarrowScreen()) {
+      return false;
+    }
+
+    const width = globalThis.innerWidth ?? this.scale.width;
+    const height = globalThis.innerHeight ?? this.scale.height;
+
+    return height > width;
+  }
+
+  private isTouchOrNarrowScreen(): boolean {
+    const phaserTouch = this.sys.game.device.input.touch;
+    const hasTouch = (globalThis.navigator?.maxTouchPoints ?? 0) > 0;
+    const hasCoarsePointer = globalThis.matchMedia?.('(pointer: coarse)').matches ?? false;
+    const isNarrowWindow = (globalThis.innerWidth ?? this.scale.width) <= 900
+      || (globalThis.innerHeight ?? this.scale.height) <= 900;
+
+    return phaserTouch || hasTouch || hasCoarsePointer || isNarrowWindow;
+  }
+
   private resumeFromPauseMenu(): void {
     if (!this.isPauseMenuOpen) {
       return;
@@ -1335,6 +1416,7 @@ export class GameScene extends Phaser.Scene {
     this.uiScene?.events.off('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
     this.events.off('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.off('keydown-ESC', this.handleEscapePressed, this);
+    this.scale.off('resize', this.handleResize, this);
     this.uiScene = undefined;
     this.clearGameplayResources();
     this.destroyEnemies();
@@ -1348,6 +1430,8 @@ export class GameScene extends Phaser.Scene {
     this.enemyFactory = undefined;
     this.virtualJoystick?.destroy();
     this.virtualJoystick = undefined;
+    this.orientationOverlay?.destroy(true);
+    this.orientationOverlay = undefined;
     this.floatingTextManager?.destroy();
     this.floatingTextManager = undefined;
     this.evolutionManager = undefined;

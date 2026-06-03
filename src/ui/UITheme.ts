@@ -13,6 +13,10 @@ export const UITheme = {
   mutedTextColor: '#cbd5e1',
   dangerTextColor: '#ef4444',
   successTextColor: '#22c55e',
+  barBgColor: 0x1f2937,
+  hpBarColor: 0xef4444,
+  expBarColor: 0x38bdf8,
+  iconBgColor: 0x111827,
 };
 
 export function toCssColor(color: number): string {

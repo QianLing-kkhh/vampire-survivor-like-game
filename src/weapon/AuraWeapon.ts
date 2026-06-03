@@ -9,6 +9,7 @@ export class AuraWeapon extends Weapon {
   private static readonly GARLIC_PERCENT_DAMAGE = 0.003;
 
   private auraBody?: Phaser.GameObjects.Arc;
+  private auraIcon?: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene, id: string, config: WeaponConfig) {
     super(scene, id, config);
@@ -22,6 +23,8 @@ export class AuraWeapon extends Weapon {
   destroy(): void {
     this.auraBody?.destroy();
     this.auraBody = undefined;
+    this.auraIcon?.destroy();
+    this.auraIcon = undefined;
   }
 
   override applyUpgrade(upgradeId: string): boolean {
@@ -73,8 +76,19 @@ export class AuraWeapon extends Weapon {
       this.auraBody.setStrokeStyle(2, 0x86efac, 0.55);
     }
 
+    if (
+      this.id === 'soul_eater'
+      && !this.auraIcon
+      && this.scene.textures.exists('soul_eater_core')
+    ) {
+      this.auraIcon = this.scene.add.image(context.player.x, context.player.y, 'soul_eater_core');
+      this.auraIcon.setDisplaySize(30, 30);
+      this.auraIcon.setDepth(24);
+    }
+
     this.auraBody.setPosition(context.player.x, context.player.y);
     this.auraBody.setRadius(this.radiusPixels);
+    this.auraIcon?.setPosition(context.player.x, context.player.y);
   }
 
   private isEnemyInRange(
