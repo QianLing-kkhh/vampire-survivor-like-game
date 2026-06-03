@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
 import { EventBus } from '../core/EventBus';
 import { GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
 import { EvolutionManager } from '../evolution/EvolutionManager';
@@ -129,19 +130,9 @@ export class TreasureManager {
 
   private applyRandomUpgrade(): void {
     this.onChestOpened?.();
+    AudioManager.play(this.scene, 'treasure_open');
 
-    const evolutionResult = this.evolutionManager?.tryEvolve({
-      weaponManager: this.weaponManager,
-      getPassiveLevel: (passiveId) => (
-        this.upgradeSelectionContext.getPassiveLevel?.(passiveId) ?? 0
-      ),
-    });
-
-    if (evolutionResult) {
-      this.onEvolutionApplied?.(evolutionResult);
-      console.log(
-        `Treasure chest evolution: ${evolutionResult.baseWeaponId} -> ${evolutionResult.evolvedWeaponId}`,
-      );
+    if (this.tryApplyEvolution()) {
       return;
     }
 
@@ -162,6 +153,27 @@ export class TreasureManager {
 
     this.onChestUpgradeApplied(option);
     console.log('Treasure chest upgrade:', option.id);
+    this.tryApplyEvolution();
+  }
+
+  private tryApplyEvolution(): boolean {
+    const evolutionResult = this.evolutionManager?.tryEvolve({
+      weaponManager: this.weaponManager,
+      getPassiveLevel: (passiveId) => (
+        this.upgradeSelectionContext.getPassiveLevel?.(passiveId) ?? 0
+      ),
+    });
+
+    if (!evolutionResult) {
+      return false;
+    }
+
+    this.onEvolutionApplied?.(evolutionResult);
+    console.log(
+      `Treasure chest evolution: ${evolutionResult.baseWeaponId} -> ${evolutionResult.evolvedWeaponId}`,
+    );
+
+    return true;
   }
 
   private getFilteredTreasureUpgradeOptions(): UpgradeOption[] {

@@ -9,7 +9,15 @@ export interface EnemyStats {
   damage: number;
   exp: number;
   scale?: number;
+  dashEnabled?: boolean;
+  dashCooldown?: number;
+  dashWarningDuration?: number;
+  dashDuration?: number;
+  dashSpeed?: number;
+  dashDamageMultiplier?: number;
 }
+
+type BossDashState = 'idle' | 'warning' | 'dashing';
 
 export interface EnemyKilledEvent {
   x: number;
@@ -80,12 +88,20 @@ export function isLevelUpEvent(value: unknown): value is LevelUpEvent {
 }
 
 export class Enemy {
+  private static readonly DASH_WARNING_DURATION_MULTIPLIER = 0.8;
+
   readonly body: Phaser.GameObjects.Arc;
   readonly maxHp: number;
   readonly moveSpeed: number;
   readonly damage: number;
   readonly exp: number;
   readonly scale: number;
+  readonly dashEnabled: boolean;
+  readonly dashCooldown: number;
+  readonly dashWarningDuration: number;
+  readonly dashDuration: number;
+  readonly dashSpeed: number;
+  readonly dashDamageMultiplier: number;
 
   currentHp: number;
   isDead = false;
@@ -93,6 +109,17 @@ export class Enemy {
   private baseScaleX = 1;
   private baseScaleY = 1;
   private baseScaleBody?: Phaser.GameObjects.GameObject;
+  private dashState: BossDashState = 'idle';
+  private dashTimerMs = 0;
+  private dashDirection = new Phaser.Math.Vector2(1, 0);
+  private dashWarningLine?: Phaser.GameObjects.Line;
+  private dashImpactWarningCircle?: Phaser.GameObjects.Arc;
+  private dashStartedPending = false;
+  private dashHitConsumed = false;
+  private dashImpactPending = false;
+  private dashPreviousPosition = new Phaser.Math.Vector2();
+  private dashCurrentPosition = new Phaser.Math.Vector2();
+  private dashImpactPosition = new Phaser.Math.Vector2();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -107,6 +134,13 @@ export class Enemy {
     this.damage = stats.damage;
     this.exp = stats.exp;
     this.scale = stats.scale ?? 1;
+    this.dashEnabled = this.id === 'boss' && stats.dashEnabled === true;
+    this.dashCooldown = stats.dashCooldown ?? 0;
+    this.dashWarningDuration = stats.dashWarningDuration ?? 0;
+    this.dashDuration = stats.dashDuration ?? 0;
+    this.dashSpeed = stats.dashSpeed ?? 0;
+    this.dashDamageMultiplier = stats.dashDamageMultiplier ?? 1;
+    this.dashTimerMs = this.dashCooldown * 1000;
     this.body = scene.add.circle(x, y, 12 * this.scale, 0xef4444);
     this.captureBaseScale(this.body);
   }
@@ -126,6 +160,12 @@ export class Enemy {
     console.log(
       `Enemy hit: ${this.id} HP ${Math.max(0, this.currentHp)} / ${this.maxHp}`,
     );
+    this.scene.events.emit('EnemyDamagedFloatingText', {
+      x: this.body.x,
+      y: this.body.y,
+      damage: actualDamage,
+      isBoss: this.id.endsWith('_boss') || this.id === 'boss',
+    });
 
     if (this.currentHp <= 0) {
       this.currentHp = 0;
@@ -138,8 +178,273 @@ export class Enemy {
     return actualDamage;
   }
 
+  updateDash(
+    deltaMs: number,
+    target: { x: number; y: number },
+    worldBounds: { width: number; height: number },
+  ): boolean {
+    if (!this.dashEnabled || this.isDead) {
+      return false;
+    }
+
+    if (this.dashState === 'idle') {
+      this.dashTimerMs -= deltaMs;
+
+      if (this.dashTimerMs > 0) {
+        return false;
+      }
+
+      this.startDashWarning(target, worldBounds);
+      return true;
+    }
+
+    if (this.dashState === 'warning') {
+      this.dashTimerMs -= deltaMs;
+      this.updateDashWarningLine();
+
+      if (this.dashTimerMs <= 0) {
+        this.startDashing();
+      }
+
+      return true;
+    }
+
+    this.updateDashMovement(deltaMs, worldBounds);
+    return true;
+  }
+
+  isDashing(): boolean {
+    return this.dashState === 'dashing';
+  }
+
+  consumeDashStarted(): boolean {
+    if (!this.dashStartedPending) {
+      return false;
+    }
+
+    this.dashStartedPending = false;
+    return true;
+  }
+
+  consumeDashHit(): boolean {
+    if (this.dashHitConsumed || (!this.isDashing() && !this.dashImpactPending)) {
+      return false;
+    }
+
+    this.dashHitConsumed = true;
+    return true;
+  }
+
+  consumeDashImpact(): Phaser.Math.Vector2 | undefined {
+    if (!this.dashImpactPending) {
+      return undefined;
+    }
+
+    this.dashImpactPending = false;
+    return this.dashImpactPosition.clone();
+  }
+
+  getDashSegment(): {
+    start: Phaser.Math.Vector2;
+    end: Phaser.Math.Vector2;
+  } | undefined {
+    if (!this.isDashing()) {
+      return undefined;
+    }
+
+    return {
+      start: this.dashPreviousPosition.clone(),
+      end: this.dashCurrentPosition.clone(),
+    };
+  }
+
+  getDashDirection(): Phaser.Math.Vector2 {
+    return this.dashDirection.clone();
+  }
+
   destroy(): void {
+    this.destroyDashWarnings();
     this.body.destroy();
+  }
+
+  private startDashWarning(
+    target: { x: number; y: number },
+    worldBounds: { width: number; height: number },
+  ): void {
+    this.dashState = 'warning';
+    this.dashTimerMs = this.dashWarningDuration
+      * Enemy.DASH_WARNING_DURATION_MULTIPLIER
+      * 1000;
+    this.dashDirection.set(target.x - this.body.x, target.y - this.body.y);
+
+    if (this.dashDirection.lengthSq() === 0) {
+      this.dashDirection.set(1, 0);
+    }
+
+    this.dashDirection.normalize();
+    this.updateDashImpactPosition(worldBounds);
+    this.createDashWarningLine();
+    this.createDashImpactWarningCircle();
+  }
+
+  private startDashing(): void {
+    this.dashState = 'dashing';
+    this.dashTimerMs = this.dashDuration * 1000;
+    this.dashStartedPending = true;
+    this.dashHitConsumed = false;
+    this.dashPreviousPosition.set(this.body.x, this.body.y);
+    this.dashCurrentPosition.set(this.body.x, this.body.y);
+    this.destroyDashWarnings();
+  }
+
+  private updateDashMovement(
+    deltaMs: number,
+    worldBounds: { width: number; height: number },
+  ): void {
+    const distance = this.dashSpeed * (deltaMs / 1000);
+    const radius = this.getBodyRadius();
+    this.dashPreviousPosition.set(this.body.x, this.body.y);
+    const nextX = Phaser.Math.Clamp(
+      this.body.x + this.dashDirection.x * distance,
+      radius,
+      worldBounds.width - radius,
+    );
+    const nextY = Phaser.Math.Clamp(
+      this.body.y + this.dashDirection.y * distance,
+      radius,
+      worldBounds.height - radius,
+    );
+    const hitBoundary = nextX === this.body.x && nextY === this.body.y;
+
+    this.body.setPosition(nextX, nextY);
+    this.dashCurrentPosition.set(this.body.x, this.body.y);
+    this.dashTimerMs -= deltaMs;
+
+    if (this.dashTimerMs <= 0 || hitBoundary) {
+      this.finishDash();
+    }
+  }
+
+  private finishDash(): void {
+    this.dashImpactPending = true;
+    this.dashImpactPosition.set(this.body.x, this.body.y);
+    this.showDashImpactFeedback();
+    this.dashState = 'idle';
+    this.dashTimerMs = this.dashCooldown * 1000;
+  }
+
+  private createDashWarningLine(): void {
+    this.destroyDashWarnings();
+    this.dashWarningLine = this.scene.add.line(
+      this.body.x,
+      this.body.y,
+      0,
+      0,
+      this.dashDirection.x * 620,
+      this.dashDirection.y * 620,
+      0xef4444,
+      0.42,
+    );
+    this.dashWarningLine.setOrigin(0, 0);
+    this.dashWarningLine.setLineWidth(18);
+    this.dashWarningLine.setDepth(34);
+  }
+
+  private createDashImpactWarningCircle(): void {
+    this.destroyDashImpactWarningCircle();
+    this.dashImpactWarningCircle = this.scene.add.circle(
+      this.dashImpactPosition.x,
+      this.dashImpactPosition.y,
+      140,
+      0xef4444,
+      0.16,
+    );
+    this.dashImpactWarningCircle.setStrokeStyle(3, 0xfca5a5, 0.75);
+    this.dashImpactWarningCircle.setDepth(33);
+  }
+
+  private updateDashWarningLine(): void {
+    if (!this.dashWarningLine?.active) {
+      return;
+    }
+
+    this.dashWarningLine.setPosition(this.body.x, this.body.y);
+    this.dashWarningLine.setTo(
+      0,
+      0,
+      this.dashDirection.x * 620,
+      this.dashDirection.y * 620,
+    );
+    this.dashImpactWarningCircle?.setPosition(
+      this.dashImpactPosition.x,
+      this.dashImpactPosition.y,
+    );
+  }
+
+  private updateDashImpactPosition(worldBounds: { width: number; height: number }): void {
+    const distance = this.dashSpeed * this.dashDuration;
+    const radius = this.getBodyRadius();
+    this.dashImpactPosition.set(
+      Phaser.Math.Clamp(
+        this.body.x + this.dashDirection.x * distance,
+        radius,
+        worldBounds.width - radius,
+      ),
+      Phaser.Math.Clamp(
+        this.body.y + this.dashDirection.y * distance,
+        radius,
+        worldBounds.height - radius,
+      ),
+    );
+  }
+
+  private showDashImpactFeedback(): void {
+    const impact = this.scene.add.circle(
+      this.dashImpactPosition.x,
+      this.dashImpactPosition.y,
+      140,
+      0xf97316,
+      0.24,
+    );
+
+    impact.setStrokeStyle(4, 0xf97316, 0.9);
+    impact.setDepth(36);
+
+    this.scene.tweens.add({
+      targets: impact,
+      alpha: 0,
+      scaleX: 1.25,
+      scaleY: 1.25,
+      duration: 220,
+      onComplete: () => {
+        if (impact.active) {
+          impact.destroy();
+        }
+      },
+    });
+  }
+
+  private destroyDashWarnings(): void {
+    if (this.dashWarningLine?.active) {
+      this.dashWarningLine.destroy();
+    }
+
+    this.dashWarningLine = undefined;
+    this.destroyDashImpactWarningCircle();
+  }
+
+  private destroyDashImpactWarningCircle(): void {
+    if (this.dashImpactWarningCircle?.active) {
+      this.dashImpactWarningCircle.destroy();
+    }
+
+    this.dashImpactWarningCircle = undefined;
+  }
+
+  private getBodyRadius(): number {
+    const body = this.body as Phaser.GameObjects.GameObject & { radius?: number };
+
+    return body.radius ?? 12 * this.scale;
   }
 
   private playHitFeedback(): void {

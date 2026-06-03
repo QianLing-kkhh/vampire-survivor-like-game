@@ -1,0 +1,62 @@
+{
+  "target_directory": "public/assets/audio/",
+  "format": "wav, mono, 44100 Hz, 16-bit PCM",
+  "note": "Temporary placeholder SFX for prototype testing. Replace with final audio later.",
+  "assets": [
+    {
+      "file": "enemy_hit.wav",
+      "event_key": "enemy_hit",
+      "github_path": "public/assets/audio/enemy_hit.wav"
+    },
+    {
+      "file": "enemy_killed.wav",
+      "event_key": "enemy_killed",
+      "github_path": "public/assets/audio/enemy_killed.wav"
+    },
+    {
+      "file": "player_hit.wav",
+      "event_key": "player_hit",
+      "github_path": "public/assets/audio/player_hit.wav"
+    },
+    {
+      "file": "level_up.wav",
+      "event_key": "level_up",
+      "github_path": "public/assets/audio/level_up.wav"
+    },
+    {
+      "file": "upgrade_selected.wav",
+      "event_key": "upgrade_selected",
+      "github_path": "public/assets/audio/upgrade_selected.wav"
+    },
+    {
+      "file": "treasure_open.wav",
+      "event_key": "treasure_open",
+      "github_path": "public/assets/audio/treasure_open.wav"
+    },
+    {
+      "file": "boss_spawn.wav",
+      "event_key": "boss_spawn",
+      "github_path": "public/assets/audio/boss_spawn.wav"
+    },
+    {
+      "file": "boss_dash.wav",
+      "event_key": "boss_dash",
+      "github_path": "public/assets/audio/boss_dash.wav"
+    },
+    {
+      "file": "victory.wav",
+      "event_key": "victory",
+      "github_path": "public/assets/audio/victory.wav"
+    },
+    {
+      "file": "game_over.wav",
+      "event_key": "game_over",
+      "github_path": "public/assets/audio/game_over.wav"
+    },
+    {
+      "file": "ui_click.wav",
+      "event_key": "ui_click",
+      "github_path": "public/assets/audio/ui_click.wav"
+    }
+  ]
+}

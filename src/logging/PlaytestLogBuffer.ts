@@ -21,6 +21,10 @@ export class PlaytestLogBuffer {
     return this.rows.length;
   }
 
+  static hasRows(): boolean {
+    return this.rows.length > 0;
+  }
+
   static toCsvText(): string {
     return this.rows.join('\n');
   }

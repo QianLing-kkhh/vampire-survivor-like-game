@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { UITheme } from './UITheme';
+
 interface WorldPosition {
   x: number;
   y: number;
@@ -49,8 +51,9 @@ export class HUD {
 
   constructor(scene: Phaser.Scene) {
     this.text = scene.add.text(16, 16, '', {
-      color: '#ffffff',
-      fontSize: '16px',
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
       lineSpacing: 4,
     });
     this.text.setDepth(900);
@@ -61,11 +64,11 @@ export class HUD {
       this.minimapY,
       HUD.MINIMAP_WIDTH,
       HUD.MINIMAP_HEIGHT,
-      0x020617,
+      UITheme.panelBgColor,
       0.72,
     );
     this.minimapBackground.setOrigin(0, 0);
-    this.minimapBackground.setStrokeStyle(1, 0xe2e8f0, 0.65);
+    this.minimapBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.65);
     this.minimapBackground.setDepth(900);
 
     for (let index = 0; index < HUD.MAX_MINIMAP_ENEMIES; index += 1) {

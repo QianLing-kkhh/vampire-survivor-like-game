@@ -31,6 +31,8 @@ export interface PlaytestLogData {
   bossPhaseDamageTaken: number;
   bossPhaseLowestHp: number;
   bossPhaseKills: number;
+  bossDashCount: number;
+  bossDashHitCount: number;
   totalUpgradeCount: number;
   levelUpUpgradeCount: number;
   chestUpgradeCount: number;
@@ -74,6 +76,8 @@ export class PlaytestLog {
     'bossPhaseDamageTaken',
     'bossPhaseLowestHp',
     'bossPhaseKills',
+    'bossDashCount',
+    'bossDashHitCount',
     'totalUpgradeCount',
     'levelUpUpgradeCount',
     'chestUpgradeCount',
@@ -125,6 +129,8 @@ export class PlaytestLog {
       Math.floor(data.bossPhaseDamageTaken).toString(),
       Math.floor(data.bossPhaseLowestHp).toString(),
       data.bossPhaseKills.toString(),
+      data.bossDashCount.toString(),
+      data.bossDashHitCount.toString(),
       data.totalUpgradeCount.toString(),
       data.levelUpUpgradeCount.toString(),
       data.chestUpgradeCount.toString(),

@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { PassiveLevel } from '../passive/PassiveItem';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { UITheme, toCssColor } from '../ui/UITheme';
 
 interface ResultSceneData {
   runId?: string;
@@ -23,6 +25,8 @@ interface ResultSceneData {
   bossSpawnTime?: number;
   bossKillTime?: number;
   bossFightDuration?: number;
+  bossDashCount?: number;
+  bossDashHitCount?: number;
   weaponIds?: string[];
   passiveItems?: PassiveLevel[];
   upgradePath?: string[];
@@ -67,8 +71,9 @@ export class ResultScene extends Phaser.Scene {
     const playtestCsv = data.playtestCsv ?? '';
 
     const title = this.add.text(centerX, centerY - 140, isVictory ? 'Victory' : 'Game Over', {
-      color: isVictory ? '#22c55e' : '#ef4444',
-      fontSize: '40px',
+      color: isVictory ? UITheme.successTextColor : UITheme.dangerTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.titleFontSize,
       fontStyle: 'bold',
     });
     title.setOrigin(0.5);
@@ -86,10 +91,13 @@ export class ResultScene extends Phaser.Scene {
         `Evolution Path: ${evolutionPathText}`,
         `Treasure Drops: ${data.treasureDropCount ?? 0}`,
         `Treasure Opens: ${data.treasureOpenCount ?? 0}`,
+        `Boss Dashes: ${data.bossDashCount ?? 0}`,
+        `Boss Dash Hits: ${data.bossDashHitCount ?? 0}`,
       ],
       {
-        color: '#ffffff',
-        fontSize: '18px',
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: UITheme.bodyFontSize,
         align: 'center',
         lineSpacing: 5,
       },
@@ -101,7 +109,8 @@ export class ResultScene extends Phaser.Scene {
       centerY + 78,
       this.formatCsvLogText(),
       {
-      color: '#cbd5e1',
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
       fontSize: '12px',
       align: 'center',
       wordWrap: { width: 720 },
@@ -110,22 +119,25 @@ export class ResultScene extends Phaser.Scene {
     this.csvLogText.setOrigin(0.5);
 
     this.settingsText = this.add.text(centerX, centerY + 130, this.formatSettingsText(), {
-      color: '#facc15',
-      fontSize: '14px',
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
       align: 'center',
     });
     this.settingsText.setOrigin(0.5);
 
     this.autoRestartText = this.add.text(centerX, centerY + 154, '', {
-      color: '#93c5fd',
-      fontSize: '14px',
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
       align: 'center',
     });
     this.autoRestartText.setOrigin(0.5);
 
     const toggleAutoButton = this.add.text(centerX - 300, centerY + 190, 'Toggle Auto Mode', {
-      backgroundColor: '#334155',
-      color: '#ffffff',
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
       fontSize: '16px',
       padding: {
         x: 12,
@@ -134,15 +146,18 @@ export class ResultScene extends Phaser.Scene {
     });
     toggleAutoButton.setOrigin(0.5);
     toggleAutoButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(toggleAutoButton);
     toggleAutoButton.on('pointerdown', () => {
+      AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
       this.settings = PlaytestSettings.toggleAutoMode();
       this.updateSettingsText();
     });
 
     const toggleFastButton = this.add.text(centerX - 112, centerY + 190, 'Toggle Fast Mode', {
-      backgroundColor: '#334155',
-      color: '#ffffff',
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
       fontSize: '16px',
       padding: {
         x: 12,
@@ -151,15 +166,18 @@ export class ResultScene extends Phaser.Scene {
     });
     toggleFastButton.setOrigin(0.5);
     toggleFastButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(toggleFastButton);
     toggleFastButton.on('pointerdown', () => {
+      AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
       this.settings = PlaytestSettings.toggleFastMode();
       this.updateSettingsText();
     });
 
     const copyButton = this.add.text(centerX + 80, centerY + 190, 'Copy Current CSV', {
-      backgroundColor: '#334155',
-      color: '#ffffff',
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
       fontSize: '16px',
       padding: {
         x: 12,
@@ -168,30 +186,36 @@ export class ResultScene extends Phaser.Scene {
     });
     copyButton.setOrigin(0.5);
     copyButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(copyButton);
     copyButton.on('pointerdown', () => {
+      AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
       this.copyCsv(playtestCsv);
     });
 
-    const copyAllButton = this.add.text(centerX + 258, centerY + 190, 'Copy All CSV', {
-      backgroundColor: '#334155',
-      color: '#ffffff',
+    const downloadAllButton = this.add.text(centerX + 258, centerY + 190, 'Download All CSV', {
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
       fontSize: '16px',
       padding: {
         x: 12,
         y: 8,
       },
     });
-    copyAllButton.setOrigin(0.5);
-    copyAllButton.setInteractive({ useHandCursor: true });
-    copyAllButton.on('pointerdown', () => {
+    downloadAllButton.setOrigin(0.5);
+    downloadAllButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(downloadAllButton);
+    downloadAllButton.on('pointerdown', () => {
+      AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
-      this.copyCsv(PlaytestLogBuffer.getAllCsvWithHeader());
+      this.downloadAllCsv();
     });
 
     const clearBufferButton = this.add.text(centerX, centerY + 232, 'Clear CSV Buffer', {
       backgroundColor: '#7f1d1d',
-      color: '#ffffff',
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
       fontSize: '16px',
       padding: {
         x: 12,
@@ -200,16 +224,19 @@ export class ResultScene extends Phaser.Scene {
     });
     clearBufferButton.setOrigin(0.5);
     clearBufferButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(clearBufferButton, '#7f1d1d', '#991b1b');
     clearBufferButton.on('pointerdown', () => {
+      AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
       PlaytestLogBuffer.clear();
       this.updateCsvLogText();
     });
 
     const restartButton = this.add.text(centerX - 130, centerY + 276, 'Restart', {
-      backgroundColor: '#1f2937',
-      color: '#ffffff',
-      fontSize: '18px',
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.bodyFontSize,
       padding: {
         x: 16,
         y: 8,
@@ -217,15 +244,18 @@ export class ResultScene extends Phaser.Scene {
     });
     restartButton.setOrigin(0.5);
     restartButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(restartButton);
     restartButton.on('pointerdown', () => {
+      AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
       this.restartGame();
     });
 
     const titleButton = this.add.text(centerX + 130, centerY + 276, 'Return to Title', {
-      backgroundColor: '#1f2937',
-      color: '#ffffff',
-      fontSize: '18px',
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.bodyFontSize,
       padding: {
         x: 16,
         y: 8,
@@ -233,7 +263,9 @@ export class ResultScene extends Phaser.Scene {
     });
     titleButton.setOrigin(0.5);
     titleButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(titleButton);
     titleButton.on('pointerdown', () => {
+      AudioManager.play(this, 'ui_click');
       this.cancelAutoRestart();
       this.scene.stop('UIScene');
       this.scene.stop('GameScene');
@@ -251,6 +283,19 @@ export class ResultScene extends Phaser.Scene {
     const seconds = totalSeconds % 60;
 
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private addButtonHover(
+    button: Phaser.GameObjects.Text,
+    backgroundColor = toCssColor(UITheme.buttonBgColor),
+    hoverColor = toCssColor(UITheme.buttonHoverColor),
+  ): void {
+    button.on('pointerover', () => {
+      button.setBackgroundColor(hoverColor);
+    });
+    button.on('pointerout', () => {
+      button.setBackgroundColor(backgroundColor);
+    });
   }
 
   private formatSettingsText(): string {
@@ -275,7 +320,7 @@ export class ResultScene extends Phaser.Scene {
 
   private formatCsvLogText(): string[] {
     return [
-      'CSV hidden. Use buttons to copy.',
+      'CSV hidden. Use buttons to copy or download.',
       `Buffered Runs Count: ${PlaytestLogBuffer.getCount()}`,
     ];
   }
@@ -331,6 +376,40 @@ export class ResultScene extends Phaser.Scene {
     }
 
     console.log('Playtest CSV:', playtestCsv);
+  }
+
+  private downloadAllCsv(): void {
+    if (!PlaytestLogBuffer.hasRows()) {
+      console.warn('No buffered playtest CSV rows to download');
+      return;
+    }
+
+    this.downloadCsv(
+      this.createCsvFilename(),
+      PlaytestLogBuffer.getAllCsvWithHeader(),
+    );
+  }
+
+  private downloadCsv(filename: string, csv: string): void {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  private createCsvFilename(): string {
+    const stamp = new Date().toISOString()
+      .replace(/[-:]/g, '')
+      .replace(/\..+/, '')
+      .replace('T', '_');
+
+    return `playtest_results_${stamp}.csv`;
   }
 
   private restartGame(): void {

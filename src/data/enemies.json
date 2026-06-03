@@ -43,6 +43,12 @@
     "moveSpeed": 75,
     "damage": 30,
     "exp": 0,
-    "scale": 4
+    "scale": 4,
+    "dashEnabled": true,
+    "dashCooldown": 8,
+    "dashWarningDuration": 0.8,
+    "dashDuration": 0.45,
+    "dashSpeed": 420,
+    "dashDamageMultiplier": 1.5
   }
 }

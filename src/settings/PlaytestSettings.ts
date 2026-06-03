@@ -2,6 +2,7 @@ export interface PlaytestSettingsState {
   autoMode: boolean;
   fastMode: boolean;
   autoTimeScale: number;
+  soundEnabled: boolean;
 }
 
 export class PlaytestSettings {
@@ -10,6 +11,7 @@ export class PlaytestSettings {
     autoMode: false,
     fastMode: false,
     autoTimeScale: 3,
+    soundEnabled: false,
   };
 
   static get(): PlaytestSettingsState {
@@ -32,6 +34,13 @@ export class PlaytestSettings {
     });
   }
 
+  static setSoundEnabled(soundEnabled: boolean): PlaytestSettingsState {
+    return this.save({
+      ...this.get(),
+      soundEnabled,
+    });
+  }
+
   static toggleAutoMode(): PlaytestSettingsState {
     const state = this.get();
 
@@ -44,11 +53,18 @@ export class PlaytestSettings {
     return this.setFastMode(!state.fastMode);
   }
 
+  static toggleSoundEnabled(): PlaytestSettingsState {
+    const state = this.get();
+
+    return this.setSoundEnabled(!state.soundEnabled);
+  }
+
   private static save(state: PlaytestSettingsState): PlaytestSettingsState {
     const nextState = {
       autoMode: state.autoMode,
       fastMode: state.fastMode,
       autoTimeScale: state.autoTimeScale,
+      soundEnabled: state.soundEnabled,
     };
 
     this.memoryState = nextState;
@@ -81,6 +97,9 @@ export class PlaytestSettings {
         autoTimeScale: typeof parsedState.autoTimeScale === 'number'
           ? parsedState.autoTimeScale
           : 3,
+        soundEnabled: parsedState.soundEnabled === undefined
+          ? false
+          : Boolean(parsedState.soundEnabled),
       };
     } catch {
       return undefined;

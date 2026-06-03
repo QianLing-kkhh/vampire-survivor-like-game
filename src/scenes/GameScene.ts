@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
 import { AutoPlayer } from '../auto/AutoPlayer';
 import {
   AutoUpgradeSelectionContext,
   AutoUpgradeSelector,
 } from '../auto/AutoUpgradeSelector';
+import { BossAttackController } from '../boss/BossAttackController';
 import { BossFactory } from '../boss/BossFactory';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { DamageCalculator } from '../combat/DamageCalculator';
@@ -35,6 +37,7 @@ import { UpgradeSelectionContext, UpgradeSelector } from '../progression/Upgrade
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
+import { FloatingTextManager } from '../ui/FloatingTextManager';
 import weapons from '../data/weapons.json';
 import upgrades from '../data/upgrades.json';
 import { WeaponFactory } from '../weapon/WeaponFactory';
@@ -54,6 +57,10 @@ export class GameScene extends Phaser.Scene {
   private static readonly DAMAGE_REACTION_RADIUS = 120;
   private static readonly DAMAGE_REACTION_DAMAGE = 20;
   private static readonly DAMAGE_REACTION_KNOCKBACK_DISTANCE = 80;
+  private static readonly BOSS_DASH_HIT_RADIUS = 110;
+  private static readonly BOSS_DASH_IMPACT_RADIUS = 140;
+  private static readonly BOSS_DASH_IMPACT_DAMAGE = 30;
+  private static readonly BOSS_DASH_KNOCKBACK_DISTANCE = 120;
   private static readonly LEVEL_UP_HEAL_LOST_HP_RATIO = 0.2;
 
   private eventBus = new EventBus<GameEventMap>();
@@ -77,7 +84,9 @@ export class GameScene extends Phaser.Scene {
   private upgradeApplier?: UpgradeApplier;
   private spawnDirector?: SpawnDirector;
   private bossSpawnDirector?: BossSpawnDirector;
+  private bossAttackController?: BossAttackController;
   private enemyFactory?: EnemyFactory;
+  private floatingTextManager?: FloatingTextManager;
   private readonly timeManager = new TimeManager();
   private readonly contactDamageCooldowns = new Map<Enemy, number>();
   private readonly centerMessages = new Set<Phaser.GameObjects.Text>();
@@ -98,6 +107,8 @@ export class GameScene extends Phaser.Scene {
   private runId = PlaytestLog.createRunId();
   private runStats = new RunStats();
   private isGameplayPaused = false;
+  private isLevelUpSelectionActive = false;
+  private isPauseMenuOpen = false;
   private isGameOver = false;
   private finalBossWarningShown = false;
   private finalBossSpawned = false;
@@ -107,6 +118,8 @@ export class GameScene extends Phaser.Scene {
   private bossPhaseDamageTaken = 0;
   private bossPhaseLowestHp = 0;
   private bossPhaseKills = 0;
+  private bossDashCount = 0;
+  private bossDashHitCount = 0;
 
   constructor() {
     super('GameScene');
@@ -140,10 +153,14 @@ export class GameScene extends Phaser.Scene {
     this.playerStats = undefined;
     this.upgradeApplier = undefined;
     this.isGameplayPaused = false;
+    this.isLevelUpSelectionActive = false;
+    this.isPauseMenuOpen = false;
     this.isGameOver = false;
     this.spawnDirector = undefined;
     this.bossSpawnDirector = undefined;
+    this.bossAttackController = undefined;
     this.enemyFactory = undefined;
+    this.floatingTextManager = undefined;
     this.weaponManager = undefined;
     this.pickupManager = undefined;
     this.treasureManager = undefined;
@@ -157,6 +174,8 @@ export class GameScene extends Phaser.Scene {
     this.bossPhaseDamageTaken = 0;
     this.bossPhaseLowestHp = 0;
     this.bossPhaseKills = 0;
+    this.bossDashCount = 0;
+    this.bossDashHitCount = 0;
 
     const playerStats = PlayerStats.fromConfig(characters.default);
     this.playerStats = playerStats;
@@ -179,6 +198,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, GameScene.WORLD_WIDTH, GameScene.WORLD_HEIGHT);
     this.cameras.main.setBounds(0, 0, GameScene.WORLD_WIDTH, GameScene.WORLD_HEIGHT);
     new WorldRenderer(this).render();
+    this.floatingTextManager = new FloatingTextManager(this);
     this.scene.launch('UIScene');
 
     this.player = new PlayerController(this, playerStats, centerX, centerY);
@@ -201,9 +221,22 @@ export class GameScene extends Phaser.Scene {
 
     this.unsubscribeLevelUp = this.eventBus.subscribe('LevelUp', (event) => {
       console.log('LevelUp', event);
-      this.playerHealth?.healLostHpRatio(GameScene.LEVEL_UP_HEAL_LOST_HP_RATIO);
+      AudioManager.play(this, 'level_up');
+      const healAmount = this.playerHealth?.healLostHpRatio(
+        GameScene.LEVEL_UP_HEAL_LOST_HP_RATIO,
+      ) ?? 0;
+
+      if (healAmount > 0 && this.player) {
+        this.floatingTextManager?.showPlayerHeal(
+          this.player.body.x,
+          this.player.body.y,
+          healAmount,
+        );
+      }
+
       this.emitHUDState();
       this.isGameplayPaused = true;
+      this.isLevelUpSelectionActive = true;
       const selectedOptions = upgradeSelector
         .selectOptions(3, this.getUpgradeSelectionContext())
         .map((option) => ({
@@ -230,6 +263,9 @@ export class GameScene extends Phaser.Scene {
     });
     this.unsubscribeEnemyKilled = this.eventBus.subscribe('EnemyKilled', (event) => {
       this.killCount += 1;
+      AudioManager.play(this, 'enemy_killed', {
+        autoMode: this.playtestSettings.autoMode,
+      });
       if (this.finalBossSpawned) {
         this.bossPhaseKills += 1;
       }
@@ -240,10 +276,17 @@ export class GameScene extends Phaser.Scene {
         if (event.enemyId === GameScene.FINAL_BOSS_ID) {
           this.finalBossKillTime = this.timeManager.gameTimeSeconds;
           this.finalBossDefeated = true;
+          this.bossAttackController?.destroy();
+          this.bossAttackController = undefined;
         }
       }
     });
     uiScene.events.on('UpgradeSelected', this.handleUpgradeSelected, this);
+    uiScene.events.on('PauseResume', this.resumeFromPauseMenu, this);
+    uiScene.events.on('PauseRestart', this.restartFromPauseMenu, this);
+    uiScene.events.on('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
+    this.events.on('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
+    this.input.keyboard?.on('keydown-ESC', this.handleEscapePressed, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
     this.pickupManager = new PickupManager(this, this.eventBus, this.expManager);
@@ -307,6 +350,7 @@ export class GameScene extends Phaser.Scene {
       (boss) => {
         boss.setEventBus(this.eventBus);
         this.enemies.push(boss);
+        AudioManager.play(this, 'boss_spawn');
         this.showCenterMessage('Boss Appears!');
       },
     );
@@ -345,11 +389,35 @@ export class GameScene extends Phaser.Scene {
     this.enemies = this.enemies.filter((enemy) => !enemy.isDead);
     this.spawnDirector?.update(this.timeManager.gameTimeSeconds, effectiveDelta);
     this.bossSpawnDirector?.update(this.timeManager.gameTimeSeconds);
+    this.bossAttackController?.update(
+      effectiveDelta,
+      this.player.body,
+      (damage) => this.applyBossProjectileDamage(damage),
+    );
 
     for (const enemy of this.enemies) {
+      const dashHandledMovement = enemy.updateDash(
+        effectiveDelta,
+        this.player.body,
+        {
+          width: GameScene.WORLD_WIDTH,
+          height: GameScene.WORLD_HEIGHT,
+        },
+      );
+
+      if (enemy.consumeDashStarted()) {
+        this.bossDashCount += 1;
+        AudioManager.play(this, 'boss_dash');
+      }
+
+      if (dashHandledMovement) {
+        continue;
+      }
+
       this.enemyMovement.moveToward(enemy, this.player.body, effectiveDelta);
     }
 
+    this.updateBossDashImpacts();
     this.updateContactDamage(effectiveDelta);
 
     if (this.playerHealth?.isDead) {
@@ -371,6 +439,7 @@ export class GameScene extends Phaser.Scene {
 
     this.pickupManager?.update(this.player.body, this.playerPickupRange);
     this.treasureManager?.update(this.player.body, this.playerPickupRange);
+    this.floatingTextManager?.update(effectiveDelta);
     this.emitHUDState();
   }
 
@@ -446,6 +515,8 @@ export class GameScene extends Phaser.Scene {
     this.finalBossSpawned = true;
     this.finalBossSpawnTime = this.timeManager.gameTimeSeconds;
     this.bossPhaseLowestHp = this.playerHealth?.currentHp ?? 0;
+    this.bossAttackController = new BossAttackController(this, boss);
+    AudioManager.play(this, 'boss_spawn');
     this.showCenterMessage('Boss Appears!');
   }
 
@@ -488,6 +559,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getHUDMessage(): string | undefined {
+    if (this.bossAttackController?.isWarningActive()) {
+      return 'Boss Attack Incoming';
+    }
+
     if (this.finalBossSpawned && !this.finalBossDefeated) {
       return 'Defeat the Boss';
     }
@@ -497,6 +572,20 @@ export class GameScene extends Phaser.Scene {
     }
 
     return undefined;
+  }
+
+  private applyBossProjectileDamage(damage: number): void {
+    if (!this.playerHealth) {
+      return;
+    }
+
+    const actualDamage = this.playerHealth.takeDamage(damage);
+
+    if (actualDamage <= 0) {
+      return;
+    }
+
+    this.recordPlayerDamage(actualDamage);
   }
 
   private updateContactDamage(deltaMs: number): void {
@@ -516,41 +605,214 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const enemy of this.enemies) {
-      if (enemy.isDead || this.contactDamageCooldowns.has(enemy)) {
+      if (enemy.isDead) {
         continue;
       }
 
-      const distance = Phaser.Math.Distance.Between(
-        this.player.body.x,
-        this.player.body.y,
-        enemy.body.x,
-        enemy.body.y,
-      );
+      const isDashHit = enemy.isDashing();
 
-      if (distance > GameScene.PLAYER_HIT_RADIUS) {
+      if (!isDashHit && this.contactDamageCooldowns.has(enemy)) {
+        continue;
+      }
+
+      if (!this.isPlayerHitByEnemy(enemy, isDashHit)) {
+        continue;
+      }
+
+      if (isDashHit && !enemy.consumeDashHit()) {
         continue;
       }
 
       const hpBeforeDamage = this.playerHealth.currentHp;
-
-      const actualDamage = this.playerHealth.takeDamage(enemy.damage);
+      const damage = isDashHit
+        ? enemy.damage * enemy.dashDamageMultiplier
+        : enemy.damage;
+      const actualDamage = this.playerHealth.takeDamage(damage);
       this.contactDamageCooldowns.set(enemy, GameScene.CONTACT_DAMAGE_COOLDOWN_MS);
 
       if (actualDamage > 0) {
-        this.runStats.recordDamageTaken(actualDamage, this.playerHealth.currentHp);
-
-        if (this.finalBossSpawned) {
-          this.bossPhaseDamageTaken += actualDamage;
-          this.bossPhaseLowestHp = this.bossPhaseLowestHp === 0
-            ? this.playerHealth.currentHp
-            : Math.min(this.bossPhaseLowestHp, this.playerHealth.currentHp);
+        if (isDashHit) {
+          this.bossDashHitCount += 1;
+          this.knockPlayerBack(enemy.getDashDirection());
         }
+
+        this.recordPlayerDamage(actualDamage);
       }
 
       if (this.playerHealth.currentHp < hpBeforeDamage) {
         this.triggerDamageReaction();
       }
     }
+  }
+
+  private updateBossDashImpacts(): void {
+    if (!this.player || !this.playerHealth) {
+      return;
+    }
+
+    for (const enemy of this.enemies) {
+      if (enemy.isDead) {
+        continue;
+      }
+
+      const impactPosition = enemy.consumeDashImpact();
+
+      if (!impactPosition) {
+        continue;
+      }
+
+      const distance = Phaser.Math.Distance.Between(
+        this.player.body.x,
+        this.player.body.y,
+        impactPosition.x,
+        impactPosition.y,
+      );
+
+      if (
+        distance > GameScene.BOSS_DASH_IMPACT_RADIUS
+        || !enemy.consumeDashHit()
+      ) {
+        continue;
+      }
+
+      const actualDamage = this.playerHealth.takeDamage(
+        GameScene.BOSS_DASH_IMPACT_DAMAGE,
+      );
+
+      if (actualDamage <= 0) {
+        continue;
+      }
+
+      this.bossDashHitCount += 1;
+      this.recordPlayerDamage(actualDamage);
+      this.knockPlayerBackFromPoint(impactPosition);
+      this.contactDamageCooldowns.set(enemy, GameScene.CONTACT_DAMAGE_COOLDOWN_MS);
+    }
+  }
+
+  private isPlayerHitByEnemy(enemy: Enemy, isDashHit: boolean): boolean {
+    if (!this.player) {
+      return false;
+    }
+
+    if (isDashHit) {
+      const dashSegment = enemy.getDashSegment();
+
+      if (!dashSegment) {
+        return false;
+      }
+
+      return this.getPointToSegmentDistance(
+        this.player.body.x,
+        this.player.body.y,
+        dashSegment.start.x,
+        dashSegment.start.y,
+        dashSegment.end.x,
+        dashSegment.end.y,
+      ) <= GameScene.BOSS_DASH_HIT_RADIUS;
+    }
+
+    return Phaser.Math.Distance.Between(
+      this.player.body.x,
+      this.player.body.y,
+      enemy.body.x,
+      enemy.body.y,
+    ) <= GameScene.PLAYER_HIT_RADIUS;
+  }
+
+  private getPointToSegmentDistance(
+    pointX: number,
+    pointY: number,
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+  ): number {
+    const segmentX = endX - startX;
+    const segmentY = endY - startY;
+    const segmentLengthSq = segmentX * segmentX + segmentY * segmentY;
+
+    if (segmentLengthSq === 0) {
+      return Phaser.Math.Distance.Between(pointX, pointY, startX, startY);
+    }
+
+    const rawT = (
+      ((pointX - startX) * segmentX + (pointY - startY) * segmentY)
+      / segmentLengthSq
+    );
+    const t = Phaser.Math.Clamp(rawT, 0, 1);
+    const closestX = startX + segmentX * t;
+    const closestY = startY + segmentY * t;
+
+    return Phaser.Math.Distance.Between(pointX, pointY, closestX, closestY);
+  }
+
+  private recordPlayerDamage(actualDamage: number): void {
+    if (!this.playerHealth) {
+      return;
+    }
+
+    AudioManager.play(this, 'player_hit');
+
+    if (this.player) {
+      this.floatingTextManager?.showPlayerDamage(
+        this.player.body.x,
+        this.player.body.y,
+        actualDamage,
+      );
+    }
+
+    this.runStats.recordDamageTaken(actualDamage, this.playerHealth.currentHp);
+
+    if (this.finalBossSpawned) {
+      this.bossPhaseDamageTaken += actualDamage;
+      this.bossPhaseLowestHp = this.bossPhaseLowestHp === 0
+        ? this.playerHealth.currentHp
+        : Math.min(this.bossPhaseLowestHp, this.playerHealth.currentHp);
+    }
+  }
+
+  private knockPlayerBack(direction: Phaser.Math.Vector2): void {
+    if (!this.player) {
+      return;
+    }
+
+    const knockbackDirection = direction.clone();
+
+    if (knockbackDirection.lengthSq() === 0) {
+      knockbackDirection.set(1, 0);
+    }
+
+    knockbackDirection.normalize().scale(GameScene.BOSS_DASH_KNOCKBACK_DISTANCE);
+
+    const radius = this.player.body.radius;
+    this.player.body.x = Phaser.Math.Clamp(
+      this.player.body.x + knockbackDirection.x,
+      radius,
+      GameScene.WORLD_WIDTH - radius,
+    );
+    this.player.body.y = Phaser.Math.Clamp(
+      this.player.body.y + knockbackDirection.y,
+      radius,
+      GameScene.WORLD_HEIGHT - radius,
+    );
+  }
+
+  private knockPlayerBackFromPoint(point: Phaser.Math.Vector2): void {
+    if (!this.player) {
+      return;
+    }
+
+    const direction = new Phaser.Math.Vector2(
+      this.player.body.x - point.x,
+      this.player.body.y - point.y,
+    );
+
+    if (direction.lengthSq() === 0) {
+      direction.set(1, 0);
+    }
+
+    this.knockPlayerBack(direction);
   }
 
   private updateAutoPlayer(deltaMs: number): void {
@@ -751,6 +1013,7 @@ export class GameScene extends Phaser.Scene {
 
   private endGame(resultType: 'gameOver' | 'victory'): void {
     this.isGameOver = true;
+    AudioManager.play(this, resultType === 'victory' ? 'victory' : 'game_over');
     this.emitHUDState();
     const weaponIds = this.weaponManager?.getWeaponIds() ?? [];
     const passiveItems = this.passiveManager?.getPassiveLevels() ?? [];
@@ -798,6 +1061,8 @@ export class GameScene extends Phaser.Scene {
       bossPhaseDamageTaken: this.bossPhaseDamageTaken,
       bossPhaseLowestHp: this.bossPhaseLowestHp,
       bossPhaseKills: this.bossPhaseKills,
+      bossDashCount: this.bossDashCount,
+      bossDashHitCount: this.bossDashHitCount,
       totalUpgradeCount,
       levelUpUpgradeCount: this.levelUpUpgradeCount,
       chestUpgradeCount: this.chestUpgradeCount,
@@ -836,6 +1101,8 @@ export class GameScene extends Phaser.Scene {
       bossPhaseDamageTaken: this.bossPhaseDamageTaken,
       bossPhaseLowestHp: this.bossPhaseLowestHp,
       bossPhaseKills: this.bossPhaseKills,
+      bossDashCount: this.bossDashCount,
+      bossDashHitCount: this.bossDashHitCount,
       totalUpgradeCount,
       levelUpUpgradeCount: this.levelUpUpgradeCount,
       chestUpgradeCount: this.chestUpgradeCount,
@@ -874,7 +1141,66 @@ export class GameScene extends Phaser.Scene {
 
     this.syncPassiveEffects();
     this.playerPickupRange = (this.playerStats?.pickupRange ?? 0) * 48;
+    this.isLevelUpSelectionActive = false;
     this.isGameplayPaused = false;
+  }
+
+  private handleEscapePressed(): void {
+    if (this.isGameOver || this.isLevelUpSelectionActive) {
+      return;
+    }
+
+    if (this.isPauseMenuOpen) {
+      this.resumeFromPauseMenu();
+      return;
+    }
+
+    this.isPauseMenuOpen = true;
+    this.isGameplayPaused = true;
+    this.scene.get('UIScene').events.emit('ShowPauseMenu');
+  }
+
+  private resumeFromPauseMenu(): void {
+    if (!this.isPauseMenuOpen) {
+      return;
+    }
+
+    this.isPauseMenuOpen = false;
+    this.isGameplayPaused = false;
+    this.scene.get('UIScene').events.emit('HidePauseMenu');
+  }
+
+  private restartFromPauseMenu(): void {
+    this.isPauseMenuOpen = false;
+    this.scene.stop('UIScene');
+    this.scene.restart();
+  }
+
+  private backToTitleFromPauseMenu(): void {
+    this.isPauseMenuOpen = false;
+    this.scene.stop('UIScene');
+    this.scene.start('TitleScene');
+  }
+
+  private showEnemyDamageFloatingText(payload: {
+    x: number;
+    y: number;
+    damage: number;
+    isBoss?: boolean;
+  }): void {
+    if (payload.damage <= 0) {
+      return;
+    }
+
+    this.floatingTextManager?.showEnemyDamage(
+      payload.x,
+      payload.y,
+      payload.damage,
+      payload.isBoss === true,
+    );
+    AudioManager.play(this, 'enemy_hit', {
+      autoMode: this.playtestSettings.autoMode,
+    });
   }
 
   private getUpgradeSelectionContext(): UpgradeSelectionContext {
@@ -959,6 +1285,11 @@ export class GameScene extends Phaser.Scene {
     this.unsubscribeEnemyKilled?.();
     this.unsubscribeEnemyKilled = undefined;
     this.uiScene?.events.off('UpgradeSelected', this.handleUpgradeSelected, this);
+    this.uiScene?.events.off('PauseResume', this.resumeFromPauseMenu, this);
+    this.uiScene?.events.off('PauseRestart', this.restartFromPauseMenu, this);
+    this.uiScene?.events.off('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
+    this.events.off('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
+    this.input.keyboard?.off('keydown-ESC', this.handleEscapePressed, this);
     this.uiScene = undefined;
     this.clearGameplayResources();
     this.destroyEnemies();
@@ -966,8 +1297,12 @@ export class GameScene extends Phaser.Scene {
     this.playerHitRange?.destroy();
     this.playerHitRange = undefined;
     this.spawnDirector = undefined;
+    this.bossAttackController?.destroy();
+    this.bossAttackController = undefined;
     this.bossSpawnDirector = undefined;
     this.enemyFactory = undefined;
+    this.floatingTextManager?.destroy();
+    this.floatingTextManager = undefined;
     this.evolutionManager = undefined;
   }
 

@@ -1,15 +1,19 @@
 import Phaser from 'phaser';
 
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { HelpOverlay } from '../ui/HelpOverlay';
+import { UITheme, toCssColor } from '../ui/UITheme';
 
 export class TitleScene extends Phaser.Scene {
   private static readonly AUTO_START_SECONDS = 10;
 
   private statusText?: Phaser.GameObjects.Text;
+  private soundButton?: Phaser.GameObjects.Text;
   private autoStartText?: Phaser.GameObjects.Text;
   private autoStartTimer?: Phaser.Time.TimerEvent;
   private autoStartRemainingSeconds = TitleScene.AUTO_START_SECONDS;
   private autoStartCanceled = false;
+  private helpOverlay?: HelpOverlay;
 
   constructor() {
     super('TitleScene');
@@ -20,23 +24,26 @@ export class TitleScene extends Phaser.Scene {
     const centerY = this.scale.height / 2;
 
     const title = this.add.text(centerX, centerY - 170, 'Vampire Survivor Prototype', {
-      color: '#facc15',
-      fontSize: '40px',
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.titleFontSize,
       fontStyle: 'bold',
     });
     title.setOrigin(0.5);
 
     this.statusText = this.add.text(centerX, centerY - 92, this.formatStatus(), {
-      color: '#cbd5e1',
-      fontSize: '18px',
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.bodyFontSize,
       align: 'center',
       lineSpacing: 8,
     });
     this.statusText.setOrigin(0.5);
 
     this.autoStartText = this.add.text(centerX, centerY - 44, '', {
-      color: '#93c5fd',
-      fontSize: '18px',
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.bodyFontSize,
       align: 'center',
     });
     this.autoStartText.setOrigin(0.5);
@@ -69,6 +76,17 @@ export class TitleScene extends Phaser.Scene {
       this.refreshStatus();
     });
 
+    this.soundButton = this.createButton(centerX, centerY + 190, this.formatSoundLabel(), () => {
+      this.cancelAutoStartCountdown();
+      PlaytestSettings.toggleSoundEnabled();
+      this.refreshSoundButton();
+    });
+
+    this.createButton(centerX, centerY + 254, 'Help', () => {
+      this.cancelAutoStartCountdown();
+      this.showHelpOverlay();
+    });
+
     this.startAutoStartCountdown();
   }
 
@@ -77,10 +95,11 @@ export class TitleScene extends Phaser.Scene {
     y: number,
     label: string,
     onClick: () => void,
-  ): void {
+  ): Phaser.GameObjects.Text {
     const button = this.add.text(x, y, label, {
-      backgroundColor: '#1f2937',
-      color: '#ffffff',
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
       fontSize: '22px',
       padding: {
         x: 22,
@@ -90,11 +109,23 @@ export class TitleScene extends Phaser.Scene {
 
     button.setOrigin(0.5);
     button.setInteractive({ useHandCursor: true });
+    button.on('pointerover', () => {
+      button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
+    });
+    button.on('pointerout', () => {
+      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+    });
     button.on('pointerdown', onClick);
+
+    return button;
   }
 
   private refreshStatus(): void {
     this.statusText?.setText(this.formatStatus());
+  }
+
+  private refreshSoundButton(): void {
+    this.soundButton?.setText(this.formatSoundLabel());
   }
 
   private startAutoStartCountdown(): void {
@@ -144,6 +175,13 @@ export class TitleScene extends Phaser.Scene {
     this.scene.start('GameScene');
   }
 
+  private showHelpOverlay(): void {
+    this.helpOverlay?.destroy();
+    this.helpOverlay = new HelpOverlay(this, () => {
+      this.helpOverlay = undefined;
+    });
+  }
+
   private formatStatus(): string {
     const settings = PlaytestSettings.get();
 
@@ -152,6 +190,10 @@ export class TitleScene extends Phaser.Scene {
       `Fast Mode: ${settings.fastMode ? 'ON' : 'OFF'}`,
       `Time Scale: ${this.getDisplayedTimeScale(settings)}x`,
     ].join('\n');
+  }
+
+  private formatSoundLabel(): string {
+    return `Sound: ${PlaytestSettings.get().soundEnabled ? 'ON' : 'OFF'}`;
   }
 
   private getDisplayedTimeScale(settings: PlaytestSettingsState): number {

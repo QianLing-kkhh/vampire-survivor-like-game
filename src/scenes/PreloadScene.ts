@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
+
 export class PreloadScene extends Phaser.Scene {
   constructor() {
     super('PreloadScene');
@@ -41,10 +43,22 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('knife_icon', '/assets/weapons/knife_icon.png');
     this.load.image('garlic_icon', '/assets/weapons/garlic_icon.png');
     this.load.image('bible_icon', '/assets/weapons/bible_icon.png');
+    this.load.audio('enemy_hit', '/assets/audio/enemy_hit.wav');
+    this.load.audio('enemy_killed', '/assets/audio/enemy_killed.wav');
+    this.load.audio('player_hit', '/assets/audio/player_hit.wav');
+    this.load.audio('level_up', '/assets/audio/level_up.wav');
+    this.load.audio('upgrade_selected', '/assets/audio/upgrade_selected.wav');
+    this.load.audio('treasure_open', '/assets/audio/treasure_open.wav');
+    this.load.audio('boss_spawn', '/assets/audio/boss_spawn.wav');
+    this.load.audio('boss_dash', '/assets/audio/boss_dash.wav');
+    this.load.audio('victory', '/assets/audio/victory.wav');
+    this.load.audio('game_over', '/assets/audio/game_over.wav');
+    this.load.audio('ui_click', '/assets/audio/ui_click.wav');
   }
 
   create(): void {
     this.logTextureStatus();
+    this.logAudioStatus();
     this.scene.start('TitleScene');
   }
 
@@ -82,6 +96,17 @@ export class PreloadScene extends Phaser.Scene {
       }
 
       console.warn(`Texture not loaded: ${textureKey}`);
+    }
+  }
+
+  private logAudioStatus(): void {
+    for (const audioKey of AudioManager.getSupportedKeys()) {
+      if (this.cache.audio.exists(audioKey)) {
+        console.log(`Audio loaded: ${audioKey}`);
+        continue;
+      }
+
+      console.warn(`Audio not loaded: ${audioKey}`);
     }
   }
 }
