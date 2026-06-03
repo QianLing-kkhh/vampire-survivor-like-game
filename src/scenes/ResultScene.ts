@@ -76,6 +76,8 @@ export class ResultScene extends Phaser.Scene {
     this.backgroundImage = this.createBackgroundImage();
     this.hasRestarted = false;
     this.settings = PlaytestSettings.get();
+    AudioManager.playBgm(this, 'result_bgm');
+    AudioManager.playSfx(this, data.resultType === 'victory' ? 'victory' : 'game_over');
     const layout = LayoutConfig.getResultLayout(this.screenManager);
     const centerX = layout.panelCenter.x;
     const centerY = layout.panelCenter.y;
@@ -188,7 +190,7 @@ export class ResultScene extends Phaser.Scene {
     currentCsvButton.setInteractive({ useHandCursor: true });
     this.addButtonHover(currentCsvButton);
     currentCsvButton.on('pointerdown', () => {
-      AudioManager.play(this, 'ui_click');
+      AudioManager.playUi(this, 'ui_click');
       this.cancelAutoRestart();
       this.downloadCsv(this.createCurrentCsvFilename(), playtestCsv);
     });
@@ -207,7 +209,7 @@ export class ResultScene extends Phaser.Scene {
     downloadAllButton.setInteractive({ useHandCursor: true });
     this.addButtonHover(downloadAllButton);
     downloadAllButton.on('pointerdown', () => {
-      AudioManager.play(this, 'ui_click');
+      AudioManager.playUi(this, 'ui_click');
       this.cancelAutoRestart();
       this.downloadAllCsv();
     });
@@ -226,7 +228,7 @@ export class ResultScene extends Phaser.Scene {
     settingsButton.setInteractive({ useHandCursor: true });
     this.addButtonHover(settingsButton);
     settingsButton.on('pointerdown', () => {
-      AudioManager.play(this, 'ui_click');
+      AudioManager.playUi(this, 'ui_click');
       this.cancelAutoRestart();
       this.showSettingsMenu();
     });
@@ -245,7 +247,7 @@ export class ResultScene extends Phaser.Scene {
     restartButton.setInteractive({ useHandCursor: true });
     this.addButtonHover(restartButton);
     restartButton.on('pointerdown', () => {
-      AudioManager.play(this, 'ui_click');
+      AudioManager.playUi(this, 'ui_click');
       this.cancelAutoRestart();
       this.restartGame();
     });
@@ -264,7 +266,7 @@ export class ResultScene extends Phaser.Scene {
     titleButton.setInteractive({ useHandCursor: true });
     this.addButtonHover(titleButton);
     titleButton.on('pointerdown', () => {
-      AudioManager.play(this, 'ui_click');
+      AudioManager.playUi(this, 'ui_click');
       this.cancelAutoRestart();
       this.scene.stop('UIScene');
       this.scene.stop('GameScene');

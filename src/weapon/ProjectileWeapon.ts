@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
 import { Enemy } from '../enemy/Enemy';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
@@ -91,6 +92,11 @@ export class ProjectileWeapon extends Weapon {
         hitEnemies: new Set<Enemy>(),
       });
     }
+
+    AudioManager.playWeapon(
+      this.scene,
+      this.id === 'thousand_edge' ? 'thousand_edge_attack' : 'knife_attack',
+    );
   }
 
   private getDirection(

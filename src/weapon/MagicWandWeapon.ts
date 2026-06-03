@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
 import { Enemy } from '../enemy/Enemy';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
@@ -92,6 +93,11 @@ export class MagicWandWeapon extends Weapon {
         ageMs: 0,
       });
     }
+
+    AudioManager.playWeapon(
+      this.scene,
+      this.id === 'holy_wand' ? 'holy_wand_shot' : 'magic_wand_shot',
+    );
   }
 
   private updateProjectiles(context: WeaponUpdateContext): void {

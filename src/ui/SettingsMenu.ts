@@ -88,8 +88,24 @@ export class SettingsMenu {
         action: () => this.toggle(() => PlaytestSettings.toggleEndlessMode()),
       },
       {
-        label: `${this.t('settings.sound', I18n.t('common.sound'))}: ${this.formatOnOff(settings.soundEnabled)}`,
-        action: () => this.toggle(() => PlaytestSettings.toggleSoundEnabled()),
+        label: `${this.t('settings.audio', 'Audio')}: ${this.formatOnOff(settings.audioEnabled)}`,
+        action: () => this.toggle(() => AudioManager.setAudioEnabled(!AudioManager.isAudioEnabled())),
+      },
+      {
+        label: `${this.t('settings.bgmVolume', 'BGM Volume')}: ${this.formatVolume(settings.bgmVolume)}`,
+        action: () => this.toggle(() => this.cycleVolume('bgm')),
+      },
+      {
+        label: `${this.t('settings.sfxVolume', 'SFX Volume')}: ${this.formatVolume(settings.sfxVolume)}`,
+        action: () => this.toggle(() => this.cycleVolume('sfx')),
+      },
+      {
+        label: `${this.t('settings.weaponVolume', 'Weapon Volume')}: ${this.formatVolume(settings.weaponVolume)}`,
+        action: () => this.toggle(() => this.cycleVolume('weapon')),
+      },
+      {
+        label: `${this.t('settings.uiVolume', 'UI Volume')}: ${this.formatVolume(settings.uiVolume)}`,
+        action: () => this.toggle(() => this.cycleVolume('ui')),
       },
       {
         label: `${this.t('settings.language', I18n.t('common.language'))}: ${I18n.getLocaleDisplayName()}`,
@@ -103,7 +119,7 @@ export class SettingsMenu {
       {
         label: this.t('settings.back', I18n.t('common.close')),
         action: () => {
-          AudioManager.play(this.scene, 'ui_click');
+          AudioManager.playUi(this.scene, 'ui_click');
           this.onClose();
         },
       },
@@ -148,7 +164,7 @@ export class SettingsMenu {
       button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
     });
     button.on('pointerdown', () => {
-      AudioManager.play(this.scene, 'ui_click');
+      AudioManager.playUi(this.scene, 'ui_click');
       onClick();
     });
 
@@ -198,6 +214,19 @@ export class SettingsMenu {
 
   private formatOnOff(enabled: boolean): string {
     return enabled ? I18n.t('common.on') : I18n.t('common.off');
+  }
+
+  private cycleVolume(channel: 'bgm' | 'sfx' | 'weapon' | 'ui'): void {
+    const currentVolume = AudioManager.getChannelVolume(channel);
+    const steps = [0, 0.25, 0.5, 0.75, 1];
+    const currentIndex = steps.findIndex((step) => Math.abs(step - currentVolume) < 0.01);
+    const nextVolume = steps[(currentIndex + 1) % steps.length];
+
+    AudioManager.setChannelVolume(channel, nextVolume);
+  }
+
+  private formatVolume(volume: number): string {
+    return `${Math.round(volume * 100)}%`;
   }
 
   private t(key: string, fallback: string): string {

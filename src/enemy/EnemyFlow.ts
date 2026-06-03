@@ -52,7 +52,7 @@ export class EnemyFlow {
       }
 
       this.config.runState.recordKill();
-      AudioManager.play(this.config.scene, 'enemy_killed', {
+      AudioManager.playSfx(this.config.scene, 'enemy_killed', {
         autoMode: this.config.playtestSettings.autoMode,
       });
 
@@ -79,7 +79,7 @@ export class EnemyFlow {
   }
 
   recordPlayerDamage(actualDamage: number): void {
-    AudioManager.play(this.config.scene, 'player_hit');
+    AudioManager.playSfx(this.config.scene, 'player_hit');
     this.config.floatingTextManager.showPlayerDamage(
       this.config.player.body.x,
       this.config.player.body.y,

@@ -118,7 +118,7 @@ export class TreasureManager {
 
   private applyRandomUpgrade(): void {
     this.onChestOpened?.();
-    AudioManager.play(this.scene, 'treasure_open');
+    AudioManager.playSfx(this.scene, 'treasure_open');
     const result = this.upgradeFlow.applyTreasureReward();
 
     if (result.type === 'none') {

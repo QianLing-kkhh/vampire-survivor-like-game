@@ -360,7 +360,7 @@ export class PauseMenu {
       button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
     });
     button.on('pointerdown', () => {
-      AudioManager.play(this.scene, 'ui_click');
+      AudioManager.playUi(this.scene, 'ui_click');
       onClick();
     });
     this.container.add(button);

@@ -136,8 +136,8 @@ export class LevelUpPanel {
     });
 
     optionBackground.on('pointerdown', () => {
-      AudioManager.play(scene, 'ui_click');
-      AudioManager.play(scene, 'upgrade_selected');
+      AudioManager.playUi(scene, 'ui_click');
+      AudioManager.playSfx(scene, 'upgrade_selected');
       this.onSelected(option);
     });
 
@@ -212,7 +212,7 @@ export class LevelUpPanel {
     }
 
     this.autoSelectTimer = scene.time.delayedCall(config.autoSelectDelayMs, () => {
-      AudioManager.play(scene, 'upgrade_selected');
+      AudioManager.playSfx(scene, 'upgrade_selected');
       onSelected(selectedOption);
     });
   }

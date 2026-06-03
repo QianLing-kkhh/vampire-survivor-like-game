@@ -148,7 +148,8 @@ export class BossController {
     this.finalBossSpawnTime = timeSeconds;
     this.config.runState.setBossPhaseInitialHp(this.config.playerHealth.currentHp);
     this.bossAttackController = new BossAttackController(this.config.scene, boss);
-    AudioManager.play(this.config.scene, 'boss_spawn');
+    AudioManager.playSfx(this.config.scene, 'boss_spawn');
+    AudioManager.playBgm(this.config.scene, 'boss_bgm');
     this.config.onCenterMessage('Boss Appears!');
   }
 
@@ -197,7 +198,7 @@ export class BossController {
 
     if (boss.consumeDashStarted()) {
       this.config.runState.recordBossDash();
-      AudioManager.play(this.config.scene, 'boss_dash');
+      AudioManager.playSfx(this.config.scene, 'boss_dash');
     }
 
     if (!dashHandledMovement) {

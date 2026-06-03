@@ -102,7 +102,7 @@ export class HelpOverlay {
       this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
     });
     this.closeButton.on('pointerdown', () => {
-      AudioManager.play(scene, 'ui_click');
+      AudioManager.playUi(scene, 'ui_click');
       this.destroy();
       onClose?.();
     });

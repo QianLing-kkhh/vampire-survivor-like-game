@@ -120,6 +120,23 @@ export class PreloadScene extends Phaser.Scene {
     this.load.audio('victory', 'assets/audio/victory.wav');
     this.load.audio('game_over', 'assets/audio/game_over.wav');
     this.load.audio('ui_click', 'assets/audio/ui_click.wav');
+    this.load.audio('title_bgm', 'assets/audio/bgm/title_bgm.wav');
+    this.load.audio('gameplay_bgm', 'assets/audio/bgm/gameplay_bgm.wav');
+    this.load.audio('boss_bgm', 'assets/audio/bgm/boss_bgm.wav');
+    this.load.audio('result_bgm', 'assets/audio/bgm/result_bgm.wav');
+    this.load.audio('knife_attack', 'assets/audio/weapon/knife_attack.wav');
+    this.load.audio('axe_throw', 'assets/audio/weapon/axe_throw.wav');
+    this.load.audio('magic_wand_shot', 'assets/audio/weapon/magic_wand_shot.wav');
+    this.load.audio('bible_orbit_hit', 'assets/audio/weapon/bible_orbit_hit.wav');
+    this.load.audio('garlic_aura_tick', 'assets/audio/weapon/garlic_aura_tick.wav');
+    this.load.audio('thousand_edge_attack', 'assets/audio/weapon/thousand_edge_attack.wav');
+    this.load.audio('holy_wand_shot', 'assets/audio/weapon/holy_wand_shot.wav');
+    this.load.audio('death_spiral_throw', 'assets/audio/weapon/death_spiral_throw.wav');
+    this.load.audio('unholy_vespers_hit', 'assets/audio/weapon/unholy_vespers_hit.wav');
+    this.load.audio('soul_eater_tick', 'assets/audio/weapon/soul_eater_tick.wav');
+    this.load.audio('ui_hover', 'assets/audio/ui/ui_hover.wav');
+    this.load.audio('ui_back', 'assets/audio/ui/ui_back.wav');
+    this.load.audio('ui_confirm', 'assets/audio/ui/ui_confirm.wav');
   }
 
   create(): void {

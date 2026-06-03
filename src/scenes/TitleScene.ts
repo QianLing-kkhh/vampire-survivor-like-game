@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
@@ -36,6 +37,7 @@ export class TitleScene extends Phaser.Scene {
     const centerX = this.screenManager.centerX;
     const centerY = this.screenManager.centerY;
     this.backgroundImage = this.createBackgroundImage();
+    AudioManager.playBgm(this, 'title_bgm');
 
     this.titleText = this.add.text(centerX, centerY - 170, I18n.t('title.gameTitle'), {
       color: UITheme.textColor,

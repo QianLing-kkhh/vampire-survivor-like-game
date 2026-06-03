@@ -165,6 +165,7 @@ export class GameScene extends Phaser.Scene {
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
 
+    AudioManager.playBgm(this, 'gameplay_bgm');
     this.physics.world.setBounds(0, 0, GameScene.WORLD_WIDTH, GameScene.WORLD_HEIGHT);
     this.cameras.main.setBounds(0, 0, GameScene.WORLD_WIDTH, GameScene.WORLD_HEIGHT);
     new WorldRenderer(this).render();
@@ -214,7 +215,8 @@ export class GameScene extends Phaser.Scene {
         onBossSpawned: (boss) => {
           boss.setEventBus(this.eventBus);
           this.enemies.push(boss);
-          AudioManager.play(this, 'boss_spawn');
+          AudioManager.playSfx(this, 'boss_spawn');
+          AudioManager.playBgm(this, 'boss_bgm');
           this.showCenterMessage('Boss Appears!');
         },
         onCenterMessage: (message) => this.showCenterMessage(message),
@@ -239,7 +241,7 @@ export class GameScene extends Phaser.Scene {
 
     this.unsubscribeLevelUp = this.eventBus.subscribe('LevelUp', (event) => {
       console.log('LevelUp', event);
-      AudioManager.play(this, 'level_up');
+      AudioManager.playSfx(this, 'level_up');
       const healAmount = this.playerHealth?.healLostHpRatio(
         GameScene.LEVEL_UP_HEAL_LOST_HP_RATIO,
       ) ?? 0;
@@ -446,7 +448,8 @@ export class GameScene extends Phaser.Scene {
     if (this.gameplayContext) {
       this.gameplayContext.bossAttackController = this.bossAttackController;
     }
-    AudioManager.play(this, 'boss_spawn');
+    AudioManager.playSfx(this, 'boss_spawn');
+    AudioManager.playBgm(this, 'boss_bgm');
     this.showCenterMessage('Boss Appears!');
   }
 
@@ -670,7 +673,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    AudioManager.play(this, 'player_hit');
+    AudioManager.playSfx(this, 'player_hit');
 
     if (this.player) {
       this.floatingTextManager?.showPlayerDamage(
@@ -913,7 +916,6 @@ export class GameScene extends Phaser.Scene {
 
   private endGame(resultType: 'gameOver' | 'victory'): void {
     this.isGameOver = true;
-    AudioManager.play(this, resultType === 'victory' ? 'victory' : 'game_over');
     this.emitHUDState();
     const survivalTime = this.timeManager.gameTimeSeconds;
     const resultData = this.runResultBuilder.build({
@@ -1119,7 +1121,7 @@ export class GameScene extends Phaser.Scene {
       payload.damage,
       payload.isBoss === true,
     );
-    AudioManager.play(this, 'enemy_hit', {
+    AudioManager.playSfx(this, 'enemy_hit', {
       autoMode: this.playtestSettings.autoMode,
     });
   }
