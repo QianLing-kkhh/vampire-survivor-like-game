@@ -211,7 +211,17 @@ export class AudioManager {
     PlaytestSettings.setAudioChannelVolume(channel, volume);
 
     if (channel === 'bgm' && AudioManager.currentBgm) {
-      AudioManager.currentBgm.setVolume(AudioManager.getChannelVolume('bgm'));
+      const bgm = AudioManager.currentBgm as Phaser.Sound.BaseSound & {
+        setVolume?: (volume: number) => Phaser.Sound.BaseSound;
+        volume?: number;
+      };
+      const bgmVolume = AudioManager.getChannelVolume('bgm');
+
+      if (bgm.setVolume) {
+        bgm.setVolume(bgmVolume);
+      } else {
+        bgm.volume = bgmVolume;
+      }
     }
   }
 

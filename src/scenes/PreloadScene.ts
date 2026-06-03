@@ -71,6 +71,9 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('slime', 'assets/enemy/slime_placeholder.png');
     this.load.image('bat', 'assets/enemy/bat_placeholder.png');
     this.load.image('golem', 'assets/enemy/golem_placeholder.png');
+    this.load.image('slime_boss', 'assets/art/enemies/slime_boss_placeholder.png');
+    this.load.image('bat_boss', 'assets/art/enemies/bat_boss_placeholder.png');
+    this.load.image('golem_boss', 'assets/art/enemies/golem_boss_placeholder.png');
     this.load.image('exp_gem', 'assets/pickup/exp_gem_placeholder.png');
     this.load.image('knife_projectile', 'assets/effects/knife_projectile.png');
     this.load.image('hit_flash', 'assets/effects/hit_flash.png');
@@ -96,12 +99,24 @@ export class PreloadScene extends Phaser.Scene {
       'assets/images/unholy_vespers_orbit_book.png',
     );
     this.load.image('soul_eater_core', 'assets/images/soul_eater_core.png');
-    this.load.image('hp_icon', 'assets/ui/hp_icon.png');
-    this.load.image('exp_icon', 'assets/ui/exp_icon.png');
-    this.load.image('time_icon', 'assets/ui/time_icon.png');
+    this.load.image('hp_icon', 'assets/art/ui/hp_icon.png');
+    this.load.image('exp_icon', 'assets/art/ui/exp_icon.png');
+    this.load.image('time_icon', 'assets/art/ui/time_icon.png');
     this.load.image('knife_icon', 'assets/weapons/knife_icon.png');
     this.load.image('garlic_icon', 'assets/weapons/garlic_icon.png');
     this.load.image('bible_icon', 'assets/weapons/bible_icon.png');
+    this.load.image('axe_icon', 'assets/art/weapons/axe_icon.png');
+    this.load.image('magic_wand_icon', 'assets/art/weapons/magic_wand_icon.png');
+    this.load.image('thousand_edge_icon', 'assets/art/weapons/thousand_edge_icon.png');
+    this.load.image('holy_wand_icon', 'assets/art/weapons/holy_wand_icon.png');
+    this.load.image('death_spiral_icon', 'assets/art/weapons/death_spiral_icon.png');
+    this.load.image('unholy_vespers_icon', 'assets/art/weapons/unholy_vespers_icon.png');
+    this.load.image('soul_eater_icon', 'assets/art/weapons/soul_eater_icon.png');
+    this.load.image('spinach_icon', 'assets/art/passives/spinach_icon.png');
+    this.load.image('empty_tome_icon', 'assets/art/passives/empty_tome_icon.png');
+    this.load.image('bracer_icon', 'assets/art/passives/bracer_icon.png');
+    this.load.image('clover_icon', 'assets/art/passives/clover_icon.png');
+    this.load.image('pummarola_icon', 'assets/art/passives/pummarola_icon.png');
     this.load.image('art_ui_title_bg', 'assets/art/ui/panel_bg.png');
     this.load.image('art_ui_result_bg', 'assets/art/ui/panel_bg.png');
     this.load.image('art_ui_pause_panel_bg', 'assets/art/ui/panel_bg.png');
@@ -193,6 +208,9 @@ export class PreloadScene extends Phaser.Scene {
       'slime',
       'bat',
       'golem',
+      'slime_boss',
+      'bat_boss',
+      'golem_boss',
       'exp_gem',
       'knife_projectile',
       'hit_flash',
@@ -212,6 +230,18 @@ export class PreloadScene extends Phaser.Scene {
       'knife_icon',
       'garlic_icon',
       'bible_icon',
+      'axe_icon',
+      'magic_wand_icon',
+      'thousand_edge_icon',
+      'holy_wand_icon',
+      'death_spiral_icon',
+      'unholy_vespers_icon',
+      'soul_eater_icon',
+      'spinach_icon',
+      'empty_tome_icon',
+      'bracer_icon',
+      'clover_icon',
+      'pummarola_icon',
       'art_ui_title_bg',
       'art_ui_result_bg',
       'art_ui_pause_panel_bg',

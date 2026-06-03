@@ -99,11 +99,11 @@ export class EnemyFactory {
       case 'boss':
         return 'art_enemies_boss_lava_beast_idle_sheet';
       case 'slime_boss':
-        return 'art_enemies_slime_boss_placeholder';
+        return 'slime_boss';
       case 'bat_boss':
-        return 'art_enemies_bat_boss_placeholder';
+        return 'bat_boss';
       case 'golem_boss':
-        return 'art_enemies_golem_boss_placeholder';
+        return 'golem_boss';
       default:
         return undefined;
     }
