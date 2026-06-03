@@ -86,15 +86,15 @@ export class ResultScene extends Phaser.Scene {
     const isVictory = data.resultType === 'victory';
     const isEndlessResult = data.endlessStarted === true;
     const weaponText = data.weaponIds && data.weaponIds.length > 0
-      ? data.weaponIds.join(', ')
+      ? this.truncateList(data.weaponIds)
       : I18n.t('common.none');
     const passiveText = data.passiveItems && data.passiveItems.length > 0
-      ? data.passiveItems
+      ? this.truncateList(data.passiveItems
         .map((passive) => `${passive.name} Lv${passive.level}`)
-        .join(', ')
+        , 4)
       : I18n.t('common.none');
     const evolutionPathText = data.evolutionPath && data.evolutionPath.length > 0
-      ? data.evolutionPath.join(' > ')
+      ? this.truncateList(data.evolutionPath, 3)
       : I18n.t('common.none');
     const playtestCsv = data.playtestCsv ?? '';
 
@@ -126,21 +126,19 @@ export class ResultScene extends Phaser.Scene {
         `${I18n.t('result.weapons')}: ${weaponText}`,
         `${I18n.t('result.passives')}: ${passiveText}`,
         `${I18n.t('result.evolutionPath')}: ${evolutionPathText}`,
-        `${I18n.t('result.treasureDrops')}: ${data.treasureDropCount ?? 0}`,
         `${I18n.t('result.treasureOpens')}: ${data.treasureOpenCount ?? 0}`,
         `${I18n.t('result.chestUpgrades')}: ${data.chestUpgradeCount ?? 0}`,
         `${I18n.t('result.chestEvolutions')}: ${data.chestEvolutionCount ?? 0}`,
-        `${I18n.t('result.totalRewards')}: ${data.totalRewardCount ?? 0}`,
         `${I18n.t('result.bossDashes')}: ${data.bossDashCount ?? 0}`,
         `${I18n.t('result.bossDashHits')}: ${data.bossDashHitCount ?? 0}`,
-        ...(isEndlessResult ? this.formatLeaderboardLines(data.endlessLeaderboardEntries ?? []) : []),
+        ...(isEndlessResult ? this.formatLeaderboardLines(data.endlessLeaderboardEntries ?? []).slice(0, 4) : []),
       ],
       {
         color: UITheme.textColor,
         fontFamily: UITheme.fontFamily,
         fontSize: layout.fontSize,
         align: 'center',
-        lineSpacing: 5,
+        lineSpacing: isPortrait ? 3 : 5,
         wordWrap: { width: Math.min(this.scale.width - 24, 760) },
       },
     );
@@ -148,7 +146,7 @@ export class ResultScene extends Phaser.Scene {
 
     this.csvLogText = this.add.text(
       centerX,
-      isPortrait ? this.scale.height - 238 : centerY + 78,
+      layout.buttonArea.y - (isPortrait ? 88 : 76),
       this.formatCsvLogText(),
       {
       color: UITheme.mutedTextColor,
@@ -160,7 +158,7 @@ export class ResultScene extends Phaser.Scene {
     );
     this.csvLogText.setOrigin(0.5);
 
-    this.settingsText = this.add.text(centerX, isPortrait ? this.scale.height - 210 : centerY + 130, this.formatSettingsText(), {
+    this.settingsText = this.add.text(centerX, layout.buttonArea.y - (isPortrait ? 64 : 48), this.formatSettingsText(), {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
       fontSize: UITheme.smallFontSize,
@@ -168,7 +166,7 @@ export class ResultScene extends Phaser.Scene {
     });
     this.settingsText.setOrigin(0.5);
 
-    this.autoRestartText = this.add.text(centerX, isPortrait ? this.scale.height - 188 : centerY + 154, '', {
+    this.autoRestartText = this.add.text(centerX, layout.buttonArea.y - (isPortrait ? 42 : 24), '', {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
       fontSize: UITheme.smallFontSize,
@@ -297,6 +295,14 @@ export class ResultScene extends Phaser.Scene {
     const seconds = totalSeconds % 60;
 
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private truncateList(items: readonly string[], maxItems = 5): string {
+    if (items.length <= maxItems) {
+      return items.join(', ');
+    }
+
+    return `${items.slice(0, maxItems).join(', ')} +${items.length - maxItems} more`;
   }
 
   private formatLeaderboardLines(entries: EndlessLeaderboardEntry[]): string[] {

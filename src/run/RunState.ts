@@ -6,6 +6,7 @@ export class RunState {
   chestUpgradeCount = 0;
   chestEvolutionCount = 0;
   duplicateOrInvalidUpgradeCount = 0;
+  skippedLevelUpCount = 0;
   upgradePath: string[] = [];
   treasureUpgradePath: string[] = [];
   evolutionPath: string[] = [];
@@ -23,6 +24,11 @@ export class RunState {
   endlessEnemyKills = 0;
   endlessDamageTaken = 0;
   endlessLeaderboardRank = 0;
+  endlessScalingLevel = 0;
+  endlessHpMultiplier = 1;
+  endlessDamageMultiplier = 1;
+  endlessSpeedMultiplier = 1;
+  endlessExpMultiplier = 1;
 
   reset(): void {
     this.killCount = 0;
@@ -32,6 +38,7 @@ export class RunState {
     this.chestUpgradeCount = 0;
     this.chestEvolutionCount = 0;
     this.duplicateOrInvalidUpgradeCount = 0;
+    this.skippedLevelUpCount = 0;
     this.upgradePath = [];
     this.treasureUpgradePath = [];
     this.evolutionPath = [];
@@ -49,6 +56,11 @@ export class RunState {
     this.endlessEnemyKills = 0;
     this.endlessDamageTaken = 0;
     this.endlessLeaderboardRank = 0;
+    this.endlessScalingLevel = 0;
+    this.endlessHpMultiplier = 1;
+    this.endlessDamageMultiplier = 1;
+    this.endlessSpeedMultiplier = 1;
+    this.endlessExpMultiplier = 1;
   }
 
   recordKill(): void {
@@ -93,6 +105,10 @@ export class RunState {
     this.duplicateOrInvalidUpgradeCount += 1;
   }
 
+  recordSkippedLevelUp(): void {
+    this.skippedLevelUpCount += 1;
+  }
+
   recordBossDash(): void {
     this.bossDashCount += 1;
   }
@@ -125,6 +141,7 @@ export class RunState {
     }
 
     this.endlessSurvivalTime = Math.max(0, gameTimeSeconds - this.endlessStartTime);
+    this.updateEndlessScaling(this.endlessSurvivalTime);
   }
 
   recordEndlessDamage(damage: number): void {
@@ -154,5 +171,15 @@ export class RunState {
 
   get totalRewardCount(): number {
     return this.levelUpUpgradeCount + this.chestUpgradeCount + this.chestEvolutionCount;
+  }
+
+  private updateEndlessScaling(endlessTimeSeconds: number): void {
+    const scalingLevel = Math.floor(Math.max(0, endlessTimeSeconds) / 60);
+
+    this.endlessScalingLevel = scalingLevel;
+    this.endlessHpMultiplier = 1 + scalingLevel * 0.35;
+    this.endlessDamageMultiplier = 1 + scalingLevel * 0.20;
+    this.endlessSpeedMultiplier = Math.min(1 + scalingLevel * 0.05, 1.5);
+    this.endlessExpMultiplier = 1 + scalingLevel * 0.15;
   }
 }

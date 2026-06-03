@@ -37,7 +37,11 @@ import { UpgradeOption } from '../progression/UpgradeOption';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunResultBuilder } from '../run/RunResultBuilder';
 import { RunState } from '../run/RunState';
-import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
+import {
+  PlaytestSettingName,
+  PlaytestSettings,
+  PlaytestSettingsState,
+} from '../settings/PlaytestSettings';
 import { SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -100,6 +104,7 @@ export class GameScene extends Phaser.Scene {
   private readonly centerMessages = new Set<Phaser.GameObjects.Text>();
   private unsubscribeLevelUp?: () => void;
   private unsubscribeEnemyKilled?: () => void;
+  private unsubscribeSettings?: () => void;
   private uiScene?: Phaser.Scene;
   private playerPickupRange = 0;
   private readonly runState = new RunState();
@@ -110,6 +115,7 @@ export class GameScene extends Phaser.Scene {
   private isLevelUpSelectionActive = false;
   private isPauseMenuOpen = false;
   private isGameOver = false;
+  private currentLevelUpOptions: UpgradeOption[] = [];
   private finalBossWarningShown = false;
   private finalBossSpawned = false;
   private finalBossDefeated = false;
@@ -128,6 +134,8 @@ export class GameScene extends Phaser.Scene {
     this.eventBus = new EventBus<GameEventMap>();
     this.unsubscribeLevelUp = undefined;
     this.unsubscribeEnemyKilled = undefined;
+    this.unsubscribeSettings?.();
+    this.unsubscribeSettings = undefined;
     this.playtestSettings = PlaytestSettings.get();
     this.runState.reset();
     this.runId = PlaytestLog.createRunId();
@@ -143,6 +151,7 @@ export class GameScene extends Phaser.Scene {
     this.isLevelUpSelectionActive = false;
     this.isPauseMenuOpen = false;
     this.isGameOver = false;
+    this.currentLevelUpOptions = [];
     this.spawnDirector = undefined;
     this.bossSpawnDirector = undefined;
     this.bossAttackController = undefined;
@@ -223,6 +232,9 @@ export class GameScene extends Phaser.Scene {
       },
     });
     this.applyGameplayContext(context);
+    this.unsubscribeSettings = PlaytestSettings.subscribe((settingName, state) => {
+      this.handleSettingsChanged(settingName, state);
+    });
     context.virtualJoystick.setGameplayActive(!this.playtestSettings.autoMode);
     this.createOrientationOverlay();
     this.scale.on('resize', this.handleResize, this);
@@ -255,8 +267,6 @@ export class GameScene extends Phaser.Scene {
       }
 
       this.emitHUDState();
-      this.isGameplayPaused = true;
-      this.isLevelUpSelectionActive = true;
       const selectedOptions = (this.upgradeFlow?.getLevelUpOptions() ?? [])
         .map((option) => ({
           ...option,
@@ -265,20 +275,19 @@ export class GameScene extends Phaser.Scene {
             this.evolutionManager,
           ),
         }));
-      const autoSelectedOption = this.playtestSettings.autoMode
-        ? this.upgradeFlow?.chooseAutoUpgrade(selectedOptions)
-        : undefined;
 
-      uiScene.events.emit(
-        'ShowLevelUpOptions',
-        this.playtestSettings.autoMode
-          ? {
-            options: selectedOptions,
-            autoSelectOptionId: autoSelectedOption?.id,
-            autoSelectDelayMs: 300,
-          }
-          : selectedOptions,
-      );
+      if (selectedOptions.length === 0) {
+        this.runState.recordSkippedLevelUp();
+        console.log('LevelUp skipped: no upgrades available');
+        this.currentLevelUpOptions = [];
+        uiScene.events.emit('ShowTemporaryMessage', 'No upgrades available');
+        return;
+      }
+
+      this.isGameplayPaused = true;
+      this.isLevelUpSelectionActive = true;
+      this.currentLevelUpOptions = selectedOptions;
+      this.refreshLevelUpPanelAutoSelection();
     });
     uiScene.events.on('UpgradeSelected', this.handleUpgradeSelected, this);
     uiScene.events.on('PauseResume', this.resumeFromPauseMenu, this);
@@ -363,6 +372,128 @@ export class GameScene extends Phaser.Scene {
     this.floatingTextManager = context.floatingTextManager;
     this.virtualJoystick = context.virtualJoystick;
     this.playerPickupRange = context.playerPickupRange;
+  }
+
+  private handleSettingsChanged(
+    settingName: PlaytestSettingName,
+    state: PlaytestSettingsState,
+  ): void {
+    const previousSettings = this.playtestSettings;
+
+    this.playtestSettings = state;
+    this.syncRuntimeSettingsToContext();
+
+    if (settingName === 'autoMode') {
+      this.handleAutoModeChanged(previousSettings.autoMode, state.autoMode);
+    }
+
+    if (settingName === 'endlessMode') {
+      this.handleEndlessModeChanged(previousSettings.endlessMode, state.endlessMode);
+    }
+
+    if (
+      settingName === 'audioEnabled'
+      || settingName === 'bgmVolume'
+      || settingName === 'settings'
+    ) {
+      this.syncCurrentBgm();
+    }
+
+    this.emitHUDState();
+  }
+
+  private syncRuntimeSettingsToContext(): void {
+    if (!this.gameplayContext) {
+      return;
+    }
+
+    this.gameplayContext.playtestSettings = this.playtestSettings;
+    this.gameplayContext.autoMode = this.playtestSettings.autoMode;
+    this.gameplayContext.fastMode = this.playtestSettings.fastMode;
+    this.gameplayContext.endlessMode = this.playtestSettings.endlessMode;
+    this.gameplayContext.timeScale = this.getGameplayTimeScale();
+    this.runState.endlessMode = this.playtestSettings.endlessMode;
+  }
+
+  private handleAutoModeChanged(previousAutoMode: boolean, autoMode: boolean): void {
+    if (!autoMode) {
+      this.player?.clearExternalMoveDirection();
+    }
+
+    if (!this.isGameplayPaused && !this.isLevelUpSelectionActive) {
+      this.virtualJoystick?.setGameplayActive(!autoMode);
+    }
+
+    if (previousAutoMode !== autoMode && this.isLevelUpSelectionActive) {
+      this.refreshLevelUpPanelAutoSelection();
+    }
+  }
+
+  private handleEndlessModeChanged(
+    previousEndlessMode: boolean,
+    endlessMode: boolean,
+  ): void {
+    if (previousEndlessMode === endlessMode) {
+      return;
+    }
+
+    if (!endlessMode && this.runState.endlessStarted && !this.isGameOver) {
+      this.endGame('victory');
+      return;
+    }
+
+    if (endlessMode) {
+      this.startEndlessIfBossAlreadyKilled();
+    }
+  }
+
+  private refreshLevelUpPanelAutoSelection(): void {
+    if (!this.uiScene || !this.isLevelUpSelectionActive) {
+      return;
+    }
+
+    if (this.playtestSettings.autoMode) {
+      const autoSelectedOption = this.upgradeFlow?.chooseAutoUpgrade(this.currentLevelUpOptions);
+
+      this.uiScene.events.emit('ShowLevelUpOptions', {
+        options: this.currentLevelUpOptions,
+        autoSelectOptionId: autoSelectedOption?.id,
+        autoSelectDelayMs: 300,
+      });
+      return;
+    }
+
+    this.uiScene.events.emit('ShowLevelUpOptions', this.currentLevelUpOptions);
+  }
+
+  private startEndlessIfBossAlreadyKilled(): void {
+    if (
+      !this.gameplayContext
+      || this.runState.endlessStarted
+      || !this.gameplayContext.bossController.hasBossBeenKilled()
+    ) {
+      return;
+    }
+
+    this.runState.startEndless(this.timeManager.gameTimeSeconds);
+    this.endlessManager?.start(this.timeManager.gameTimeSeconds);
+  }
+
+  private syncCurrentBgm(): void {
+    if (this.isGameOver || !AudioManager.isAudioEnabled()) {
+      return;
+    }
+
+    if (AudioManager.getChannelVolume('bgm') <= 0) {
+      return;
+    }
+
+    if (this.gameplayContext?.bossController.hasBossSpawned()) {
+      AudioManager.playBgm(this, 'boss_bgm');
+      return;
+    }
+
+    AudioManager.playBgm(this, 'gameplay_bgm');
   }
 
   private emitHUDState(): void {
@@ -952,6 +1083,7 @@ export class GameScene extends Phaser.Scene {
     this.upgradeFlow?.applyLevelUpUpgrade(option);
     this.isLevelUpSelectionActive = false;
     this.isGameplayPaused = false;
+    this.currentLevelUpOptions = [];
     this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMode);
   }
 
@@ -1239,6 +1371,8 @@ export class GameScene extends Phaser.Scene {
     this.unsubscribeLevelUp = undefined;
     this.unsubscribeEnemyKilled?.();
     this.unsubscribeEnemyKilled = undefined;
+    this.unsubscribeSettings?.();
+    this.unsubscribeSettings = undefined;
     this.uiScene?.events.off('UpgradeSelected', this.handleUpgradeSelected, this);
     this.uiScene?.events.off('PauseResume', this.resumeFromPauseMenu, this);
     this.uiScene?.events.off('PauseRestart', this.restartFromPauseMenu, this);

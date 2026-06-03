@@ -40,6 +40,14 @@ export class LevelUpPanel {
     this.container = scene.add.container(0, 0);
     this.container.setDepth(1000);
     this.layout(scene);
+
+    if (options.length === 0) {
+      scene.time.delayedCall(900, () => {
+        this.destroy();
+      });
+      return;
+    }
+
     this.unsubscribeResize = this.screenManager.onResize(() => {
       this.layout(scene);
     });
@@ -74,6 +82,17 @@ export class LevelUpPanel {
     title.setOrigin(0.5);
     this.container.add(title);
 
+    if (this.options.length === 0) {
+      const emptyText = scene.add.text(0, 8, 'No upgrades available', {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: layout.fontSize,
+      });
+      emptyText.setOrigin(0.5);
+      this.container.add(emptyText);
+      return;
+    }
+
     this.options.forEach((option, index) => {
       this.addOption(scene, option, index);
     });
@@ -107,8 +126,9 @@ export class LevelUpPanel {
       wordWrap: { width: layout.cardWidth - 36 },
     });
 
+    const visibleRows = option.displayInfo?.rows.slice(0, this.screenManager.isPortrait() ? 2 : 3) ?? [];
     const rowStartY = y - layout.cardHeight / 2 + 48;
-    option.displayInfo?.rows.slice(0, 3).forEach((row, rowIndex) => {
+    visibleRows.forEach((row, rowIndex) => {
       this.addInfoRow(
         scene,
         x - layout.cardWidth / 2 + 18,
@@ -117,15 +137,17 @@ export class LevelUpPanel {
         row,
       );
     });
-    const previewY = rowStartY + Math.max(1, option.displayInfo?.rows.length ?? 0) * 24 + 4;
+    const previewY = rowStartY + Math.max(1, visibleRows.length) * 24 + 4;
+    const descriptionHeight = y + layout.cardHeight / 2 - previewY - 12;
     const description = scene.add.text(x - layout.cardWidth / 2 + 18, y - layout.cardHeight / 2 + 48, option.preview ?? option.description, {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
       fontSize: layout.descriptionFontSize,
-      lineSpacing: 4,
+      lineSpacing: this.screenManager.isPortrait() ? 2 : 4,
       wordWrap: { width: layout.cardWidth - 36 },
     });
     description.setPosition(x - layout.cardWidth / 2 + 18, option.displayInfo ? previewY : y - layout.cardHeight / 2 + 48);
+    description.setMaxLines(Math.max(1, Math.floor(descriptionHeight / 16)));
 
     optionBackground.on('pointerover', () => {
       optionBackground.setFillStyle(UITheme.buttonHoverColor, 1);

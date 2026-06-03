@@ -15,8 +15,15 @@ export interface PlaytestSettingsState {
   endlessMode: boolean;
 }
 
+export type PlaytestSettingName = keyof PlaytestSettingsState | 'settings';
+export type PlaytestSettingsListener = (
+  settingName: PlaytestSettingName,
+  state: PlaytestSettingsState,
+) => void;
+
 export class PlaytestSettings {
   private static readonly STORAGE_KEY = 'vampire-survivor-like-game:playtest-settings';
+  private static readonly listeners = new Set<PlaytestSettingsListener>();
   private static memoryState: PlaytestSettingsState = {
     autoMode: false,
     fastMode: false,
@@ -37,18 +44,28 @@ export class PlaytestSettings {
     return storedState ?? { ...this.memoryState };
   }
 
+  static subscribe(listener: PlaytestSettingsListener): () => void {
+    this.listeners.add(listener);
+
+    return () => this.unsubscribe(listener);
+  }
+
+  static unsubscribe(listener: PlaytestSettingsListener): void {
+    this.listeners.delete(listener);
+  }
+
   static setAutoMode(autoMode: boolean): PlaytestSettingsState {
     return this.save({
       ...this.get(),
       autoMode,
-    });
+    }, 'autoMode');
   }
 
   static setFastMode(fastMode: boolean): PlaytestSettingsState {
     return this.save({
       ...this.get(),
       fastMode,
-    });
+    }, 'fastMode');
   }
 
   static setSoundEnabled(soundEnabled: boolean): PlaytestSettingsState {
@@ -56,7 +73,7 @@ export class PlaytestSettings {
       ...this.get(),
       soundEnabled,
       audioEnabled: soundEnabled,
-    });
+    }, 'audioEnabled');
   }
 
   static setAudioEnabled(audioEnabled: boolean): PlaytestSettingsState {
@@ -64,7 +81,7 @@ export class PlaytestSettings {
       ...this.get(),
       audioEnabled,
       soundEnabled: audioEnabled,
-    });
+    }, 'audioEnabled');
   }
 
   static setAudioChannelVolume(channel: AudioChannel, volume: number): PlaytestSettingsState {
@@ -73,13 +90,13 @@ export class PlaytestSettings {
 
     switch (channel) {
       case 'bgm':
-        return this.save({ ...state, bgmVolume: clampedVolume });
+        return this.save({ ...state, bgmVolume: clampedVolume }, 'bgmVolume');
       case 'sfx':
-        return this.save({ ...state, sfxVolume: clampedVolume });
+        return this.save({ ...state, sfxVolume: clampedVolume }, 'sfxVolume');
       case 'weapon':
-        return this.save({ ...state, weaponVolume: clampedVolume });
+        return this.save({ ...state, weaponVolume: clampedVolume }, 'weaponVolume');
       case 'ui':
-        return this.save({ ...state, uiVolume: clampedVolume });
+        return this.save({ ...state, uiVolume: clampedVolume }, 'uiVolume');
       default:
         return state;
     }
@@ -89,14 +106,14 @@ export class PlaytestSettings {
     return this.save({
       ...this.get(),
       locale,
-    });
+    }, 'locale');
   }
 
   static setEndlessMode(endlessMode: boolean): PlaytestSettingsState {
     return this.save({
       ...this.get(),
       endlessMode,
-    });
+    }, 'endlessMode');
   }
 
   static toggleAutoMode(): PlaytestSettingsState {
@@ -129,7 +146,10 @@ export class PlaytestSettings {
     return this.setEndlessMode(!state.endlessMode);
   }
 
-  private static save(state: PlaytestSettingsState): PlaytestSettingsState {
+  private static save(
+    state: PlaytestSettingsState,
+    settingName: PlaytestSettingName = 'settings',
+  ): PlaytestSettingsState {
     const nextState = {
       autoMode: state.autoMode,
       fastMode: state.fastMode,
@@ -155,7 +175,19 @@ export class PlaytestSettings {
       // Memory fallback is enough for environments without localStorage.
     }
 
-    return { ...nextState };
+    const savedState = { ...nextState };
+    this.notifyChange(settingName, savedState);
+
+    return savedState;
+  }
+
+  static notifyChange(
+    settingName: PlaytestSettingName,
+    state: PlaytestSettingsState,
+  ): void {
+    for (const listener of this.listeners) {
+      listener(settingName, { ...state });
+    }
   }
 
   private static readStoredState(): PlaytestSettingsState | undefined {

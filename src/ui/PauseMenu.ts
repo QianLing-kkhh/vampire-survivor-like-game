@@ -410,21 +410,45 @@ export class PauseMenu {
   private layoutStatsItems(layout: ReturnType<typeof LayoutConfig.getPauseMenuLayout>): void {
     const left = layout.panelCenter.x - layout.panelWidth / 2 + 24;
     let y = layout.panelCenter.y - layout.panelHeight / 2 + 72;
-    const rowGap = this.screenManager.isPortrait() ? 13 : 14;
-    const fontSize = this.screenManager.isPortrait() ? '10px' : '11px';
+    const backButton = this.pageItems[this.pageItems.length - 1] as Phaser.GameObjects.Text | undefined;
+    const bottomLimit = layout.panelCenter.y + layout.panelHeight / 2 - 76;
+    const textRowGap = this.screenManager.isPortrait() ? 17 : 18;
+    const iconRowGap = this.screenManager.isPortrait() ? 25 : 26;
+    const fontSize = this.screenManager.isPortrait() ? '10px' : '12px';
+    let hiddenCount = 0;
 
-    for (const item of this.pageItems) {
+    for (const item of this.pageItems.slice(0, -1)) {
+      const itemHeight = item instanceof Phaser.GameObjects.Container ? iconRowGap : textRowGap;
+
+      if (y + itemHeight > bottomLimit) {
+        this.setPageItemVisible(item, false);
+        hiddenCount += 1;
+        continue;
+      }
+
+      this.setPageItemVisible(item, true);
+
       if (item instanceof Phaser.GameObjects.Text) {
         item.setPosition(left, y);
-        item.setFontSize(item.text === 'Back' ? '14px' : fontSize);
-        y += item.text === 'Back' ? 34 : rowGap;
+        item.setFontSize(fontSize);
+        y += textRowGap;
         continue;
       }
 
       if (item instanceof Phaser.GameObjects.Container) {
         item.setPosition(left + 12, y + 8);
-        y += rowGap;
+        y += iconRowGap;
       }
+    }
+
+    void hiddenCount;
+
+    if (backButton) {
+      const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
+      backButton.setVisible(true);
+      backButton.setPosition(layout.panelCenter.x, layout.panelCenter.y + layout.panelHeight / 2 - 38);
+      backButton.setFontSize(metrics.fontSize);
+      backButton.setFixedSize(metrics.width, metrics.height);
     }
   }
 
@@ -434,6 +458,12 @@ export class PauseMenu {
     }
 
     this.pageItems.length = 0;
+  }
+
+  private setPageItemVisible(item: Phaser.GameObjects.GameObject, visible: boolean): void {
+    if (item instanceof Phaser.GameObjects.Text || item instanceof Phaser.GameObjects.Container) {
+      item.setVisible(visible);
+    }
   }
 
   private showHelpOverlay(): void {

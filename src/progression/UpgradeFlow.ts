@@ -49,6 +49,12 @@ export class UpgradeFlow {
       }));
   }
 
+  hasAvailableLevelUpOptions(): boolean {
+    return this.params.upgradeSelector
+      .selectOptions(1, this.params.getUpgradeSelectionContext())
+      .length > 0;
+  }
+
   chooseAutoUpgrade(options: readonly UpgradeOption[]): UpgradeOption | null {
     return this.params.autoUpgradeSelector.select(
       options,
@@ -79,6 +85,7 @@ export class UpgradeFlow {
 
     if (options.length === 0) {
       console.warn('Treasure chest opened, but no upgrade options were available');
+      this.recordInvalidUpgrade('chest:no_available_upgrade');
       return { type: 'none' };
     }
 

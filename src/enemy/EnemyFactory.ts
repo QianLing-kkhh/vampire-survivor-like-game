@@ -18,8 +18,8 @@ export class EnemyFactory {
     private readonly enemyConfigs: EnemyConfigMap,
   ) {}
 
-  create(enemyId: string, x: number, y: number): Enemy {
-    const stats = this.enemyConfigs[enemyId];
+  create(enemyId: string, x: number, y: number, statsOverride?: EnemyStats): Enemy {
+    const stats = statsOverride ?? this.enemyConfigs[enemyId];
 
     if (!stats) {
       throw new Error(`Unknown enemy id: ${enemyId}`);
@@ -53,6 +53,16 @@ export class EnemyFactory {
     (enemy as unknown as { body: EnemyImageBody }).body = body;
 
     return enemy;
+  }
+
+  getEnemyStats(enemyId: string): EnemyStats {
+    const stats = this.enemyConfigs[enemyId];
+
+    if (!stats) {
+      throw new Error(`Unknown enemy id: ${enemyId}`);
+    }
+
+    return { ...stats };
   }
 
   private createArtBody(

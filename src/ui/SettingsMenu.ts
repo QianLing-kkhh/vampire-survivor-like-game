@@ -134,6 +134,7 @@ export class SettingsMenu {
 
   private toggle(action: () => void): void {
     action();
+    this.syncSceneBgm();
     this.onSettingsChanged();
     this.renderButtons();
     this.applyLayout();
@@ -172,24 +173,31 @@ export class SettingsMenu {
   }
 
   private applyLayout(): void {
-    const layout = LayoutConfig.getPauseMenuLayout(this.screenManager);
-    const panelWidth = Math.min(layout.panelWidth, this.screenManager.isPortrait() ? 360 : 440);
-    const panelHeight = Math.min(layout.panelHeight, this.screenManager.isPortrait() ? 440 : 460);
+    const panel = LayoutConfig.getPanelLayout(this.screenManager, {
+      maxWidth: this.screenManager.isPortrait() ? 360 : 480,
+      maxHeight: this.screenManager.isPortrait() ? 680 : 620,
+      padding: 28,
+    });
     const centerX = this.screenManager.centerX;
     const centerY = this.screenManager.centerY;
-    const buttonLayout = LayoutConfig.getButtonLayout(this.screenManager, this.buttons.length, {
+    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
+    const availableHeight = panel.content.height - 58;
+    const gap = Math.min(metrics.gap, Math.max(metrics.height + 4, availableHeight / Math.max(this.buttons.length - 1, 1)));
+    const buttonLayout = LayoutConfig.getButtonListLayout({
+      screen: this.screenManager,
+      count: this.buttons.length,
       centerX,
-      startY: centerY + 42,
+      startY: panel.content.y + 64,
       mode: 'vertical',
-      maxColumns: 1,
+      gap,
     });
 
     this.background.setPosition(centerX, centerY);
-    this.background.setSize(panelWidth, panelHeight);
+    this.background.setSize(panel.width, panel.height);
     this.panelImage?.setPosition(centerX, centerY);
-    this.coverImage(this.panelImage, panelWidth, panelHeight);
-    this.title.setPosition(centerX, centerY - panelHeight / 2 + 44);
-    this.title.setFontSize(this.screenManager.isPortrait() ? '24px' : UITheme.headerFontSize);
+    this.coverImage(this.panelImage, panel.width, panel.height);
+    this.title.setPosition(centerX, panel.content.y + 26);
+    this.title.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
 
     this.buttons.forEach((button, index) => {
       const position = buttonLayout.positions[index];
@@ -227,6 +235,23 @@ export class SettingsMenu {
 
   private formatVolume(volume: number): string {
     return `${Math.round(volume * 100)}%`;
+  }
+
+  private syncSceneBgm(): void {
+    if (!AudioManager.isAudioEnabled() || AudioManager.getChannelVolume('bgm') <= 0) {
+      return;
+    }
+
+    switch (this.scene.scene.key) {
+      case 'TitleScene':
+        AudioManager.playBgm(this.scene, 'title_bgm');
+        break;
+      case 'ResultScene':
+        AudioManager.playBgm(this.scene, 'result_bgm');
+        break;
+      default:
+        break;
+    }
   }
 
   private t(key: string, fallback: string): string {

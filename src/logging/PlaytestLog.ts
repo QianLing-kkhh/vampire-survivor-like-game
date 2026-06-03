@@ -45,6 +45,11 @@ export interface PlaytestLogData {
   endlessEnemyKills: number;
   endlessDamageTaken: number;
   endlessLeaderboardRank: number;
+  endlessScalingLevel: number;
+  endlessHpMultiplier: number;
+  endlessDamageMultiplier: number;
+  endlessSpeedMultiplier: number;
+  endlessExpMultiplier: number;
   finalMoveSpeed: number;
   finalPickupRange: number;
   finalMaxHp: number;
@@ -101,6 +106,11 @@ export class PlaytestLog {
     'endlessEnemyKills',
     'endlessDamageTaken',
     'endlessLeaderboardRank',
+    'endlessScalingLevel',
+    'endlessHpMultiplier',
+    'endlessDamageMultiplier',
+    'endlessSpeedMultiplier',
+    'endlessExpMultiplier',
     'finalMoveSpeed',
     'finalPickupRange',
     'finalMaxHp',
@@ -165,6 +175,11 @@ export class PlaytestLog {
       data.endlessEnemyKills.toString(),
       Math.floor(data.endlessDamageTaken).toString(),
       data.endlessLeaderboardRank.toString(),
+      data.endlessScalingLevel.toString(),
+      PlaytestLog.formatNumber(data.endlessHpMultiplier),
+      PlaytestLog.formatNumber(data.endlessDamageMultiplier),
+      PlaytestLog.formatNumber(data.endlessSpeedMultiplier),
+      PlaytestLog.formatNumber(data.endlessExpMultiplier),
       PlaytestLog.formatNumber(data.finalMoveSpeed),
       PlaytestLog.formatNumber(data.finalPickupRange),
       PlaytestLog.formatNumber(data.finalMaxHp),

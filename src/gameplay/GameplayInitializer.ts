@@ -230,6 +230,12 @@ export class GameplayInitializer {
     return {
       scene: config.scene,
       playtestSettings: config.playtestSettings,
+      autoMode: config.playtestSettings.autoMode,
+      fastMode: config.playtestSettings.fastMode,
+      endlessMode: config.playtestSettings.endlessMode,
+      timeScale: config.playtestSettings.autoMode && config.playtestSettings.fastMode
+        ? config.playtestSettings.autoTimeScale
+        : 1,
       eventBus: config.eventBus,
       autoPlayer: config.autoPlayer,
       damageCalculator: config.damageCalculator,

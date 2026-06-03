@@ -35,6 +35,10 @@ import { WeaponManager } from '../weapon/WeaponManager';
 export interface GameplayContext {
   scene: Phaser.Scene;
   playtestSettings: PlaytestSettingsState;
+  autoMode: boolean;
+  fastMode: boolean;
+  endlessMode: boolean;
+  timeScale: number;
   eventBus: EventBus<GameEventMap>;
   autoPlayer: AutoPlayer;
   damageCalculator: DamageCalculator;

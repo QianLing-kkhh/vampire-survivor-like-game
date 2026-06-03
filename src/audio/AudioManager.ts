@@ -122,8 +122,11 @@ export class AudioManager {
   private static readonly lastPlayedAt = new Map<AudioEventKey, number>();
   private static currentBgm?: Phaser.Sound.BaseSound;
   private static currentBgmKey?: string;
+  private static unsubscribeSettings?: () => void;
 
   static getSupportedKeys(): readonly AudioEventKey[] {
+    AudioManager.ensureSettingsSubscription();
+
     return AudioManager.SUPPORTED_KEYS;
   }
 
@@ -132,6 +135,8 @@ export class AudioManager {
     key: AudioEventKey,
     options: PlayOptions = {},
   ): void {
+    AudioManager.ensureSettingsSubscription();
+
     if (AudioManager.WEAPON_KEYS.has(key)) {
       AudioManager.playWeapon(scene, key, options);
       return;
@@ -151,18 +156,23 @@ export class AudioManager {
   }
 
   static playSfx(scene: Phaser.Scene, key: AudioEventKey, options: PlayOptions = {}): void {
+    AudioManager.ensureSettingsSubscription();
     AudioManager.playOnChannel(scene, key, 'sfx', options);
   }
 
   static playWeapon(scene: Phaser.Scene, key: AudioEventKey, options: PlayOptions = {}): void {
+    AudioManager.ensureSettingsSubscription();
     AudioManager.playOnChannel(scene, key, 'weapon', options);
   }
 
   static playUi(scene: Phaser.Scene, key: AudioEventKey, options: PlayOptions = {}): void {
+    AudioManager.ensureSettingsSubscription();
     AudioManager.playOnChannel(scene, key, 'ui', options);
   }
 
   static playBgm(scene: Phaser.Scene, key: AudioEventKey, options: PlayOptions = {}): void {
+    AudioManager.ensureSettingsSubscription();
+
     if (!AudioManager.isAudioEnabled() || AudioManager.getChannelVolume('bgm') <= 0) {
       AudioManager.stopBgm();
       return;
@@ -208,20 +218,11 @@ export class AudioManager {
   }
 
   static setChannelVolume(channel: AudioChannel, volume: number): void {
+    AudioManager.ensureSettingsSubscription();
     PlaytestSettings.setAudioChannelVolume(channel, volume);
 
     if (channel === 'bgm' && AudioManager.currentBgm) {
-      const bgm = AudioManager.currentBgm as Phaser.Sound.BaseSound & {
-        setVolume?: (volume: number) => Phaser.Sound.BaseSound;
-        volume?: number;
-      };
-      const bgmVolume = AudioManager.getChannelVolume('bgm');
-
-      if (bgm.setVolume) {
-        bgm.setVolume(bgmVolume);
-      } else {
-        bgm.volume = bgmVolume;
-      }
+      AudioManager.applyCurrentBgmVolume();
     }
   }
 
@@ -247,11 +248,16 @@ export class AudioManager {
   }
 
   static setAudioEnabled(enabled: boolean): void {
+    AudioManager.ensureSettingsSubscription();
     PlaytestSettings.setAudioEnabled(enabled);
 
     if (!enabled) {
       AudioManager.stopBgm();
     }
+  }
+
+  static getCurrentBgmKey(): string | undefined {
+    return AudioManager.currentBgmKey;
   }
 
   private static playOnChannel(
@@ -294,5 +300,45 @@ export class AudioManager {
     const lastPlayedAt = AudioManager.lastPlayedAt.get(key) ?? -Infinity;
 
     return scene.time.now - lastPlayedAt >= cooldownMs;
+  }
+
+  private static ensureSettingsSubscription(): void {
+    if (AudioManager.unsubscribeSettings) {
+      return;
+    }
+
+    AudioManager.unsubscribeSettings = PlaytestSettings.subscribe((settingName) => {
+      if (settingName === 'audioEnabled' && !AudioManager.isAudioEnabled()) {
+        AudioManager.stopBgm();
+        return;
+      }
+
+      if (settingName === 'bgmVolume') {
+        if (AudioManager.getChannelVolume('bgm') <= 0) {
+          AudioManager.applyCurrentBgmVolume();
+          return;
+        }
+
+        AudioManager.applyCurrentBgmVolume();
+      }
+    });
+  }
+
+  private static applyCurrentBgmVolume(): void {
+    if (!AudioManager.currentBgm) {
+      return;
+    }
+
+    const bgm = AudioManager.currentBgm as Phaser.Sound.BaseSound & {
+      setVolume?: (volume: number) => Phaser.Sound.BaseSound;
+      volume?: number;
+    };
+    const bgmVolume = AudioManager.getChannelVolume('bgm');
+
+    if (bgm.setVolume) {
+      bgm.setVolume(bgmVolume);
+    } else {
+      bgm.volume = bgmVolume;
+    }
   }
 }

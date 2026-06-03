@@ -18,6 +18,7 @@ export class UIScene extends Phaser.Scene {
   private levelUpPanel?: LevelUpPanel;
   private pauseMenu?: PauseMenu;
   private helpPanel?: HelpPanel;
+  private temporaryMessage?: Phaser.GameObjects.Text;
 
   constructor() {
     super('UIScene');
@@ -27,6 +28,7 @@ export class UIScene extends Phaser.Scene {
     this.hud = new HUD(this);
     this.events.on('UpdateHUD', this.updateHUD, this);
     this.events.on('ShowLevelUpOptions', this.showLevelUpOptions, this);
+    this.events.on('ShowTemporaryMessage', this.showTemporaryMessage, this);
     this.events.on('ShowPauseMenu', this.showPauseMenu, this);
     this.events.on('HidePauseMenu', this.hidePauseMenu, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
@@ -40,6 +42,14 @@ export class UIScene extends Phaser.Scene {
   private showLevelUpOptions(payload: LevelUpOptionsPayload): void {
     this.hidePauseMenu();
     const options = Array.isArray(payload) ? payload : payload.options;
+
+    if (options.length === 0) {
+      this.levelUpPanel?.destroy();
+      this.levelUpPanel = undefined;
+      this.showTemporaryMessage('No upgrades available');
+      return;
+    }
+
     const config: LevelUpPanelConfig = Array.isArray(payload)
       ? {}
       : {
@@ -122,9 +132,40 @@ export class UIScene extends Phaser.Scene {
     this.helpPanel = undefined;
   }
 
+  private showTemporaryMessage(message: string): void {
+    this.temporaryMessage?.destroy();
+    this.temporaryMessage = this.add.text(
+      this.scale.width / 2,
+      this.scale.height * 0.28,
+      message,
+      {
+        color: '#f8fafc',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '22px',
+        fontStyle: 'bold',
+        stroke: '#111827',
+        strokeThickness: 4,
+      },
+    );
+    this.temporaryMessage.setOrigin(0.5);
+    this.temporaryMessage.setDepth(3000);
+
+    this.tweens.add({
+      targets: this.temporaryMessage,
+      alpha: 0,
+      y: this.temporaryMessage.y - 24,
+      duration: 1400,
+      onComplete: () => {
+        this.temporaryMessage?.destroy();
+        this.temporaryMessage = undefined;
+      },
+    });
+  }
+
   private cleanup(): void {
     this.events.off('UpdateHUD', this.updateHUD, this);
     this.events.off('ShowLevelUpOptions', this.showLevelUpOptions, this);
+    this.events.off('ShowTemporaryMessage', this.showTemporaryMessage, this);
     this.events.off('ShowPauseMenu', this.showPauseMenu, this);
     this.events.off('HidePauseMenu', this.hidePauseMenu, this);
     this.levelUpPanel?.destroy();
@@ -133,6 +174,8 @@ export class UIScene extends Phaser.Scene {
     this.pauseMenu = undefined;
     this.helpPanel?.destroy();
     this.helpPanel = undefined;
+    this.temporaryMessage?.destroy();
+    this.temporaryMessage = undefined;
     this.hud?.destroy();
     this.hud = undefined;
   }

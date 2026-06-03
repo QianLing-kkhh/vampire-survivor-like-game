@@ -139,10 +139,12 @@ export class HelpOverlay {
     this.panelImage?.setPosition(center.x, center.y);
     this.coverImage(this.panelImage, layout.panelWidth, layout.panelHeight);
     this.title.setPosition(center.x, center.y - layout.panelHeight / 2 + 42);
-    this.title.setFontSize(this.screenManager.isPortrait() ? '24px' : UITheme.headerFontSize);
+    this.title.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
     this.body.setPosition(center.x - layout.bodyWidth / 2, center.y - layout.panelHeight / 2 + 88);
     this.body.setFontSize(layout.fontSize);
+    this.body.setLineSpacing(this.screenManager.isPortrait() ? 5 : 8);
     this.body.setWordWrapWidth(layout.bodyWidth);
+    this.body.setMaxLines(this.screenManager.isPortrait() ? 9 : 12);
     this.closeButton.setPosition(center.x, center.y + layout.panelHeight / 2 - 44);
     this.closeButton.setFontSize(getButtonMetrics(this.screenManager.width, this.screenManager.height).fontSize);
     this.closeButton.setFixedSize(

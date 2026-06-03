@@ -76,7 +76,157 @@ export type ButtonLayout = {
   mode: ButtonLayoutMode;
 };
 
+export type RectLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type TextListLayout = {
+  rows: Array<{
+    iconX: number;
+    iconY: number;
+    textX: number;
+    textY: number;
+    width: number;
+    height: number;
+  }>;
+  lineHeight: number;
+};
+
+export type ResponsiveFontSizes = {
+  title: string;
+  header: string;
+  body: string;
+  small: string;
+};
+
 export class LayoutConfig {
+  static getResponsiveFontSizes(screen: ScreenManager): ResponsiveFontSizes {
+    if (screen.width <= 430 || screen.height <= 620) {
+      return {
+        title: '26px',
+        header: '21px',
+        body: '12px',
+        small: '10px',
+      };
+    }
+
+    if (screen.isPortrait() || screen.width <= 760 || screen.height <= 760) {
+      return {
+        title: '30px',
+        header: '24px',
+        body: '14px',
+        small: '11px',
+      };
+    }
+
+    return {
+      title: '40px',
+      header: '28px',
+      body: '18px',
+      small: '14px',
+    };
+  }
+
+  static getPanelLayout(
+    screen: ScreenManager,
+    options: {
+      maxWidth: number;
+      maxHeight: number;
+      padding?: number;
+    },
+  ): RectLayout & { content: RectLayout } {
+    const safe = SafeArea.getInsets(screen);
+    const padding = options.padding ?? 24;
+    const width = Math.min(options.maxWidth, screen.width - safe.left - safe.right);
+    const height = Math.min(options.maxHeight, screen.height - safe.top - safe.bottom);
+    const x = screen.centerX - width / 2;
+    const y = screen.centerY - height / 2;
+
+    return {
+      x,
+      y,
+      width,
+      height,
+      content: {
+        x: x + padding,
+        y: y + padding,
+        width: Math.max(0, width - padding * 2),
+        height: Math.max(0, height - padding * 2),
+      },
+    };
+  }
+
+  static getTextListLayout(params: {
+    startX: number;
+    startY: number;
+    rowCount: number;
+    lineHeight: number;
+    iconSize?: number;
+    gap?: number;
+    width: number;
+  }): TextListLayout {
+    const iconSize = params.iconSize ?? 0;
+    const gap = params.gap ?? 8;
+
+    return {
+      lineHeight: params.lineHeight,
+      rows: Array.from({ length: params.rowCount }, (_value, index) => {
+        const y = params.startY + index * params.lineHeight;
+
+        return {
+          iconX: params.startX + iconSize / 2,
+          iconY: y + params.lineHeight / 2,
+          textX: params.startX + (iconSize > 0 ? iconSize + gap : 0),
+          textY: y,
+          width: params.width - (iconSize > 0 ? iconSize + gap : 0),
+          height: params.lineHeight,
+        };
+      }),
+    };
+  }
+
+  static getButtonListLayout(params: {
+    screen: ScreenManager;
+    count: number;
+    startY: number;
+    buttonWidth?: number;
+    buttonHeight?: number;
+    gap?: number;
+    mode?: ButtonLayoutMode;
+    centerX?: number;
+  }): ButtonLayout {
+    const metrics = getButtonMetrics(params.screen.width, params.screen.height);
+    const width = params.buttonWidth ?? metrics.width;
+    const height = params.buttonHeight ?? metrics.height;
+    const gap = params.gap ?? Math.max(height + 8, metrics.gap);
+    const mode = params.mode ?? 'vertical';
+    const centerX = params.centerX ?? params.screen.centerX;
+    const positions: Phaser.Math.Vector2[] = [];
+
+    if (mode === 'vertical') {
+      for (let index = 0; index < params.count; index += 1) {
+        positions.push(new Phaser.Math.Vector2(centerX, params.startY + index * gap));
+      }
+
+      return { positions, width, height, gap, fontSize: metrics.fontSize, mode };
+    }
+
+    const columnGap = width + 24;
+    for (let index = 0; index < params.count; index += 1) {
+      const row = Math.floor(index / 2);
+      const column = index % 2;
+      positions.push(new Phaser.Math.Vector2(
+        centerX + (column === 0 ? -columnGap / 2 : columnGap / 2),
+        params.startY + row * gap,
+      ));
+    }
+
+    return { positions, width, height, gap, fontSize: metrics.fontSize, mode };
+  }
+
   static getButtonLayout(
     screen: ScreenManager,
     count: number,
@@ -127,26 +277,26 @@ export class LayoutConfig {
   static getHudLayout(screen: ScreenManager): HudLayout {
     const safe = SafeArea.getInsets(screen);
     const portrait = screen.isPortrait();
-    const minimapWidth = portrait ? 108 : 150;
-    const minimapHeight = portrait ? 86 : 104;
+    const minimapWidth = portrait ? 96 : 150;
+    const minimapHeight = portrait ? 76 : 104;
     const barWidth = Math.min(portrait ? screen.width * 0.48 : 230, 250);
     const pauseButtonPosition = portrait
-      ? new Phaser.Math.Vector2(screen.width - safe.right - 80, safe.top + 28)
-      : new Phaser.Math.Vector2(screen.width - safe.right - 80, safe.top + 28);
+      ? new Phaser.Math.Vector2(safe.left + 58, safe.top + 28)
+      : new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth - 70, safe.top + 28);
     const minimapPosition = portrait
-      ? new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top + 84)
+      ? new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top + 16)
       : new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top + 56);
 
     return {
       statsPosition: new Phaser.Math.Vector2(safe.left, safe.top),
       weaponsPosition: new Phaser.Math.Vector2(safe.left, safe.top + 132),
-      passivesPosition: new Phaser.Math.Vector2(portrait ? safe.left + 136 : safe.left, portrait ? safe.top + 132 : safe.top + 250),
+      passivesPosition: new Phaser.Math.Vector2(portrait ? safe.left : safe.left, portrait ? safe.top + 264 : safe.top + 250),
       minimapPosition,
       minimapSize: { width: minimapWidth, height: minimapHeight },
       pauseButtonPosition,
       bossTextPosition: new Phaser.Math.Vector2(screen.centerX, safe.top + 92),
       barWidth,
-      maxIconRows: portrait ? 4 : 6,
+      maxIconRows: portrait ? 3 : 6,
       fontSize: portrait ? '12px' : '14px',
     };
   }
@@ -159,18 +309,18 @@ export class LayoutConfig {
 
     if (portrait) {
       const cardWidth = Math.min(availableWidth - 20, 430);
-      const cardHeight = Math.max(96, Math.min(128, (availableHeight - 132) / 3));
+      const cardHeight = Math.max(150, Math.min(210, (availableHeight - 132) / 3));
 
       return {
         panelCenter: new Phaser.Math.Vector2(screen.centerX, screen.centerY),
         cardWidth,
         cardHeight,
-        cardGap: 14,
+        cardGap: 10,
         layoutMode: 'vertical',
         panelWidth: Math.min(availableWidth, cardWidth + 34),
         panelHeight: Math.min(availableHeight, cardHeight * 3 + 118),
-        fontSize: '16px',
-        descriptionFontSize: '12px',
+        fontSize: '14px',
+        descriptionFontSize: '11px',
       };
     }
 
@@ -179,7 +329,7 @@ export class LayoutConfig {
     return {
       panelCenter: new Phaser.Math.Vector2(screen.centerX, screen.centerY),
       cardWidth,
-      cardHeight: Math.min(220, availableHeight - 170),
+      cardHeight: Math.min(250, availableHeight - 170),
       cardGap: 18,
       layoutMode: 'horizontal',
       panelWidth: Math.min(availableWidth, cardWidth * 3 + 92),
@@ -209,12 +359,12 @@ export class LayoutConfig {
     const portrait = screen.isPortrait();
 
     return {
-      titlePosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 84 : screen.centerY - 170),
-      statusPosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 142 : screen.centerY - 92),
-      countdownPosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 206 : screen.centerY - 44),
-      buttonStartY: portrait ? 254 : screen.centerY - 8,
+      titlePosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 74 : screen.centerY - 188),
+      statusPosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 128 : screen.centerY - 118),
+      countdownPosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 184 : screen.centerY - 64),
+      buttonStartY: portrait ? 228 : screen.centerY - 18,
       buttonGap: getButtonMetrics(screen.width, screen.height).gap,
-      buttonColumns: portrait ? 1 : 2,
+      buttonColumns: 1,
       fontSize: getButtonMetrics(screen.width, screen.height).fontSize,
     };
   }
@@ -222,11 +372,11 @@ export class LayoutConfig {
   static getResultLayout(screen: ScreenManager): ResultLayout {
     return {
       panelCenter: new Phaser.Math.Vector2(screen.centerX, screen.centerY),
-      contentStartY: screen.isPortrait() ? 126 : screen.centerY - 56,
-      buttonArea: new Phaser.Math.Vector2(screen.centerX, screen.height - 152),
+      contentStartY: screen.isPortrait() ? 104 : 96,
+      buttonArea: new Phaser.Math.Vector2(screen.centerX, screen.height - (screen.isPortrait() ? 222 : 154)),
       buttonGap: getButtonMetrics(screen.width, screen.height).gap,
       fontSize: screen.isPortrait() ? '12px' : '18px',
-      titleY: screen.isPortrait() ? 54 : screen.centerY - 140,
+      titleY: screen.isPortrait() ? 46 : 42,
     };
   }
 

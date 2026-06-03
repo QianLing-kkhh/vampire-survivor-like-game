@@ -18,6 +18,14 @@ interface EndlessRuleState {
   elapsedMs: number;
 }
 
+export interface EndlessEnemyScaling {
+  scalingLevel: number;
+  hpMultiplier: number;
+  damageMultiplier: number;
+  speedMultiplier: number;
+  expMultiplier: number;
+}
+
 export interface EndlessManagerConfig {
   scene: Phaser.Scene;
   enemyFactory: EnemyFactory;
@@ -107,7 +115,7 @@ export class EndlessManager {
         && state.elapsedMs >= rule.intervalSeconds * 1000
       ) {
         state.elapsedMs -= rule.intervalSeconds * 1000;
-        this.spawnBatch(rule.enemyId, rule.count);
+        this.spawnBatch(rule.enemyId, rule.count, endlessTimeSeconds);
       }
     });
   }
@@ -118,6 +126,18 @@ export class EndlessManager {
 
   getEndlessTimeSeconds(gameTimeSeconds: number): number {
     return this.started ? Math.max(0, gameTimeSeconds - this.startTimeSeconds) : 0;
+  }
+
+  static getEnemyScale(endlessTimeSeconds: number): EndlessEnemyScaling {
+    const scalingLevel = Math.floor(Math.max(0, endlessTimeSeconds) / 60);
+
+    return {
+      scalingLevel,
+      hpMultiplier: 1 + scalingLevel * 0.35,
+      damageMultiplier: 1 + scalingLevel * 0.20,
+      speedMultiplier: Math.min(1 + scalingLevel * 0.05, 1.5),
+      expMultiplier: 1 + scalingLevel * 0.15,
+    };
   }
 
   reset(): void {
@@ -139,10 +159,20 @@ export class EndlessManager {
     return selectedIndex;
   }
 
-  private spawnBatch(enemyId: string, count: number): void {
+  private spawnBatch(enemyId: string, count: number, endlessTimeSeconds: number): void {
+    const scaling = EndlessManager.getEnemyScale(endlessTimeSeconds);
+    const baseStats = this.config.enemyFactory.getEnemyStats(enemyId);
+    const scaledStats = {
+      ...baseStats,
+      hp: Math.round(baseStats.hp * scaling.hpMultiplier),
+      damage: Math.round(baseStats.damage * scaling.damageMultiplier),
+      moveSpeed: baseStats.moveSpeed * scaling.speedMultiplier,
+      exp: Math.round(baseStats.exp * scaling.expMultiplier),
+    };
+
     for (let index = 0; index < count; index += 1) {
       const position = this.getSpawnPosition();
-      const enemy = this.config.enemyFactory.create(enemyId, position.x, position.y);
+      const enemy = this.config.enemyFactory.create(enemyId, position.x, position.y, scaledStats);
 
       this.config.onEnemySpawned(enemy);
     }
