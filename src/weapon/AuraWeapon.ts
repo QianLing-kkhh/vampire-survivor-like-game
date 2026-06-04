@@ -102,8 +102,9 @@ export class AuraWeapon extends Weapon {
     const artTextureKey = this.id === 'soul_eater'
       ? 'art_weapons_soul_eater_core_sheet'
       : 'art_weapons_garlic_core_sheet';
+    const animationKey = this.id === 'soul_eater' ? 'art_soul_eater_core' : 'art_garlic_core';
 
-    if (this.scene.textures.exists(artTextureKey)) {
+    if (this.scene.textures.exists(artTextureKey) && this.scene.anims.exists(animationKey)) {
       const icon = this.scene.add.sprite(context.player.x, context.player.y, artTextureKey);
       icon.setDisplaySize(
         AuraWeapon.AURA_ICON_DISPLAY_SIZE,
@@ -111,8 +112,19 @@ export class AuraWeapon extends Weapon {
       );
       icon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
       icon.setAlpha(0.9);
-      icon.play(this.id === 'soul_eater' ? 'art_soul_eater_core' : 'art_garlic_core');
+      icon.play(animationKey);
       this.auraIcon = icon;
+      return;
+    }
+
+    if (this.scene.textures.exists(artTextureKey)) {
+      this.auraIcon = this.scene.add.image(context.player.x, context.player.y, artTextureKey, 0);
+      this.auraIcon.setDisplaySize(
+        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
+        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
+      );
+      this.auraIcon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
+      this.auraIcon.setAlpha(0.9);
       return;
     }
 

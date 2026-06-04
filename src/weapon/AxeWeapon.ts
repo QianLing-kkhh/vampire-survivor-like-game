@@ -285,14 +285,15 @@ export class AxeWeapon extends Weapon {
     const artTextureKey = this.id === 'death_spiral'
       ? 'art_weapons_death_spiral_projectile_sheet'
       : 'art_weapons_axe_projectile_sheet';
+    const animationKey = this.id === 'death_spiral'
+      ? 'art_death_spiral_projectile_spin'
+      : 'art_axe_projectile_spin';
 
-    if (this.scene.textures.exists(artTextureKey)) {
+    if (this.scene.textures.exists(artTextureKey) && this.scene.anims.exists(animationKey)) {
       const body = this.scene.add.sprite(x, y, artTextureKey);
       const displaySize = VisualScale.getProjectileDisplaySize(this.id);
       body.setDisplaySize(displaySize, displaySize);
-      body.play(this.id === 'death_spiral'
-        ? 'art_death_spiral_projectile_spin'
-        : 'art_axe_projectile_spin');
+      body.play(animationKey);
 
       return body;
     }
@@ -301,8 +302,13 @@ export class AxeWeapon extends Weapon {
       ? 'death_spiral_projectile'
       : 'axe_projectile';
 
-    if (this.scene.textures.exists(textureKey)) {
-      const body = this.scene.add.image(x, y, textureKey);
+    const useArtFallback = this.scene.textures.exists(artTextureKey);
+    const fallbackTextureKey = useArtFallback ? artTextureKey : textureKey;
+
+    if (this.scene.textures.exists(fallbackTextureKey)) {
+      const body = useArtFallback
+        ? this.scene.add.image(x, y, fallbackTextureKey, 0)
+        : this.scene.add.image(x, y, fallbackTextureKey);
       const displaySize = VisualScale.getProjectileDisplaySize(this.id);
       body.setDisplaySize(displaySize, displaySize);
 
