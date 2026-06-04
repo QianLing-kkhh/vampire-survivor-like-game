@@ -105,3 +105,31 @@ Future content packs may include:
 - Cosmetics
 
 Do not allow broad custom weapons/enemies until validators are mature.
+
+## Custom Stage Foundation
+
+Custom stage schema and validation utilities now exist under `src/custom/`:
+
+- `CustomStageSchema`
+- `CustomStageValidator`
+- `CustomStageSerializer`
+- `CustomStageStorage`
+- `CustomStageValidationResult`
+
+Current scope:
+
+- Custom stage metadata
+- Custom map metadata
+- Custom waves
+- References to existing enemies/Bosses only
+- Local storage shell for custom stage packages
+
+Not implemented yet:
+
+- Import/export UI
+- Stage selection UI for custom stages
+- Automatic registration into `ContentRegistry`
+- Custom weapons/enemies/passives
+- Custom Boss skill definitions
+
+Future custom stages should validate first, then register through `ContentRegistry` as custom content packs. The validator catches structure, missing references, ID conflicts, and obvious density/performance risks; it is not a full balance verifier.
