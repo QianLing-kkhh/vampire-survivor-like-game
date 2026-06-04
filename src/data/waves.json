@@ -57,37 +57,43 @@
     "time": 345,
     "enemy": "bat",
     "count": 120,
-    "interval": 0.45
+    "interval": 0.39
   },
   {
     "time": 360,
     "enemy": "slime",
     "count": 160,
-    "interval": 0.52
+    "interval": 0.46
   },
   {
     "time": 375,
     "enemy": "golem",
     "count": 60,
-    "interval": 1.1
+    "interval": 0.98
   },
   {
     "time": 390,
     "enemy": "bat",
     "count": 180,
-    "interval": 0.33
+    "interval": 0.29
   },
   {
     "time": 420,
     "enemy": "golem",
-    "count": 100,
-    "interval": 0.78
+    "count": 120,
+    "interval": 0.68
   },
   {
     "time": 420,
     "enemy": "slime",
+    "count": 220,
+    "interval": 0.48
+  },
+  {
+    "time": 420,
+    "enemy": "bat",
     "count": 180,
-    "interval": 0.55
+    "interval": 0.38
   },
   {
     "time": 450,

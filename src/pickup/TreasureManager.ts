@@ -15,7 +15,7 @@ interface Position {
 export class TreasureManager {
   private static readonly NORMAL_DROP_CHANCE = 0.03;
   private static readonly ENDLESS_DROP_WINDOW_SECONDS = 60;
-  private static readonly ENDLESS_MAX_DROPS_PER_WINDOW = 12;
+  private static readonly ENDLESS_MAX_DROPS_PER_WINDOW = 10;
 
   private readonly chests: TreasureChest[] = [];
   private readonly unsubscribeEnemyKilled: () => void;
