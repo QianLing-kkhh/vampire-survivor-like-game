@@ -73,6 +73,10 @@ export interface PlaytestLogData {
   endlessBossIdsSpawned: readonly string[];
   endlessBossSkillHitCount: number;
   endlessBossSkillUseCount: number;
+  finalExpRequirementMultiplier: number;
+  maxExpRequirementMultiplier: number;
+  endlessLevelUpCount: number;
+  averageEndlessLevelIntervalSeconds: number;
   finalMoveSpeed: number;
   finalPickupRange: number;
   finalMaxHp: number;
@@ -157,6 +161,10 @@ export class PlaytestLog {
     'endlessBossIdsSpawned',
     'endlessBossSkillHitCount',
     'endlessBossSkillUseCount',
+    'finalExpRequirementMultiplier',
+    'maxExpRequirementMultiplier',
+    'endlessLevelUpCount',
+    'averageEndlessLevelIntervalSeconds',
     'finalMoveSpeed',
     'finalPickupRange',
     'finalMaxHp',
@@ -249,6 +257,10 @@ export class PlaytestLog {
       data.endlessBossIdsSpawned.join('|'),
       data.endlessBossSkillHitCount.toString(),
       data.endlessBossSkillUseCount.toString(),
+      PlaytestLog.formatNumber(data.finalExpRequirementMultiplier),
+      PlaytestLog.formatNumber(data.maxExpRequirementMultiplier),
+      data.endlessLevelUpCount.toString(),
+      PlaytestLog.formatNumber(data.averageEndlessLevelIntervalSeconds),
       PlaytestLog.formatNumber(data.finalMoveSpeed),
       PlaytestLog.formatNumber(data.finalPickupRange),
       PlaytestLog.formatNumber(data.finalMaxHp),

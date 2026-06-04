@@ -1,3 +1,5 @@
+import { EndlessManager } from '../endless/EndlessManager';
+
 import { GameplayContext } from './GameplayContext';
 
 export interface GameplayUpdateCallbacks {
@@ -89,10 +91,17 @@ export class GameplayUpdater {
     }
 
     if (!context.runState.endlessStarted) {
+      context.levelManager.setRequiredExpMultiplier(1);
+      context.expRequirementMultiplier = 1;
       return;
     }
 
     context.runState.updateEndlessTime(context.timeManager.gameTimeSeconds);
+    context.expRequirementMultiplier = EndlessManager.getExpRequirementMultiplier(
+      context.runState.endlessSurvivalTime,
+    );
+    context.levelManager.setRequiredExpMultiplier(context.expRequirementMultiplier);
+    context.runState.recordExpRequirementMultiplier(context.expRequirementMultiplier);
     if (!allowSpawns) {
       return;
     }

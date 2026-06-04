@@ -67,6 +67,7 @@ export interface GameplayContext {
   passiveManager: PassiveManager;
   expManager: ExpManager;
   levelManager: LevelManager;
+  expRequirementMultiplier: number;
   upgradeSelector: UpgradeSelector;
   upgradeApplier: UpgradeApplier;
   upgradeFlow: UpgradeFlow;

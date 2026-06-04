@@ -151,6 +151,13 @@ export class EndlessManager {
     };
   }
 
+  static getExpRequirementMultiplier(endlessTimeSeconds: number): number {
+    const scalingLevel = Math.floor(Math.max(0, endlessTimeSeconds) / 60);
+    const multiplier = 1 + scalingLevel * 0.35 + Math.pow(scalingLevel, 1.35) * 0.08;
+
+    return Math.min(20, Math.max(1, multiplier));
+  }
+
   reset(): void {
     this.started = false;
     this.startTimeSeconds = 0;

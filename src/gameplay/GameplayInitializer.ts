@@ -287,6 +287,7 @@ export class GameplayInitializer {
       passiveManager,
       expManager,
       levelManager,
+      expRequirementMultiplier: 1,
       upgradeSelector,
       upgradeApplier,
       upgradeFlow,

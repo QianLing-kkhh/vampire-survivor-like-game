@@ -4,6 +4,7 @@ import { ExpManager } from './ExpManager';
 
 export class LevelManager {
   private level = 1;
+  private requiredExpMultiplier = 1;
 
   constructor(
     private readonly expManager: ExpManager,
@@ -23,7 +24,15 @@ export class LevelManager {
   }
 
   get requiredExp(): number {
-    return this.level * 5;
+    return Math.ceil(this.level * 5 * this.requiredExpMultiplier);
+  }
+
+  setRequiredExpMultiplier(multiplier: number): void {
+    this.requiredExpMultiplier = Math.max(1, multiplier);
+  }
+
+  getRequiredExpMultiplier(): number {
+    return this.requiredExpMultiplier;
   }
 
   checkLevelUp(): boolean {

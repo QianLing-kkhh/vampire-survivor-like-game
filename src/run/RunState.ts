@@ -52,6 +52,11 @@ export class RunState {
   endlessBossIdsSpawned: string[] = [];
   endlessBossSkillHitCount = 0;
   endlessBossSkillUseCount = 0;
+  finalExpRequirementMultiplier = 1;
+  maxExpRequirementMultiplier = 1;
+  endlessLevelUpCount = 0;
+  private endlessLevelIntervalTotalSeconds = 0;
+  private lastEndlessLevelUpTime: number | null = null;
 
   reset(): void {
     this.killCount = 0;
@@ -107,6 +112,11 @@ export class RunState {
     this.endlessBossIdsSpawned = [];
     this.endlessBossSkillHitCount = 0;
     this.endlessBossSkillUseCount = 0;
+    this.finalExpRequirementMultiplier = 1;
+    this.maxExpRequirementMultiplier = 1;
+    this.endlessLevelUpCount = 0;
+    this.endlessLevelIntervalTotalSeconds = 0;
+    this.lastEndlessLevelUpTime = null;
   }
 
   recordKill(): void {
@@ -136,6 +146,10 @@ export class RunState {
   recordLevelUpUpgrade(upgradeId: string): void {
     this.levelUpUpgradeCount += 1;
     this.upgradePath.push(upgradeId);
+
+    if (this.endlessStarted) {
+      this.recordEndlessLevelUp();
+    }
   }
 
   recordChestUpgrade(upgradeId: string): void {
@@ -301,6 +315,34 @@ export class RunState {
       + this.chestUpgradeCount
       + this.chestEvolutionCount
       + this.endlessRewardCount;
+  }
+
+  get averageEndlessLevelIntervalSeconds(): number {
+    return this.endlessLevelUpCount > 1
+      ? this.endlessLevelIntervalTotalSeconds / (this.endlessLevelUpCount - 1)
+      : 0;
+  }
+
+  recordExpRequirementMultiplier(multiplier: number): void {
+    const safeMultiplier = Math.max(1, multiplier);
+    this.finalExpRequirementMultiplier = safeMultiplier;
+    this.maxExpRequirementMultiplier = Math.max(
+      this.maxExpRequirementMultiplier,
+      safeMultiplier,
+    );
+  }
+
+  private recordEndlessLevelUp(): void {
+    this.endlessLevelUpCount += 1;
+
+    if (this.lastEndlessLevelUpTime !== null) {
+      this.endlessLevelIntervalTotalSeconds += Math.max(
+        0,
+        this.endlessSurvivalTime - this.lastEndlessLevelUpTime,
+      );
+    }
+
+    this.lastEndlessLevelUpTime = this.endlessSurvivalTime;
   }
 
   private updateEndlessScaling(endlessTimeSeconds: number): void {
