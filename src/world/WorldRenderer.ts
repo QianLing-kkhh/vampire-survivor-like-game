@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 import { VisualScale } from '../visual/VisualScale';
 
-import { WorldConfig } from './WorldConfig';
+import { WorldConfig, WorldRenderConfig } from './WorldConfig';
 
 type LandmarkType = 'tree' | 'rock' | 'grave';
 
@@ -10,7 +10,10 @@ export class WorldRenderer {
   private static readonly GRID_COLOR = 0x1f2937;
   private static readonly LANDMARK_TYPES: LandmarkType[] = ['tree', 'rock', 'grave'];
 
-  constructor(private readonly scene: Phaser.Scene) {}
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly config: WorldRenderConfig = WorldConfig,
+  ) {}
 
   render(): void {
     this.renderBackground();
@@ -21,10 +24,10 @@ export class WorldRenderer {
   private renderBackground(): void {
     if (this.scene.textures.exists('art_world_ground_tile')) {
       const background = this.scene.add.tileSprite(
-        WorldConfig.width / 2,
-        WorldConfig.height / 2,
-        WorldConfig.width,
-        WorldConfig.height,
+        this.config.width / 2,
+        this.config.height / 2,
+        this.config.width,
+        this.config.height,
         'art_world_ground_tile',
       );
 
@@ -33,10 +36,10 @@ export class WorldRenderer {
     }
 
     const background = this.scene.add.rectangle(
-      WorldConfig.width / 2,
-      WorldConfig.height / 2,
-      WorldConfig.width,
-      WorldConfig.height,
+      this.config.width / 2,
+      this.config.height / 2,
+      this.config.width,
+      this.config.height,
       0x111827,
     );
 
@@ -48,12 +51,12 @@ export class WorldRenderer {
     graphics.setDepth(-90);
     graphics.lineStyle(1, WorldRenderer.GRID_COLOR, 0.35);
 
-    for (let x = 0; x <= WorldConfig.width; x += WorldConfig.gridSize) {
-      graphics.lineBetween(x, 0, x, WorldConfig.height);
+    for (let x = 0; x <= this.config.width; x += this.config.gridSize) {
+      graphics.lineBetween(x, 0, x, this.config.height);
     }
 
-    for (let y = 0; y <= WorldConfig.height; y += WorldConfig.gridSize) {
-      graphics.lineBetween(0, y, WorldConfig.width, y);
+    for (let y = 0; y <= this.config.height; y += this.config.gridSize) {
+      graphics.lineBetween(0, y, this.config.width, y);
     }
   }
 
@@ -61,14 +64,14 @@ export class WorldRenderer {
     let landmarkIndex = 0;
 
     for (
-      let x = WorldConfig.landmarkSpacing;
-      x < WorldConfig.width;
-      x += WorldConfig.landmarkSpacing
+      let x = this.config.landmarkSpacing;
+      x < this.config.width;
+      x += this.config.landmarkSpacing
     ) {
       for (
-        let y = WorldConfig.landmarkSpacing;
-        y < WorldConfig.height;
-        y += WorldConfig.landmarkSpacing
+        let y = this.config.landmarkSpacing;
+        y < this.config.height;
+        y += this.config.landmarkSpacing
       ) {
         const type = WorldRenderer.LANDMARK_TYPES[
           landmarkIndex % WorldRenderer.LANDMARK_TYPES.length

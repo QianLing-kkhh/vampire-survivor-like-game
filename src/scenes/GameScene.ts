@@ -24,6 +24,8 @@ import { GameplayInitializer } from '../gameplay/GameplayInitializer';
 import { GameplayUpdater } from '../gameplay/GameplayUpdater';
 import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PlaytestLog } from '../logging/PlaytestLog';
+import { MapDefinition } from '../map/MapDefinition';
+import { MapManager } from '../map/MapManager';
 import { PickupManager } from '../pickup/PickupManager';
 import { TreasureManager } from '../pickup/TreasureManager';
 import { PassiveManager } from '../passive/PassiveManager';
@@ -44,20 +46,15 @@ import {
   PlaytestSettingsState,
 } from '../settings/PlaytestSettings';
 import { SpawnDirector } from '../spawn/SpawnDirector';
+import { StageDefinition } from '../stage/StageDefinition';
+import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { PauseMenuStatsData } from '../ui/PauseMenu';
 import { WeaponManager } from '../weapon/WeaponManager';
-import { WorldConfig } from '../world/WorldConfig';
 import { WorldRenderer } from '../world/WorldRenderer';
 
 export class GameScene extends Phaser.Scene {
-  private static readonly INITIAL_WEAPON_ID = 'knife';
-  private static readonly VICTORY_TIME_SECONDS = 300;
-  private static readonly FINAL_BOSS_WARNING_SECONDS = 270;
-  private static readonly FINAL_BOSS_ID = 'boss';
-  private static readonly WORLD_WIDTH = WorldConfig.width;
-  private static readonly WORLD_HEIGHT = WorldConfig.height;
   private static readonly PLAYER_HIT_RADIUS = 28;
   private static readonly CONTACT_DAMAGE_COOLDOWN_MS = 1000;
   private static readonly DAMAGE_REACTION_RADIUS = 120;
@@ -75,7 +72,11 @@ export class GameScene extends Phaser.Scene {
   private readonly damageCalculator = new DamageCalculator();
   private readonly gameplayInitializer = new GameplayInitializer();
   private readonly gameplayUpdater = new GameplayUpdater();
+  private readonly stageManager = new StageManager();
+  private readonly mapManager = new MapManager();
   private playtestSettings: PlaytestSettingsState = PlaytestSettings.get();
+  private currentStage: StageDefinition = this.stageManager.getSelectedStage();
+  private currentMap: MapDefinition = this.mapManager.getMap(this.currentStage.mapId);
   private gameplayContext?: GameplayContext;
   private player?: PlayerController;
   private playerHitRange?: Phaser.GameObjects.Arc;
@@ -128,6 +129,32 @@ export class GameScene extends Phaser.Scene {
     super('GameScene');
   }
 
+  private get worldWidth(): number {
+    return this.currentMap.worldWidth;
+  }
+
+  private get worldHeight(): number {
+    return this.currentMap.worldHeight;
+  }
+
+  private get finalBossWarningTimeSeconds(): number {
+    return this.stageManager.getFinalBossWarningTimeSeconds(this.currentStage);
+  }
+
+  private getWorldRenderConfig(): {
+    width: number;
+    height: number;
+    gridSize: number;
+    landmarkSpacing: number;
+  } {
+    return {
+      width: this.currentMap.worldWidth,
+      height: this.currentMap.worldHeight,
+      gridSize: this.currentMap.gridSize,
+      landmarkSpacing: this.currentMap.landmarkSpacing,
+    };
+  }
+
   create(): void {
     this.enemies = [];
     this.contactDamageCooldowns.clear();
@@ -173,14 +200,16 @@ export class GameScene extends Phaser.Scene {
     this.finalBossDefeated = false;
     this.finalBossSpawnTime = 0;
     this.finalBossKillTime = 0;
+    this.currentStage = this.stageManager.getSelectedStage();
+    this.currentMap = this.mapManager.getMap(this.currentStage.mapId);
 
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
 
     AudioManager.playBgm(this, 'gameplay_bgm');
-    this.physics.world.setBounds(0, 0, GameScene.WORLD_WIDTH, GameScene.WORLD_HEIGHT);
-    this.cameras.main.setBounds(0, 0, GameScene.WORLD_WIDTH, GameScene.WORLD_HEIGHT);
-    new WorldRenderer(this).render();
+    this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight);
+    this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
+    new WorldRenderer(this, this.getWorldRenderConfig()).render();
     this.scene.launch('UIScene');
     const context = this.gameplayInitializer.initialize({
       scene: this,
@@ -192,14 +221,13 @@ export class GameScene extends Phaser.Scene {
       timeManager: this.timeManager,
       runState: this.runState,
       playtestSettings: this.playtestSettings,
-      initialWeaponId: GameScene.INITIAL_WEAPON_ID,
       centerX,
       centerY,
-      worldWidth: GameScene.WORLD_WIDTH,
-      worldHeight: GameScene.WORLD_HEIGHT,
-      finalBossId: GameScene.FINAL_BOSS_ID,
-      finalBossWarningSeconds: GameScene.FINAL_BOSS_WARNING_SECONDS,
-      finalBossTimeSeconds: GameScene.VICTORY_TIME_SECONDS,
+      worldWidth: this.worldWidth,
+      worldHeight: this.worldHeight,
+      finalBossId: this.currentStage.finalBossId,
+      finalBossWarningSeconds: this.finalBossWarningTimeSeconds,
+      finalBossTimeSeconds: this.currentStage.finalBossSpawnTimeSeconds,
       playerHitRadius: GameScene.PLAYER_HIT_RADIUS,
       contactDamageCooldownMs: GameScene.CONTACT_DAMAGE_COOLDOWN_MS,
       damageReactionRadius: GameScene.DAMAGE_REACTION_RADIUS,
@@ -328,8 +356,8 @@ export class GameScene extends Phaser.Scene {
       deltaMs: delta,
       isLevelUpSelectionActive: this.isLevelUpSelectionActive,
       isAutoMovementEnabled: this.playtestSettings.autoMovement,
-      worldWidth: GameScene.WORLD_WIDTH,
-      worldHeight: GameScene.WORLD_HEIGHT,
+      worldWidth: this.worldWidth,
+      worldHeight: this.worldHeight,
       callbacks: {
         getGameplayTimeScale: () => this.getGameplayTimeScale(),
         updateAutoPlayer: (deltaMs) => this.updateAutoPlayer(deltaMs),
@@ -533,7 +561,7 @@ export class GameScene extends Phaser.Scene {
       currentExp: this.expManager.currentExp,
       requiredExp: this.levelManager.requiredExp,
       timeSeconds: this.timeManager.gameTimeSeconds,
-      targetTimeSeconds: GameScene.VICTORY_TIME_SECONDS,
+      targetTimeSeconds: this.currentStage.finalBossSpawnTimeSeconds,
       weaponIds: this.weaponManager?.getWeaponIds() ?? [],
       weaponHudInfo: this.weaponManager?.getWeaponHudInfo() ?? [],
       weaponBuildHudInfo: this.weaponManager?.getWeaponBuildHudInfo({
@@ -550,8 +578,8 @@ export class GameScene extends Phaser.Scene {
       moveSpeed: this.playerStats.moveSpeed,
       pickupRange: this.playerStats.pickupRange,
       playerMaxHp: this.playerHealth.maxHp,
-      worldWidth: GameScene.WORLD_WIDTH,
-      worldHeight: GameScene.WORLD_HEIGHT,
+      worldWidth: this.worldWidth,
+      worldHeight: this.worldHeight,
       playerPosition: this.player
         ? { x: this.player.body.x, y: this.player.body.y }
         : { x: 0, y: 0 },
@@ -569,7 +597,7 @@ export class GameScene extends Phaser.Scene {
   private updateFinalBossEvent(): void {
     if (
       !this.finalBossWarningShown
-      && this.timeManager.gameTimeSeconds >= GameScene.FINAL_BOSS_WARNING_SECONDS
+      && this.timeManager.gameTimeSeconds >= this.finalBossWarningTimeSeconds
     ) {
       this.finalBossWarningShown = true;
       this.showCenterMessage('Boss Coming');
@@ -577,7 +605,7 @@ export class GameScene extends Phaser.Scene {
 
     if (
       !this.finalBossSpawned
-      && this.timeManager.gameTimeSeconds >= GameScene.VICTORY_TIME_SECONDS
+      && this.timeManager.gameTimeSeconds >= this.currentStage.finalBossSpawnTimeSeconds
     ) {
       this.spawnFinalBoss();
     }
@@ -590,7 +618,7 @@ export class GameScene extends Phaser.Scene {
 
     const position = this.getFinalBossSpawnPosition();
     const boss = this.enemyFactory.create(
-      GameScene.FINAL_BOSS_ID,
+      this.currentStage.finalBossId,
       position.x,
       position.y,
     );
@@ -612,17 +640,17 @@ export class GameScene extends Phaser.Scene {
   private getFinalBossSpawnPosition(): { x: number; y: number } {
     if (!this.player) {
       return {
-        x: GameScene.WORLD_WIDTH / 2,
-        y: GameScene.WORLD_HEIGHT / 2,
+        x: this.worldWidth / 2,
+        y: this.worldHeight / 2,
       };
     }
 
     const padding = 120;
     const candidates = [
-      { x: GameScene.WORLD_WIDTH / 2, y: padding },
-      { x: GameScene.WORLD_WIDTH - padding, y: GameScene.WORLD_HEIGHT / 2 },
-      { x: GameScene.WORLD_WIDTH / 2, y: GameScene.WORLD_HEIGHT - padding },
-      { x: padding, y: GameScene.WORLD_HEIGHT / 2 },
+      { x: this.worldWidth / 2, y: padding },
+      { x: this.worldWidth - padding, y: this.worldHeight / 2 },
+      { x: this.worldWidth / 2, y: this.worldHeight - padding },
+      { x: padding, y: this.worldHeight / 2 },
     ];
 
     let farthestPosition = candidates[0];
@@ -895,8 +923,8 @@ export class GameScene extends Phaser.Scene {
       pickupRangePx: this.playerPickupRange,
       weaponContext: this.weaponManager?.getAutoWeaponContext(),
       worldBounds: {
-        width: GameScene.WORLD_WIDTH,
-        height: GameScene.WORLD_HEIGHT,
+        width: this.worldWidth,
+        height: this.worldHeight,
       },
     });
 
@@ -990,12 +1018,12 @@ export class GameScene extends Phaser.Scene {
     enemy.body.x = Phaser.Math.Clamp(
       enemy.body.x + direction.x,
       enemyRadius,
-      GameScene.WORLD_WIDTH - enemyRadius,
+      this.worldWidth - enemyRadius,
     );
     enemy.body.y = Phaser.Math.Clamp(
       enemy.body.y + direction.y,
       enemyRadius,
-      GameScene.WORLD_HEIGHT - enemyRadius,
+      this.worldHeight - enemyRadius,
     );
   }
 
@@ -1218,7 +1246,7 @@ export class GameScene extends Phaser.Scene {
     const text = overlayChildren[1] as Phaser.GameObjects.Text | undefined;
 
     this.cameras.main.setSize(this.scale.width, this.scale.height);
-    this.cameras.main.setBounds(0, 0, GameScene.WORLD_WIDTH, GameScene.WORLD_HEIGHT);
+    this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
     background?.setSize(this.scale.width, this.scale.height);
     text?.setPosition(this.scale.width / 2, this.scale.height / 2);
     this.updateOrientationOverlay();

@@ -1,0 +1,10 @@
+{
+  "stage_001": {
+    "id": "stage_001",
+    "name": "Prototype Field",
+    "mapId": "prototype_field",
+    "finalBossId": "boss",
+    "finalBossSpawnTimeSeconds": 300,
+    "warningBeforeSpawnSeconds": 30
+  }
+}

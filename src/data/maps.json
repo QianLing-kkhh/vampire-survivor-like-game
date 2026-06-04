@@ -1,0 +1,10 @@
+{
+  "prototype_field": {
+    "id": "prototype_field",
+    "name": "Prototype Field",
+    "worldWidth": 4000,
+    "worldHeight": 4000,
+    "gridSize": 128,
+    "landmarkSpacing": 512
+  }
+}

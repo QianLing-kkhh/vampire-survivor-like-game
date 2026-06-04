@@ -7,10 +7,10 @@ import {
 } from '../auto/AutoUpgradeSelector';
 import { BossFactory } from '../boss/BossFactory';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
+import { CharacterManager } from '../character/CharacterManager';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
 import { TimeManager } from '../core/TimeManager';
-import characters from '../data/characters.json';
 import enemies from '../data/enemies.json';
 import passives from '../data/passives.json';
 import waves from '../data/waves.json';
@@ -69,7 +69,6 @@ export interface GameplayInitializerConfig {
   timeManager: TimeManager;
   runState: RunState;
   playtestSettings: PlaytestSettingsState;
-  initialWeaponId: string;
   centerX: number;
   centerY: number;
   worldWidth: number;
@@ -91,7 +90,9 @@ export interface GameplayInitializerConfig {
 
 export class GameplayInitializer {
   initialize(config: GameplayInitializerConfig): GameplayContext {
-    const playerStats = PlayerStats.fromConfig(characters.default);
+    const characterManager = new CharacterManager();
+    const selectedCharacter = characterManager.getSelectedCharacter();
+    const playerStats = PlayerStats.fromConfig(selectedCharacter.baseStats);
     const runStats = new RunStats(playerStats.maxHp);
     const weaponFactory = new WeaponFactory(config.scene, weapons);
     const weaponManager = new WeaponManager(runStats, weaponFactory);
@@ -241,7 +242,7 @@ export class GameplayInitializer {
       },
     });
 
-    weaponManager.addWeapon(weaponFactory.create(config.initialWeaponId));
+    weaponManager.addWeapon(weaponFactory.create(selectedCharacter.startingWeaponId));
     this.syncPassiveEffects(passiveManager, weaponManager, treasureManager);
 
     return {

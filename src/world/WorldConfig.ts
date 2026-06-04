@@ -5,3 +5,9 @@ export const WorldConfig = {
   landmarkSpacing: 512,
 } as const;
 
+export interface WorldRenderConfig {
+  width: number;
+  height: number;
+  gridSize: number;
+  landmarkSpacing: number;
+}
