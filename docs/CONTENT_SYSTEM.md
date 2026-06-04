@@ -26,13 +26,31 @@ The content system is the architecture foundation for built-in content, future c
 - `stages`
 - `maps`
 
+`ContentPackManifest` is the future metadata wrapper for custom, mod, and remote packs. It records pack id, name, version, author, source, optional content hash, compatible game-version range, dependencies, and declared provided IDs. A manifest is not a loaded pack and does not imply registration.
+
+`ContentPackSource` describes where a pack can come from: builtin, local, custom, mod, or remote. Remote sources are only metadata in the current build.
+
 Weapon definitions may include optional `tags` and `behavior` metadata. Tags describe archetypes such as projectile, aura, orbit, magic, physical, explosive, pierce, homing, arcing, spiral, control, base, and evolved. Behavior config describes the intended behavior family, but current built-in weapons still use their concrete runtime classes.
 
 Current status:
 
 - Built-in content is registered as one builtin content pack.
 - Custom/mod loading is not implemented yet.
+- Remote content loading is not implemented yet.
 - The registry is not a mod loader yet.
+
+## Content Pack Providers
+
+`ContentPackProvider` is the standard async interface for future pack sources:
+
+- `listManifests()`
+- `loadPack(manifestId)`
+
+Provider results return structured success, errors, and warnings. Providers must not automatically register content into `ContentRegistry`; loaded packs still need validation and an explicit registration path.
+
+`LocalContentPackProvider` is currently a shell for future local/custom pack storage. It can be instantiated and can read a localStorage-backed list if one exists, but no current gameplay flow writes or loads packs through it.
+
+Remote provider interfaces are separate from content registration. There is no network request, API URL, authentication, upload, download, or server integration in the current implementation.
 
 ## Built-In Content
 
@@ -150,3 +168,14 @@ Current local custom stages validate first, save through `CustomStageStorage`, a
 Future broader custom or mod content packs may still register through `ContentRegistry` once package dependency and override rules are mature. The validator catches structure, missing references, ID conflicts, and obvious density/performance risks; it is not a full balance verifier.
 
 Custom stage packages may record `createdWithGameVersion` and `createdWithContentHash`. A different content hash should warn because references may still exist but balance/replay comparison may no longer be equivalent.
+
+## Remote Interfaces
+
+The current code defines interface-only remote providers for:
+
+- Leaderboard submission and fetch
+- Save upload and download
+- Daily challenge fetch
+- Custom stage upload, fetch, and search
+
+These interfaces are future adapters. They do not perform requests, do not change save or leaderboard behavior, and do not make remote content trusted. Any future remote content must still pass validation before it can affect runtime content.

@@ -140,3 +140,14 @@ Planned but not implemented:
 - UI for browsing imported content
 
 The current Custom Stage Tool is intentionally local-only. It does not load remote files, upload data, or register content packs. Valid saved custom stages are launched only through `StageSelectScene`, not directly from the tool.
+
+## Remote Sharing Interfaces
+
+`RemoteCustomStageProvider` now defines the future shape for custom stage upload, fetch, and search. It is interface-only:
+
+- No server is configured.
+- No network request is made.
+- No remote package is trusted or registered.
+- No online sharing UI exists.
+
+`ContentPackManifest` is the future metadata format for custom/mod/remote content packs. Custom stages or broader mod packs should declare source, version, content hash, dependencies, and provided IDs through a manifest before registration. Validation remains mandatory before any loaded custom or remote content can enter the runtime selection path.

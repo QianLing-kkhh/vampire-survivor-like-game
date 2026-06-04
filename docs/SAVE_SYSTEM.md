@@ -252,6 +252,22 @@ Version metadata is also formal save data. CSV buffers, replay storage, and cust
 
 Per-run metadata such as `runSeed`, selected character/stage/map, challenge/custom stage IDs, ruleset ID, leaderboard key, and CSV/replay compatibility fields belongs to run/test/replay/leaderboard records. It is not progression state and should not be treated as unlock or save progression data.
 
+## Remote Save Interface
+
+`RemoteSaveProvider` defines the future shape for cloud save upload and download, but it is not connected to `SaveManager`.
+
+Current behavior:
+
+- Save data remains local.
+- `SaveManager` still reads and writes through `SaveStorage`.
+- No cloud save request is made.
+- No authentication or API endpoint is configured.
+- Import still goes through `SaveValidator` and `SaveMigrator`.
+
+Future cloud save implementations should treat downloaded saves like imported saves: validate first, reject unsupported future schemas, migrate compatible older schemas, and only then write through `SaveManager`.
+
+Remote leaderboard and challenge provider interfaces are also separate from formal save data. They must not store progression state outside `SaveManager`.
+
 ## Future Save Domains
 
 Likely future additions:

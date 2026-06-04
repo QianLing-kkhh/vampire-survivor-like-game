@@ -12,6 +12,7 @@ Future architecture should assume support for:
 - Random stages
 - Custom stages
 - Mod / content packs
+- Content pack manifests and provider interfaces
 - Save/load
 - Custom cosmetics
 - Appearance themes and skin selections
@@ -42,6 +43,7 @@ Future architecture should assume support for:
 - Replay and seed reproduction
 - Unified GameEvent timeline for achievements, tutorials, unlocks, debug tooling, and replay foundations
 - Optional online leaderboard or cloud save adapters
+- Remote provider adapters for leaderboards, saves, challenges, custom stages, and future pack sources
 
 ## Current Architecture Principles
 
@@ -66,6 +68,8 @@ Future architecture should assume support for:
 19. Relic-style rule changes should use `RelicManager` / `RelicEffect`, not passive upgrades or scene conditionals.
 20. Tutorial and guide prompts should use `TutorialManager` and `GameEventBus`, not `GameScene` conditionals.
 21. Daily, seeded, and custom challenges should use `ChallengeManager` and write through `SelectionManager`, not mutate gameplay systems directly.
+22. Future mod, local, and remote content sources should expose `ContentPackManifest` metadata and load through provider interfaces before validation and registration.
+23. Remote providers should remain adapters; they should not bypass `SaveManager`, `ContentRegistry`, validation, leaderboard keys, or compatibility checks.
 
 ## Seeded Runs And Replay
 
@@ -203,6 +207,8 @@ Content should eventually split into resolvers and registries:
 - Relic registry and manager for rule-changing run items
 - Tutorial registry and manager for event-driven, non-blocking guide prompts
 - Replay recorder, serializer, storage, and playback shell for future reproduction tooling
+- Content pack manifest and provider interfaces for local, custom, mod, and future remote pack sources
+- Remote provider interfaces for leaderboard, save, challenge, and custom stage services
 
 ## Risk Areas
 
@@ -222,3 +228,4 @@ Content should eventually split into resolvers and registries:
 - Tutorial prompts being hardcoded into scenes instead of routed through `TutorialManager`
 - Replay blobs being mixed into formal save data, CSV buffers, or leaderboard records
 - Challenge activation bypassing `SelectionManager` or mixing challenge leaderboards with normal/endless records
+- Remote content or cloud data bypassing validation, migration, compatibility checks, or explicit user-controlled registration
