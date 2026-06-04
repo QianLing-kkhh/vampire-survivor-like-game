@@ -9,7 +9,7 @@ import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 type ProjectileBody = Phaser.GameObjects.GameObject & {
   x: number;
   y: number;
-  rotation?: number;
+  rotation: number;
   destroy: () => void;
 };
 
@@ -82,17 +82,20 @@ export class ProjectileWeapon extends Weapon {
 
     for (const direction of this.getProjectileDirections(baseDirection)) {
       const projectile = this.createProjectileBody(context.player.x, context.player.y);
-
-      this.projectiles.push({
+      const velocity = direction.scale(speed);
+      const projectileState: Projectile = {
         body: projectile,
         target,
-        velocity: direction.scale(speed),
+        velocity,
         previousX: projectile.x,
         previousY: projectile.y,
         ageMs: 0,
         pierceRemaining: this.config.pierce ?? 1,
         hitEnemies: new Set<Enemy>(),
-      });
+      };
+
+      this.alignProjectileToVelocity(projectileState);
+      this.projectiles.push(projectileState);
     }
 
     AudioManager.playWeapon(
@@ -163,7 +166,7 @@ export class ProjectileWeapon extends Weapon {
       projectile.previousY = projectile.body.y;
       projectile.body.x += projectile.velocity.x * (context.deltaMs / (1000 / 60));
       projectile.body.y += projectile.velocity.y * (context.deltaMs / (1000 / 60));
-      projectile.body.rotation = Math.atan2(projectile.velocity.y, projectile.velocity.x);
+      this.alignProjectileToVelocity(projectile);
     }
 
     for (let index = this.projectiles.length - 1; index >= 0; index -= 1) {
@@ -344,6 +347,7 @@ export class ProjectileWeapon extends Weapon {
       artTextureKey
       && this.scene.textures.exists(artTextureKey)
       && this.scene.anims.exists(animationKey)
+      && this.shouldUseAnimatedProjectile()
     ) {
       const body = this.scene.add.sprite(x, y, artTextureKey);
       const displaySize = VisualScale.getProjectileDisplaySize(this.id);
@@ -389,6 +393,31 @@ export class ProjectileWeapon extends Weapon {
         return 'art_holy_wand_projectile';
       default:
         return 'art_knife_projectile_spin';
+    }
+  }
+
+  private shouldUseAnimatedProjectile(): boolean {
+    return this.id !== 'knife' && this.id !== 'thousand_edge';
+  }
+
+  private alignProjectileToVelocity(projectile: Projectile): void {
+    if (projectile.velocity.lengthSq() === 0) {
+      return;
+    }
+
+    projectile.body.rotation = Math.atan2(
+      projectile.velocity.y,
+      projectile.velocity.x,
+    ) + this.getProjectileRotationOffset();
+  }
+
+  private getProjectileRotationOffset(): number {
+    switch (this.id) {
+      case 'knife':
+      case 'thousand_edge':
+        return Math.PI / 4;
+      default:
+        return 0;
     }
   }
 
