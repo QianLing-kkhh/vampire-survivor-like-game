@@ -20,6 +20,7 @@
     "startAutoTest": "开始自动测试",
     "selectCharacter": "选择角色",
     "selectStage": "选择关卡",
+    "customStageTool": "自定义关卡工具",
     "autoStartCountdown": "{seconds} 秒后开始自动测试",
     "autoTestCanceled": "自动测试倒计时已取消",
     "currentSelection": "{character} / {stage} / {map}",
@@ -40,6 +41,19 @@
   },
   "stageSelect": {
     "title": "关卡选择"
+  },
+  "customStage": {
+    "title": "自定义关卡工具",
+    "pasteJson": "粘贴 JSON",
+    "validate": "验证",
+    "save": "保存",
+    "export": "导出",
+    "back": "返回",
+    "valid": "自定义关卡有效",
+    "invalid": "自定义关卡无效",
+    "errors": "错误",
+    "warnings": "警告",
+    "storedStages": "已保存的自定义关卡"
   },
   "pause": {
     "title": "已暂停",

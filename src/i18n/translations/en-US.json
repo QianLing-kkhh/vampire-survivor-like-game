@@ -35,6 +35,7 @@
     "startAutoTest": "Start Auto Test",
     "selectCharacter": "Select Character",
     "selectStage": "Select Stage",
+    "customStageTool": "Custom Stage Tool",
     "autoStartCountdown": "Auto test starts in {seconds}s",
     "autoTestCanceled": "Auto test canceled",
     "currentSelection": "{character} / {stage} / {map}",
@@ -55,6 +56,19 @@
   },
   "stageSelect": {
     "title": "Stage Select"
+  },
+  "customStage": {
+    "title": "Custom Stage Tool",
+    "pasteJson": "Paste JSON",
+    "validate": "Validate",
+    "save": "Save",
+    "export": "Export",
+    "back": "Back",
+    "valid": "Valid custom stage",
+    "invalid": "Invalid custom stage",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "storedStages": "Stored Custom Stages"
   },
   "pause": {
     "title": "Paused",

@@ -21,6 +21,7 @@ export class TitleScene extends Phaser.Scene {
   private autoTestButton?: Phaser.GameObjects.Text;
   private selectCharacterButton?: Phaser.GameObjects.Text;
   private selectStageButton?: Phaser.GameObjects.Text;
+  private customStageToolButton?: Phaser.GameObjects.Text;
   private settingsButton?: Phaser.GameObjects.Text;
   private helpButton?: Phaser.GameObjects.Text;
   private backgroundImage?: Phaser.GameObjects.Image;
@@ -105,6 +106,11 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('StageSelectScene');
     });
 
+    this.customStageToolButton = this.createButton(centerX, centerY + 202, I18n.t('title.customStageTool'), () => {
+      this.cancelAutoStartCountdown();
+      this.scene.start('CustomStageToolScene');
+    });
+
     this.settingsButton = this.createButton(centerX - 140, centerY + 132, this.t('title.settings', 'Settings'), () => {
       this.cancelAutoStartCountdown();
       this.showSettingsMenu();
@@ -172,6 +178,7 @@ export class TitleScene extends Phaser.Scene {
       this.autoTestButton,
       this.selectCharacterButton,
       this.selectStageButton,
+      this.customStageToolButton,
       this.settingsButton,
       this.helpButton,
     ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
@@ -243,6 +250,7 @@ export class TitleScene extends Phaser.Scene {
     this.autoTestButton?.setText(I18n.t('title.startAutoTest'));
     this.selectCharacterButton?.setText(I18n.t('title.selectCharacter'));
     this.selectStageButton?.setText(I18n.t('title.selectStage'));
+    this.customStageToolButton?.setText(I18n.t('title.customStageTool'));
     this.settingsButton?.setText(this.t('title.settings', 'Settings'));
     this.helpButton?.setText(I18n.t('common.help'));
     this.selectionText?.setText(this.formatSelectionSummary());

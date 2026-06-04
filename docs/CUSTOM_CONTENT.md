@@ -27,7 +27,16 @@ The current custom stage foundation lives under `src/custom/`:
 - `CustomStageSerializer`: JSON parse/serialize/clone/normalize helpers.
 - `CustomStageStorage`: localStorage plus memory fallback shell for saved custom stage packages.
 
-Import/export UI is not implemented. Custom stage packages are not automatically registered into gameplay or StageManager selection yet.
+`CustomStageToolScene` provides a minimal local utility for custom stage packages:
+
+- Paste JSON through a browser prompt.
+- Validate with `CustomStageValidator`.
+- Display error/warning counts and the first few issues.
+- Save valid packages to `CustomStageStorage`.
+- List stored custom stage IDs.
+- Export stored package JSON through clipboard or console fallback.
+
+Custom stage packages are not automatically registered into gameplay or StageManager selection yet, and they cannot be launched from this tool.
 
 ## CustomStageValidator
 
@@ -118,9 +127,10 @@ This prevents incompatible custom runs from being mixed into one leaderboard.
 
 Planned but not implemented:
 
-- CustomStage import/export
 - Custom content pack files
 - Content pack dependency declarations
 - User-created map metadata
 - Version migration tooling
 - UI for browsing imported content
+
+The current Custom Stage Tool is intentionally local-only and utility-only. It does not load remote files, upload data, register content packs, or enable custom stage play.

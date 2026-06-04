@@ -20,6 +20,7 @@
     "startAutoTest": "自動テスト開始",
     "selectCharacter": "キャラクター選択",
     "selectStage": "ステージ選択",
+    "customStageTool": "カスタムステージツール",
     "autoStartCountdown": "{seconds}秒後に自動テスト開始",
     "autoTestCanceled": "自動テストのカウントダウンを停止",
     "currentSelection": "{character} / {stage} / {map}",
@@ -40,6 +41,19 @@
   },
   "stageSelect": {
     "title": "ステージ選択"
+  },
+  "customStage": {
+    "title": "カスタムステージツール",
+    "pasteJson": "JSONを貼り付け",
+    "validate": "検証",
+    "save": "保存",
+    "export": "エクスポート",
+    "back": "戻る",
+    "valid": "カスタムステージは有効です",
+    "invalid": "カスタムステージは無効です",
+    "errors": "エラー",
+    "warnings": "警告",
+    "storedStages": "保存済みカスタムステージ"
   },
   "pause": {
     "title": "一時停止",
