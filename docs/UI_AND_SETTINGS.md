@@ -73,6 +73,8 @@ HelpOverlay uses tab buttons and data-driven help sections. It includes controls
 
 Help text should avoid hardcoded gameplay values when a manager/config can provide those values.
 
+The Guide tab documents the non-blocking tutorial hint layer. HelpOverlay remains static help; event-triggered prompts belong to `TutorialManager`.
+
 ### ResultScene
 
 ResultScene shows compact run results, auto restart countdown, CSV download buttons, Settings, and endless leaderboard entries when available.
@@ -191,3 +193,14 @@ Help content should prefer:
 - Truncation instead of overlap when content exceeds available space
 
 CSV field names, internal IDs, and debug keys should not be translated for display unless a dedicated display layer is added.
+
+## Tutorial Hints
+
+`TutorialManager` is the event-driven guide layer for first-time prompts such as level-up, treasure, evolution, Boss, endless, and mobile joystick hints.
+
+Rules:
+
+- Tutorial prompts should be temporary and non-blocking.
+- Tutorial prompts should not pause gameplay or force-open HelpOverlay.
+- Seen one-time steps are saved through `SaveManager.progression.tutorial`.
+- Future guide UI can listen to `TutorialManager`; gameplay systems should not hardcode tutorial checks in `GameScene`.

@@ -35,6 +35,7 @@ Future architecture should assume support for:
 - Active skills
 - Input configuration and controller support
 - Tutorial system
+- Event-driven tutorial triggers and non-blocking guide prompts
 - Version migrations
 - Content validation tools
 - Replay and seed reproduction
@@ -62,6 +63,7 @@ Future architecture should assume support for:
 17. Achievements, milestones, quests, and unlock triggers should evaluate data-driven definitions and persist through `SaveManager.progression`.
 18. Unlock state should be owned by `UnlockManager`; content managers can query it but should not duplicate unlock rules.
 19. Relic-style rule changes should use `RelicManager` / `RelicEffect`, not passive upgrades or scene conditionals.
+20. Tutorial and guide prompts should use `TutorialManager` and `GameEventBus`, not `GameScene` conditionals.
 
 ## Seeded Runs And Replay
 
@@ -85,6 +87,18 @@ Important boundaries:
 - `GameEventBridge` mirrors selected legacy events so new systems can start listening without risky rewrites.
 - `GameEventRecorder` stores a bounded recent event timeline, but it is not a full replay system.
 - Complete replay still requires run seed, input samples, deterministic timing, content/version hashes, and compatible update order.
+
+## Tutorials And Guides
+
+`TutorialManager`, `TutorialRegistry`, and `TutorialStep` provide the foundation for future new-player guidance, Help prompts, mobile controls teaching, starter tasks, and first-time event hints.
+
+Important boundaries:
+
+- Tutorial triggers should be data-driven and event-driven where possible.
+- Tutorial prompts should remain non-blocking unless a future dedicated onboarding flow explicitly opts into pauses.
+- HelpOverlay is static reference material; TutorialManager decides when a contextual prompt should be shown.
+- Tutorial seen/disabled state is formal save data under `SaveManager.progression.tutorial`.
+- Future guide UI should subscribe to `TutorialManager` rather than adding checks to `GameScene`.
 
 ## Achievements And Milestones
 
@@ -150,6 +164,7 @@ Content should eventually split into resolvers and registries:
 - Achievement and milestone registries for event-driven goals and future unlock rewards
 - Unlock registry and manager for content access state and reward application
 - Relic registry and manager for rule-changing run items
+- Tutorial registry and manager for event-driven, non-blocking guide prompts
 
 ## Risk Areas
 
@@ -166,3 +181,4 @@ Content should eventually split into resolvers and registries:
 - Achievement or quest progress being stored outside `SaveManager`
 - Character, stage, map, or cosmetic managers duplicating unlock storage instead of using `UnlockManager`
 - Relic effects being implemented as passive upgrades or ad hoc `GameScene` conditionals
+- Tutorial prompts being hardcoded into scenes instead of routed through `TutorialManager`

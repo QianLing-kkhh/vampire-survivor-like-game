@@ -6,7 +6,8 @@ export type HelpTabId =
   | 'passives'
   | 'upgrades'
   | 'treasures'
-  | 'endless';
+  | 'endless'
+  | 'guide';
 
 export interface HelpLine {
   iconKey?: string;

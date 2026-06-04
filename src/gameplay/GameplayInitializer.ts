@@ -53,6 +53,7 @@ import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
+import { TutorialManager } from '../tutorial/TutorialManager';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { UnlockManager } from '../unlock/UnlockManager';
 import { WeaponFactory } from '../weapon/WeaponFactory';
@@ -166,6 +167,7 @@ export class GameplayInitializer {
     });
 
     achievementManager.initialize(gameEventBus);
+    new TutorialManager({ gameEventBus });
     const weaponConfigs = ContentRegistry.listWeapons();
     const enemyConfigs = ContentRegistry.listEnemies();
     const passiveItems = ContentRegistry.listPassives();

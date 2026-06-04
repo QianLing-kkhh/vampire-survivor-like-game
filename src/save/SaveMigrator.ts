@@ -14,6 +14,7 @@ import {
   serializeLeaderboardKey,
 } from '../leaderboard/LeaderboardKey';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
+import { TutorialState } from '../tutorial/TutorialState';
 
 export class SaveMigrator {
   migrate(rawSave: string | null): SaveData {
@@ -108,6 +109,7 @@ export class SaveMigrator {
       milestones: this.isObject(progression.milestones)
         ? progression.milestones
         : defaultProgression.milestones,
+      tutorial: this.normalizeTutorialState(progression.tutorial),
     };
   }
 
@@ -164,6 +166,19 @@ export class SaveMigrator {
       },
       {},
     );
+  }
+
+  private normalizeTutorialState(value: unknown): TutorialState {
+    const defaultTutorial = createDefaultSaveData().progression.tutorial;
+
+    if (!this.isObject(value)) {
+      return defaultTutorial;
+    }
+
+    return {
+      disabled: value.disabled === true,
+      seenStepIds: this.readStringArray(value.seenStepIds),
+    };
   }
 
   private migrateSelections(

@@ -36,6 +36,7 @@ export class HelpContentBuilder {
       this.buildUpgradesHelp(),
       this.buildTreasuresHelp(),
       this.buildEndlessHelp(),
+      this.buildGuideHelp(),
     ];
   }
 
@@ -143,6 +144,15 @@ export class HelpContentBuilder {
       this.line(`Time Slow: enemy speed x${rewardConfig.enemySlow.multiplier} for ${rewardConfig.enemySlow.durationSeconds}s; cooldown ${rewardConfig.enemySlow.cooldownSeconds}s.`, 'time_icon', 'S'),
       this.line(`Shield blocks one hit per stack; max ${rewardConfig.shield.maxStacks}.`, 'hp_icon', 'S'),
       this.line(`Minor Growth permanently adds +${(rewardConfig.minorGrowth.damageBonus * 100).toFixed(1)}% weapon damage.`, 'exp_icon', 'G'),
+    ]);
+  }
+
+  buildGuideHelp(): HelpSection {
+    return this.section('guide', 'Guide', 'time_icon', 'G', [
+      this.line('Tutorial hints are event-driven and should stay lightweight.', 'time_icon', 'T'),
+      this.line('Hints can point players toward Help tabs without pausing combat.', 'art_ui_panel_bg', 'H'),
+      this.line('Seen tutorial steps are saved so one-time hints do not repeat.', 'exp_icon', 'S'),
+      this.line('Future mobile, Boss, endless, and reward tips should use TutorialManager.', 'hp_icon', 'G'),
     ]);
   }
 

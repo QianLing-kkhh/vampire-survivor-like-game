@@ -72,6 +72,24 @@ Current status:
 - Built-in achievements listen to events such as `enemy.killed`, `player.levelUp`, `pickup.treasureOpened`, `weapon.evolved`, `boss.killed`, `endless.started`, and `run.ended`.
 - Achievement progress is formal save data under `SaveData.progression.achievements`, not CSV playtest data.
 
+## Tutorial / Guide Layer
+
+The tutorial layer is the foundation for event-driven starter guidance, first-time hints, Help prompts, mobile control tips, and future guided objectives.
+
+- `TutorialStep`: data shape for tutorial id, i18n keys, trigger, one-time behavior, priority, and optional Help tab link.
+- `TutorialTrigger`: serializable trigger shape for GameEvent, time, or named condition prompts.
+- `TutorialRegistry`: registers built-in and future content/mod tutorial steps.
+- `TutorialManager`: subscribes to `GameEventBus`, evaluates tutorial triggers, marks one-time steps as seen, and persists state through `SaveManager`.
+- `TutorialState`: save-backed disabled flag and seen step ids.
+- `BuiltInTutorials`: starter definitions for first level-up, treasure, evolution, Boss, endless, and mobile joystick hints.
+
+Current status:
+
+- There is no large tutorial UI yet.
+- Tutorial prompts are non-blocking and must not pause combat.
+- If no UI listener is attached, `TutorialManager` logs a lightweight console hint.
+- Tutorial state is formal save data under `SaveData.progression.tutorial`.
+
 ## Unlock Layer
 
 The unlock layer is the foundation for future character, stage, map, weapon, passive, cosmetic, theme, difficulty, challenge, daily reward, achievement reward, and meta-progression unlocks.
@@ -314,6 +332,7 @@ TitleScene
     -> GameplayInitializer creates GameplayContext
     -> GameEventBus / GameEventRecorder / GameEventBridge start per-run event capture
     -> AchievementManager subscribes to GameEventBus for low-risk achievement unlocks
+    -> TutorialManager subscribes to GameEventBus for low-risk one-time guide prompts
     -> UnlockManager ensures built-in default content is unlocked
     -> RelicManager is created empty for future rule-changing run items
     -> GameplayUpdater updates runtime systems
@@ -344,6 +363,7 @@ TitleScene
 - Gameplay randomness should go through injected `RandomSource` streams from `RandomManager`.
 - New achievements, tutorials, unlocks, replay diagnostics, audio listeners, or floating-text listeners should subscribe to `GameEventBus` rather than scene callbacks.
 - Achievement and milestone progress should persist through `SaveManager.progression`, not localStorage owned by individual systems.
+- Tutorial seen/disabled state should persist through `SaveManager.progression.tutorial`, not through scene-local flags.
 - Unlock state should go through `UnlockManager`; Character/Stage/Map managers should not own unlock rules.
 - Existing `core/EventBus` and callbacks are still valid during migration; do not delete them until the dependent systems have moved.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.

@@ -20,8 +20,12 @@ import {
 } from '../settings/InputSettings';
 import { AchievementProgress } from '../achievement/AchievementProgress';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
+import {
+  DEFAULT_TUTORIAL_STATE,
+  TutorialState,
+} from '../tutorial/TutorialState';
 
-export const SAVE_SCHEMA_VERSION = 8;
+export const SAVE_SCHEMA_VERSION = 9;
 
 export interface SaveData {
   schemaVersion: number;
@@ -48,6 +52,7 @@ export interface SaveData {
     }>;
     achievements: Record<string, AchievementProgress>;
     milestones: Record<string, unknown>;
+    tutorial: TutorialState;
   };
   selections: {
     selectedCharacterId: string;
@@ -123,6 +128,7 @@ export function createDefaultSaveData(): SaveData {
       },
       achievements: {},
       milestones: {},
+      tutorial: { ...DEFAULT_TUTORIAL_STATE },
     },
     selections: {
       selectedCharacterId: 'default',
