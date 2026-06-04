@@ -26,7 +26,8 @@
     "currentSelection": "{character} / {stage} / {map}",
     "toggleAutoMode": "オートモード切替",
     "toggleFastMode": "高速モード切替",
-    "toggleLanguage": "言語"
+    "toggleLanguage": "言語",
+    "records": "記録"
   },
   "selection": {
     "character": "キャラクター",
@@ -135,5 +136,16 @@
     "uiVolume": "UI音量",
     "language": "言語",
     "back": "戻る"
+  },
+  "records": {
+    "title": "記録",
+    "achievements": "実績",
+    "leaderboards": "ランキング",
+    "unlocks": "アンロック",
+    "back": "戻る",
+    "empty": "データなし",
+    "unlocked": "解除済み",
+    "locked": "未解除",
+    "noRecords": "記録なし"
   }
 }

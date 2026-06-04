@@ -233,6 +233,8 @@ Current endless records use:
 
 Reserved future leaderboard dimensions include difficulty, seed, challenge ID, custom stage ID, and ruleset ID. The older global endless leaderboard is migrated through compatibility paths and should not be used by new systems.
 
+`RecordsScene` is the current minimal viewer for achievements, local leaderboards, and unlock state. It is read-only: it should not claim rewards, unlock content, reset records, or expose raw save JSON.
+
 ## What SaveData Is Not
 
 Formal save data is not the same as:

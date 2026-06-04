@@ -36,6 +36,7 @@
     "selectCharacter": "Select Character",
     "selectStage": "Select Stage",
     "customStageTool": "Custom Stage Tool",
+    "records": "Records",
     "autoStartCountdown": "Auto test starts in {seconds}s",
     "autoTestCanceled": "Auto test canceled",
     "currentSelection": "{character} / {stage} / {map}",
@@ -69,6 +70,17 @@
     "errors": "Errors",
     "warnings": "Warnings",
     "storedStages": "Stored Custom Stages"
+  },
+  "records": {
+    "title": "Records",
+    "achievements": "Achievements",
+    "leaderboards": "Leaderboards",
+    "unlocks": "Unlocks",
+    "back": "Back",
+    "empty": "Empty",
+    "unlocked": "Unlocked",
+    "locked": "Locked",
+    "noRecords": "No records yet"
   },
   "pause": {
     "title": "Paused",

@@ -12,6 +12,7 @@ The Title Scene provides:
 - Start Auto Test
 - Select Character
 - Select Stage
+- Records
 - Settings
 - Help
 - Auto-test countdown after no input
@@ -28,6 +29,16 @@ The current selection scenes are intentionally minimal:
 - Back returns to Title.
 
 They do not implement unlocks, detailed previews, custom stages, random stages, daily challenges, or difficulty selection yet.
+
+### RecordsScene
+
+RecordsScene is the minimal read-only entry for save-backed records:
+
+- Achievements
+- Leaderboards
+- Unlocks
+
+It does not implement achievement reward claiming, unlock actions, online leaderboard features, or raw metadata inspection. Empty systems should show a compact empty state instead of failing.
 
 ### Game HUD
 
