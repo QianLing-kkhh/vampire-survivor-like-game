@@ -65,6 +65,19 @@ Achievement and milestone progress:
 - `progression.achievements`: achievement progress by achievement id.
 - `progression.milestones`: reserved milestone progress placeholder.
 
+Unlock progress:
+
+- `progression.unlockedCharacterIds`
+- `progression.unlockedStageIds`
+- `progression.unlockedMapIds`
+- `progression.unlockedWeaponIds`
+- `progression.unlockedPassiveIds`
+- `progression.unlockedCosmeticIds`
+- `progression.unlockedThemeIds`
+- `progression.unlockedDifficultyIds`
+- `progression.unlockedChallengeIds`
+- `progression.unlocks`: normalized unlock state by `type:targetId`.
+
 ## SaveStorage
 
 `SaveStorage` owns localStorage access.
@@ -144,6 +157,8 @@ Import supports both raw `SaveData` JSON and `SaveExportPackage` JSON. Imported 
 
 Because achievements and milestones are formal progression data, `resetSave()` clears their progress along with other save-backed progression.
 
+Reset also restores default unlock state, leaving the current default character, stage, map, and theme unlocked.
+
 ## Settings Integration
 
 `SettingsManager` is the current domain-based settings entry point and reads/writes through `SaveManager.settings`.
@@ -187,6 +202,18 @@ Current behavior:
 - `AchievementReward` is data-only until an unlock layer is connected.
 - Milestone storage is reserved but not yet wired into gameplay counters.
 - Achievement progress is not part of CSV playtest logs.
+
+## Unlock Integration
+
+`UnlockManager` is the canonical owner for unlock state. It reads and writes through `SaveData.progression` and ensures built-in default content remains unlocked.
+
+Current behavior:
+
+- Existing default character, stage, map, and theme are unlocked.
+- No unlock UI is implemented yet.
+- `CharacterManager`, `StageManager`, and `MapManager` expose unlock-aware listing helpers.
+- Achievement rewards can call `UnlockManager`, but reward failure should not block achievement unlock.
+- Future content should register unlock definitions instead of storing access flags in individual managers.
 
 ## Records and Leaderboards
 

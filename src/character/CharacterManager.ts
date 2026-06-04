@@ -2,6 +2,7 @@ import { ContentBootstrap } from '../content/ContentBootstrap';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
 import { ContentRegistry } from '../content/ContentRegistry';
 import { SaveManager } from '../save/SaveManager';
+import { UnlockManager } from '../unlock/UnlockManager';
 
 import { CharacterDefinition } from './CharacterDefinition';
 
@@ -72,8 +73,19 @@ export class CharacterManager {
     };
   }
 
-  listCharacters(): CharacterDefinition[] {
-    return Object.keys(this.characterData).map((characterId) => this.getCharacter(characterId));
+  listCharacters(options: { includeLocked?: boolean } = {}): CharacterDefinition[] {
+    const characters = Object.keys(this.characterData)
+      .map((characterId) => this.getCharacter(characterId));
+
+    if (options.includeLocked === true) {
+      return characters;
+    }
+
+    return characters.filter((character) => this.isCharacterUnlocked(character.id));
+  }
+
+  isCharacterUnlocked(characterId: string): boolean {
+    return UnlockManager.isUnlocked('character', characterId);
   }
 
   private getCharacterDataFromRegistry(): CharacterData {

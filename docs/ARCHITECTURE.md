@@ -72,6 +72,26 @@ Current status:
 - Built-in achievements listen to events such as `enemy.killed`, `player.levelUp`, `pickup.treasureOpened`, `weapon.evolved`, `boss.killed`, `endless.started`, and `run.ended`.
 - Achievement progress is formal save data under `SaveData.progression.achievements`, not CSV playtest data.
 
+## Unlock Layer
+
+The unlock layer is the foundation for future character, stage, map, weapon, passive, cosmetic, theme, difficulty, challenge, daily reward, achievement reward, and meta-progression unlocks.
+
+- `UnlockableType`: built-in unlock target types plus future custom/mod extension strings.
+- `UnlockDefinition`: data shape for unlock id, target type/id, optional display keys, default-unlocked status, hidden flag, and future conditions.
+- `UnlockCondition`: reserved condition shape for achievement, milestone, run, endless, kill-count, and custom unlock rules.
+- `UnlockReward`: simple reward target shape for systems that grant unlocks.
+- `UnlockRegistry`: registers built-in and future content/mod unlock definitions.
+- `UnlockManager`: canonical read/write entry for unlock state backed by `SaveManager.progression`.
+- `BuiltInUnlocks`: registers current default character, stage, map, and theme as unlocked.
+
+Current status:
+
+- Existing default content remains unlocked.
+- No unlock UI exists yet.
+- Character, Stage, and Map managers expose unlock-aware listing helpers.
+- Achievement rewards can call `UnlockManager`, but built-in achievements currently do not grant unlock rewards.
+- Unlock progress is formal save data, not CSV data.
+
 ## Content Layer
 
 The content layer is the current foundation for future custom content and mod content packs.
@@ -270,6 +290,7 @@ TitleScene
     -> GameplayInitializer creates GameplayContext
     -> GameEventBus / GameEventRecorder / GameEventBridge start per-run event capture
     -> AchievementManager subscribes to GameEventBus for low-risk achievement unlocks
+    -> UnlockManager ensures built-in default content is unlocked
     -> GameplayUpdater updates runtime systems
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
     -> EnemyFlow handles enemy update/contact damage
@@ -297,5 +318,6 @@ TitleScene
 - Gameplay randomness should go through injected `RandomSource` streams from `RandomManager`.
 - New achievements, tutorials, unlocks, replay diagnostics, audio listeners, or floating-text listeners should subscribe to `GameEventBus` rather than scene callbacks.
 - Achievement and milestone progress should persist through `SaveManager.progression`, not localStorage owned by individual systems.
+- Unlock state should go through `UnlockManager`; Character/Stage/Map managers should not own unlock rules.
 - Existing `core/EventBus` and callbacks are still valid during migration; do not delete them until the dependent systems have moved.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.

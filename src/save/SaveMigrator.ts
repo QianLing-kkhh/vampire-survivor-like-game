@@ -70,17 +70,38 @@ export class SaveMigrator {
     return {
       ...defaultProgression,
       unlockedCharacterIds: Array.isArray(progression.unlockedCharacterIds)
-        ? this.readStringArray(progression.unlockedCharacterIds)
+        ? this.mergeStringArrays(defaultProgression.unlockedCharacterIds, progression.unlockedCharacterIds)
         : defaultProgression.unlockedCharacterIds,
       unlockedStageIds: Array.isArray(progression.unlockedStageIds)
-        ? this.readStringArray(progression.unlockedStageIds)
+        ? this.mergeStringArrays(defaultProgression.unlockedStageIds, progression.unlockedStageIds)
         : defaultProgression.unlockedStageIds,
       unlockedMapIds: Array.isArray(progression.unlockedMapIds)
-        ? this.readStringArray(progression.unlockedMapIds)
+        ? this.mergeStringArrays(defaultProgression.unlockedMapIds, progression.unlockedMapIds)
         : defaultProgression.unlockedMapIds,
+      unlockedWeaponIds: Array.isArray(progression.unlockedWeaponIds)
+        ? this.readStringArray(progression.unlockedWeaponIds)
+        : defaultProgression.unlockedWeaponIds,
+      unlockedPassiveIds: Array.isArray(progression.unlockedPassiveIds)
+        ? this.readStringArray(progression.unlockedPassiveIds)
+        : defaultProgression.unlockedPassiveIds,
       unlockedCosmeticIds: Array.isArray(progression.unlockedCosmeticIds)
         ? this.readStringArray(progression.unlockedCosmeticIds)
         : defaultProgression.unlockedCosmeticIds,
+      unlockedThemeIds: Array.isArray(progression.unlockedThemeIds)
+        ? this.mergeStringArrays(defaultProgression.unlockedThemeIds, progression.unlockedThemeIds)
+        : defaultProgression.unlockedThemeIds,
+      unlockedDifficultyIds: Array.isArray(progression.unlockedDifficultyIds)
+        ? this.mergeStringArrays(defaultProgression.unlockedDifficultyIds, progression.unlockedDifficultyIds)
+        : defaultProgression.unlockedDifficultyIds,
+      unlockedChallengeIds: Array.isArray(progression.unlockedChallengeIds)
+        ? this.readStringArray(progression.unlockedChallengeIds)
+        : defaultProgression.unlockedChallengeIds,
+      unlocks: this.isObject(progression.unlocks)
+        ? {
+          ...defaultProgression.unlocks,
+          ...this.normalizeUnlocks(progression.unlocks),
+        }
+        : defaultProgression.unlocks,
       achievements: this.isObject(progression.achievements)
         ? this.normalizeAchievementProgress(progression.achievements)
         : defaultProgression.achievements,
@@ -88,6 +109,30 @@ export class SaveMigrator {
         ? progression.milestones
         : defaultProgression.milestones,
     };
+  }
+
+  private mergeStringArrays(defaultValues: readonly string[], value: unknown): string[] {
+    return [...new Set([...defaultValues, ...this.readStringArray(value)])];
+  }
+
+  private normalizeUnlocks(
+    unlocks: Record<string, unknown>,
+  ): SaveData['progression']['unlocks'] {
+    return Object.entries(unlocks).reduce<SaveData['progression']['unlocks']>(
+      (result, [unlockId, value]) => {
+        if (!this.isObject(value)) {
+          return result;
+        }
+
+        result[unlockId] = {
+          unlocked: value.unlocked === true,
+          unlockedAt: this.readOptionalString(value.unlockedAt),
+        };
+
+        return result;
+      },
+      {},
+    );
   }
 
   private normalizeAchievementProgress(

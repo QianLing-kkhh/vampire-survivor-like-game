@@ -5,6 +5,7 @@ import { CustomStageValidator } from '../custom/CustomStageValidator';
 import { MapManager } from '../map/MapManager';
 import { SaveManager } from '../save/SaveManager';
 import { StageManager } from '../stage/StageManager';
+import { UnlockManager } from '../unlock/UnlockManager';
 
 import {
   DEFAULT_SELECTION_STATE,
@@ -48,6 +49,11 @@ export class SelectionManager {
       return false;
     }
 
+    if (!UnlockManager.isUnlocked('character', id)) {
+      console.warn(`Selection character is locked: ${id}`);
+      return false;
+    }
+
     characterManager.setSelectedCharacterId(id);
     this.notify();
     return true;
@@ -59,6 +65,11 @@ export class SelectionManager {
 
     if (stage.id !== id) {
       console.warn(`Selection stage id not found: ${id}`);
+      return false;
+    }
+
+    if (!UnlockManager.isUnlocked('stage', id)) {
+      console.warn(`Selection stage is locked: ${id}`);
       return false;
     }
 
@@ -78,6 +89,11 @@ export class SelectionManager {
 
     if (mapManager.getMap(id).id !== id) {
       console.warn(`Selection map id not found: ${id}`);
+      return false;
+    }
+
+    if (!UnlockManager.isUnlocked('map', id)) {
+      console.warn(`Selection map is locked: ${id}`);
       return false;
     }
 

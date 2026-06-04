@@ -53,6 +53,7 @@ import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
+import { UnlockManager } from '../unlock/UnlockManager';
 import { WeaponFactory } from '../weapon/WeaponFactory';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { MapManager } from '../map/MapManager';
@@ -104,6 +105,7 @@ export interface GameplayInitializerConfig {
 export class GameplayInitializer {
   initialize(config: GameplayInitializerConfig): GameplayContext {
     ContentBootstrap.ensureInitialized();
+    UnlockManager.initialize();
     const characterManager = new CharacterManager();
     const stageManager = new StageManager();
     const mapManager = new MapManager();

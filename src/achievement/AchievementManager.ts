@@ -1,6 +1,8 @@
 import { GameEvent } from '../events/GameEvent';
 import { GameEventBus } from '../events/GameEventBus';
 import { SaveManager } from '../save/SaveManager';
+import { UnlockManager } from '../unlock/UnlockManager';
+import { UnlockableType } from '../unlock/UnlockableType';
 
 import { AchievementDefinition } from './AchievementDefinition';
 import {
@@ -193,6 +195,7 @@ export class AchievementManager {
         continue;
       }
 
+      this.applyRewards(definition);
       console.info(`Achievement unlocked: ${definition.id}`);
       this.notify(progress, definition);
     }
@@ -215,5 +218,39 @@ export class AchievementManager {
 
   private readNumber(value: unknown): number {
     return typeof value === 'number' ? value : 0;
+  }
+
+  private applyRewards(definition: AchievementDefinition): void {
+    for (const reward of definition.rewards ?? []) {
+      const unlockableType = this.toUnlockableType(reward.type);
+
+      if (!unlockableType || !reward.targetId) {
+        continue;
+      }
+
+      try {
+        UnlockManager.unlock(unlockableType, reward.targetId);
+      } catch (error) {
+        console.warn(`Achievement reward failed for ${definition.id}`, error);
+      }
+    }
+  }
+
+  private toUnlockableType(rewardType: string): UnlockableType | null {
+    switch (rewardType) {
+      case 'unlockCharacter':
+        return 'character';
+      case 'unlockStage':
+        return 'stage';
+      case 'unlockMap':
+        return 'map';
+      case 'unlockCosmetic':
+        return 'cosmetic';
+      case 'none':
+      case 'currency':
+        return null;
+      default:
+        return null;
+    }
   }
 }

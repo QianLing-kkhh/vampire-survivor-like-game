@@ -5,6 +5,7 @@ import { CustomStagePackage } from '../custom/CustomStageSchema';
 import { CustomStageStorage } from '../custom/CustomStageStorage';
 import { CustomStageValidator } from '../custom/CustomStageValidator';
 import { SaveManager } from '../save/SaveManager';
+import { UnlockManager } from '../unlock/UnlockManager';
 
 import { MapDefinition } from './MapDefinition';
 
@@ -69,8 +70,18 @@ export class MapManager {
     return this.mapData[mapId] ?? this.mapData[DEFAULT_CONTENT_IDS.map];
   }
 
-  listMaps(): MapDefinition[] {
-    return Object.values(this.mapData).map((map) => ({ ...map }));
+  listMaps(options: { includeLocked?: boolean } = {}): MapDefinition[] {
+    const maps = Object.values(this.mapData).map((map) => ({ ...map }));
+
+    if (options.includeLocked === true) {
+      return maps;
+    }
+
+    return maps.filter((map) => this.isMapUnlocked(map.id));
+  }
+
+  isMapUnlocked(mapId: string): boolean {
+    return UnlockManager.isUnlocked('map', mapId);
   }
 
   private getMapDataFromRegistry(): MapData {

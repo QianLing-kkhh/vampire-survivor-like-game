@@ -17,6 +17,7 @@ Future architecture should assume support for:
 - Appearance themes and skin selections
 - Mod art packs and theme asset overrides
 - Unlocks and meta progression
+- Central unlock state for characters, stages, maps, cosmetics, weapons, passives, difficulties, and challenge access
 - Achievements and quests
 - Milestones, starter goals, and achievement-driven unlock rewards
 - Daily challenges and seed challenges
@@ -58,6 +59,7 @@ Future architecture should assume support for:
 15. Gameplay randomness should use injected `RandomSource` streams from `RandomManager`, not direct `Math.random()`.
 16. New cross-system observers should subscribe to `GameEventBus` instead of wiring directly into `GameScene`, manager callbacks, or UI events.
 17. Achievements, milestones, quests, and unlock triggers should evaluate data-driven definitions and persist through `SaveManager.progression`.
+18. Unlock state should be owned by `UnlockManager`; content managers can query it but should not duplicate unlock rules.
 
 ## Seeded Runs And Replay
 
@@ -94,6 +96,18 @@ Important boundaries:
 - Milestones are intended for reusable threshold counters, such as kills, treasures, evolutions, and endless survival targets.
 - Future Character / Stage / Skin unlocks should integrate through an unlock layer or manager, then be referenced by achievement rewards.
 
+## Unlocks
+
+`UnlockManager`, `UnlockRegistry`, and `UnlockDefinition` provide the foundation for future content access rules and reward-driven unlocks.
+
+Important boundaries:
+
+- Existing default character, stage, map, and theme remain unlocked.
+- New content should register an `UnlockDefinition` rather than adding unlock logic to selection scenes.
+- `AchievementReward`, milestone rewards, daily challenge rewards, and quest rewards can map to `UnlockReward`.
+- Selection and content managers may check `UnlockManager`, but they should not store unlock state themselves.
+- Unlock data is stored in formal save progression data.
+
 ## Planned Domain Splits
 
 Settings should eventually split into domains:
@@ -120,6 +134,7 @@ Content should eventually split into resolvers and registries:
 - Selection manager for character, stage, map, difficulty, challenge, custom stage, seed, and ruleset IDs
 - Game event bus and recorder for achievements, tutorials, replay diagnostics, unlocks, and listener cleanup
 - Achievement and milestone registries for event-driven goals and future unlock rewards
+- Unlock registry and manager for content access state and reward application
 
 ## Risk Areas
 
@@ -134,3 +149,4 @@ Content should eventually split into resolvers and registries:
 - Selection UI directly mutating individual managers instead of using `SelectionManager`
 - Event consumers wiring directly into `GameScene` or manager callbacks instead of using `GameEventBus`
 - Achievement or quest progress being stored outside `SaveManager`
+- Character, stage, map, or cosmetic managers duplicating unlock storage instead of using `UnlockManager`

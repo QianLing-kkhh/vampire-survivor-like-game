@@ -5,6 +5,7 @@ import { CustomStagePackage } from '../custom/CustomStageSchema';
 import { CustomStageStorage } from '../custom/CustomStageStorage';
 import { CustomStageValidator } from '../custom/CustomStageValidator';
 import { SaveManager } from '../save/SaveManager';
+import { UnlockManager } from '../unlock/UnlockManager';
 
 import { StageDefinition } from './StageDefinition';
 
@@ -100,12 +101,22 @@ export class StageManager {
     return this.stageData[stageId] ?? this.stageData[DEFAULT_CONTENT_IDS.stage];
   }
 
-  listStages(): StageDefinition[] {
-    return Object.values(this.stageData).map((stage) => ({ ...stage }));
+  listStages(options: { includeLocked?: boolean } = {}): StageDefinition[] {
+    const stages = Object.values(this.stageData).map((stage) => ({ ...stage }));
+
+    if (options.includeLocked === true) {
+      return stages;
+    }
+
+    return stages.filter((stage) => this.isStageUnlocked(stage.id));
+  }
+
+  isStageUnlocked(stageId: string): boolean {
+    return UnlockManager.isUnlocked('stage', stageId);
   }
 
   listSelectableStages(): SelectableStageEntry[] {
-    const builtinStages = this.listStages().map((stage) => ({
+    const builtinStages = this.listStages({ includeLocked: false }).map((stage) => ({
       id: stage.id,
       name: stage.name,
       source: 'builtin' as const,

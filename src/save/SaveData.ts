@@ -21,7 +21,7 @@ import {
 import { AchievementProgress } from '../achievement/AchievementProgress';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 
-export const SAVE_SCHEMA_VERSION = 7;
+export const SAVE_SCHEMA_VERSION = 8;
 
 export interface SaveData {
   schemaVersion: number;
@@ -36,7 +36,16 @@ export interface SaveData {
     unlockedCharacterIds: string[];
     unlockedStageIds: string[];
     unlockedMapIds: string[];
+    unlockedWeaponIds: string[];
+    unlockedPassiveIds: string[];
     unlockedCosmeticIds: string[];
+    unlockedThemeIds: string[];
+    unlockedDifficultyIds: string[];
+    unlockedChallengeIds: string[];
+    unlocks: Record<string, {
+      unlocked: boolean;
+      unlockedAt?: string;
+    }>;
     achievements: Record<string, AchievementProgress>;
     milestones: Record<string, unknown>;
   };
@@ -72,6 +81,7 @@ export interface SaveSummary {
   selectedDifficultyId: string;
   selectedThemeId: string;
   settingsCount?: number;
+  unlockCount?: number;
   achievementCount?: number;
   leaderboardCount: number;
   customStageCount?: number;
@@ -91,7 +101,26 @@ export function createDefaultSaveData(): SaveData {
       unlockedCharacterIds: ['default'],
       unlockedStageIds: ['stage_001'],
       unlockedMapIds: ['prototype_field'],
+      unlockedWeaponIds: [],
+      unlockedPassiveIds: [],
       unlockedCosmeticIds: [],
+      unlockedThemeIds: ['default'],
+      unlockedDifficultyIds: ['normal'],
+      unlockedChallengeIds: [],
+      unlocks: {
+        'character:default': {
+          unlocked: true,
+        },
+        'stage:stage_001': {
+          unlocked: true,
+        },
+        'map:prototype_field': {
+          unlocked: true,
+        },
+        'theme:default': {
+          unlocked: true,
+        },
+      },
       achievements: {},
       milestones: {},
     },
