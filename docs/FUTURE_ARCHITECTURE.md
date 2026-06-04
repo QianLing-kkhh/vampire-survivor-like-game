@@ -20,6 +20,7 @@ Future architecture should assume support for:
 - Multi-dimensional leaderboards
 - Difficulty system
 - Mutator rule modifiers
+- RunRuleSet composition for difficulty, challenges, custom stages, and mod rules
 - Enemy affixes and elite enemies
 - Enemy modifier configs for fast, shielded, explosive, split, or future mod-defined behavior
 - Data-driven Boss skills
@@ -47,6 +48,7 @@ Future architecture should assume support for:
 9. CSV/playtest logs and formal save data must remain separate unless intentionally integrated.
 10. Future selection UI should build on existing managers, save data, and content registry rather than bypass them.
 11. Enemy variants should prefer `EnemyModifier` configs over combinatorial enemy IDs.
+12. Difficulty, challenge, and custom rule changes should prefer `RunRuleSet` mutators over direct runtime if/else branches.
 
 ## Planned Domain Splits
 
@@ -68,6 +70,8 @@ Content should eventually split into resolvers and registries:
 - Enemy modifier registry for elite/affix behaviors
 - Weapon tag registry for archetype interactions
 - Weapon behavior registry for future custom weapon behavior types
+- Difficulty manager and mutator registry for future challenge rules
+- RunRuleSet as the single per-run rule composition point
 
 ## Risk Areas
 
@@ -77,3 +81,4 @@ Content should eventually split into resolvers and registries:
 - New persistent state being stored outside `SaveManager`
 - Mod/custom content bypassing validation
 - Leaderboards mixing incompatible schemas, seeds, difficulties, or content versions
+- Rule changes bypassing `RunRuleSet` and becoming invisible to CSV or leaderboard keys

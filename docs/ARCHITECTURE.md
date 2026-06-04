@@ -117,6 +117,18 @@ Enemy, Boss, and combat behavior are split from the main scene.
 - `EndlessBossManager`: manages rotating endless Boss spawns, active Boss state, and `BossSkillRuntime` updates.
 - `BossSkillFactory`: creates data-driven Boss skills such as dash, beam, summon, shockwave, and slow zone from Boss skill configs.
 
+## Rules Layer
+
+The rules layer is the foundation for future difficulty, challenge, custom stage, seeded run, and mod rule combinations.
+
+- `DifficultyDefinition`: data shape for Easy / Normal / Hard-style baseline multipliers.
+- `DifficultyManager`: resolves the selected difficulty from save-backed selections and falls back to `normal`.
+- `MutatorConfig`: serializable rule modifier data for enemy stats, spawn rate, treasure rate, EXP rate, Boss timing, and weapon pool restrictions.
+- `MutatorFactory` / `MutatorRegistry`: create built-in or future registered mutators from config.
+- `RunRuleSet`: the per-run effective rules object. It applies difficulty first, then configured mutators in order.
+
+Current default behavior is `normal` difficulty with no mutators, so gameplay values remain unchanged. Future systems should add rule changes through `RunRuleSet` rather than direct `GameScene`, `SpawnDirector`, or `EnemyFactory` conditionals.
+
 ## Endless Layer
 
 Endless systems activate after the final Boss is killed when Endless Mode is enabled.
@@ -172,6 +184,7 @@ BootScene / PreloadScene
 TitleScene
   -> GameScene
     -> managers resolve selected character/stage/map
+    -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
     -> GameplayUpdater updates runtime systems
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
@@ -195,3 +208,4 @@ TitleScene
 - Per-run result fields should be added to `RunState` and `RunResultBuilder`, not manually assembled in UI.
 - Persistent player selections and settings should go through `SaveManager`.
 - Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.
+- Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.

@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
+import { RunRuleSet } from '../rules/RunRuleSet';
 
 interface EndlessSpawnRule {
   enemyId: string;
@@ -35,6 +36,7 @@ export interface EndlessManagerConfig {
   getPlayerPosition: () => { x: number; y: number };
   getWorldSize: () => { width: number; height: number };
   onEnemySpawned(enemy: Enemy): void;
+  runRuleSet?: RunRuleSet;
 }
 
 export class EndlessManager {
@@ -114,9 +116,9 @@ export class EndlessManager {
 
       while (
         this.getAliveEnemyCount() < EndlessManager.MAX_ENEMIES
-        && state.elapsedMs >= rule.intervalSeconds * 1000
+        && state.elapsedMs >= this.getEffectiveIntervalMs(rule.intervalSeconds)
       ) {
-        state.elapsedMs -= rule.intervalSeconds * 1000;
+        state.elapsedMs -= this.getEffectiveIntervalMs(rule.intervalSeconds);
         this.spawnBatch(rule.enemyId, rule.count, endlessTimeSeconds, rule.modifiers);
       }
     });
@@ -287,5 +289,12 @@ export class EndlessManager {
 
   private getAliveEnemyCount(): number {
     return this.config.enemies.filter((enemy) => !enemy.isDead).length;
+  }
+
+  private getEffectiveIntervalMs(intervalSeconds: number): number {
+    const effectiveSeconds = this.config.runRuleSet?.applySpawnInterval(intervalSeconds)
+      ?? intervalSeconds;
+
+    return Math.max(0.001, effectiveSeconds) * 1000;
   }
 }

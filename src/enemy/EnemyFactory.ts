@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { RunRuleSet } from '../rules/RunRuleSet';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Enemy, EnemyStats } from './Enemy';
@@ -28,6 +29,7 @@ export class EnemyFactory {
   constructor(
     private readonly scene: Phaser.Scene,
     enemyConfigs?: EnemyConfigMap,
+    private readonly runRuleSet?: RunRuleSet,
   ) {
     ContentBootstrap.ensureInitialized();
     this.enemyConfigs = enemyConfigs ?? ContentRegistry.listEnemies();
@@ -57,10 +59,11 @@ export class EnemyFactory {
     const modifierRuntime = new EnemyModifierRuntime(
       EnemyModifierFactory.createMany(createOptions?.modifiers),
     );
-    const stats = modifierRuntime.applyStats({
+    const modifiedStats = modifierRuntime.applyStats({
       ...(baseStats ?? statsOverride as EnemyStats),
       ...(statsOverride ?? {}),
     });
+    const stats = this.applyRunRules(enemyId, modifiedStats);
     const enemy = new Enemy(this.scene, enemyId, stats, x, y);
     enemy.setModifierRuntime(modifierRuntime);
     const textureKey = AssetKeyResolver.getEnemyTextureKey(this.scene, enemyId);
@@ -90,6 +93,21 @@ export class EnemyFactory {
     }
 
     return { ...stats };
+  }
+
+  private applyRunRules(enemyId: string, stats: EnemyStats): EnemyStats {
+    if (!this.runRuleSet) {
+      return stats;
+    }
+
+    const ruleStats = enemyId === 'boss' || stats.bossLike === true || enemyId.endsWith('_boss')
+      ? this.runRuleSet.applyBossStats(stats)
+      : this.runRuleSet.applyEnemyStats(stats);
+
+    return {
+      ...ruleStats,
+      exp: this.runRuleSet.applyExpValue(ruleStats.exp),
+    };
   }
 
   private createArtBody(

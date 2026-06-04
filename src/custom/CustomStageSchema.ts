@@ -1,4 +1,5 @@
 import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
+import { MutatorConfig } from '../rules/MutatorConfig';
 
 export const CUSTOM_STAGE_SCHEMA_VERSION = 1;
 
@@ -25,6 +26,7 @@ export interface CustomStageDefinition {
   finalBossSpawnTime: number;
   warningBeforeBoss: number;
   allowEndless: boolean;
+  mutators?: MutatorConfig[];
   startingRules?: Record<string, unknown>;
 }
 

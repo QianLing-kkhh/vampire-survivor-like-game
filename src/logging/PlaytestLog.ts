@@ -80,6 +80,9 @@ export interface PlaytestLogData {
   maxExpRequirementMultiplier: number;
   endlessLevelUpCount: number;
   averageEndlessLevelIntervalSeconds: number;
+  difficultyId: string;
+  mutatorIds: readonly string[];
+  rulesetId: string;
   finalMoveSpeed: number;
   finalPickupRange: number;
   finalMaxHp: number;
@@ -171,6 +174,9 @@ export class PlaytestLog {
     'maxExpRequirementMultiplier',
     'endlessLevelUpCount',
     'averageEndlessLevelIntervalSeconds',
+    'difficultyId',
+    'mutatorIds',
+    'rulesetId',
     'finalMoveSpeed',
     'finalPickupRange',
     'finalMaxHp',
@@ -270,6 +276,9 @@ export class PlaytestLog {
       PlaytestLog.formatNumber(data.maxExpRequirementMultiplier),
       data.endlessLevelUpCount.toString(),
       PlaytestLog.formatNumber(data.averageEndlessLevelIntervalSeconds),
+      data.difficultyId,
+      data.mutatorIds.join('|'),
+      data.rulesetId,
       PlaytestLog.formatNumber(data.finalMoveSpeed),
       PlaytestLog.formatNumber(data.finalPickupRange),
       PlaytestLog.formatNumber(data.finalMaxHp),

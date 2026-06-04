@@ -20,7 +20,7 @@ import {
 } from '../settings/InputSettings';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 
-export const SAVE_SCHEMA_VERSION = 3;
+export const SAVE_SCHEMA_VERSION = 4;
 
 export interface SaveData {
   schemaVersion: number;
@@ -41,6 +41,7 @@ export interface SaveData {
     selectedCharacterId: string;
     selectedStageId: string;
     selectedMapId: string;
+    selectedDifficultyId: string;
     selectedThemeId: string;
   };
   cosmetics: {
@@ -71,6 +72,7 @@ export function createDefaultSaveData(): SaveData {
       selectedCharacterId: 'default',
       selectedStageId: 'stage_001',
       selectedMapId: 'prototype_field',
+      selectedDifficultyId: 'normal',
       selectedThemeId: 'default',
     },
     cosmetics: {

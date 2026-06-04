@@ -1,3 +1,5 @@
+import { MutatorConfig } from '../rules/MutatorConfig';
+
 export interface StageDefinition {
   id: string;
   name: string;
@@ -5,4 +7,6 @@ export interface StageDefinition {
   finalBossId: string;
   finalBossSpawnTimeSeconds: number;
   warningBeforeSpawnSeconds: number;
+  difficultyId?: string;
+  mutators?: MutatorConfig[];
 }

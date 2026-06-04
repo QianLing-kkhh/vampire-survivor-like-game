@@ -7,6 +7,7 @@ import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { Position } from '../enemy/EnemyMovement';
 import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
+import { RunRuleSet } from '../rules/RunRuleSet';
 import { SpawnWave } from './SpawnWave';
 
 interface ActiveWave {
@@ -30,6 +31,7 @@ export class SpawnDirector {
     private readonly getPlayerPosition: () => Position,
     private readonly getWorldSize: () => { width: number; height: number },
     private readonly onEnemySpawned: (enemy: Enemy) => void,
+    private readonly runRuleSet?: RunRuleSet,
   ) {
     ContentBootstrap.ensureInitialized();
     this.pendingWaves = [...waves].sort((a, b) => a.time - b.time);
@@ -40,6 +42,7 @@ export class SpawnDirector {
     getPlayerPosition: () => Position,
     getWorldSize: () => { width: number; height: number },
     onEnemySpawned: (enemy: Enemy) => void,
+    runRuleSet?: RunRuleSet,
   ): SpawnDirector {
     ContentBootstrap.ensureInitialized();
     return new SpawnDirector(
@@ -48,6 +51,7 @@ export class SpawnDirector {
       getPlayerPosition,
       getWorldSize,
       onEnemySpawned,
+      runRuleSet,
     );
   }
 
@@ -78,9 +82,9 @@ export class SpawnDirector {
 
       while (
         activeWave.spawnedCount < activeWave.wave.count
-        && activeWave.elapsedSinceSpawn >= activeWave.wave.interval * 1000
+        && activeWave.elapsedSinceSpawn >= this.getEffectiveIntervalMs(activeWave.wave.interval)
       ) {
-        activeWave.elapsedSinceSpawn -= activeWave.wave.interval * 1000;
+        activeWave.elapsedSinceSpawn -= this.getEffectiveIntervalMs(activeWave.wave.interval);
         activeWave.spawnedCount += 1;
         this.spawnEnemy(
           activeWave.wave.enemy,
@@ -96,6 +100,13 @@ export class SpawnDirector {
 
       this.activeWaves.splice(index, 1);
     }
+  }
+
+  private getEffectiveIntervalMs(intervalSeconds: number): number {
+    const effectiveSeconds = this.runRuleSet?.applySpawnInterval(intervalSeconds)
+      ?? intervalSeconds;
+
+    return Math.max(0.001, effectiveSeconds) * 1000;
   }
 
   private spawnEnemy(enemyId: string, modifiers?: EnemyModifierConfig[]): void {

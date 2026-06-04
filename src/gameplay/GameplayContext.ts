@@ -27,6 +27,7 @@ import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunState } from '../run/RunState';
+import { RunRuleSet } from '../rules/RunRuleSet';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
@@ -48,6 +49,7 @@ export interface GameplayContext {
   damageCalculator: DamageCalculator;
   enemyMovement: EnemyMovement;
   timeManager: TimeManager;
+  runRuleSet: RunRuleSet;
   runState: RunState;
   runStats: RunStats;
   player: PlayerController;

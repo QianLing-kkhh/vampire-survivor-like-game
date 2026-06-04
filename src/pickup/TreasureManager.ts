@@ -4,6 +4,7 @@ import { AudioManager } from '../audio/AudioManager';
 import { EventBus } from '../core/EventBus';
 import { GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
+import { RunRuleSet } from '../rules/RunRuleSet';
 
 import { TreasureChest } from './TreasureChest';
 
@@ -30,6 +31,7 @@ export class TreasureManager {
     private readonly onChestDropped?: () => void,
     private readonly onChestOpened?: () => void,
     private readonly getEndlessTimeSeconds?: () => number | null,
+    private readonly runRuleSet?: RunRuleSet,
   ) {
     this.unsubscribeEnemyKilled = eventBus.subscribe('EnemyKilled', (event) => {
       if (!isEnemyKilledEvent(event)) {
@@ -111,7 +113,11 @@ export class TreasureManager {
       return true;
     }
 
-    if (Math.random() >= TreasureManager.NORMAL_DROP_CHANCE + this.bonusDropChance) {
+    const dropChance = this.runRuleSet?.applyTreasureDropChance(
+      TreasureManager.NORMAL_DROP_CHANCE + this.bonusDropChance,
+    ) ?? TreasureManager.NORMAL_DROP_CHANCE + this.bonusDropChance;
+
+    if (Math.random() >= dropChance) {
       return false;
     }
 

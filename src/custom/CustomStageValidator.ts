@@ -1,6 +1,7 @@
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
 import { EnemyModifierFactory } from '../enemy/modifiers/EnemyModifierFactory';
+import { MutatorFactory } from '../rules/MutatorFactory';
 
 import {
   CUSTOM_STAGE_SCHEMA_VERSION,
@@ -166,6 +167,89 @@ export class CustomStageValidator {
         'Boss appears before 60 seconds; this may be too early for a normal stage.',
         'stage.finalBossSpawnTime',
       ));
+    }
+
+    this.validateStageMutators(stage.mutators, 'stage.mutators', issues);
+  }
+
+  private validateStageMutators(
+    mutators: readonly unknown[] | undefined,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    if (mutators === undefined) {
+      return;
+    }
+
+    if (!Array.isArray(mutators)) {
+      issues.push(this.error('invalid_mutators', 'Stage mutators must be an array.', path));
+      return;
+    }
+
+    mutators.forEach((mutator, index) => {
+      const mutatorPath = `${path}.${index}`;
+
+      if (!this.isObject(mutator)) {
+        issues.push(this.error('invalid_mutator', 'Mutator must be an object.', mutatorPath));
+        return;
+      }
+
+      const type = mutator.type;
+
+      if (typeof type !== 'string') {
+        issues.push(this.error('missing_mutator_type', 'Mutator type is required.', `${mutatorPath}.type`));
+        return;
+      }
+
+      if (!MutatorFactory.isKnownType(type)) {
+        issues.push(this.warning(
+          'unknown_mutator_type',
+          `Mutator type is not registered: ${type}`,
+          `${mutatorPath}.type`,
+        ));
+      }
+
+      this.validateMutatorSpecificFields(mutator, mutatorPath, issues);
+    });
+  }
+
+  private validateMutatorSpecificFields(
+    mutator: Record<string, unknown>,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    switch (mutator.type) {
+      case 'enemyStat':
+        this.validatePositiveOptionalNumber(mutator.enemyHpMultiplier, `${path}.enemyHpMultiplier`, issues);
+        this.validatePositiveOptionalNumber(mutator.enemyDamageMultiplier, `${path}.enemyDamageMultiplier`, issues);
+        this.validatePositiveOptionalNumber(mutator.enemySpeedMultiplier, `${path}.enemySpeedMultiplier`, issues);
+        break;
+      case 'spawnRate':
+        this.validatePositiveRequiredNumber(mutator.spawnRateMultiplier, `${path}.spawnRateMultiplier`, issues);
+        break;
+      case 'treasureRate':
+        this.validateNonNegativeRequiredNumber(mutator.treasureDropMultiplier, `${path}.treasureDropMultiplier`, issues);
+        break;
+      case 'expRate':
+        this.validateNonNegativeRequiredNumber(mutator.expMultiplier, `${path}.expMultiplier`, issues);
+        break;
+      case 'bossTiming':
+        this.validatePositiveOptionalNumber(
+          mutator.finalBossSpawnTimeMultiplier,
+          `${path}.finalBossSpawnTimeMultiplier`,
+          issues,
+        );
+        this.validateNumberOptional(mutator.finalBossSpawnTimeOffsetSeconds, `${path}.finalBossSpawnTimeOffsetSeconds`, issues);
+        this.validateNumberOptional(mutator.warningBeforeBossOffsetSeconds, `${path}.warningBeforeBossOffsetSeconds`, issues);
+        break;
+      case 'weaponPool':
+        this.validateStringArrayOptional(mutator.allowedWeaponIds, `${path}.allowedWeaponIds`, issues);
+        this.validateStringArrayOptional(mutator.bannedWeaponIds, `${path}.bannedWeaponIds`, issues);
+        this.validateStringArrayOptional(mutator.requiredTags, `${path}.requiredTags`, issues);
+        this.validateStringArrayOptional(mutator.bannedTags, `${path}.bannedTags`, issues);
+        break;
+      default:
+        break;
     }
   }
 
@@ -396,6 +480,58 @@ export class CustomStageValidator {
         break;
       default:
         break;
+    }
+  }
+
+  private validatePositiveRequiredNumber(
+    value: unknown,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    if (typeof value !== 'number' || value <= 0) {
+      issues.push(this.error('invalid_mutator_number', 'Value must be > 0.', path));
+    }
+  }
+
+  private validatePositiveOptionalNumber(
+    value: unknown,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    if (value !== undefined && (typeof value !== 'number' || value <= 0)) {
+      issues.push(this.error('invalid_mutator_number', 'Value must be > 0.', path));
+    }
+  }
+
+  private validateNonNegativeRequiredNumber(
+    value: unknown,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    if (typeof value !== 'number' || value < 0) {
+      issues.push(this.error('invalid_mutator_number', 'Value must be >= 0.', path));
+    }
+  }
+
+  private validateNumberOptional(
+    value: unknown,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    if (value !== undefined && typeof value !== 'number') {
+      issues.push(this.error('invalid_mutator_number', 'Value must be a number.', path));
+    }
+  }
+
+  private validateStringArrayOptional(
+    value: unknown,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    if (value !== undefined && !(
+      Array.isArray(value) && value.every((item) => typeof item === 'string')
+    )) {
+      issues.push(this.error('invalid_mutator_string_array', 'Value must be a string array.', path));
     }
   }
 

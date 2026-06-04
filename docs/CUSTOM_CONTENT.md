@@ -71,6 +71,23 @@ The first future version should only support:
 
 The current custom stage schema follows that scope: it only references existing enemies/Bosses and does not allow custom weapons, enemies, passives, or Boss skills. Those belong to later mod content once validators are more mature.
 
+## Difficulty And Mutators
+
+`DifficultyDefinition`, `MutatorConfig`, and `RunRuleSet` now exist as a foundation for custom stage and challenge rules.
+
+Current custom stage packages may declare stage-level `mutators`, and `CustomStageValidator` checks their basic shape and numeric ranges. This does not mean custom stages are playable through UI yet, and no built-in stage enables mutators by default.
+
+Supported first-pass mutator types:
+
+- `enemyStat`
+- `spawnRate`
+- `treasureRate`
+- `expRate`
+- `bossTiming`
+- `weaponPool`
+
+Future custom stages should use mutators for rule changes instead of hardcoding behavior in gameplay classes. Validator checks are structural and advisory; they do not guarantee balance.
+
 ## Enemy Modifiers
 
 `EnemyModifier` is now available as an architecture foundation for future elite enemies, affixes, random endless upgrades, custom stage wave modifiers, and mod content.

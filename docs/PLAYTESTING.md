@@ -27,6 +27,8 @@ Settings are intended to apply immediately during a run.
 - Fast Mode increases gameplay time scale immediately.
 - Endless Mode changes the Boss-kill result rule immediately.
 
+Current runs use `normal` difficulty with no mutators unless future test harnesses or custom content explicitly provide a different `RunRuleSet`. Difficulty and mutator IDs are recorded in CSV so future samples can be separated by ruleset.
+
 Useful combinations:
 
 - Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.
@@ -132,6 +134,9 @@ Important endless metrics:
 - `endlessBossKillCount`
 - `maxSimultaneousEndlessBosses`
 - `activeEndlessBossCountAtDeath`
+- `difficultyId`
+- `mutatorIds`
+- `rulesetId`
 
 ## CSV Export
 
@@ -172,6 +177,7 @@ These help distinguish between real pauses, browser reloads, buffer resets, and 
 | Endless Boss count | Late endless pressure and Boss stacking |
 | Endless scaling level | Enemy growth pressure |
 | Leaderboard key scope | Confirms records are separated by mode/stage/map/character |
+| Difficulty / ruleset ID | Confirms challenge and mutator samples are not mixed |
 | Reward usage counts | Post-cap reward balance |
 | Shield gained/consumed | Defensive reward strength |
 | Treasure open count | Reward pacing and inflation risk |

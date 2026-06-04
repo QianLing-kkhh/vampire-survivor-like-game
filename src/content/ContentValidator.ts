@@ -1,4 +1,14 @@
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
+import {
+  BossTimingMutatorConfig,
+  EnemyStatMutatorConfig,
+  ExpRateMutatorConfig,
+  MutatorConfig,
+  SpawnRateMutatorConfig,
+  TreasureRateMutatorConfig,
+  WeaponPoolMutatorConfig,
+} from '../rules/MutatorConfig';
+import { MutatorFactory } from '../rules/MutatorFactory';
 import { WeaponBehaviorConfig } from '../weapon/behavior/WeaponBehaviorConfig';
 import { WeaponBehaviorRegistry } from '../weapon/behavior/WeaponBehaviorRegistry';
 import { WeaponConfig } from '../weapon/Weapon';
@@ -36,7 +46,99 @@ export class ContentValidator {
       if (!pack.enemies?.[stage.finalBossId]) {
         console.warn(`Stage ${stage.id} references missing final boss: ${stage.finalBossId}`);
       }
+
+      this.validateStageMutators(stage.id, stage.mutators, pack);
     }
+  }
+
+  private validateStageMutators(
+    stageId: string,
+    mutators: readonly MutatorConfig[] | undefined,
+    pack: ContentPack,
+  ): void {
+    for (const mutator of mutators ?? []) {
+      if (!MutatorFactory.isKnownType(mutator.type)) {
+        console.warn(`Stage ${stageId} uses unknown mutator type: ${mutator.type}`);
+        continue;
+      }
+
+      this.validateMutatorFields(stageId, mutator, pack);
+    }
+  }
+
+  private validateMutatorFields(
+    stageId: string,
+    mutator: MutatorConfig,
+    pack: ContentPack,
+  ): void {
+    switch (mutator.type) {
+      case 'enemyStat':
+        this.validateEnemyStatMutator(stageId, mutator as EnemyStatMutatorConfig);
+        break;
+      case 'spawnRate':
+        this.warnIfNotPositive(
+          stageId,
+          'spawnRateMultiplier',
+          (mutator as SpawnRateMutatorConfig).spawnRateMultiplier,
+        );
+        break;
+      case 'treasureRate':
+        this.warnIfNegative(
+          stageId,
+          'treasureDropMultiplier',
+          (mutator as TreasureRateMutatorConfig).treasureDropMultiplier,
+        );
+        break;
+      case 'expRate':
+        this.warnIfNegative(
+          stageId,
+          'expMultiplier',
+          (mutator as ExpRateMutatorConfig).expMultiplier,
+        );
+        break;
+      case 'bossTiming':
+        this.warnIfNotPositive(
+          stageId,
+          'finalBossSpawnTimeMultiplier',
+          (mutator as BossTimingMutatorConfig).finalBossSpawnTimeMultiplier,
+        );
+        break;
+      case 'weaponPool':
+        this.validateWeaponPoolMutator(stageId, mutator as WeaponPoolMutatorConfig, pack);
+        break;
+      default:
+        break;
+    }
+  }
+
+  private validateEnemyStatMutator(stageId: string, mutator: EnemyStatMutatorConfig): void {
+    this.warnIfNotPositive(stageId, 'enemyHpMultiplier', mutator.enemyHpMultiplier);
+    this.warnIfNotPositive(stageId, 'enemyDamageMultiplier', mutator.enemyDamageMultiplier);
+    this.warnIfNotPositive(stageId, 'enemySpeedMultiplier', mutator.enemySpeedMultiplier);
+  }
+
+  private validateWeaponPoolMutator(
+    stageId: string,
+    mutator: WeaponPoolMutatorConfig,
+    pack: ContentPack,
+  ): void {
+        for (const weaponId of [
+          ...(mutator.allowedWeaponIds ?? []),
+          ...(mutator.bannedWeaponIds ?? []),
+        ]) {
+          if (!pack.weapons?.[weaponId]) {
+            console.warn(`Stage ${stageId} weaponPool mutator references missing weapon: ${weaponId}`);
+          }
+        }
+
+        for (const tag of [
+          ...(mutator.requiredTags ?? []),
+          ...(mutator.bannedTags ?? []),
+        ]) {
+          if (typeof tag !== 'string') {
+            console.warn(`Stage ${stageId} weaponPool mutator includes a non-string tag.`);
+          }
+        }
   }
 
   private validateCharacters(pack: ContentPack): void {
@@ -194,5 +296,17 @@ export class ContentValidator {
       || (weaponType === 'axe' && behaviorType === 'arcing')
       || (weaponType === 'magic_wand' && behaviorType === 'homing')
       || (weaponType === 'projectile' && behaviorType === 'homing');
+  }
+
+  private warnIfNotPositive(stageId: string, field: string, value: number | undefined): void {
+    if (value !== undefined && value <= 0) {
+      console.warn(`Stage ${stageId} mutator field ${field} should be > 0.`);
+    }
+  }
+
+  private warnIfNegative(stageId: string, field: string, value: number | undefined): void {
+    if (value !== undefined && value < 0) {
+      console.warn(`Stage ${stageId} mutator field ${field} should be >= 0.`);
+    }
   }
 }

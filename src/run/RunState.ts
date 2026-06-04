@@ -58,6 +58,9 @@ export class RunState {
   finalExpRequirementMultiplier = 1;
   maxExpRequirementMultiplier = 1;
   endlessLevelUpCount = 0;
+  difficultyId = 'normal';
+  mutatorIds: string[] = [];
+  rulesetId = 'normal';
   private endlessLevelIntervalTotalSeconds = 0;
   private lastEndlessLevelUpTime: number | null = null;
 
@@ -121,8 +124,17 @@ export class RunState {
     this.finalExpRequirementMultiplier = 1;
     this.maxExpRequirementMultiplier = 1;
     this.endlessLevelUpCount = 0;
+    this.difficultyId = 'normal';
+    this.mutatorIds = [];
+    this.rulesetId = 'normal';
     this.endlessLevelIntervalTotalSeconds = 0;
     this.lastEndlessLevelUpTime = null;
+  }
+
+  setRuleSetInfo(difficultyId: string, mutatorIds: readonly string[], rulesetId: string): void {
+    this.difficultyId = difficultyId || 'normal';
+    this.mutatorIds = [...mutatorIds];
+    this.rulesetId = rulesetId || this.difficultyId;
   }
 
   recordKill(): void {

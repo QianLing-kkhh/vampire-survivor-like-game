@@ -36,12 +36,18 @@ import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunState } from '../run/RunState';
+import { DifficultyManager } from '../rules/DifficultyManager';
+import { MutatorFactory } from '../rules/MutatorFactory';
+import { MutatorContext } from '../rules/MutatorContext';
+import { RunRuleSet } from '../rules/RunRuleSet';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SpawnDirector } from '../spawn/SpawnDirector';
+import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { WeaponFactory } from '../weapon/WeaponFactory';
 import { WeaponManager } from '../weapon/WeaponManager';
+import { MapManager } from '../map/MapManager';
 
 import { GameplayContext } from './GameplayContext';
 
@@ -90,7 +96,31 @@ export class GameplayInitializer {
   initialize(config: GameplayInitializerConfig): GameplayContext {
     ContentBootstrap.ensureInitialized();
     const characterManager = new CharacterManager();
+    const stageManager = new StageManager();
+    const mapManager = new MapManager();
+    const difficultyManager = new DifficultyManager();
     const selectedCharacter = characterManager.getSelectedCharacter();
+    const selectedStage = stageManager.getSelectedStage();
+    const selectedMap = mapManager.getSelectedMap();
+    const selectedDifficulty = selectedStage.difficultyId
+      ? difficultyManager.getDifficulty(selectedStage.difficultyId)
+      : difficultyManager.getSelectedDifficulty();
+    const mutatorConfigs = selectedStage.mutators ?? [];
+    const mutators = MutatorFactory.createMany(mutatorConfigs);
+    const mutatorContext: MutatorContext = {
+      difficultyId: selectedDifficulty.id,
+      characterId: selectedCharacter.id,
+      stageId: selectedStage.id,
+      mapId: selectedMap.id,
+      mode: 'normal',
+      contentSource: 'builtin',
+    };
+    const runRuleSet = new RunRuleSet(
+      selectedDifficulty,
+      mutators,
+      mutatorConfigs,
+      mutatorContext,
+    );
     const weaponConfigs = ContentRegistry.listWeapons();
     const enemyConfigs = ContentRegistry.listEnemies();
     const passiveItems = ContentRegistry.listPassives();
@@ -143,11 +173,17 @@ export class GameplayInitializer {
       config.callbacks.onChestDropped,
       config.callbacks.onChestOpened,
       () => (config.runState.endlessStarted ? config.runState.endlessSurvivalTime : null),
+      runRuleSet,
     );
-    const enemyFactory = new EnemyFactory(config.scene, enemyConfigs);
-    const bossFactory = new BossFactory(config.scene, enemyConfigs);
+    const enemyFactory = new EnemyFactory(config.scene, enemyConfigs, runRuleSet);
+    const bossFactory = new BossFactory(config.scene, enemyConfigs, runRuleSet);
     const enemiesList: Enemy[] = [];
     config.runState.endlessMode = config.playtestSettings.endlessMode;
+    config.runState.setRuleSetInfo(
+      runRuleSet.difficulty.id,
+      runRuleSet.getMutatorIds(),
+      runRuleSet.rulesetId,
+    );
     const spawnDirector = new SpawnDirector(
       waveSet,
       enemyFactory,
@@ -156,6 +192,7 @@ export class GameplayInitializer {
       (enemy) => {
         config.callbacks.onEnemySpawned(enemy);
       },
+      runRuleSet,
     );
     const bossSpawnDirector = new BossSpawnDirector(
       bossFactory,
@@ -180,6 +217,7 @@ export class GameplayInitializer {
       onEnemySpawned: (enemy) => {
         config.callbacks.onEnemySpawned(enemy);
       },
+      runRuleSet,
     });
     let bossController: BossController;
     const enemyFlow = new EnemyFlow({
@@ -221,7 +259,9 @@ export class GameplayInitializer {
       worldWidth: config.worldWidth,
       worldHeight: config.worldHeight,
       warningTimeSeconds: config.finalBossWarningSeconds,
-      finalBossTimeSeconds: config.finalBossTimeSeconds,
+      finalBossTimeSeconds: runRuleSet.applyFinalBossSpawnTime(
+        config.finalBossTimeSeconds,
+      ),
       finalBossId: config.finalBossId,
       dashHitRadius: config.bossDashHitRadius,
       dashImpactRadius: config.bossDashImpactRadius,
@@ -268,6 +308,7 @@ export class GameplayInitializer {
       damageCalculator: config.damageCalculator,
       enemyMovement: config.enemyMovement,
       timeManager: config.timeManager,
+      runRuleSet,
       runState: config.runState,
       runStats,
       player,
