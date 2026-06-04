@@ -45,6 +45,7 @@ Future architecture should assume support for:
 - Optional online leaderboard or cloud save adapters
 - Remote provider adapters for leaderboards, saves, challenges, custom stages, and future pack sources
 - Maintenance/audit commands and reports
+- Architecture boundary lint for soft static checks
 - Performance profiling and object pooling for late-endless object pressure
 
 ## Current Architecture Principles
@@ -75,6 +76,7 @@ Future architecture should assume support for:
 24. Developer/debug tooling should be opt-in and should not mutate gameplay state while collecting diagnostics.
 25. Foundation systems that are not fully active should be documented as foundation/planned rather than removed as dead code.
 26. Object pooling should start with low-risk visuals and move into gameplay-critical entities only after profiling and cleanup verification.
+27. Architecture boundary warnings should be handled by routing new code through existing managers/resolvers or by documenting intentional compatibility exceptions.
 
 ## Current Audit Snapshot
 
@@ -104,6 +106,7 @@ Known architecture follow-ups:
 - Gate or remove developer console output that is not part of tool fallback behavior.
 - Keep direct JSON imports limited to bootstrap/config/help boundaries or migrate them through registry-backed display builders.
 - Profile late-endless object pressure before pooling projectiles, pickups, Boss skill graphics, or enemies.
+- Use `check:architecture` as a lightweight warning layer for direct JSON imports, direct `Math.random`, direct `localStorage`, hardcoded asset keys, and `GameScene` growth.
 
 ## Seeded Runs And Replay
 

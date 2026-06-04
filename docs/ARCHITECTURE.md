@@ -29,6 +29,7 @@ The runtime layer keeps per-run object references and update order out of the sc
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
 - `PerformanceMonitor`: per-run lightweight stats collector for FPS, counts, and object lifecycle counters.
 - `PoolManager`: per-run object pool registry for reusable runtime visuals and future high-volume objects.
+- `check-architecture-boundaries.mjs`: warning-only static guard for direct JSON imports, direct `Math.random`, direct `localStorage`, scattered asset keys, and `GameScene` growth.
 
 Current flow:
 
@@ -468,3 +469,4 @@ TitleScene
 - Existing `core/EventBus` and callbacks are still valid during migration; do not delete them until the dependent systems have moved.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.
 - Future high-volume runtime visuals should use `PoolManager` / `ObjectPool` only after behavior-preserving profiling. Do not pool gameplay-critical entities without tests and shutdown cleanup.
+- Use `npm.cmd run check:architecture` to surface soft boundary warnings. The script is not ESLint and does not fail by default; intentional compatibility paths should be documented or whitelisted.
