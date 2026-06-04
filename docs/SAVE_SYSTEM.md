@@ -7,6 +7,8 @@ The save system is the persistence foundation for settings, selections, progress
 - `SaveData`
 - `SaveStorage`
 - `SaveMigrator`
+- `SaveValidator`
+- `SaveExport`
 - `SaveManager`
 
 ## SaveData
@@ -61,8 +63,39 @@ If localStorage is not available, it falls back to in-memory storage.
 - Current schema migration hook
 - Corrupted JSON fallback
 - Migration from the old flat settings shape into domain-based settings
+- Fallback when local stored save data is from an unsupported future schema
 
 If JSON is corrupted, the game should warn and fall back to a default save rather than crashing.
+
+## SaveValidator
+
+`SaveValidator` performs lightweight structural checks before import:
+
+- Save data must be an object.
+- `schemaVersion` must not be newer than the current supported schema.
+- `settings`, `progression`, `selections`, `cosmetics`, and `records` should have object-like shapes.
+- Selected character, stage, map, difficulty, and theme IDs should be strings when present.
+- `records.leaderboardsByKey` should be an object when present.
+
+The validator does not deeply verify every gameplay content reference. Old or incomplete saves can produce warnings and still pass through `SaveMigrator`, which fills defaults.
+
+## Save Export Package
+
+`SaveManager.exportSave()` returns a pretty-printed JSON string.
+
+The current export wrapper shape is:
+
+```ts
+{
+  exportVersion: 1,
+  exportedAt: string,
+  gameVersion?: string,
+  save: SaveData,
+  checksum?: string
+}
+```
+
+`gameVersion` and `checksum` are reserved. This first version does not compute a checksum.
 
 ## SaveManager
 
@@ -73,10 +106,19 @@ If JSON is corrupted, the game should warn and fall back to a default save rathe
 - `get()`
 - `update(partial)`
 - `reset()`
+- `resetSave()`
+- `exportSave()`
+- `importSave(serialized)`
+- `validateCurrentSave()`
+- `getSaveSummary()`
 - `clear()`
 - `subscribe(listener)`
 
 Future persistent player state should go through `SaveManager`.
+
+Import supports both raw `SaveData` JSON and `SaveExportPackage` JSON. Imported data is validated first, migrated to the current schema, written through `SaveStorage`, and then sent to subscribers.
+
+`resetSave()` restores default formal save data only. It does not clear the CSV playtest buffer, browser-wide localStorage, custom stage storage, or other unrelated storage keys.
 
 ## Settings Integration
 
@@ -119,6 +161,8 @@ Formal save data is not the same as:
 - debug telemetry
 
 Keep CSV/playtest data separate unless a future feature explicitly integrates it.
+
+Save import/export currently covers formal `SaveData`. Future custom stage backup/export may include `CustomStageStorage`, but that is intentionally not merged into this first save export format yet.
 
 ## Future Save Domains
 

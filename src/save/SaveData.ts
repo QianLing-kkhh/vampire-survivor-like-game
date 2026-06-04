@@ -52,6 +52,17 @@ export interface SaveData {
   };
 }
 
+export interface SaveSummary {
+  schemaVersion: number;
+  selectedCharacterId: string;
+  selectedStageId: string;
+  selectedMapId: string;
+  selectedDifficultyId: string;
+  settingsCount?: number;
+  leaderboardCount: number;
+  customStageCount?: number;
+}
+
 export function createDefaultSaveData(): SaveData {
   return {
     schemaVersion: SAVE_SCHEMA_VERSION,

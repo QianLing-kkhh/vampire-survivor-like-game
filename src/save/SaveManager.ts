@@ -1,6 +1,13 @@
-import { SaveData, createDefaultSaveData } from './SaveData';
+import {
+  SaveData,
+  SaveSummary,
+  createDefaultSaveData,
+} from './SaveData';
+import { createSaveExportPackage } from './SaveExport';
+import { SaveImportResult, createSaveImportResult } from './SaveImportResult';
 import { SaveMigrator } from './SaveMigrator';
 import { SaveStorage } from './SaveStorage';
+import { SaveValidator } from './SaveValidator';
 
 export type SaveListener = (saveData: SaveData) => void;
 type SaveSettingsUpdate = Partial<{
@@ -13,6 +20,7 @@ export type SaveDataUpdate = Partial<Omit<SaveData, 'settings'>> & {
 export class SaveManager {
   private static readonly storage = new SaveStorage();
   private static readonly migrator = new SaveMigrator();
+  private static readonly validator = new SaveValidator();
   private static readonly listeners = new Set<SaveListener>();
   private static saveData: SaveData | null = null;
 
@@ -97,6 +105,76 @@ export class SaveManager {
     return this.get();
   }
 
+  static resetSave(): SaveData {
+    return this.reset();
+  }
+
+  static exportSave(): string {
+    return JSON.stringify(createSaveExportPackage(this.get()), null, 2);
+  }
+
+  static importSave(serialized: string): SaveImportResult {
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(serialized);
+    } catch {
+      return createSaveImportResult([
+        {
+          level: 'error',
+          code: 'invalid_json',
+          message: 'Save import text is not valid JSON.',
+        },
+      ]);
+    }
+
+    const candidateSave = this.extractSaveCandidate(parsed);
+    const validationResult = this.validator.validateSave(candidateSave);
+
+    if (!validationResult.success) {
+      return validationResult;
+    }
+
+    const migratedSave = this.migrator.migrate(JSON.stringify(candidateSave));
+
+    this.saveData = migratedSave;
+    this.save();
+    this.notify();
+
+    return {
+      success: true,
+      save: this.clone(migratedSave),
+      errors: [],
+      warnings: validationResult.warnings,
+    };
+  }
+
+  static validateCurrentSave(): SaveImportResult {
+    const currentSave = this.get();
+    const validationResult = this.validator.validateSave(currentSave);
+
+    return {
+      ...validationResult,
+      save: validationResult.success ? currentSave : undefined,
+    };
+  }
+
+  static getSaveSummary(): SaveSummary {
+    const saveData = this.get();
+
+    return {
+      schemaVersion: saveData.schemaVersion,
+      selectedCharacterId: saveData.selections.selectedCharacterId,
+      selectedStageId: saveData.selections.selectedStageId,
+      selectedMapId: saveData.selections.selectedMapId,
+      selectedDifficultyId: saveData.selections.selectedDifficultyId,
+      settingsCount: Object.values(saveData.settings)
+        .reduce((total, domain) => total + Object.keys(domain).length, 0),
+      leaderboardCount: Object.values(saveData.records.leaderboardsByKey)
+        .reduce((total, records) => total + records.length, 0),
+    };
+  }
+
   static clear(): void {
     this.saveData = null;
     this.storage.clear();
@@ -123,6 +201,22 @@ export class SaveManager {
     for (const listener of this.listeners) {
       listener(saveData);
     }
+  }
+
+  private static extractSaveCandidate(parsed: unknown): unknown {
+    if (!this.isObject(parsed)) {
+      return parsed;
+    }
+
+    if (this.isObject(parsed.save)) {
+      return parsed.save;
+    }
+
+    return parsed;
+  }
+
+  private static isObject(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
   }
 
   private static clone(saveData: SaveData): SaveData {

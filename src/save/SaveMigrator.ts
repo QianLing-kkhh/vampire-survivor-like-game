@@ -24,6 +24,16 @@ export class SaveMigrator {
     try {
       const parsedSave = JSON.parse(rawSave) as Partial<SaveData>;
 
+      if (
+        typeof parsedSave.schemaVersion === 'number'
+        && parsedSave.schemaVersion > SAVE_SCHEMA_VERSION
+      ) {
+        console.warn(
+          `Save schema ${parsedSave.schemaVersion} is newer than supported schema ${SAVE_SCHEMA_VERSION}. Falling back to default save.`,
+        );
+        return createDefaultSaveData();
+      }
+
       if (parsedSave.schemaVersion === SAVE_SCHEMA_VERSION) {
         return this.mergeWithDefaults(parsedSave);
       }
