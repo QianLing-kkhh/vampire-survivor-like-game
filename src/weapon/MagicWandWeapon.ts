@@ -121,6 +121,15 @@ export class MagicWandWeapon extends Weapon {
       const actualDamage = projectile.target.takeDamage(this.createHitResult());
 
       this.recordEnemyHit(projectile.target, actualDamage);
+      this.applyWeaponKnockback(
+        projectile.target,
+        new Phaser.Math.Vector2(
+          projectile.target.body.x - projectile.body.x,
+          projectile.target.body.y - projectile.body.y,
+        ),
+        this.modifiedProjectileSpeed,
+      );
+      this.applyExplosionDamage(projectile, context.enemies, actualDamage);
 
       if (projectile.target.isDead) {
         projectile.target.destroy();
@@ -204,6 +213,65 @@ export class MagicWandWeapon extends Weapon {
     body.setDisplaySize(displaySize, displaySize);
 
     return body;
+  }
+
+  private applyExplosionDamage(
+    projectile: MagicProjectile,
+    enemies: readonly Enemy[],
+    primaryDamage: number,
+  ): void {
+    if (primaryDamage <= 0) {
+      return;
+    }
+
+    const explosionRadius = this.id === 'holy_wand' ? 60 : 45;
+    const damageMultiplier = this.id === 'holy_wand' ? 0.5 : 0.4;
+    const explosionDamage = primaryDamage * damageMultiplier;
+    const centerX = projectile.target.body.x;
+    const centerY = projectile.target.body.y;
+
+    this.showExplosionFeedback(centerX, centerY, explosionRadius);
+
+    for (const enemy of enemies) {
+      if (
+        enemy === projectile.target
+        || enemy.isDead
+        || Phaser.Math.Distance.Between(centerX, centerY, enemy.body.x, enemy.body.y)
+          > explosionRadius
+      ) {
+        continue;
+      }
+
+      const actualDamage = enemy.takeDamage(this.createHitResultFromDamage(explosionDamage));
+
+      this.recordEnemyHit(enemy, actualDamage);
+      this.applyWeaponKnockback(
+        enemy,
+        new Phaser.Math.Vector2(enemy.body.x - centerX, enemy.body.y - centerY),
+        this.modifiedProjectileSpeed,
+        0.5,
+      );
+
+      if (enemy.isDead) {
+        enemy.destroy();
+      }
+    }
+  }
+
+  private showExplosionFeedback(x: number, y: number, radius: number): void {
+    const feedback = this.scene.add.circle(x, y, radius, 0x38bdf8, 0.18);
+
+    feedback.setStrokeStyle(3, 0xbae6fd, 0.75);
+    feedback.setDepth(26);
+
+    this.scene.tweens.add({
+      targets: feedback,
+      alpha: 0,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      duration: 170,
+      onComplete: () => feedback.destroy(),
+    });
   }
 
   private destroyProjectile(index: number): void {

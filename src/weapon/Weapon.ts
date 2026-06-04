@@ -22,6 +22,9 @@ export interface WeaponConfig {
   hitRadius?: number;
   lifetime?: number;
   arcHeight?: number;
+  knockbackPower?: number;
+  knockbackSpeedFactor?: number;
+  knockbackDurationMs?: number;
 }
 
 export interface WeaponUpdateContext {
@@ -94,6 +97,20 @@ export abstract class Weapon {
     );
   }
 
+  protected createHitResultWithMultiplier(multiplier: number): HitResult {
+    return this.damageCalculator.calculateDamage(
+      this.modifiedDamage * multiplier,
+      DamageType.Normal,
+    );
+  }
+
+  protected createHitResultFromDamage(damage: number): HitResult {
+    return this.damageCalculator.calculateDamage(
+      damage,
+      DamageType.Normal,
+    );
+  }
+
   protected get modifiedDamage(): number {
     return this.damage * this.passiveDamageMultiplier;
   }
@@ -137,6 +154,30 @@ export abstract class Weapon {
     if (enemy.isDead) {
       this.runStats?.recordWeaponKill(this.id);
     }
+  }
+
+  protected applyWeaponKnockback(
+    enemy: Enemy,
+    direction: Phaser.Math.Vector2,
+    hitSpeed: number,
+    strengthMultiplier = 1,
+  ): void {
+    const knockbackPower = this.config.knockbackPower ?? 0;
+
+    if (knockbackPower <= 0) {
+      return;
+    }
+
+    const strength = (
+      knockbackPower
+      + Math.max(0, hitSpeed) * (this.config.knockbackSpeedFactor ?? 0)
+    ) * strengthMultiplier;
+
+    enemy.applyWeaponKnockback(
+      direction,
+      strength,
+      this.config.knockbackDurationMs ?? 120,
+    );
   }
 
   protected abstract activate(context: WeaponUpdateContext): void;

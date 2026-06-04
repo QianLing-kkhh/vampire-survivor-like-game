@@ -170,9 +170,18 @@ export class ProjectileWeapon extends Weapon {
       const hitEnemy = this.findHitEnemy(projectile, context.enemies);
 
       if (hitEnemy) {
-        const actualDamage = hitEnemy.takeDamage(this.createHitResult());
+        const damageMultiplier = Math.pow(0.5, projectile.hitEnemies.size);
+        const actualDamage = hitEnemy.takeDamage(
+          this.createHitResultWithMultiplier(damageMultiplier),
+        );
 
         this.recordEnemyHit(hitEnemy, actualDamage);
+        this.applyWeaponKnockback(
+          hitEnemy,
+          projectile.velocity.clone(),
+          projectile.velocity.length(),
+        );
+        this.applyHolyWandExplosion(projectile, hitEnemy, context.enemies, actualDamage);
         projectile.hitEnemies.add(hitEnemy);
         projectile.pierceRemaining -= 1;
 
@@ -261,6 +270,67 @@ export class ProjectileWeapon extends Weapon {
     const closestY = startY + segmentY * projectedPosition;
 
     return Phaser.Math.Distance.Between(pointX, pointY, closestX, closestY);
+  }
+
+  private applyHolyWandExplosion(
+    projectile: Projectile,
+    primaryTarget: Enemy,
+    enemies: readonly Enemy[],
+    primaryDamage: number,
+  ): void {
+    if (this.id !== 'holy_wand' || primaryDamage <= 0) {
+      return;
+    }
+
+    const explosionRadius = 60;
+    const explosionDamage = primaryDamage * 0.5;
+
+    this.showExplosionFeedback(projectile.body.x, projectile.body.y, explosionRadius);
+
+    for (const enemy of enemies) {
+      if (
+        enemy === primaryTarget
+        || enemy.isDead
+        || Phaser.Math.Distance.Between(
+          projectile.body.x,
+          projectile.body.y,
+          enemy.body.x,
+          enemy.body.y,
+        ) > explosionRadius
+      ) {
+        continue;
+      }
+
+      const actualDamage = enemy.takeDamage(this.createHitResultFromDamage(explosionDamage));
+
+      this.recordEnemyHit(enemy, actualDamage);
+      this.applyWeaponKnockback(
+        enemy,
+        new Phaser.Math.Vector2(enemy.body.x - projectile.body.x, enemy.body.y - projectile.body.y),
+        projectile.velocity.length(),
+        0.5,
+      );
+
+      if (enemy.isDead) {
+        enemy.destroy();
+      }
+    }
+  }
+
+  private showExplosionFeedback(x: number, y: number, radius: number): void {
+    const feedback = this.scene.add.circle(x, y, radius, 0x93c5fd, 0.18);
+
+    feedback.setStrokeStyle(3, 0xdbeafe, 0.75);
+    feedback.setDepth(26);
+
+    this.scene.tweens.add({
+      targets: feedback,
+      alpha: 0,
+      scaleX: 1.25,
+      scaleY: 1.25,
+      duration: 180,
+      onComplete: () => feedback.destroy(),
+    });
   }
 
   private createProjectileBody(x: number, y: number): ProjectileBody {

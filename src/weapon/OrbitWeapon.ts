@@ -143,6 +143,14 @@ export class OrbitWeapon extends Weapon {
       const actualDamage = enemy.takeDamage(this.createHitResult());
 
       this.recordEnemyHit(enemy, actualDamage);
+      this.applyWeaponKnockback(
+        enemy,
+        new Phaser.Math.Vector2(
+          enemy.body.x - context.player.x,
+          enemy.body.y - context.player.y,
+        ),
+        Phaser.Math.DegToRad(this.orbitSpeedDegreesPerSecond) * this.radiusPixels,
+      );
       this.hitCooldowns.set(enemy, this.cooldownMs);
 
       if (enemy.isDead) {

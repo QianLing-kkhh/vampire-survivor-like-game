@@ -89,6 +89,7 @@ export function isLevelUpEvent(value: unknown): value is LevelUpEvent {
 
 export class Enemy {
   private static readonly DASH_WARNING_DURATION_MULTIPLIER = 0.8;
+  private static readonly WEAPON_KNOCKBACK_IMMUNITY_MS = 250;
 
   readonly body: Phaser.GameObjects.Arc;
   readonly maxHp: number;
@@ -120,6 +121,9 @@ export class Enemy {
   private dashPreviousPosition = new Phaser.Math.Vector2();
   private dashCurrentPosition = new Phaser.Math.Vector2();
   private dashImpactPosition = new Phaser.Math.Vector2();
+  private knockbackVelocity = new Phaser.Math.Vector2();
+  private knockbackRemainingMs = 0;
+  private weaponKnockbackImmunityMs = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -211,6 +215,77 @@ export class Enemy {
 
     this.updateDashMovement(deltaMs, worldBounds);
     return true;
+  }
+
+  applyWeaponKnockback(
+    direction: Phaser.Math.Vector2,
+    strength: number,
+    durationMs: number,
+  ): boolean {
+    if (
+      this.id === 'boss'
+      || this.isDead
+      || this.isWeaponKnockbackImmune()
+      || strength <= 0
+      || durationMs <= 0
+    ) {
+      return false;
+    }
+
+    const knockbackDirection = direction.clone();
+
+    if (knockbackDirection.lengthSq() === 0) {
+      knockbackDirection.set(1, 0);
+    }
+
+    const resistanceMultiplier = this.id.endsWith('_boss') ? 0.5 : 1;
+    const adjustedStrength = strength * resistanceMultiplier;
+
+    this.knockbackVelocity = knockbackDirection
+      .normalize()
+      .scale(adjustedStrength / (durationMs / 1000));
+    this.knockbackRemainingMs = durationMs;
+    this.weaponKnockbackImmunityMs = Enemy.WEAPON_KNOCKBACK_IMMUNITY_MS;
+    return true;
+  }
+
+  updateWeaponKnockback(
+    deltaMs: number,
+    worldBounds: { width: number; height: number },
+  ): boolean {
+    this.weaponKnockbackImmunityMs = Math.max(
+      0,
+      this.weaponKnockbackImmunityMs - deltaMs,
+    );
+
+    if (this.knockbackRemainingMs <= 0 || this.isDead) {
+      return false;
+    }
+
+    const deltaSeconds = deltaMs / 1000;
+    const radius = this.getBodyRadius();
+
+    this.body.x = Phaser.Math.Clamp(
+      this.body.x + this.knockbackVelocity.x * deltaSeconds,
+      radius,
+      worldBounds.width - radius,
+    );
+    this.body.y = Phaser.Math.Clamp(
+      this.body.y + this.knockbackVelocity.y * deltaSeconds,
+      radius,
+      worldBounds.height - radius,
+    );
+    this.knockbackRemainingMs = Math.max(0, this.knockbackRemainingMs - deltaMs);
+
+    if (this.knockbackRemainingMs <= 0) {
+      this.knockbackVelocity.set(0, 0);
+    }
+
+    return true;
+  }
+
+  isWeaponKnockbackImmune(): boolean {
+    return this.weaponKnockbackImmunityMs > 0;
   }
 
   isDashing(): boolean {

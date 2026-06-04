@@ -150,6 +150,13 @@ export class EnemyFlow {
         continue;
       }
 
+      if (enemy.updateWeaponKnockback(deltaMs, {
+        width: this.config.worldWidth,
+        height: this.config.worldHeight,
+      })) {
+        continue;
+      }
+
       this.config.enemyMovement.moveToward(
         enemy,
         this.config.player.body,

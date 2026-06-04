@@ -6,13 +6,17 @@
     "projectileSpeed": 8,
     "pierce": 2,
     "projectileCount": 3,
-    "spreadAngle": 20
+    "spreadAngle": 20,
+    "knockbackPower": 45,
+    "knockbackSpeedFactor": 0.02,
+    "knockbackDurationMs": 120
   },
   "garlic": {
     "type": "aura",
     "damage": 2,
     "cooldown": 0.35,
-    "radius": 2.5
+    "radius": 2.5,
+    "knockbackPower": 0
   },
   "bible": {
     "type": "orbit",
@@ -20,14 +24,20 @@
     "cooldown": 0.5,
     "radius": 3.2,
     "orbitSpeed": 240,
-    "orbitCount": 3
+    "orbitCount": 3,
+    "knockbackPower": 65,
+    "knockbackSpeedFactor": 0.01,
+    "knockbackDurationMs": 120
   },
   "magic_wand": {
     "type": "magic_wand",
     "damage": 14,
     "cooldown": 1.2,
     "projectileSpeed": 280,
-    "projectileCount": 1
+    "projectileCount": 1,
+    "knockbackPower": 70,
+    "knockbackSpeedFactor": 0.015,
+    "knockbackDurationMs": 120
   },
   "axe": {
     "type": "axe",
@@ -37,7 +47,10 @@
     "projectileCount": 1,
     "hitRadius": 32,
     "lifetime": 2.0,
-    "arcHeight": 220
+    "arcHeight": 220,
+    "knockbackPower": 110,
+    "knockbackSpeedFactor": 0.025,
+    "knockbackDurationMs": 120
   },
   "thousand_edge": {
     "type": "projectile",
@@ -46,7 +59,10 @@
     "projectileSpeed": 900,
     "pierce": 3,
     "projectileCount": 5,
-    "spreadAngle": 25
+    "spreadAngle": 25,
+    "knockbackPower": 55,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
   },
   "unholy_vespers": {
     "type": "orbit",
@@ -55,7 +71,10 @@
     "radius": 3.2,
     "orbitSpeed": 320,
     "orbitCount": 6,
-    "hitRadius": 42
+    "hitRadius": 42,
+    "knockbackPower": 80,
+    "knockbackSpeedFactor": 0.01,
+    "knockbackDurationMs": 120
   },
   "holy_wand": {
     "type": "projectile",
@@ -64,7 +83,10 @@
     "projectileSpeed": 1000,
     "pierce": 1,
     "projectileCount": 2,
-    "spreadAngle": 8
+    "spreadAngle": 8,
+    "knockbackPower": 90,
+    "knockbackSpeedFactor": 0.016,
+    "knockbackDurationMs": 120
   },
   "death_spiral": {
     "type": "axe",
@@ -74,12 +96,16 @@
     "projectileCount": 5,
     "spreadAngle": 360,
     "pierce": 3,
-    "arcHeight": 260
+    "arcHeight": 260,
+    "knockbackPower": 130,
+    "knockbackSpeedFactor": 0.025,
+    "knockbackDurationMs": 120
   },
   "soul_eater": {
     "type": "aura",
     "damage": 5,
     "cooldown": 0.3,
-    "radius": 4.0
+    "radius": 4.0,
+    "knockbackPower": 0
   }
 }

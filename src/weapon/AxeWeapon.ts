@@ -25,6 +25,9 @@ interface AxeProjectile {
   startX: number;
   startY: number;
   direction: Phaser.Math.Vector2;
+  perpendicularDirection: Phaser.Math.Vector2;
+  previousX: number;
+  previousY: number;
   ageMs: number;
   hitEnemies: Set<Enemy>;
 }
@@ -33,6 +36,12 @@ export class AxeWeapon extends Weapon {
   private static readonly MAX_PROJECTILE_COUNT = 4;
   private static readonly MAX_EVOLVED_PROJECTILE_COUNT = 8;
   private static readonly DEFAULT_ARC_HEIGHT = 220;
+  private static readonly AXE_SPIRAL_TURNS = 2.0;
+  private static readonly AXE_MAX_SPIRAL_RADIUS = 70;
+  private static readonly AXE_ACCELERATION = 220;
+  private static readonly DEATH_SPIRAL_TURNS = 3.0;
+  private static readonly DEATH_SPIRAL_MAX_SPIRAL_RADIUS = 110;
+  private static readonly DEATH_SPIRAL_ACCELERATION = 280;
 
   private readonly projectiles: AxeProjectile[] = [];
   private readonly hitRadius: number;
@@ -116,11 +125,16 @@ export class AxeWeapon extends Weapon {
     baseDirection.normalize();
 
     for (const direction of this.getProjectileDirections(baseDirection)) {
+      const body = this.createProjectileBody(context.player.x, context.player.y);
+
       this.projectiles.push({
-        body: this.createProjectileBody(context.player.x, context.player.y),
+        body,
         startX: context.player.x,
         startY: context.player.y,
         direction,
+        perpendicularDirection: new Phaser.Math.Vector2(-direction.y, direction.x),
+        previousX: body.x,
+        previousY: body.y,
         ageMs: 0,
         hitEnemies: new Set<Enemy>(),
       });
@@ -137,7 +151,7 @@ export class AxeWeapon extends Weapon {
 
       projectile.ageMs += context.deltaMs;
       this.moveProjectile(projectile);
-      this.checkProjectileHits(projectile, context.enemies);
+      this.checkProjectileHits(projectile, context.enemies, context.deltaMs);
 
       if (projectile.ageMs < this.lifetimeMs) {
         continue;
@@ -150,20 +164,44 @@ export class AxeWeapon extends Weapon {
 
   private moveProjectile(projectile: AxeProjectile): void {
     const progress = Math.min(1, projectile.ageMs / this.lifetimeMs);
-    const travelDistance = this.modifiedProjectileSpeed * (projectile.ageMs / 1000);
-    const arcOffset = -Math.sin(progress * Math.PI) * this.arcHeight;
+    const elapsedSeconds = projectile.ageMs / 1000;
+    const acceleration = this.id === 'death_spiral'
+      ? AxeWeapon.DEATH_SPIRAL_ACCELERATION
+      : AxeWeapon.AXE_ACCELERATION;
+    const spiralTurns = this.id === 'death_spiral'
+      ? AxeWeapon.DEATH_SPIRAL_TURNS
+      : AxeWeapon.AXE_SPIRAL_TURNS;
+    const maxSpiralRadius = this.id === 'death_spiral'
+      ? AxeWeapon.DEATH_SPIRAL_MAX_SPIRAL_RADIUS
+      : AxeWeapon.AXE_MAX_SPIRAL_RADIUS;
+    const travelDistance = this.modifiedProjectileSpeed * elapsedSeconds
+      + 0.5 * acceleration * elapsedSeconds * elapsedSeconds;
+    const spiralRadius = maxSpiralRadius * progress;
+    const spiralOffset = Math.sin(progress * spiralTurns * Math.PI * 2) * spiralRadius;
 
+    projectile.previousX = projectile.body.x;
+    projectile.previousY = projectile.body.y;
     projectile.body.x = projectile.startX + projectile.direction.x * travelDistance;
     projectile.body.y = projectile.startY
-      + projectile.direction.y * travelDistance
-      + arcOffset;
+      + projectile.direction.y * travelDistance;
+    projectile.body.x += projectile.perpendicularDirection.x * spiralOffset;
+    projectile.body.y += projectile.perpendicularDirection.y * spiralOffset;
     projectile.body.rotation += 0.28;
   }
 
   private checkProjectileHits(
     projectile: AxeProjectile,
     enemies: readonly Enemy[],
+    deltaMs: number,
   ): void {
+    const movementDirection = new Phaser.Math.Vector2(
+      projectile.body.x - projectile.previousX,
+      projectile.body.y - projectile.previousY,
+    );
+    const hitSpeed = deltaMs <= 0
+      ? this.modifiedProjectileSpeed
+      : movementDirection.length() / (deltaMs / 1000);
+
     for (const enemy of enemies) {
       if (enemy.isDead || projectile.hitEnemies.has(enemy)) {
         continue;
@@ -183,6 +221,7 @@ export class AxeWeapon extends Weapon {
       const actualDamage = enemy.takeDamage(this.createHitResult());
 
       this.recordEnemyHit(enemy, actualDamage);
+      this.applyWeaponKnockback(enemy, movementDirection, hitSpeed);
       projectile.hitEnemies.add(enemy);
 
       if (enemy.isDead) {
