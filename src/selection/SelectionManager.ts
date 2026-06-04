@@ -38,6 +38,7 @@ export class SelectionManager {
       customStageId,
       seed: saveSelection.selectedSeed,
       rulesetId: saveSelection.selectedRulesetId,
+      challengeDateKey: saveSelection.selectedChallengeDateKey,
     };
   }
 
@@ -179,6 +180,33 @@ export class SelectionManager {
         selectedCustomStageId: undefined,
         selectedSeed: undefined,
         selectedRulesetId: undefined,
+        selectedChallengeDateKey: undefined,
+      },
+    });
+    this.notify();
+  }
+
+  static setChallengeSelection(selection: {
+    challengeId: string;
+    characterId: string;
+    stageId: string;
+    mapId: string;
+    difficultyId?: string;
+    seed: string;
+    rulesetId?: string;
+    challengeDateKey?: string;
+  }): void {
+    SaveManager.update({
+      selections: {
+        selectedChallengeId: selection.challengeId,
+        selectedCharacterId: selection.characterId,
+        selectedStageId: selection.stageId,
+        selectedMapId: selection.mapId,
+        selectedDifficultyId: selection.difficultyId ?? DEFAULT_SELECTION_STATE.difficultyId,
+        selectedCustomStageId: undefined,
+        selectedSeed: selection.seed,
+        selectedRulesetId: selection.rulesetId,
+        selectedChallengeDateKey: selection.challengeDateKey,
       },
     });
     this.notify();

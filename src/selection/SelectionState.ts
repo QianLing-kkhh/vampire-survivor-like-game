@@ -7,6 +7,7 @@ export interface SelectionState {
   customStageId?: string;
   seed?: string;
   rulesetId?: string;
+  challengeDateKey?: string;
 }
 
 export const DEFAULT_SELECTION_STATE: SelectionState = {

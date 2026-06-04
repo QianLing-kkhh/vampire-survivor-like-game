@@ -45,6 +45,16 @@ export function createLeaderboardKey(params: LeaderboardKey): LeaderboardKey {
   };
 }
 
+export function createChallengeLeaderboardKey(params: Omit<LeaderboardKey, 'mode'> & {
+  challengeId: string;
+  seed: string;
+}): LeaderboardKey {
+  return createLeaderboardKey({
+    ...params,
+    mode: 'challenge',
+  });
+}
+
 export function serializeLeaderboardKey(key: LeaderboardKey): string {
   return LEADERBOARD_KEY_FIELDS
     .map((field) => {

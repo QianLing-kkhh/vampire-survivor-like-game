@@ -21,6 +21,7 @@ Future architecture should assume support for:
 - Achievements and quests
 - Milestones, starter goals, and achievement-driven unlock rewards
 - Daily challenges and seed challenges
+- Fixed-seed daily/weekly/custom challenge definitions
 - Multi-dimensional leaderboards
 - Difficulty system
 - Mutator rule modifiers
@@ -64,6 +65,7 @@ Future architecture should assume support for:
 18. Unlock state should be owned by `UnlockManager`; content managers can query it but should not duplicate unlock rules.
 19. Relic-style rule changes should use `RelicManager` / `RelicEffect`, not passive upgrades or scene conditionals.
 20. Tutorial and guide prompts should use `TutorialManager` and `GameEventBus`, not `GameScene` conditionals.
+21. Daily, seeded, and custom challenges should use `ChallengeManager` and write through `SelectionManager`, not mutate gameplay systems directly.
 
 ## Seeded Runs And Replay
 
@@ -75,6 +77,19 @@ Important boundaries:
 - A complete replay still needs input recording, content/version hashes, and deterministic timing.
 - Daily challenges, random stages, seeded custom stages, and leaderboard fairness should set or preserve `SelectionState.seed`.
 - New random systems should request a domain stream such as upgrade, spawn, treasure, endless, Boss, or visual from `RandomManager`.
+
+## Daily Challenges
+
+`ChallengeDefinition`, `ChallengeManager`, `DailyChallengeGenerator`, `ChallengeRegistry`, and `ChallengeRules` provide the foundation for daily, weekly, seeded, and custom challenge runs.
+
+Important boundaries:
+
+- Daily challenges are fixed by date key and seed, currently `daily:YYYY-MM-DD`.
+- Activating a challenge writes character, stage, map, difficulty, seed, challenge id, and ruleset id through `SelectionManager`.
+- There is no challenge selection UI yet.
+- Default Start Game and Auto Test behavior are unchanged unless a challenge is explicitly activated through the manager API.
+- Challenge records and leaderboards should be keyed by challenge id, seed, difficulty, and ruleset when future UI enables them.
+- Challenge rules should become `RunRuleSet` mutators rather than scene-level if/else logic.
 
 `ReplayRecorder`, `ReplayData`, `ReplaySerializer`, `ReplayStorage`, and `ReplayPlaybackController` now provide the replay record foundation.
 
@@ -168,6 +183,7 @@ Content should eventually split into resolvers and registries:
 - Weapon tag registry for archetype interactions
 - Weapon behavior registry for future custom weapon behavior types
 - Difficulty manager and mutator registry for future challenge rules
+- Challenge manager and daily challenge generator for fixed-seed rule sets
 - RunRuleSet as the single per-run rule composition point
 - Selection manager for character, stage, map, difficulty, challenge, custom stage, seed, and ruleset IDs
 - Game event bus and recorder for achievements, tutorials, replay diagnostics, unlocks, and listener cleanup
@@ -194,3 +210,4 @@ Content should eventually split into resolvers and registries:
 - Relic effects being implemented as passive upgrades or ad hoc `GameScene` conditionals
 - Tutorial prompts being hardcoded into scenes instead of routed through `TutorialManager`
 - Replay blobs being mixed into formal save data, CSV buffers, or leaderboard records
+- Challenge activation bypassing `SelectionManager` or mixing challenge leaderboards with normal/endless records

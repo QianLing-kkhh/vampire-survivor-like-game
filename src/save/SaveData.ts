@@ -25,7 +25,7 @@ import {
   TutorialState,
 } from '../tutorial/TutorialState';
 
-export const SAVE_SCHEMA_VERSION = 9;
+export const SAVE_SCHEMA_VERSION = 10;
 
 export interface SaveData {
   schemaVersion: number;
@@ -53,6 +53,7 @@ export interface SaveData {
     achievements: Record<string, AchievementProgress>;
     milestones: Record<string, unknown>;
     tutorial: TutorialState;
+    completedChallengeIds: string[];
   };
   selections: {
     selectedCharacterId: string;
@@ -63,6 +64,7 @@ export interface SaveData {
     selectedCustomStageId?: string;
     selectedSeed?: string;
     selectedRulesetId?: string;
+    selectedChallengeDateKey?: string;
     selectedThemeId: string;
   };
   cosmetics: {
@@ -75,6 +77,10 @@ export interface SaveData {
   };
   records: {
     leaderboardsByKey: Record<string, LeaderboardRecord[]>;
+    challengeHistory: Record<string, {
+      activatedAt?: string;
+      completedAt?: string;
+    }>;
   };
 }
 
@@ -129,6 +135,7 @@ export function createDefaultSaveData(): SaveData {
       achievements: {},
       milestones: {},
       tutorial: { ...DEFAULT_TUTORIAL_STATE },
+      completedChallengeIds: [],
     },
     selections: {
       selectedCharacterId: 'default',
@@ -145,6 +152,7 @@ export function createDefaultSaveData(): SaveData {
     },
     records: {
       leaderboardsByKey: {},
+      challengeHistory: {},
     },
   };
 }

@@ -31,6 +31,8 @@ Current runs use `normal` difficulty with no mutators unless future test harness
 
 Each run also records a `runSeed`. If `SelectionState.seed` is empty, a new seed is generated for the run. A fixed seed is a foundation for debugging and future daily challenges, but it is not a complete replay by itself; version, content, settings, timing, and player input also matter.
 
+Daily challenge foundation exists but has no UI yet. `DailyChallengeGenerator` produces stable `daily:YYYY-MM-DD` seeds, and `ChallengeManager.activateChallenge()` can write a fixed challenge selection through `SelectionManager` for future test harnesses.
+
 The runtime also creates a per-run `GameEventBus` and bounded `GameEventRecorder`. This records recent high-value events for debugging foundations, but it is not exported as a full CSV timeline and is not a complete replay.
 
 The runtime also creates a `ReplayRecorder`. Current replay records include run seed, selection snapshot, settings snapshot, selected key events, and run result summary. Input samples are reserved but not populated until an input mapping layer exists.
@@ -194,6 +196,19 @@ Current behavior:
 - Only selected key events are recorded; high-frequency damage and weapon-hit events are intentionally skipped.
 - Replay playback UI and deterministic input injection are not implemented yet.
 - A replay is useful for debugging context, but it is not a guaranteed full reproduction until input samples and content hashes are added.
+
+## Challenge Diagnostics
+
+Daily/seeded challenge support is currently an architecture foundation.
+
+Current behavior:
+
+- `DailyChallengeGenerator` returns the same challenge definition for the same date.
+- Different date keys produce different `daily:{date}` seeds.
+- `ChallengeManager.activateChallenge(id)` updates selection state but does not start gameplay.
+- `ChallengeManager.clearChallenge()` clears challenge id, seed, custom stage, and ruleset selection.
+- Challenge leaderboard keys should include `mode=challenge`, `challengeId`, `seed`, `difficultyId`, and `rulesetId` when future UI enables challenge results.
+- No online leaderboard, challenge UI, or gameplay rule changes are active yet.
 
 ## Balance Metrics to Watch
 

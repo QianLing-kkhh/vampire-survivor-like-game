@@ -110,6 +110,9 @@ export class SaveMigrator {
         ? progression.milestones
         : defaultProgression.milestones,
       tutorial: this.normalizeTutorialState(progression.tutorial),
+      completedChallengeIds: Array.isArray(progression.completedChallengeIds)
+        ? this.readStringArray(progression.completedChallengeIds)
+        : defaultProgression.completedChallengeIds,
     };
   }
 
@@ -201,6 +204,7 @@ export class SaveMigrator {
       selectedCustomStageId: this.readOptionalString(selections.selectedCustomStageId),
       selectedSeed: this.readOptionalString(selections.selectedSeed),
       selectedRulesetId: this.readOptionalString(selections.selectedRulesetId),
+      selectedChallengeDateKey: this.readOptionalString(selections.selectedChallengeDateKey),
       selectedThemeId: this.readString(selections.selectedThemeId, defaultSelections.selectedThemeId),
     };
   }
@@ -250,6 +254,9 @@ export class SaveMigrator {
     if (this.isObject(records.leaderboardsByKey)) {
       return {
         leaderboardsByKey: this.normalizeLeaderboardsByKey(records.leaderboardsByKey),
+        challengeHistory: this.isObject(records.challengeHistory)
+          ? this.normalizeChallengeHistory(records.challengeHistory)
+          : createDefaultSaveData().records.challengeHistory,
       };
     }
 
@@ -258,6 +265,9 @@ export class SaveMigrator {
         leaderboardsByKey: this.migrateLegacyEndlessLeaderboards(
           records.endlessLeaderboardByStageId,
         ),
+        challengeHistory: this.isObject(records.challengeHistory)
+          ? this.normalizeChallengeHistory(records.challengeHistory)
+          : createDefaultSaveData().records.challengeHistory,
       };
     }
 
@@ -279,6 +289,26 @@ export class SaveMigrator {
           .sort((a, b) => (b.endlessSurvivalTime ?? b.survivalTime)
             - (a.endlessSurvivalTime ?? a.survivalTime))
           .slice(0, 10);
+
+        return result;
+      },
+      {},
+    );
+  }
+
+  private normalizeChallengeHistory(
+    history: Record<string, unknown>,
+  ): SaveData['records']['challengeHistory'] {
+    return Object.entries(history).reduce<SaveData['records']['challengeHistory']>(
+      (result, [challengeId, value]) => {
+        if (!this.isObject(value)) {
+          return result;
+        }
+
+        result[challengeId] = {
+          activatedAt: this.readOptionalString(value.activatedAt),
+          completedAt: this.readOptionalString(value.completedAt),
+        };
 
         return result;
       },
