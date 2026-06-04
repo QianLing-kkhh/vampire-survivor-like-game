@@ -268,6 +268,25 @@ The random layer is the foundation for seeded runs, replay debugging, daily chal
 
 `GameplayInitializer` creates one `RandomManager` per run. New gameplay randomness should receive a `RandomSource` or `RandomManager` through constructor/config injection rather than using `Math.random()` or a global singleton.
 
+## Replay Layer
+
+The replay layer is the foundation for future automated test reproduction, balance debugging, seed verification, daily challenge validation, and leaderboard fairness checks.
+
+- `ReplayData`: versioned replay record shape with run seed, selection snapshot, settings snapshot, input samples, event markers, and result summary.
+- `ReplayRecorder`: per-run recorder shell. It records selected key `GameEventBus` events and can accept future throttled input samples.
+- `ReplaySerializer`: JSON serialize/parse/validate helper for replay data.
+- `ReplayStorage`: localStorage-backed recent replay storage with memory fallback and a cap of 10 records.
+- `ReplayPlaybackController`: shell for future playback loading; it does not inject input or simulate playback yet.
+- `ReplayVersion`: replay schema and storage key constants.
+
+Current status:
+
+- `GameplayInitializer` creates a `ReplayRecorder` per run and stores it in `GameplayContext`.
+- `GameScene` stops the recorder at run end and saves the latest replay data through `ReplayStorage`.
+- Input sampling is not connected yet because the project does not have an `InputState` / `InputMapper` layer.
+- Replay data is separate from formal `SaveData`, CSV logs, and leaderboard records.
+- This is not complete playback; deterministic replay still needs input injection, content hashes, version compatibility, and stable update order.
+
 ## Endless Layer
 
 Endless systems activate after the final Boss is killed when Endless Mode is enabled.
@@ -331,6 +350,7 @@ TitleScene
     -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
     -> GameEventBus / GameEventRecorder / GameEventBridge start per-run event capture
+    -> ReplayRecorder starts a per-run replay shell from seed, selection, settings, and key events
     -> AchievementManager subscribes to GameEventBus for low-risk achievement unlocks
     -> TutorialManager subscribes to GameEventBus for low-risk one-time guide prompts
     -> UnlockManager ensures built-in default content is unlocked
@@ -362,6 +382,7 @@ TitleScene
 - Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.
 - Gameplay randomness should go through injected `RandomSource` streams from `RandomManager`.
 - New achievements, tutorials, unlocks, replay diagnostics, audio listeners, or floating-text listeners should subscribe to `GameEventBus` rather than scene callbacks.
+- Replay data should stay in `ReplayStorage`; do not merge replay blobs into formal save data or CSV rows.
 - Achievement and milestone progress should persist through `SaveManager.progression`, not localStorage owned by individual systems.
 - Tutorial seen/disabled state should persist through `SaveManager.progression.tutorial`, not through scene-local flags.
 - Unlock state should go through `UnlockManager`; Character/Stage/Map managers should not own unlock rules.

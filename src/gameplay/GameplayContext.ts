@@ -26,6 +26,7 @@ import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
 import { RandomManager } from '../random/RandomManager';
 import { RelicManager } from '../relic/RelicManager';
+import { ReplayRecorder } from '../replay/ReplayRecorder';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
@@ -59,6 +60,7 @@ export interface GameplayContext {
   timeManager: TimeManager;
   randomManager: RandomManager;
   runSeed: string;
+  replayRecorder?: ReplayRecorder;
   runRuleSet: RunRuleSet;
   relicManager: RelicManager;
   runState: RunState;

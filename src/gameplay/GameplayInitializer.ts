@@ -39,6 +39,7 @@ import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { RandomManager } from '../random/RandomManager';
 import { RelicManager } from '../relic/RelicManager';
+import { ReplayRecorder } from '../replay/ReplayRecorder';
 import { RunSeed } from '../random/RunSeed';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
@@ -48,6 +49,7 @@ import { DifficultyManager } from '../rules/DifficultyManager';
 import { MutatorFactory } from '../rules/MutatorFactory';
 import { MutatorContext } from '../rules/MutatorContext';
 import { RunRuleSet } from '../rules/RunRuleSet';
+import { SAVE_SCHEMA_VERSION } from '../save/SaveData';
 import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
@@ -117,6 +119,7 @@ export class GameplayInitializer {
     const randomManager = new RandomManager(runSeed);
     const gameEventBus = new GameEventBus();
     const gameEventRecorder = new GameEventRecorder();
+    const replayRecorder = new ReplayRecorder();
     const gameEventBridge = new GameEventBridge({
       sourceEventBus: config.eventBus,
       gameEventBus,
@@ -126,6 +129,7 @@ export class GameplayInitializer {
 
     gameEventBus.subscribeAll((event) => {
       gameEventRecorder.record(event);
+      replayRecorder.recordEvent(event);
       config.runState.recordGameEvent();
     });
     const selectedCharacter = characterManager.getSelectedCharacter();
@@ -244,6 +248,28 @@ export class GameplayInitializer {
       runRuleSet.rulesetId,
     );
     config.runState.setRunSeed(runSeed);
+    config.runState.setReplayId(config.runId);
+    replayRecorder.start({
+      runId: config.runId,
+      runSeed,
+      selection: {
+        characterId: selectedCharacter.id,
+        stageId: selectedStage.id,
+        mapId: selectedMap.id,
+        difficultyId: selectedDifficulty.id,
+        customStageId: selection.customStageId,
+        challengeId: selection.challengeId,
+        seed: selection.seed,
+        rulesetId: runRuleSet.rulesetId,
+      },
+      settingsSnapshot: {
+        autoMovement: config.playtestSettings.autoMovement,
+        autoUpgrade: config.playtestSettings.autoUpgrade,
+        fastMode: config.playtestSettings.fastMode,
+        endlessMode: config.playtestSettings.endlessMode,
+      },
+      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+    });
     const spawnDirector = new SpawnDirector(
       waveSet,
       enemyFactory,
@@ -379,6 +405,7 @@ export class GameplayInitializer {
       timeManager: config.timeManager,
       randomManager,
       runSeed,
+      replayRecorder,
       runRuleSet,
       relicManager,
       runState: config.runState,

@@ -1,5 +1,6 @@
 export class RunState {
   runSeed = '';
+  replayId = '';
   killCount = 0;
   treasureDropCount = 0;
   treasureOpenCount = 0;
@@ -68,6 +69,7 @@ export class RunState {
 
   reset(): void {
     this.runSeed = '';
+    this.replayId = '';
     this.killCount = 0;
     this.treasureDropCount = 0;
     this.treasureOpenCount = 0;
@@ -143,6 +145,10 @@ export class RunState {
 
   setRunSeed(runSeed: string): void {
     this.runSeed = runSeed;
+  }
+
+  setReplayId(replayId: string): void {
+    this.replayId = replayId;
   }
 
   recordGameEvent(): void {

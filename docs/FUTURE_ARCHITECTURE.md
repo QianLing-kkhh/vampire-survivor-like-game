@@ -76,6 +76,16 @@ Important boundaries:
 - Daily challenges, random stages, seeded custom stages, and leaderboard fairness should set or preserve `SelectionState.seed`.
 - New random systems should request a domain stream such as upgrade, spawn, treasure, endless, Boss, or visual from `RandomManager`.
 
+`ReplayRecorder`, `ReplayData`, `ReplaySerializer`, `ReplayStorage`, and `ReplayPlaybackController` now provide the replay record foundation.
+
+Replay boundaries:
+
+- Replay storage is separate from `SaveData`, `PlaytestLogBuffer`, and leaderboards.
+- Current replay records include run seed, selection, settings snapshot, selected key game events, and result summary.
+- Input samples are reserved but not yet populated because input mapping is not centralized yet.
+- Full playback still needs deterministic input injection, content hash/version checks, and a playback scene/controller.
+- High-frequency events such as `weapon.hit` or `enemy.damaged` should not be recorded by default.
+
 ## Game Events And Replay Foundations
 
 `GameEventBus`, `GameEventRecorder`, and `GameEventBridge` provide the foundation for future achievements, quests, tutorials, unlocks, audio/floating-text listener cleanup, and replay/debug timelines.
@@ -165,6 +175,7 @@ Content should eventually split into resolvers and registries:
 - Unlock registry and manager for content access state and reward application
 - Relic registry and manager for rule-changing run items
 - Tutorial registry and manager for event-driven, non-blocking guide prompts
+- Replay recorder, serializer, storage, and playback shell for future reproduction tooling
 
 ## Risk Areas
 
@@ -182,3 +193,4 @@ Content should eventually split into resolvers and registries:
 - Character, stage, map, or cosmetic managers duplicating unlock storage instead of using `UnlockManager`
 - Relic effects being implemented as passive upgrades or ad hoc `GameScene` conditionals
 - Tutorial prompts being hardcoded into scenes instead of routed through `TutorialManager`
+- Replay blobs being mixed into formal save data, CSV buffers, or leaderboard records

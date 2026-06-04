@@ -33,6 +33,8 @@ Each run also records a `runSeed`. If `SelectionState.seed` is empty, a new seed
 
 The runtime also creates a per-run `GameEventBus` and bounded `GameEventRecorder`. This records recent high-value events for debugging foundations, but it is not exported as a full CSV timeline and is not a complete replay.
 
+The runtime also creates a `ReplayRecorder`. Current replay records include run seed, selection snapshot, settings snapshot, selected key events, and run result summary. Input samples are reserved but not populated until an input mapping layer exists.
+
 Useful combinations:
 
 - Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.
@@ -180,6 +182,18 @@ Testing notes:
 - If a new listener is added, listener failures should log a warning and not interrupt gameplay.
 - `GameEventRecorder` keeps only a bounded recent timeline for debugging.
 - Full replay still requires seed, input samples, deterministic timing, and content/version hashes.
+
+## Replay Diagnostics
+
+Replay foundation records are stored separately from CSV and formal save data.
+
+Current behavior:
+
+- `ReplayStorage` keeps the most recent 10 replay records in localStorage with memory fallback.
+- Replay records use `runId` as their storage id.
+- Only selected key events are recorded; high-frequency damage and weapon-hit events are intentionally skipped.
+- Replay playback UI and deterministic input injection are not implemented yet.
+- A replay is useful for debugging context, but it is not a guaranteed full reproduction until input samples and content hashes are added.
 
 ## Balance Metrics to Watch
 

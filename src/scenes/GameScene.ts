@@ -34,6 +34,7 @@ import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
+import { ReplayStorage } from '../replay/ReplayStorage';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeOption } from '../progression/UpgradeOption';
@@ -1206,6 +1207,18 @@ export class GameScene extends Phaser.Scene {
       gameTimeSeconds: survivalTime,
       runId: this.runId,
     });
+    const replayData = this.gameplayContext?.replayRecorder?.stop({
+      resultType,
+      survivalTime,
+      endlessSurvivalTime: this.runState.endlessSurvivalTime,
+      finalLevel: this.levelManager?.currentLevel ?? 1,
+      killCount: this.runState.killCount,
+    });
+
+    if (replayData) {
+      new ReplayStorage().save(replayData);
+    }
+
     const resultData = this.runResultBuilder.build({
       runId: this.runId,
       autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,

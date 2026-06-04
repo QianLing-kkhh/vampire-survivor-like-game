@@ -245,6 +245,7 @@ export class RunResultBuilder {
       upgradeCountStats: runStatsSummary.upgradeCountStats,
       runId: context.runId,
       runSeed: context.runState.runSeed,
+      replayId: context.runState.replayId,
       autoMode: context.autoMode,
       fastMode: context.fastMode,
       timeScale: context.timeScale,
