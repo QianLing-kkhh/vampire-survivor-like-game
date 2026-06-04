@@ -11,6 +11,11 @@ export type HudLayout = {
   minimapPosition: Phaser.Math.Vector2;
   minimapSize: { width: number; height: number };
   pauseButtonPosition: Phaser.Math.Vector2;
+  pauseButtonRect: RectLayout;
+  statsRect: RectLayout;
+  minimapRect: RectLayout;
+  buildListRect: RectLayout;
+  virtualJoystickRect: RectLayout;
   bossTextPosition: Phaser.Math.Vector2;
   barWidth: number;
   maxIconRows: number;
@@ -323,27 +328,41 @@ export class LayoutConfig {
   static getHudLayout(screen: ScreenManager): HudLayout {
     const safe = SafeArea.getInsets(screen);
     const portrait = screen.isPortrait();
+    const margin = portrait ? 8 : 10;
     const minimapWidth = portrait ? 96 : 150;
     const minimapHeight = portrait ? 76 : 104;
-    const barWidth = Math.min(portrait ? screen.width * 0.48 : 230, 250);
-    const pauseWidth = 92;
-    const pauseHeight = 40;
+    const barWidth = Math.min(portrait ? screen.width * 0.54 : 230, 250);
+    const pauseWidth = portrait ? 48 : 92;
+    const pauseHeight = portrait ? 48 : 40;
     const pauseRect = portrait
       ? {
-        x: safe.left,
-        y: safe.top,
+        x: safe.left + margin,
+        y: safe.top + margin,
         width: pauseWidth,
         height: pauseHeight,
       }
       : {
         x: screen.width - safe.right - minimapWidth - pauseWidth - 16,
-        y: safe.top,
+        y: safe.top + margin,
         width: pauseWidth,
         height: pauseHeight,
       };
+    const statsRect = portrait
+      ? {
+        x: safe.left + margin,
+        y: pauseRect.y + pauseRect.height + 8,
+        width: barWidth,
+        height: 144,
+      }
+      : {
+        x: safe.left + margin,
+        y: safe.top + margin,
+        width: barWidth,
+        height: 144,
+      };
     const minimapTopRight = {
       x: screen.width - safe.right - minimapWidth,
-      y: portrait ? safe.top : safe.top + pauseHeight + 12,
+      y: safe.top + margin,
       width: minimapWidth,
       height: minimapHeight,
     };
@@ -355,23 +374,67 @@ export class LayoutConfig {
     };
     const minimapRect = LayoutConfig.moveToAvoidOverlap(
       minimapTopRight,
-      [pauseRect],
-      [minimapBottomRight],
+      [pauseRect, statsRect],
+      [
+        minimapBottomRight,
+        {
+          x: pauseRect.x - minimapWidth - 12,
+          y: pauseRect.y,
+          width: minimapWidth,
+          height: minimapHeight,
+        },
+      ],
     );
+    const virtualJoystickRect = portrait
+      ? {
+        x: safe.left,
+        y: screen.height - safe.bottom - 220,
+        width: 220,
+        height: 220,
+      }
+      : {
+        x: safe.left,
+        y: screen.height - safe.bottom - 180,
+        width: 190,
+        height: 180,
+      };
+    const buildStartY = statsRect.y + statsRect.height + 10;
+    const maxBuildHeight = Math.max(
+      34,
+      virtualJoystickRect.y - buildStartY - 10,
+    );
+    const maxIconRows = portrait
+      ? Math.max(1, Math.min(3, Math.floor(maxBuildHeight / 34)))
+      : 6;
+    const buildListRect = {
+      x: safe.left + margin,
+      y: buildStartY,
+      width: portrait ? Math.min(screen.width - safe.left - safe.right - margin * 2, 330) : 430,
+      height: maxIconRows * 34,
+    };
+    const passivesY = buildListRect.y + buildListRect.height + 8;
 
     return {
-      statsPosition: new Phaser.Math.Vector2(safe.left, safe.top),
-      weaponsPosition: new Phaser.Math.Vector2(safe.left, safe.top + 132),
-      passivesPosition: new Phaser.Math.Vector2(portrait ? safe.left : safe.left, portrait ? safe.top + 264 : safe.top + 250),
+      statsPosition: new Phaser.Math.Vector2(statsRect.x, statsRect.y),
+      weaponsPosition: new Phaser.Math.Vector2(buildListRect.x, buildListRect.y),
+      passivesPosition: new Phaser.Math.Vector2(
+        buildListRect.x,
+        portrait ? passivesY : safe.top + 250,
+      ),
       minimapPosition: new Phaser.Math.Vector2(minimapRect.x, minimapRect.y),
       minimapSize: { width: minimapWidth, height: minimapHeight },
       pauseButtonPosition: new Phaser.Math.Vector2(
         pauseRect.x + pauseRect.width / 2,
         pauseRect.y + pauseRect.height / 2,
       ),
+      pauseButtonRect: pauseRect,
+      statsRect,
+      minimapRect,
+      buildListRect,
+      virtualJoystickRect,
       bossTextPosition: new Phaser.Math.Vector2(screen.centerX, safe.top + 92),
       barWidth,
-      maxIconRows: portrait ? 3 : 6,
+      maxIconRows,
       fontSize: portrait ? '12px' : '14px',
     };
   }

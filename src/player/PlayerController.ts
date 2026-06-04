@@ -35,6 +35,7 @@ type FacingDirection8 =
 export class PlayerController {
   private static readonly MAX_MOVEMENT_STEP = 24;
   private static readonly IDLE_SPEED_THRESHOLD = 6;
+  private static readonly PLAYER_DEPTH = 20;
 
   readonly body: PlayerBody;
 
@@ -296,17 +297,21 @@ export class PlayerController {
     if (this.scene.textures.exists('art_player_player_walk_sheet')) {
       const body = this.scene.add.sprite(x, y, 'art_player_player_walk_sheet');
       body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
+      body.setDepth(PlayerController.PLAYER_DEPTH);
       this.playPlayerAnimation(body, 'art_player_idle_down');
 
       return Object.assign(body, { radius: 14 });
     }
 
     if (!this.scene.textures.exists('player')) {
-      return this.scene.add.circle(x, y, 14, 0x4ade80);
+      const body = this.scene.add.circle(x, y, 14, 0x4ade80);
+      body.setDepth(PlayerController.PLAYER_DEPTH);
+      return body;
     }
 
     const body = this.scene.add.image(x, y, 'player');
     body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
+    body.setDepth(PlayerController.PLAYER_DEPTH);
 
     return Object.assign(body, { radius: 14 });
   }

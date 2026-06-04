@@ -778,7 +778,17 @@ export class HUD {
       layout.pauseButtonPosition.x,
       layout.pauseButtonPosition.y,
     );
+    this.pauseButton.setText(this.screenManager.isPortrait() ? 'II' : 'Pause');
     this.pauseButton.setFontSize(layout.fontSize);
+    this.pauseButton.setInteractive(
+      new Phaser.Geom.Rectangle(
+        -layout.pauseButtonRect.width / 2,
+        -layout.pauseButtonRect.height / 2,
+        layout.pauseButtonRect.width,
+        layout.pauseButtonRect.height,
+      ),
+      Phaser.Geom.Rectangle.Contains,
+    );
     this.layoutPanelBackground(
       this.minimapBackground,
       this.minimapImage,

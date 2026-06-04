@@ -8,6 +8,11 @@ import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 
 export class AuraWeapon extends Weapon {
   private static readonly GARLIC_PERCENT_DAMAGE = 0.003;
+  private static readonly AURA_DEPTH = 8;
+  private static readonly AURA_FILL_ALPHA = 0.12;
+  private static readonly AURA_STROKE_ALPHA = 0.5;
+  private static readonly AURA_ICON_DEPTH = 22;
+  private static readonly AURA_ICON_DISPLAY_SIZE = 30;
 
   private auraBody?: Phaser.GameObjects.Arc;
   private auraIcon?: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
@@ -72,9 +77,14 @@ export class AuraWeapon extends Weapon {
         context.player.y,
         this.radiusPixels,
         0x22c55e,
-        VisualScale.auraAlpha,
+        AuraWeapon.AURA_FILL_ALPHA,
       );
-      this.auraBody.setStrokeStyle(VisualScale.auraStrokeWidth, 0x86efac, 0.65);
+      this.auraBody.setStrokeStyle(
+        VisualScale.auraStrokeWidth,
+        0x86efac,
+        AuraWeapon.AURA_STROKE_ALPHA,
+      );
+      this.auraBody.setDepth(AuraWeapon.AURA_DEPTH);
     }
 
     this.ensureAuraIcon(context);
@@ -95,9 +105,12 @@ export class AuraWeapon extends Weapon {
 
     if (this.scene.textures.exists(artTextureKey)) {
       const icon = this.scene.add.sprite(context.player.x, context.player.y, artTextureKey);
-      const displaySize = VisualScale.getAuraCoreDisplaySize(this.id);
-      icon.setDisplaySize(displaySize, displaySize);
-      icon.setDepth(24);
+      icon.setDisplaySize(
+        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
+        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
+      );
+      icon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
+      icon.setAlpha(0.9);
       icon.play(this.id === 'soul_eater' ? 'art_soul_eater_core' : 'art_garlic_core');
       this.auraIcon = icon;
       return;
@@ -108,9 +121,12 @@ export class AuraWeapon extends Weapon {
     }
 
     this.auraIcon = this.scene.add.image(context.player.x, context.player.y, 'soul_eater_core');
-    const displaySize = VisualScale.getAuraCoreDisplaySize(this.id);
-    this.auraIcon.setDisplaySize(displaySize, displaySize);
-    this.auraIcon.setDepth(24);
+    this.auraIcon.setDisplaySize(
+      AuraWeapon.AURA_ICON_DISPLAY_SIZE,
+      AuraWeapon.AURA_ICON_DISPLAY_SIZE,
+    );
+    this.auraIcon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
+    this.auraIcon.setAlpha(0.9);
   }
 
   private isEnemyInRange(
