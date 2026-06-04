@@ -21,6 +21,7 @@ Future architecture should assume support for:
 - Difficulty system
 - Mutator rule modifiers
 - Enemy affixes and elite enemies
+- Enemy modifier configs for fast, shielded, explosive, split, or future mod-defined behavior
 - Data-driven Boss skills
 - Weapon tags and build archetypes
 - Relics, equipment, and one-use items
@@ -44,6 +45,7 @@ Future architecture should assume support for:
 8. Custom content must pass validation before registration.
 9. CSV/playtest logs and formal save data must remain separate unless intentionally integrated.
 10. Future selection UI should build on existing managers, save data, and content registry rather than bypass them.
+11. Enemy variants should prefer `EnemyModifier` configs over combinatorial enemy IDs.
 
 ## Planned Domain Splits
 
@@ -62,6 +64,7 @@ Content should eventually split into resolvers and registries:
 - Asset key resolver for texture/animation/icon keys
 - Localization display resolver for names/descriptions
 - Validation tools for custom content
+- Enemy modifier registry for elite/affix behaviors
 
 ## Risk Areas
 

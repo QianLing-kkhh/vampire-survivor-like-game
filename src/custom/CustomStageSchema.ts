@@ -1,3 +1,5 @@
+import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
+
 export const CUSTOM_STAGE_SCHEMA_VERSION = 1;
 
 export interface CustomStagePackage {
@@ -53,4 +55,5 @@ export interface CustomWaveDefinition {
   duration?: number;
   weight?: number;
   groupId?: string;
+  modifiers?: EnemyModifierConfig[];
 }

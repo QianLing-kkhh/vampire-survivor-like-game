@@ -108,6 +108,8 @@ Enemy, Boss, and combat behavior are split from the main scene.
 - `Enemy`: runtime enemy entity and per-enemy state.
 - `EnemyFactory`: creates enemies from registry-backed data, with optional runtime stat overrides.
 - `EnemyFlow`: updates enemy movement, removes dead enemies, applies contact damage, handles shield absorption, records kills, and triggers player damage reaction.
+- `EnemyModifierRuntime`: optional per-enemy modifier lifecycle for future elite enemies, affixes, custom waves, and mod content.
+- `EnemyModifierFactory` / `EnemyModifierRegistry`: create built-in or future registered enemy modifiers from config.
 - `BossController`: controls final Boss warning, spawn, ranged warning attack, dash, dash hit detection, Boss kill state, and Boss-related run stats.
 - `EndlessBossManager`: manages rotating endless Boss spawns, active Boss state, and `BossSkillRuntime` updates.
 - `BossSkillFactory`: creates data-driven Boss skills such as dash, beam, summon, shockwave, and slow zone from Boss skill configs.
@@ -183,6 +185,7 @@ TitleScene
 - UI displays runtime state and sends user intents through scene events.
 - Upgrade and treasure reward rules should go through `UpgradeFlow`.
 - Enemy movement and contact damage should go through `EnemyFlow`.
+- Enemy affixes should go through `EnemyModifierRuntime`; do not create a new enemy ID for every stat/behavior combination.
 - Final Boss-specific state should go through `BossController`.
 - Endless Boss lifecycle should go through `EndlessBossManager`; concrete Boss skills should go through `BossSkillFactory` and `BossSkillRuntime`.
 - Per-run result fields should be added to `RunState` and `RunResultBuilder`, not manually assembled in UI.

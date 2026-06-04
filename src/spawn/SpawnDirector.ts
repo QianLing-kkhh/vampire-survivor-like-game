@@ -6,6 +6,7 @@ import { ContentRegistry } from '../content/ContentRegistry';
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { Position } from '../enemy/EnemyMovement';
+import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
 import { SpawnWave } from './SpawnWave';
 
 interface ActiveWave {
@@ -81,7 +82,10 @@ export class SpawnDirector {
       ) {
         activeWave.elapsedSinceSpawn -= activeWave.wave.interval * 1000;
         activeWave.spawnedCount += 1;
-        this.spawnEnemy(activeWave.wave.enemy);
+        this.spawnEnemy(
+          activeWave.wave.enemy,
+          (activeWave.wave as SpawnWave & { modifiers?: EnemyModifierConfig[] }).modifiers,
+        );
       }
     }
 
@@ -94,9 +98,9 @@ export class SpawnDirector {
     }
   }
 
-  private spawnEnemy(enemyId: string): void {
+  private spawnEnemy(enemyId: string, modifiers?: EnemyModifierConfig[]): void {
     const position = this.getSpawnPosition();
-    const enemy = this.enemyFactory.create(enemyId, position.x, position.y);
+    const enemy = this.enemyFactory.create(enemyId, position.x, position.y, { modifiers });
 
     this.onEnemySpawned(enemy);
   }

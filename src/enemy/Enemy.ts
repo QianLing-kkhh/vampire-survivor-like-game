@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 
 import { HitResult } from '../combat/HitResult';
 import { EventBus } from '../core/EventBus';
+import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
+import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
 
 export interface EnemyStats {
   hp: number;
@@ -127,6 +129,7 @@ export class Enemy {
   private knockbackVelocity = new Phaser.Math.Vector2();
   private knockbackRemainingMs = 0;
   private weaponKnockbackImmunityMs = 0;
+  private modifierRuntime?: EnemyModifierRuntime;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -157,23 +160,47 @@ export class Enemy {
     this.eventBus = eventBus;
   }
 
+  setModifierRuntime(modifierRuntime: EnemyModifierRuntime): void {
+    if (modifierRuntime.isEmpty) {
+      return;
+    }
+
+    this.modifierRuntime = modifierRuntime;
+    this.modifierRuntime.attach(this);
+  }
+
   takeDamage(hitResult: HitResult): number {
     if (this.isDead) {
       return 0;
     }
 
-    const actualDamage = Math.min(this.currentHp, Math.max(0, hitResult.damage));
+    const incomingDamage = Math.max(0, hitResult.damage);
+    const modifiedDamage = this.modifierRuntime?.beforeTakeDamage(hitResult, incomingDamage) ?? {
+      damage: incomingDamage,
+      absorbedDamage: 0,
+    };
+    const actualDamage = Math.min(this.currentHp, Math.max(0, modifiedDamage.damage));
 
     this.currentHp -= actualDamage;
-    console.log(
-      `Enemy hit: ${this.id} HP ${Math.max(0, this.currentHp)} / ${this.maxHp}`,
-    );
-    this.scene.events.emit('EnemyDamagedFloatingText', {
-      x: this.body.x,
-      y: this.body.y,
-      damage: actualDamage,
-      isBoss: this.bossLike || this.id.endsWith('_boss') || this.id === 'boss',
+    this.modifierRuntime?.afterTakeDamage({
+      enemy: this,
+      hitResult,
+      incomingDamage,
+      actualDamage,
+      absorbedDamage: modifiedDamage.absorbedDamage,
     });
+
+    if (actualDamage > 0) {
+      console.log(
+        `Enemy hit: ${this.id} HP ${Math.max(0, this.currentHp)} / ${this.maxHp}`,
+      );
+      this.scene.events.emit('EnemyDamagedFloatingText', {
+        x: this.body.x,
+        y: this.body.y,
+        damage: actualDamage,
+        isBoss: this.bossLike || this.id.endsWith('_boss') || this.id === 'boss',
+      });
+    }
 
     if (this.currentHp <= 0) {
       this.currentHp = 0;
@@ -184,6 +211,17 @@ export class Enemy {
 
     this.playHitFeedback();
     return actualDamage;
+  }
+
+  updateModifiers(deltaMs: number): void {
+    this.modifierRuntime?.update(deltaMs);
+  }
+
+  triggerModifierDeathEffects(context: Omit<EnemyModifierDeathContext, 'enemy'>): void {
+    this.modifierRuntime?.onDeath({
+      ...context,
+      enemy: this,
+    });
   }
 
   updateDash(

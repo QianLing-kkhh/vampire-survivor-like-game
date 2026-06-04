@@ -1,5 +1,6 @@
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { EnemyModifierFactory } from '../enemy/modifiers/EnemyModifierFactory';
 
 import {
   CUSTOM_STAGE_SCHEMA_VERSION,
@@ -284,6 +285,117 @@ export class CustomStageValidator {
         'Single wave may spawn more than 300 enemies per minute.',
         path,
       ));
+    }
+
+    this.validateWaveModifiers(wave.modifiers, `${path}.modifiers`, issues);
+  }
+
+  private validateWaveModifiers(
+    modifiers: readonly unknown[] | undefined,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    if (modifiers === undefined) {
+      return;
+    }
+
+    if (!Array.isArray(modifiers)) {
+      issues.push(this.error('invalid_modifiers', 'Wave modifiers must be an array.', path));
+      return;
+    }
+
+    modifiers.forEach((modifier, index) => {
+      const modifierPath = `${path}.${index}`;
+
+      if (!this.isObject(modifier)) {
+        issues.push(this.error('invalid_modifier', 'Enemy modifier must be an object.', modifierPath));
+        return;
+      }
+
+      const type = modifier.type;
+
+      if (typeof type !== 'string') {
+        issues.push(this.error(
+          'missing_modifier_type',
+          'Enemy modifier type is required.',
+          `${modifierPath}.type`,
+        ));
+        return;
+      }
+
+      if (!EnemyModifierFactory.isKnownType(type)) {
+        issues.push(this.warning(
+          'unknown_modifier_type',
+          `Enemy modifier type is not registered: ${type}`,
+          `${modifierPath}.type`,
+        ));
+      }
+
+      if (
+        modifier.strength !== undefined
+        && (typeof modifier.strength !== 'number' || modifier.strength < 0)
+      ) {
+        issues.push(this.warning(
+          'invalid_modifier_strength',
+          'Modifier strength should be greater than or equal to 0.',
+          `${modifierPath}.strength`,
+        ));
+      }
+
+      this.validateModifierSpecificFields(modifier, modifierPath, issues);
+    });
+  }
+
+  private validateModifierSpecificFields(
+    modifier: Record<string, unknown>,
+    path: string,
+    issues: CustomStageValidationIssue[],
+  ): void {
+    switch (modifier.type) {
+      case 'fast':
+        if (
+          modifier.speedMultiplier !== undefined
+          && (typeof modifier.speedMultiplier !== 'number' || modifier.speedMultiplier <= 0)
+        ) {
+          issues.push(this.error('invalid_fast_modifier', 'speedMultiplier must be > 0.', path));
+        }
+        break;
+      case 'shielded':
+        if (
+          modifier.shieldHp !== undefined
+          && (typeof modifier.shieldHp !== 'number' || modifier.shieldHp < 0)
+        ) {
+          issues.push(this.error('invalid_shielded_modifier', 'shieldHp must be >= 0.', path));
+        }
+        break;
+      case 'explosive':
+        if (
+          modifier.explosionRadius !== undefined
+          && (typeof modifier.explosionRadius !== 'number' || modifier.explosionRadius < 0)
+        ) {
+          issues.push(this.error('invalid_explosive_modifier', 'explosionRadius must be >= 0.', path));
+        }
+        if (
+          modifier.explosionDamage !== undefined
+          && (typeof modifier.explosionDamage !== 'number' || modifier.explosionDamage < 0)
+        ) {
+          issues.push(this.error('invalid_explosive_modifier', 'explosionDamage must be >= 0.', path));
+        }
+        break;
+      case 'splitOnDeath':
+        if (typeof modifier.spawnEnemyId !== 'string' || !this.enemyExists(modifier.spawnEnemyId)) {
+          issues.push(this.error(
+            'invalid_split_modifier_enemy',
+            `splitOnDeath spawnEnemyId does not exist: ${modifier.spawnEnemyId}`,
+            `${path}.spawnEnemyId`,
+          ));
+        }
+        if (typeof modifier.count !== 'number' || modifier.count <= 0) {
+          issues.push(this.error('invalid_split_modifier_count', 'splitOnDeath count must be > 0.', path));
+        }
+        break;
+      default:
+        break;
     }
   }
 

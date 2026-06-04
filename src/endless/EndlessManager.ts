@@ -2,11 +2,13 @@ import Phaser from 'phaser';
 
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
+import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
 
 interface EndlessSpawnRule {
   enemyId: string;
   intervalSeconds: number;
   count: number;
+  modifiers?: EnemyModifierConfig[];
 }
 
 interface EndlessTier {
@@ -115,7 +117,7 @@ export class EndlessManager {
         && state.elapsedMs >= rule.intervalSeconds * 1000
       ) {
         state.elapsedMs -= rule.intervalSeconds * 1000;
-        this.spawnBatch(rule.enemyId, rule.count, endlessTimeSeconds);
+        this.spawnBatch(rule.enemyId, rule.count, endlessTimeSeconds, rule.modifiers);
       }
     });
   }
@@ -177,7 +179,12 @@ export class EndlessManager {
     return selectedIndex;
   }
 
-  private spawnBatch(enemyId: string, count: number, endlessTimeSeconds: number): void {
+  private spawnBatch(
+    enemyId: string,
+    count: number,
+    endlessTimeSeconds: number,
+    modifiers?: EnemyModifierConfig[],
+  ): void {
     const scaling = EndlessManager.getEnemyScale(endlessTimeSeconds);
     const baseStats = this.config.enemyFactory.getEnemyStats(enemyId);
     const scaledStats = {
@@ -190,7 +197,9 @@ export class EndlessManager {
 
     for (let index = 0; index < count; index += 1) {
       const position = this.getSpawnPosition();
-      const enemy = this.config.enemyFactory.create(enemyId, position.x, position.y, scaledStats);
+      const enemy = this.config.enemyFactory.create(enemyId, position.x, position.y, scaledStats, {
+        modifiers,
+      });
 
       this.config.onEnemySpawned(enemy);
     }

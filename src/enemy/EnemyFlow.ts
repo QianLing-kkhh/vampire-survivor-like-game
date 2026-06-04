@@ -183,6 +183,9 @@ export class EnemyFlow {
         continue;
       }
 
+      this.config.enemies[index].triggerModifierDeathEffects({
+        scene: this.config.scene,
+      });
       this.config.enemies.splice(index, 1);
     }
   }
@@ -191,6 +194,8 @@ export class EnemyFlow {
     const enemySpeedMultiplier = EndlessRewardManager.getGlobalEnemySpeedMultiplier();
 
     for (const enemy of this.config.enemies) {
+      enemy.updateModifiers(deltaMs);
+
       if (enemy.isDead || enemy.dashEnabled) {
         continue;
       }

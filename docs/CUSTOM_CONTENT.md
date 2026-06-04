@@ -71,6 +71,19 @@ The first future version should only support:
 
 The current custom stage schema follows that scope: it only references existing enemies/Bosses and does not allow custom weapons, enemies, passives, or Boss skills. Those belong to later mod content once validators are more mature.
 
+## Enemy Modifiers
+
+`EnemyModifier` is now available as an architecture foundation for future elite enemies, affixes, random endless upgrades, custom stage wave modifiers, and mod content.
+
+Current built-in modifier types:
+
+- `fast`
+- `shielded`
+- `explosive`
+- `splitOnDeath`
+
+Built-in waves do not use modifiers by default, so current normal and endless balance is unchanged. Custom stage waves may include a `modifiers` array in schema, and `CustomStageValidator` checks known modifier types and basic numeric ranges. This is a validation and runtime foundation, not a complete elite enemy UI or balance pass.
+
 ## Leaderboard Keys
 
 Custom leaderboard records should use structured keys that include:

@@ -6,8 +6,15 @@ import { ContentRegistry } from '../content/ContentRegistry';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Enemy, EnemyStats } from './Enemy';
+import { EnemyModifierConfig } from './modifiers/EnemyModifierConfig';
+import { EnemyModifierFactory } from './modifiers/EnemyModifierFactory';
+import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
 
 type EnemyConfigMap = Record<string, EnemyStats>;
+export interface EnemyCreateOptions {
+  modifiers?: EnemyModifierConfig[];
+}
+
 type EnemyImageBody = Phaser.GameObjects.Image & {
   radius: number;
   setFillStyle: (color: number) => EnemyImageBody;
@@ -28,14 +35,34 @@ export class EnemyFactory {
 
   private readonly enemyConfigs: EnemyConfigMap;
 
-  create(enemyId: string, x: number, y: number, statsOverride?: EnemyStats): Enemy {
-    const stats = statsOverride ?? this.enemyConfigs[enemyId];
+  create(
+    enemyId: string,
+    x: number,
+    y: number,
+    statsOverrideOrOptions?: EnemyStats | EnemyCreateOptions,
+    options?: EnemyCreateOptions,
+  ): Enemy {
+    const baseStats = this.enemyConfigs[enemyId];
+    const statsOverride = this.isEnemyCreateOptions(statsOverrideOrOptions)
+      ? undefined
+      : statsOverrideOrOptions;
+    const createOptions = this.isEnemyCreateOptions(statsOverrideOrOptions)
+      ? statsOverrideOrOptions
+      : options;
 
-    if (!stats) {
+    if (!baseStats && !statsOverride) {
       throw new Error(`Unknown enemy id: ${enemyId}`);
     }
 
+    const modifierRuntime = new EnemyModifierRuntime(
+      EnemyModifierFactory.createMany(createOptions?.modifiers),
+    );
+    const stats = modifierRuntime.applyStats({
+      ...(baseStats ?? statsOverride as EnemyStats),
+      ...(statsOverride ?? {}),
+    });
     const enemy = new Enemy(this.scene, enemyId, stats, x, y);
+    enemy.setModifierRuntime(modifierRuntime);
     const textureKey = AssetKeyResolver.getEnemyTextureKey(this.scene, enemyId);
     const animationKey = AssetKeyResolver.getEnemyAnimationKey(this.scene, enemyId);
 
@@ -49,6 +76,10 @@ export class EnemyFactory {
     }
 
     return enemy;
+  }
+
+  private isEnemyCreateOptions(value: EnemyStats | EnemyCreateOptions | undefined): value is EnemyCreateOptions {
+    return value !== undefined && 'modifiers' in value;
   }
 
   getEnemyStats(enemyId: string): EnemyStats {
