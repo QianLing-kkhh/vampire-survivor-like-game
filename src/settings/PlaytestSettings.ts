@@ -1,5 +1,6 @@
 import { DEFAULT_LOCALE, SupportedLocale, isSupportedLocale } from '../i18n/Locale';
 import type { AudioChannel } from '../audio/AudioManager';
+import { SaveManager } from '../save/SaveManager';
 
 export interface PlaytestSettingsState {
   autoMode: boolean;
@@ -206,6 +207,21 @@ export class PlaytestSettings {
 
     this.memoryState = nextState;
 
+    SaveManager.update({
+      settings: {
+        autoMovement: nextState.autoMovement,
+        autoUpgrade: nextState.autoUpgrade,
+        fastMode: nextState.fastMode,
+        endlessMode: nextState.endlessMode,
+        audioEnabled: nextState.audioEnabled,
+        bgmVolume: nextState.bgmVolume,
+        sfxVolume: nextState.sfxVolume,
+        weaponVolume: nextState.weaponVolume,
+        uiVolume: nextState.uiVolume,
+        locale: nextState.locale,
+      },
+    });
+
     try {
       globalThis.localStorage?.setItem(
         PlaytestSettings.STORAGE_KEY,
@@ -231,6 +247,49 @@ export class PlaytestSettings {
   }
 
   private static readStoredState(): PlaytestSettingsState | undefined {
+    const hasStoredSave = SaveManager.hasStoredSave();
+    const legacyState = this.readLegacyStoredState();
+
+    if (!hasStoredSave && legacyState) {
+      SaveManager.update({
+        settings: {
+          autoMovement: legacyState.autoMovement,
+          autoUpgrade: legacyState.autoUpgrade,
+          fastMode: legacyState.fastMode,
+          endlessMode: legacyState.endlessMode,
+          audioEnabled: legacyState.audioEnabled,
+          bgmVolume: legacyState.bgmVolume,
+          sfxVolume: legacyState.sfxVolume,
+          weaponVolume: legacyState.weaponVolume,
+          uiVolume: legacyState.uiVolume,
+          locale: legacyState.locale,
+        },
+      });
+      return legacyState;
+    }
+
+    const storedSaveSettings = SaveManager.get().settings;
+
+    return {
+      autoMode: storedSaveSettings.autoMovement || storedSaveSettings.autoUpgrade,
+      autoMovement: storedSaveSettings.autoMovement,
+      autoUpgrade: storedSaveSettings.autoUpgrade,
+      fastMode: storedSaveSettings.fastMode,
+      autoTimeScale: this.memoryState.autoTimeScale,
+      soundEnabled: storedSaveSettings.audioEnabled,
+      audioEnabled: storedSaveSettings.audioEnabled,
+      bgmVolume: this.readVolume(storedSaveSettings.bgmVolume),
+      sfxVolume: this.readVolume(storedSaveSettings.sfxVolume),
+      weaponVolume: this.readVolume(storedSaveSettings.weaponVolume),
+      uiVolume: this.readVolume(storedSaveSettings.uiVolume),
+      locale: isSupportedLocale(storedSaveSettings.locale)
+        ? storedSaveSettings.locale
+        : DEFAULT_LOCALE,
+      endlessMode: storedSaveSettings.endlessMode,
+    };
+  }
+
+  private static readLegacyStoredState(): PlaytestSettingsState | undefined {
     try {
       const rawState = globalThis.localStorage?.getItem(PlaytestSettings.STORAGE_KEY);
 

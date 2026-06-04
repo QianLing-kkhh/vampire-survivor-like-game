@@ -1,4 +1,5 @@
 import characters from '../data/characters.json';
+import { SaveManager } from '../save/SaveManager';
 
 import { CharacterDefinition } from './CharacterDefinition';
 
@@ -13,19 +14,43 @@ const DEFAULT_STARTING_WEAPON_ID = 'knife';
 export class CharacterManager {
   constructor(
     private readonly characterData: CharacterData = characters,
-    private selectedCharacterId = DEFAULT_CHARACTER_ID,
-  ) {}
+    private selectedCharacterId = SaveManager.get().selections.selectedCharacterId,
+  ) {
+    if (!this.characterData[this.selectedCharacterId]) {
+      this.selectedCharacterId = DEFAULT_CHARACTER_ID;
+    }
+  }
 
   getSelectedCharacter(): CharacterDefinition {
     return this.getCharacter(this.selectedCharacterId);
   }
 
+  getSelectedCharacterId(): string {
+    return this.selectedCharacterId;
+  }
+
+  setSelectedCharacterId(characterId: string): void {
+    this.selectedCharacterId = this.characterData[characterId]
+      ? characterId
+      : DEFAULT_CHARACTER_ID;
+
+    SaveManager.update({
+      selections: {
+        ...SaveManager.get().selections,
+        selectedCharacterId: this.selectedCharacterId,
+      },
+    });
+  }
+
   getCharacter(characterId: string): CharacterDefinition {
-    const character = this.characterData[characterId] ?? this.characterData[DEFAULT_CHARACTER_ID];
+    const resolvedCharacterId = this.characterData[characterId]
+      ? characterId
+      : DEFAULT_CHARACTER_ID;
+    const character = this.characterData[resolvedCharacterId];
 
     return {
-      id: characterId,
-      name: character.name ?? characterId,
+      id: resolvedCharacterId,
+      name: character.name ?? resolvedCharacterId,
       startingWeaponId: character.startingWeaponId ?? DEFAULT_STARTING_WEAPON_ID,
       baseStats: {
         maxHp: character.maxHp,
