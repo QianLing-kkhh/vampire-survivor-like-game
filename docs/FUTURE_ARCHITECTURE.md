@@ -2,6 +2,12 @@
 
 This document records future expansion goals so future changes do not accidentally hard-code around the current one-character, one-stage prototype.
 
+## Consolidation Decision
+
+The project has reached the point where architecture should consolidate instead of expanding horizontally. Most major extension points now exist as implemented foundations or shells. The recommended next phase is content proof: add small real examples that exercise the foundations, then only extend architecture where those examples expose gaps.
+
+Do not add another broad manager, registry, provider, or shell unless it is required by a concrete playable feature or tool workflow.
+
 ## Expansion Targets
 
 Future architecture should assume support for:

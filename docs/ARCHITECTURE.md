@@ -2,6 +2,17 @@
 
 This document is the primary architecture reference for Codex and future development. The project is still a playable prototype, but major systems are now separated into explicit layers.
 
+## Implementation Readiness
+
+The broad architecture foundation is complete enough to stop adding new generic systems and begin content proof work. New architecture should now be justified by a concrete playable feature, tool workflow, or validation gap.
+
+Current readiness:
+
+- Runtime foundations for save/settings/content/assets/selection/random/events/rules/replay/version/debug are in place.
+- Minimal UI exists for character/stage selection, custom stage tools, records, replay tools, daily challenge, settings, help, and result flow.
+- Several systems are intentionally foundation-only: appearance themes, relics without drops, full replay playback, remote providers, full mod loading, milestone depth, and playtest scenario batches.
+- The next architecture pressure should come from adding real characters, stages, Bosses, relics, elite enemies, and custom stage examples rather than creating more registries.
+
 ## Scene Layer
 
 Scenes own Phaser lifecycle, scene transitions, high-level UI/gameplay coordination, and scene events.
