@@ -41,6 +41,8 @@ The runtime also creates a `ReplayRecorder`. Current replay records include run 
 
 Developer DebugPanel foundation is available for local diagnostics. It is disabled by default and can be toggled with F3 through `DeveloperSettings.showDebugPanel`. It shows compact run/version/seed/content, selected stage/map/character, FPS, enemy/Boss counts, endless state, CSV buffer size, and recent event count without changing gameplay.
 
+Playtest scenario runner foundation exists under `src/playtest/`. It defines scenario data, a queue, built-in scenario presets, and a runner shell for future batches across character, stage, difficulty, seed, mutator, and Endless combinations. It is inactive by default and does not change the current Title Scene Auto Test or Result Scene auto-restart behavior.
+
 Useful combinations:
 
 - Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.
@@ -53,6 +55,8 @@ Useful combinations:
 The Title Scene starts Auto Movement + Auto Upgrade + Fast Mode automatically after 10 seconds without input.
 
 The Result Scene can automatically start the next run after 10 seconds.
+
+Current Auto Test is still the legacy single-mode flow. Future scenario batches should route through `PlaytestScenarioRunner` so CSV, replay, leaderboard, seed, and selection metadata can be grouped by scenario.
 
 ## Auto Player Behavior
 
