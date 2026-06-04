@@ -41,6 +41,7 @@ export interface RunResultBuildContext {
 
 export class RunResultBuilder {
   build(context: RunResultBuildContext) {
+    const metadata = context.runState.getRunMetadata();
     const weaponIds = context.weaponManager?.getWeaponIds() ?? [];
     const passiveItems = context.passiveManager?.getPassiveLevels() ?? [];
     const weaponDamageStats = context.weaponManager?.getWeaponDamageStats() ?? [];
@@ -58,16 +59,24 @@ export class RunResultBuilder {
       killCount: context.runState.killCount,
       weaponIds,
       passiveItems,
+      metadata,
     });
     const postEvolutionDuration = context.runState.evolutionTime === null
       ? 0
       : Math.max(0, context.survivalTime - context.runState.evolutionTime);
     const playtestCsv = PlaytestLog.createCsv({
       runId: context.runId,
-      runSeed: context.runState.runSeed,
-      gameVersion: context.runState.gameVersion,
-      contentHash: context.runState.contentHash,
-      csvSchemaVersion: PlaytestLog.getCsvSchemaVersion(),
+      runSeed: metadata.runSeed,
+      gameVersion: metadata.gameVersion,
+      contentHash: metadata.contentHash,
+      csvSchemaVersion: metadata.csvSchemaVersion,
+      characterId: metadata.characterId,
+      stageId: metadata.stageId,
+      mapId: metadata.mapId,
+      customStageId: metadata.customStageId,
+      challengeId: metadata.challengeId,
+      seed: metadata.seed,
+      leaderboardKey: metadata.leaderboardKey,
       timestamp: new Date().toISOString(),
       autoMode: context.autoMode,
       fastMode: context.fastMode,
@@ -237,7 +246,7 @@ export class RunResultBuilder {
       finalMoveSpeed,
       finalPickupRange,
       finalMaxHp,
-      endlessLeaderboardEntries: EndlessLeaderboard.getEntries(),
+      endlessLeaderboardEntries: EndlessLeaderboard.getEntries(metadata),
       weaponIds,
       passiveItems,
       weaponDamageStats,
@@ -247,9 +256,16 @@ export class RunResultBuilder {
       weaponKillStats: runStatsSummary.weaponKillStats,
       upgradeCountStats: runStatsSummary.upgradeCountStats,
       runId: context.runId,
-      runSeed: context.runState.runSeed,
-      gameVersion: context.runState.gameVersion,
-      contentHash: context.runState.contentHash,
+      runSeed: metadata.runSeed,
+      gameVersion: metadata.gameVersion,
+      contentHash: metadata.contentHash,
+      characterId: metadata.characterId,
+      stageId: metadata.stageId,
+      mapId: metadata.mapId,
+      customStageId: metadata.customStageId,
+      challengeId: metadata.challengeId,
+      seed: metadata.seed,
+      leaderboardKey: metadata.leaderboardKey,
       replayId: context.runState.replayId,
       autoMode: context.autoMode,
       fastMode: context.fastMode,
@@ -280,6 +296,7 @@ export class RunResultBuilder {
     killCount: number;
     weaponIds: string[];
     passiveItems: ReturnType<PassiveManager['getPassiveLevels']>;
+    metadata: ReturnType<RunState['getRunMetadata']>;
   }): number {
     if (!context.runState.endlessStarted) {
       context.runState.recordEndlessLeaderboardRank(null);
@@ -295,7 +312,7 @@ export class RunResultBuilder {
       weaponIds: context.weaponIds,
       passiveItems: context.passiveItems,
       evolutionPath: context.runState.evolutionPath,
-    });
+    }, context.metadata);
 
     context.runState.recordEndlessLeaderboardRank(rank);
     return rank ?? 0;

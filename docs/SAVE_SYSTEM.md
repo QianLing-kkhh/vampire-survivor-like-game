@@ -248,6 +248,8 @@ Save import/export currently covers formal `SaveData`. Future custom stage backu
 
 Version metadata is also formal save data. CSV buffers, replay storage, and custom stage storage remain separate diagnostic/content stores even when they record compatible `gameVersion` or `contentHash` values.
 
+Per-run metadata such as `runSeed`, selected character/stage/map, challenge/custom stage IDs, ruleset ID, leaderboard key, and CSV/replay compatibility fields belongs to run/test/replay/leaderboard records. It is not progression state and should not be treated as unlock or save progression data.
+
 ## Future Save Domains
 
 Likely future additions:

@@ -28,6 +28,7 @@ import { GameEventBus } from '../events/GameEventBus';
 import { GameEventRecorder } from '../events/GameEventRecorder';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
+import { createLeaderboardKey, serializeLeaderboardKey } from '../leaderboard/LeaderboardKey';
 import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PickupManager } from '../pickup/PickupManager';
 import { TreasureManager } from '../pickup/TreasureManager';
@@ -248,14 +249,39 @@ export class GameplayInitializer {
       runRuleSet.getMutatorIds(),
       runRuleSet.rulesetId,
     );
-    config.runState.setRunSeed(runSeed);
     config.runState.setReplayId(config.runId);
-    config.runState.setVersionInfo(versionInfo);
-    config.runState.setSelectionInfo(
-      selectedCharacter.id,
-      selectedStage.id,
-      selectedMap.id,
-    );
+    const leaderboardKey = serializeLeaderboardKey(createLeaderboardKey({
+      mode: selection.challengeId
+        ? 'challenge'
+        : selection.customStageId ? 'custom' : config.playtestSettings.endlessMode ? 'endless' : 'normal',
+      characterId: selectedCharacter.id,
+      stageId: selectedStage.id,
+      mapId: selectedMap.id,
+      difficultyId: selectedDifficulty.id,
+      seed: selection.seed,
+      challengeId: selection.challengeId,
+      customStageId: selection.customStageId,
+      rulesetId: runRuleSet.rulesetId,
+    }));
+    config.runState.setRunMetadata({
+      runId: config.runId,
+      runSeed,
+      gameVersion: versionInfo.gameVersion,
+      contentHash: versionInfo.contentHash,
+      saveSchemaVersion: versionInfo.saveSchemaVersion,
+      csvSchemaVersion: versionInfo.csvSchemaVersion,
+      replaySchemaVersion: versionInfo.replaySchemaVersion,
+      customStageSchemaVersion: versionInfo.customStageSchemaVersion,
+      characterId: selectedCharacter.id,
+      stageId: selectedStage.id,
+      mapId: selectedMap.id,
+      difficultyId: selectedDifficulty.id,
+      customStageId: selection.customStageId,
+      challengeId: selection.challengeId,
+      rulesetId: runRuleSet.rulesetId,
+      seed: selection.seed,
+      leaderboardKey,
+    });
     replayRecorder.start({
       runId: config.runId,
       runSeed,
@@ -275,6 +301,7 @@ export class GameplayInitializer {
         fastMode: config.playtestSettings.fastMode,
         endlessMode: config.playtestSettings.endlessMode,
       },
+      metadata: config.runState.getRunMetadata(),
       versionInfo,
     });
     const spawnDirector = new SpawnDirector(

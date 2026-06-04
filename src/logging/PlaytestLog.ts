@@ -11,6 +11,13 @@ export interface PlaytestLogData {
   gameVersion: string;
   contentHash: string;
   csvSchemaVersion: number;
+  characterId: string;
+  stageId: string;
+  mapId: string;
+  customStageId?: string;
+  challengeId?: string;
+  seed?: string;
+  leaderboardKey?: string;
   timestamp: string;
   autoMode: boolean;
   fastMode: boolean;
@@ -109,6 +116,13 @@ export class PlaytestLog {
     'gameVersion',
     'contentHash',
     'csvSchemaVersion',
+    'characterId',
+    'stageId',
+    'mapId',
+    'customStageId',
+    'challengeId',
+    'seed',
+    'leaderboardKey',
     'timestamp',
     'autoMode',
     'fastMode',
@@ -219,6 +233,13 @@ export class PlaytestLog {
       data.gameVersion,
       data.contentHash,
       data.csvSchemaVersion.toString(),
+      data.characterId,
+      data.stageId,
+      data.mapId,
+      data.customStageId ?? '',
+      data.challengeId ?? '',
+      data.seed ?? '',
+      data.leaderboardKey ?? '',
       data.timestamp,
       data.autoMode ? 'true' : 'false',
       data.fastMode ? 'true' : 'false',

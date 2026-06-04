@@ -420,6 +420,10 @@ export class SaveMigrator {
       id: typeof record.id === 'string'
         ? record.id
         : `${timestamp}-${index}`,
+      runId: typeof record.runId === 'string' ? record.runId : undefined,
+      runSeed: typeof record.runSeed === 'string' ? record.runSeed : typeof record.seed === 'string' ? record.seed : undefined,
+      gameVersion: typeof record.gameVersion === 'string' ? record.gameVersion : undefined,
+      contentHash: typeof record.contentHash === 'string' ? record.contentHash : undefined,
       timestamp,
       mode: typeof record.mode === 'string' ? record.mode : 'endless',
       survivalTime,
@@ -429,6 +433,11 @@ export class SaveMigrator {
       characterId,
       stageId,
       mapId,
+      difficultyId: typeof record.difficultyId === 'string' ? record.difficultyId : undefined,
+      customStageId: typeof record.customStageId === 'string' ? record.customStageId : undefined,
+      challengeId: typeof record.challengeId === 'string' ? record.challengeId : undefined,
+      rulesetId: typeof record.rulesetId === 'string' ? record.rulesetId : undefined,
+      leaderboardKey: typeof record.leaderboardKey === 'string' ? record.leaderboardKey : undefined,
       seed: typeof record.seed === 'string' ? record.seed : undefined,
       weaponIds: this.readStringArray(record.weaponIds),
       passiveItems: this.readPassiveItems(record.passiveItems),

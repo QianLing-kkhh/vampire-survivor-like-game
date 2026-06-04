@@ -7,13 +7,25 @@ const DEFAULT_MAX_RECORDS = 10;
 export class LeaderboardManager {
   static addRecord(key: LeaderboardKey, record: LeaderboardRecord): number | null {
     const serializedKey = serializeLeaderboardKey(key);
+    const normalizedRecord: LeaderboardRecord = {
+      ...record,
+      characterId: record.characterId || key.characterId || 'default',
+      stageId: record.stageId || key.stageId || 'stage_001',
+      mapId: record.mapId || key.mapId || 'prototype_field',
+      difficultyId: record.difficultyId ?? key.difficultyId,
+      customStageId: record.customStageId ?? key.customStageId,
+      challengeId: record.challengeId ?? key.challengeId,
+      rulesetId: record.rulesetId ?? key.rulesetId,
+      seed: record.seed ?? key.seed,
+      leaderboardKey: record.leaderboardKey ?? serializedKey,
+    };
     const records = [
       ...LeaderboardStorage.get(serializedKey),
-      record,
+      normalizedRecord,
     ];
     const sortedRecords = LeaderboardManager.sortRecords(key, records)
       .slice(0, DEFAULT_MAX_RECORDS);
-    const rank = sortedRecords.findIndex((entry) => entry.id === record.id);
+    const rank = sortedRecords.findIndex((entry) => entry.id === normalizedRecord.id);
 
     LeaderboardStorage.set(serializedKey, sortedRecords);
     return rank >= 0 ? rank + 1 : null;

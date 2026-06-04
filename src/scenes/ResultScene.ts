@@ -13,6 +13,16 @@ import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
 interface ResultSceneData {
   runId?: string;
+  runSeed?: string;
+  characterId?: string;
+  stageId?: string;
+  mapId?: string;
+  difficultyId?: string;
+  customStageId?: string;
+  challengeId?: string;
+  rulesetId?: string;
+  seed?: string;
+  leaderboardKey?: string;
   autoMode?: boolean;
   fastMode?: boolean;
   timeScale?: number;
@@ -309,6 +319,7 @@ export class ResultScene extends Phaser.Scene {
       ...(params.isEndlessResult ? [
         `Endless Survival Time: ${this.formatTime(params.data.endlessSurvivalTime ?? 0)}`,
       ] : []),
+      this.formatMetadataLine(params.data),
       `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
       `${I18n.t('result.killCount')}: ${params.data.killCount ?? 0}`,
       `${I18n.t('result.weapons')}: ${params.weaponText}`,
@@ -331,6 +342,15 @@ export class ResultScene extends Phaser.Scene {
       ...lines.slice(0, Math.max(1, params.maxRows - 1)),
       `+${lines.length - params.maxRows + 1} more`,
     ];
+  }
+
+  private formatMetadataLine(data: ResultSceneData): string {
+    const stage = data.customStageId ?? data.stageId ?? '-';
+    const character = data.characterId ?? '-';
+    const seed = data.seed ?? data.runSeed ?? '';
+    const shortSeed = seed.length > 14 ? `${seed.slice(0, 14)}...` : seed;
+
+    return `Stage: ${stage}  Character: ${character}${shortSeed ? `  Seed: ${shortSeed}` : ''}`;
   }
 
   private formatLeaderboardLines(entries: EndlessLeaderboardEntry[], maxRows: number): string[] {

@@ -31,13 +31,13 @@ Current runs use `normal` difficulty with no mutators unless future test harness
 
 Each run also records a `runSeed`. If `SelectionState.seed` is empty, a new seed is generated for the run. A fixed seed is a foundation for debugging and future daily challenges, but it is not a complete replay by itself; version, content, settings, timing, and player input also matter.
 
-Each run records `gameVersion`, `contentHash`, and `csvSchemaVersion`. `contentHash` is a stable, non-cryptographic hash of built-in content registered through `ContentRegistry`; it is used for compatibility warnings and CSV batch isolation, not security.
+Each run records a metadata snapshot: `runSeed`, `gameVersion`, `contentHash`, schema versions, character/stage/map IDs, difficulty/ruleset IDs, optional custom/challenge IDs, optional fixed seed, and leaderboard key. CSV, replay records, local leaderboard records, and ResultScene summaries should use this same snapshot rather than rereading current selection state at run end.
 
 Daily challenge foundation exists but has no UI yet. `DailyChallengeGenerator` produces stable `daily:YYYY-MM-DD` seeds, and `ChallengeManager.activateChallenge()` can write a fixed challenge selection through `SelectionManager` for future test harnesses.
 
 The runtime also creates a per-run `GameEventBus` and bounded `GameEventRecorder`. This records recent high-value events for debugging foundations, but it is not exported as a full CSV timeline and is not a complete replay.
 
-The runtime also creates a `ReplayRecorder`. Current replay records include run seed, selection snapshot, settings snapshot, selected key events, and run result summary. Input samples are reserved but not populated until an input mapping layer exists.
+The runtime also creates a `ReplayRecorder`. Current replay records include run metadata, selection snapshot, settings snapshot, selected key events, and run result summary. Input samples are reserved but not populated until an input mapping layer exists.
 
 Developer DebugPanel foundation is available for local diagnostics. It is disabled by default and can be toggled with F3 through `DeveloperSettings.showDebugPanel`. It shows compact run/version/seed/content, selected stage/map/character, FPS, enemy/Boss counts, endless state, CSV buffer size, and recent event count without changing gameplay.
 
@@ -153,6 +153,12 @@ Important endless metrics:
 - `gameVersion`
 - `contentHash`
 - `csvSchemaVersion`
+- `characterId`
+- `stageId`
+- `mapId`
+- `customStageId`
+- `challengeId`
+- `leaderboardKey`
 
 ## CSV Export
 
@@ -165,10 +171,11 @@ Current CSV behavior:
 - The buffer is persisted to `localStorage`.
 - Entering the Title Scene clears the current playtest buffer, including after a page refresh.
 - Rows with a different `csvSchemaVersion` or `contentHash` are not mixed into the current buffer.
+- Rows with a different `gameVersion` are also treated as a new batch.
 - The buffer keeps the latest 1000 runs.
 - Clear CSV Buffer removes both memory and persisted logs.
 
-If CSV schema or content hash changes, clear the buffer before comparing new results with old samples. Do not compare old and new schema/content rows mixed in All CSV.
+If CSV schema, content hash, or game version changes, keep samples separate. Do not compare old and new schema/content/version rows mixed in All CSV.
 
 ## CSV Diagnostics
 
@@ -203,7 +210,7 @@ Current behavior:
 - Replay records use `runId` as their storage id.
 - Only selected key events are recorded; high-frequency damage and weapon-hit events are intentionally skipped.
 - Replay playback UI and deterministic input injection are not implemented yet.
-- A replay is useful for debugging context, but it is not a guaranteed full reproduction until input samples and content hashes are added.
+- A replay is useful for debugging context, but it is not a guaranteed full reproduction until input samples and compatibility checks are complete.
 
 ## Challenge Diagnostics
 

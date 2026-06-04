@@ -26,7 +26,6 @@ export class PlaytestLogBuffer {
     if (!this.isCurrentCsvRow(csvRow)) {
       console.info('Playtest CSV buffer cleared because CSV schema or content hash changed.');
       this.clear();
-      return;
     }
 
     if (this.rows.length > 0 && !this.areRowsCompatible(csvRow, this.rows[0].row)) {
@@ -199,7 +198,7 @@ export class PlaytestLogBuffer {
   }
 
   private static extractTimestamp(csvRow: string): string {
-    return this.parseCsvLine(csvRow)[5] ?? '';
+    return this.parseCsvLine(csvRow)[12] ?? '';
   }
 
   private static isCurrentCsvRow(csvRow: string): boolean {
@@ -207,14 +206,15 @@ export class PlaytestLogBuffer {
     const currentVersionInfo = getCurrentVersionInfo();
 
     return parsedRow[4] === PlaytestLog.getCsvSchemaVersion().toString()
-      && parsedRow[3] === currentVersionInfo.contentHash;
+      && parsedRow[3] === currentVersionInfo.contentHash
+      && parsedRow[2] === currentVersionInfo.gameVersion;
   }
 
   private static areRowsCompatible(leftRow: string, rightRow: string): boolean {
     const left = this.parseCsvLine(leftRow);
     const right = this.parseCsvLine(rightRow);
 
-    return left[4] === right[4] && left[3] === right[3];
+    return left[4] === right[4] && left[3] === right[3] && left[2] === right[2];
   }
 
   private static calculateGapSeconds(

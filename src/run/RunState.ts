@@ -1,6 +1,9 @@
 import { VersionInfo } from '../version/VersionInfo';
 
+import { RunMetadata, createDefaultRunMetadata } from './RunMetadata';
+
 export class RunState {
+  private metadata: RunMetadata = createDefaultRunMetadata();
   gameVersion = '';
   contentHash = '';
   characterId = '';
@@ -75,6 +78,7 @@ export class RunState {
   private lastEndlessLevelUpTime: number | null = null;
 
   reset(): void {
+    this.metadata = createDefaultRunMetadata();
     this.gameVersion = '';
     this.contentHash = '';
     this.characterId = '';
@@ -153,21 +157,65 @@ export class RunState {
     this.difficultyId = difficultyId || 'normal';
     this.mutatorIds = [...mutatorIds];
     this.rulesetId = rulesetId || this.difficultyId;
+    this.setRunMetadata({
+      ...this.metadata,
+      difficultyId: this.difficultyId,
+      rulesetId: this.rulesetId,
+    });
   }
 
   setVersionInfo(versionInfo: VersionInfo): void {
-    this.gameVersion = versionInfo.gameVersion;
-    this.contentHash = versionInfo.contentHash;
+    this.setRunMetadata({
+      ...this.metadata,
+      gameVersion: versionInfo.gameVersion,
+      contentHash: versionInfo.contentHash,
+      saveSchemaVersion: versionInfo.saveSchemaVersion,
+      csvSchemaVersion: versionInfo.csvSchemaVersion,
+      replaySchemaVersion: versionInfo.replaySchemaVersion,
+      customStageSchemaVersion: versionInfo.customStageSchemaVersion,
+    });
   }
 
   setSelectionInfo(characterId: string, stageId: string, mapId: string): void {
-    this.characterId = characterId;
-    this.stageId = stageId;
-    this.mapId = mapId;
+    this.setRunMetadata({
+      ...this.metadata,
+      characterId,
+      stageId,
+      mapId,
+    });
   }
 
   setRunSeed(runSeed: string): void {
-    this.runSeed = runSeed;
+    this.setRunMetadata({
+      ...this.metadata,
+      runSeed,
+    });
+  }
+
+  setRunMetadata(metadata: RunMetadata): void {
+    this.metadata = {
+      ...createDefaultRunMetadata(),
+      ...metadata,
+      runId: metadata.runId || this.metadata.runId,
+      runSeed: metadata.runSeed || this.metadata.runSeed,
+      characterId: metadata.characterId || 'default',
+      stageId: metadata.stageId || 'stage_001',
+      mapId: metadata.mapId || 'prototype_field',
+      difficultyId: metadata.difficultyId || 'normal',
+      rulesetId: metadata.rulesetId || metadata.difficultyId || 'normal',
+    };
+    this.runSeed = this.metadata.runSeed;
+    this.gameVersion = this.metadata.gameVersion;
+    this.contentHash = this.metadata.contentHash;
+    this.characterId = this.metadata.characterId;
+    this.stageId = this.metadata.stageId;
+    this.mapId = this.metadata.mapId;
+    this.difficultyId = this.metadata.difficultyId ?? 'normal';
+    this.rulesetId = this.metadata.rulesetId ?? this.difficultyId;
+  }
+
+  getRunMetadata(): RunMetadata {
+    return { ...this.metadata };
   }
 
   setReplayId(replayId: string): void {

@@ -1,5 +1,9 @@
 export interface LeaderboardRecord {
   id: string;
+  runId?: string;
+  runSeed?: string;
+  gameVersion?: string;
+  contentHash?: string;
   timestamp: string;
   mode: string;
   survivalTime: number;
@@ -9,6 +13,11 @@ export interface LeaderboardRecord {
   characterId: string;
   stageId: string;
   mapId: string;
+  difficultyId?: string;
+  customStageId?: string;
+  challengeId?: string;
+  rulesetId?: string;
+  leaderboardKey?: string;
   seed?: string;
   weaponIds: string[];
   passiveItems: string[];

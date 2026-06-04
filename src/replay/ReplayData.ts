@@ -1,4 +1,5 @@
 import { VersionInfo } from '../version/VersionInfo';
+import { RunMetadata } from '../run/RunMetadata';
 
 export interface ReplaySelectionSnapshot {
   characterId: string;
@@ -49,6 +50,7 @@ export interface ReplayData {
   saveSchemaVersion?: number;
   csvSchemaVersion?: number;
   versionInfo?: VersionInfo;
+  metadata?: RunMetadata;
   runId: string;
   runSeed: string;
   selection: ReplaySelectionSnapshot;
@@ -66,4 +68,5 @@ export interface ReplayStartConfig {
   saveSchemaVersion?: number;
   csvSchemaVersion?: number;
   versionInfo?: VersionInfo;
+  metadata?: RunMetadata;
 }
