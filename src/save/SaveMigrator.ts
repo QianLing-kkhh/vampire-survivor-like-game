@@ -9,6 +9,11 @@ import { DEFAULT_DEVELOPER_SETTINGS } from '../settings/DeveloperSettings';
 import { DEFAULT_DISPLAY_SETTINGS } from '../settings/DisplaySettings';
 import { DEFAULT_GAMEPLAY_SETTINGS } from '../settings/GameplaySettings';
 import { DEFAULT_INPUT_SETTINGS } from '../settings/InputSettings';
+import {
+  createLeaderboardKey,
+  serializeLeaderboardKey,
+} from '../leaderboard/LeaderboardKey';
+import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 
 export class SaveMigrator {
   migrate(rawSave: string | null): SaveData {
@@ -48,11 +53,173 @@ export class SaveMigrator {
         ...defaultSave.cosmetics,
         ...save.cosmetics,
       },
-      records: {
-        ...defaultSave.records,
-        ...save.records,
-      },
+      records: this.migrateRecords(save.records),
     };
+  }
+
+  private migrateRecords(records: unknown): SaveData['records'] {
+    if (!this.isObject(records)) {
+      return createDefaultSaveData().records;
+    }
+
+    if (this.isObject(records.leaderboardsByKey)) {
+      return {
+        leaderboardsByKey: this.normalizeLeaderboardsByKey(records.leaderboardsByKey),
+      };
+    }
+
+    if (this.isObject(records.endlessLeaderboardByStageId)) {
+      return {
+        leaderboardsByKey: this.migrateLegacyEndlessLeaderboards(
+          records.endlessLeaderboardByStageId,
+        ),
+      };
+    }
+
+    return createDefaultSaveData().records;
+  }
+
+  private normalizeLeaderboardsByKey(
+    leaderboardsByKey: Record<string, unknown>,
+  ): Record<string, LeaderboardRecord[]> {
+    return Object.entries(leaderboardsByKey).reduce<Record<string, LeaderboardRecord[]>>(
+      (result, [key, records]) => {
+        if (!Array.isArray(records)) {
+          return result;
+        }
+
+        result[key] = records
+          .map((record, index) => this.normalizeLeaderboardRecord(record, index))
+          .filter((record): record is LeaderboardRecord => record !== null)
+          .sort((a, b) => (b.endlessSurvivalTime ?? b.survivalTime)
+            - (a.endlessSurvivalTime ?? a.survivalTime))
+          .slice(0, 10);
+
+        return result;
+      },
+      {},
+    );
+  }
+
+  private migrateLegacyEndlessLeaderboards(
+    endlessLeaderboardByStageId: Record<string, unknown>,
+  ): Record<string, LeaderboardRecord[]> {
+    return Object.entries(endlessLeaderboardByStageId).reduce<Record<string, LeaderboardRecord[]>>(
+      (result, [stageId, records]) => {
+        if (!Array.isArray(records)) {
+          return result;
+        }
+
+        const key = serializeLeaderboardKey(createLeaderboardKey({
+          mode: 'endless',
+          characterId: 'default',
+          stageId: stageId || 'stage_001',
+          mapId: 'prototype_field',
+        }));
+
+        result[key] = records
+          .map((record, index) => this.normalizeLeaderboardRecord(
+            record,
+            index,
+            stageId || 'stage_001',
+          ))
+          .filter((record): record is LeaderboardRecord => record !== null)
+          .sort((a, b) => (b.endlessSurvivalTime ?? b.survivalTime)
+            - (a.endlessSurvivalTime ?? a.survivalTime))
+          .slice(0, 10);
+
+        return result;
+      },
+      {},
+    );
+  }
+
+  private normalizeLeaderboardRecord(
+    record: unknown,
+    index: number,
+    fallbackStageId = 'stage_001',
+  ): LeaderboardRecord | null {
+    if (!this.isObject(record)) {
+      return null;
+    }
+
+    const timestamp = typeof record.timestamp === 'string'
+      ? record.timestamp
+      : new Date(0).toISOString();
+    const survivalTime = this.readNumber(
+      record.survivalTime ?? record.totalSurvivalTime,
+      0,
+      0,
+    );
+    const endlessSurvivalTime = this.readNumber(
+      record.endlessSurvivalTime,
+      survivalTime,
+      0,
+    );
+    const characterId = typeof record.characterId === 'string'
+      ? record.characterId
+      : 'default';
+    const stageId = typeof record.stageId === 'string'
+      ? record.stageId
+      : fallbackStageId;
+    const mapId = typeof record.mapId === 'string'
+      ? record.mapId
+      : 'prototype_field';
+
+    return {
+      id: typeof record.id === 'string'
+        ? record.id
+        : `${timestamp}-${index}`,
+      timestamp,
+      mode: typeof record.mode === 'string' ? record.mode : 'endless',
+      survivalTime,
+      endlessSurvivalTime,
+      finalLevel: this.readNumber(record.finalLevel, 1, 1),
+      killCount: this.readNumber(record.killCount, 0, 0),
+      characterId,
+      stageId,
+      mapId,
+      seed: typeof record.seed === 'string' ? record.seed : undefined,
+      weaponIds: this.readStringArray(record.weaponIds),
+      passiveItems: this.readPassiveItems(record.passiveItems),
+      evolutionPath: this.readStringArray(record.evolutionPath),
+      metadata: this.isObject(record.metadata) ? record.metadata : undefined,
+    };
+  }
+
+  private readStringArray(value: unknown): string[] {
+    return Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === 'string')
+      : [];
+  }
+
+  private readPassiveItems(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+
+        if (!this.isObject(item)) {
+          return null;
+        }
+
+        const name = typeof item.name === 'string'
+          ? item.name
+          : typeof item.id === 'string' ? item.id : null;
+        const level = typeof item.level === 'number'
+          ? item.level
+          : null;
+
+        return name === null
+          ? null
+          : level === null ? name : `${name} Lv.${level}`;
+      })
+      .filter((item): item is string => item !== null);
   }
 
   private migrateSettings(settings: unknown): SaveData['settings'] {

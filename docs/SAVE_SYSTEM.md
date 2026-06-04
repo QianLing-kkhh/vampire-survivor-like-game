@@ -96,6 +96,19 @@ The current selected IDs are save-backed:
 
 There is no selection UI yet. Managers fall back to defaults if a saved ID is missing from registered content.
 
+## Records and Leaderboards
+
+`records.leaderboardsByKey` stores local leaderboard records by a stable serialized `LeaderboardKey`.
+
+Current endless records use:
+
+- `mode=endless`
+- selected character ID
+- selected stage ID
+- selected map ID
+
+Reserved future leaderboard dimensions include difficulty, seed, challenge ID, custom stage ID, and ruleset ID. The older global endless leaderboard is migrated through compatibility paths and should not be used by new systems.
+
 ## What SaveData Is Not
 
 Formal save data is not the same as:

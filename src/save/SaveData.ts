@@ -18,8 +18,9 @@ import {
   DEFAULT_INPUT_SETTINGS,
   InputSettingsData,
 } from '../settings/InputSettings';
+import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 
-export const SAVE_SCHEMA_VERSION = 2;
+export const SAVE_SCHEMA_VERSION = 3;
 
 export interface SaveData {
   schemaVersion: number;
@@ -46,7 +47,7 @@ export interface SaveData {
     selectedCharacterSkinByCharacterId: Record<string, string>;
   };
   records: {
-    endlessLeaderboardByStageId: Record<string, unknown[]>;
+    leaderboardsByKey: Record<string, LeaderboardRecord[]>;
   };
 }
 
@@ -76,7 +77,7 @@ export function createDefaultSaveData(): SaveData {
       selectedCharacterSkinByCharacterId: {},
     },
     records: {
-      endlessLeaderboardByStageId: {},
+      leaderboardsByKey: {},
     },
   };
 }

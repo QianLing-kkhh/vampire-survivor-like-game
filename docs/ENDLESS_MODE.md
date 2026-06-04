@@ -109,11 +109,18 @@ Endless treasure drops and opens are tracked separately by `RunState`.
 
 ## Local Leaderboard
 
-`EndlessLeaderboard` stores local top-10 entries in `localStorage`.
+`EndlessLeaderboard` is now a compatibility facade over the leaderboard key system.
+
+Current endless records are stored through `SaveManager.records.leaderboardsByKey` and are scoped by:
+
+- `mode=endless`
+- selected character ID
+- selected stage ID
+- selected map ID
 
 Entries include timestamp, endless survival time, total survival time, final level, kill count, weapon IDs, passive items, and evolution path.
 
-Future leaderboard dimensions should use structured keys such as stage ID, map ID, character ID, difficulty, mutator set, seed, and content pack version.
+Future leaderboard dimensions are reserved in `LeaderboardKey`, including difficulty, seed, challenge ID, custom stage ID, and ruleset ID.
 
 ## Known Balance Notes
 

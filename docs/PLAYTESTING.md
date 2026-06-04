@@ -97,6 +97,8 @@ To test Endless Mode:
 5. Death after Endless Mode starts is recorded as an endless result rather than normal Game Over.
 6. Review endless survival time and local leaderboard rank in the Result Scene.
 
+The local endless leaderboard is scoped to the current selected character, stage, and map. Runs from other future stage/map/character combinations should not appear in the current Result Scene leaderboard.
+
 Recommended sample:
 
 1. Clear CSV Buffer.
@@ -169,6 +171,7 @@ These help distinguish between real pauses, browser reloads, buffer resets, and 
 | Boss dash hit rate | Dash effectiveness |
 | Endless Boss count | Late endless pressure and Boss stacking |
 | Endless scaling level | Enemy growth pressure |
+| Leaderboard key scope | Confirms records are separated by mode/stage/map/character |
 | Reward usage counts | Post-cap reward balance |
 | Shield gained/consumed | Defensive reward strength |
 | Treasure open count | Reward pacing and inflation risk |
