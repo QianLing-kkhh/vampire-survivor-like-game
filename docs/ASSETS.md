@@ -1,239 +1,230 @@
 # Asset Guide
 
-This project currently uses temporary prototype assets. They are intended for readability and testing, not final production quality.
+This project currently uses prototype assets. Legacy assets and the newer unified art pack coexist so old fallback paths can continue working.
 
-## Asset Root
+## Asset Roots
 
-Static assets are stored under:
-
-```text
-public/assets/
-```
-
-Vite serves these files from the site root, so Phaser preload paths use `/assets/...`.
-
-Example:
-
-```ts
-this.load.image('player', '/assets/player/player_placeholder.png');
-```
-
-## Directory Structure
-
-Current asset folders:
+Legacy static assets:
 
 ```text
 public/assets/
-├─ audio/
-├─ effects/
-├─ enemy/
-├─ images/
-├─ pickup/
-├─ player/
-├─ ui/
-└─ weapons/
 ```
 
-## Player Assets
+Unified art pack:
 
 ```text
-public/assets/player/player_placeholder.png
+public/assets/art/
 ```
 
-Texture key:
+Phaser preload paths should be relative so GitHub Pages subpath deployment works:
 
 ```text
-player
+assets/art/player/player_walk_sheet.png
 ```
 
-## Enemy Assets
+Do not use root-absolute `/assets/...` paths.
+
+## New Art Pack Structure
+
+The current art pack is described by:
 
 ```text
-public/assets/enemy/slime_placeholder.png
-public/assets/enemy/bat_placeholder.png
-public/assets/enemy/golem_placeholder.png
+public/assets/art/animation_manifest.json
 ```
 
-Texture keys:
+Main directories:
 
 ```text
-slime
-bat
-golem
+public/assets/art/
+  effects/
+  enemies/
+  passives/
+  pickups/
+  player/
+  ui/
+  weapons/
+  world/
 ```
 
-## Pickup Assets
+## Manifest
 
-```text
-public/assets/pickup/exp_gem_placeholder.png
-```
+`animation_manifest.json` lists:
 
-Texture key:
+- `path`
+- `key`
+- `type`
+- `frameWidth`
+- `frameHeight`
+- `frames`
 
-```text
-exp_gem
-```
+`PreloadScene` mirrors this manifest into `ART_MANIFEST_ASSETS`, loads images with `this.load.image`, and loads spritesheets with `this.load.spritesheet`.
 
-## Effect / Weapon Assets
+## Spritesheets
 
-Base effect assets:
+Animated assets use horizontal spritesheets for Phaser.
 
-```text
-public/assets/effects/knife_projectile.png
-public/assets/effects/hit_flash.png
-public/assets/effects/bible_orbit_projectile.png
-```
+Rules:
 
-Texture keys:
+- Use transparent PNG.
+- Keep frames in one row.
+- Use manifest `frameWidth` and `frameHeight`.
+- Use stable texture keys from the manifest.
+- Create Phaser animations from spritesheet keys.
 
-```text
-knife_projectile
-hit_flash
-bible_orbit_projectile
-```
+Example animation keys:
 
-Additional weapon and gameplay image assets:
+- `art_player_walk`
+- `art_slime_walk`
+- `art_bat_fly`
+- `art_golem_walk`
+- `art_boss_lava_beast_idle`
+- `art_knife_projectile_spin`
+- `art_axe_projectile_spin`
+- `art_death_spiral_projectile_spin`
+- `art_magic_wand_projectile`
+- `art_holy_wand_projectile`
+- `art_thousand_edge_projectile_spin`
+- `art_bible_orbit_book_spin`
+- `art_unholy_vespers_orbit_book_spin`
+- `art_garlic_core`
+- `art_soul_eater_core`
+- `art_hit_flash`
+- `art_boss_dash_impact`
+- `art_level_up_glow`
 
-```text
-public/assets/images/axe_projectile.png
-public/assets/images/magic_wand_projectile.png
-public/assets/images/treasure_chest.png
-public/assets/images/boss_lava_beast.png
-public/assets/images/thousand_edge_projectile.png
-public/assets/images/holy_wand_projectile.png
-public/assets/images/death_spiral_projectile.png
-public/assets/images/unholy_vespers_orbit_book.png
-public/assets/images/soul_eater_core.png
-```
+## Mini Boss Keys
 
-Texture keys:
+`EnemyFactory` can use enemy IDs as texture keys, so these direct keys must remain preload-safe:
 
-```text
-axe_projectile
-magic_wand_projectile
-treasure_chest
-boss_lava_beast
-thousand_edge_projectile
-holy_wand_projectile
-death_spiral_projectile
-unholy_vespers_orbit_book
-soul_eater_core
-```
+- `slime_boss`
+- `bat_boss`
+- `golem_boss`
 
-## UI Assets
+The art pack also contains:
 
-```text
-public/assets/ui/hp_icon.png
-public/assets/ui/exp_icon.png
-public/assets/ui/time_icon.png
-```
+- `art_enemies_slime_boss_placeholder`
+- `art_enemies_bat_boss_placeholder`
+- `art_enemies_golem_boss_placeholder`
 
-Texture keys:
+## Common Texture Groups
 
-```text
-hp_icon
-exp_icon
-time_icon
-```
+Player:
 
-## Weapon Icon Assets
+- `art_player_player_walk_sheet`
+- `art_player_walk`
+- fallback: `player`
 
-```text
-public/assets/weapons/knife_icon.png
-public/assets/weapons/garlic_icon.png
-public/assets/weapons/bible_icon.png
-```
+Enemies:
 
-Texture keys:
+- `art_enemies_slime_walk_sheet`
+- `art_enemies_bat_fly_sheet`
+- `art_enemies_golem_walk_sheet`
+- `art_enemies_boss_lava_beast_idle_sheet`
+- mini boss placeholder PNGs
+- fallbacks: `slime`, `bat`, `golem`, `boss_lava_beast`
 
-```text
-knife_icon
-garlic_icon
-bible_icon
-```
+Weapons:
+
+- `art_weapons_knife_projectile_sheet`
+- `art_weapons_axe_projectile_sheet`
+- `art_weapons_magic_wand_projectile_sheet`
+- `art_weapons_bible_orbit_book_sheet`
+- `art_weapons_garlic_core_sheet`
+- `art_weapons_thousand_edge_projectile_sheet`
+- `art_weapons_holy_wand_projectile_sheet`
+- `art_weapons_death_spiral_projectile_sheet`
+- `art_weapons_unholy_vespers_orbit_book_sheet`
+- `art_weapons_soul_eater_core_sheet`
+
+Pickups:
+
+- `art_pickups_exp_gem`
+- `art_pickups_treasure_chest`
+- fallbacks: `exp_gem`, `treasure_chest`
+
+Passives:
+
+- `art_passives_spinach_icon`
+- `art_passives_empty_tome_icon`
+- `art_passives_bracer_icon`
+- `art_passives_clover_icon`
+- `art_passives_pummarola_icon`
+
+World:
+
+- `art_world_tree_landmark`
+- `art_world_rock_landmark`
+- `art_world_grave_landmark`
+- `art_world_grass_tile`
+- `art_world_ground_tile`
+
+UI:
+
+- `art_ui_panel_bg`
+- `art_ui_hp_icon`
+- `art_ui_exp_icon`
+- `art_ui_time_icon`
+- `art_ui_weapon_frame`
+- `art_ui_passive_frame`
+
+Effects:
+
+- `art_effects_hit_flash_sheet`
+- `art_effects_boss_dash_warning`
+- `art_effects_boss_dash_impact_sheet`
+- `art_effects_level_up_glow_sheet`
+
+## Fallback Policy
+
+Missing textures should never crash the game.
+
+Allowed fallbacks:
+
+- Old texture keys from `public/assets/`
+- Phaser graphics circles, rectangles, or arcs
+- Text initials for missing icons
+
+When adding a new visible object:
+
+1. Add or reuse an art pack asset.
+2. Add preload support in `PreloadScene`.
+3. Use `scene.textures.exists(key)` before relying on optional textures.
+4. Keep fallback graphics until the asset is confirmed in builds.
+
+## PNG Transparency
+
+PNG files must contain real alpha transparency.
+
+Do not commit PNGs with:
+
+- White backgrounds baked into the image
+- Checkerboard backgrounds baked into the image
+- 0-byte or obviously incomplete files
+
+If a generated PNG has a white or checkerboard background, remove it before committing the file. Prefer edge-connected background removal so weapon highlights and glow effects are preserved.
 
 ## Audio Assets
 
-Temporary audio files should be placed under:
+Audio files live under:
 
 ```text
 public/assets/audio/
+  bgm/
+  sfx/
+  weapon/
+  ui/
 ```
 
-Expected files:
-
-```text
-enemy_hit.wav
-enemy_killed.wav
-player_hit.wav
-level_up.wav
-upgrade_selected.wav
-treasure_open.wav
-boss_spawn.wav
-boss_dash.wav
-victory.wav
-game_over.wav
-ui_click.wav
-```
-
-Expected audio keys:
-
-```text
-enemy_hit
-enemy_killed
-player_hit
-level_up
-upgrade_selected
-treasure_open
-boss_spawn
-boss_dash
-victory
-game_over
-ui_click
-```
-
-## PreloadScene
-
-Asset loading is centralized in:
-
-```text
-src/scenes/PreloadScene.ts
-```
-
-When adding assets:
-
-1. Put the file under `public/assets/`.
-2. Add a preload entry in `PreloadScene.ts`.
-3. Use a stable texture/audio key.
-4. Add a fallback path in gameplay code if the asset is optional.
-
-## Temporary Asset Policy
-
-The current assets are placeholder content. Keep them:
-
-- Small enough for web builds.
-- Visually readable at gameplay size.
-- Named clearly by gameplay purpose.
-- Easy to replace later.
-
-## PNG Transparency Note
-
-PNG files must contain real alpha transparency. A checkerboard pattern drawn into the image is not transparent and will appear in-game.
-
-If a generated PNG has a white or checkerboard background, remove it before committing the file.
-
-Recommended approach:
-
-- Use edge-connected background removal.
-- Preserve weapon highlights and glow effects.
-- Avoid deleting all white pixels globally.
+Audio is optional at runtime. `AudioManager` checks the Phaser audio cache before playback.
 
 ## Git Notes for Binary Assets
 
-GitHub API text-file updates are not suitable for binary PNG/WAV replacement in this workflow. For binary assets, replace files locally and push with Git:
+Binary PNG/WAV assets should be committed locally with Git:
 
 ```sh
 git add public/assets
 git commit -m "update prototype assets"
 git push
 ```
+
+Do not replace binary assets through a text-only GitHub API workflow.

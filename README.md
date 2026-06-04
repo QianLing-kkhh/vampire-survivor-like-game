@@ -1,8 +1,8 @@
 # Vampire Survivor Like Game
 
-A playable **Phaser + TypeScript** prototype inspired by *Vampire Survivors*.
+A playable **Vampire Survivors-like Phaser prototype** built with TypeScript, Phaser 3, and Vite.
 
-This is not a finished game. It is a work-in-progress prototype for testing core gameplay systems, weapon balance, progression, boss encounters, automated playtesting, CSV logging, and temporary UI/audio/visual assets.
+This is not a finished game. It is a playable prototype for testing core survival gameplay, weapon progression, Boss pressure, endless mode, automated playtesting, CSV logging, responsive UI, temporary audio, and the current art pack.
 
 ## Tech Stack
 
@@ -57,135 +57,79 @@ GitHub Pages deployment is configured through GitHub Actions. In GitHub, set **R
 
 - WASD / Arrow Keys: Move
 - Hold Left Mouse: Move toward cursor
+- Virtual Joystick: Mobile / narrow-screen movement
 - ESC: Pause / Resume
+- Pause button: Available in all layouts
 
 ## Basic Gameplay
 
 - Defeat enemies and collect EXP gems.
-- Level up to choose upgrades.
+- Level up to choose weapons, passives, stat upgrades, or endless rewards.
 - Open treasure chests for bonus upgrades or weapon evolution.
-- Survive until the Boss appears.
-- Defeat the Boss to win.
+- Survive until the final Boss appears.
+- Defeat the Boss to win, or continue into Endless Mode when enabled.
 
 ## Current Systems
 
 Implemented systems currently include:
 
-- Player movement
-- Mouse movement support
-- Enemy waves and post-Boss pressure waves
-- Enemy contact damage
-- Player damage, knockback, and recovery
-- Weapon system
-- Passive item system
-- Level-up upgrade choices
-- Treasure chest rewards
-- Weapon evolution through treasure chests
-- Boss encounter
-- Boss dash attack and dash statistics
-- HUD with weapons, passives, stats, minimap, and Boss state
-- Title scene
-- Help overlay
-- Pause menu
-- Result scene
-- Temporary UI theme
-- Temporary PNG assets
-- Temporary audio system and placeholder audio support
-- Auto playtest mode
-- Fast test mode
+- Refactored gameplay architecture with `GameplayContext`, `GameplayInitializer`, and `GameplayUpdater`
+- Centralized `UpgradeFlow` for level-up, treasure, evolution, and endless rewards
+- `EnemyFlow` for enemy movement, contact damage, kill handling, and shield absorption
+- `BossController` for final Boss spawn, ranged warning attack, dash, and Boss victory state
+- Base and evolved weapon systems
+- Passive items and weapon evolution through treasure chests
+- Endless Mode after Boss kill when enabled
+- Endless enemy quantity and stat scaling
+- Endless rewards: Emergency Heal, Overdrive, Time Slow, Shield, and Minor Growth
+- Local endless leaderboard
+- Title, HUD, LevelUpPanel, PauseMenu, SettingsMenu, HelpOverlay, and ResultScene
+- Responsive layout with safe areas, minimap placement, mobile joystick, and all-mode Pause button
+- i18n support for `en-US`, `zh-CN`, and `ja-JP`
+- Channel-based audio settings for BGM, SFX, weapon, and UI sounds
+- Art pack and spritesheet assets under `public/assets/art/`
+- Auto playtesting with separate Auto Movement, Auto Upgrade, and Fast Mode
 - Persistent CSV playtest logs
 
-For more detail, see:
-
-- [`docs/FEATURES.md`](docs/FEATURES.md)
-- [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md)
-- [`docs/ASSETS.md`](docs/ASSETS.md)
-
-## Weapons
-
-Base weapons currently include:
-
-- Knife
-- Garlic
-- Bible
-- Magic Wand
-- Axe
-
-Evolved weapons currently include:
-
-- Thousand Edge
-- Soul Eater
-- Unholy Vespers
-- Holy Wand
-- Death Spiral
-
-## Passive Items
-
-Current passive items include:
-
-- Spinach
-- Empty Tome
-- Bracer
-- Clover
-- Pummarola
-
-## Weapon Evolution
-
-Weapon evolution is triggered through treasure chests after the required base weapon and passive item conditions are met.
-
-Current routes:
-
-| Base Weapon | Required Passive | Evolution |
-|---|---|---|
-| Knife | Bracer | Thousand Edge |
-| Garlic | Pummarola | Soul Eater |
-| Bible | Empty Tome | Unholy Vespers |
-| Magic Wand | Spinach | Holy Wand |
-| Axe | Spinach | Death Spiral |
-
-## Auto Playtest Mode
+## Auto Playtest
 
 The Title Scene starts an Auto + Fast test automatically after 10 seconds with no user input.
 
-In Auto Mode, the Result Scene can restart the next run automatically after 10 seconds. The result screen allows downloading the accumulated CSV log for multiple runs.
+Current automated settings are split:
 
-Playtest logs persist in `localStorage`, so refreshing the page should not immediately lose accumulated runs unless the CSV buffer is cleared.
+- Auto Movement: lets `AutoPlayer` control movement.
+- Auto Upgrade: lets the level-up panel select upgrades automatically.
+- Fast Mode: increases runtime speed immediately when enabled.
 
-## CSV Playtest Logs
-
-CSV logs are intended for balance analysis. They record run results and gameplay statistics such as:
-
-- Run result
-- Survival time
-- Final level and EXP
-- Kill count
-- Upgrade path
-- Weapon damage, hits, and kills
-- Passive items
-- Treasure drops and openings
-- Weapon evolution data
-- Boss spawn, kill, dash, and phase data
-- Auto playtest mode data
-- CSV buffer diagnostics such as run index, session ID, and real-time gaps
-
-See [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md) for details.
+In auto testing, the Result Scene can restart the next run automatically after 10 seconds. The result screen allows downloading current-run CSV data or the accumulated CSV buffer.
 
 ## Sound
 
-Sound can be toggled from the Title Scene or Pause Menu. The setting is saved locally when browser `localStorage` is available.
+Audio is disabled by default. New users start with:
 
-The current audio files are temporary placeholder assets and can be replaced later.
+- `audioEnabled = false`
+- BGM volume = 0
+- SFX volume = 0
+- Weapon volume = 0
+- UI volume = 0
 
-## Assets
+Audio can be enabled and channel volumes can be changed in Settings. Missing audio files are skipped safely.
 
-PNG and audio assets are temporary prototype assets stored under `public/assets/`.
+## Documentation
 
-See [`docs/ASSETS.md`](docs/ASSETS.md) for asset paths and naming conventions.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/FEATURES.md`](docs/FEATURES.md)
+- [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md)
+- [`docs/ENDLESS_MODE.md`](docs/ENDLESS_MODE.md)
+- [`docs/UI_AND_SETTINGS.md`](docs/UI_AND_SETTINGS.md)
+- [`docs/AUDIO.md`](docs/AUDIO.md)
+- [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md)
+- [`docs/ASSETS.md`](docs/ASSETS.md)
 
 ## Known Issues / Temporary Items
 
 - Gameplay balance is still under active tuning.
-- PNG assets are temporary prototype assets.
-- Audio is temporary placeholder content.
+- PNG and spritesheet assets are prototype assets.
+- Audio files are temporary or optional placeholders.
 - Phaser makes the production bundle relatively large, so `npm run build` may show a chunk size warning.
-- Auto playtest results can vary significantly depending on current balance, Boss waves, and evolution timing.
+- Auto playtest results can vary significantly depending on balance, Boss pressure, endless scaling, and evolution timing.

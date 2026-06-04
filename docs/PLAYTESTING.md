@@ -18,16 +18,27 @@ npm.cmd run dev
 
 Then start a normal game from the Title Scene.
 
+## Runtime Test Settings
+
+Settings are intended to apply immediately during a run.
+
+- Auto Movement controls movement only. When enabled, `AutoPlayer` supplies movement direction.
+- Auto Upgrade controls upgrade selection only. When enabled, the level-up panel auto-selects an upgrade.
+- Fast Mode increases gameplay time scale immediately.
+- Endless Mode changes the Boss-kill result rule immediately.
+
+Useful combinations:
+
+- Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.
+- Manual movement + automatic upgrade: Auto Movement off, Auto Upgrade on.
+- Automatic movement + manual upgrade: Auto Movement on, Auto Upgrade off.
+- Full auto test: Auto Movement on, Auto Upgrade on, Fast Mode on.
+
 ## Auto Test Mode
 
-Auto Test Mode lets the game play itself for repeated balance testing.
+The Title Scene starts Auto Movement + Auto Upgrade + Fast Mode automatically after 10 seconds without input.
 
-Current behavior:
-
-- The Title Scene starts Auto + Fast mode automatically after 10 seconds without input.
-- The Result Scene can automatically start the next run after 10 seconds.
-- Auto Mode controls player movement and upgrade selection.
-- Fast Mode increases overall test speed.
+The Result Scene can automatically start the next run after 10 seconds.
 
 ## Auto Player Behavior
 
@@ -35,6 +46,7 @@ The auto player attempts to:
 
 - Avoid nearby enemies.
 - Move toward EXP gem clusters when safe.
+- Prefer nearby pickups using effective pickup distance.
 - Move toward treasure chests when safe.
 - Stay within map boundaries.
 - Adjust movement strategy based on danger level and weapon behavior.
@@ -51,8 +63,40 @@ It attempts to:
 - Continue investing in already-developed weapons/passives.
 - Prefer missing evolution requirements when a route is close to evolving.
 - Avoid invalid upgrades through the filtered upgrade pool.
+- Use post-cap endless rewards once normal upgrade options are exhausted.
 
-This allows different runs to develop different builds while still giving weapon evolution a reasonable chance to appear.
+## Endless Mode Testing
+
+To test Endless Mode:
+
+1. Open Settings.
+2. Enable Endless Mode.
+3. Use Auto Movement, Auto Upgrade, and Fast Mode for repeated runs if desired.
+4. Let the run continue after the final Boss is killed.
+5. Death after Endless Mode starts is recorded as an endless result rather than normal Game Over.
+6. Review endless survival time and local leaderboard rank in the Result Scene.
+
+Important endless metrics:
+
+- `endlessSurvivalTime`
+- `endlessEnemyKills`
+- `endlessDamageTaken`
+- `endlessTreasureDropCount`
+- `endlessTreasureOpenCount`
+- `endlessScalingLevel`
+- `endlessHpMultiplier`
+- `endlessDamageMultiplier`
+- `endlessSpeedMultiplier`
+- `endlessExpMultiplier`
+- `endlessRewardCount`
+- `endlessHealCount`
+- `endlessOverdriveCount`
+- `endlessGrowthCount`
+- `endlessEnemySlowCount`
+- `endlessShieldGained`
+- `endlessShieldConsumed`
+- `endlessShieldRemaining`
+- `endlessShieldAbsorbedDamage`
 
 ## CSV Export
 
@@ -66,6 +110,8 @@ Current CSV behavior:
 - Refreshing the page should restore existing buffered logs.
 - The buffer keeps the latest 1000 runs.
 - Clear CSV Buffer removes both memory and persisted logs.
+
+If CSV schema changes, clear the buffer before comparing new results with old samples.
 
 ## CSV Diagnostics
 
@@ -101,32 +147,58 @@ The CSV records data including:
 - Boss spawn, kill, and fight duration
 - Boss dash count and hit count
 - Boss phase damage and kills
-- Auto mode and fast mode settings
+- Auto/Fast settings
+- Endless mode, scaling, reward, shield, slow, and leaderboard fields
 
 ## Balance Metrics to Watch
 
-Useful high-level metrics:
-
 | Metric | Typical Use |
 |---|---|
-| Victory rate | Overall difficulty |
+| Normal victory rate | Overall non-endless difficulty |
 | Survival time | When deaths happen |
 | Boss fight duration | Boss phase pacing |
 | Boss phase damage taken | Boss phase pressure |
-| Boss dash hit rate | Boss dash effectiveness |
+| Boss dash hit rate | Dash effectiveness |
 | Evolution rate | Whether evolution appears often enough |
 | Weapon damage share | Weapon balance |
 | Treasure open count | Reward pacing |
-| Final level | Progression speed |
+| Endless treasure count | Endless reward inflation risk |
+| Endless survival time | Endless difficulty and leaderboard pacing |
+| Endless scaling level | Enemy growth pressure |
+| Reward usage counts | Post-cap reward balance |
 
 ## Current Balance Targets
 
 These are approximate testing targets, not strict rules:
 
-- Victory rate: around 60% to 80% for auto tests
+- Normal auto-test victory rate: around 60% to 80%
 - Boss dash hit rate: around 10% to 25%
 - Boss fight duration: around 45 to 80 seconds
 - Evolution rate: enough to appear in some runs, but not guaranteed every run
+- Endless mode: should eventually kill the player through scaling pressure
+
+## Recommended Test Sets
+
+Normal mode sample:
+
+1. Clear CSV Buffer.
+2. Disable Endless Mode.
+3. Run Auto Movement + Auto Upgrade + Fast Mode for 50 runs.
+4. Download All CSV.
+5. Check victory rate, Boss stats, evolution rate, and weapon damage distribution.
+
+Endless sample:
+
+1. Clear CSV Buffer.
+2. Enable Endless Mode.
+3. Run Auto Movement + Auto Upgrade + Fast Mode for 20 runs.
+4. Download All CSV.
+5. Check endless survival time, treasure counts, scaling level, reward counts, and leaderboard ranks.
+
+Manual smoke test:
+
+1. Start Game with Auto Movement and Auto Upgrade disabled.
+2. Check keyboard, mouse, virtual joystick, pause, settings, level-up, treasure, Boss, Result, and CSV download.
 
 ## Common Interpretation Notes
 
@@ -134,15 +206,4 @@ These are approximate testing targets, not strict rules:
 - Knife often has high total damage because it is the starting weapon and exists for the full run.
 - Boss phase damage is more useful than total damage taken when judging final encounter pressure.
 - Large `realTimeGapSeconds` values usually mean testing stopped, the page waited on a result screen, or the browser/session was interrupted.
-
-## Recommended Test Procedure
-
-For balance testing:
-
-1. Clear CSV Buffer if you want a clean sample.
-2. Start Auto + Fast Mode.
-3. Let the game run for at least 20 runs.
-4. Download All CSV.
-5. Check victory rate, Boss stats, evolution stats, and weapon damage distribution.
-6. Change only one balance area at a time.
-7. Repeat the test.
+- If CSV schema changes, clear the buffer before comparing results.
