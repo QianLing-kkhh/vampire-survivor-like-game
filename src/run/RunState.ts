@@ -23,6 +23,8 @@ export class RunState {
   endlessBestUpdated = false;
   endlessEnemyKills = 0;
   endlessDamageTaken = 0;
+  endlessTreasureDropCount = 0;
+  endlessTreasureOpenCount = 0;
   endlessLeaderboardRank = 0;
   endlessScalingLevel = 0;
   endlessHpMultiplier = 1;
@@ -55,6 +57,8 @@ export class RunState {
     this.endlessBestUpdated = false;
     this.endlessEnemyKills = 0;
     this.endlessDamageTaken = 0;
+    this.endlessTreasureDropCount = 0;
+    this.endlessTreasureOpenCount = 0;
     this.endlessLeaderboardRank = 0;
     this.endlessScalingLevel = 0;
     this.endlessHpMultiplier = 1;
@@ -73,10 +77,18 @@ export class RunState {
 
   recordTreasureDrop(): void {
     this.treasureDropCount += 1;
+
+    if (this.endlessStarted) {
+      this.endlessTreasureDropCount += 1;
+    }
   }
 
   recordTreasureOpen(): void {
     this.treasureOpenCount += 1;
+
+    if (this.endlessStarted) {
+      this.endlessTreasureOpenCount += 1;
+    }
   }
 
   recordLevelUpUpgrade(upgradeId: string): void {

@@ -57,6 +57,19 @@ export type ResultLayout = {
   titleY: number;
 };
 
+export type ResultSceneLayout = {
+  headerY: number;
+  summaryArea: RectLayout;
+  leaderboardArea: RectLayout;
+  autoRestartY: number;
+  buttonArea: RectLayout;
+  buttonLayout: ButtonLayout;
+  summaryMaxRows: number;
+  leaderboardMaxRows: number;
+  fontSize: string;
+  smallFontSize: string;
+};
+
 export type HelpLayout = {
   panelCenter: Phaser.Math.Vector2;
   panelWidth: number;
@@ -377,6 +390,60 @@ export class LayoutConfig {
       buttonGap: getButtonMetrics(screen.width, screen.height).gap,
       fontSize: screen.isPortrait() ? '12px' : '18px',
       titleY: screen.isPortrait() ? 46 : 42,
+    };
+  }
+
+  static getResultSceneLayout(screen: ScreenManager): ResultSceneLayout {
+    const safe = SafeArea.getInsets(screen);
+    const portrait = screen.isPortrait();
+    const metrics = getButtonMetrics(screen.width, screen.height);
+    const buttonMode: ButtonLayoutMode = portrait ? 'vertical' : 'twoColumn';
+    const buttonRows = portrait ? 5 : 3;
+    const buttonAreaHeight = buttonRows * metrics.height + (buttonRows - 1) * 8;
+    const buttonArea = {
+      x: safe.left,
+      y: screen.height - safe.bottom - buttonAreaHeight,
+      width: screen.width - safe.left - safe.right,
+      height: buttonAreaHeight,
+    };
+    const headerY = safe.top + (portrait ? 28 : 32);
+    const autoRestartY = buttonArea.y - (portrait ? 22 : 18);
+    const summaryTop = safe.top + (portrait ? 58 : 64);
+    const leaderboardHeight = portrait ? 82 : 118;
+    const leaderboardArea = {
+      x: safe.left + 12,
+      y: autoRestartY - leaderboardHeight - 16,
+      width: screen.width - safe.left - safe.right - 24,
+      height: leaderboardHeight,
+    };
+    const summaryArea = {
+      x: safe.left + 12,
+      y: summaryTop,
+      width: screen.width - safe.left - safe.right - 24,
+      height: Math.max(80, leaderboardArea.y - summaryTop - 12),
+    };
+    const buttonLayout = LayoutConfig.getButtonListLayout({
+      screen,
+      count: 5,
+      startY: buttonArea.y + metrics.height / 2,
+      buttonWidth: metrics.width,
+      buttonHeight: metrics.height,
+      gap: metrics.height + 8,
+      mode: buttonMode,
+      centerX: screen.centerX,
+    });
+
+    return {
+      headerY,
+      summaryArea,
+      leaderboardArea,
+      autoRestartY,
+      buttonArea,
+      buttonLayout,
+      summaryMaxRows: portrait ? Math.max(5, Math.floor(summaryArea.height / 17)) : Math.max(6, Math.floor(summaryArea.height / 23)),
+      leaderboardMaxRows: screen.height < 720 ? 3 : 5,
+      fontSize: portrait ? '12px' : '16px',
+      smallFontSize: portrait ? '10px' : '12px',
     };
   }
 

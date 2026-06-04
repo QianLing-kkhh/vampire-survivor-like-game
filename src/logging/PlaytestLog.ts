@@ -44,6 +44,8 @@ export interface PlaytestLogData {
   endlessSurvivalTime: number;
   endlessEnemyKills: number;
   endlessDamageTaken: number;
+  endlessTreasureDropCount: number;
+  endlessTreasureOpenCount: number;
   endlessLeaderboardRank: number;
   endlessScalingLevel: number;
   endlessHpMultiplier: number;
@@ -105,6 +107,8 @@ export class PlaytestLog {
     'endlessSurvivalTime',
     'endlessEnemyKills',
     'endlessDamageTaken',
+    'endlessTreasureDropCount',
+    'endlessTreasureOpenCount',
     'endlessLeaderboardRank',
     'endlessScalingLevel',
     'endlessHpMultiplier',
@@ -174,6 +178,8 @@ export class PlaytestLog {
       Math.floor(data.endlessSurvivalTime).toString(),
       data.endlessEnemyKills.toString(),
       Math.floor(data.endlessDamageTaken).toString(),
+      data.endlessTreasureDropCount.toString(),
+      data.endlessTreasureOpenCount.toString(),
       data.endlessLeaderboardRank.toString(),
       data.endlessScalingLevel.toString(),
       PlaytestLog.formatNumber(data.endlessHpMultiplier),

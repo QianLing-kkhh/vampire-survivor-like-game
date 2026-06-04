@@ -78,10 +78,8 @@ export class ResultScene extends Phaser.Scene {
     this.settings = PlaytestSettings.get();
     AudioManager.playBgm(this, 'result_bgm');
     AudioManager.playSfx(this, data.resultType === 'victory' ? 'victory' : 'game_over');
-    const layout = LayoutConfig.getResultLayout(this.screenManager);
-    const centerX = layout.panelCenter.x;
-    const centerY = layout.panelCenter.y;
-    const isPortrait = this.screenManager.isPortrait();
+    const layout = LayoutConfig.getResultSceneLayout(this.screenManager);
+    const centerX = this.screenManager.centerX;
     const survivalTimeSeconds = data.survivalTime ?? data.survivalTimeSeconds ?? 0;
     const isVictory = data.resultType === 'victory';
     const isEndlessResult = data.endlessStarted === true;
@@ -101,84 +99,69 @@ export class ResultScene extends Phaser.Scene {
     const resultTitle = isEndlessResult
       ? 'Endless Victory'
       : isVictory ? I18n.t('result.victory') : I18n.t('result.gameOver');
-    const title = this.add.text(centerX, layout.titleY, resultTitle, {
+    const title = this.add.text(centerX, layout.headerY, resultTitle, {
       color: isVictory ? UITheme.successTextColor : UITheme.dangerTextColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: isPortrait ? '30px' : UITheme.titleFontSize,
+      fontSize: this.screenManager.isPortrait() ? '28px' : UITheme.titleFontSize,
       fontStyle: 'bold',
     });
     title.setOrigin(0.5);
 
+    const summaryLines = this.getSummaryLines({
+      data,
+      resultTitle,
+      survivalTimeSeconds,
+      isEndlessResult,
+      weaponText,
+      passiveText,
+      evolutionPathText,
+      maxRows: layout.summaryMaxRows,
+    });
     const result = this.add.text(
-      centerX,
-      layout.contentStartY,
-      [
-        `${I18n.t('result.result')}: ${resultTitle}`,
-        `${I18n.t('result.survivalTime')}: ${this.formatTime(survivalTimeSeconds)}`,
-        ...(isEndlessResult ? [
-          `Endless Survival Time: ${this.formatTime(data.endlessSurvivalTime ?? 0)}`,
-          `Endless Kills: ${data.endlessEnemyKills ?? 0}`,
-          `Endless Damage Taken: ${Math.floor(data.endlessDamageTaken ?? 0)}`,
-          `Endless Rank: ${data.endlessLeaderboardRank ? `#${data.endlessLeaderboardRank}` : 'None'}`,
-        ] : []),
-        `${I18n.t('result.finalLevel')}: ${data.finalLevel ?? 1}`,
-        `${I18n.t('result.killCount')}: ${data.killCount ?? 0}`,
-        `${I18n.t('result.weapons')}: ${weaponText}`,
-        `${I18n.t('result.passives')}: ${passiveText}`,
-        `${I18n.t('result.evolutionPath')}: ${evolutionPathText}`,
-        `${I18n.t('result.treasureOpens')}: ${data.treasureOpenCount ?? 0}`,
-        `${I18n.t('result.chestUpgrades')}: ${data.chestUpgradeCount ?? 0}`,
-        `${I18n.t('result.chestEvolutions')}: ${data.chestEvolutionCount ?? 0}`,
-        `${I18n.t('result.bossDashes')}: ${data.bossDashCount ?? 0}`,
-        `${I18n.t('result.bossDashHits')}: ${data.bossDashHitCount ?? 0}`,
-        ...(isEndlessResult ? this.formatLeaderboardLines(data.endlessLeaderboardEntries ?? []).slice(0, 4) : []),
-      ],
+      layout.summaryArea.x + layout.summaryArea.width / 2,
+      layout.summaryArea.y,
+      summaryLines,
       {
         color: UITheme.textColor,
         fontFamily: UITheme.fontFamily,
         fontSize: layout.fontSize,
         align: 'center',
-        lineSpacing: isPortrait ? 3 : 5,
-        wordWrap: { width: Math.min(this.scale.width - 24, 760) },
+        lineSpacing: this.screenManager.isPortrait() ? 2 : 4,
+        wordWrap: { width: layout.summaryArea.width },
       },
     );
-    result.setOrigin(0.5, isPortrait ? 0 : 0.5);
+    result.setOrigin(0.5, 0);
 
-    this.csvLogText = this.add.text(
-      centerX,
-      layout.buttonArea.y - (isPortrait ? 88 : 76),
-      this.formatCsvLogText(),
-      {
+    if (isEndlessResult && data.endlessLeaderboardEntries?.length) {
+      const leaderboard = this.add.text(
+        layout.leaderboardArea.x + layout.leaderboardArea.width / 2,
+        layout.leaderboardArea.y,
+        this.formatLeaderboardLines(data.endlessLeaderboardEntries, layout.leaderboardMaxRows),
+        {
+          color: UITheme.mutedTextColor,
+          fontFamily: UITheme.fontFamily,
+          fontSize: layout.smallFontSize,
+          align: 'center',
+          lineSpacing: 2,
+          wordWrap: { width: layout.leaderboardArea.width },
+        },
+      );
+      leaderboard.setOrigin(0.5, 0);
+    }
+
+    this.autoRestartText = this.add.text(centerX, layout.autoRestartY, '', {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: isPortrait ? '11px' : '12px',
-      align: 'center',
-      wordWrap: { width: Math.min(this.scale.width - 24, 720) },
-      },
-    );
-    this.csvLogText.setOrigin(0.5);
-
-    this.settingsText = this.add.text(centerX, layout.buttonArea.y - (isPortrait ? 64 : 48), this.formatSettingsText(), {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'center',
-    });
-    this.settingsText.setOrigin(0.5);
-
-    this.autoRestartText = this.add.text(centerX, layout.buttonArea.y - (isPortrait ? 42 : 24), '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
+      fontSize: layout.smallFontSize,
       align: 'center',
     });
     this.autoRestartText.setOrigin(0.5);
 
-    const currentCsvButton = this.add.text(centerX + 80, centerY + 190, I18n.t('result.downloadCurrentCsv'), {
+    const currentCsvButton = this.add.text(centerX, 0, I18n.t('result.downloadCurrentCsv'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '16px',
+      fontSize: layout.buttonLayout.fontSize,
       padding: {
         x: 12,
         y: 8,
@@ -193,11 +176,11 @@ export class ResultScene extends Phaser.Scene {
       this.downloadCsv(this.createCurrentCsvFilename(), playtestCsv);
     });
 
-    const downloadAllButton = this.add.text(centerX + 258, centerY + 190, I18n.t('result.downloadAllCsv'), {
+    const downloadAllButton = this.add.text(centerX, 0, I18n.t('result.downloadAllCsv'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '16px',
+      fontSize: layout.buttonLayout.fontSize,
       padding: {
         x: 12,
         y: 8,
@@ -212,11 +195,11 @@ export class ResultScene extends Phaser.Scene {
       this.downloadAllCsv();
     });
 
-    const settingsButton = this.add.text(centerX, centerY + 232, this.t('result.settings', 'Settings'), {
+    const settingsButton = this.add.text(centerX, 0, this.t('result.settings', 'Settings'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '16px',
+      fontSize: layout.buttonLayout.fontSize,
       padding: {
         x: 12,
         y: 8,
@@ -231,11 +214,11 @@ export class ResultScene extends Phaser.Scene {
       this.showSettingsMenu();
     });
 
-    const restartButton = this.add.text(centerX - 130, centerY + 276, I18n.t('result.restart'), {
+    const restartButton = this.add.text(centerX, 0, I18n.t('result.restart'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.bodyFontSize,
+      fontSize: layout.buttonLayout.fontSize,
       padding: {
         x: 16,
         y: 8,
@@ -250,11 +233,11 @@ export class ResultScene extends Phaser.Scene {
       this.restartGame();
     });
 
-    const titleButton = this.add.text(centerX + 130, centerY + 276, I18n.t('common.returnToTitle'), {
+    const titleButton = this.add.text(centerX, 0, I18n.t('common.returnToTitle'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.bodyFontSize,
+      fontSize: layout.buttonLayout.fontSize,
       padding: {
         x: 16,
         y: 8,
@@ -305,16 +288,58 @@ export class ResultScene extends Phaser.Scene {
     return `${items.slice(0, maxItems).join(', ')} +${items.length - maxItems} more`;
   }
 
-  private formatLeaderboardLines(entries: EndlessLeaderboardEntry[]): string[] {
+  private getSummaryLines(params: {
+    data: ResultSceneData;
+    resultTitle: string;
+    survivalTimeSeconds: number;
+    isEndlessResult: boolean;
+    weaponText: string;
+    passiveText: string;
+    evolutionPathText: string;
+    maxRows: number;
+  }): string[] {
+    const lines = [
+      `${I18n.t('result.result')}: ${params.resultTitle}`,
+      `${I18n.t('result.survivalTime')}: ${this.formatTime(params.survivalTimeSeconds)}`,
+      ...(params.isEndlessResult ? [
+        `Endless Survival Time: ${this.formatTime(params.data.endlessSurvivalTime ?? 0)}`,
+      ] : []),
+      `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
+      `${I18n.t('result.killCount')}: ${params.data.killCount ?? 0}`,
+      `${I18n.t('result.weapons')}: ${params.weaponText}`,
+      `${I18n.t('result.passives')}: ${params.passiveText}`,
+      `${I18n.t('result.evolutionPath')}: ${params.evolutionPathText}`,
+      `${I18n.t('result.treasureOpens')}: ${params.data.treasureOpenCount ?? 0}`,
+      `${I18n.t('result.chestUpgrades')}: ${params.data.chestUpgradeCount ?? 0}`,
+      `${I18n.t('result.chestEvolutions')}: ${params.data.chestEvolutionCount ?? 0}`,
+      `${I18n.t('result.bossDashes')}: ${params.data.bossDashCount ?? 0} / ${I18n.t('result.bossDashHits')}: ${params.data.bossDashHitCount ?? 0}`,
+    ];
+
+    if (lines.length <= params.maxRows) {
+      return lines;
+    }
+
+    return [
+      ...lines.slice(0, Math.max(1, params.maxRows - 1)),
+      `+${lines.length - params.maxRows + 1} more`,
+    ];
+  }
+
+  private formatLeaderboardLines(entries: EndlessLeaderboardEntry[], maxRows: number): string[] {
     if (entries.length === 0) {
       return ['Endless Leaderboard: None'];
     }
 
+    const visibleCount = Math.max(0, maxRows);
+    const visibleEntries = entries.slice(0, visibleCount);
+    const hiddenCount = Math.max(0, entries.length - visibleEntries.length);
+
     return [
       'Endless Leaderboard Top 10',
-      ...entries.slice(0, 10).map((entry, index) => (
+      ...visibleEntries.map((entry, index) => (
         `#${index + 1} ${this.formatTime(entry.endlessSurvivalTime)}  Lv.${entry.finalLevel}  Kills ${entry.killCount}`
       )),
+      ...(hiddenCount > 0 ? [`+${hiddenCount} more`] : []),
     ];
   }
 
@@ -484,22 +509,22 @@ export class ResultScene extends Phaser.Scene {
       return;
     }
 
-    const layout = LayoutConfig.getResultLayout(this.screenManager);
-    const buttonLayout = LayoutConfig.getButtonLayout(this.screenManager, buttons.length, {
-      centerX: layout.buttonArea.x,
-      startY: layout.buttonArea.y + (this.screenManager.isPortrait() ? 0 : 42),
-      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
-    });
+    const layout = LayoutConfig.getResultSceneLayout(this.screenManager);
+    const buttonLayout = layout.buttonLayout;
     const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
 
     this.layoutBackground();
 
     buttons.forEach((button, index) => {
       const position = buttonLayout.positions[index];
+      const x = buttonLayout.mode === 'twoColumn' && buttons.length % 2 === 1 && index === buttons.length - 1
+        ? this.screenManager?.centerX ?? position.x
+        : position.x;
+
       button.setFontSize(metrics.fontSize);
       button.setFixedSize(metrics.width, metrics.height);
       button.setAlign('center');
-      button.setPosition(position.x, position.y);
+      button.setPosition(x, position.y);
     });
   }
 

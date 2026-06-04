@@ -14,10 +14,14 @@ interface Position {
 
 export class TreasureManager {
   private static readonly NORMAL_DROP_CHANCE = 0.03;
+  private static readonly ENDLESS_DROP_WINDOW_SECONDS = 60;
+  private static readonly ENDLESS_MAX_DROPS_PER_WINDOW = 12;
 
   private readonly chests: TreasureChest[] = [];
   private readonly unsubscribeEnemyKilled: () => void;
   private bonusDropChance = 0;
+  private endlessDropWindow = -1;
+  private endlessDropsInWindow = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -25,6 +29,7 @@ export class TreasureManager {
     private readonly upgradeFlow: UpgradeFlow,
     private readonly onChestDropped?: () => void,
     private readonly onChestOpened?: () => void,
+    private readonly getEndlessTimeSeconds?: () => number | null,
   ) {
     this.unsubscribeEnemyKilled = eventBus.subscribe('EnemyKilled', (event) => {
       if (!isEnemyKilledEvent(event)) {
@@ -78,10 +83,41 @@ export class TreasureManager {
   }
 
   private shouldDropChest(isBoss: boolean): boolean {
-    return (
-      isBoss
-      || Math.random() < TreasureManager.NORMAL_DROP_CHANCE + this.bonusDropChance
+    if (isBoss) {
+      return true;
+    }
+
+    if (Math.random() >= TreasureManager.NORMAL_DROP_CHANCE + this.bonusDropChance) {
+      return false;
+    }
+
+    const endlessTimeSeconds = this.getEndlessTimeSeconds?.();
+
+    if (endlessTimeSeconds === null || endlessTimeSeconds === undefined) {
+      return true;
+    }
+
+    this.updateEndlessDropWindow(endlessTimeSeconds);
+
+    if (this.endlessDropsInWindow >= TreasureManager.ENDLESS_MAX_DROPS_PER_WINDOW) {
+      return false;
+    }
+
+    this.endlessDropsInWindow += 1;
+    return true;
+  }
+
+  private updateEndlessDropWindow(endlessTimeSeconds: number): void {
+    const windowIndex = Math.floor(
+      Math.max(0, endlessTimeSeconds) / TreasureManager.ENDLESS_DROP_WINDOW_SECONDS,
     );
+
+    if (windowIndex === this.endlessDropWindow) {
+      return;
+    }
+
+    this.endlessDropWindow = windowIndex;
+    this.endlessDropsInWindow = 0;
   }
 
   private spawnChest(x: number, y: number): void {

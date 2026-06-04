@@ -136,6 +136,7 @@ export class GameplayInitializer {
       upgradeFlow,
       config.callbacks.onChestDropped,
       config.callbacks.onChestOpened,
+      () => (config.runState.endlessStarted ? config.runState.endlessSurvivalTime : null),
     );
     const enemyFactory = new EnemyFactory(config.scene, enemies);
     const bossFactory = new BossFactory(config.scene, enemies);
