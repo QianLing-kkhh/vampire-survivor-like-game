@@ -32,6 +32,26 @@ Current flow:
 4. `GameScene.update()` delegates runtime update to `GameplayUpdater`.
 5. `GameScene` still owns pause gates, settings changes, HUD emit, and ResultScene transition.
 
+## Event Layer
+
+The event layer is the foundation for future achievements, quests, tutorials, replay/debug tooling, unlocks, audio listeners, floating text listeners, and cross-system statistics.
+
+- `GameEventType`: stable dot-name event type definitions such as `enemy.killed`, `weapon.evolved`, and `pickup.treasureOpened`.
+- `GameEventPayloads`: typed payload shapes for common runtime events.
+- `GameEvent`: normalized emitted event with id, type, payload, game time, real timestamp, and optional run id.
+- `GameEventBus`: per-run event bus with type subscriptions, all-event subscriptions, and listener error isolation.
+- `GameEventRecorder`: bounded in-memory recent event recorder for debugging and future replay foundations.
+- `GameEventBridge`: bridges selected legacy `EventBus` events into `GameEventBus` during the migration period.
+- `GameEventSubscription`: common listener/unsubscribe types.
+
+Current status:
+
+- `GameplayInitializer` creates one `GameEventBus`, one `GameEventRecorder`, and a legacy bridge per run.
+- Existing `core/EventBus`, Phaser scene events, and callbacks still exist.
+- `GameEventBridge` currently mirrors high-value legacy events such as enemy kills, level-ups, and EXP collection.
+- `GameScene`, `TreasureManager`, `UpgradeFlow`, and `EnemyFlow` emit selected new events without replacing existing gameplay statistics.
+- `RunState` still owns gameplay counters directly; it is not fully event-driven yet, which avoids duplicate counting during migration.
+
 ## Content Layer
 
 The content layer is the current foundation for future custom content and mod content packs.
@@ -228,6 +248,7 @@ TitleScene
     -> RunSeed / RandomManager create seeded random streams
     -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
+    -> GameEventBus / GameEventRecorder / GameEventBridge start per-run event capture
     -> GameplayUpdater updates runtime systems
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
     -> EnemyFlow handles enemy update/contact damage
@@ -253,4 +274,6 @@ TitleScene
 - Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.
 - Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.
 - Gameplay randomness should go through injected `RandomSource` streams from `RandomManager`.
+- New achievements, tutorials, unlocks, replay diagnostics, audio listeners, or floating-text listeners should subscribe to `GameEventBus` rather than scene callbacks.
+- Existing `core/EventBus` and callbacks are still valid during migration; do not delete them until the dependent systems have moved.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.

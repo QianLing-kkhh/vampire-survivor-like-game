@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { AudioManager } from '../audio/AudioManager';
 import { EventBus } from '../core/EventBus';
 import { GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
+import { GameEventBus } from '../events/GameEventBus';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { RandomSource } from '../random/RandomSource';
 import { SeededRandom } from '../random/SeededRandom';
@@ -35,6 +36,9 @@ export class TreasureManager {
     private readonly getEndlessTimeSeconds?: () => number | null,
     private readonly runRuleSet?: RunRuleSet,
     private readonly random: RandomSource = new SeededRandom('treasure-fallback'),
+    private readonly gameEventBus?: GameEventBus,
+    private readonly getGameTimeSeconds?: () => number,
+    private readonly getRunId?: () => string | undefined,
   ) {
     this.unsubscribeEnemyKilled = eventBus.subscribe('EnemyKilled', (event) => {
       if (!isEnemyKilledEvent(event)) {
@@ -74,7 +78,10 @@ export class TreasureManager {
         chest.updateMagnet(playerPosition.x, playerPosition.y, deltaMs);
 
         if (chest.canFinalizeOpen(playerPosition.x, playerPosition.y)) {
+          const openedX = chest.body.x;
+          const openedY = chest.body.y;
           chest.open();
+          this.emitTreasureOpened(openedX, openedY);
           this.applyRandomUpgrade();
           this.chests.splice(index, 1);
         }
@@ -155,6 +162,7 @@ export class TreasureManager {
 
   private spawnChest(x: number, y: number): void {
     this.chests.push(new TreasureChest(this.scene, x, y));
+    this.emitTreasureDropped(x, y);
     this.onChestDropped?.();
   }
 
@@ -180,5 +188,31 @@ export class TreasureManager {
     if (result.type === 'none') {
       console.warn('Treasure chest opened, but no reward was applied');
     }
+  }
+
+  private emitTreasureDropped(x: number, y: number): void {
+    const gameTimeSeconds = this.getGameTimeSeconds?.() ?? 0;
+
+    this.gameEventBus?.emit('pickup.treasureDropped', {
+      x,
+      y,
+      gameTimeSeconds,
+    }, {
+      gameTimeSeconds,
+      runId: this.getRunId?.(),
+    });
+  }
+
+  private emitTreasureOpened(x: number, y: number): void {
+    const gameTimeSeconds = this.getGameTimeSeconds?.() ?? 0;
+
+    this.gameEventBus?.emit('pickup.treasureOpened', {
+      x,
+      y,
+      gameTimeSeconds,
+    }, {
+      gameTimeSeconds,
+      runId: this.getRunId?.(),
+    });
   }
 }

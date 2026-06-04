@@ -4,6 +4,7 @@ import { AudioManager } from '../audio/AudioManager';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
+import { GameEventBus } from '../events/GameEventBus';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { RunState } from '../run/RunState';
@@ -24,6 +25,9 @@ export interface EnemyFlowConfig {
   playerHealth: PlayerHealth;
   runState: RunState;
   runStats: RunStats;
+  gameEventBus?: GameEventBus;
+  getGameTimeSeconds?: () => number;
+  getRunId?: () => string | undefined;
   floatingTextManager: FloatingTextManager;
   playtestSettings: PlaytestSettingsState;
   worldWidth: number;
@@ -148,6 +152,7 @@ export class EnemyFlow {
     const actualDamage = shieldAbsorbed
       ? 0
       : this.config.playerHealth.takeDamage(incomingDamage);
+    const gameTimeSeconds = this.config.getGameTimeSeconds?.() ?? 0;
 
     if (options?.sourceEnemy) {
       this.setContactCooldown(options.sourceEnemy);
@@ -155,6 +160,29 @@ export class EnemyFlow {
 
     if (actualDamage > 0) {
       this.recordPlayerDamage(actualDamage);
+    }
+
+    if (actualDamage > 0 || shieldAbsorbed) {
+      this.config.gameEventBus?.emit('player.damageTaken', {
+        actualDamage,
+        incomingDamage,
+        shieldAbsorbed,
+        currentHp: this.config.playerHealth.currentHp,
+        gameTimeSeconds,
+      }, {
+        gameTimeSeconds,
+        runId: this.config.getRunId?.(),
+      });
+    }
+
+    if (shieldAbsorbed) {
+      this.config.gameEventBus?.emit('player.shieldConsumed', {
+        incomingDamage,
+        gameTimeSeconds,
+      }, {
+        gameTimeSeconds,
+        runId: this.config.getRunId?.(),
+      });
     }
 
     if (options?.knockbackDirection && (actualDamage > 0 || shieldAbsorbed)) {

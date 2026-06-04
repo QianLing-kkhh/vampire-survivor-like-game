@@ -3,6 +3,7 @@ import {
   AutoUpgradeSelector,
 } from '../auto/AutoUpgradeSelector';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
+import { GameEventBus } from '../events/GameEventBus';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { RunState } from '../run/RunState';
 import { PassiveManager } from '../passive/PassiveManager';
@@ -30,6 +31,8 @@ export interface UpgradeFlowParams {
   weaponManager: WeaponManager;
   passiveManager: PassiveManager;
   runState: RunState;
+  gameEventBus?: GameEventBus;
+  getRunId?: () => string | undefined;
   getUpgradeSelectionContext(): UpgradeSelectionContext;
   getAutoUpgradeSelectionContext(): AutoUpgradeSelectionContext;
   getGameTimeSeconds(): number;
@@ -81,12 +84,25 @@ export class UpgradeFlow {
 
   applyLevelUpUpgrade(upgrade: UpgradeOption): boolean {
     if (this.endlessRewardManager.isRewardId(upgrade.id)) {
-      return this.endlessRewardManager.applyReward(upgrade.id, 'level');
+      const applied = this.endlessRewardManager.applyReward(upgrade.id, 'level');
+
+      if (applied) {
+        this.emitEndlessRewardChosen(upgrade.id, 'level');
+        this.emitUpgradeApplied(upgrade.id, 'endlessReward');
+      }
+
+      return applied;
     }
 
     this.params.runState.recordLevelUpUpgrade(upgrade.id);
 
-    return this.applyUpgrade(upgrade, `level:${upgrade.id}`);
+    const applied = this.applyUpgrade(upgrade, `level:${upgrade.id}`);
+
+    if (applied) {
+      this.emitUpgradeApplied(upgrade.id, 'levelUp');
+    }
+
+    return applied;
   }
 
   applyTreasureReward(): TreasureRewardResult {
@@ -109,6 +125,8 @@ export class UpgradeFlow {
         const reward = this.selectRandomEndlessReward();
 
         if (reward && this.endlessRewardManager.applyReward(reward.id, 'chest')) {
+          this.emitEndlessRewardChosen(reward.id, 'chest');
+          this.emitUpgradeApplied(reward.id, 'endlessReward');
           console.log('Treasure chest endless reward:', reward.id);
           return {
             type: 'upgrade',
@@ -130,6 +148,7 @@ export class UpgradeFlow {
     }
 
     this.params.runState.recordChestUpgrade(upgrade.id);
+    this.emitUpgradeApplied(upgrade.id, 'treasure');
     console.log('Treasure chest upgrade:', upgrade.id);
     const secondEvolution = this.tryEvolveFromTreasure();
 
@@ -161,6 +180,10 @@ export class UpgradeFlow {
       evolutionResult.baseWeaponId,
       evolutionResult.evolvedWeaponId,
       this.params.getGameTimeSeconds(),
+    );
+    this.emitWeaponEvolved(
+      evolutionResult.baseWeaponId,
+      evolutionResult.evolvedWeaponId,
     );
     this.params.onUpgradeApplied?.();
 
@@ -204,5 +227,50 @@ export class UpgradeFlow {
     }
 
     return rewards[Math.floor(Math.random() * rewards.length)];
+  }
+
+  private emitUpgradeApplied(
+    upgradeId: string,
+    source: 'levelUp' | 'treasure' | 'endlessReward',
+  ): void {
+    const gameTimeSeconds = this.params.getGameTimeSeconds();
+
+    this.params.gameEventBus?.emit('upgrade.applied', {
+      upgradeId,
+      source,
+      gameTimeSeconds,
+    }, {
+      gameTimeSeconds,
+      runId: this.params.getRunId?.(),
+    });
+  }
+
+  private emitEndlessRewardChosen(
+    rewardId: string,
+    source: 'level' | 'chest',
+  ): void {
+    const gameTimeSeconds = this.params.getGameTimeSeconds();
+
+    this.params.gameEventBus?.emit('endless.rewardChosen', {
+      rewardId,
+      source,
+      gameTimeSeconds,
+    }, {
+      gameTimeSeconds,
+      runId: this.params.getRunId?.(),
+    });
+  }
+
+  private emitWeaponEvolved(baseWeaponId: string, evolvedWeaponId: string): void {
+    const gameTimeSeconds = this.params.getGameTimeSeconds();
+
+    this.params.gameEventBus?.emit('weapon.evolved', {
+      baseWeaponId,
+      evolvedWeaponId,
+      gameTimeSeconds,
+    }, {
+      gameTimeSeconds,
+      runId: this.params.getRunId?.(),
+    });
   }
 }

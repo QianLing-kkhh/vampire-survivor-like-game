@@ -31,6 +31,8 @@ Current runs use `normal` difficulty with no mutators unless future test harness
 
 Each run also records a `runSeed`. If `SelectionState.seed` is empty, a new seed is generated for the run. A fixed seed is a foundation for debugging and future daily challenges, but it is not a complete replay by itself; version, content, settings, timing, and player input also matter.
 
+The runtime also creates a per-run `GameEventBus` and bounded `GameEventRecorder`. This records recent high-value events for debugging foundations, but it is not exported as a full CSV timeline and is not a complete replay.
+
 Useful combinations:
 
 - Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.
@@ -167,6 +169,17 @@ The CSV includes diagnostics for detecting missing or interrupted runs:
 - `realTimeGapSeconds`
 
 These help distinguish between real pauses, browser reloads, buffer resets, and missing append events.
+
+## Event Diagnostics
+
+The current event architecture mirrors selected runtime events into `GameEventBus`, including run start/end, enemy kills, level-ups, treasure drop/open, upgrade selection/application, weapon evolution, endless start/rewards, and selected player damage events.
+
+Testing notes:
+
+- GameEvent recording should not change `RunState` counters.
+- If a new listener is added, listener failures should log a warning and not interrupt gameplay.
+- `GameEventRecorder` keeps only a bounded recent timeline for debugging.
+- Full replay still requires seed, input samples, deterministic timing, and content/version hashes.
 
 ## Balance Metrics to Watch
 

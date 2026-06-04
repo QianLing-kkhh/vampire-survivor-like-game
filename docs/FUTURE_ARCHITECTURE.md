@@ -35,6 +35,7 @@ Future architecture should assume support for:
 - Version migrations
 - Content validation tools
 - Replay and seed reproduction
+- Unified GameEvent timeline for achievements, tutorials, unlocks, debug tooling, and replay foundations
 - Optional online leaderboard or cloud save adapters
 
 ## Current Architecture Principles
@@ -54,6 +55,7 @@ Future architecture should assume support for:
 13. Future skins/themes should use `AppearanceManager`, `AppearanceRegistry`, and `AssetKeyResolver` rather than direct texture strings.
 14. Future CharacterSelect, StageSelect, CustomStageSelect, daily challenge, and seeded-run flows should write through `SelectionManager`.
 15. Gameplay randomness should use injected `RandomSource` streams from `RandomManager`, not direct `Math.random()`.
+16. New cross-system observers should subscribe to `GameEventBus` instead of wiring directly into `GameScene`, manager callbacks, or UI events.
 
 ## Seeded Runs And Replay
 
@@ -65,6 +67,18 @@ Important boundaries:
 - A complete replay still needs input recording, content/version hashes, and deterministic timing.
 - Daily challenges, random stages, seeded custom stages, and leaderboard fairness should set or preserve `SelectionState.seed`.
 - New random systems should request a domain stream such as upgrade, spawn, treasure, endless, Boss, or visual from `RandomManager`.
+
+## Game Events And Replay Foundations
+
+`GameEventBus`, `GameEventRecorder`, and `GameEventBridge` provide the foundation for future achievements, quests, tutorials, unlocks, audio/floating-text listener cleanup, and replay/debug timelines.
+
+Important boundaries:
+
+- `GameEventBus` is per-run and lives in `GameplayContext`.
+- Existing `core/EventBus`, Phaser scene events, and callbacks are still present during migration.
+- `GameEventBridge` mirrors selected legacy events so new systems can start listening without risky rewrites.
+- `GameEventRecorder` stores a bounded recent event timeline, but it is not a full replay system.
+- Complete replay still requires run seed, input samples, deterministic timing, content/version hashes, and compatible update order.
 
 ## Planned Domain Splits
 
@@ -90,6 +104,7 @@ Content should eventually split into resolvers and registries:
 - Difficulty manager and mutator registry for future challenge rules
 - RunRuleSet as the single per-run rule composition point
 - Selection manager for character, stage, map, difficulty, challenge, custom stage, seed, and ruleset IDs
+- Game event bus and recorder for achievements, tutorials, replay diagnostics, unlocks, and listener cleanup
 
 ## Risk Areas
 
@@ -102,3 +117,4 @@ Content should eventually split into resolvers and registries:
 - Rule changes bypassing `RunRuleSet` and becoming invisible to CSV or leaderboard keys
 - Theme or skin systems bypassing `AssetKeyResolver` and becoming impossible to swap per appearance selection
 - Selection UI directly mutating individual managers instead of using `SelectionManager`
+- Event consumers wiring directly into `GameScene` or manager callbacks instead of using `GameEventBus`

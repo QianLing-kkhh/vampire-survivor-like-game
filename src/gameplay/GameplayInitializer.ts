@@ -22,6 +22,9 @@ import { EnemyFlow } from '../enemy/EnemyFlow';
 import { EnemyMovement } from '../enemy/EnemyMovement';
 import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
+import { GameEventBridge } from '../events/GameEventBridge';
+import { GameEventBus } from '../events/GameEventBus';
+import { GameEventRecorder } from '../events/GameEventRecorder';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import { VirtualJoystick } from '../input/VirtualJoystick';
@@ -70,6 +73,7 @@ export interface GameplayInitializerCallbacks {
 export interface GameplayInitializerConfig {
   scene: Phaser.Scene;
   eventBus: EventBus<GameEventMap>;
+  runId: string;
   autoPlayer: AutoPlayer;
   autoUpgradeSelector: AutoUpgradeSelector;
   damageCalculator: DamageCalculator;
@@ -106,6 +110,19 @@ export class GameplayInitializer {
     const selection = SelectionManager.getSelection();
     const runSeed = RunSeed.createSeedFromSelection(selection);
     const randomManager = new RandomManager(runSeed);
+    const gameEventBus = new GameEventBus();
+    const gameEventRecorder = new GameEventRecorder();
+    const gameEventBridge = new GameEventBridge({
+      sourceEventBus: config.eventBus,
+      gameEventBus,
+      getGameTimeSeconds: () => config.timeManager.gameTimeSeconds,
+      getRunId: () => config.runId,
+    });
+
+    gameEventBus.subscribeAll((event) => {
+      gameEventRecorder.record(event);
+      config.runState.recordGameEvent();
+    });
     const selectedCharacter = characterManager.getSelectedCharacter();
     const selectedStageRuntime = stageManager.getSelectedStageRuntimeDefinition();
     const selectedStage = selectedStageRuntime.stage;
@@ -175,6 +192,8 @@ export class GameplayInitializer {
       weaponManager,
       passiveManager,
       runState: config.runState,
+      gameEventBus,
+      getRunId: () => config.runId,
       getUpgradeSelectionContext: config.callbacks.getUpgradeSelectionContext,
       getAutoUpgradeSelectionContext: config.callbacks.getAutoUpgradeSelectionContext,
       getGameTimeSeconds: () => config.timeManager.gameTimeSeconds,
@@ -190,6 +209,9 @@ export class GameplayInitializer {
       () => (config.runState.endlessStarted ? config.runState.endlessSurvivalTime : null),
       runRuleSet,
       randomManager.getTreasureRandom(),
+      gameEventBus,
+      () => config.timeManager.gameTimeSeconds,
+      () => config.runId,
     );
     const enemyFactory = new EnemyFactory(config.scene, enemyConfigs, runRuleSet);
     const bossFactory = new BossFactory(config.scene, enemyConfigs, runRuleSet);
@@ -249,6 +271,9 @@ export class GameplayInitializer {
       playerHealth,
       runState: config.runState,
       runStats,
+      gameEventBus,
+      getGameTimeSeconds: () => config.timeManager.gameTimeSeconds,
+      getRunId: () => config.runId,
       floatingTextManager,
       playtestSettings: config.playtestSettings,
       worldWidth: config.worldWidth,
@@ -324,6 +349,9 @@ export class GameplayInitializer {
         ? config.playtestSettings.autoTimeScale
         : 1,
       eventBus: config.eventBus,
+      gameEventBus,
+      gameEventRecorder,
+      gameEventBridge,
       autoPlayer: config.autoPlayer,
       damageCalculator: config.damageCalculator,
       enemyMovement: config.enemyMovement,

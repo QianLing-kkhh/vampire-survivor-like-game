@@ -40,6 +40,7 @@ import { UpgradeOption } from '../progression/UpgradeOption';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunResultBuilder } from '../run/RunResultBuilder';
 import { RunState } from '../run/RunState';
+import { SelectionManager } from '../selection/SelectionManager';
 import {
   PlaytestSettingName,
   PlaytestSettings,
@@ -214,6 +215,7 @@ export class GameScene extends Phaser.Scene {
     const context = this.gameplayInitializer.initialize({
       scene: this,
       eventBus: this.eventBus,
+      runId: this.runId,
       autoPlayer: this.autoPlayer,
       autoUpgradeSelector: this.autoUpgradeSelector,
       damageCalculator: this.damageCalculator,
@@ -251,10 +253,47 @@ export class GameScene extends Phaser.Scene {
         onEnemySpawned: (enemy) => {
           enemy.setEventBus(this.eventBus);
           this.enemies.push(enemy);
+          const gameTimeSeconds = this.timeManager.gameTimeSeconds;
+
+          this.gameplayContext?.gameEventBus.emit('enemy.spawned', {
+            enemyId: enemy.id,
+            x: enemy.body.x,
+            y: enemy.body.y,
+            isBoss: enemy.id === 'boss'
+              || enemy.id.endsWith('_boss')
+              || enemy.id.startsWith('endless_'),
+            gameTimeSeconds,
+          }, {
+            gameTimeSeconds,
+            runId: this.runId,
+          });
+
+          if (enemy.id.startsWith('endless_')) {
+            this.gameplayContext?.gameEventBus.emit('endless.bossSpawned', {
+              bossId: enemy.id,
+              x: enemy.body.x,
+              y: enemy.body.y,
+              gameTimeSeconds,
+            }, {
+              gameTimeSeconds,
+              runId: this.runId,
+            });
+          }
         },
         onBossSpawned: (boss) => {
           boss.setEventBus(this.eventBus);
           this.enemies.push(boss);
+          const gameTimeSeconds = this.timeManager.gameTimeSeconds;
+
+          this.gameplayContext?.gameEventBus.emit('boss.spawned', {
+            bossId: boss.id,
+            x: boss.body.x,
+            y: boss.body.y,
+            gameTimeSeconds,
+          }, {
+            gameTimeSeconds,
+            runId: this.runId,
+          });
           AudioManager.playSfx(this, 'boss_spawn');
           AudioManager.playBgm(this, 'boss_bgm');
           this.showCenterMessage('Boss Appears!');
@@ -263,6 +302,7 @@ export class GameScene extends Phaser.Scene {
       },
     });
     this.applyGameplayContext(context);
+    this.emitRunStarted();
     this.unsubscribeSettings = PlaytestSettings.subscribe((settingName, state) => {
       this.handleSettingsChanged(settingName, state);
     });
@@ -309,6 +349,13 @@ export class GameScene extends Phaser.Scene {
 
       if (selectedOptions.length === 0) {
         this.runState.recordSkippedLevelUp();
+        context.gameEventBus.emit('upgrade.skipped', {
+          reason: 'no_available_upgrade',
+          gameTimeSeconds: this.timeManager.gameTimeSeconds,
+        }, {
+          gameTimeSeconds: this.timeManager.gameTimeSeconds,
+          runId: this.runId,
+        });
         console.log('LevelUp skipped: no upgrades available');
         this.currentLevelUpOptions = [];
         uiScene.events.emit('ShowTemporaryMessage', 'No upgrades available');
@@ -318,6 +365,13 @@ export class GameScene extends Phaser.Scene {
       this.isGameplayPaused = true;
       this.isLevelUpSelectionActive = true;
       this.currentLevelUpOptions = selectedOptions;
+      context.gameEventBus.emit('upgrade.optionsShown', {
+        optionIds: selectedOptions.map((option) => option.id),
+        gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      }, {
+        gameTimeSeconds: this.timeManager.gameTimeSeconds,
+        runId: this.runId,
+      });
       this.refreshLevelUpPanelAutoSelection();
     });
     uiScene.events.on('UpgradeSelected', this.handleUpgradeSelected, this);
@@ -407,6 +461,27 @@ export class GameScene extends Phaser.Scene {
     this.playerPickupRange = context.playerPickupRange;
   }
 
+  private emitRunStarted(): void {
+    if (!this.gameplayContext) {
+      return;
+    }
+
+    const selection = SelectionManager.getSelection();
+    const gameTimeSeconds = this.timeManager.gameTimeSeconds;
+
+    this.gameplayContext.gameEventBus.emit('run.started', {
+      runId: this.runId,
+      runSeed: this.gameplayContext.runSeed,
+      characterId: selection.characterId,
+      stageId: this.currentStage.id,
+      mapId: this.currentMap.id,
+      gameTimeSeconds,
+    }, {
+      gameTimeSeconds,
+      runId: this.runId,
+    });
+  }
+
   private handleSettingsChanged(
     settingName: PlaytestSettingName,
     state: PlaytestSettingsState,
@@ -415,6 +490,13 @@ export class GameScene extends Phaser.Scene {
 
     this.playtestSettings = state;
     this.syncRuntimeSettingsToContext();
+    this.gameplayContext?.gameEventBus.emit('ui.settingsChanged', {
+      settingName,
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+    }, {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      runId: this.runId,
+    });
 
     if (settingName === 'autoMode' || settingName === 'autoMovement') {
       this.handleAutoMovementChanged(previousSettings.autoMovement, state.autoMovement);
@@ -530,6 +612,13 @@ export class GameScene extends Phaser.Scene {
     this.runState.startEndless(this.timeManager.gameTimeSeconds);
     this.endlessManager?.start(this.timeManager.gameTimeSeconds);
     this.endlessBossManager?.start(this.timeManager.gameTimeSeconds);
+    this.gameplayContext.gameEventBus.emit('endless.started', {
+      endlessStartTime: this.timeManager.gameTimeSeconds,
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+    }, {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      runId: this.runId,
+    });
   }
 
   private syncCurrentBgm(): void {
@@ -1103,6 +1192,17 @@ export class GameScene extends Phaser.Scene {
     this.isGameOver = true;
     this.emitHUDState();
     const survivalTime = this.timeManager.gameTimeSeconds;
+    this.gameplayContext?.gameEventBus.emit('run.ended', {
+      runId: this.runId,
+      resultType,
+      survivalTime,
+      killCount: this.runState.killCount,
+      endlessStarted: this.runState.endlessStarted,
+      gameTimeSeconds: survivalTime,
+    }, {
+      gameTimeSeconds: survivalTime,
+      runId: this.runId,
+    });
     const resultData = this.runResultBuilder.build({
       runId: this.runId,
       autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,
@@ -1134,6 +1234,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleUpgradeSelected(option: UpgradeOption): void {
+    this.gameplayContext?.gameEventBus.emit('upgrade.selected', {
+      upgradeId: option.id,
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+    }, {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      runId: this.runId,
+    });
     this.upgradeFlow?.applyLevelUpUpgrade(option);
     this.isLevelUpSelectionActive = false;
     this.isGameplayPaused = false;
@@ -1159,6 +1266,12 @@ export class GameScene extends Phaser.Scene {
     this.isPauseMenuOpen = true;
     this.isGameplayPaused = true;
     this.virtualJoystick?.setGameplayActive(false);
+    this.gameplayContext?.gameEventBus.emit('ui.pauseOpened', {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+    }, {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      runId: this.runId,
+    });
     this.scene.get('UIScene').events.emit('ShowPauseMenu', this.buildPauseMenuStatsData());
   }
 
@@ -1274,6 +1387,12 @@ export class GameScene extends Phaser.Scene {
     this.isPauseMenuOpen = false;
     this.isGameplayPaused = false;
     this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
+    this.gameplayContext?.gameEventBus.emit('ui.pauseClosed', {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+    }, {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      runId: this.runId,
+    });
     this.scene.get('UIScene').events.emit('HidePauseMenu');
   }
 
@@ -1421,6 +1540,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private cleanup(): void {
+    this.gameplayContext?.gameEventBridge?.clear();
+    this.gameplayContext?.gameEventBus.clear();
     this.unsubscribeLevelUp?.();
     this.unsubscribeLevelUp = undefined;
     this.unsubscribeEnemyKilled?.();

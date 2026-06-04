@@ -62,6 +62,7 @@ export class RunState {
   difficultyId = 'normal';
   mutatorIds: string[] = [];
   rulesetId = 'normal';
+  gameEventCount = 0;
   private endlessLevelIntervalTotalSeconds = 0;
   private lastEndlessLevelUpTime: number | null = null;
 
@@ -129,6 +130,7 @@ export class RunState {
     this.difficultyId = 'normal';
     this.mutatorIds = [];
     this.rulesetId = 'normal';
+    this.gameEventCount = 0;
     this.endlessLevelIntervalTotalSeconds = 0;
     this.lastEndlessLevelUpTime = null;
   }
@@ -141,6 +143,10 @@ export class RunState {
 
   setRunSeed(runSeed: string): void {
     this.runSeed = runSeed;
+  }
+
+  recordGameEvent(): void {
+    this.gameEventCount += 1;
   }
 
   recordKill(): void {
