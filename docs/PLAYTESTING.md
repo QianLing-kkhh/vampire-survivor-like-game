@@ -213,6 +213,7 @@ Current behavior:
 - `ReplayStorage` keeps the most recent 10 replay records in localStorage with memory fallback.
 - Replay records use `runId` as their storage id.
 - Only selected key events are recorded; high-frequency damage and weapon-hit events are intentionally skipped.
+- `ReplayToolScene` is available from Title as a developer/balance tool for listing saved replays, viewing summary metadata, importing replay JSON, exporting selected replay JSON, deleting selected replay records, and checking compatibility warnings.
 - Replay playback UI and deterministic input injection are not implemented yet.
 - A replay is useful for debugging context, but it is not a guaranteed full reproduction until input samples and compatibility checks are complete.
 

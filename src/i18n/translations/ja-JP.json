@@ -27,7 +27,8 @@
     "toggleAutoMode": "オートモード切替",
     "toggleFastMode": "高速モード切替",
     "toggleLanguage": "言語",
-    "records": "記録"
+    "records": "記録",
+    "replayTool": "リプレイツール"
   },
   "selection": {
     "character": "キャラクター",
@@ -147,5 +148,16 @@
     "unlocked": "解除済み",
     "locked": "未解除",
     "noRecords": "記録なし"
+  },
+  "replay": {
+    "title": "リプレイツール",
+    "import": "JSONをインポート",
+    "export": "JSONをエクスポート",
+    "delete": "削除",
+    "back": "戻る",
+    "empty": "リプレイなし",
+    "compatible": "互換あり",
+    "warning": "警告",
+    "invalid": "無効"
   }
 }

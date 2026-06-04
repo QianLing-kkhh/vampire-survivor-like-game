@@ -27,7 +27,8 @@
     "toggleAutoMode": "切换自动模式",
     "toggleFastMode": "切换加速模式",
     "toggleLanguage": "语言",
-    "records": "记录"
+    "records": "记录",
+    "replayTool": "回放工具"
   },
   "selection": {
     "character": "角色",
@@ -147,5 +148,16 @@
     "unlocked": "已解锁",
     "locked": "未解锁",
     "noRecords": "暂无记录"
+  },
+  "replay": {
+    "title": "回放工具",
+    "import": "导入 JSON",
+    "export": "导出 JSON",
+    "delete": "删除",
+    "back": "返回",
+    "empty": "暂无回放",
+    "compatible": "兼容",
+    "warning": "警告",
+    "invalid": "无效"
   }
 }

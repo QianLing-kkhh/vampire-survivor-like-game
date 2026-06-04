@@ -37,6 +37,7 @@
     "selectStage": "Select Stage",
     "customStageTool": "Custom Stage Tool",
     "records": "Records",
+    "replayTool": "Replay Tool",
     "autoStartCountdown": "Auto test starts in {seconds}s",
     "autoTestCanceled": "Auto test canceled",
     "currentSelection": "{character} / {stage} / {map}",
@@ -81,6 +82,17 @@
     "unlocked": "Unlocked",
     "locked": "Locked",
     "noRecords": "No records yet"
+  },
+  "replay": {
+    "title": "Replay Tool",
+    "import": "Import JSON",
+    "export": "Export JSON",
+    "delete": "Delete",
+    "back": "Back",
+    "empty": "No replays yet",
+    "compatible": "Compatible",
+    "warning": "Warning",
+    "invalid": "Invalid"
   },
   "pause": {
     "title": "Paused",
