@@ -49,9 +49,13 @@ Recommended validation commands on Windows:
 ```sh
 npm.cmd exec tsc
 npm.cmd run build
+npm.cmd run validate
+npm.cmd run pre-release
 ```
 
 GitHub Pages deployment is configured through GitHub Actions. In GitHub, set **Repository Settings -> Pages -> Source** to **GitHub Actions**.
+
+See [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) before pushing release or deployment changes.
 
 The current Vite production bundle can show a chunk-size warning. That warning is expected for now and does not by itself mean the build failed.
 
@@ -137,6 +141,7 @@ Audio can be enabled and channel volumes can be changed in Settings. Missing aud
 - [`docs/AUDIO.md`](docs/AUDIO.md)
 - [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md)
 - [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md)
 
 ## Known Issues / Temporary Items
 

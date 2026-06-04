@@ -10,7 +10,8 @@
     "validate": "node scripts/validate-project.mjs",
     "validate:docs": "node scripts/check-doc-links.mjs",
     "validate:content": "node scripts/check-content-audit.mjs",
-    "validate:assets": "node scripts/check-assets.mjs"
+    "validate:assets": "node scripts/check-assets.mjs",
+    "pre-release": "node scripts/pre-release-check.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"

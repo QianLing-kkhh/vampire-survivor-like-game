@@ -305,6 +305,17 @@ Focused checks:
 - `npm.cmd run validate:assets` checks required asset roots and animation manifest references.
 - `npm.cmd run validate:docs` checks local Markdown links in `README.md` and `docs/*.md`.
 
+## Pre-Release Check
+
+Use `npm.cmd run pre-release` before deployment pushes. It runs:
+
+- `npm.cmd exec tsc`
+- `npm.cmd run build`
+- `npm.cmd run validate` when the script exists
+- `node scripts/print-build-info.mjs`
+
+The pre-release script does not modify files, push commits, deploy, or perform GitHub authentication. Deployment steps remain manual and are documented in [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
+
 ## Common Interpretation Notes
 
 - A low evolved weapon damage value does not always mean the weapon is weak. Evolution may have occurred late.
