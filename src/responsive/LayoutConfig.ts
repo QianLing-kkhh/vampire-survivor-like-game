@@ -116,6 +116,39 @@ export type ResponsiveFontSizes = {
 };
 
 export class LayoutConfig {
+  static intersects(a: RectLayout, b: RectLayout): boolean {
+    return a.x < b.x + b.width
+      && a.x + a.width > b.x
+      && a.y < b.y + b.height
+      && a.y + a.height > b.y;
+  }
+
+  static clampRectToSafeArea(
+    rect: RectLayout,
+    safe: { top: number; right: number; bottom: number; left: number },
+    screen: ScreenManager,
+  ): RectLayout {
+    return {
+      ...rect,
+      x: Phaser.Math.Clamp(rect.x, safe.left, screen.width - safe.right - rect.width),
+      y: Phaser.Math.Clamp(rect.y, safe.top, screen.height - safe.bottom - rect.height),
+    };
+  }
+
+  static moveToAvoidOverlap(
+    target: RectLayout,
+    blockers: RectLayout[],
+    candidates: RectLayout[],
+  ): RectLayout {
+    if (!blockers.some((blocker) => LayoutConfig.intersects(target, blocker))) {
+      return target;
+    }
+
+    return candidates.find((candidate) => (
+      !blockers.some((blocker) => LayoutConfig.intersects(candidate, blocker))
+    )) ?? target;
+  }
+
   static getResponsiveFontSizes(screen: ScreenManager): ResponsiveFontSizes {
     if (screen.width <= 430 || screen.height <= 620) {
       return {
@@ -293,20 +326,49 @@ export class LayoutConfig {
     const minimapWidth = portrait ? 96 : 150;
     const minimapHeight = portrait ? 76 : 104;
     const barWidth = Math.min(portrait ? screen.width * 0.48 : 230, 250);
-    const pauseButtonPosition = portrait
-      ? new Phaser.Math.Vector2(safe.left + 58, safe.top + 28)
-      : new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth - 70, safe.top + 28);
-    const minimapPosition = portrait
-      ? new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top + 16)
-      : new Phaser.Math.Vector2(screen.width - safe.right - minimapWidth, safe.top + 56);
+    const pauseWidth = 92;
+    const pauseHeight = 40;
+    const pauseRect = portrait
+      ? {
+        x: safe.left,
+        y: safe.top,
+        width: pauseWidth,
+        height: pauseHeight,
+      }
+      : {
+        x: screen.width - safe.right - minimapWidth - pauseWidth - 16,
+        y: safe.top,
+        width: pauseWidth,
+        height: pauseHeight,
+      };
+    const minimapTopRight = {
+      x: screen.width - safe.right - minimapWidth,
+      y: portrait ? safe.top : safe.top + pauseHeight + 12,
+      width: minimapWidth,
+      height: minimapHeight,
+    };
+    const minimapBottomRight = {
+      x: screen.width - safe.right - minimapWidth,
+      y: screen.height - safe.bottom - minimapHeight,
+      width: minimapWidth,
+      height: minimapHeight,
+    };
+    const minimapRect = LayoutConfig.moveToAvoidOverlap(
+      minimapTopRight,
+      [pauseRect],
+      [minimapBottomRight],
+    );
 
     return {
       statsPosition: new Phaser.Math.Vector2(safe.left, safe.top),
       weaponsPosition: new Phaser.Math.Vector2(safe.left, safe.top + 132),
       passivesPosition: new Phaser.Math.Vector2(portrait ? safe.left : safe.left, portrait ? safe.top + 264 : safe.top + 250),
-      minimapPosition,
+      minimapPosition: new Phaser.Math.Vector2(minimapRect.x, minimapRect.y),
       minimapSize: { width: minimapWidth, height: minimapHeight },
-      pauseButtonPosition,
+      pauseButtonPosition: new Phaser.Math.Vector2(
+        pauseRect.x + pauseRect.width / 2,
+        pauseRect.y + pauseRect.height / 2,
+      ),
       bossTextPosition: new Phaser.Math.Vector2(screen.centerX, safe.top + 92),
       barWidth,
       maxIconRows: portrait ? 3 : 6,
@@ -370,15 +432,21 @@ export class LayoutConfig {
 
   static getTitleLayout(screen: ScreenManager): TitleLayout {
     const portrait = screen.isPortrait();
+    const safe = SafeArea.getInsets(screen);
+    const metrics = getButtonMetrics(screen.width, screen.height);
+    const titleY = safe.top + (portrait ? 34 : 30);
+    const statusY = titleY + (portrait ? 54 : 44);
+    const countdownY = statusY + (portrait ? 70 : 50);
+    const buttonStartY = countdownY + metrics.height / 2 + (portrait ? 30 : 16);
 
     return {
-      titlePosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 74 : screen.centerY - 188),
-      statusPosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 128 : screen.centerY - 118),
-      countdownPosition: new Phaser.Math.Vector2(screen.centerX, portrait ? 184 : screen.centerY - 64),
-      buttonStartY: portrait ? 228 : screen.centerY - 18,
-      buttonGap: getButtonMetrics(screen.width, screen.height).gap,
+      titlePosition: new Phaser.Math.Vector2(screen.centerX, titleY),
+      statusPosition: new Phaser.Math.Vector2(screen.centerX, statusY),
+      countdownPosition: new Phaser.Math.Vector2(screen.centerX, countdownY),
+      buttonStartY,
+      buttonGap: Math.min(metrics.gap, metrics.height + (portrait ? 10 : 6)),
       buttonColumns: 1,
-      fontSize: getButtonMetrics(screen.width, screen.height).fontSize,
+      fontSize: metrics.fontSize,
     };
   }
 

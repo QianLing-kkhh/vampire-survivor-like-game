@@ -14,7 +14,7 @@ export interface GameplayUpdateCallbacks {
 export interface GameplayUpdateOptions {
   deltaMs: number;
   isLevelUpSelectionActive: boolean;
-  isAutoMode: boolean;
+  isAutoMovementEnabled: boolean;
   worldWidth: number;
   worldHeight: number;
   callbacks: GameplayUpdateCallbacks;
@@ -26,13 +26,13 @@ export class GameplayUpdater {
     const effectiveDelta = options.deltaMs * callbacks.getGameplayTimeScale();
 
     context.virtualJoystick.setGameplayActive(
-      !options.isLevelUpSelectionActive && !options.isAutoMode,
+      !options.isLevelUpSelectionActive && !options.isAutoMovementEnabled,
     );
 
     context.timeManager.update(effectiveDelta);
     context.passiveManager.update(effectiveDelta, context.playerHealth);
 
-    if (options.isAutoMode) {
+    if (options.isAutoMovementEnabled) {
       callbacks.updateAutoPlayer(effectiveDelta);
     } else if (context.virtualJoystick.hasInput()) {
       callbacks.updatePlayerFromVirtualJoystick(effectiveDelta);

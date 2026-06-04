@@ -112,6 +112,7 @@ export class HUD {
   private readonly minimapImage?: Phaser.GameObjects.Image;
   private readonly minimapPlayer: Phaser.GameObjects.Arc;
   private readonly minimapEnemies: Phaser.GameObjects.Arc[] = [];
+  private readonly pauseButton: Phaser.GameObjects.Text;
   private minimapX: number;
   private minimapY = 14;
   private minimapWidth = HUD.MINIMAP_WIDTH;
@@ -119,7 +120,7 @@ export class HUD {
   private barWidth = HUD.BAR_WIDTH;
   private maxIconRows = 6;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, private readonly onPause?: () => void) {
     this.scene = scene;
     this.screenManager = new ScreenManager(scene);
     this.statsPanelBg = this.createPanelBackground(12, 8, 250, 126);
@@ -166,6 +167,26 @@ export class HUD {
     this.minimapPlayer = scene.add.circle(0, 0, 3, 0x38bdf8, 1);
     this.minimapPlayer.setDepth(902);
     this.minimapPlayer.setScrollFactor(0);
+
+    this.pauseButton = scene.add.text(0, 0, 'Pause', {
+      backgroundColor: '#111827',
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: '14px',
+      padding: {
+        x: 14,
+        y: 9,
+      },
+    });
+    this.pauseButton.setOrigin(0.5);
+    this.pauseButton.setDepth(1200);
+    this.pauseButton.setScrollFactor(0);
+    this.pauseButton.setInteractive({ useHandCursor: true });
+    this.pauseButton.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation();
+      this.onPause?.();
+    });
+
     this.update({
       currentHp: 0,
       maxHp: 0,
@@ -208,6 +229,7 @@ export class HUD {
     this.minimapBackground.destroy();
     this.minimapImage?.destroy();
     this.minimapPlayer.destroy();
+    this.pauseButton.destroy();
     this.minimapEnemies.forEach((enemyDot) => {
       enemyDot.destroy();
     });
@@ -752,6 +774,11 @@ export class HUD {
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
     this.minimapBackground.setPosition(this.minimapX, this.minimapY);
     this.minimapBackground.setSize(this.minimapWidth, this.minimapHeight);
+    this.pauseButton.setPosition(
+      layout.pauseButtonPosition.x,
+      layout.pauseButtonPosition.y,
+    );
+    this.pauseButton.setFontSize(layout.fontSize);
     this.layoutPanelBackground(
       this.minimapBackground,
       this.minimapImage,

@@ -36,9 +36,12 @@ export interface GameplayContext {
   scene: Phaser.Scene;
   playtestSettings: PlaytestSettingsState;
   autoMode: boolean;
+  autoMovementEnabled: boolean;
+  autoUpgradeEnabled: boolean;
   fastMode: boolean;
   endlessMode: boolean;
   timeScale: number;
+  effectiveTimeScale: number;
   eventBus: EventBus<GameEventMap>;
   autoPlayer: AutoPlayer;
   damageCalculator: DamageCalculator;

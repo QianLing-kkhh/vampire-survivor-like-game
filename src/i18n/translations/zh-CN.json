@@ -89,5 +89,20 @@
     "bossIn": "Boss 倒计时 {time}",
     "goalDefeatBoss": "目标 击败 Boss",
     "evolved": "进化"
+  },
+  "settings": {
+    "title": "设置",
+    "autoMovement": "自动走位",
+    "autoUpgrade": "自动升级",
+    "fastMode": "加速模式",
+    "endlessMode": "无尽模式",
+    "audio": "音频",
+    "sound": "声音",
+    "bgmVolume": "背景音乐音量",
+    "sfxVolume": "特效音量",
+    "weaponVolume": "武器音量",
+    "uiVolume": "界面音量",
+    "language": "语言",
+    "back": "返回"
   }
 }

@@ -3,6 +3,8 @@ import type { AudioChannel } from '../audio/AudioManager';
 
 export interface PlaytestSettingsState {
   autoMode: boolean;
+  autoMovement: boolean;
+  autoUpgrade: boolean;
   fastMode: boolean;
   autoTimeScale: number;
   soundEnabled: boolean;
@@ -26,6 +28,8 @@ export class PlaytestSettings {
   private static readonly listeners = new Set<PlaytestSettingsListener>();
   private static memoryState: PlaytestSettingsState = {
     autoMode: false,
+    autoMovement: false,
+    autoUpgrade: false,
     fastMode: false,
     autoTimeScale: 3,
     soundEnabled: false,
@@ -58,7 +62,29 @@ export class PlaytestSettings {
     return this.save({
       ...this.get(),
       autoMode,
+      autoMovement: autoMode,
+      autoUpgrade: autoMode,
     }, 'autoMode');
+  }
+
+  static setAutoMovement(autoMovement: boolean): PlaytestSettingsState {
+    const state = this.get();
+
+    return this.save({
+      ...state,
+      autoMovement,
+      autoMode: autoMovement || state.autoUpgrade,
+    }, 'autoMovement');
+  }
+
+  static setAutoUpgrade(autoUpgrade: boolean): PlaytestSettingsState {
+    const state = this.get();
+
+    return this.save({
+      ...state,
+      autoUpgrade,
+      autoMode: state.autoMovement || autoUpgrade,
+    }, 'autoUpgrade');
   }
 
   static setFastMode(fastMode: boolean): PlaytestSettingsState {
@@ -122,6 +148,18 @@ export class PlaytestSettings {
     return this.setAutoMode(!state.autoMode);
   }
 
+  static toggleAutoMovement(): PlaytestSettingsState {
+    const state = this.get();
+
+    return this.setAutoMovement(!state.autoMovement);
+  }
+
+  static toggleAutoUpgrade(): PlaytestSettingsState {
+    const state = this.get();
+
+    return this.setAutoUpgrade(!state.autoUpgrade);
+  }
+
   static toggleFastMode(): PlaytestSettingsState {
     const state = this.get();
 
@@ -151,7 +189,9 @@ export class PlaytestSettings {
     settingName: PlaytestSettingName = 'settings',
   ): PlaytestSettingsState {
     const nextState = {
-      autoMode: state.autoMode,
+      autoMode: state.autoMovement || state.autoUpgrade,
+      autoMovement: state.autoMovement,
+      autoUpgrade: state.autoUpgrade,
       fastMode: state.fastMode,
       autoTimeScale: state.autoTimeScale,
       soundEnabled: state.soundEnabled,
@@ -203,9 +243,18 @@ export class PlaytestSettings {
       const audioEnabled = parsedState.audioEnabled === undefined
         ? Boolean(parsedState.soundEnabled)
         : Boolean(parsedState.audioEnabled);
+      const legacyAutoMode = Boolean(parsedState.autoMode);
+      const autoMovement = parsedState.autoMovement === undefined
+        ? legacyAutoMode
+        : Boolean(parsedState.autoMovement);
+      const autoUpgrade = parsedState.autoUpgrade === undefined
+        ? legacyAutoMode
+        : Boolean(parsedState.autoUpgrade);
 
       return {
-        autoMode: Boolean(parsedState.autoMode),
+        autoMode: autoMovement || autoUpgrade,
+        autoMovement,
+        autoUpgrade,
         fastMode: Boolean(parsedState.fastMode),
         autoTimeScale: typeof parsedState.autoTimeScale === 'number'
           ? parsedState.autoTimeScale

@@ -232,9 +232,14 @@ export class GameplayInitializer {
       scene: config.scene,
       playtestSettings: config.playtestSettings,
       autoMode: config.playtestSettings.autoMode,
+      autoMovementEnabled: config.playtestSettings.autoMovement,
+      autoUpgradeEnabled: config.playtestSettings.autoUpgrade,
       fastMode: config.playtestSettings.fastMode,
       endlessMode: config.playtestSettings.endlessMode,
-      timeScale: config.playtestSettings.autoMode && config.playtestSettings.fastMode
+      timeScale: config.playtestSettings.fastMode
+        ? config.playtestSettings.autoTimeScale
+        : 1,
+      effectiveTimeScale: config.playtestSettings.fastMode
         ? config.playtestSettings.autoTimeScale
         : 1,
       eventBus: config.eventBus,

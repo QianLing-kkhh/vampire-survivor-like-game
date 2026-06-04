@@ -1,14 +1,18 @@
 import Phaser from 'phaser';
 
+import { LayoutConfig } from '../responsive/LayoutConfig';
+import { SafeArea } from '../responsive/SafeArea';
+import { ScreenManager } from '../responsive/ScreenManager';
+
 type PauseHandler = () => void;
 
 export class VirtualJoystick {
-  private static readonly BASE_RADIUS = 56;
-  private static readonly KNOB_RADIUS = 24;
-  private static readonly BOTTOM_MARGIN = 100;
-  private static readonly LEFT_MARGIN = 100;
-  private static readonly UI_DEPTH = 10000;
+  private static readonly BASE_RADIUS = 64;
+  private static readonly KNOB_RADIUS = 28;
+  private static readonly ACTIVE_AREA_RADIUS = 110;
+  private static readonly UI_DEPTH = 950;
 
+  private readonly screenManager: ScreenManager;
   private readonly container: Phaser.GameObjects.Container;
   private readonly base: Phaser.GameObjects.Arc;
   private readonly knob: Phaser.GameObjects.Arc;
@@ -16,14 +20,15 @@ export class VirtualJoystick {
   private readonly direction = new Phaser.Math.Vector2(0, 0);
   private activePointerId?: number;
   private gameplayActive = true;
-  private baseX = VirtualJoystick.LEFT_MARGIN;
+  private baseX = 0;
   private baseY: number;
 
   constructor(
     private readonly scene: Phaser.Scene,
     onPause: PauseHandler,
   ) {
-    this.baseY = scene.scale.height - VirtualJoystick.BOTTOM_MARGIN;
+    this.screenManager = new ScreenManager(scene);
+    this.baseY = scene.scale.height - VirtualJoystick.BASE_RADIUS - 40;
     this.container = scene.add.container(0, 0);
     this.container.setDepth(VirtualJoystick.UI_DEPTH);
     this.container.setScrollFactor(0);
@@ -72,6 +77,7 @@ export class VirtualJoystick {
     this.pauseButton.on('pointerdown', () => {
       onPause();
     });
+    this.pauseButton.setVisible(false);
 
     this.container.add([this.base, this.knob, this.pauseButton]);
 
@@ -109,6 +115,7 @@ export class VirtualJoystick {
     this.scene.input.off('pointerup', this.handlePointerUp, this);
     this.scene.input.off('pointerupoutside', this.handlePointerUp, this);
     this.scene.scale.off('resize', this.handleResize, this);
+    this.screenManager.dispose();
     this.container.destroy(true);
   }
 
@@ -174,11 +181,20 @@ export class VirtualJoystick {
   }
 
   private updateControlPositions(): void {
-    this.baseX = VirtualJoystick.LEFT_MARGIN;
-    this.baseY = this.scene.scale.height - VirtualJoystick.BOTTOM_MARGIN;
+    const safe = SafeArea.getInsets(this.screenManager);
+    const landscape = this.screenManager.isLandscape();
+    const xOffset = landscape ? 40 : 32;
+    const yOffset = landscape ? 32 : 40;
+    const hudLayout = LayoutConfig.getHudLayout(this.screenManager);
+
+    this.baseX = safe.left + VirtualJoystick.BASE_RADIUS + xOffset;
+    this.baseY = this.scene.scale.height - safe.bottom - VirtualJoystick.BASE_RADIUS - yOffset;
     this.base.setPosition(this.baseX, this.baseY);
     this.knob.setPosition(this.baseX, this.baseY);
-    this.pauseButton.setPosition(this.scene.scale.width - 80, 60);
+    this.pauseButton.setPosition(
+      hudLayout.pauseButtonPosition.x,
+      hudLayout.pauseButtonPosition.y,
+    );
   }
 
   private updateVisibility(): void {
@@ -186,8 +202,10 @@ export class VirtualJoystick {
 
     this.container.setVisible(visible);
 
+    this.pauseButton.setVisible(false);
+
     if (this.pauseButton.input) {
-      this.pauseButton.input.enabled = visible;
+      this.pauseButton.input.enabled = false;
     }
   }
 
@@ -196,8 +214,13 @@ export class VirtualJoystick {
   }
 
   private isInActiveTouchArea(x: number, y: number): boolean {
-    return x <= this.scene.scale.width * 0.45
-      && y >= this.scene.scale.height * 0.45;
+    if (Phaser.Math.Distance.Between(x, y, this.baseX, this.baseY)
+      <= VirtualJoystick.ACTIVE_AREA_RADIUS) {
+      return true;
+    }
+
+    return x <= this.scene.scale.width * 0.48
+      && y >= this.scene.scale.height * 0.48;
   }
 
   private isTouchUiEnabled(): boolean {

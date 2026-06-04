@@ -235,7 +235,7 @@ export class GameScene extends Phaser.Scene {
     this.unsubscribeSettings = PlaytestSettings.subscribe((settingName, state) => {
       this.handleSettingsChanged(settingName, state);
     });
-    context.virtualJoystick.setGameplayActive(!this.playtestSettings.autoMode);
+    context.virtualJoystick.setGameplayActive(!this.playtestSettings.autoMovement);
     this.createOrientationOverlay();
     this.scale.on('resize', this.handleResize, this);
     this.playerHitRange = this.add.circle(
@@ -290,6 +290,7 @@ export class GameScene extends Phaser.Scene {
       this.refreshLevelUpPanelAutoSelection();
     });
     uiScene.events.on('UpgradeSelected', this.handleUpgradeSelected, this);
+    uiScene.events.on('HudPausePressed', this.handleEscapePressed, this);
     uiScene.events.on('PauseResume', this.resumeFromPauseMenu, this);
     uiScene.events.on('PauseRestart', this.restartFromPauseMenu, this);
     uiScene.events.on('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
@@ -323,7 +324,7 @@ export class GameScene extends Phaser.Scene {
     this.gameplayUpdater.update(this.gameplayContext, {
       deltaMs: delta,
       isLevelUpSelectionActive: this.isLevelUpSelectionActive,
-      isAutoMode: this.playtestSettings.autoMode,
+      isAutoMovementEnabled: this.playtestSettings.autoMovement,
       worldWidth: GameScene.WORLD_WIDTH,
       worldHeight: GameScene.WORLD_HEIGHT,
       callbacks: {
@@ -383,8 +384,12 @@ export class GameScene extends Phaser.Scene {
     this.playtestSettings = state;
     this.syncRuntimeSettingsToContext();
 
-    if (settingName === 'autoMode') {
-      this.handleAutoModeChanged(previousSettings.autoMode, state.autoMode);
+    if (settingName === 'autoMode' || settingName === 'autoMovement') {
+      this.handleAutoMovementChanged(previousSettings.autoMovement, state.autoMovement);
+    }
+
+    if (settingName === 'autoMode' || settingName === 'autoUpgrade') {
+      this.handleAutoUpgradeChanged(previousSettings.autoUpgrade, state.autoUpgrade);
     }
 
     if (settingName === 'endlessMode') {
@@ -409,22 +414,37 @@ export class GameScene extends Phaser.Scene {
 
     this.gameplayContext.playtestSettings = this.playtestSettings;
     this.gameplayContext.autoMode = this.playtestSettings.autoMode;
+    this.gameplayContext.autoMovementEnabled = this.playtestSettings.autoMovement;
+    this.gameplayContext.autoUpgradeEnabled = this.playtestSettings.autoUpgrade;
     this.gameplayContext.fastMode = this.playtestSettings.fastMode;
     this.gameplayContext.endlessMode = this.playtestSettings.endlessMode;
     this.gameplayContext.timeScale = this.getGameplayTimeScale();
+    this.gameplayContext.effectiveTimeScale = this.gameplayContext.timeScale;
     this.runState.endlessMode = this.playtestSettings.endlessMode;
   }
 
-  private handleAutoModeChanged(previousAutoMode: boolean, autoMode: boolean): void {
-    if (!autoMode) {
+  private handleAutoMovementChanged(
+    previousAutoMovement: boolean,
+    autoMovement: boolean,
+  ): void {
+    if (!autoMovement) {
       this.player?.clearExternalMoveDirection();
     }
 
     if (!this.isGameplayPaused && !this.isLevelUpSelectionActive) {
-      this.virtualJoystick?.setGameplayActive(!autoMode);
+      this.virtualJoystick?.setGameplayActive(!autoMovement);
     }
 
-    if (previousAutoMode !== autoMode && this.isLevelUpSelectionActive) {
+    if (previousAutoMovement !== autoMovement) {
+      this.emitHUDState();
+    }
+  }
+
+  private handleAutoUpgradeChanged(
+    previousAutoUpgrade: boolean,
+    autoUpgrade: boolean,
+  ): void {
+    if (previousAutoUpgrade !== autoUpgrade && this.isLevelUpSelectionActive) {
       this.refreshLevelUpPanelAutoSelection();
     }
   }
@@ -452,7 +472,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (this.playtestSettings.autoMode) {
+    if (this.playtestSettings.autoUpgrade) {
       const autoSelectedOption = this.upgradeFlow?.chooseAutoUpgrade(this.currentLevelUpOptions);
 
       this.uiScene.events.emit('ShowLevelUpOptions', {
@@ -520,7 +540,7 @@ export class GameScene extends Phaser.Scene {
         ),
       }) ?? [],
       passiveItems: this.passiveManager?.getPassiveLevels() ?? [],
-      autoMode: this.playtestSettings.autoMode,
+      autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,
       evolutionCandidateStats: this.getEvolutionCandidateStats(),
       moveSpeed: this.playerStats.moveSpeed,
       pickupRange: this.playerStats.pickupRange,
@@ -1051,7 +1071,7 @@ export class GameScene extends Phaser.Scene {
     const survivalTime = this.timeManager.gameTimeSeconds;
     const resultData = this.runResultBuilder.build({
       runId: this.runId,
-      autoMode: this.playtestSettings.autoMode,
+      autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,
       fastMode: this.playtestSettings.fastMode,
       timeScale: this.getGameplayTimeScale(),
       upgradeSelectionMode: this.autoUpgradeSelector.mode,
@@ -1084,7 +1104,7 @@ export class GameScene extends Phaser.Scene {
     this.isLevelUpSelectionActive = false;
     this.isGameplayPaused = false;
     this.currentLevelUpOptions = [];
-    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMode);
+    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
   }
 
   private handleUpgradeApplied(): void {
@@ -1219,7 +1239,7 @@ export class GameScene extends Phaser.Scene {
 
     this.isPauseMenuOpen = false;
     this.isGameplayPaused = false;
-    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMode);
+    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
     this.scene.get('UIScene').events.emit('HidePauseMenu');
   }
 
@@ -1254,7 +1274,7 @@ export class GameScene extends Phaser.Scene {
       payload.isBoss === true,
     );
     AudioManager.playSfx(this, 'enemy_hit', {
-      autoMode: this.playtestSettings.autoMode,
+      autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,
     });
   }
 
@@ -1359,7 +1379,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getGameplayTimeScale(): number {
-    if (!this.playtestSettings.autoMode || !this.playtestSettings.fastMode) {
+    if (!this.playtestSettings.fastMode) {
       return 1;
     }
 
@@ -1374,6 +1394,7 @@ export class GameScene extends Phaser.Scene {
     this.unsubscribeSettings?.();
     this.unsubscribeSettings = undefined;
     this.uiScene?.events.off('UpgradeSelected', this.handleUpgradeSelected, this);
+    this.uiScene?.events.off('HudPausePressed', this.handleEscapePressed, this);
     this.uiScene?.events.off('PauseResume', this.resumeFromPauseMenu, this);
     this.uiScene?.events.off('PauseRestart', this.restartFromPauseMenu, this);
     this.uiScene?.events.off('PauseBackToTitle', this.backToTitleFromPauseMenu, this);

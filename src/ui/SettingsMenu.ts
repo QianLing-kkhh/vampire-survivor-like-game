@@ -76,8 +76,12 @@ export class SettingsMenu {
     const settings = PlaytestSettings.get();
     const entries = [
       {
-        label: `${this.t('settings.autoMode', I18n.t('common.autoMode'))}: ${this.formatOnOff(settings.autoMode)}`,
-        action: () => this.toggle(() => PlaytestSettings.toggleAutoMode()),
+        label: `${this.t('settings.autoMovement', 'Auto Movement')}: ${this.formatOnOff(settings.autoMovement)}`,
+        action: () => this.toggle(() => PlaytestSettings.toggleAutoMovement()),
+      },
+      {
+        label: `${this.t('settings.autoUpgrade', 'Auto Upgrade')}: ${this.formatOnOff(settings.autoUpgrade)}`,
+        action: () => this.toggle(() => PlaytestSettings.toggleAutoUpgrade()),
       },
       {
         label: `${this.t('settings.fastMode', I18n.t('common.fastMode'))}: ${this.formatOnOff(settings.fastMode)}`,
@@ -181,14 +185,19 @@ export class SettingsMenu {
     const centerX = this.screenManager.centerX;
     const centerY = this.screenManager.centerY;
     const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
-    const availableHeight = panel.content.height - 58;
-    const gap = Math.min(metrics.gap, Math.max(metrics.height + 4, availableHeight / Math.max(this.buttons.length - 1, 1)));
+    const useTwoColumn = this.screenManager.isLandscape() && this.screenManager.height <= 520;
+    const rows = useTwoColumn ? Math.ceil(this.buttons.length / 2) : this.buttons.length;
+    const availableHeight = panel.content.height - 78;
+    const gap = Math.min(
+      metrics.gap,
+      Math.max(metrics.height + 4, availableHeight / Math.max(rows - 1, 1)),
+    );
     const buttonLayout = LayoutConfig.getButtonListLayout({
       screen: this.screenManager,
       count: this.buttons.length,
       centerX,
       startY: panel.content.y + 64,
-      mode: 'vertical',
+      mode: useTwoColumn ? 'twoColumn' : 'vertical',
       gap,
     });
 

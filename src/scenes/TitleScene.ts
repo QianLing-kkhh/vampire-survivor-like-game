@@ -148,18 +148,21 @@ export class TitleScene extends Phaser.Scene {
       this.settingsButton,
       this.helpButton,
     ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
-    const buttonLayout = LayoutConfig.getButtonLayout(this.screenManager, buttons.length, {
+    const buttonLayout = LayoutConfig.getButtonListLayout({
+      screen: this.screenManager,
+      count: buttons.length,
       startY: layout.buttonStartY,
-      mode: layout.buttonColumns === 1 ? 'vertical' : 'twoColumn',
-      maxColumns: layout.buttonColumns,
+      mode: 'vertical',
+      gap: layout.buttonGap,
     });
     this.layoutBackground();
 
     this.titleText?.setPosition(layout.titlePosition.x, layout.titlePosition.y);
-    this.titleText?.setFontSize(this.screenManager.isPortrait() ? '30px' : UITheme.titleFontSize);
+    this.titleText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).title);
     this.statusText?.setPosition(layout.statusPosition.x, layout.statusPosition.y);
-    this.statusText?.setFontSize(this.screenManager.isPortrait() ? '13px' : UITheme.bodyFontSize);
+    this.statusText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
     this.autoStartText?.setPosition(layout.countdownPosition.x, layout.countdownPosition.y);
+    this.autoStartText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
 
     buttons.forEach((button, index) => {
       const position = buttonLayout.positions[index];
@@ -288,7 +291,8 @@ export class TitleScene extends Phaser.Scene {
     const settings = PlaytestSettings.get();
 
     return [
-      `${I18n.t('common.autoMode')}: ${settings.autoMode ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `Auto Movement: ${settings.autoMovement ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `Auto Upgrade: ${settings.autoUpgrade ? I18n.t('common.on') : I18n.t('common.off')}`,
       `${I18n.t('common.fastMode')}: ${settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')}`,
       `Endless Mode: ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`,
       `${I18n.t('common.timeScale')}: ${this.getDisplayedTimeScale(settings)}x`,
@@ -296,7 +300,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private getDisplayedTimeScale(settings: PlaytestSettingsState): number {
-    if (!settings.autoMode || !settings.fastMode) {
+    if (!settings.fastMode) {
       return 1;
     }
 

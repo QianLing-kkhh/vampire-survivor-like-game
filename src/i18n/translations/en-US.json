@@ -14,6 +14,21 @@
     "timeScale": "Time Scale",
     "none": "None"
   },
+  "settings": {
+    "title": "Settings",
+    "autoMovement": "Auto Movement",
+    "autoUpgrade": "Auto Upgrade",
+    "fastMode": "Fast Mode",
+    "endlessMode": "Endless Mode",
+    "audio": "Audio",
+    "sound": "Sound",
+    "bgmVolume": "BGM Volume",
+    "sfxVolume": "SFX Volume",
+    "weaponVolume": "Weapon Volume",
+    "uiVolume": "UI Volume",
+    "language": "Language",
+    "back": "Back"
+  },
   "title": {
     "gameTitle": "Vampire Survivor Prototype",
     "startGame": "Start Game",

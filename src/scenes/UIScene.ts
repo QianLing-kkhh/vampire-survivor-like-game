@@ -25,7 +25,9 @@ export class UIScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.hud = new HUD(this);
+    this.hud = new HUD(this, () => {
+      this.events.emit('HudPausePressed');
+    });
     this.events.on('UpdateHUD', this.updateHUD, this);
     this.events.on('ShowLevelUpOptions', this.showLevelUpOptions, this);
     this.events.on('ShowTemporaryMessage', this.showTemporaryMessage, this);

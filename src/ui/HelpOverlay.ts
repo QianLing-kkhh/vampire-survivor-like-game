@@ -224,13 +224,19 @@ export class HelpOverlay {
     const top = center.y - layout.panelHeight / 2;
     const left = center.x - layout.panelWidth / 2;
     const tabGap = 8;
-    const contentLeft = this.screenManager.isLandscape()
+    const verticalTabs = this.usesVerticalTabs(layout.panelHeight);
+    const tabRows = verticalTabs
+      ? this.tabButtons.length
+      : this.getTabRows(layout.panelWidth, tabGap);
+    const tabAreaTop = top + (verticalTabs ? 90 : 78);
+    const tabAreaHeight = tabRows * HelpOverlay.TAB_SIZE + Math.max(0, tabRows - 1) * tabGap;
+    const contentLeft = verticalTabs
       ? left + 96
       : left + 34;
-    const contentTop = this.screenManager.isLandscape()
+    const contentTop = verticalTabs
       ? top + 92
-      : top + 128;
-    const bodyWidth = this.screenManager.isLandscape()
+      : tabAreaTop + tabAreaHeight + 18;
+    const bodyWidth = verticalTabs
       ? layout.panelWidth - 132
       : layout.panelWidth - 68;
     const contentBottom = center.y + layout.panelHeight / 2 - 82;
@@ -245,7 +251,7 @@ export class HelpOverlay {
     this.coverImage(this.panelImage, layout.panelWidth, layout.panelHeight);
     this.title.setPosition(center.x, top + 42);
     this.title.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
-    this.layoutTabs(left, top, layout.panelWidth, tabGap);
+    this.layoutTabs(left, top, layout.panelWidth, layout.panelHeight, tabGap);
 
     this.contentItems.forEach((item, index) => {
       if (index >= maxRows) {
@@ -277,13 +283,21 @@ export class HelpOverlay {
     );
   }
 
-  private layoutTabs(left: number, top: number, panelWidth: number, gap: number): void {
+  private layoutTabs(
+    left: number,
+    top: number,
+    panelWidth: number,
+    panelHeight: number,
+    gap: number,
+  ): void {
+    const verticalTabs = this.usesVerticalTabs(panelHeight);
+
     this.tabButtons.forEach((tab, index) => {
       const selected = index === this.selectedSectionIndex;
       tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
       tab.background.setStrokeStyle(2, selected ? 0x22c55e : UITheme.panelBorderColor, selected ? 1 : 0.75);
 
-      if (this.screenManager.isLandscape()) {
+      if (verticalTabs) {
         tab.container.setPosition(left + 46, top + 90 + index * (HelpOverlay.TAB_SIZE + gap));
         return;
       }
@@ -296,6 +310,18 @@ export class HelpOverlay {
         top + 82 + row * (HelpOverlay.TAB_SIZE + gap),
       );
     });
+  }
+
+  private usesVerticalTabs(panelHeight: number): boolean {
+    return this.screenManager.isLandscape()
+      && panelHeight >= 460
+      && this.tabButtons.length * (HelpOverlay.TAB_SIZE + 8) <= panelHeight - 110;
+  }
+
+  private getTabRows(panelWidth: number, gap: number): number {
+    const columns = Math.max(1, Math.floor((panelWidth - 56) / (HelpOverlay.TAB_SIZE + gap)));
+
+    return Math.ceil(this.tabButtons.length / columns);
   }
 
   private showOverflowHint(x: number, y: number, width: number): void {
