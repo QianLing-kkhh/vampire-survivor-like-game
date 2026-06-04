@@ -146,7 +146,7 @@ export class EndlessManager {
       scalingLevel,
       hpMultiplier,
       damageMultiplier,
-      speedMultiplier: Math.min(1 + scalingLevel * 0.055, 1.65),
+      speedMultiplier: Math.min(1 + scalingLevel * 0.085, 2.2),
       expMultiplier: 1 + scalingLevel * 0.18,
     };
   }

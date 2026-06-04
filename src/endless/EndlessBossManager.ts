@@ -306,7 +306,7 @@ export class EndlessBossManager {
       hp: Math.round(baseStats.hp * scaling.hpMultiplier * 1.2 * config.baseHpMultiplier),
       damage: Math.round(baseStats.damage * scaling.damageMultiplier * config.baseDamageMultiplier),
       moveSpeed: baseStats.moveSpeed
-        * Math.min(scaling.speedMultiplier, 1.35)
+        * Math.min(scaling.speedMultiplier, 1.5)
         * config.baseSpeedMultiplier,
       exp: Math.round(baseStats.exp * scaling.expMultiplier),
       bossLike: true,

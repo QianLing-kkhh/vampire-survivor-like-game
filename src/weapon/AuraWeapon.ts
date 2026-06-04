@@ -8,7 +8,8 @@ import { VisualScale } from '../visual/VisualScale';
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 
 export class AuraWeapon extends Weapon {
-  private static readonly GARLIC_PERCENT_DAMAGE = 0.003;
+  private static readonly GARLIC_PERCENT_DAMAGE = 0.004;
+  private static readonly SOUL_EATER_PERCENT_DAMAGE = 0.005;
   private static readonly AURA_DEPTH = 8;
   private static readonly AURA_FILL_ALPHA = 0.12;
   private static readonly AURA_STROKE_ALPHA = 0.5;
@@ -147,14 +148,22 @@ export class AuraWeapon extends Weapon {
   }
 
   private createAuraHitResult(enemy: Enemy) {
-    if (this.id !== 'garlic') {
-      return this.createHitResult();
+    if (this.id === 'garlic') {
+      return {
+        damage: this.modifiedDamage + enemy.maxHp * AuraWeapon.GARLIC_PERCENT_DAMAGE,
+        isCritical: false,
+        damageType: DamageType.Normal,
+      };
     }
 
-    return {
-      damage: this.modifiedDamage + enemy.maxHp * AuraWeapon.GARLIC_PERCENT_DAMAGE,
-      isCritical: false,
-      damageType: DamageType.Normal,
-    };
+    if (this.id === 'soul_eater') {
+      return {
+        damage: this.modifiedDamage + enemy.maxHp * AuraWeapon.SOUL_EATER_PERCENT_DAMAGE,
+        isCritical: false,
+        damageType: DamageType.Normal,
+      };
+    }
+
+    return this.createHitResult();
   }
 }

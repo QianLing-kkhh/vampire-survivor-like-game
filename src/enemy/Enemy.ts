@@ -90,7 +90,8 @@ export function isLevelUpEvent(value: unknown): value is LevelUpEvent {
 
 export class Enemy {
   private static readonly DASH_WARNING_DURATION_MULTIPLIER = 0.8;
-  private static readonly WEAPON_KNOCKBACK_IMMUNITY_MS = 250;
+  private static readonly NORMAL_WEAPON_KNOCKBACK_IMMUNITY_MS = 3000;
+  private static readonly MINI_BOSS_WEAPON_KNOCKBACK_IMMUNITY_MS = 5000;
 
   readonly body: Phaser.GameObjects.Arc;
   readonly maxHp: number;
@@ -249,7 +250,7 @@ export class Enemy {
       .normalize()
       .scale(adjustedStrength / (durationMs / 1000));
     this.knockbackRemainingMs = durationMs;
-    this.weaponKnockbackImmunityMs = Enemy.WEAPON_KNOCKBACK_IMMUNITY_MS;
+    this.weaponKnockbackImmunityMs = this.getWeaponKnockbackImmunityDurationMs();
     return true;
   }
 
@@ -290,6 +291,12 @@ export class Enemy {
 
   isWeaponKnockbackImmune(): boolean {
     return this.weaponKnockbackImmunityMs > 0;
+  }
+
+  private getWeaponKnockbackImmunityDurationMs(): number {
+    return this.id.endsWith('_boss')
+      ? Enemy.MINI_BOSS_WEAPON_KNOCKBACK_IMMUNITY_MS
+      : Enemy.NORMAL_WEAPON_KNOCKBACK_IMMUNITY_MS;
   }
 
   isDashing(): boolean {

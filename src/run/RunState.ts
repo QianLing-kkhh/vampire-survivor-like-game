@@ -320,7 +320,7 @@ export class RunState {
     this.endlessScalingLevel = scalingLevel;
     this.endlessHpMultiplier = hpMultiplier;
     this.endlessDamageMultiplier = damageMultiplier;
-    this.endlessSpeedMultiplier = Math.min(1 + scalingLevel * 0.055, 1.65);
+    this.endlessSpeedMultiplier = Math.min(1 + scalingLevel * 0.085, 2.2);
     this.endlessExpMultiplier = 1 + scalingLevel * 0.18;
   }
 }
