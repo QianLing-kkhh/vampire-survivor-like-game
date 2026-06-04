@@ -6,6 +6,7 @@ import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
+import { HomingBehaviorConfig } from './behavior/WeaponBehaviorConfig';
 
 type MagicWandWeaponConfig = WeaponConfig & {
   projectileCount?: number;
@@ -221,8 +222,11 @@ export class MagicWandWeapon extends Weapon {
       return;
     }
 
-    const explosionRadius = this.id === 'holy_wand' ? 60 : 45;
-    const damageMultiplier = this.id === 'holy_wand' ? 0.5 : 0.4;
+    const homingBehavior = this.getHomingBehavior();
+    const explosionRadius = homingBehavior?.explosionRadius
+      ?? (this.id === 'holy_wand' ? 60 : 45);
+    const damageMultiplier = homingBehavior?.explosionDamageMultiplier
+      ?? (this.id === 'holy_wand' ? 0.5 : 0.4);
     const explosionDamage = primaryDamage * damageMultiplier;
     const centerX = projectile.target.body.x;
     const centerY = projectile.target.body.y;
@@ -286,5 +290,11 @@ export class MagicWandWeapon extends Weapon {
         Math.floor(magicWandConfig.projectileCount ?? 1),
       ),
     );
+  }
+
+  private getHomingBehavior(): HomingBehaviorConfig | undefined {
+    return this.config.behavior?.type === 'homing'
+      ? this.config.behavior
+      : undefined;
   }
 }

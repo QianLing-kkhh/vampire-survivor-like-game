@@ -6,6 +6,7 @@ import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
+import { HomingBehaviorConfig, ProjectileBehaviorConfig } from './behavior/WeaponBehaviorConfig';
 
 type ProjectileBody = Phaser.GameObjects.GameObject & {
   x: number;
@@ -176,7 +177,10 @@ export class ProjectileWeapon extends Weapon {
       const hitEnemy = this.findHitEnemy(projectile, context.enemies);
 
       if (hitEnemy) {
-        const damageMultiplier = Math.pow(0.5, projectile.hitEnemies.size);
+        const damageMultiplier = Math.pow(
+          this.getPierceDamageFalloff(),
+          projectile.hitEnemies.size,
+        );
         const actualDamage = hitEnemy.takeDamage(
           this.createHitResultWithMultiplier(damageMultiplier),
         );
@@ -288,8 +292,8 @@ export class ProjectileWeapon extends Weapon {
       return;
     }
 
-    const explosionRadius = 60;
-    const explosionDamage = primaryDamage * 0.5;
+    const explosionRadius = this.getHomingBehavior()?.explosionRadius ?? 60;
+    const explosionDamage = primaryDamage * (this.getHomingBehavior()?.explosionDamageMultiplier ?? 0.5);
 
     this.showExplosionFeedback(projectile.body.x, projectile.body.y, explosionRadius);
 
@@ -366,7 +370,7 @@ export class ProjectileWeapon extends Weapon {
   }
 
   private alignProjectileToVelocity(projectile: Projectile): void {
-    if (projectile.velocity.lengthSq() === 0) {
+    if (!this.shouldAlignToVelocity() || projectile.velocity.lengthSq() === 0) {
       return;
     }
 
@@ -384,6 +388,30 @@ export class ProjectileWeapon extends Weapon {
       default:
         return 0;
     }
+  }
+
+  private shouldAlignToVelocity(): boolean {
+    const behavior = this.getProjectileBehavior();
+
+    return behavior?.alignToVelocity ?? true;
+  }
+
+  private getPierceDamageFalloff(): number {
+    const behavior = this.getProjectileBehavior();
+
+    return behavior?.pierceDamageFalloff ?? 0.5;
+  }
+
+  private getProjectileBehavior(): ProjectileBehaviorConfig | undefined {
+    return this.config.behavior?.type === 'projectile'
+      ? this.config.behavior
+      : undefined;
+  }
+
+  private getHomingBehavior(): HomingBehaviorConfig | undefined {
+    return this.config.behavior?.type === 'homing'
+      ? this.config.behavior
+      : undefined;
   }
 
 }

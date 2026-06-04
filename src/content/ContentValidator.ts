@@ -1,4 +1,8 @@
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
+import { WeaponBehaviorConfig } from '../weapon/behavior/WeaponBehaviorConfig';
+import { WeaponBehaviorRegistry } from '../weapon/behavior/WeaponBehaviorRegistry';
+import { WeaponConfig } from '../weapon/Weapon';
+import { WeaponTagRegistry } from '../weapon/tags/WeaponTagRegistry';
 
 import { ContentPack } from './ContentPack';
 import { DEFAULT_CONTENT_IDS } from './ContentId';
@@ -76,6 +80,9 @@ export class ContentValidator {
       if (!weapon.type || weapon.damage === undefined || weapon.cooldown === undefined) {
         console.warn(`Weapon ${weaponId} is missing a basic field.`);
       }
+
+      this.validateWeaponTags(weaponId, weapon);
+      this.validateWeaponBehavior(weaponId, weapon);
     }
 
     for (const [enemyId, enemy] of Object.entries(pack.enemies ?? {})) {
@@ -100,5 +107,92 @@ export class ContentValidator {
         console.warn(`Upgrade ${upgrade.id ?? 'unknown'} is missing a basic field.`);
       }
     }
+  }
+
+  private validateWeaponTags(weaponId: string, weapon: WeaponConfig): void {
+    if (weapon.tags === undefined) {
+      return;
+    }
+
+    if (!Array.isArray(weapon.tags)) {
+      console.warn(`Weapon ${weaponId} tags must be an array.`);
+      return;
+    }
+
+    for (const tag of weapon.tags) {
+      if (typeof tag !== 'string') {
+        console.warn(`Weapon ${weaponId} contains a non-string tag.`);
+        continue;
+      }
+
+      if (!WeaponTagRegistry.isBuiltInTag(tag)) {
+        console.warn(`Weapon ${weaponId} uses custom or unknown tag: ${tag}`);
+      }
+    }
+  }
+
+  private validateWeaponBehavior(weaponId: string, weapon: WeaponConfig): void {
+    if (weapon.behavior === undefined) {
+      return;
+    }
+
+    const behavior = weapon.behavior;
+
+    if (!behavior.type || !WeaponBehaviorRegistry.isKnownType(behavior.type)) {
+      console.warn(`Weapon ${weaponId} uses unknown behavior type: ${behavior.type}`);
+      return;
+    }
+
+    if (!this.isWeaponBehaviorCompatible(weapon.type, behavior.type)) {
+      console.warn(
+        `Weapon ${weaponId} type ${weapon.type} uses behavior ${behavior.type}; concrete class still controls runtime.`,
+      );
+    }
+
+    this.validateWeaponBehaviorFields(weaponId, behavior);
+  }
+
+  private validateWeaponBehaviorFields(weaponId: string, behavior: WeaponBehaviorConfig): void {
+    switch (behavior.type) {
+      case 'projectile':
+        if (
+          behavior.pierceDamageFalloff !== undefined
+          && (behavior.pierceDamageFalloff < 0 || behavior.pierceDamageFalloff > 1)
+        ) {
+          console.warn(`Weapon ${weaponId} pierceDamageFalloff should be between 0 and 1.`);
+        }
+        break;
+      case 'aura':
+        if (behavior.percentMaxHpDamage !== undefined && behavior.percentMaxHpDamage < 0) {
+          console.warn(`Weapon ${weaponId} percentMaxHpDamage should be >= 0.`);
+        }
+        break;
+      case 'arcing':
+        if (behavior.maxSpiralRadius !== undefined && behavior.maxSpiralRadius < 0) {
+          console.warn(`Weapon ${weaponId} maxSpiralRadius should be >= 0.`);
+        }
+        if (behavior.acceleration !== undefined && behavior.acceleration < 0) {
+          console.warn(`Weapon ${weaponId} acceleration should be >= 0.`);
+        }
+        break;
+      case 'homing':
+        if (behavior.explosionRadius !== undefined && behavior.explosionRadius < 0) {
+          console.warn(`Weapon ${weaponId} explosionRadius should be >= 0.`);
+        }
+        if (behavior.explosionDamageMultiplier !== undefined && behavior.explosionDamageMultiplier < 0) {
+          console.warn(`Weapon ${weaponId} explosionDamageMultiplier should be >= 0.`);
+        }
+        break;
+      case 'orbit':
+      default:
+        break;
+    }
+  }
+
+  private isWeaponBehaviorCompatible(weaponType: string, behaviorType: string): boolean {
+    return weaponType === behaviorType
+      || (weaponType === 'axe' && behaviorType === 'arcing')
+      || (weaponType === 'magic_wand' && behaviorType === 'homing')
+      || (weaponType === 'projectile' && behaviorType === 'homing');
   }
 }

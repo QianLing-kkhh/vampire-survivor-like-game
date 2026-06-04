@@ -15,6 +15,12 @@ export interface PassiveDetailInfo {
   relatedWeaponIds: string[];
 }
 
+export interface PassiveEffectScope {
+  all?: boolean;
+  tags?: string[];
+  weaponIds?: string[];
+}
+
 export class PassiveManager {
   private static readonly DEFAULT_MAX_LEVEL = 5;
   private static readonly PUMMAROLA_HEAL_INTERVAL_MS = 5000;

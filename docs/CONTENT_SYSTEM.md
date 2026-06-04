@@ -26,6 +26,8 @@ The content system is the architecture foundation for built-in content, future c
 - `stages`
 - `maps`
 
+Weapon definitions may include optional `tags` and `behavior` metadata. Tags describe archetypes such as projectile, aura, orbit, magic, physical, explosive, pierce, homing, arcing, spiral, control, base, and evolved. Behavior config describes the intended behavior family, but current built-in weapons still use their concrete runtime classes.
+
 Current status:
 
 - Built-in content is registered as one builtin content pack.
@@ -85,6 +87,8 @@ Current validation warns for:
 - Evolution route references to missing weapon/passive IDs
 - Wave references to missing enemy IDs
 - Missing basic fields in weapons, enemies, passives, or upgrades
+- Unknown weapon tags
+- Unknown or suspicious weapon behavior config
 
 Validation does not block startup except future critical default-content checks may become hard failures.
 
@@ -99,12 +103,15 @@ Future content packs may include:
 - Custom Boss definitions
 - Custom passives
 - Custom weapons
+- Weapon tags and behavior configs for custom/mod weapons
 - Enemy affixes
 - Mutators
 - Tutorials
 - Cosmetics
 
 Do not allow broad custom weapons/enemies until validators are mature.
+
+Custom weapon runtime is not implemented yet. The current `WeaponTag` and `WeaponBehaviorConfig` system is a foundation for future passives, relics, mutators, content restrictions, achievements, and mod-defined weapons.
 
 ## Custom Stage Foundation
 

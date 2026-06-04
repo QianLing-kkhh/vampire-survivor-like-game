@@ -1,6 +1,13 @@
 {
   "knife": {
     "type": "projectile",
+    "tags": ["base", "projectile", "physical", "pierce", "knockback"],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.5,
+      "alignToVelocity": true
+    },
     "damage": 10,
     "cooldown": 1.0,
     "projectileSpeed": 8,
@@ -13,6 +20,12 @@
   },
   "garlic": {
     "type": "aura",
+    "tags": ["base", "aura", "area", "defensive"],
+    "behavior": {
+      "type": "aura",
+      "knockback": false,
+      "percentMaxHpDamage": 0.004
+    },
     "damage": 2,
     "cooldown": 0.35,
     "radius": 2.5,
@@ -20,6 +33,10 @@
   },
   "bible": {
     "type": "orbit",
+    "tags": ["base", "orbit", "magic", "area", "knockback", "control"],
+    "behavior": {
+      "type": "orbit"
+    },
     "damage": 10,
     "cooldown": 0.5,
     "radius": 3.2,
@@ -31,6 +48,12 @@
   },
   "magic_wand": {
     "type": "magic_wand",
+    "tags": ["base", "projectile", "magic", "homing", "explosive", "knockback"],
+    "behavior": {
+      "type": "homing",
+      "explosionRadius": 45,
+      "explosionDamageMultiplier": 0.4
+    },
     "damage": 14,
     "cooldown": 1.2,
     "projectileSpeed": 280,
@@ -41,6 +64,14 @@
   },
   "axe": {
     "type": "axe",
+    "tags": ["base", "projectile", "physical", "arcing", "spiral", "area", "knockback"],
+    "behavior": {
+      "type": "arcing",
+      "trajectory": "spiralAccelerating",
+      "spiralTurns": 2,
+      "maxSpiralRadius": 70,
+      "acceleration": 220
+    },
     "damage": 24,
     "cooldown": 2.2,
     "projectileSpeed": 260,
@@ -54,6 +85,13 @@
   },
   "thousand_edge": {
     "type": "projectile",
+    "tags": ["evolved", "projectile", "physical", "pierce", "knockback"],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.5,
+      "alignToVelocity": true
+    },
     "damage": 14,
     "cooldown": 0.25,
     "projectileSpeed": 900,
@@ -66,6 +104,10 @@
   },
   "unholy_vespers": {
     "type": "orbit",
+    "tags": ["evolved", "orbit", "magic", "area", "knockback", "control"],
+    "behavior": {
+      "type": "orbit"
+    },
     "damage": 14,
     "cooldown": 0.35,
     "radius": 3.2,
@@ -78,6 +120,12 @@
   },
   "holy_wand": {
     "type": "projectile",
+    "tags": ["evolved", "projectile", "magic", "homing", "explosive", "knockback"],
+    "behavior": {
+      "type": "homing",
+      "explosionRadius": 60,
+      "explosionDamageMultiplier": 0.5
+    },
     "damage": 18,
     "cooldown": 0.3,
     "projectileSpeed": 1000,
@@ -90,6 +138,14 @@
   },
   "death_spiral": {
     "type": "axe",
+    "tags": ["evolved", "projectile", "physical", "spiral", "area", "knockback"],
+    "behavior": {
+      "type": "arcing",
+      "trajectory": "spiralAccelerating",
+      "spiralTurns": 3,
+      "maxSpiralRadius": 110,
+      "acceleration": 280
+    },
     "damage": 28,
     "cooldown": 1.2,
     "projectileSpeed": 620,
@@ -103,6 +159,12 @@
   },
   "soul_eater": {
     "type": "aura",
+    "tags": ["evolved", "aura", "area", "sustain", "defensive"],
+    "behavior": {
+      "type": "aura",
+      "knockback": false,
+      "percentMaxHpDamage": 0.005
+    },
     "damage": 5,
     "cooldown": 0.3,
     "radius": 4.0,

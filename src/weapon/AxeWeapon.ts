@@ -5,6 +5,7 @@ import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
+import { ArcingBehaviorConfig } from './behavior/WeaponBehaviorConfig';
 
 type AxeWeaponConfig = WeaponConfig & {
   projectileCount?: number;
@@ -166,15 +167,16 @@ export class AxeWeapon extends Weapon {
   private moveProjectile(projectile: AxeProjectile): void {
     const progress = Math.min(1, projectile.ageMs / this.lifetimeMs);
     const elapsedSeconds = projectile.ageMs / 1000;
-    const acceleration = this.id === 'death_spiral'
+    const behavior = this.getArcingBehavior();
+    const acceleration = behavior?.acceleration ?? (this.id === 'death_spiral'
       ? AxeWeapon.DEATH_SPIRAL_ACCELERATION
-      : AxeWeapon.AXE_ACCELERATION;
-    const spiralTurns = this.id === 'death_spiral'
+      : AxeWeapon.AXE_ACCELERATION);
+    const spiralTurns = behavior?.spiralTurns ?? (this.id === 'death_spiral'
       ? AxeWeapon.DEATH_SPIRAL_TURNS
-      : AxeWeapon.AXE_SPIRAL_TURNS;
-    const maxSpiralRadius = this.id === 'death_spiral'
+      : AxeWeapon.AXE_SPIRAL_TURNS);
+    const maxSpiralRadius = behavior?.maxSpiralRadius ?? (this.id === 'death_spiral'
       ? AxeWeapon.DEATH_SPIRAL_MAX_SPIRAL_RADIUS
-      : AxeWeapon.AXE_MAX_SPIRAL_RADIUS;
+      : AxeWeapon.AXE_MAX_SPIRAL_RADIUS);
     const travelDistance = this.modifiedProjectileSpeed * elapsedSeconds
       + 0.5 * acceleration * elapsedSeconds * elapsedSeconds;
     const spiralRadius = maxSpiralRadius * progress;
@@ -321,5 +323,11 @@ export class AxeWeapon extends Weapon {
         Math.floor(config.projectileCount ?? 1),
       ),
     );
+  }
+
+  private getArcingBehavior(): ArcingBehaviorConfig | undefined {
+    return this.config.behavior?.type === 'arcing'
+      ? this.config.behavior
+      : undefined;
   }
 }

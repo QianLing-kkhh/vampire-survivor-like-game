@@ -24,6 +24,7 @@ Future architecture should assume support for:
 - Enemy modifier configs for fast, shielded, explosive, split, or future mod-defined behavior
 - Data-driven Boss skills
 - Weapon tags and build archetypes
+- Weapon behavior configs as the gradual path toward custom/mod weapon runtimes
 - Relics, equipment, and one-use items
 - Active skills
 - Input configuration and controller support
@@ -65,6 +66,8 @@ Content should eventually split into resolvers and registries:
 - Localization display resolver for names/descriptions
 - Validation tools for custom content
 - Enemy modifier registry for elite/affix behaviors
+- Weapon tag registry for archetype interactions
+- Weapon behavior registry for future custom weapon behavior types
 
 ## Risk Areas
 

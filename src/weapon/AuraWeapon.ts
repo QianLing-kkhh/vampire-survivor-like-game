@@ -6,6 +6,7 @@ import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
+import { AuraBehaviorConfig } from './behavior/WeaponBehaviorConfig';
 
 export class AuraWeapon extends Weapon {
   private static readonly GARLIC_PERCENT_DAMAGE = 0.004;
@@ -150,7 +151,7 @@ export class AuraWeapon extends Weapon {
   private createAuraHitResult(enemy: Enemy) {
     if (this.id === 'garlic') {
       return {
-        damage: this.modifiedDamage + enemy.maxHp * AuraWeapon.GARLIC_PERCENT_DAMAGE,
+        damage: this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(AuraWeapon.GARLIC_PERCENT_DAMAGE),
         isCritical: false,
         damageType: DamageType.Normal,
       };
@@ -158,12 +159,26 @@ export class AuraWeapon extends Weapon {
 
     if (this.id === 'soul_eater') {
       return {
-        damage: this.modifiedDamage + enemy.maxHp * AuraWeapon.SOUL_EATER_PERCENT_DAMAGE,
+        damage: this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(
+          AuraWeapon.SOUL_EATER_PERCENT_DAMAGE,
+        ),
         isCritical: false,
         damageType: DamageType.Normal,
       };
     }
 
     return this.createHitResult();
+  }
+
+  private getPercentMaxHpDamage(defaultValue: number): number {
+    const behavior = this.getAuraBehavior();
+
+    return behavior?.percentMaxHpDamage ?? defaultValue;
+  }
+
+  private getAuraBehavior(): AuraBehaviorConfig | undefined {
+    return this.config.behavior?.type === 'aura'
+      ? this.config.behavior
+      : undefined;
   }
 }

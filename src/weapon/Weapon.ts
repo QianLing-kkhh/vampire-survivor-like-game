@@ -5,11 +5,15 @@ import { DamageType } from '../combat/DamageType';
 import { HitResult } from '../combat/HitResult';
 import { Enemy } from '../enemy/Enemy';
 import { RunStats } from '../stats/RunStats';
+import { WeaponBehaviorConfig } from './behavior/WeaponBehaviorConfig';
+import { WeaponTag } from './tags/WeaponTag';
 
 export type WeaponType = 'projectile' | 'aura' | 'orbit' | 'magic_wand' | 'axe';
 
 export interface WeaponConfig {
   type: WeaponType | string;
+  tags?: WeaponTag[];
+  behavior?: WeaponBehaviorConfig;
   damage: number;
   cooldown: number;
   projectileSpeed?: number;

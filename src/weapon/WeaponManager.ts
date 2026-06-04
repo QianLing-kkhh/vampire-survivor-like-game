@@ -2,8 +2,9 @@ import { Enemy } from '../enemy/Enemy';
 import { PlayerController } from '../player/PlayerController';
 import { RunStats } from '../stats/RunStats';
 
-import { Weapon } from './Weapon';
+import { Weapon, WeaponConfig } from './Weapon';
 import { WeaponFactory } from './WeaponFactory';
+import { WeaponTag } from './tags/WeaponTag';
 
 type ManagedWeapon = Weapon & {
   destroy?: () => void;
@@ -151,6 +152,13 @@ export class WeaponManager {
 
   getWeaponIds(): string[] {
     return this.weapons.map((weapon) => weapon.id);
+  }
+
+  getWeaponTags(weaponId: string): WeaponTag[] {
+    const weapon = this.weapons.find((managedWeapon) => managedWeapon.id === weaponId);
+    const config = (weapon as unknown as { config?: WeaponConfig } | undefined)?.config;
+
+    return [...(config?.tags ?? [])];
   }
 
   getUpgradeTargetWeaponId(baseWeaponId: string): string {

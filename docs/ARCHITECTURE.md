@@ -97,6 +97,9 @@ Progression owns upgrade availability, upgrade application, passive effects, wea
 - `AutoUpgradeSelector`: weighted upgrade selector for automated testing.
 - `PassiveManager`: tracks passive levels and passive-derived modifiers.
 - `WeaponManager`: owns weapon list, weapon upgrades, evolution replacement, damage/hit/kill stats, and build display info.
+- `WeaponTag`: classifies weapons for future passives, relics, mutators, challenges, limited weapon pools, and custom content.
+- `WeaponBehaviorConfig`: data shape for projectile, aura, orbit, arcing, and homing behavior metadata.
+- `WeaponBehaviorFactory` / `WeaponBehaviorRegistry`: lightweight behavior wrapper foundation; current built-in weapons still run through concrete weapon classes.
 - `EvolutionManager`: evaluates evolution rules and applies weapon evolution through `WeaponManager`.
 
 Important rule: `UpgradeFlow` is the preferred orchestration point. `GameScene` and `TreasureManager` should not duplicate upgrade/evolution details.
@@ -184,6 +187,7 @@ TitleScene
 
 - UI displays runtime state and sends user intents through scene events.
 - Upgrade and treasure reward rules should go through `UpgradeFlow`.
+- Weapon archetype interactions should prefer tags/behavior config over weapon-id-only conditionals when possible.
 - Enemy movement and contact damage should go through `EnemyFlow`.
 - Enemy affixes should go through `EnemyModifierRuntime`; do not create a new enemy ID for every stat/behavior combination.
 - Final Boss-specific state should go through `BossController`.

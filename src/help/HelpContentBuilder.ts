@@ -8,7 +8,9 @@ import weaponsData from '../data/weapons.json';
 
 import { HelpLine, HelpSection, HelpTabId } from './HelpTab';
 
-type WeaponConfig = Record<string, string | number | boolean | undefined>;
+type WeaponConfig = Record<string, string | number | boolean | string[] | object | undefined> & {
+  tags?: string[];
+};
 type PassiveConfig = {
   id: string;
   name: string;
@@ -171,10 +173,15 @@ export class HelpContentBuilder {
 
     const parts = Object.entries(config)
       .filter(([key]) => key !== 'type')
+      .filter(([key]) => key !== 'behavior')
+      .filter(([key]) => key !== 'tags')
       .filter(([, value]) => value !== undefined)
       .map(([key, value]) => `${this.formatName(key)} ${value}`);
+    const tagText = config.tags && config.tags.length > 0
+      ? `tags ${config.tags.join('/')}`
+      : undefined;
 
-    return [`type ${config.type ?? 'unknown'}`, ...parts].join(', ');
+    return [`type ${config.type ?? 'unknown'}`, ...(tagText ? [tagText] : []), ...parts].join(', ');
   }
 
   private getUpgradeIconKey(upgradeId: string): string | undefined {

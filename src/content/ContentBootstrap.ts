@@ -9,6 +9,7 @@ import weapons from '../data/weapons.json';
 
 import { CharacterDefinition } from '../character/CharacterDefinition';
 import { PassiveItem } from '../passive/PassiveItem';
+import { WeaponConfig } from '../weapon/Weapon';
 
 import { ContentPack } from './ContentPack';
 import { ContentRegistry } from './ContentRegistry';
@@ -40,7 +41,7 @@ export class ContentBootstrap {
       id: 'builtin',
       version: '1.0.0',
       source: 'builtin',
-      weapons,
+      weapons: weapons as Record<string, WeaponConfig>,
       enemies,
       passives: this.passivesToRecord(passives),
       upgrades,
