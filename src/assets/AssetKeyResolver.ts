@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AppearanceManager } from '../appearance/AppearanceManager';
 import { AssetFallbacks } from './AssetFallbacks';
 import {
   AssetKeyEntry,
@@ -15,7 +16,11 @@ export class AssetKeyResolver {
   }
 
   static getPlayerTextureKey(scene: Phaser.Scene): string | null {
-    return AssetKeyResolver.resolveTexture(scene, DEFAULT_ASSET_KEY_MAP.player.texture);
+    return AssetKeyResolver.resolveTexture(
+      scene,
+      DEFAULT_ASSET_KEY_MAP.player.texture,
+      'player.default.texture',
+    );
   }
 
   static getPlayerAnimationKey(
@@ -26,6 +31,7 @@ export class AssetKeyResolver {
     return AssetKeyResolver.resolveAnimation(
       scene,
       DEFAULT_ASSET_KEY_MAP.player.animations[state][direction],
+      `player.default.animation.${state}.${direction}`,
     );
   }
 
@@ -35,10 +41,14 @@ export class AssetKeyResolver {
     ];
 
     if (!entry) {
-      return AssetFallbacks.resolveTexture(scene, enemyId);
+      return AssetKeyResolver.resolveTexture(
+        scene,
+        { primary: enemyId },
+        `enemy.${enemyId}.texture`,
+      );
     }
 
-    return AssetKeyResolver.resolveTexture(scene, entry.texture);
+    return AssetKeyResolver.resolveTexture(scene, entry.texture, `enemy.${enemyId}.texture`);
   }
 
   static getEnemyAnimationKey(scene: Phaser.Scene, enemyId: string): string | null {
@@ -50,14 +60,18 @@ export class AssetKeyResolver {
       return null;
     }
 
-    return AssetKeyResolver.resolveAnimation(scene, entry.animation);
+    return AssetKeyResolver.resolveAnimation(scene, entry.animation, `enemy.${enemyId}.animation`);
   }
 
   static getWeaponProjectileTextureKey(scene: Phaser.Scene, weaponId: string): string | null {
     const entry = AssetKeyResolver.getWeaponEntry(weaponId);
 
     return entry?.projectileTexture
-      ? AssetKeyResolver.resolveTexture(scene, entry.projectileTexture)
+      ? AssetKeyResolver.resolveTexture(
+        scene,
+        entry.projectileTexture,
+        `weapon.${weaponId}.projectile.texture`,
+      )
       : null;
   }
 
@@ -65,14 +79,20 @@ export class AssetKeyResolver {
     const entry = AssetKeyResolver.getWeaponEntry(weaponId);
 
     return entry?.projectileAnimation
-      ? AssetKeyResolver.resolveAnimation(scene, entry.projectileAnimation)
+      ? AssetKeyResolver.resolveAnimation(
+        scene,
+        entry.projectileAnimation,
+        `weapon.${weaponId}.projectile.animation`,
+      )
       : null;
   }
 
   static getWeaponIconKey(scene: Phaser.Scene, weaponId: string): string | null {
     const entry = AssetKeyResolver.getWeaponEntry(weaponId);
 
-    return entry?.icon ? AssetKeyResolver.resolveTexture(scene, entry.icon) : null;
+    return entry?.icon
+      ? AssetKeyResolver.resolveTexture(scene, entry.icon, `weapon.${weaponId}.icon`, 'icons')
+      : null;
   }
 
   static getPassiveIconKey(scene: Phaser.Scene, passiveId: string): string | null {
@@ -80,7 +100,9 @@ export class AssetKeyResolver {
       passiveId as keyof typeof DEFAULT_ASSET_KEY_MAP.passives
     ];
 
-    return entry ? AssetKeyResolver.resolveTexture(scene, entry) : null;
+    return entry
+      ? AssetKeyResolver.resolveTexture(scene, entry, `passive.${passiveId}.icon`, 'icons')
+      : null;
   }
 
   static getPickupTextureKey(scene: Phaser.Scene, pickupType: string): string | null {
@@ -88,7 +110,9 @@ export class AssetKeyResolver {
       pickupType as keyof typeof DEFAULT_ASSET_KEY_MAP.pickups
     ];
 
-    return entry ? AssetKeyResolver.resolveTexture(scene, entry) : null;
+    return entry
+      ? AssetKeyResolver.resolveTexture(scene, entry, `pickup.${pickupType}.texture`)
+      : null;
   }
 
   static getWorldLandmarkTextureKey(scene: Phaser.Scene, landmarkType: string): string | null {
@@ -104,7 +128,9 @@ export class AssetKeyResolver {
       effectType as keyof typeof DEFAULT_ASSET_KEY_MAP.effects
     ];
 
-    return entry?.texture ? AssetKeyResolver.resolveTexture(scene, entry.texture) : null;
+    return entry?.texture
+      ? AssetKeyResolver.resolveTexture(scene, entry.texture, `effect.${effectType}.texture`)
+      : null;
   }
 
   static getEffectAnimationKey(scene: Phaser.Scene, effectType: string): string | null {
@@ -113,7 +139,7 @@ export class AssetKeyResolver {
     ];
 
     return entry && 'animation' in entry && entry.animation
-      ? AssetKeyResolver.resolveAnimation(scene, entry.animation)
+      ? AssetKeyResolver.resolveAnimation(scene, entry.animation, `effect.${effectType}.animation`)
       : null;
   }
 
@@ -128,14 +154,52 @@ export class AssetKeyResolver {
       key as keyof typeof DEFAULT_ASSET_KEY_MAP.world
     ];
 
-    return entry ? AssetKeyResolver.resolveTexture(scene, entry) : null;
+    return entry
+      ? AssetKeyResolver.resolveTexture(scene, entry, `world.${key}.texture`, 'world')
+      : null;
   }
 
-  private static resolveTexture(scene: Phaser.Scene, entry: AssetKeyEntry): string | null {
+  private static resolveTexture(
+    scene: Phaser.Scene,
+    entry: AssetKeyEntry,
+    logicalKey?: string,
+    overrideDomain: 'textures' | 'icons' | 'world' | 'ui' = 'textures',
+  ): string | null {
+    const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, overrideDomain);
+
+    if (AssetFallbacks.hasTexture(scene, overrideKey)) {
+      return overrideKey;
+    }
+
     return AssetFallbacks.resolveTexture(scene, entry.primary, entry.fallbacks ?? []);
   }
 
-  private static resolveAnimation(scene: Phaser.Scene, entry: AssetKeyEntry): string | null {
+  private static resolveAnimation(
+    scene: Phaser.Scene,
+    entry: AssetKeyEntry,
+    logicalKey?: string,
+  ): string | null {
+    const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, 'animations');
+
+    if (AssetFallbacks.hasAnimation(scene, overrideKey)) {
+      return overrideKey;
+    }
+
     return AssetFallbacks.resolveAnimation(scene, entry.primary, entry.fallbacks ?? []);
+  }
+
+  private static getOverride(
+    logicalKey: string | undefined,
+    domain: 'textures' | 'animations' | 'icons' | 'ui' | 'world',
+  ): string | undefined {
+    if (!logicalKey) {
+      return undefined;
+    }
+
+    try {
+      return AppearanceManager.resolveOverride(logicalKey, domain);
+    } catch {
+      return undefined;
+    }
   }
 }

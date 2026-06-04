@@ -93,6 +93,16 @@ Settings storage is split into domains behind `SettingsManager`:
 
 `PlaytestSettings` remains as a compatibility facade so existing UI and runtime callers keep working. New systems should use `SettingsManager` directly when they belong to a specific settings domain.
 
+## Appearance
+
+Appearance selection is save-backed but has no UI yet.
+
+- Current theme: `default`
+- `AppearanceManager` owns selected theme and skin IDs.
+- `UITheme` remains the active default UI style constants.
+- Future theme/skin controls should live in `SettingsMenu` or a dedicated appearance screen, not scattered across Title/Pause/Result.
+- Runtime asset lookup should continue through `AssetKeyResolver` so active themes can override texture, animation, icon, world, UI, or audio keys later.
+
 ## Immediate Apply Rule
 
 Settings should apply immediately to the current run.

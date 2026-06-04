@@ -20,7 +20,7 @@ import {
 } from '../settings/InputSettings';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 
-export const SAVE_SCHEMA_VERSION = 4;
+export const SAVE_SCHEMA_VERSION = 5;
 
 export interface SaveData {
   schemaVersion: number;
@@ -45,7 +45,12 @@ export interface SaveData {
     selectedThemeId: string;
   };
   cosmetics: {
+    selectedThemeId: string;
     selectedCharacterSkinByCharacterId: Record<string, string>;
+    selectedWeaponSkinByWeaponId: Record<string, string>;
+    selectedEnemySkinByEnemyId: Record<string, string>;
+    selectedUiThemeId?: string;
+    selectedWorldThemeId?: string;
   };
   records: {
     leaderboardsByKey: Record<string, LeaderboardRecord[]>;
@@ -58,6 +63,7 @@ export interface SaveSummary {
   selectedStageId: string;
   selectedMapId: string;
   selectedDifficultyId: string;
+  selectedThemeId: string;
   settingsCount?: number;
   leaderboardCount: number;
   customStageCount?: number;
@@ -87,7 +93,10 @@ export function createDefaultSaveData(): SaveData {
       selectedThemeId: 'default',
     },
     cosmetics: {
+      selectedThemeId: 'default',
       selectedCharacterSkinByCharacterId: {},
+      selectedWeaponSkinByWeaponId: {},
+      selectedEnemySkinByEnemyId: {},
     },
     records: {
       leaderboardsByKey: {},

@@ -174,7 +174,7 @@ When adding a new visible object:
 
 1. Add or reuse an art pack asset.
 2. Add preload support in `PreloadScene`.
-3. Use `scene.textures.exists(key)` before relying on optional textures.
+3. Resolve runtime keys through `AssetKeyResolver`.
 4. Keep fallback graphics until the asset is confirmed in builds.
 
 ## PNG Transparency
@@ -187,9 +187,9 @@ Do not commit PNGs with:
 - Checkerboard backgrounds baked into the image
 - 0-byte or incomplete files
 
-## Future Asset Key Resolver
+## Asset Key Resolver
 
-Texture keys and animation keys are still partly mapped in gameplay/UI classes. A future `AssetKeyResolver` should centralize:
+`AssetKeyResolver` is the current runtime entry point for texture, animation, icon, and fallback resolution. It centralizes:
 
 - weapon icon keys
 - passive icon keys
@@ -199,6 +199,17 @@ Texture keys and animation keys are still partly mapped in gameplay/UI classes. 
 - art pack vs legacy key mapping
 
 New code should avoid scattering new texture-key strings across unrelated systems.
+
+## Appearance Themes and Skins
+
+The appearance foundation is present, but no selection UI or art-pack import exists yet.
+
+- `AppearanceRegistry` registers the built-in `default` theme and future skins/themes.
+- `AppearanceManager` stores active appearance selections in formal save data.
+- `ThemeAssetOverrides` maps logical keys such as `enemy.slime.texture` or `weapon.knife.projectile.animation` to concrete Phaser keys.
+- `AssetKeyResolver` checks active appearance overrides before falling back to the default asset map.
+
+The default theme has no overrides, so current visuals remain unchanged. Future custom skins, map themes, UI themes, and mod art packs should register through the appearance layer and continue to resolve through `AssetKeyResolver`.
 
 ## Audio Assets
 

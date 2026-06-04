@@ -1,6 +1,7 @@
 export type AssetKeyEntry = {
   primary: string;
   fallbacks?: readonly string[];
+  logicalKey?: string;
 };
 
 export type PlayerAnimationState = 'idle' | 'walk';

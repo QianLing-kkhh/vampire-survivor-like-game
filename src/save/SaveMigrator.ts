@@ -59,11 +59,45 @@ export class SaveMigrator {
         ...defaultSave.selections,
         ...save.selections,
       },
-      cosmetics: {
-        ...defaultSave.cosmetics,
-        ...save.cosmetics,
-      },
+      cosmetics: this.migrateCosmetics(save.cosmetics, save.selections),
       records: this.migrateRecords(save.records),
+    };
+  }
+
+  private migrateCosmetics(
+    cosmetics: unknown,
+    selections: Partial<SaveData['selections']> | undefined,
+  ): SaveData['cosmetics'] {
+    const defaultCosmetics = createDefaultSaveData().cosmetics;
+
+    if (!this.isObject(cosmetics)) {
+      return {
+        ...defaultCosmetics,
+        selectedThemeId: selections?.selectedThemeId ?? defaultCosmetics.selectedThemeId,
+      };
+    }
+
+    return {
+      ...defaultCosmetics,
+      ...cosmetics,
+      selectedThemeId: typeof cosmetics.selectedThemeId === 'string'
+        ? cosmetics.selectedThemeId
+        : selections?.selectedThemeId ?? defaultCosmetics.selectedThemeId,
+      selectedCharacterSkinByCharacterId: this.isObject(cosmetics.selectedCharacterSkinByCharacterId)
+        ? this.readStringRecord(cosmetics.selectedCharacterSkinByCharacterId)
+        : defaultCosmetics.selectedCharacterSkinByCharacterId,
+      selectedWeaponSkinByWeaponId: this.isObject(cosmetics.selectedWeaponSkinByWeaponId)
+        ? this.readStringRecord(cosmetics.selectedWeaponSkinByWeaponId)
+        : defaultCosmetics.selectedWeaponSkinByWeaponId,
+      selectedEnemySkinByEnemyId: this.isObject(cosmetics.selectedEnemySkinByEnemyId)
+        ? this.readStringRecord(cosmetics.selectedEnemySkinByEnemyId)
+        : defaultCosmetics.selectedEnemySkinByEnemyId,
+      selectedUiThemeId: typeof cosmetics.selectedUiThemeId === 'string'
+        ? cosmetics.selectedUiThemeId
+        : undefined,
+      selectedWorldThemeId: typeof cosmetics.selectedWorldThemeId === 'string'
+        ? cosmetics.selectedWorldThemeId
+        : undefined,
     };
   }
 
@@ -201,6 +235,16 @@ export class SaveMigrator {
     return Array.isArray(value)
       ? value.filter((item): item is string => typeof item === 'string')
       : [];
+  }
+
+  private readStringRecord(value: Record<string, unknown>): Record<string, string> {
+    return Object.entries(value).reduce<Record<string, string>>((result, [key, item]) => {
+      if (typeof item === 'string') {
+        result[key] = item;
+      }
+
+      return result;
+    }, {});
   }
 
   private readPassiveItems(value: unknown): string[] {

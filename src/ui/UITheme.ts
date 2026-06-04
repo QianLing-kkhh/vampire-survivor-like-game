@@ -1,4 +1,7 @@
 export const UITheme = {
+  themeId: 'default',
+  paletteId: 'default',
+  buttonStyleId: 'default',
   fontFamily: 'Arial, Helvetica, sans-serif',
   titleFontSize: '40px',
   headerFontSize: '28px',

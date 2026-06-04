@@ -14,6 +14,8 @@ Future architecture should assume support for:
 - Mod / content packs
 - Save/load
 - Custom cosmetics
+- Appearance themes and skin selections
+- Mod art packs and theme asset overrides
 - Unlocks and meta progression
 - Achievements and quests
 - Daily challenges and seed challenges
@@ -49,6 +51,7 @@ Future architecture should assume support for:
 10. Future selection UI should build on existing managers, save data, and content registry rather than bypass them.
 11. Enemy variants should prefer `EnemyModifier` configs over combinatorial enemy IDs.
 12. Difficulty, challenge, and custom rule changes should prefer `RunRuleSet` mutators over direct runtime if/else branches.
+13. Future skins/themes should use `AppearanceManager`, `AppearanceRegistry`, and `AssetKeyResolver` rather than direct texture strings.
 
 ## Planned Domain Splits
 
@@ -65,6 +68,7 @@ Content should eventually split into resolvers and registries:
 
 - Content registry for gameplay definitions
 - Asset key resolver for texture/animation/icon keys
+- Appearance registry for themes, skins, and future mod art packs
 - Localization display resolver for names/descriptions
 - Validation tools for custom content
 - Enemy modifier registry for elite/affix behaviors
@@ -82,3 +86,4 @@ Content should eventually split into resolvers and registries:
 - Mod/custom content bypassing validation
 - Leaderboards mixing incompatible schemas, seeds, difficulties, or content versions
 - Rule changes bypassing `RunRuleSet` and becoming invisible to CSV or leaderboard keys
+- Theme or skin systems bypassing `AssetKeyResolver` and becoming impossible to swap per appearance selection

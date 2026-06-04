@@ -13,8 +13,12 @@ export type SaveListener = (saveData: SaveData) => void;
 type SaveSettingsUpdate = Partial<{
   [Domain in keyof SaveData['settings']]: Partial<SaveData['settings'][Domain]>;
 }>;
-export type SaveDataUpdate = Partial<Omit<SaveData, 'settings'>> & {
+export type SaveDataUpdate = Partial<Omit<SaveData, 'settings' | 'progression' | 'selections' | 'cosmetics' | 'records'>> & {
   settings?: SaveSettingsUpdate;
+  progression?: Partial<SaveData['progression']>;
+  selections?: Partial<SaveData['selections']>;
+  cosmetics?: Partial<SaveData['cosmetics']>;
+  records?: Partial<SaveData['records']>;
 };
 
 export class SaveManager {
@@ -168,6 +172,8 @@ export class SaveManager {
       selectedStageId: saveData.selections.selectedStageId,
       selectedMapId: saveData.selections.selectedMapId,
       selectedDifficultyId: saveData.selections.selectedDifficultyId,
+      selectedThemeId: saveData.cosmetics.selectedThemeId
+        ?? saveData.selections.selectedThemeId,
       settingsCount: Object.values(saveData.settings)
         .reduce((total, domain) => total + Object.keys(domain).length, 0),
       leaderboardCount: Object.values(saveData.records.leaderboardsByKey)

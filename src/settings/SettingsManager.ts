@@ -1,3 +1,5 @@
+import { AppearanceManager } from '../appearance/AppearanceManager';
+import { AppearanceSelection } from '../appearance/AppearanceSelection';
 import { SaveData } from '../save/SaveData';
 import { SaveManager } from '../save/SaveManager';
 
@@ -52,6 +54,10 @@ export class SettingsManager {
     return { ...SettingsManager.getAll().developer };
   }
 
+  static getAppearance(): AppearanceSelection {
+    return AppearanceManager.getSelection();
+  }
+
   static updateGameplay(partial: Partial<GameplaySettingsData>): SettingsData {
     return SettingsManager.updateDomain('gameplay', partial);
   }
@@ -78,6 +84,12 @@ export class SettingsManager {
 
   static updateDeveloper(partial: Partial<DeveloperSettingsData>): SettingsData {
     return SettingsManager.updateDomain('developer', partial);
+  }
+
+  static updateSelectedTheme(themeId: string): AppearanceSelection {
+    AppearanceManager.setSelectedThemeId(themeId);
+
+    return AppearanceManager.getSelection();
   }
 
   static subscribe(listener: SettingsChangeListener): () => void {

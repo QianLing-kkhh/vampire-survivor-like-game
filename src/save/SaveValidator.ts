@@ -18,7 +18,7 @@ export class SaveValidator {
     this.validateObjectField(data, 'settings', issues);
     this.validateObjectField(data, 'progression', issues);
     this.validateSelections(data.selections, issues);
-    this.validateObjectField(data, 'cosmetics', issues);
+    this.validateCosmetics(data.cosmetics, issues);
     this.validateRecords(data.records, issues);
 
     return createSaveImportResult(issues, issues.some((issue) => issue.level === 'error')
@@ -110,6 +110,39 @@ export class SaveValidator {
     }
   }
 
+  private validateCosmetics(value: unknown, issues: SaveImportIssue[]): void {
+    if (!this.isObject(value)) {
+      issues.push(this.warning(
+        'invalid_cosmetics',
+        'cosmetics is missing or invalid; migrator will apply defaults.',
+        'cosmetics',
+      ));
+      return;
+    }
+
+    this.validateOptionalString(value, 'selectedThemeId', 'cosmetics.selectedThemeId', issues);
+    this.validateOptionalString(value, 'selectedUiThemeId', 'cosmetics.selectedUiThemeId', issues);
+    this.validateOptionalString(value, 'selectedWorldThemeId', 'cosmetics.selectedWorldThemeId', issues);
+    this.validateOptionalStringRecord(
+      value,
+      'selectedCharacterSkinByCharacterId',
+      'cosmetics.selectedCharacterSkinByCharacterId',
+      issues,
+    );
+    this.validateOptionalStringRecord(
+      value,
+      'selectedWeaponSkinByWeaponId',
+      'cosmetics.selectedWeaponSkinByWeaponId',
+      issues,
+    );
+    this.validateOptionalStringRecord(
+      value,
+      'selectedEnemySkinByEnemyId',
+      'cosmetics.selectedEnemySkinByEnemyId',
+      issues,
+    );
+  }
+
   private validateOptionalString(
     data: Record<string, unknown>,
     field: string,
@@ -120,6 +153,21 @@ export class SaveValidator {
       issues.push(this.warning(
         `invalid_${field}`,
         `${path} should be a string; migrator may replace it with a default.`,
+        path,
+      ));
+    }
+  }
+
+  private validateOptionalStringRecord(
+    data: Record<string, unknown>,
+    field: string,
+    path: string,
+    issues: SaveImportIssue[],
+  ): void {
+    if (data[field] !== undefined && !this.isObject(data[field])) {
+      issues.push(this.warning(
+        `invalid_${field}`,
+        `${path} should be a string map; migrator may replace it with a default.`,
         path,
       ));
     }

@@ -37,6 +37,15 @@ Current default selections:
 - Map: `prototype_field`
 - Theme: `default`
 
+Current cosmetics fields:
+
+- selected theme ID
+- selected character skin IDs by character
+- selected weapon skin IDs by weapon
+- selected enemy skin IDs by enemy
+- reserved selected UI theme ID
+- reserved selected world theme ID
+
 Current unlock defaults:
 
 - `default` character
@@ -137,6 +146,17 @@ The current selected IDs are save-backed:
 - `MapManager`
 
 There is no selection UI yet. Managers fall back to defaults if a saved ID is missing from registered content.
+
+## Appearance Integration
+
+Appearance selections are stored in `SaveData.cosmetics` and read through `AppearanceManager`.
+
+Current behavior:
+
+- The built-in `default` theme is active.
+- No appearance selection UI is implemented.
+- Default theme overrides are empty, so saved appearance data does not change visuals.
+- Future skins, themes, and mod art packs should store persistent selections in `cosmetics` and resolve runtime keys through `AssetKeyResolver`.
 
 ## Records and Leaderboards
 

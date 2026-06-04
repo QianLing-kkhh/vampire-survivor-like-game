@@ -71,6 +71,23 @@ Current save domains:
 
 CSV playtest logs are separate from formal save data unless explicitly integrated later.
 
+## Appearance Layer
+
+The appearance layer is the foundation for future themes, skins, UI themes, map themes, and mod art packs.
+
+- `AppearanceRegistry`: registers built-in and future custom theme/skin definitions.
+- `AppearanceManager`: reads/writes the active appearance selection through `SaveManager.cosmetics`.
+- `ThemeDefinition`: describes a theme and optional asset override sets.
+- `SkinDefinition`: describes target-specific skins for characters, weapons, enemies, bosses, UI, world, and effects.
+- `ThemeAssetOverrides`: maps logical asset keys to concrete Phaser texture, animation, icon, UI, world, or audio keys.
+- `AssetKeyResolver`: remains the single runtime asset-key path. It checks active appearance overrides first, then falls back to the default art-pack/legacy key map.
+
+Current status:
+
+- Only the `default` theme is registered.
+- No appearance selection UI or mod art loader exists yet.
+- Default appearance overrides are empty, so current visuals remain unchanged.
+
 ## Character / Stage / Map Layer
 
 These managers prepare the project for multi-character, multi-stage, and multi-map selection without adding UI yet.
@@ -172,6 +189,7 @@ Responsive helpers centralize screen layout rules.
 
 - `PreloadScene`: central asset/audio preload and spritesheet animation creation.
 - Art pack assets: `public/assets/art/` plus `animation_manifest.json`.
+- `AssetKeyResolver`: centralized texture, animation, icon, and fallback resolution, including the appearance override hook.
 - `AudioManager`: channel-based audio playback for BGM, SFX, weapon, and UI channels.
 - `I18n`: locale lookup, fallback, and interpolation.
 - `Locale`: supported locales and display names.
@@ -209,3 +227,4 @@ TitleScene
 - Persistent player selections and settings should go through `SaveManager`.
 - Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.
 - Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.
+- Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.
