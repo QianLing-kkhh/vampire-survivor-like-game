@@ -287,6 +287,24 @@ These are approximate testing targets, not strict rules:
 3. Toggle Auto Movement, Auto Upgrade, Fast Mode, Endless Mode, audio, and language from Settings.
 4. Confirm settings apply without scene restart.
 
+## Project Validation
+
+Use `npm.cmd run validate` before release candidates or larger Codex handoffs. It runs:
+
+- `npm.cmd exec tsc`
+- `npm.cmd run build`
+- `npm.cmd run validate:content`
+- `npm.cmd run validate:assets`
+- `npm.cmd run validate:docs`
+
+The validation scripts are local Node tools. They do not upload data, fetch remote content, modify files, or auto-fix issues. Vite chunk-size warnings are acceptable if the build command exits successfully.
+
+Focused checks:
+
+- `npm.cmd run validate:content` performs JSON reference checks for built-in content.
+- `npm.cmd run validate:assets` checks required asset roots and animation manifest references.
+- `npm.cmd run validate:docs` checks local Markdown links in `README.md` and `docs/*.md`.
+
 ## Common Interpretation Notes
 
 - A low evolved weapon damage value does not always mean the weapon is weak. Evolution may have occurred late.

@@ -200,6 +200,17 @@ Do not commit PNGs with:
 
 New code should avoid scattering new texture-key strings across unrelated systems.
 
+## Asset Validation Script
+
+`npm.cmd run validate:assets` checks the asset surface used by the resolver and preload pipeline. It verifies:
+
+- `public/assets` and `public/assets/art` exist;
+- required art groups such as `player`, `enemies`, `weapons`, `passives`, `pickups`, and `ui` exist;
+- `public/assets/art/animation_manifest.json` parses as JSON;
+- manifest file references resolve to files in `public/assets`.
+
+The first version does not inspect PNG alpha channels or visual correctness. It is a missing-file and manifest sanity check for local validation and future CI.
+
 ## Appearance Themes and Skins
 
 The appearance foundation is present, but no selection UI or art-pack import exists yet.

@@ -124,6 +124,21 @@ Current validation warns for:
 
 Validation does not block startup except future critical default-content checks may become hard failures.
 
+## Validation Scripts
+
+`npm.cmd run validate:content` runs a lightweight Node-based content audit for local quality gates and future CI. It does not import TypeScript runtime code, so it can run from Node without a TS loader.
+
+The current script checks:
+
+- required `src/data/*.json` files parse correctly;
+- stages reference existing maps and final bosses;
+- characters reference existing starting weapons;
+- wave entries reference existing enemies;
+- boss configs reference existing enemy definitions;
+- simple weapon evolution/passive references when those fields are present.
+
+If a richer `src/tools/ContentAudit.ts` implementation is added later, the script can delegate to it or run it after build output is available.
+
 ## Future Content Types
 
 Future content packs may include:
