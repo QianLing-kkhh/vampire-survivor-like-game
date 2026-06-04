@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
+import { ContentRegistry } from '../content/ContentRegistry';
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { Position } from '../enemy/EnemyMovement';
@@ -27,7 +30,24 @@ export class SpawnDirector {
     private readonly getWorldSize: () => { width: number; height: number },
     private readonly onEnemySpawned: (enemy: Enemy) => void,
   ) {
+    ContentBootstrap.ensureInitialized();
     this.pendingWaves = [...waves].sort((a, b) => a.time - b.time);
+  }
+
+  static createDefault(
+    enemyFactory: EnemyFactory,
+    getPlayerPosition: () => Position,
+    getWorldSize: () => { width: number; height: number },
+    onEnemySpawned: (enemy: Enemy) => void,
+  ): SpawnDirector {
+    ContentBootstrap.ensureInitialized();
+    return new SpawnDirector(
+      ContentRegistry.getWaveSet(DEFAULT_CONTENT_IDS.waveSet) ?? [],
+      enemyFactory,
+      getPlayerPosition,
+      getWorldSize,
+      onEnemySpawned,
+    );
   }
 
   update(gameTimeSeconds: number, deltaMs: number): void {

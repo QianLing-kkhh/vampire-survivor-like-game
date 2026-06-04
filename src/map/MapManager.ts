@@ -1,21 +1,26 @@
-import maps from '../data/maps.json';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
+import { ContentRegistry } from '../content/ContentRegistry';
 import { SaveManager } from '../save/SaveManager';
 
 import { MapDefinition } from './MapDefinition';
 
 type MapData = Record<string, MapDefinition>;
 
-const DEFAULT_MAP_ID = 'prototype_field';
-
 export class MapManager {
   constructor(
-    private readonly mapData: MapData = maps,
+    mapData?: MapData,
     private selectedMapId = SaveManager.get().selections.selectedMapId,
   ) {
+    ContentBootstrap.ensureInitialized();
+    this.mapData = mapData ?? this.getMapDataFromRegistry();
+
     if (!this.mapData[this.selectedMapId]) {
-      this.selectedMapId = DEFAULT_MAP_ID;
+      this.selectedMapId = DEFAULT_CONTENT_IDS.map;
     }
   }
+
+  private readonly mapData: MapData;
 
   getSelectedMap(): MapDefinition {
     return this.getMap(this.selectedMapId);
@@ -26,7 +31,7 @@ export class MapManager {
   }
 
   setSelectedMapId(mapId: string): void {
-    this.selectedMapId = this.mapData[mapId] ? mapId : DEFAULT_MAP_ID;
+    this.selectedMapId = this.mapData[mapId] ? mapId : DEFAULT_CONTENT_IDS.map;
 
     SaveManager.update({
       selections: {
@@ -37,6 +42,13 @@ export class MapManager {
   }
 
   getMap(mapId: string): MapDefinition {
-    return this.mapData[mapId] ?? this.mapData[DEFAULT_MAP_ID];
+    return this.mapData[mapId] ?? this.mapData[DEFAULT_CONTENT_IDS.map];
+  }
+
+  private getMapDataFromRegistry(): MapData {
+    return ContentRegistry.listMaps().reduce<MapData>((record, map) => {
+      record[map.id] = map;
+      return record;
+    }, {});
   }
 }

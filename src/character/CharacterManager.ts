@@ -1,4 +1,6 @@
-import characters from '../data/characters.json';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
+import { ContentRegistry } from '../content/ContentRegistry';
 import { SaveManager } from '../save/SaveManager';
 
 import { CharacterDefinition } from './CharacterDefinition';
@@ -8,18 +10,22 @@ type CharacterData = Record<string, CharacterDefinition['baseStats'] & {
   startingWeaponId?: string;
 }>;
 
-const DEFAULT_CHARACTER_ID = 'default';
 const DEFAULT_STARTING_WEAPON_ID = 'knife';
 
 export class CharacterManager {
   constructor(
-    private readonly characterData: CharacterData = characters,
+    characterData?: CharacterData,
     private selectedCharacterId = SaveManager.get().selections.selectedCharacterId,
   ) {
+    ContentBootstrap.ensureInitialized();
+    this.characterData = characterData ?? this.getCharacterDataFromRegistry();
+
     if (!this.characterData[this.selectedCharacterId]) {
-      this.selectedCharacterId = DEFAULT_CHARACTER_ID;
+      this.selectedCharacterId = DEFAULT_CONTENT_IDS.character;
     }
   }
+
+  private readonly characterData: CharacterData;
 
   getSelectedCharacter(): CharacterDefinition {
     return this.getCharacter(this.selectedCharacterId);
@@ -32,7 +38,7 @@ export class CharacterManager {
   setSelectedCharacterId(characterId: string): void {
     this.selectedCharacterId = this.characterData[characterId]
       ? characterId
-      : DEFAULT_CHARACTER_ID;
+      : DEFAULT_CONTENT_IDS.character;
 
     SaveManager.update({
       selections: {
@@ -45,7 +51,7 @@ export class CharacterManager {
   getCharacter(characterId: string): CharacterDefinition {
     const resolvedCharacterId = this.characterData[characterId]
       ? characterId
-      : DEFAULT_CHARACTER_ID;
+      : DEFAULT_CONTENT_IDS.character;
     const character = this.characterData[resolvedCharacterId];
 
     return {
@@ -59,5 +65,16 @@ export class CharacterManager {
         expMultiplier: character.expMultiplier,
       },
     };
+  }
+
+  private getCharacterDataFromRegistry(): CharacterData {
+    return ContentRegistry.listCharacters().reduce<CharacterData>((record, character) => {
+      record[character.id] = {
+        ...character.baseStats,
+        name: character.name,
+        startingWeaponId: character.startingWeaponId,
+      };
+      return record;
+    }, {});
   }
 }

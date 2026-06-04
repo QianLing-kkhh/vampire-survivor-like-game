@@ -1,4 +1,6 @@
 import { PlayerHealth } from '../player/PlayerHealth';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
 
 import { PassiveEffects, PassiveItem, PassiveLevel } from './PassiveItem';
 
@@ -20,7 +22,12 @@ export class PassiveManager {
   private readonly levels = new Map<string, number>();
   private pummarolaElapsedMs = 0;
 
-  constructor(private readonly passives: readonly PassiveItem[]) {}
+  constructor(passives?: readonly PassiveItem[]) {
+    ContentBootstrap.ensureInitialized();
+    this.passives = passives ?? ContentRegistry.listPassives();
+  }
+
+  private readonly passives: readonly PassiveItem[];
 
   applyPassive(passiveId: string): boolean {
     const passive = this.getPassive(passiveId);

@@ -1,3 +1,6 @@
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
+
 import { UpgradeOption } from './UpgradeOption';
 
 export interface UpgradeSelectionContext {
@@ -21,7 +24,12 @@ export interface UpgradeSelectionContext {
 }
 
 export class UpgradeSelector {
-  constructor(private readonly upgrades: readonly UpgradeOption[]) {}
+  constructor(upgrades?: readonly UpgradeOption[]) {
+    ContentBootstrap.ensureInitialized();
+    this.upgrades = upgrades ?? ContentRegistry.getUpgradeOptions();
+  }
+
+  private readonly upgrades: readonly UpgradeOption[];
 
   selectOptions(count = 3, context?: UpgradeSelectionContext): UpgradeOption[] {
     const availableUpgrades = this.getAvailableUpgrades(context);

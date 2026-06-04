@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
+
 import { AuraWeapon } from './AuraWeapon';
 import { AxeWeapon } from './AxeWeapon';
 import { MagicWandWeapon } from './MagicWandWeapon';
@@ -12,8 +15,13 @@ type WeaponConfigMap = Record<string, WeaponConfig>;
 export class WeaponFactory {
   constructor(
     private readonly scene: Phaser.Scene,
-    private readonly weaponConfigs: WeaponConfigMap,
-  ) {}
+    weaponConfigs?: WeaponConfigMap,
+  ) {
+    ContentBootstrap.ensureInitialized();
+    this.weaponConfigs = weaponConfigs ?? ContentRegistry.listWeapons();
+  }
+
+  private readonly weaponConfigs: WeaponConfigMap;
 
   create(weaponId: string): Weapon {
     const config = this.weaponConfigs[weaponId];

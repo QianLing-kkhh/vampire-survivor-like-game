@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Enemy, EnemyStats } from './Enemy';
@@ -17,8 +19,13 @@ type EnemySpriteBody = Phaser.GameObjects.Sprite & {
 export class EnemyFactory {
   constructor(
     private readonly scene: Phaser.Scene,
-    private readonly enemyConfigs: EnemyConfigMap,
-  ) {}
+    enemyConfigs?: EnemyConfigMap,
+  ) {
+    ContentBootstrap.ensureInitialized();
+    this.enemyConfigs = enemyConfigs ?? ContentRegistry.listEnemies();
+  }
+
+  private readonly enemyConfigs: EnemyConfigMap;
 
   create(enemyId: string, x: number, y: number, statsOverride?: EnemyStats): Enemy {
     const stats = statsOverride ?? this.enemyConfigs[enemyId];

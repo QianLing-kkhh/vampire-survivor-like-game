@@ -9,13 +9,11 @@ import { BossFactory } from '../boss/BossFactory';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { CharacterManager } from '../character/CharacterManager';
 import { DamageCalculator } from '../combat/DamageCalculator';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
+import { ContentRegistry } from '../content/ContentRegistry';
 import { EventBus } from '../core/EventBus';
 import { TimeManager } from '../core/TimeManager';
-import enemies from '../data/enemies.json';
-import passives from '../data/passives.json';
-import waves from '../data/waves.json';
-import weapons from '../data/weapons.json';
-import upgrades from '../data/upgrades.json';
 import { Enemy, GameEventMap } from '../enemy/Enemy';
 import { BossController } from '../enemy/BossController';
 import { EnemyFactory } from '../enemy/EnemyFactory';
@@ -90,13 +88,19 @@ export interface GameplayInitializerConfig {
 
 export class GameplayInitializer {
   initialize(config: GameplayInitializerConfig): GameplayContext {
+    ContentBootstrap.ensureInitialized();
     const characterManager = new CharacterManager();
     const selectedCharacter = characterManager.getSelectedCharacter();
+    const weaponConfigs = ContentRegistry.listWeapons();
+    const enemyConfigs = ContentRegistry.listEnemies();
+    const passiveItems = ContentRegistry.listPassives();
+    const upgradeOptions = ContentRegistry.getUpgradeOptions();
+    const waveSet = ContentRegistry.getWaveSet(DEFAULT_CONTENT_IDS.waveSet) ?? [];
     const playerStats = PlayerStats.fromConfig(selectedCharacter.baseStats);
     const runStats = new RunStats(playerStats.maxHp);
-    const weaponFactory = new WeaponFactory(config.scene, weapons);
+    const weaponFactory = new WeaponFactory(config.scene, weaponConfigs);
     const weaponManager = new WeaponManager(runStats, weaponFactory);
-    const passiveManager = new PassiveManager(passives);
+    const passiveManager = new PassiveManager(passiveItems);
     const playerHealth = new PlayerHealth(playerStats.maxHp);
     const upgradeApplier = new UpgradeApplier(
       playerStats,
@@ -116,7 +120,7 @@ export class GameplayInitializer {
     const virtualJoystick = new VirtualJoystick(config.scene, config.callbacks.onPauseRequested);
     const expManager = new ExpManager(config.eventBus);
     const levelManager = new LevelManager(expManager, config.eventBus);
-    const upgradeSelector = new UpgradeSelector([...upgrades, ...passives]);
+    const upgradeSelector = new UpgradeSelector([...upgradeOptions, ...passiveItems]);
     const evolutionManager = new EvolutionManager(EVOLUTION_RULES);
     const upgradeFlow = new UpgradeFlow({
       upgradeSelector,
@@ -140,12 +144,12 @@ export class GameplayInitializer {
       config.callbacks.onChestOpened,
       () => (config.runState.endlessStarted ? config.runState.endlessSurvivalTime : null),
     );
-    const enemyFactory = new EnemyFactory(config.scene, enemies);
-    const bossFactory = new BossFactory(config.scene, enemies);
+    const enemyFactory = new EnemyFactory(config.scene, enemyConfigs);
+    const bossFactory = new BossFactory(config.scene, enemyConfigs);
     const enemiesList: Enemy[] = [];
     config.runState.endlessMode = config.playtestSettings.endlessMode;
     const spawnDirector = new SpawnDirector(
-      waves,
+      waveSet,
       enemyFactory,
       () => player.body,
       () => ({ width: config.scene.scale.width, height: config.scene.scale.height }),

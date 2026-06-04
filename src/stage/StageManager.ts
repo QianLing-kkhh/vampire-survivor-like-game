@@ -1,21 +1,26 @@
-import stages from '../data/stages.json';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
+import { ContentRegistry } from '../content/ContentRegistry';
 import { SaveManager } from '../save/SaveManager';
 
 import { StageDefinition } from './StageDefinition';
 
 type StageData = Record<string, StageDefinition>;
 
-const DEFAULT_STAGE_ID = 'stage_001';
-
 export class StageManager {
   constructor(
-    private readonly stageData: StageData = stages,
+    stageData?: StageData,
     private selectedStageId = SaveManager.get().selections.selectedStageId,
   ) {
+    ContentBootstrap.ensureInitialized();
+    this.stageData = stageData ?? this.getStageDataFromRegistry();
+
     if (!this.stageData[this.selectedStageId]) {
-      this.selectedStageId = DEFAULT_STAGE_ID;
+      this.selectedStageId = DEFAULT_CONTENT_IDS.stage;
     }
   }
+
+  private readonly stageData: StageData;
 
   getSelectedStage(): StageDefinition {
     return this.getStage(this.selectedStageId);
@@ -26,7 +31,7 @@ export class StageManager {
   }
 
   setSelectedStageId(stageId: string): void {
-    this.selectedStageId = this.stageData[stageId] ? stageId : DEFAULT_STAGE_ID;
+    this.selectedStageId = this.stageData[stageId] ? stageId : DEFAULT_CONTENT_IDS.stage;
 
     SaveManager.update({
       selections: {
@@ -37,10 +42,17 @@ export class StageManager {
   }
 
   getStage(stageId: string): StageDefinition {
-    return this.stageData[stageId] ?? this.stageData[DEFAULT_STAGE_ID];
+    return this.stageData[stageId] ?? this.stageData[DEFAULT_CONTENT_IDS.stage];
   }
 
   getFinalBossWarningTimeSeconds(stage: StageDefinition): number {
     return Math.max(0, stage.finalBossSpawnTimeSeconds - stage.warningBeforeSpawnSeconds);
+  }
+
+  private getStageDataFromRegistry(): StageData {
+    return ContentRegistry.listStages().reduce<StageData>((record, stage) => {
+      record[stage.id] = stage;
+      return record;
+    }, {});
   }
 }
