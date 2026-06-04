@@ -50,6 +50,10 @@ export class StageManager {
     return this.stageData[stageId] ?? this.stageData[DEFAULT_CONTENT_IDS.stage];
   }
 
+  listStages(): StageDefinition[] {
+    return Object.values(this.stageData).map((stage) => ({ ...stage }));
+  }
+
   getFinalBossWarningTimeSeconds(stage: StageDefinition): number {
     return Math.max(0, stage.finalBossSpawnTimeSeconds - stage.warningBeforeSpawnSeconds);
   }

@@ -9,6 +9,8 @@ Scenes own Phaser lifecycle, scene transitions, high-level UI/gameplay coordinat
 - `BootScene`: bootstraps the scene flow.
 - `PreloadScene`: loads legacy assets, art pack assets, spritesheets, animations, and audio keys.
 - `TitleScene`: start screen, auto-test countdown, Settings, Help, and title BGM entry point.
+- `CharacterSelectScene`: minimal character selection scene backed by `SelectionManager`.
+- `StageSelectScene`: minimal stage selection scene backed by `SelectionManager`.
 - `GameScene`: main lifecycle, pause/resume, settings change handling, result transition, HUD emit, and gameplay runtime callbacks.
 - `UIScene`: overlay scene for HUD, LevelUpPanel, PauseMenu, temporary messages, and UI events.
 - `ResultScene`: compact run summary, CSV download, auto restart, Settings, and endless leaderboard display.
@@ -105,7 +107,7 @@ Current defaults:
 - Stage: `stage_001`
 - Map: `prototype_field`
 
-Selection UI is planned, not implemented. `TitleScene` may show a compact current-selection summary, but it does not provide a formal selector.
+Minimal Character/Stage selection UI exists. Full custom stage, random stage, daily challenge, unlock-aware, and detailed preview selectors are still planned.
 
 ## Progression Layer
 
@@ -203,6 +205,7 @@ Responsive helpers centralize screen layout rules.
 BootScene / PreloadScene
   -> preload assets and ensure runtime can use registered content
 TitleScene
+  -> CharacterSelectScene / StageSelectScene for minimal selection
   -> GameScene
     -> SelectionManager / managers resolve selected character/stage/map
     -> DifficultyManager and stage mutator configs create RunRuleSet

@@ -18,11 +18,28 @@
     "gameTitle": "Vampire Survivor 原型",
     "startGame": "开始游戏",
     "startAutoTest": "开始自动测试",
+    "selectCharacter": "选择角色",
+    "selectStage": "选择关卡",
     "autoStartCountdown": "{seconds} 秒后开始自动测试",
     "autoTestCanceled": "自动测试倒计时已取消",
+    "currentSelection": "{character} / {stage} / {map}",
     "toggleAutoMode": "切换自动模式",
     "toggleFastMode": "切换加速模式",
     "toggleLanguage": "语言"
+  },
+  "selection": {
+    "character": "角色",
+    "stage": "关卡",
+    "map": "地图",
+    "confirm": "确认",
+    "back": "返回",
+    "current": "当前"
+  },
+  "characterSelect": {
+    "title": "角色选择"
+  },
+  "stageSelect": {
+    "title": "关卡选择"
   },
   "pause": {
     "title": "已暂停",

@@ -50,6 +50,10 @@ export class MapManager {
     return this.mapData[mapId] ?? this.mapData[DEFAULT_CONTENT_IDS.map];
   }
 
+  listMaps(): MapDefinition[] {
+    return Object.values(this.mapData).map((map) => ({ ...map }));
+  }
+
   private getMapDataFromRegistry(): MapData {
     return ContentRegistry.listMaps().reduce<MapData>((record, map) => {
       record[map.id] = map;

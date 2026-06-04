@@ -72,6 +72,10 @@ export class CharacterManager {
     };
   }
 
+  listCharacters(): CharacterDefinition[] {
+    return Object.keys(this.characterData).map((characterId) => this.getCharacter(characterId));
+  }
+
   private getCharacterDataFromRegistry(): CharacterData {
     return ContentRegistry.listCharacters().reduce<CharacterData>((record, character) => {
       record[character.id] = {

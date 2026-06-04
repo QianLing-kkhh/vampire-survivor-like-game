@@ -10,11 +10,24 @@ The Title Scene provides:
 
 - Start Game
 - Start Auto Test
+- Select Character
+- Select Stage
 - Settings
 - Help
 - Auto-test countdown after no input
 
 Title should not duplicate individual settings toggles. Settings belong in `SettingsMenu`.
+
+### CharacterSelectScene / StageSelectScene
+
+The current selection scenes are intentionally minimal:
+
+- List registered built-in characters or stages.
+- Highlight the current selection.
+- Confirm writes through `SelectionManager`.
+- Back returns to Title.
+
+They do not implement unlocks, detailed previews, custom stages, random stages, daily challenges, or difficulty selection yet.
 
 ### Game HUD
 

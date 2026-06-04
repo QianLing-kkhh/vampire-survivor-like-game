@@ -19,6 +19,8 @@ export class TitleScene extends Phaser.Scene {
   private titleText?: Phaser.GameObjects.Text;
   private startButton?: Phaser.GameObjects.Text;
   private autoTestButton?: Phaser.GameObjects.Text;
+  private selectCharacterButton?: Phaser.GameObjects.Text;
+  private selectStageButton?: Phaser.GameObjects.Text;
   private settingsButton?: Phaser.GameObjects.Text;
   private helpButton?: Phaser.GameObjects.Text;
   private backgroundImage?: Phaser.GameObjects.Image;
@@ -93,6 +95,16 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('GameScene');
     });
 
+    this.selectCharacterButton = this.createButton(centerX, centerY + 106, I18n.t('title.selectCharacter'), () => {
+      this.cancelAutoStartCountdown();
+      this.scene.start('CharacterSelectScene');
+    });
+
+    this.selectStageButton = this.createButton(centerX, centerY + 154, I18n.t('title.selectStage'), () => {
+      this.cancelAutoStartCountdown();
+      this.scene.start('StageSelectScene');
+    });
+
     this.settingsButton = this.createButton(centerX - 140, centerY + 132, this.t('title.settings', 'Settings'), () => {
       this.cancelAutoStartCountdown();
       this.showSettingsMenu();
@@ -158,6 +170,8 @@ export class TitleScene extends Phaser.Scene {
     const buttons = [
       this.startButton,
       this.autoTestButton,
+      this.selectCharacterButton,
+      this.selectStageButton,
       this.settingsButton,
       this.helpButton,
     ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
@@ -165,7 +179,7 @@ export class TitleScene extends Phaser.Scene {
       screen: this.screenManager,
       count: buttons.length,
       startY: layout.buttonStartY,
-      mode: 'vertical',
+      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
       gap: layout.buttonGap,
     });
     this.layoutBackground();
@@ -227,6 +241,8 @@ export class TitleScene extends Phaser.Scene {
     this.titleText?.setText(I18n.t('title.gameTitle'));
     this.startButton?.setText(I18n.t('title.startGame'));
     this.autoTestButton?.setText(I18n.t('title.startAutoTest'));
+    this.selectCharacterButton?.setText(I18n.t('title.selectCharacter'));
+    this.selectStageButton?.setText(I18n.t('title.selectStage'));
     this.settingsButton?.setText(this.t('title.settings', 'Settings'));
     this.helpButton?.setText(I18n.t('common.help'));
     this.selectionText?.setText(this.formatSelectionSummary());
@@ -307,11 +323,8 @@ export class TitleScene extends Phaser.Scene {
     const settings = PlaytestSettings.get();
 
     return [
-      `Auto Movement: ${settings.autoMovement ? I18n.t('common.on') : I18n.t('common.off')}`,
-      `Auto Upgrade: ${settings.autoUpgrade ? I18n.t('common.on') : I18n.t('common.off')}`,
-      `${I18n.t('common.fastMode')}: ${settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')}`,
-      `Endless Mode: ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`,
-      `${I18n.t('common.timeScale')}: ${this.getDisplayedTimeScale(settings)}x`,
+      `Auto Move ${settings.autoMovement ? I18n.t('common.on') : I18n.t('common.off')} / Auto Upgrade ${settings.autoUpgrade ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `${I18n.t('common.fastMode')} ${settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')} / Endless ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')} / ${I18n.t('common.timeScale')} ${this.getDisplayedTimeScale(settings)}x`,
     ].join('\n');
   }
 

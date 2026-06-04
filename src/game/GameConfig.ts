@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { BootScene } from '../scenes/BootScene';
 import { PreloadScene } from '../scenes/PreloadScene';
 import { TitleScene } from '../scenes/TitleScene';
+import { CharacterSelectScene } from '../scenes/CharacterSelectScene';
+import { StageSelectScene } from '../scenes/StageSelectScene';
 import { GameScene } from '../scenes/GameScene';
 import { UIScene } from '../scenes/UIScene';
 import { ResultScene } from '../scenes/ResultScene';
@@ -24,5 +26,5 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [BootScene, PreloadScene, TitleScene, GameScene, UIScene, ResultScene]
+  scene: [BootScene, PreloadScene, TitleScene, CharacterSelectScene, StageSelectScene, GameScene, UIScene, ResultScene]
 };

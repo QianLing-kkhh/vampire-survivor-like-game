@@ -33,12 +33,28 @@
     "gameTitle": "Vampire Survivor Prototype",
     "startGame": "Start Game",
     "startAutoTest": "Start Auto Test",
+    "selectCharacter": "Select Character",
+    "selectStage": "Select Stage",
     "autoStartCountdown": "Auto test starts in {seconds}s",
     "autoTestCanceled": "Auto test canceled",
     "currentSelection": "{character} / {stage} / {map}",
     "toggleAutoMode": "Toggle Auto Mode",
     "toggleFastMode": "Toggle Fast Mode",
     "toggleLanguage": "Language"
+  },
+  "selection": {
+    "character": "Character",
+    "stage": "Stage",
+    "map": "Map",
+    "confirm": "Confirm",
+    "back": "Back",
+    "current": "Current"
+  },
+  "characterSelect": {
+    "title": "Character Select"
+  },
+  "stageSelect": {
+    "title": "Stage Select"
   },
   "pause": {
     "title": "Paused",

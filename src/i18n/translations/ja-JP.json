@@ -18,11 +18,28 @@
     "gameTitle": "Vampire Survivor プロトタイプ",
     "startGame": "ゲーム開始",
     "startAutoTest": "自動テスト開始",
+    "selectCharacter": "キャラクター選択",
+    "selectStage": "ステージ選択",
     "autoStartCountdown": "{seconds}秒後に自動テスト開始",
     "autoTestCanceled": "自動テストのカウントダウンを停止",
+    "currentSelection": "{character} / {stage} / {map}",
     "toggleAutoMode": "オートモード切替",
     "toggleFastMode": "高速モード切替",
     "toggleLanguage": "言語"
+  },
+  "selection": {
+    "character": "キャラクター",
+    "stage": "ステージ",
+    "map": "マップ",
+    "confirm": "決定",
+    "back": "戻る",
+    "current": "現在"
+  },
+  "characterSelect": {
+    "title": "キャラクター選択"
+  },
+  "stageSelect": {
+    "title": "ステージ選択"
   },
   "pause": {
     "title": "一時停止",
