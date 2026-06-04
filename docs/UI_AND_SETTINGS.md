@@ -13,6 +13,8 @@ The Title Scene provides:
 - Select Character
 - Select Stage
 - Records
+- Replay Tool
+- Daily Challenge
 - Settings
 - Help
 - Auto-test countdown after no input
@@ -39,6 +41,16 @@ RecordsScene is the minimal read-only entry for save-backed records:
 - Unlocks
 
 It does not implement achievement reward claiming, unlock actions, online leaderboard features, or raw metadata inspection. Empty systems should show a compact empty state instead of failing.
+
+### ReplayToolScene
+
+ReplayToolScene is a developer/balance utility for saved replay records. It can list, inspect, import, export, and delete local replay JSON. It does not implement playback.
+
+### DailyChallengeScene
+
+DailyChallengeScene is the minimal visible daily challenge entry. It shows today's local-date challenge seed and summary, can copy the seed, and can activate the challenge before starting `GameScene`.
+
+Normal Title Start Game should clear active challenge selection so ordinary runs do not inherit daily challenge seed or ruleset data.
 
 ### Game HUD
 

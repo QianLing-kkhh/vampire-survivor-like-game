@@ -28,7 +28,8 @@
     "toggleFastMode": "高速モード切替",
     "toggleLanguage": "言語",
     "records": "記録",
-    "replayTool": "リプレイツール"
+    "replayTool": "リプレイツール",
+    "dailyChallenge": "デイリーチャレンジ"
   },
   "selection": {
     "character": "キャラクター",
@@ -159,5 +160,16 @@
     "compatible": "互換あり",
     "warning": "警告",
     "invalid": "無効"
+  },
+  "dailyChallenge": {
+    "title": "デイリーチャレンジ",
+    "today": "今日のチャレンジ",
+    "seed": "シード",
+    "start": "チャレンジ開始",
+    "back": "戻る",
+    "copySeed": "シードをコピー",
+    "rules": "ルール",
+    "mode": "モード",
+    "noChallenge": "チャレンジがありません"
   }
 }

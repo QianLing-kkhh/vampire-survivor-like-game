@@ -24,6 +24,7 @@ export class TitleScene extends Phaser.Scene {
   private customStageToolButton?: Phaser.GameObjects.Text;
   private recordsButton?: Phaser.GameObjects.Text;
   private replayToolButton?: Phaser.GameObjects.Text;
+  private dailyChallengeButton?: Phaser.GameObjects.Text;
   private settingsButton?: Phaser.GameObjects.Text;
   private helpButton?: Phaser.GameObjects.Text;
   private backgroundImage?: Phaser.GameObjects.Image;
@@ -84,6 +85,7 @@ export class TitleScene extends Phaser.Scene {
 
     this.startButton = this.createButton(centerX, centerY - 8, I18n.t('title.startGame'), () => {
       this.cancelAutoStartCountdown();
+      SelectionManager.clearChallengeSelection();
       PlaytestSettings.setAutoMode(false);
       PlaytestSettings.setFastMode(false);
       this.refreshStatus();
@@ -121,6 +123,11 @@ export class TitleScene extends Phaser.Scene {
     this.replayToolButton = this.createButton(centerX, centerY + 298, I18n.t('title.replayTool'), () => {
       this.cancelAutoStartCountdown();
       this.scene.start('ReplayToolScene');
+    });
+
+    this.dailyChallengeButton = this.createButton(centerX, centerY + 346, I18n.t('title.dailyChallenge'), () => {
+      this.cancelAutoStartCountdown();
+      this.scene.start('DailyChallengeScene');
     });
 
     this.settingsButton = this.createButton(centerX - 140, centerY + 132, this.t('title.settings', 'Settings'), () => {
@@ -193,6 +200,7 @@ export class TitleScene extends Phaser.Scene {
       this.customStageToolButton,
       this.recordsButton,
       this.replayToolButton,
+      this.dailyChallengeButton,
       this.settingsButton,
       this.helpButton,
     ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
@@ -200,7 +208,7 @@ export class TitleScene extends Phaser.Scene {
       screen: this.screenManager,
       count: buttons.length,
       startY: layout.buttonStartY,
-      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
+      mode: this.screenManager.isPortrait() && buttons.length <= 8 ? 'vertical' : 'twoColumn',
       gap: layout.buttonGap,
     });
     this.layoutBackground();
@@ -267,6 +275,7 @@ export class TitleScene extends Phaser.Scene {
     this.customStageToolButton?.setText(I18n.t('title.customStageTool'));
     this.recordsButton?.setText(I18n.t('title.records'));
     this.replayToolButton?.setText(I18n.t('title.replayTool'));
+    this.dailyChallengeButton?.setText(I18n.t('title.dailyChallenge'));
     this.settingsButton?.setText(this.t('title.settings', 'Settings'));
     this.helpButton?.setText(I18n.t('common.help'));
     this.selectionText?.setText(this.formatSelectionSummary());

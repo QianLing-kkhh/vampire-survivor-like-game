@@ -28,7 +28,8 @@
     "toggleFastMode": "切换加速模式",
     "toggleLanguage": "语言",
     "records": "记录",
-    "replayTool": "回放工具"
+    "replayTool": "回放工具",
+    "dailyChallenge": "每日挑战"
   },
   "selection": {
     "character": "角色",
@@ -159,5 +160,16 @@
     "compatible": "兼容",
     "warning": "警告",
     "invalid": "无效"
+  },
+  "dailyChallenge": {
+    "title": "每日挑战",
+    "today": "今日挑战",
+    "seed": "种子",
+    "start": "开始挑战",
+    "back": "返回",
+    "copySeed": "复制种子",
+    "rules": "规则",
+    "mode": "模式",
+    "noChallenge": "暂无挑战"
   }
 }

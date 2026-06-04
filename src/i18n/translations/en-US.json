@@ -38,6 +38,7 @@
     "customStageTool": "Custom Stage Tool",
     "records": "Records",
     "replayTool": "Replay Tool",
+    "dailyChallenge": "Daily Challenge",
     "autoStartCountdown": "Auto test starts in {seconds}s",
     "autoTestCanceled": "Auto test canceled",
     "currentSelection": "{character} / {stage} / {map}",
@@ -93,6 +94,17 @@
     "compatible": "Compatible",
     "warning": "Warning",
     "invalid": "Invalid"
+  },
+  "dailyChallenge": {
+    "title": "Daily Challenge",
+    "today": "Today's Challenge",
+    "seed": "Seed",
+    "start": "Start Challenge",
+    "back": "Back",
+    "copySeed": "Copy Seed",
+    "rules": "Rules",
+    "mode": "Mode",
+    "noChallenge": "No challenge available"
   },
   "pause": {
     "title": "Paused",
