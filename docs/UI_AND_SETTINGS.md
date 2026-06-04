@@ -83,6 +83,16 @@ Current settings:
 
 Settings are persisted through `PlaytestSettings`, which now reads/writes through `SaveManager`.
 
+Settings storage is split into domains behind `SettingsManager`:
+
+- `GameplaySettings`
+- `AudioSettings`
+- `DisplaySettings`
+- `InputSettings`
+- `DeveloperSettings`
+
+`PlaytestSettings` remains as a compatibility facade so existing UI and runtime callers keep working. New systems should use `SettingsManager` directly when they belong to a specific settings domain.
+
 ## Immediate Apply Rule
 
 Settings should apply immediately to the current run.

@@ -54,11 +54,16 @@ The save layer is the current foundation for persistent settings, selections, pr
 - `SaveStorage`: localStorage read/write/clear with memory fallback.
 - `SaveMigrator`: default save creation, schema migration hook, and corrupted JSON fallback.
 - `SaveManager`: unified load/save/get/update/reset/subscribe entry point.
-- `PlaytestSettings`: public settings API remains stable but reads/writes through `SaveManager`.
+- `SettingsManager`: domain-based settings entry point backed by `SaveManager.settings`.
+- `PlaytestSettings`: compatibility facade for existing callers; new systems should prefer `SettingsManager`.
 
 Current save domains:
 
-- `settings`
+- `settings.gameplay`
+- `settings.audio`
+- `settings.display`
+- `settings.input`
+- `settings.developer`
 - `progression`
 - `selections`
 - `cosmetics`

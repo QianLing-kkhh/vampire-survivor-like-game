@@ -3,6 +3,12 @@ import { SaveMigrator } from './SaveMigrator';
 import { SaveStorage } from './SaveStorage';
 
 export type SaveListener = (saveData: SaveData) => void;
+type SaveSettingsUpdate = Partial<{
+  [Domain in keyof SaveData['settings']]: Partial<SaveData['settings'][Domain]>;
+}>;
+export type SaveDataUpdate = Partial<Omit<SaveData, 'settings'>> & {
+  settings?: SaveSettingsUpdate;
+};
 
 export class SaveManager {
   private static readonly storage = new SaveStorage();
@@ -33,14 +39,32 @@ export class SaveManager {
     return this.clone(this.saveData);
   }
 
-  static update(partial: Partial<SaveData>): SaveData {
+  static update(partial: SaveDataUpdate): SaveData {
     const currentSave = this.saveData ?? this.load();
     const nextSave: SaveData = {
       ...currentSave,
       ...partial,
       settings: {
-        ...currentSave.settings,
-        ...partial.settings,
+        gameplay: {
+          ...currentSave.settings.gameplay,
+          ...partial.settings?.gameplay,
+        },
+        audio: {
+          ...currentSave.settings.audio,
+          ...partial.settings?.audio,
+        },
+        display: {
+          ...currentSave.settings.display,
+          ...partial.settings?.display,
+        },
+        input: {
+          ...currentSave.settings.input,
+          ...partial.settings?.input,
+        },
+        developer: {
+          ...currentSave.settings.developer,
+          ...partial.settings?.developer,
+        },
       },
       progression: {
         ...currentSave.progression,

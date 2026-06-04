@@ -1,20 +1,34 @@
-import { DEFAULT_LOCALE, SupportedLocale } from '../i18n/Locale';
+import {
+  DEFAULT_AUDIO_SETTINGS,
+  AudioSettingsData,
+} from '../settings/AudioSettings';
+import {
+  DEFAULT_DEVELOPER_SETTINGS,
+  DeveloperSettingsData,
+} from '../settings/DeveloperSettings';
+import {
+  DEFAULT_DISPLAY_SETTINGS,
+  DisplaySettingsData,
+} from '../settings/DisplaySettings';
+import {
+  DEFAULT_GAMEPLAY_SETTINGS,
+  GameplaySettingsData,
+} from '../settings/GameplaySettings';
+import {
+  DEFAULT_INPUT_SETTINGS,
+  InputSettingsData,
+} from '../settings/InputSettings';
 
-export const SAVE_SCHEMA_VERSION = 1;
+export const SAVE_SCHEMA_VERSION = 2;
 
 export interface SaveData {
   schemaVersion: number;
   settings: {
-    autoMovement: boolean;
-    autoUpgrade: boolean;
-    fastMode: boolean;
-    endlessMode: boolean;
-    audioEnabled: boolean;
-    bgmVolume: number;
-    sfxVolume: number;
-    weaponVolume: number;
-    uiVolume: number;
-    locale: SupportedLocale;
+    gameplay: GameplaySettingsData;
+    audio: AudioSettingsData;
+    display: DisplaySettingsData;
+    input: InputSettingsData;
+    developer: DeveloperSettingsData;
   };
   progression: {
     unlockedCharacterIds: string[];
@@ -40,16 +54,11 @@ export function createDefaultSaveData(): SaveData {
   return {
     schemaVersion: SAVE_SCHEMA_VERSION,
     settings: {
-      autoMovement: false,
-      autoUpgrade: false,
-      fastMode: false,
-      endlessMode: false,
-      audioEnabled: false,
-      bgmVolume: 0,
-      sfxVolume: 0,
-      weaponVolume: 0,
-      uiVolume: 0,
-      locale: DEFAULT_LOCALE,
+      gameplay: { ...DEFAULT_GAMEPLAY_SETTINGS },
+      audio: { ...DEFAULT_AUDIO_SETTINGS },
+      display: { ...DEFAULT_DISPLAY_SETTINGS },
+      input: { ...DEFAULT_INPUT_SETTINGS },
+      developer: { ...DEFAULT_DEVELOPER_SETTINGS },
     },
     progression: {
       unlockedCharacterIds: ['default'],

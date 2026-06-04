@@ -1,6 +1,8 @@
-import { DEFAULT_LOCALE, SupportedLocale, isSupportedLocale } from '../i18n/Locale';
 import type { AudioChannel } from '../audio/AudioManager';
+import { DEFAULT_LOCALE, SupportedLocale, isSupportedLocale } from '../i18n/Locale';
 import { SaveManager } from '../save/SaveManager';
+
+import { SettingsData, SettingsManager } from './SettingsManager';
 
 export interface PlaytestSettingsState {
   autoMode: boolean;
@@ -27,29 +29,18 @@ export type PlaytestSettingsListener = (
 export class PlaytestSettings {
   private static readonly STORAGE_KEY = 'vampire-survivor-like-game:playtest-settings';
   private static readonly listeners = new Set<PlaytestSettingsListener>();
-  private static memoryState: PlaytestSettingsState = {
-    autoMode: false,
-    autoMovement: false,
-    autoUpgrade: false,
-    fastMode: false,
-    autoTimeScale: 3,
-    soundEnabled: false,
-    audioEnabled: false,
-    bgmVolume: 0,
-    sfxVolume: 0,
-    weaponVolume: 0,
-    uiVolume: 0,
-    locale: DEFAULT_LOCALE,
-    endlessMode: false,
-  };
+  private static unsubscribeSettingsManager?: () => void;
+  private static legacyMigrated = false;
 
   static get(): PlaytestSettingsState {
-    const storedState = this.readStoredState();
+    this.ensureLegacyMigrated();
+    this.ensureSettingsManagerSubscription();
 
-    return storedState ?? { ...this.memoryState };
+    return this.flatten(SettingsManager.getAll());
   }
 
   static subscribe(listener: PlaytestSettingsListener): () => void {
+    this.ensureSettingsManagerSubscription();
     this.listeners.add(listener);
 
     return () => this.unsubscribe(listener);
@@ -60,87 +51,75 @@ export class PlaytestSettings {
   }
 
   static setAutoMode(autoMode: boolean): PlaytestSettingsState {
-    return this.save({
-      ...this.get(),
-      autoMode,
+    SettingsManager.updateGameplay({
       autoMovement: autoMode,
       autoUpgrade: autoMode,
-    }, 'autoMode');
+    });
+
+    return this.get();
   }
 
   static setAutoMovement(autoMovement: boolean): PlaytestSettingsState {
-    const state = this.get();
+    SettingsManager.updateGameplay({ autoMovement });
 
-    return this.save({
-      ...state,
-      autoMovement,
-      autoMode: autoMovement || state.autoUpgrade,
-    }, 'autoMovement');
+    return this.get();
   }
 
   static setAutoUpgrade(autoUpgrade: boolean): PlaytestSettingsState {
-    const state = this.get();
+    SettingsManager.updateGameplay({ autoUpgrade });
 
-    return this.save({
-      ...state,
-      autoUpgrade,
-      autoMode: state.autoMovement || autoUpgrade,
-    }, 'autoUpgrade');
+    return this.get();
   }
 
   static setFastMode(fastMode: boolean): PlaytestSettingsState {
-    return this.save({
-      ...this.get(),
-      fastMode,
-    }, 'fastMode');
+    SettingsManager.updateGameplay({ fastMode });
+
+    return this.get();
   }
 
   static setSoundEnabled(soundEnabled: boolean): PlaytestSettingsState {
-    return this.save({
-      ...this.get(),
-      soundEnabled,
-      audioEnabled: soundEnabled,
-    }, 'audioEnabled');
+    return this.setAudioEnabled(soundEnabled);
   }
 
   static setAudioEnabled(audioEnabled: boolean): PlaytestSettingsState {
-    return this.save({
-      ...this.get(),
-      audioEnabled,
-      soundEnabled: audioEnabled,
-    }, 'audioEnabled');
+    SettingsManager.updateAudio({ audioEnabled });
+
+    return this.get();
   }
 
   static setAudioChannelVolume(channel: AudioChannel, volume: number): PlaytestSettingsState {
     const clampedVolume = Math.max(0, Math.min(1, volume));
-    const state = this.get();
 
     switch (channel) {
       case 'bgm':
-        return this.save({ ...state, bgmVolume: clampedVolume }, 'bgmVolume');
+        SettingsManager.updateAudio({ bgmVolume: clampedVolume });
+        break;
       case 'sfx':
-        return this.save({ ...state, sfxVolume: clampedVolume }, 'sfxVolume');
+        SettingsManager.updateAudio({ sfxVolume: clampedVolume });
+        break;
       case 'weapon':
-        return this.save({ ...state, weaponVolume: clampedVolume }, 'weaponVolume');
+        SettingsManager.updateAudio({ weaponVolume: clampedVolume });
+        break;
       case 'ui':
-        return this.save({ ...state, uiVolume: clampedVolume }, 'uiVolume');
+        SettingsManager.updateAudio({ uiVolume: clampedVolume });
+        break;
       default:
-        return state;
+        break;
     }
+
+    return this.get();
   }
 
   static setLocale(locale: SupportedLocale): PlaytestSettingsState {
-    return this.save({
-      ...this.get(),
-      locale,
-    }, 'locale');
+    SettingsManager.updateDisplay({ locale });
+
+    return this.get();
   }
 
   static setEndlessMode(endlessMode: boolean): PlaytestSettingsState {
-    return this.save({
-      ...this.get(),
-      endlessMode,
-    }, 'endlessMode');
+    SettingsManager.updateGameplay({ endlessMode });
+
+    return this.get();
   }
 
   static toggleAutoMode(): PlaytestSettingsState {
@@ -168,9 +147,7 @@ export class PlaytestSettings {
   }
 
   static toggleSoundEnabled(): PlaytestSettingsState {
-    const state = this.get();
-
-    return this.setAudioEnabled(!state.audioEnabled);
+    return this.toggleAudioEnabled();
   }
 
   static toggleAudioEnabled(): PlaytestSettingsState {
@@ -185,58 +162,6 @@ export class PlaytestSettings {
     return this.setEndlessMode(!state.endlessMode);
   }
 
-  private static save(
-    state: PlaytestSettingsState,
-    settingName: PlaytestSettingName = 'settings',
-  ): PlaytestSettingsState {
-    const nextState = {
-      autoMode: state.autoMovement || state.autoUpgrade,
-      autoMovement: state.autoMovement,
-      autoUpgrade: state.autoUpgrade,
-      fastMode: state.fastMode,
-      autoTimeScale: state.autoTimeScale,
-      soundEnabled: state.soundEnabled,
-      audioEnabled: state.audioEnabled,
-      bgmVolume: state.bgmVolume,
-      sfxVolume: state.sfxVolume,
-      weaponVolume: state.weaponVolume,
-      uiVolume: state.uiVolume,
-      locale: state.locale,
-      endlessMode: state.endlessMode,
-    };
-
-    this.memoryState = nextState;
-
-    SaveManager.update({
-      settings: {
-        autoMovement: nextState.autoMovement,
-        autoUpgrade: nextState.autoUpgrade,
-        fastMode: nextState.fastMode,
-        endlessMode: nextState.endlessMode,
-        audioEnabled: nextState.audioEnabled,
-        bgmVolume: nextState.bgmVolume,
-        sfxVolume: nextState.sfxVolume,
-        weaponVolume: nextState.weaponVolume,
-        uiVolume: nextState.uiVolume,
-        locale: nextState.locale,
-      },
-    });
-
-    try {
-      globalThis.localStorage?.setItem(
-        PlaytestSettings.STORAGE_KEY,
-        JSON.stringify(nextState),
-      );
-    } catch {
-      // Memory fallback is enough for environments without localStorage.
-    }
-
-    const savedState = { ...nextState };
-    this.notifyChange(settingName, savedState);
-
-    return savedState;
-  }
-
   static notifyChange(
     settingName: PlaytestSettingName,
     state: PlaytestSettingsState,
@@ -246,47 +171,87 @@ export class PlaytestSettings {
     }
   }
 
-  private static readStoredState(): PlaytestSettingsState | undefined {
-    const hasStoredSave = SaveManager.hasStoredSave();
-    const legacyState = this.readLegacyStoredState();
-
-    if (!hasStoredSave && legacyState) {
-      SaveManager.update({
-        settings: {
-          autoMovement: legacyState.autoMovement,
-          autoUpgrade: legacyState.autoUpgrade,
-          fastMode: legacyState.fastMode,
-          endlessMode: legacyState.endlessMode,
-          audioEnabled: legacyState.audioEnabled,
-          bgmVolume: legacyState.bgmVolume,
-          sfxVolume: legacyState.sfxVolume,
-          weaponVolume: legacyState.weaponVolume,
-          uiVolume: legacyState.uiVolume,
-          locale: legacyState.locale,
-        },
-      });
-      return legacyState;
+  private static ensureSettingsManagerSubscription(): void {
+    if (this.unsubscribeSettingsManager) {
+      return;
     }
 
-    const storedSaveSettings = SaveManager.get().settings;
+    this.unsubscribeSettingsManager = SettingsManager.subscribe((domain, settingName, settings) => {
+      const state = this.flatten(settings);
+
+      this.notifyChange(this.toPlaytestSettingName(domain, settingName), state);
+    });
+  }
+
+  private static ensureLegacyMigrated(): void {
+    if (this.legacyMigrated) {
+      return;
+    }
+
+    this.legacyMigrated = true;
+
+    if (SaveManager.hasStoredSave()) {
+      return;
+    }
+
+    const legacyState = this.readLegacyStoredState();
+
+    if (!legacyState) {
+      return;
+    }
+
+    SettingsManager.updateGameplay({
+      autoMovement: legacyState.autoMovement,
+      autoUpgrade: legacyState.autoUpgrade,
+      fastMode: legacyState.fastMode,
+      endlessMode: legacyState.endlessMode,
+      autoTimeScale: legacyState.autoTimeScale,
+    });
+    SettingsManager.updateAudio({
+      audioEnabled: legacyState.audioEnabled,
+      bgmVolume: legacyState.bgmVolume,
+      sfxVolume: legacyState.sfxVolume,
+      weaponVolume: legacyState.weaponVolume,
+      uiVolume: legacyState.uiVolume,
+    });
+    SettingsManager.updateDisplay({ locale: legacyState.locale });
+  }
+
+  private static flatten(settings: SettingsData): PlaytestSettingsState {
+    const gameplay = settings.gameplay;
+    const audio = settings.audio;
+    const display = settings.display;
 
     return {
-      autoMode: storedSaveSettings.autoMovement || storedSaveSettings.autoUpgrade,
-      autoMovement: storedSaveSettings.autoMovement,
-      autoUpgrade: storedSaveSettings.autoUpgrade,
-      fastMode: storedSaveSettings.fastMode,
-      autoTimeScale: this.memoryState.autoTimeScale,
-      soundEnabled: storedSaveSettings.audioEnabled,
-      audioEnabled: storedSaveSettings.audioEnabled,
-      bgmVolume: this.readVolume(storedSaveSettings.bgmVolume),
-      sfxVolume: this.readVolume(storedSaveSettings.sfxVolume),
-      weaponVolume: this.readVolume(storedSaveSettings.weaponVolume),
-      uiVolume: this.readVolume(storedSaveSettings.uiVolume),
-      locale: isSupportedLocale(storedSaveSettings.locale)
-        ? storedSaveSettings.locale
-        : DEFAULT_LOCALE,
-      endlessMode: storedSaveSettings.endlessMode,
+      autoMode: gameplay.autoMovement || gameplay.autoUpgrade,
+      autoMovement: gameplay.autoMovement,
+      autoUpgrade: gameplay.autoUpgrade,
+      fastMode: gameplay.fastMode,
+      autoTimeScale: gameplay.autoTimeScale,
+      soundEnabled: audio.audioEnabled,
+      audioEnabled: audio.audioEnabled,
+      bgmVolume: this.readVolume(audio.bgmVolume),
+      sfxVolume: this.readVolume(audio.sfxVolume),
+      weaponVolume: this.readVolume(audio.weaponVolume),
+      uiVolume: this.readVolume(audio.uiVolume),
+      locale: isSupportedLocale(display.locale) ? display.locale : DEFAULT_LOCALE,
+      endlessMode: gameplay.endlessMode,
     };
+  }
+
+  private static toPlaytestSettingName(
+    domain: keyof SettingsData,
+    settingName: string,
+  ): PlaytestSettingName {
+    if (domain === 'audio' || domain === 'display' || domain === 'gameplay') {
+      if (settingName === 'settings') {
+        return 'settings';
+      }
+
+      return settingName as PlaytestSettingName;
+    }
+
+    return 'settings';
   }
 
   private static readLegacyStoredState(): PlaytestSettingsState | undefined {
