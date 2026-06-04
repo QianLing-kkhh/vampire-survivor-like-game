@@ -10,8 +10,12 @@ import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
 import { RunRuleSet } from '../rules/RunRuleSet';
 import { SpawnWave } from './SpawnWave';
 
+export type RuntimeSpawnWave = SpawnWave & {
+  modifiers?: EnemyModifierConfig[];
+};
+
 interface ActiveWave {
-  wave: SpawnWave;
+  wave: RuntimeSpawnWave;
   spawnedCount: number;
   elapsedSinceSpawn: number;
 }
@@ -21,12 +25,12 @@ export class SpawnDirector {
   private static readonly SPAWN_MARGIN = 100;
   private static readonly MAX_SPAWN_ATTEMPTS = 20;
 
-  private readonly pendingWaves: SpawnWave[];
+  private readonly pendingWaves: RuntimeSpawnWave[];
   private readonly activeWaves: ActiveWave[] = [];
   private spawnCount = 0;
 
   constructor(
-    waves: readonly SpawnWave[],
+    waves: readonly RuntimeSpawnWave[],
     private readonly enemyFactory: EnemyFactory,
     private readonly getPlayerPosition: () => Position,
     private readonly getWorldSize: () => { width: number; height: number },
@@ -88,7 +92,7 @@ export class SpawnDirector {
         activeWave.spawnedCount += 1;
         this.spawnEnemy(
           activeWave.wave.enemy,
-          (activeWave.wave as SpawnWave & { modifiers?: EnemyModifierConfig[] }).modifiers,
+          activeWave.wave.modifiers,
         );
       }
     }

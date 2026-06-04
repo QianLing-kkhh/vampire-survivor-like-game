@@ -12,6 +12,7 @@ import { DamageCalculator } from '../combat/DamageCalculator';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { CustomWaveDefinition } from '../custom/CustomStageSchema';
 import { EventBus } from '../core/EventBus';
 import { TimeManager } from '../core/TimeManager';
 import { Enemy, GameEventMap } from '../enemy/Enemy';
@@ -42,7 +43,7 @@ import { MutatorContext } from '../rules/MutatorContext';
 import { RunRuleSet } from '../rules/RunRuleSet';
 import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
-import { SpawnDirector } from '../spawn/SpawnDirector';
+import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -102,7 +103,8 @@ export class GameplayInitializer {
     const difficultyManager = new DifficultyManager();
     const selection = SelectionManager.getSelection();
     const selectedCharacter = characterManager.getSelectedCharacter();
-    const selectedStage = stageManager.getSelectedStage();
+    const selectedStageRuntime = stageManager.getSelectedStageRuntimeDefinition();
+    const selectedStage = selectedStageRuntime.stage;
     const selectedMap = mapManager.getSelectedMap();
     const selectedDifficulty = selectedStage.difficultyId
       ? difficultyManager.getDifficulty(selectedStage.difficultyId)
@@ -116,7 +118,7 @@ export class GameplayInitializer {
       mapId: selectedMap.id,
       mode: 'normal',
       seed: selection.seed,
-      contentSource: 'builtin',
+      contentSource: selectedStageRuntime.source,
     };
     const runRuleSet = new RunRuleSet(
       selectedDifficulty,
@@ -128,7 +130,9 @@ export class GameplayInitializer {
     const enemyConfigs = ContentRegistry.listEnemies();
     const passiveItems = ContentRegistry.listPassives();
     const upgradeOptions = ContentRegistry.getUpgradeOptions();
-    const waveSet = ContentRegistry.getWaveSet(DEFAULT_CONTENT_IDS.waveSet) ?? [];
+    const waveSet = selectedStageRuntime.customStagePackage
+      ? this.toSpawnWaves(selectedStageRuntime.customStagePackage.waves)
+      : ContentRegistry.getWaveSet(DEFAULT_CONTENT_IDS.waveSet) ?? [];
     const playerStats = PlayerStats.fromConfig(selectedCharacter.baseStats);
     const runStats = new RunStats(playerStats.maxHp);
     const weaponFactory = new WeaponFactory(config.scene, weaponConfigs);
@@ -355,5 +359,25 @@ export class GameplayInitializer {
       projectileSpeedMultiplier: effects.projectileSpeedMultiplier,
     });
     treasureManager.setBonusDropChance(effects.treasureDropBonus);
+  }
+
+  private toSpawnWaves(customWaves: readonly CustomWaveDefinition[]): RuntimeSpawnWave[] {
+    return customWaves.map((wave) => {
+      const batchCount = Math.max(1, Math.floor(wave.count));
+      const durationSpawnCount = wave.duration === undefined
+        ? batchCount
+        : Math.max(batchCount, Math.ceil(wave.duration / wave.interval) * batchCount);
+      const interval = wave.duration === undefined
+        ? wave.interval
+        : Math.max(0.001, wave.interval / batchCount);
+
+      return {
+        time: wave.startTime,
+        enemy: wave.enemyId,
+        count: durationSpawnCount,
+        interval,
+        modifiers: wave.modifiers,
+      };
+    });
   }
 }

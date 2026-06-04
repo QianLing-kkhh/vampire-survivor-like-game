@@ -1,20 +1,29 @@
 import { CustomStagePackage } from './CustomStageSchema';
 import { CustomStageSerializer } from './CustomStageSerializer';
+import { CustomStageValidator } from './CustomStageValidator';
 
 export class CustomStageStorage {
   private static readonly STORAGE_KEY = 'vampire_survivor_like_custom_stages_v1';
   private memoryPackages: CustomStagePackage[] = [];
 
   list(): CustomStagePackage[] {
-    return this.loadPackages().map((stagePackage) => (
-      CustomStageSerializer.clone(stagePackage)
-    ));
+    return this.loadPackages()
+      .map((stagePackage) => this.safeClone(stagePackage))
+      .filter((stagePackage): stagePackage is CustomStagePackage => stagePackage !== null);
+  }
+
+  listValid(validator = new CustomStageValidator()): CustomStagePackage[] {
+    return this.list().filter((stagePackage) => {
+      const result = validator.validate(stagePackage);
+
+      return result.valid;
+    });
   }
 
   get(id: string): CustomStagePackage | undefined {
     const stagePackage = this.loadPackages().find((candidate) => candidate.id === id);
 
-    return stagePackage ? CustomStageSerializer.clone(stagePackage) : undefined;
+    return stagePackage ? this.safeClone(stagePackage) ?? undefined : undefined;
   }
 
   save(stagePackage: CustomStagePackage): void {
@@ -54,7 +63,9 @@ export class CustomStageStorage {
         return [];
       }
 
-      return parsedValue as CustomStagePackage[];
+      return parsedValue
+        .map((value) => this.safeClone(value as CustomStagePackage))
+        .filter((value): value is CustomStagePackage => value !== null);
     } catch {
       return this.memoryPackages;
     }
@@ -72,6 +83,15 @@ export class CustomStageStorage {
       );
     } catch {
       // Keep memory fallback when localStorage is unavailable.
+    }
+  }
+
+  private safeClone(stagePackage: CustomStagePackage): CustomStagePackage | null {
+    try {
+      return CustomStageSerializer.clone(stagePackage);
+    } catch {
+      console.warn('Skipping corrupted custom stage package.');
+      return null;
     }
   }
 }

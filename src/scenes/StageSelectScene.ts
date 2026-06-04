@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 
 import { I18n } from '../i18n/I18n';
-import { MapManager } from '../map/MapManager';
 import { SelectionManager } from '../selection/SelectionManager';
 import { StageManager } from '../stage/StageManager';
 import { SelectionListPanel } from '../ui/SelectionListPanel';
@@ -16,21 +15,29 @@ export class StageSelectScene extends Phaser.Scene {
   create(): void {
     const stageManager = new StageManager();
     const selection = SelectionManager.getSelection();
+    const selectableStages = stageManager.listSelectableStages()
+      .filter((stage) => stage.source === 'builtin' || stage.valid);
 
     this.cameras.main.setBackgroundColor('#020617');
     this.panel = new SelectionListPanel(this, {
       title: I18n.t('stageSelect.title'),
-      items: stageManager.listStages().map((stage) => ({
+      items: selectableStages.map((stage) => ({
         id: stage.id,
         name: stage.name,
-        description: `${I18n.t('selection.map')}: ${stage.mapId}`,
+        description: [
+          stage.source === 'custom' ? 'Custom' : 'Built-in',
+          `${I18n.t('selection.map')}: ${stage.mapId}`,
+          stage.warnings && stage.warnings.length > 0 ? `${stage.warnings.length} warnings` : '',
+        ].filter(Boolean).join(' / '),
       })),
-      selectedId: selection.stageId,
+      selectedId: selection.customStageId ?? selection.stageId,
       onConfirm: (id) => {
-        const stage = stageManager.getStage(id);
+        const selectedStage = selectableStages.find((stage) => stage.id === id);
 
-        if (SelectionManager.setStageId(stage.id)) {
-          new MapManager().setSelectedMapId(stage.mapId);
+        if (selectedStage?.source === 'custom' && selectedStage.customStageId) {
+          SelectionManager.setCustomStageId(selectedStage.customStageId);
+        } else if (selectedStage?.source === 'builtin') {
+          SelectionManager.setStageId(selectedStage.id);
         }
 
         this.scene.start('TitleScene');

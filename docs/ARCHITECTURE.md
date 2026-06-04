@@ -11,6 +11,7 @@ Scenes own Phaser lifecycle, scene transitions, high-level UI/gameplay coordinat
 - `TitleScene`: start screen, auto-test countdown, Settings, Help, and title BGM entry point.
 - `CharacterSelectScene`: minimal character selection scene backed by `SelectionManager`.
 - `StageSelectScene`: minimal stage selection scene backed by `SelectionManager`.
+- `CustomStageToolScene`: local custom stage package paste/validate/save/export utility.
 - `GameScene`: main lifecycle, pause/resume, settings change handling, result transition, HUD emit, and gameplay runtime callbacks.
 - `UIScene`: overlay scene for HUD, LevelUpPanel, PauseMenu, temporary messages, and UI events.
 - `ResultScene`: compact run summary, CSV download, auto restart, Settings, and endless leaderboard display.
@@ -109,6 +110,8 @@ Current defaults:
 
 Minimal Character/Stage selection UI exists. Full custom stage, random stage, daily challenge, unlock-aware, and detailed preview selectors are still planned.
 
+Valid custom stages saved through `CustomStageStorage` are exposed by `StageManager.listSelectableStages()` and can be selected in `StageSelectScene`. They are not registered into the builtin `ContentRegistry`; `SelectionManager` stores `selectedCustomStageId`, while `StageManager`, `MapManager`, and `GameplayInitializer` resolve the package at runtime.
+
 ## Progression Layer
 
 Progression owns upgrade availability, upgrade application, passive effects, weapon evolution, and auto upgrade selection.
@@ -206,8 +209,10 @@ BootScene / PreloadScene
   -> preload assets and ensure runtime can use registered content
 TitleScene
   -> CharacterSelectScene / StageSelectScene for minimal selection
+  -> CustomStageToolScene for local custom stage package validation/storage
   -> GameScene
     -> SelectionManager / managers resolve selected character/stage/map
+    -> Custom stage packages, when selected, provide runtime stage/map/waves
     -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
     -> GameplayUpdater updates runtime systems

@@ -133,10 +133,12 @@ Current scope:
 
 Not implemented yet:
 
-- Import/export UI
-- Stage selection UI for custom stages
+- Full custom content pack import/export UI
+- Complex Stage selection preview for custom stages
 - Automatic registration into `ContentRegistry`
 - Custom weapons/enemies/passives
 - Custom Boss skill definitions
 
-Future custom stages should validate first, then register through `ContentRegistry` as custom content packs. The validator catches structure, missing references, ID conflicts, and obvious density/performance risks; it is not a full balance verifier.
+Current local custom stages validate first, save through `CustomStageStorage`, and are exposed by `StageManager.listSelectableStages()` without being registered into the builtin registry. When selected, `SelectionManager` stores `selectedCustomStageId`, and `GameplayInitializer` builds runtime stage/map/waves directly from the saved package.
+
+Future broader custom or mod content packs may still register through `ContentRegistry` once package dependency and override rules are mature. The validator catches structure, missing references, ID conflicts, and obvious density/performance risks; it is not a full balance verifier.

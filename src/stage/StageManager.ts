@@ -1,11 +1,31 @@
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { CustomStagePackage } from '../custom/CustomStageSchema';
+import { CustomStageStorage } from '../custom/CustomStageStorage';
+import { CustomStageValidator } from '../custom/CustomStageValidator';
 import { SaveManager } from '../save/SaveManager';
 
 import { StageDefinition } from './StageDefinition';
 
 type StageData = Record<string, StageDefinition>;
+
+export interface SelectableStageEntry {
+  id: string;
+  name: string;
+  source: 'builtin' | 'custom';
+  customStageId?: string;
+  mapId: string;
+  description?: string;
+  valid: boolean;
+  warnings?: string[];
+}
+
+export interface StageRuntimeDefinition {
+  source: 'builtin' | 'custom';
+  stage: StageDefinition;
+  customStagePackage?: CustomStagePackage;
+}
 
 export class StageManager {
   constructor(
@@ -23,10 +43,33 @@ export class StageManager {
   private readonly stageData: StageData;
 
   getSelectedStage(): StageDefinition {
-    return this.getStage(this.getSelectedStageId());
+    return this.getSelectedStageRuntimeDefinition().stage;
+  }
+
+  getSelectedStageRuntimeDefinition(): StageRuntimeDefinition {
+    const customStagePackage = this.getSelectedCustomStagePackage();
+
+    if (customStagePackage) {
+      return {
+        source: 'custom',
+        stage: this.toStageDefinition(customStagePackage),
+        customStagePackage,
+      };
+    }
+
+    return {
+      source: 'builtin',
+      stage: this.getStage(this.getSelectedStageId()),
+    };
   }
 
   getSelectedStageId(): string {
+    const customStagePackage = this.getSelectedCustomStagePackage();
+
+    if (customStagePackage) {
+      return customStagePackage.stage.id;
+    }
+
     const savedStageId = SaveManager.get().selections.selectedStageId;
 
     this.selectedStageId = this.stageData[savedStageId]
@@ -42,16 +85,52 @@ export class StageManager {
     SaveManager.update({
       selections: {
         selectedStageId: this.selectedStageId,
+        selectedCustomStageId: undefined,
       },
     });
   }
 
   getStage(stageId: string): StageDefinition {
+    const customStagePackage = this.getSelectedCustomStagePackage();
+
+    if (customStagePackage?.stage.id === stageId) {
+      return this.toStageDefinition(customStagePackage);
+    }
+
     return this.stageData[stageId] ?? this.stageData[DEFAULT_CONTENT_IDS.stage];
   }
 
   listStages(): StageDefinition[] {
     return Object.values(this.stageData).map((stage) => ({ ...stage }));
+  }
+
+  listSelectableStages(): SelectableStageEntry[] {
+    const builtinStages = this.listStages().map((stage) => ({
+      id: stage.id,
+      name: stage.name,
+      source: 'builtin' as const,
+      mapId: stage.mapId,
+      description: stage.mapId,
+      valid: true,
+      warnings: [],
+    }));
+    const validator = new CustomStageValidator();
+    const customStages = new CustomStageStorage().list().map((stagePackage) => {
+      const validation = validator.validate(stagePackage);
+
+      return {
+        id: stagePackage.id,
+        name: stagePackage.name,
+        source: 'custom' as const,
+        customStageId: stagePackage.id,
+        mapId: stagePackage.map.id,
+        description: stagePackage.stage.id,
+        valid: validation.valid,
+        warnings: validation.warnings.map((warning) => warning.message),
+      };
+    });
+
+    return [...builtinStages, ...customStages];
   }
 
   getFinalBossWarningTimeSeconds(stage: StageDefinition): number {
@@ -63,5 +142,41 @@ export class StageManager {
       record[stage.id] = stage;
       return record;
     }, {});
+  }
+
+  private getSelectedCustomStagePackage(): CustomStagePackage | undefined {
+    const customStageId = SaveManager.get().selections.selectedCustomStageId;
+
+    if (!customStageId) {
+      return undefined;
+    }
+
+    const stagePackage = new CustomStageStorage().get(customStageId);
+
+    if (!stagePackage) {
+      console.warn(`Selected custom stage package not found: ${customStageId}`);
+      return undefined;
+    }
+
+    const validation = new CustomStageValidator().validate(stagePackage);
+
+    if (!validation.valid) {
+      console.warn(`Selected custom stage package is invalid: ${customStageId}`);
+      return undefined;
+    }
+
+    return stagePackage;
+  }
+
+  private toStageDefinition(stagePackage: CustomStagePackage): StageDefinition {
+    return {
+      id: stagePackage.stage.id,
+      name: stagePackage.stage.name,
+      mapId: stagePackage.map.id,
+      finalBossId: stagePackage.stage.finalBossId,
+      finalBossSpawnTimeSeconds: stagePackage.stage.finalBossSpawnTime,
+      warningBeforeSpawnSeconds: stagePackage.stage.warningBeforeBoss,
+      mutators: stagePackage.stage.mutators,
+    };
   }
 }

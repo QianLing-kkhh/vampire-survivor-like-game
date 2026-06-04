@@ -1,5 +1,7 @@
 import { CharacterManager } from '../character/CharacterManager';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
+import { CustomStageStorage } from '../custom/CustomStageStorage';
+import { CustomStageValidator } from '../custom/CustomStageValidator';
 import { MapManager } from '../map/MapManager';
 import { SaveManager } from '../save/SaveManager';
 import { StageManager } from '../stage/StageManager';
@@ -23,6 +25,7 @@ export class SelectionManager {
     const characterId = characterManager.getCharacter(saveSelection.selectedCharacterId).id;
     const stage = stageManager.getStage(saveSelection.selectedStageId);
     const map = mapManager.getMap(saveSelection.selectedMapId);
+    const customStageId = this.getValidCustomStageId(saveSelection.selectedCustomStageId);
 
     return {
       ...DEFAULT_SELECTION_STATE,
@@ -31,7 +34,7 @@ export class SelectionManager {
       mapId: map.id,
       difficultyId: saveSelection.selectedDifficultyId ?? DEFAULT_SELECTION_STATE.difficultyId,
       challengeId: saveSelection.selectedChallengeId,
-      customStageId: saveSelection.selectedCustomStageId,
+      customStageId,
       seed: saveSelection.selectedSeed,
       rulesetId: saveSelection.selectedRulesetId,
     };
@@ -52,13 +55,20 @@ export class SelectionManager {
 
   static setStageId(id: string): boolean {
     const stageManager = new StageManager();
+    const stage = stageManager.getStage(id);
 
-    if (stageManager.getStage(id).id !== id) {
+    if (stage.id !== id) {
       console.warn(`Selection stage id not found: ${id}`);
       return false;
     }
 
-    stageManager.setSelectedStageId(id);
+    SaveManager.update({
+      selections: {
+        selectedStageId: stage.id,
+        selectedMapId: stage.mapId,
+        selectedCustomStageId: undefined,
+      },
+    });
     this.notify();
     return true;
   }
@@ -71,9 +81,55 @@ export class SelectionManager {
       return false;
     }
 
-    mapManager.setSelectedMapId(id);
+    SaveManager.update({
+      selections: {
+        selectedMapId: id,
+        selectedCustomStageId: undefined,
+      },
+    });
     this.notify();
     return true;
+  }
+
+  static setCustomStageId(customStageId: string): boolean {
+    const stagePackage = new CustomStageStorage().get(customStageId);
+
+    if (!stagePackage) {
+      console.warn(`Selection custom stage package not found: ${customStageId}`);
+      return false;
+    }
+
+    const validation = new CustomStageValidator().validate(stagePackage);
+
+    if (!validation.valid) {
+      console.warn(`Selection custom stage package is invalid: ${customStageId}`);
+      return false;
+    }
+
+    SaveManager.update({
+      selections: {
+        selectedCustomStageId: stagePackage.id,
+        selectedStageId: stagePackage.stage.id,
+        selectedMapId: stagePackage.map.id,
+      },
+    });
+    this.notify();
+    return true;
+  }
+
+  static clearCustomStage(): void {
+    SaveManager.update({
+      selections: {
+        selectedCustomStageId: undefined,
+        selectedStageId: DEFAULT_SELECTION_STATE.stageId,
+        selectedMapId: DEFAULT_SELECTION_STATE.mapId,
+      },
+    });
+    this.notify();
+  }
+
+  static isCustomStageSelected(): boolean {
+    return this.getSelection().customStageId !== undefined;
   }
 
   static setDifficultyId(id: string): boolean {
@@ -149,6 +205,16 @@ export class SelectionManager {
       warnings.push(`Map fallback: ${DEFAULT_CONTENT_IDS.map}`);
     }
 
+    if (saveSelection.selectedCustomStageId) {
+      const stagePackage = new CustomStageStorage().get(saveSelection.selectedCustomStageId);
+
+      if (!stagePackage) {
+        warnings.push(`Custom stage fallback: ${DEFAULT_CONTENT_IDS.stage}`);
+      } else if (!new CustomStageValidator().validate(stagePackage).valid) {
+        warnings.push(`Custom stage invalid: ${saveSelection.selectedCustomStageId}`);
+      }
+    }
+
     return {
       valid: warnings.length === 0,
       warnings,
@@ -171,5 +237,21 @@ export class SelectionManager {
     for (const listener of this.listeners) {
       listener(selection);
     }
+  }
+
+  private static getValidCustomStageId(customStageId: string | undefined): string | undefined {
+    if (!customStageId) {
+      return undefined;
+    }
+
+    const stagePackage = new CustomStageStorage().get(customStageId);
+
+    if (!stagePackage) {
+      return undefined;
+    }
+
+    return new CustomStageValidator().validate(stagePackage).valid
+      ? stagePackage.id
+      : undefined;
   }
 }

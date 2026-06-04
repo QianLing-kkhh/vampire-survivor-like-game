@@ -36,7 +36,7 @@ The current custom stage foundation lives under `src/custom/`:
 - List stored custom stage IDs.
 - Export stored package JSON through clipboard or console fallback.
 
-Custom stage packages are not automatically registered into gameplay or StageManager selection yet, and they cannot be launched from this tool.
+Saved valid custom stage packages can now be selected from `StageSelectScene` and launched through the normal `GameScene` flow. The tool itself still does not start gameplay directly; it only validates, saves, lists, and exports packages.
 
 ## CustomStageValidator
 
@@ -55,20 +55,23 @@ The current validator checks:
 
 Validator output is advisory for balance. It can reject invalid structure and obvious missing references, but it does not guarantee a stage is fun, fair, or fully balanced.
 
-## Registration Path
+## Runtime Selection Path
 
-Custom content should register through `ContentRegistry` as a `ContentPack`.
+Custom stages are intentionally not mixed into the builtin `ContentRegistry`.
 
-Recommended flow:
+Current flow:
 
 ```text
-Import custom content
+Import or paste custom stage JSON
   -> parse schema
-  -> migrate if needed
   -> validate
-  -> register pack
-  -> save metadata
+  -> save package in CustomStageStorage
+  -> StageManager exposes valid packages as selectable custom stages
+  -> SelectionManager stores selectedCustomStageId
+  -> GameplayInitializer builds runtime stage/map/waves from the package
 ```
+
+This keeps builtin content isolated while still allowing validated local custom stages to run.
 
 ## First Supported Custom Content Scope
 
@@ -84,7 +87,7 @@ The current custom stage schema follows that scope: it only references existing 
 
 `DifficultyDefinition`, `MutatorConfig`, and `RunRuleSet` now exist as a foundation for custom stage and challenge rules.
 
-Current custom stage packages may declare stage-level `mutators`, and `CustomStageValidator` checks their basic shape and numeric ranges. This does not mean custom stages are playable through UI yet, and no built-in stage enables mutators by default.
+Current custom stage packages may declare stage-level `mutators`, and `CustomStageValidator` checks their basic shape and numeric ranges. Custom stages selected from `StageSelectScene` can use these stage-level mutators. No built-in stage enables mutators by default.
 
 Supported first-pass mutator types:
 
@@ -133,4 +136,4 @@ Planned but not implemented:
 - Version migration tooling
 - UI for browsing imported content
 
-The current Custom Stage Tool is intentionally local-only and utility-only. It does not load remote files, upload data, register content packs, or enable custom stage play.
+The current Custom Stage Tool is intentionally local-only. It does not load remote files, upload data, or register content packs. Valid saved custom stages are launched only through `StageSelectScene`, not directly from the tool.
