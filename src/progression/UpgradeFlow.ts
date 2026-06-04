@@ -127,7 +127,6 @@ export class UpgradeFlow {
         if (reward && this.endlessRewardManager.applyReward(reward.id, 'chest')) {
           this.emitEndlessRewardChosen(reward.id, 'chest');
           this.emitUpgradeApplied(reward.id, 'endlessReward');
-          console.log('Treasure chest endless reward:', reward.id);
           return {
             type: 'upgrade',
             upgradeId: reward.id,
@@ -149,7 +148,6 @@ export class UpgradeFlow {
 
     this.params.runState.recordChestUpgrade(upgrade.id);
     this.emitUpgradeApplied(upgrade.id, 'treasure');
-    console.log('Treasure chest upgrade:', upgrade.id);
     const secondEvolution = this.tryEvolveFromTreasure();
 
     if (secondEvolution) {
@@ -188,7 +186,6 @@ export class UpgradeFlow {
     this.params.onUpgradeApplied?.();
 
     const evolution = `${evolutionResult.baseWeaponId}->${evolutionResult.evolvedWeaponId}`;
-    console.log(`Treasure chest evolution: ${evolution}`);
 
     return evolution;
   }

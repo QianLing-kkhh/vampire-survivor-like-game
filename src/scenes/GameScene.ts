@@ -327,7 +327,6 @@ export class GameScene extends Phaser.Scene {
     this.uiScene = uiScene;
 
     this.unsubscribeLevelUp = this.eventBus.subscribe('LevelUp', (event) => {
-      console.log('LevelUp', event);
       AudioManager.playSfx(this, 'level_up');
       const healAmount = this.playerHealth?.healLostHpRatio(
         GameScene.LEVEL_UP_HEAL_LOST_HP_RATIO,
@@ -360,7 +359,6 @@ export class GameScene extends Phaser.Scene {
           gameTimeSeconds: this.timeManager.gameTimeSeconds,
           runId: this.runId,
         });
-        console.log('LevelUp skipped: no upgrades available');
         this.currentLevelUpOptions = [];
         uiScene.events.emit('ShowTemporaryMessage', 'No upgrades available');
         return;

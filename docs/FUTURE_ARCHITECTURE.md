@@ -44,6 +44,7 @@ Future architecture should assume support for:
 - Unified GameEvent timeline for achievements, tutorials, unlocks, debug tooling, and replay foundations
 - Optional online leaderboard or cloud save adapters
 - Remote provider adapters for leaderboards, saves, challenges, custom stages, and future pack sources
+- Maintenance/audit commands and reports
 
 ## Current Architecture Principles
 
@@ -70,6 +71,35 @@ Future architecture should assume support for:
 21. Daily, seeded, and custom challenges should use `ChallengeManager` and write through `SelectionManager`, not mutate gameplay systems directly.
 22. Future mod, local, and remote content sources should expose `ContentPackManifest` metadata and load through provider interfaces before validation and registration.
 23. Remote providers should remain adapters; they should not bypass `SaveManager`, `ContentRegistry`, validation, leaderboard keys, or compatibility checks.
+24. Developer/debug tooling should be opt-in and should not mutate gameplay state while collecting diagnostics.
+25. Foundation systems that are not fully active should be documented as foundation/planned rather than removed as dead code.
+
+## Current Audit Snapshot
+
+The current architecture contains several intentional compatibility layers:
+
+- `PlaytestSettings` remains as a facade over domain-based `SettingsManager`.
+- The legacy `core/EventBus` remains while `GameEventBus` migration continues.
+- `BossAttackController` remains for final Boss ranged attacks; endless Boss skills use `BossSkillFactory`.
+- Legacy asset keys remain as fallbacks behind `AssetKeyResolver`.
+- `EndlessLeaderboard` remains as a facade over structured `LeaderboardManager` records.
+
+Foundation-only systems that should be preserved unless their future scope changes:
+
+- Content pack provider and remote provider interfaces
+- Relic runtime foundation with no relic drops/UI
+- Replay recording/export/import without playback
+- Playtest scenario runner shell
+- Daily challenge foundation with local minimal UI and no remote service
+- Achievement/milestone/unlock/tutorial foundations
+- Appearance theme/skin foundation with only the default theme active
+
+Known architecture follow-ups:
+
+- Move remaining gameplay randomness away from direct `Math.random()` where it affects choices or rewards.
+- Continue reducing `GameScene` orchestration as smaller services mature.
+- Gate or remove developer console output that is not part of tool fallback behavior.
+- Keep direct JSON imports limited to bootstrap/config/help boundaries or migrate them through registry-backed display builders.
 
 ## Seeded Runs And Replay
 
@@ -209,6 +239,8 @@ Content should eventually split into resolvers and registries:
 - Replay recorder, serializer, storage, and playback shell for future reproduction tooling
 - Content pack manifest and provider interfaces for local, custom, mod, and future remote pack sources
 - Remote provider interfaces for leaderboard, save, challenge, and custom stage services
+- Developer debug panel for opt-in diagnostics
+- Playtest scenario runner shell for future queued balance batches
 
 ## Risk Areas
 
@@ -229,3 +261,4 @@ Content should eventually split into resolvers and registries:
 - Replay blobs being mixed into formal save data, CSV buffers, or leaderboard records
 - Challenge activation bypassing `SelectionManager` or mixing challenge leaderboards with normal/endless records
 - Remote content or cloud data bypassing validation, migration, compatibility checks, or explicit user-controlled registration
+- Treating interface-only remote providers, replay playback, relic drops, or mod loading as implemented gameplay features

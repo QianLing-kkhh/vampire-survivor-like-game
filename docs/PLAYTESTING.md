@@ -43,6 +43,8 @@ Developer DebugPanel foundation is available for local diagnostics. It is disabl
 
 Playtest scenario runner foundation exists under `src/playtest/`. It defines scenario data, a queue, built-in scenario presets, and a runner shell for future batches across character, stage, difficulty, seed, mutator, and Endless combinations. It is inactive by default and does not change the current Title Scene Auto Test or Result Scene auto-restart behavior.
 
+Maintenance/audit command tooling is not currently a runtime feature. Architecture audits should rely on TypeScript/build validation, targeted repository scans, and documentation synchronization until a dedicated maintenance command layer exists.
+
 Useful combinations:
 
 - Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.
@@ -180,6 +182,8 @@ Current CSV behavior:
 - Clear CSV Buffer removes both memory and persisted logs.
 
 If CSV schema, content hash, or game version changes, keep samples separate. Do not compare old and new schema/content/version rows mixed in All CSV.
+
+CSV, replay, leaderboard, and ResultScene data should continue to use the same `RunMetadata` snapshot captured at run start. Do not rebuild these fields from current selection state at run end.
 
 ## CSV Diagnostics
 

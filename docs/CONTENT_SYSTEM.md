@@ -85,6 +85,14 @@ The registry provides:
 
 Business systems should not directly import gameplay JSON. They should read through `ContentRegistry` or a manager/factory backed by it.
 
+Current allowed direct JSON import boundaries:
+
+- `ContentBootstrap` imports builtin data to register the builtin pack.
+- Help/display builders may still import builtin data for static help until localized display metadata is registry-backed.
+- Boss config loaders may import Boss config data while the Boss content registry path is still maturing.
+
+New runtime gameplay systems should not add additional direct JSON imports.
+
 ## Conflict Rules
 
 Current first-pass behavior:

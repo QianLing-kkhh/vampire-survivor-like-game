@@ -172,6 +172,8 @@ Reset also restores default unlock state, leaving the current default character,
 
 Legacy PlaytestSettings localStorage can migrate into the new save when no save exists yet.
 
+Audit note: direct localStorage access is limited to storage boundary classes such as `SaveStorage`, `PlaytestLogBuffer`, `CustomStageStorage`, `ReplayStorage`, legacy `PlaytestSettings` migration, and provider/storage shells. New persistent gameplay or player state should not write localStorage directly.
+
 ## Selection Integration
 
 The current selected IDs are save-backed:
@@ -267,6 +269,8 @@ Current behavior:
 Future cloud save implementations should treat downloaded saves like imported saves: validate first, reject unsupported future schemas, migrate compatible older schemas, and only then write through `SaveManager`.
 
 Remote leaderboard and challenge provider interfaces are also separate from formal save data. They must not store progression state outside `SaveManager`.
+
+Remote provider interfaces currently perform no network requests and are not called by runtime save flows.
 
 ## Future Save Domains
 

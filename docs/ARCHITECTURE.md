@@ -12,6 +12,10 @@ Scenes own Phaser lifecycle, scene transitions, high-level UI/gameplay coordinat
 - `CharacterSelectScene`: minimal character selection scene backed by `SelectionManager`.
 - `StageSelectScene`: minimal stage selection scene backed by `SelectionManager`.
 - `CustomStageToolScene`: local custom stage package paste/validate/save/export utility.
+- `CustomStageEditorLiteScene`: prompt-driven custom stage basics and wave editor.
+- `RecordsScene`: read-only achievements, local leaderboards, and unlock state viewer.
+- `ReplayToolScene`: developer replay import/export/compatibility utility; no playback.
+- `DailyChallengeScene`: minimal local daily challenge summary and activation scene.
 - `GameScene`: main lifecycle, pause/resume, settings change handling, result transition, HUD emit, and gameplay runtime callbacks.
 - `UIScene`: overlay scene for HUD, LevelUpPanel, PauseMenu, temporary messages, and UI events.
 - `ResultScene`: compact run summary, CSV download, auto restart, Settings, and endless leaderboard display.
@@ -115,6 +119,10 @@ Current status:
 The content layer is the current foundation for future custom content and mod content packs.
 
 - `ContentPack`: data bundle shape for weapons, enemies, passives, upgrades, waves, characters, stages, and maps.
+- `ContentPackManifest`: metadata shape for future builtin/custom/mod/remote pack discovery.
+- `ContentPackSource`: source descriptor for builtin, local, custom, mod, or remote content sources.
+- `ContentPackProvider`: async provider interface for listing manifests and loading packs.
+- `LocalContentPackProvider`: localStorage/memory shell; not connected to runtime registration.
 - `ContentRegistry`: unified in-memory read entry for registered content.
 - `ContentBootstrap`: imports built-in JSON and registers one builtin content pack.
 - `ContentValidator`: first-pass validation with warnings for missing references and required fields.
@@ -124,7 +132,9 @@ The content layer is the current foundation for future custom content and mod co
 Current status:
 
 - Only the builtin content pack is registered.
-- Custom/mod loading is not implemented yet.
+- Local custom stages are stored and selected outside the builtin registry.
+- Custom/mod content pack loading is not implemented yet.
+- Remote pack providers are interface-only and make no network requests.
 - New gameplay systems should avoid direct JSON imports and read definitions through `ContentRegistry` or managers that use it.
 
 ## Save Layer
@@ -186,7 +196,7 @@ Current defaults:
 - Stage: `stage_001`
 - Map: `prototype_field`
 
-Minimal Character/Stage selection UI exists. Full custom stage, random stage, daily challenge, unlock-aware, and detailed preview selectors are still planned.
+Minimal Character/Stage selection UI exists. Custom stages can appear in Stage Select after validation and local storage. Map selection, random stage selection, difficulty selection, detailed previews, unlock presentation, and custom challenge selection remain planned.
 
 Valid custom stages saved through `CustomStageStorage` are exposed by `StageManager.listSelectableStages()` and can be selected in `StageSelectScene`. They are not registered into the builtin `ContentRegistry`; `SelectionManager` stores `selectedCustomStageId`, while `StageManager`, `MapManager`, and `GameplayInitializer` resolve the package at runtime.
 
@@ -268,6 +278,27 @@ The random layer is the foundation for seeded runs, replay debugging, daily chal
 
 `GameplayInitializer` creates one `RandomManager` per run. New gameplay randomness should receive a `RandomSource` or `RandomManager` through constructor/config injection rather than using `Math.random()` or a global singleton.
 
+Current migration note:
+
+- Upgrade option selection, spawn positions, treasure checks, and endless Boss random choices have seeded paths.
+- Some compatibility or low-risk utility paths still use `Math.random()` for ids, sessions, or not-yet-migrated fallback choices. Do not add new gameplay randomness through direct `Math.random()`.
+
+## Challenge Layer
+
+The challenge layer is the foundation for daily, weekly, seeded, and custom challenge rules.
+
+- `ChallengeDefinition`: serializable challenge selection, seed, difficulty, mutator, and mode shape.
+- `DailyChallengeGenerator`: deterministic local-date daily challenge generator using `daily:YYYY-MM-DD` seeds.
+- `ChallengeRegistry`: optional registry for generated or future content-provided challenges.
+- `ChallengeManager`: activates or clears a challenge by writing through `SelectionManager`.
+- `ChallengeRules`: summary/helper layer for challenge rule display.
+
+Current status:
+
+- `DailyChallengeScene` provides a minimal visible entry and can start today's local challenge.
+- There is no online challenge service, reward flow, calendar browser, or challenge editor.
+- Normal Title Start Game clears active challenge selection so ordinary runs do not inherit challenge seed/rules.
+
 ## Replay Layer
 
 The replay layer is the foundation for future automated test reproduction, balance debugging, seed verification, daily challenge validation, and leaderboard fairness checks.
@@ -296,6 +327,8 @@ Endless systems activate after the final Boss is killed when Endless Mode is ena
 - `EndlessRewardManager`: provides post-cap rewards, temporary buffs, permanent minor growth, shield stacks, and global enemy slow multiplier.
 - `EndlessLeaderboard`: stores local top-10 endless results in `localStorage`.
 
+`EndlessLeaderboard` is a compatibility facade over `LeaderboardManager` and `SaveManager.records.leaderboardsByKey`. New records should use `LeaderboardKey`.
+
 ## Run Logging Layer
 
 Run logging is separated from gameplay object ownership.
@@ -316,6 +349,11 @@ UI classes should display state, not own gameplay rules.
 - `SettingsMenu`: reusable settings overlay for Title, Pause, and Result flows.
 - `HelpOverlay`: tabbed help system built from data/config where possible.
 - `ResultScene`: compact summary, CSV export, Settings, and leaderboard display.
+- `RecordsPanel`, `AchievementListPanel`, `LeaderboardPanel`, and `UnlocksPanel`: read-only records viewer components.
+- `ReplayListPanel`, `ReplayDetailPanel`, and `ReplayImportPanel`: replay tool components.
+- `DailyChallengePanel` and `ChallengeSummaryPanel`: daily challenge summary components.
+- `CustomStageEditorPanel`, `CustomWaveEditorPanel`, and `CustomStageValidationPanel`: custom stage tool/editor components.
+- `DebugPanel`: developer-only diagnostics overlay, hidden by default.
 - `UITheme`: shared colors, font sizes, button metrics, and panel constants.
 
 ## Responsive Layer
@@ -335,6 +373,22 @@ Responsive helpers centralize screen layout rules.
 - `I18n`: locale lookup, fallback, and interpolation.
 - `Locale`: supported locales and display names.
 
+## Remote Provider Layer
+
+Remote providers are interface-only foundations for future online adapters.
+
+- `RemoteProviderResult`: shared success/data/errors/warnings/status result shape.
+- `RemoteLeaderboardProvider`: future leaderboard submit/fetch contract.
+- `RemoteSaveProvider`: future cloud save upload/download contract.
+- `RemoteChallengeProvider`: future remote daily challenge fetch contract.
+- `RemoteCustomStageProvider`: future custom stage upload/fetch/search contract.
+
+Current status:
+
+- No implementation performs network requests.
+- No remote provider is called by runtime gameplay.
+- Remote data must go through validation, compatibility checks, and explicit manager flows before it can affect content, saves, leaderboards, or selections.
+
 ## High-Level Runtime Flow
 
 ```text
@@ -343,6 +397,8 @@ BootScene / PreloadScene
 TitleScene
   -> CharacterSelectScene / StageSelectScene for minimal selection
   -> CustomStageToolScene for local custom stage package validation/storage
+  -> CustomStageEditorLiteScene for lightweight local package editing
+  -> RecordsScene / ReplayToolScene / DailyChallengeScene for foundation viewers/tools
   -> GameScene
     -> SelectionManager / managers resolve selected character/stage/map
     -> Custom stage packages, when selected, provide runtime stage/map/waves

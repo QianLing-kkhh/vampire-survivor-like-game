@@ -151,3 +151,5 @@ The current Custom Stage Tool is intentionally local-only. It does not load remo
 - No online sharing UI exists.
 
 `ContentPackManifest` is the future metadata format for custom/mod/remote content packs. Custom stages or broader mod packs should declare source, version, content hash, dependencies, and provided IDs through a manifest before registration. Validation remains mandatory before any loaded custom or remote content can enter the runtime selection path.
+
+Audit boundary: playable custom stages currently support only existing enemy/Boss references and local package storage. Custom enemies, weapons, passives, Boss skills, assets, remote sharing, dependency resolution, and mod pack registration remain planned.

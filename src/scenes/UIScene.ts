@@ -70,7 +70,6 @@ export class UIScene extends Phaser.Scene {
 
     this.levelUpPanel?.destroy();
     this.levelUpPanel = new LevelUpPanel(this, options, (option) => {
-      console.log('UpgradeSelected', option);
       this.levelUpPanel?.destroy();
       this.levelUpPanel = undefined;
       this.events.emit('UpgradeSelected', option);

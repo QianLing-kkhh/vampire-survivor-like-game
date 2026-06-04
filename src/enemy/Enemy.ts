@@ -191,9 +191,6 @@ export class Enemy {
     });
 
     if (actualDamage > 0) {
-      console.log(
-        `Enemy hit: ${this.id} HP ${Math.max(0, this.currentHp)} / ${this.maxHp}`,
-      );
       this.scene.events.emit('EnemyDamagedFloatingText', {
         x: this.body.x,
         y: this.body.y,
