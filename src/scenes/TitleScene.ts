@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
+import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
@@ -33,6 +34,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    PlaytestLogBuffer.clear();
+    console.info('Playtest CSV buffer cleared on TitleScene entry.');
     this.screenManager = new ScreenManager(this);
     const centerX = this.screenManager.centerX;
     const centerY = this.screenManager.centerY;

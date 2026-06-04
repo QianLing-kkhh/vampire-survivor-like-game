@@ -14,7 +14,7 @@ type StoredPlaytestLog = string | Partial<BufferedPlaytestLog>;
 export class PlaytestLogBuffer {
   private static readonly MAX_ROWS = 1000;
   private static readonly STORAGE_KEY = 'vampire_survivor_like_playtest_logs';
-  private static readonly SESSION_ID = PlaytestLogBuffer.createSessionId();
+  private static sessionId = PlaytestLogBuffer.createSessionId();
   private static rows: BufferedPlaytestLog[] = PlaytestLogBuffer.loadStoredRows();
 
   static append(csvRow: string): void {
@@ -30,7 +30,7 @@ export class PlaytestLogBuffer {
       row: csvRow,
       timestamp,
       runIndex: this.getNextRunIndex(),
-      sessionId: PlaytestLogBuffer.SESSION_ID,
+      sessionId: PlaytestLogBuffer.sessionId,
       previousRunTimestamp,
       realTimeGapSeconds: this.calculateGapSeconds(timestamp, previousRunTimestamp),
     });
@@ -62,7 +62,13 @@ export class PlaytestLogBuffer {
 
   static clear(): void {
     this.rows = [];
-    this.saveRows();
+    this.sessionId = PlaytestLogBuffer.createSessionId();
+
+    try {
+      globalThis.localStorage?.removeItem(PlaytestLogBuffer.STORAGE_KEY);
+    } catch {
+      // Memory clear above is enough when localStorage is unavailable.
+    }
   }
 
   private static getHeader(): string {
@@ -154,8 +160,8 @@ export class PlaytestLogBuffer {
           ? index + 1
           : storedRow.runIndex ?? index + 1,
         sessionId: typeof storedRow === 'string'
-          ? PlaytestLogBuffer.SESSION_ID
-          : storedRow.sessionId ?? PlaytestLogBuffer.SESSION_ID,
+          ? PlaytestLogBuffer.sessionId
+          : storedRow.sessionId ?? PlaytestLogBuffer.sessionId,
         previousRunTimestamp,
         realTimeGapSeconds: typeof storedRow === 'string'
           ? this.calculateGapSeconds(timestamp, previousRunTimestamp)
