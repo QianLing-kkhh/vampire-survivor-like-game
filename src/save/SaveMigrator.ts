@@ -15,6 +15,7 @@ import {
 } from '../leaderboard/LeaderboardKey';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 import { TutorialState } from '../tutorial/TutorialState';
+import { VersionInfo, getCurrentVersionInfo } from '../version/VersionInfo';
 
 export class SaveMigrator {
   migrate(rawSave: string | null): SaveData {
@@ -51,11 +52,45 @@ export class SaveMigrator {
 
     return {
       schemaVersion: SAVE_SCHEMA_VERSION,
+      versionInfo: this.migrateVersionInfo(save.versionInfo),
       settings: this.migrateSettings(save.settings),
       progression: this.migrateProgression(save.progression),
       selections: this.migrateSelections(save.selections),
       cosmetics: this.migrateCosmetics(save.cosmetics, save.selections),
       records: this.migrateRecords(save.records),
+    };
+  }
+
+  private migrateVersionInfo(versionInfo: unknown): VersionInfo {
+    const defaultVersionInfo = getCurrentVersionInfo();
+
+    if (!this.isObject(versionInfo)) {
+      return defaultVersionInfo;
+    }
+
+    return {
+      gameVersion: this.readString(versionInfo.gameVersion, defaultVersionInfo.gameVersion),
+      saveSchemaVersion: this.readNumber(
+        versionInfo.saveSchemaVersion,
+        defaultVersionInfo.saveSchemaVersion,
+        0,
+      ),
+      csvSchemaVersion: this.readNumber(
+        versionInfo.csvSchemaVersion,
+        defaultVersionInfo.csvSchemaVersion,
+        0,
+      ),
+      replaySchemaVersion: this.readNumber(
+        versionInfo.replaySchemaVersion,
+        defaultVersionInfo.replaySchemaVersion,
+        0,
+      ),
+      customStageSchemaVersion: this.readNumber(
+        versionInfo.customStageSchemaVersion,
+        defaultVersionInfo.customStageSchemaVersion,
+        0,
+      ),
+      contentHash: this.readString(versionInfo.contentHash, defaultVersionInfo.contentHash),
     };
   }
 

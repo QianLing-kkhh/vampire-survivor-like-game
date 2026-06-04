@@ -1,4 +1,5 @@
 import { PlaytestLog } from './PlaytestLog';
+import { getCurrentVersionInfo } from '../version/VersionInfo';
 
 interface BufferedPlaytestLog {
   row: string;
@@ -20,6 +21,17 @@ export class PlaytestLogBuffer {
   static append(csvRow: string): void {
     if (!csvRow) {
       return;
+    }
+
+    if (!this.isCurrentCsvRow(csvRow)) {
+      console.info('Playtest CSV buffer cleared because CSV schema or content hash changed.');
+      this.clear();
+      return;
+    }
+
+    if (this.rows.length > 0 && !this.areRowsCompatible(csvRow, this.rows[0].row)) {
+      console.info('Playtest CSV buffer cleared because CSV schema or content hash changed.');
+      this.clear();
     }
 
     const timestamp = this.extractTimestamp(csvRow);
@@ -128,7 +140,9 @@ export class PlaytestLogBuffer {
         return [];
       }
 
-      return this.normalizeStoredRows(parsedRows).slice(-PlaytestLogBuffer.MAX_ROWS);
+      return this.normalizeStoredRows(parsedRows)
+        .filter((row) => this.isCurrentCsvRow(row.row))
+        .slice(-PlaytestLogBuffer.MAX_ROWS);
     } catch {
       return [];
     }
@@ -185,7 +199,22 @@ export class PlaytestLogBuffer {
   }
 
   private static extractTimestamp(csvRow: string): string {
-    return this.parseCsvLine(csvRow)[2] ?? '';
+    return this.parseCsvLine(csvRow)[5] ?? '';
+  }
+
+  private static isCurrentCsvRow(csvRow: string): boolean {
+    const parsedRow = this.parseCsvLine(csvRow);
+    const currentVersionInfo = getCurrentVersionInfo();
+
+    return parsedRow[4] === PlaytestLog.getCsvSchemaVersion().toString()
+      && parsedRow[3] === currentVersionInfo.contentHash;
+  }
+
+  private static areRowsCompatible(leftRow: string, rightRow: string): boolean {
+    const left = this.parseCsvLine(leftRow);
+    const right = this.parseCsvLine(rightRow);
+
+    return left[4] === right[4] && left[3] === right[3];
   }
 
   private static calculateGapSeconds(

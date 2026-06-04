@@ -16,11 +16,14 @@ The save system is the persistence foundation for settings, selections, progress
 `SaveData` contains:
 
 - `schemaVersion`
+- `versionInfo`
 - `settings`
 - `progression`
 - `selections`
 - `cosmetics`
 - `records`
+
+`versionInfo` records the current game version, save/CSV/replay/custom-stage schema versions, and built-in content hash. Old saves without this metadata are migrated with current values.
 
 `settings` is split into domains:
 
@@ -113,6 +116,8 @@ If JSON is corrupted, the game should warn and fall back to a default save rathe
 - `records.leaderboardsByKey` should be an object when present.
 
 The validator does not deeply verify every gameplay content reference. Old or incomplete saves can produce warnings and still pass through `SaveMigrator`, which fills defaults.
+
+Version compatibility checks are advisory for ordinary startup. Newer unsupported schema versions are errors, older schema versions can be migrated, and game version/content hash differences should produce warnings rather than blocking normal play.
 
 ## Save Export Package
 
@@ -240,6 +245,8 @@ Formal save data is not the same as:
 Keep CSV/playtest data separate unless a future feature explicitly integrates it.
 
 Save import/export currently covers formal `SaveData`. Future custom stage backup/export may include `CustomStageStorage`, but that is intentionally not merged into this first save export format yet.
+
+Version metadata is also formal save data. CSV buffers, replay storage, and custom stage storage remain separate diagnostic/content stores even when they record compatible `gameVersion` or `contentHash` values.
 
 ## Future Save Domains
 

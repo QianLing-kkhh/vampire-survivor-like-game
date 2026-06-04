@@ -1,4 +1,5 @@
 import { GameEvent } from '../events/GameEvent';
+import { getCurrentVersionInfo } from '../version/VersionInfo';
 
 import {
   ReplayData,
@@ -31,11 +32,16 @@ export class ReplayRecorder {
   private eventLimitWarningShown = false;
 
   start(config: ReplayStartConfig): void {
+    const versionInfo = config.versionInfo ?? getCurrentVersionInfo();
+
     this.replayData = {
       replayVersion: REPLAY_VERSION,
       createdAt: new Date().toISOString(),
-      saveSchemaVersion: config.saveSchemaVersion,
-      csvSchemaVersion: config.csvSchemaVersion,
+      gameVersion: versionInfo.gameVersion,
+      contentHash: versionInfo.contentHash,
+      saveSchemaVersion: config.saveSchemaVersion ?? versionInfo.saveSchemaVersion,
+      csvSchemaVersion: config.csvSchemaVersion ?? versionInfo.csvSchemaVersion,
+      versionInfo,
       runId: config.runId,
       runSeed: config.runSeed,
       selection: { ...config.selection },

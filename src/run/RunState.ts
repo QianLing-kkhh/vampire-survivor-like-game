@@ -1,4 +1,11 @@
+import { VersionInfo } from '../version/VersionInfo';
+
 export class RunState {
+  gameVersion = '';
+  contentHash = '';
+  characterId = '';
+  stageId = '';
+  mapId = '';
   runSeed = '';
   replayId = '';
   killCount = 0;
@@ -68,6 +75,11 @@ export class RunState {
   private lastEndlessLevelUpTime: number | null = null;
 
   reset(): void {
+    this.gameVersion = '';
+    this.contentHash = '';
+    this.characterId = '';
+    this.stageId = '';
+    this.mapId = '';
     this.runSeed = '';
     this.replayId = '';
     this.killCount = 0;
@@ -141,6 +153,17 @@ export class RunState {
     this.difficultyId = difficultyId || 'normal';
     this.mutatorIds = [...mutatorIds];
     this.rulesetId = rulesetId || this.difficultyId;
+  }
+
+  setVersionInfo(versionInfo: VersionInfo): void {
+    this.gameVersion = versionInfo.gameVersion;
+    this.contentHash = versionInfo.contentHash;
+  }
+
+  setSelectionInfo(characterId: string, stageId: string, mapId: string): void {
+    this.characterId = characterId;
+    this.stageId = stageId;
+    this.mapId = mapId;
   }
 
   setRunSeed(runSeed: string): void {

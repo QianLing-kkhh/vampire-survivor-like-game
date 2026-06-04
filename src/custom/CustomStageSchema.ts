@@ -1,7 +1,9 @@
 import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
 import { MutatorConfig } from '../rules/MutatorConfig';
 
-export const CUSTOM_STAGE_SCHEMA_VERSION = 1;
+import { CUSTOM_STAGE_SCHEMA_VERSION } from '../version/SchemaVersion';
+
+export { CUSTOM_STAGE_SCHEMA_VERSION };
 
 export interface CustomStagePackage {
   schemaVersion: number;
@@ -11,6 +13,8 @@ export interface CustomStagePackage {
   author?: string;
   createdAt?: string;
   updatedAt?: string;
+  createdWithGameVersion?: string;
+  createdWithContentHash?: string;
   stage: CustomStageDefinition;
   map: CustomMapDefinition;
   waves: CustomWaveDefinition[];

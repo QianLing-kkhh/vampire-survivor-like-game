@@ -24,11 +24,14 @@ import {
   DEFAULT_TUTORIAL_STATE,
   TutorialState,
 } from '../tutorial/TutorialState';
+import { SAVE_SCHEMA_VERSION } from '../version/SchemaVersion';
+import { VersionInfo, getCurrentVersionInfo } from '../version/VersionInfo';
 
-export const SAVE_SCHEMA_VERSION = 10;
+export { SAVE_SCHEMA_VERSION };
 
 export interface SaveData {
   schemaVersion: number;
+  versionInfo?: VersionInfo;
   settings: {
     gameplay: GameplaySettingsData;
     audio: AudioSettingsData;
@@ -101,6 +104,7 @@ export interface SaveSummary {
 export function createDefaultSaveData(): SaveData {
   return {
     schemaVersion: SAVE_SCHEMA_VERSION,
+    versionInfo: getCurrentVersionInfo(),
     settings: {
       gameplay: { ...DEFAULT_GAMEPLAY_SETTINGS },
       audio: { ...DEFAULT_AUDIO_SETTINGS },

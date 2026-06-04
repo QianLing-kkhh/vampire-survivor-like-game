@@ -65,6 +65,9 @@ export class RunResultBuilder {
     const playtestCsv = PlaytestLog.createCsv({
       runId: context.runId,
       runSeed: context.runState.runSeed,
+      gameVersion: context.runState.gameVersion,
+      contentHash: context.runState.contentHash,
+      csvSchemaVersion: PlaytestLog.getCsvSchemaVersion(),
       timestamp: new Date().toISOString(),
       autoMode: context.autoMode,
       fastMode: context.fastMode,
@@ -245,6 +248,8 @@ export class RunResultBuilder {
       upgradeCountStats: runStatsSummary.upgradeCountStats,
       runId: context.runId,
       runSeed: context.runState.runSeed,
+      gameVersion: context.runState.gameVersion,
+      contentHash: context.runState.contentHash,
       replayId: context.runState.replayId,
       autoMode: context.autoMode,
       fastMode: context.fastMode,

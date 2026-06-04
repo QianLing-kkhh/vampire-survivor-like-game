@@ -1,12 +1,16 @@
 import { WeaponDamageStat } from '../weapon/WeaponManager';
 import { KeyValueStat } from '../stats/RunStats';
 import { PassiveLevel } from '../passive/PassiveItem';
+import { CSV_SCHEMA_VERSION } from '../version/SchemaVersion';
 
 export type UpgradeSelectionModeLog = 'weighted_random';
 
 export interface PlaytestLogData {
   runId: string;
   runSeed: string;
+  gameVersion: string;
+  contentHash: string;
+  csvSchemaVersion: number;
   timestamp: string;
   autoMode: boolean;
   fastMode: boolean;
@@ -102,6 +106,9 @@ export class PlaytestLog {
   private static readonly HEADER = [
     'runId',
     'runSeed',
+    'gameVersion',
+    'contentHash',
+    'csvSchemaVersion',
     'timestamp',
     'autoMode',
     'fastMode',
@@ -201,10 +208,17 @@ export class PlaytestLog {
     return PlaytestLog.HEADER;
   }
 
+  static getCsvSchemaVersion(): number {
+    return CSV_SCHEMA_VERSION;
+  }
+
   static createCsv(data: PlaytestLogData): string {
     const values = [
       data.runId,
       data.runSeed,
+      data.gameVersion,
+      data.contentHash,
+      data.csvSchemaVersion.toString(),
       data.timestamp,
       data.autoMode ? 'true' : 'false',
       data.fastMode ? 'true' : 'false',

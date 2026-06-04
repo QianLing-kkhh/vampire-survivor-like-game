@@ -1,5 +1,6 @@
 import { ReplayData } from './ReplayData';
 import { REPLAY_VERSION } from './ReplayVersion';
+import { CompatibilityCheck } from '../version/CompatibilityCheck';
 
 export interface ReplayValidationResult {
   valid: boolean;
@@ -61,6 +62,10 @@ export class ReplaySerializer {
     if (!Array.isArray(replay.events)) {
       warnings.push('Replay events should be an array.');
     }
+
+    const compatibility = CompatibilityCheck.checkReplayCompatibility(replay as Partial<ReplayData>);
+    errors.push(...compatibility.errors);
+    warnings.push(...compatibility.warnings);
 
     return {
       valid: errors.length === 0,

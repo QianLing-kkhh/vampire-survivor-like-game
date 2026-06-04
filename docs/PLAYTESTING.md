@@ -31,6 +31,8 @@ Current runs use `normal` difficulty with no mutators unless future test harness
 
 Each run also records a `runSeed`. If `SelectionState.seed` is empty, a new seed is generated for the run. A fixed seed is a foundation for debugging and future daily challenges, but it is not a complete replay by itself; version, content, settings, timing, and player input also matter.
 
+Each run records `gameVersion`, `contentHash`, and `csvSchemaVersion`. `contentHash` is a stable, non-cryptographic hash of built-in content registered through `ContentRegistry`; it is used for compatibility warnings and CSV batch isolation, not security.
+
 Daily challenge foundation exists but has no UI yet. `DailyChallengeGenerator` produces stable `daily:YYYY-MM-DD` seeds, and `ChallengeManager.activateChallenge()` can write a fixed challenge selection through `SelectionManager` for future test harnesses.
 
 The runtime also creates a per-run `GameEventBus` and bounded `GameEventRecorder`. This records recent high-value events for debugging foundations, but it is not exported as a full CSV timeline and is not a complete replay.
@@ -146,6 +148,9 @@ Important endless metrics:
 - `mutatorIds`
 - `rulesetId`
 - `runSeed`
+- `gameVersion`
+- `contentHash`
+- `csvSchemaVersion`
 
 ## CSV Export
 
@@ -157,10 +162,11 @@ Current CSV behavior:
 - All-run CSV data is stored in a playtest log buffer.
 - The buffer is persisted to `localStorage`.
 - Entering the Title Scene clears the current playtest buffer, including after a page refresh.
+- Rows with a different `csvSchemaVersion` or `contentHash` are not mixed into the current buffer.
 - The buffer keeps the latest 1000 runs.
 - Clear CSV Buffer removes both memory and persisted logs.
 
-If CSV schema changes, clear the buffer before comparing new results with old samples. Do not compare old and new schema rows mixed in All CSV.
+If CSV schema or content hash changes, clear the buffer before comparing new results with old samples. Do not compare old and new schema/content rows mixed in All CSV.
 
 ## CSV Diagnostics
 

@@ -49,7 +49,6 @@ import { DifficultyManager } from '../rules/DifficultyManager';
 import { MutatorFactory } from '../rules/MutatorFactory';
 import { MutatorContext } from '../rules/MutatorContext';
 import { RunRuleSet } from '../rules/RunRuleSet';
-import { SAVE_SCHEMA_VERSION } from '../save/SaveData';
 import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
@@ -61,6 +60,7 @@ import { UnlockManager } from '../unlock/UnlockManager';
 import { WeaponFactory } from '../weapon/WeaponFactory';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { MapManager } from '../map/MapManager';
+import { getCurrentVersionInfo } from '../version/VersionInfo';
 
 import { GameplayContext } from './GameplayContext';
 
@@ -117,6 +117,7 @@ export class GameplayInitializer {
     const selection = SelectionManager.getSelection();
     const runSeed = RunSeed.createSeedFromSelection(selection);
     const randomManager = new RandomManager(runSeed);
+    const versionInfo = getCurrentVersionInfo();
     const gameEventBus = new GameEventBus();
     const gameEventRecorder = new GameEventRecorder();
     const replayRecorder = new ReplayRecorder();
@@ -249,6 +250,12 @@ export class GameplayInitializer {
     );
     config.runState.setRunSeed(runSeed);
     config.runState.setReplayId(config.runId);
+    config.runState.setVersionInfo(versionInfo);
+    config.runState.setSelectionInfo(
+      selectedCharacter.id,
+      selectedStage.id,
+      selectedMap.id,
+    );
     replayRecorder.start({
       runId: config.runId,
       runSeed,
@@ -268,7 +275,7 @@ export class GameplayInitializer {
         fastMode: config.playtestSettings.fastMode,
         endlessMode: config.playtestSettings.endlessMode,
       },
-      saveSchemaVersion: SAVE_SCHEMA_VERSION,
+      versionInfo,
     });
     const spawnDirector = new SpawnDirector(
       waveSet,

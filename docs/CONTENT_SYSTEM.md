@@ -77,6 +77,12 @@ Current first-pass behavior:
 
 Future mod support may need explicit override rules, dependency order, and compatibility checks.
 
+## Content Hash
+
+`ContentHash` computes a stable, non-cryptographic hash over registered built-in content: weapons, enemies, passives, upgrades, the default wave set, characters, stages, and maps.
+
+The hash is recorded in save version info, CSV rows, and replay data so test results and replay attempts can warn when they were produced against a different built-in content set. It is not a security checksum and does not replace validation for custom or mod content.
+
 ## ContentValidator
 
 Current validation warns for:
@@ -142,3 +148,5 @@ Not implemented yet:
 Current local custom stages validate first, save through `CustomStageStorage`, and are exposed by `StageManager.listSelectableStages()` without being registered into the builtin registry. When selected, `SelectionManager` stores `selectedCustomStageId`, and `GameplayInitializer` builds runtime stage/map/waves directly from the saved package.
 
 Future broader custom or mod content packs may still register through `ContentRegistry` once package dependency and override rules are mature. The validator catches structure, missing references, ID conflicts, and obvious density/performance risks; it is not a full balance verifier.
+
+Custom stage packages may record `createdWithGameVersion` and `createdWithContentHash`. A different content hash should warn because references may still exist but balance/replay comparison may no longer be equivalent.

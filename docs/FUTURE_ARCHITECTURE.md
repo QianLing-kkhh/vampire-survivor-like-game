@@ -91,6 +91,17 @@ Important boundaries:
 - Challenge records and leaderboards should be keyed by challenge id, seed, difficulty, and ruleset when future UI enables them.
 - Challenge rules should become `RunRuleSet` mutators rather than scene-level if/else logic.
 
+## Version And Compatibility Metadata
+
+Persistent and comparable run data should record:
+
+- `gameVersion`
+- save / CSV / replay / custom-stage schema versions
+- built-in `contentHash`
+- selected content IDs, seeds, and ruleset IDs
+
+Compatibility checks should error on newer unsupported schemas, warn on older migratable schemas, and warn when game version or content hash differs. Content hash is a reproducibility and comparison hint, not a security mechanism.
+
 `ReplayRecorder`, `ReplayData`, `ReplaySerializer`, `ReplayStorage`, and `ReplayPlaybackController` now provide the replay record foundation.
 
 Replay boundaries:
