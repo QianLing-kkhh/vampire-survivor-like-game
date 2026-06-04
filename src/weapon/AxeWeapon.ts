@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { Enemy } from '../enemy/Enemy';
+import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 
@@ -248,7 +249,8 @@ export class AxeWeapon extends Weapon {
 
     if (this.scene.textures.exists(artTextureKey)) {
       const body = this.scene.add.sprite(x, y, artTextureKey);
-      body.setDisplaySize(this.id === 'death_spiral' ? 30 : 24, this.id === 'death_spiral' ? 30 : 24);
+      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+      body.setDisplaySize(displaySize, displaySize);
       body.play(this.id === 'death_spiral'
         ? 'art_death_spiral_projectile_spin'
         : 'art_axe_projectile_spin');
@@ -262,12 +264,14 @@ export class AxeWeapon extends Weapon {
 
     if (this.scene.textures.exists(textureKey)) {
       const body = this.scene.add.image(x, y, textureKey);
-      body.setDisplaySize(this.id === 'death_spiral' ? 26 : 22, this.id === 'death_spiral' ? 26 : 18);
+      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+      body.setDisplaySize(displaySize, displaySize);
 
       return body;
     }
 
-    const body = this.scene.add.rectangle(x, y, 18, 10, 0xf97316);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    const body = this.scene.add.rectangle(x, y, displaySize, displaySize * 0.56, 0xf97316);
 
     body.setStrokeStyle(2, 0xffedd5, 0.8);
 

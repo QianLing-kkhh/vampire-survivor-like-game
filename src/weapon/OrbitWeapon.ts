@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { Enemy } from '../enemy/Enemy';
+import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 
@@ -199,7 +200,8 @@ export class OrbitWeapon extends Weapon {
 
     if (this.scene.textures.exists(artTextureKey)) {
       const body = this.scene.add.sprite(x, y, artTextureKey);
-      body.setDisplaySize(this.id === 'unholy_vespers' ? 34 : 28, this.id === 'unholy_vespers' ? 34 : 28);
+      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+      body.setDisplaySize(displaySize, displaySize);
       body.play(this.id === 'unholy_vespers'
         ? 'art_unholy_vespers_orbit_book_spin'
         : 'art_bible_orbit_book_spin');
@@ -212,11 +214,12 @@ export class OrbitWeapon extends Weapon {
       : 'bible_orbit_projectile';
 
     if (!this.scene.textures.exists(textureKey)) {
-      return this.scene.add.circle(x, y, 11, 0xa78bfa);
+      return this.scene.add.circle(x, y, VisualScale.getProjectileDisplaySize(this.id) / 2, 0xa78bfa);
     }
 
     const body = this.scene.add.image(x, y, textureKey);
-    body.setDisplaySize(this.id === 'unholy_vespers' ? 30 : 24, this.id === 'unholy_vespers' ? 30 : 24);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    body.setDisplaySize(displaySize, displaySize);
 
     return body;
   }

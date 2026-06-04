@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { VisualScale } from '../visual/VisualScale';
+
 import { WorldConfig } from './WorldConfig';
 
 type LandmarkType = 'tree' | 'rock' | 'grave';
@@ -95,13 +97,21 @@ export class WorldRenderer {
   private renderTree(x: number, y: number): void {
     if (this.scene.textures.exists('art_world_tree_landmark')) {
       const tree = this.scene.add.image(x, y, 'art_world_tree_landmark');
-      tree.setDisplaySize(80, 80);
+      const displaySize = VisualScale.getLandmarkDisplaySize('tree');
+      tree.setDisplaySize(displaySize, displaySize);
       tree.setDepth(-79);
       return;
     }
 
-    const trunk = this.scene.add.rectangle(x, y + 12, 10, 24, 0x7c2d12);
-    const leaves = this.scene.add.circle(x, y - 4, 24, 0x166534, 0.9);
+    const displaySize = VisualScale.getLandmarkDisplaySize('tree');
+    const trunk = this.scene.add.rectangle(
+      x,
+      y + displaySize * 0.16,
+      displaySize * 0.13,
+      displaySize * 0.3,
+      0x7c2d12,
+    );
+    const leaves = this.scene.add.circle(x, y - displaySize * 0.05, displaySize * 0.3, 0x166534, 0.9);
 
     trunk.setDepth(-80);
     leaves.setDepth(-79);
@@ -110,12 +120,21 @@ export class WorldRenderer {
   private renderRock(x: number, y: number): void {
     if (this.scene.textures.exists('art_world_rock_landmark')) {
       const rockImage = this.scene.add.image(x, y, 'art_world_rock_landmark');
-      rockImage.setDisplaySize(72, 72);
+      const displaySize = VisualScale.getLandmarkDisplaySize('rock');
+      rockImage.setDisplaySize(displaySize, displaySize);
       rockImage.setDepth(-80);
       return;
     }
 
-    const rock = this.scene.add.ellipse(x, y, 44, 30, 0x64748b, 0.9);
+    const displaySize = VisualScale.getLandmarkDisplaySize('rock');
+    const rock = this.scene.add.ellipse(
+      x,
+      y,
+      displaySize * 0.82,
+      displaySize * 0.56,
+      0x64748b,
+      0.9,
+    );
 
     rock.setStrokeStyle(2, 0x94a3b8, 0.5);
     rock.setDepth(-80);
@@ -124,13 +143,28 @@ export class WorldRenderer {
   private renderGrave(x: number, y: number): void {
     if (this.scene.textures.exists('art_world_grave_landmark')) {
       const graveImage = this.scene.add.image(x, y, 'art_world_grave_landmark');
-      graveImage.setDisplaySize(72, 72);
+      const displaySize = VisualScale.getLandmarkDisplaySize('grave');
+      graveImage.setDisplaySize(displaySize, displaySize);
       graveImage.setDepth(-80);
       return;
     }
 
-    const grave = this.scene.add.rectangle(x, y, 30, 44, 0x6b7280, 0.9);
-    const top = this.scene.add.circle(x, y - 20, 15, 0x6b7280, 0.9);
+    const displaySize = VisualScale.getLandmarkDisplaySize('grave');
+    const grave = this.scene.add.rectangle(
+      x,
+      y,
+      displaySize * 0.42,
+      displaySize * 0.62,
+      0x6b7280,
+      0.9,
+    );
+    const top = this.scene.add.circle(
+      x,
+      y - displaySize * 0.28,
+      displaySize * 0.21,
+      0x6b7280,
+      0.9,
+    );
 
     grave.setStrokeStyle(2, 0x9ca3af, 0.5);
     top.setStrokeStyle(2, 0x9ca3af, 0.5);

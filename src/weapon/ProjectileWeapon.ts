@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
 import { Enemy } from '../enemy/Enemy';
+import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 
@@ -267,7 +268,8 @@ export class ProjectileWeapon extends Weapon {
 
     if (artTextureKey && this.scene.textures.exists(artTextureKey)) {
       const body = this.scene.add.sprite(x, y, artTextureKey);
-      body.setDisplaySize(18, 18);
+      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+      body.setDisplaySize(displaySize, displaySize);
       body.play(this.getArtProjectileAnimationKey());
 
       return body;
@@ -276,11 +278,12 @@ export class ProjectileWeapon extends Weapon {
     const textureKey = this.getProjectileTextureKey();
 
     if (!this.scene.textures.exists(textureKey)) {
-      return this.scene.add.circle(x, y, 5, 0xfacc15);
+      return this.scene.add.circle(x, y, VisualScale.getProjectileDisplaySize(this.id) / 2, 0xfacc15);
     }
 
     const body = this.scene.add.image(x, y, textureKey);
-    body.setDisplaySize(14, 14);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    body.setDisplaySize(displaySize, displaySize);
 
     return body;
   }

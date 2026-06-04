@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { DamageType } from '../combat/DamageType';
 import { Enemy } from '../enemy/Enemy';
+import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 
@@ -71,9 +72,9 @@ export class AuraWeapon extends Weapon {
         context.player.y,
         this.radiusPixels,
         0x22c55e,
-        0.18,
+        VisualScale.auraAlpha,
       );
-      this.auraBody.setStrokeStyle(2, 0x86efac, 0.55);
+      this.auraBody.setStrokeStyle(VisualScale.auraStrokeWidth, 0x86efac, 0.65);
     }
 
     this.ensureAuraIcon(context);
@@ -94,7 +95,8 @@ export class AuraWeapon extends Weapon {
 
     if (this.scene.textures.exists(artTextureKey)) {
       const icon = this.scene.add.sprite(context.player.x, context.player.y, artTextureKey);
-      icon.setDisplaySize(34, 34);
+      const displaySize = VisualScale.getAuraCoreDisplaySize(this.id);
+      icon.setDisplaySize(displaySize, displaySize);
       icon.setDepth(24);
       icon.play(this.id === 'soul_eater' ? 'art_soul_eater_core' : 'art_garlic_core');
       this.auraIcon = icon;
@@ -106,7 +108,8 @@ export class AuraWeapon extends Weapon {
     }
 
     this.auraIcon = this.scene.add.image(context.player.x, context.player.y, 'soul_eater_core');
-    this.auraIcon.setDisplaySize(30, 30);
+    const displaySize = VisualScale.getAuraCoreDisplaySize(this.id);
+    this.auraIcon.setDisplaySize(displaySize, displaySize);
     this.auraIcon.setDepth(24);
   }
 

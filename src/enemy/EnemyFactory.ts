@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { VisualScale } from '../visual/VisualScale';
+
 import { Enemy, EnemyStats } from './Enemy';
 
 type EnemyConfigMap = Record<string, EnemyStats>;
@@ -45,7 +47,8 @@ export class EnemyFactory {
 
     const scale = stats.scale ?? 1;
     const body = this.scene.add.image(x, y, textureKey) as EnemyImageBody;
-    body.setDisplaySize(24 * scale, 24 * scale);
+    const displaySize = VisualScale.getEnemyDisplaySize(enemyId, scale);
+    body.setDisplaySize(displaySize, displaySize);
     body.radius = 12 * scale;
     body.setFillStyle = () => body;
 
@@ -73,7 +76,7 @@ export class EnemyFactory {
     textureKey: string,
   ): EnemyImageBody | EnemySpriteBody {
     const scale = stats.scale ?? 1;
-    const displaySize = 24 * scale;
+    const displaySize = VisualScale.getEnemyDisplaySize(enemyId, scale);
 
     if (this.isAnimatedEnemy(enemyId)) {
       const body = this.scene.add.sprite(x, y, textureKey) as EnemySpriteBody;

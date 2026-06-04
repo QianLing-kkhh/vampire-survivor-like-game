@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { VisualScale } from '../visual/VisualScale';
+
 export class TreasureChest {
   readonly body: Phaser.GameObjects.GameObject & {
     x: number;
@@ -19,7 +21,14 @@ export class TreasureChest {
       !scene.textures.exists('art_pickups_treasure_chest')
       && !scene.textures.exists('treasure_chest')
     ) {
-      const lid = scene.add.rectangle(x, y - 8, 32, 8, 0xb45309, 0.95);
+      const lid = scene.add.rectangle(
+        x,
+        y - VisualScale.treasureDisplayHeight * 0.28,
+        VisualScale.treasureDisplayWidth,
+        VisualScale.treasureDisplayHeight * 0.24,
+        0xb45309,
+        0.95,
+      );
       lid.setStrokeStyle(1, 0xfef3c7, 0.8);
       lid.setDepth(13);
       this.body.setData('lid', lid);
@@ -49,19 +58,26 @@ export class TreasureChest {
   ): TreasureChest['body'] {
     if (scene.textures.exists('art_pickups_treasure_chest')) {
       const body = scene.add.image(x, y, 'art_pickups_treasure_chest');
-      body.setDisplaySize(36, 32);
+      body.setDisplaySize(VisualScale.treasureDisplayWidth, VisualScale.treasureDisplayHeight);
 
       return body;
     }
 
     if (scene.textures.exists('treasure_chest')) {
       const body = scene.add.image(x, y, 'treasure_chest');
-      body.setDisplaySize(32, 28);
+      body.setDisplaySize(VisualScale.treasureDisplayWidth, VisualScale.treasureDisplayHeight);
 
       return body;
     }
 
-    const body = scene.add.rectangle(x, y, 28, 22, 0xf59e0b, 0.95);
+    const body = scene.add.rectangle(
+      x,
+      y,
+      VisualScale.treasureDisplayWidth,
+      VisualScale.treasureDisplayHeight * 0.78,
+      0xf59e0b,
+      0.95,
+    );
     body.setStrokeStyle(2, 0xfef3c7, 0.9);
 
     return body;

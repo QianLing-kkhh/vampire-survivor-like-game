@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { VisualScale } from '../visual/VisualScale';
+
 import { PlayerStats } from './PlayerStats';
 
 type MovementKeys = {
@@ -20,9 +22,19 @@ type PlayerBody = Phaser.GameObjects.GameObject & {
 };
 
 type MovementSource = 'manual' | 'auto' | 'virtualJoystick' | 'external';
+type FacingDirection8 =
+  | 'right'
+  | 'down_right'
+  | 'down'
+  | 'down_left'
+  | 'left'
+  | 'up_left'
+  | 'up'
+  | 'up_right';
 
 export class PlayerController {
   private static readonly MAX_MOVEMENT_STEP = 24;
+  private static readonly IDLE_SPEED_THRESHOLD = 6;
 
   readonly body: PlayerBody;
 
@@ -31,6 +43,8 @@ export class PlayerController {
   private readonly lastFramePosition: Phaser.Math.Vector2;
   private readonly velocity = new Phaser.Math.Vector2(0, 0);
   private externalMoveDirection?: Phaser.Math.Vector2;
+  private lastFacingDirection: FacingDirection8 = 'down';
+  private currentAnimationKey?: string;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -79,6 +93,7 @@ export class PlayerController {
     this.updateVelocity(direction, deltaSeconds);
     this.moveByVelocity(deltaSeconds);
     this.rollbackAbnormalMovement(deltaSeconds, direction, source);
+    this.updateAnimation();
     this.lastFramePosition.set(this.body.x, this.body.y);
   }
 
@@ -91,6 +106,7 @@ export class PlayerController {
     this.body.x += displacement.x;
     this.body.y += displacement.y;
     this.clampToWorldBounds();
+    this.updateAnimation();
     this.lastFramePosition.set(this.body.x, this.body.y);
   }
 
@@ -279,8 +295,8 @@ export class PlayerController {
   private createBody(x: number, y: number): PlayerBody {
     if (this.scene.textures.exists('art_player_player_walk_sheet')) {
       const body = this.scene.add.sprite(x, y, 'art_player_player_walk_sheet');
-      body.setDisplaySize(28, 28);
-      body.play('art_player_walk');
+      body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
+      this.playPlayerAnimation(body, 'art_player_idle_down');
 
       return Object.assign(body, { radius: 14 });
     }
@@ -290,8 +306,97 @@ export class PlayerController {
     }
 
     const body = this.scene.add.image(x, y, 'player');
-    body.setDisplaySize(28, 28);
+    body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
 
     return Object.assign(body, { radius: 14 });
+  }
+
+  private updateAnimation(): void {
+    const body = this.body as PlayerBody & {
+      play?: (key: string) => Phaser.GameObjects.Sprite;
+      setFlipX?: (value: boolean) => Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
+    };
+    const isMoving = this.velocity.length() > PlayerController.IDLE_SPEED_THRESHOLD;
+    const direction = isMoving
+      ? this.getDirection8FromVector(this.velocity.x, this.velocity.y)
+      : this.lastFacingDirection;
+
+    if (isMoving) {
+      this.lastFacingDirection = direction;
+    }
+
+    this.setDirectionalFlip(body, direction);
+
+    const animationKey = `art_player_${isMoving ? 'walk' : 'idle'}_${direction}`;
+
+    if (!body.play || !this.scene.anims.exists(animationKey)) {
+      return;
+    }
+
+    this.playPlayerAnimation(body, animationKey);
+  }
+
+  private playPlayerAnimation(
+    body: { play?: (key: string) => Phaser.GameObjects.Sprite },
+    animationKey: string,
+  ): void {
+    if (!body.play || !this.scene.anims.exists(animationKey)) {
+      return;
+    }
+
+    if (this.currentAnimationKey === animationKey) {
+      return;
+    }
+
+    body.play(animationKey);
+    this.currentAnimationKey = animationKey;
+  }
+
+  private setDirectionalFlip(
+    body: PlayerBody & {
+      setFlipX?: (value: boolean) => Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
+    },
+    direction: FacingDirection8,
+  ): void {
+    body.setFlipX?.(
+      direction === 'left'
+      || direction === 'down_left'
+      || direction === 'up_left',
+    );
+  }
+
+  private getDirection8FromVector(vx: number, vy: number): FacingDirection8 {
+    const angle = Phaser.Math.Angle.Normalize(Math.atan2(vy, vx));
+    const degrees = Phaser.Math.RadToDeg(angle);
+
+    if (degrees < 22.5 || degrees >= 337.5) {
+      return 'right';
+    }
+
+    if (degrees < 67.5) {
+      return 'down_right';
+    }
+
+    if (degrees < 112.5) {
+      return 'down';
+    }
+
+    if (degrees < 157.5) {
+      return 'down_left';
+    }
+
+    if (degrees < 202.5) {
+      return 'left';
+    }
+
+    if (degrees < 247.5) {
+      return 'up_left';
+    }
+
+    if (degrees < 292.5) {
+      return 'up';
+    }
+
+    return 'up_right';
   }
 }

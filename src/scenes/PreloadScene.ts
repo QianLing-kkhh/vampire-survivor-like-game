@@ -156,6 +156,7 @@ export class PreloadScene extends Phaser.Scene {
 
   create(): void {
     this.createArtManifestAnimations();
+    this.createPlayerDirectionAnimations();
     this.logTextureStatus();
     this.logAudioStatus();
     this.scene.start('TitleScene');
@@ -200,6 +201,49 @@ export class PreloadScene extends Phaser.Scene {
         });
       }
     }
+  }
+
+  private createPlayerDirectionAnimations(): void {
+    const textureKey = 'art_player_player_walk_sheet';
+
+    if (!this.textures.exists(textureKey)) {
+      return;
+    }
+
+    const directions = [
+      'down',
+      'up',
+      'left',
+      'right',
+      'down_left',
+      'down_right',
+      'up_left',
+      'up_right',
+    ];
+
+    for (const direction of directions) {
+      this.createPlayerAnimationAlias(`art_player_walk_${direction}`, textureKey, 0, 3, -1);
+      this.createPlayerAnimationAlias(`art_player_idle_${direction}`, textureKey, 0, 0, 0);
+    }
+  }
+
+  private createPlayerAnimationAlias(
+    animationKey: string,
+    textureKey: string,
+    start: number,
+    end: number,
+    repeat: number,
+  ): void {
+    if (this.anims.exists(animationKey)) {
+      return;
+    }
+
+    this.anims.create({
+      key: animationKey,
+      frames: this.anims.generateFrameNumbers(textureKey, { start, end }),
+      frameRate: 8,
+      repeat,
+    });
   }
 
   private logTextureStatus(): void {

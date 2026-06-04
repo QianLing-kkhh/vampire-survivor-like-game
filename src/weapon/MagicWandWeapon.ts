@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
 import { Enemy } from '../enemy/Enemy';
+import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 
@@ -177,20 +178,30 @@ export class MagicWandWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): MagicProjectileBody {
-    if (this.scene.textures.exists('art_weapons_magic_wand_projectile_sheet')) {
-      const body = this.scene.add.sprite(x, y, 'art_weapons_magic_wand_projectile_sheet');
-      body.setDisplaySize(18, 18);
-      body.play('art_magic_wand_projectile');
+    const artTextureKey = this.id === 'holy_wand'
+      ? 'art_weapons_holy_wand_projectile_sheet'
+      : 'art_weapons_magic_wand_projectile_sheet';
+
+    if (this.scene.textures.exists(artTextureKey)) {
+      const body = this.scene.add.sprite(x, y, artTextureKey);
+      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+      body.setDisplaySize(displaySize, displaySize);
+      body.play(this.id === 'holy_wand' ? 'art_holy_wand_projectile' : 'art_magic_wand_projectile');
 
       return body;
     }
 
-    if (!this.scene.textures.exists('magic_wand_projectile')) {
-      return this.scene.add.circle(x, y, 6, 0x38bdf8);
+    const textureKey = this.id === 'holy_wand'
+      ? 'holy_wand_projectile'
+      : 'magic_wand_projectile';
+
+    if (!this.scene.textures.exists(textureKey)) {
+      return this.scene.add.circle(x, y, VisualScale.getProjectileDisplaySize(this.id) / 2, 0x38bdf8);
     }
 
-    const body = this.scene.add.image(x, y, 'magic_wand_projectile');
-    body.setDisplaySize(14, 14);
+    const body = this.scene.add.image(x, y, textureKey);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    body.setDisplaySize(displaySize, displaySize);
 
     return body;
   }
