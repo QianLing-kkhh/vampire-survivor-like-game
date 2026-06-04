@@ -109,14 +109,15 @@ Enemy, Boss, and combat behavior are split from the main scene.
 - `EnemyFactory`: creates enemies from registry-backed data, with optional runtime stat overrides.
 - `EnemyFlow`: updates enemy movement, removes dead enemies, applies contact damage, handles shield absorption, records kills, and triggers player damage reaction.
 - `BossController`: controls final Boss warning, spawn, ranged warning attack, dash, dash hit detection, Boss kill state, and Boss-related run stats.
-- `EndlessBossManager`: manages rotating endless Boss spawns, active Boss states, and endless Boss skills.
+- `EndlessBossManager`: manages rotating endless Boss spawns, active Boss state, and `BossSkillRuntime` updates.
+- `BossSkillFactory`: creates data-driven Boss skills such as dash, beam, summon, shockwave, and slow zone from Boss skill configs.
 
 ## Endless Layer
 
 Endless systems activate after the final Boss is killed when Endless Mode is enabled.
 
 - `EndlessManager`: starts endless state, spawns endless enemies in tiers, applies enemy stat scaling, and uses a soft enemy cap.
-- `EndlessBossManager`: periodically spawns random endless Bosses and allows multiple active Bosses with soft performance protection.
+- `EndlessBossManager`: periodically spawns random endless Bosses and delegates concrete skill behavior to `BossSkillRuntime`.
 - `EndlessRewardManager`: provides post-cap rewards, temporary buffs, permanent minor growth, shield stacks, and global enemy slow multiplier.
 - `EndlessLeaderboard`: stores local top-10 endless results in `localStorage`.
 
@@ -183,7 +184,7 @@ TitleScene
 - Upgrade and treasure reward rules should go through `UpgradeFlow`.
 - Enemy movement and contact damage should go through `EnemyFlow`.
 - Final Boss-specific state should go through `BossController`.
-- Endless Boss state should go through `EndlessBossManager`.
+- Endless Boss lifecycle should go through `EndlessBossManager`; concrete Boss skills should go through `BossSkillFactory` and `BossSkillRuntime`.
 - Per-run result fields should be added to `RunState` and `RunResultBuilder`, not manually assembled in UI.
 - Persistent player selections and settings should go through `SaveManager`.
 - Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.

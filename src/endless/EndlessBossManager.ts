@@ -1,8 +1,12 @@
 import Phaser from 'phaser';
 
+import { AudioManager } from '../audio/AudioManager';
+import { BossSkillContext } from '../boss/skills/BossSkillContext';
+import { BossSkillFactory } from '../boss/skills/BossSkillFactory';
+import { BossSkillRuntime } from '../boss/skills/BossSkillRuntime';
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
-import { EnemyFlow, PlayerDamageResult } from '../enemy/EnemyFlow';
+import { EnemyFlow } from '../enemy/EnemyFlow';
 import { RunState } from '../run/RunState';
 
 import { EndlessManager } from './EndlessManager';
@@ -19,18 +23,12 @@ interface EndlessBossManagerConfig {
   onEnemySpawned: (enemy: Enemy) => void;
 }
 
-interface PendingSkill {
-  config: EndlessBossConfig;
-  remainingMs: number;
-  data: Record<string, unknown>;
-  visual?: Phaser.GameObjects.GameObject;
-}
-
 interface ActiveZone {
   x: number;
   y: number;
   radius: number;
   remainingMs: number;
+  playerSpeedMultiplier: number;
   visual: Phaser.GameObjects.Arc;
 }
 
@@ -53,9 +51,9 @@ export class EndlessBossManager {
   private nextSpawnTime = 0;
   private activeBoss: Enemy | null = null;
   private activeBossConfig: EndlessBossConfig | null = null;
+  private activeBossSkillRuntime: BossSkillRuntime | null = null;
   private lastBossId: EndlessBossId | null = null;
-  private skillCooldownRemainingMs = 0;
-  private pendingSkill: PendingSkill | null = null;
+  private currentGameTimeSeconds = 0;
   private readonly activeZones: ActiveZone[] = [];
 
   constructor(config: EndlessBossManagerConfig) {
@@ -83,7 +81,9 @@ export class EndlessBossManager {
     this.active = false;
     this.activeBoss = null;
     this.activeBossConfig = null;
-    this.clearSkillVisuals();
+    this.activeBossSkillRuntime?.clear();
+    this.activeBossSkillRuntime = null;
+    this.clearZones();
   }
 
   clear(): void {
@@ -97,6 +97,7 @@ export class EndlessBossManager {
       return;
     }
 
+    this.currentGameTimeSeconds = gameTimeSeconds;
     this.updateZones(deltaMs);
 
     if (this.activeBoss?.isDead) {
@@ -111,7 +112,7 @@ export class EndlessBossManager {
       return;
     }
 
-    this.updateBossSkill(gameTimeSeconds, deltaMs);
+    this.activeBossSkillRuntime?.update(deltaMs);
   }
 
   hasActiveBoss(): boolean {
@@ -159,11 +160,18 @@ export class EndlessBossManager {
 
   getPlayerMoveSpeedMultiplier(): number {
     const playerPosition = this.getPlayerPosition();
-    return this.activeZones.some((zone) => (
+    const matchingZones = this.activeZones.filter((zone) => (
       Phaser.Math.Distance.Between(playerPosition.x, playerPosition.y, zone.x, zone.y) <= zone.radius
-    ))
-      ? 0.6
-      : 1;
+    ));
+
+    if (matchingZones.length === 0) {
+      return 1;
+    }
+
+    return matchingZones.reduce(
+      (lowestMultiplier, zone) => Math.min(lowestMultiplier, zone.playerSpeedMultiplier),
+      1,
+    );
   }
 
   private spawnBoss(gameTimeSeconds: number): void {
@@ -174,8 +182,10 @@ export class EndlessBossManager {
 
     this.activeBoss = boss;
     this.activeBossConfig = config;
-    this.skillCooldownRemainingMs = config.skillCooldown * 1000;
-    this.pendingSkill = null;
+    this.activeBossSkillRuntime = new BossSkillRuntime(
+      BossSkillFactory.createSkills(config.skills),
+      () => this.createSkillContext(boss),
+    );
     this.onEnemySpawned(boss);
     this.runState.recordEndlessBossSpawn(config.id);
   }
@@ -186,245 +196,89 @@ export class EndlessBossManager {
       this.lastBossId = this.activeBossConfig.id;
     }
 
+    this.activeBossSkillRuntime?.clear();
+    this.activeBossSkillRuntime = null;
     this.activeBoss = null;
     this.activeBossConfig = null;
-    this.pendingSkill = null;
-    this.skillCooldownRemainingMs = 0;
     this.nextSpawnTime = gameTimeSeconds + this.getSpawnInterval(gameTimeSeconds - this.endlessStartTime);
-    this.clearSkillVisuals();
   }
 
-  private updateBossSkill(gameTimeSeconds: number, deltaMs: number): void {
-    if (!this.activeBoss || !this.activeBossConfig) {
-      return;
-    }
-
-    if (this.pendingSkill) {
-      this.pendingSkill.remainingMs -= deltaMs;
-      if (this.pendingSkill.remainingMs <= 0) {
-        const pendingSkill = this.pendingSkill;
-        this.pendingSkill = null;
-        pendingSkill.visual?.destroy();
-        this.executeSkill(pendingSkill, gameTimeSeconds);
-        this.skillCooldownRemainingMs = this.activeBossConfig.skillCooldown * 1000;
-      }
-      return;
-    }
-
-    this.skillCooldownRemainingMs -= deltaMs;
-    if (this.skillCooldownRemainingMs > 0) {
-      return;
-    }
-
-    this.startSkillWarning(this.activeBossConfig, gameTimeSeconds);
-  }
-
-  private startSkillWarning(config: EndlessBossConfig, gameTimeSeconds: number): void {
-    if (!this.activeBoss) {
-      return;
-    }
-
-    if (config.warningDuration <= 0) {
-      this.executeSkill({ config, remainingMs: 0, data: {} }, gameTimeSeconds);
-      this.skillCooldownRemainingMs = config.skillCooldown * 1000;
-      return;
-    }
-
-    const bossPosition = new Phaser.Math.Vector2(this.activeBoss.body.x, this.activeBoss.body.y);
-    const playerPosition = this.getPlayerPosition();
-    const data: Record<string, unknown> = {};
-    let visual: Phaser.GameObjects.GameObject | undefined;
-
-    if (config.skillType === 'berserker_dash' || config.skillType === 'sniper_beam') {
-      const direction = playerPosition.clone().subtract(bossPosition).normalize();
-      const length = config.skillType === 'sniper_beam' ? 1200 : 520;
-      data.direction = direction;
-      data.start = bossPosition.clone();
-      data.end = bossPosition.clone().add(direction.clone().scale(length));
-      visual = this.scene.add.line(
-        bossPosition.x,
-        bossPosition.y,
-        0,
-        0,
-        direction.x * length,
-        direction.y * length,
-        0xff3333,
-        0.65,
-      ).setOrigin(0, 0).setDepth(34);
-    } else if (config.skillType === 'freezer_zone') {
-      data.x = playerPosition.x;
-      data.y = playerPosition.y;
-      data.radius = 120;
-      visual = this.scene.add.circle(playerPosition.x, playerPosition.y, 120, 0x66ccff, 0.18)
-        .setStrokeStyle(3, 0x99ddff, 0.7)
-        .setDepth(9);
-    } else if (config.skillType === 'tanker_shockwave') {
-      data.x = bossPosition.x;
-      data.y = bossPosition.y;
-      data.radius = 180;
-      visual = this.scene.add.circle(bossPosition.x, bossPosition.y, 180, 0xff7733, 0.14)
-        .setStrokeStyle(4, 0xffaa33, 0.8)
-        .setDepth(34);
-    }
-
-    this.pendingSkill = {
-      config,
-      remainingMs: config.warningDuration * 1000,
-      data,
-      visual,
+  private createSkillContext(boss: Enemy): BossSkillContext {
+    return {
+      scene: this.scene,
+      boss,
+      enemies: this.enemies,
+      enemyFactory: this.enemyFactory,
+      enemyFlow: this.enemyFlow,
+      runState: this.runState,
+      getPlayerPosition: () => this.getPlayerPosition(),
+      getPlayerBody: () => this.getPlayerPosition(),
+      getGameTimeSeconds: () => this.endlessStartTime + this.getEndlessTimeSeconds(),
+      getWorldSize: () => this.getWorldSize(),
+      getEndlessTimeSeconds: () => this.getEndlessTimeSeconds(),
+      applyPlayerDamage: (_source, damage, options) => this.enemyFlow.applyPlayerDamage(damage, {
+        knockbackDirection: options?.knockbackDirection,
+        knockbackDistance: options?.knockbackDistance,
+        triggerReaction: true,
+      }),
+      spawnEnemy: (enemyId, x, y, options) => this.spawnSkillEnemy(enemyId, x, y, options),
+      addPlayerSlowZone: (zone) => {
+        this.activeZones.push({
+          x: zone.x,
+          y: zone.y,
+          radius: zone.radius,
+          remainingMs: zone.durationMs,
+          playerSpeedMultiplier: zone.playerSpeedMultiplier,
+          visual: zone.visual,
+        });
+      },
+      playSfx: (key) => {
+        AudioManager.playSfx(this.scene, key);
+      },
     };
   }
 
-  private executeSkill(skill: PendingSkill, gameTimeSeconds: number): void {
-    this.runState.recordEndlessBossSkillUse();
-
-    if (!this.activeBoss) {
-      return;
+  private spawnSkillEnemy(
+    enemyId: string,
+    x: number,
+    y: number,
+    options?: { useEndlessScaling?: boolean },
+  ): Enemy | null {
+    if (this.enemies.length >= EndlessBossManager.MAX_ENEMIES) {
+      return null;
     }
 
-    if (skill.config.skillType === 'berserker_dash') {
-      this.executeBerserkerDash(skill);
-    } else if (skill.config.skillType === 'summoner_call') {
-      this.executeSummonerCall(gameTimeSeconds);
-    } else if (skill.config.skillType === 'freezer_zone') {
-      this.executeFreezerZone(skill);
-    } else if (skill.config.skillType === 'sniper_beam') {
-      this.executeSniperBeam(skill);
-    } else if (skill.config.skillType === 'tanker_shockwave') {
-      this.executeTankerShockwave(skill);
-    }
+    const baseStats = this.enemyFactory.getEnemyStats(enemyId);
+    const stats = options?.useEndlessScaling === true
+      ? this.getScaledSummonStats(enemyId)
+      : baseStats;
+    const worldSize = this.getWorldSize();
+    const enemy = this.enemyFactory.create(
+      enemyId,
+      Phaser.Math.Clamp(x, 48, worldSize.width - 48),
+      Phaser.Math.Clamp(y, 48, worldSize.height - 48),
+      stats,
+    );
+
+    this.onEnemySpawned(enemy);
+    return enemy;
   }
 
-  private executeBerserkerDash(skill: PendingSkill): void {
-    if (!this.activeBoss) {
-      return;
-    }
+  private getScaledSummonStats(enemyId: string) {
+    const baseStats = this.enemyFactory.getEnemyStats(enemyId);
+    const scaling = EndlessManager.getEnemyScale(this.getEndlessTimeSeconds());
 
-    const start = skill.data.start as Phaser.Math.Vector2;
-    const direction = skill.data.direction as Phaser.Math.Vector2;
-    const end = start.clone().add(direction.clone().scale(520 * 0.35));
-    const clampedEnd = this.clampToWorld(end);
-    this.activeBoss.body.setPosition(clampedEnd.x, clampedEnd.y);
-    this.hitPlayerAlongSegment(start, clampedEnd, 80, this.activeBoss.damage * 1.2, direction, 120);
-    this.createImpactCircle(clampedEnd.x, clampedEnd.y, 90, 0xff5522);
+    return {
+      ...baseStats,
+      hp: Math.round(baseStats.hp * scaling.hpMultiplier),
+      damage: Math.round(baseStats.damage * scaling.damageMultiplier),
+      moveSpeed: baseStats.moveSpeed * scaling.speedMultiplier,
+      exp: Math.round(baseStats.exp * scaling.expMultiplier),
+    };
   }
 
-  private executeSummonerCall(gameTimeSeconds: number): void {
-    if (!this.activeBoss || this.enemies.length >= EndlessBossManager.MAX_ENEMIES) {
-      return;
-    }
-
-    const summons = [
-      ...Array<string>(8).fill('bat'),
-      ...Array<string>(8).fill('slime'),
-      ...Array<string>(2).fill('golem'),
-    ];
-    const availableSlots = Math.max(0, EndlessBossManager.MAX_ENEMIES - this.enemies.length);
-    const selectedSummons = summons.slice(0, Math.min(summons.length, availableSlots));
-    const bossX = this.activeBoss.body.x;
-    const bossY = this.activeBoss.body.y;
-    const scaling = EndlessManager.getEnemyScale(Math.max(0, gameTimeSeconds - this.endlessStartTime));
-
-    selectedSummons.forEach((enemyId, index) => {
-      const angle = (Math.PI * 2 * index) / Math.max(1, selectedSummons.length);
-      const x = bossX + Math.cos(angle) * 180;
-      const y = bossY + Math.sin(angle) * 180;
-      const baseStats = this.enemyFactory.getEnemyStats(enemyId);
-      const enemy = this.enemyFactory.create(enemyId, x, y, {
-        ...baseStats,
-        hp: Math.round(baseStats.hp * scaling.hpMultiplier),
-        damage: Math.round(baseStats.damage * scaling.damageMultiplier),
-        moveSpeed: baseStats.moveSpeed * scaling.speedMultiplier,
-        exp: Math.round(baseStats.exp * scaling.expMultiplier),
-      });
-      this.onEnemySpawned(enemy);
-    });
-
-    this.createImpactCircle(bossX, bossY, 210, 0xaa44ff);
-  }
-
-  private executeFreezerZone(skill: PendingSkill): void {
-    const x = Number(skill.data.x);
-    const y = Number(skill.data.y);
-    const radius = Number(skill.data.radius);
-    const visual = this.scene.add.circle(x, y, radius, 0x66ccff, 0.16)
-      .setStrokeStyle(3, 0x99ddff, 0.55)
-      .setDepth(8);
-
-    this.activeZones.push({ x, y, radius, remainingMs: 4000, visual });
-  }
-
-  private executeSniperBeam(skill: PendingSkill): void {
-    if (!this.activeBoss) {
-      return;
-    }
-
-    const start = skill.data.start as Phaser.Math.Vector2;
-    const end = skill.data.end as Phaser.Math.Vector2;
-    const direction = skill.data.direction as Phaser.Math.Vector2;
-    this.hitPlayerAlongSegment(start, end, 35, this.activeBoss.damage * 1.5, direction, 110);
-    const line = this.scene.add.line(
-      start.x,
-      start.y,
-      0,
-      0,
-      end.x - start.x,
-      end.y - start.y,
-      0xff6633,
-      0.8,
-    ).setOrigin(0, 0).setDepth(35);
-    this.scene.time.delayedCall(140, () => line.destroy());
-  }
-
-  private executeTankerShockwave(skill: PendingSkill): void {
-    if (!this.activeBoss) {
-      return;
-    }
-
-    const center = new Phaser.Math.Vector2(Number(skill.data.x), Number(skill.data.y));
-    const radius = Number(skill.data.radius);
-    const playerPosition = this.getPlayerPosition();
-
-    if (Phaser.Math.Distance.Between(center.x, center.y, playerPosition.x, playerPosition.y) <= radius) {
-      const direction = playerPosition.clone().subtract(center).normalize();
-      const result = this.enemyFlow.applyPlayerDamage(this.activeBoss.damage, {
-        knockbackDirection: direction,
-        knockbackDistance: 140,
-      });
-      this.recordSkillDamage(result, this.activeBoss.damage);
-    }
-
-    this.createImpactCircle(center.x, center.y, radius, 0xffaa33);
-  }
-
-  private hitPlayerAlongSegment(
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
-    radius: number,
-    damage: number,
-    knockbackDirection: Phaser.Math.Vector2,
-    knockbackDistance: number,
-  ): void {
-    const playerPosition = this.getPlayerPosition();
-    const distance = this.distanceSegmentToPoint(start, end, playerPosition);
-
-    if (distance > radius) {
-      return;
-    }
-
-    const result = this.enemyFlow.applyPlayerDamage(damage, {
-      knockbackDirection,
-      knockbackDistance,
-    });
-    this.recordSkillDamage(result, damage);
-  }
-
-  private recordSkillDamage(result: PlayerDamageResult, incomingDamage: number): void {
-    if (!result.hit) {
-      return;
-    }
-
-    this.runState.recordEndlessBossSkillHit(result.actualDamage, incomingDamage);
+  private getEndlessTimeSeconds(): number {
+    return Math.max(0, this.currentGameTimeSeconds - this.endlessStartTime);
   }
 
   private updateZones(deltaMs: number): void {
@@ -436,6 +290,11 @@ export class EndlessBossManager {
         this.activeZones.splice(index, 1);
       }
     }
+  }
+
+  private clearZones(): void {
+    this.activeZones.forEach((zone) => zone.visual.destroy());
+    this.activeZones.length = 0;
   }
 
   private getScaledBossStats(config: EndlessBossConfig, gameTimeSeconds: number) {
@@ -517,50 +376,6 @@ export class EndlessBossManager {
       Phaser.Math.Clamp(position.x, 48, worldSize.width - 48),
       Phaser.Math.Clamp(position.y, 48, worldSize.height - 48),
     );
-  }
-
-  private createImpactCircle(x: number, y: number, radius: number, color: number): void {
-    const circle = this.scene.add.circle(x, y, radius, color, 0.22)
-      .setStrokeStyle(4, color, 0.75)
-      .setDepth(35);
-    this.scene.tweens.add({
-      targets: circle,
-      alpha: 0,
-      scale: 1.25,
-      duration: 220,
-      onComplete: () => circle.destroy(),
-    });
-  }
-
-  private clearSkillVisuals(): void {
-    this.pendingSkill?.visual?.destroy();
-    this.pendingSkill = null;
-    this.activeZones.forEach((zone) => zone.visual.destroy());
-    this.activeZones.length = 0;
-  }
-
-  private distanceSegmentToPoint(
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
-    point: Phaser.Math.Vector2,
-  ): number {
-    const segmentX = end.x - start.x;
-    const segmentY = end.y - start.y;
-    const lengthSq = segmentX * segmentX + segmentY * segmentY;
-
-    if (lengthSq <= 0) {
-      return Phaser.Math.Distance.Between(start.x, start.y, point.x, point.y);
-    }
-
-    const t = Phaser.Math.Clamp(
-      ((point.x - start.x) * segmentX + (point.y - start.y) * segmentY) / lengthSq,
-      0,
-      1,
-    );
-    const projectionX = start.x + segmentX * t;
-    const projectionY = start.y + segmentY * t;
-
-    return Phaser.Math.Distance.Between(point.x, point.y, projectionX, projectionY);
   }
 
   private formatBossName(id: EndlessBossId): string {

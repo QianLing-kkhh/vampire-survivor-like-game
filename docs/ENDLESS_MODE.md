@@ -54,8 +54,8 @@ Current goals:
 
 - No artificial endless time cap.
 - Boss spawn intervals shrink as endless time increases.
-- Multiple endless Bosses can coexist if the player cannot kill them quickly enough.
-- Soft caps protect performance but are not intended as a gameplay hard cap.
+- Boss lifecycle is managed by `EndlessBossManager`.
+- Concrete skills are created through `BossSkillFactory` from `bosses.json` skill configs.
 - Bosses use scaled stats at spawn time.
 
 Implemented endless Boss roles include:
@@ -66,7 +66,7 @@ Implemented endless Boss roles include:
 - Sniper
 - Tanker
 
-Boss pressure should come from stacking and varied skills, not unavoidable instant kills.
+Boss pressure should come from varied data-driven skills, not unavoidable instant kills.
 
 ## Post-Cap Rewards
 

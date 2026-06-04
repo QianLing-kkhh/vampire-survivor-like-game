@@ -1,4 +1,5 @@
 import bossesData from '../data/bosses.json';
+import { BossSkillConfig } from '../boss/skills/BossSkillConfig';
 
 export type EndlessBossId =
   | 'endless_berserker'
@@ -7,13 +8,6 @@ export type EndlessBossId =
   | 'endless_sniper'
   | 'endless_tanker';
 
-export type EndlessBossSkillType =
-  | 'berserker_dash'
-  | 'summoner_call'
-  | 'freezer_zone'
-  | 'sniper_beam'
-  | 'tanker_shockwave';
-
 export interface EndlessBossConfig {
   id: EndlessBossId;
   enemyId: string;
@@ -21,9 +15,7 @@ export interface EndlessBossConfig {
   baseHpMultiplier: number;
   baseDamageMultiplier: number;
   baseSpeedMultiplier: number;
-  skillType: EndlessBossSkillType;
-  skillCooldown: number;
-  warningDuration: number;
+  skills: BossSkillConfig[];
   description: string;
 }
 
@@ -38,4 +30,3 @@ export const ENDLESS_BOSS_CONFIGS: readonly EndlessBossConfig[] = Object.values(
 export function getEndlessBossConfig(id: EndlessBossId): EndlessBossConfig {
   return typedBossesData.endlessBosses[id];
 }
-
