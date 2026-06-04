@@ -14,6 +14,8 @@ The Title Scene provides:
 - Help
 - Auto-test countdown after no input
 
+Title should not duplicate individual settings toggles. Settings belong in `SettingsMenu`.
+
 ### Game HUD
 
 The HUD shows:
@@ -23,15 +25,15 @@ The HUD shows:
 - Level
 - Time and current goal
 - Weapon + matching passive build rows
-- Shield stack count when available
+- Shield/endless text when relevant
 - Minimap
 - Pause button in all modes
 
-The permanent HUD should stay lightweight and avoid large background panels.
+The permanent HUD should stay lightweight and avoid large background panels that cover gameplay.
 
 ### LevelUpPanel
 
-The LevelUpPanel displays available upgrade cards. Auto Upgrade can select a card after a short delay when enabled.
+The LevelUpPanel displays available upgrade cards. It uses icon-first weapon/passive presentation where possible. Auto Upgrade can select a card after a short delay when enabled.
 
 ### PauseMenu
 
@@ -44,19 +46,25 @@ The PauseMenu contains:
 - Settings
 - Help
 
-The Stats / Build page shows detailed character, weapon, passive, damage, and shield information.
+Detailed character, weapon, passive, damage, shield, and endless stats belong in PauseMenu Stats / Build, not in the permanent HUD.
 
 ### SettingsMenu
 
-SettingsMenu is a reusable overlay opened from Title, Pause, and Result flows.
+SettingsMenu is the unified settings entry opened from Title, Pause, and Result flows.
+
+Title, Pause, and Result should not each show their own duplicated Auto/Fast/Endless/Sound/Language toggle lists.
 
 ### HelpOverlay
 
 HelpOverlay uses tab buttons and data-driven help sections. It includes controls, weapons, UI, evolution, passives, upgrades, treasures, and endless help.
 
+Help text should avoid hardcoded gameplay values when a manager/config can provide those values.
+
 ### ResultScene
 
 ResultScene shows compact run results, auto restart countdown, CSV download buttons, Settings, and endless leaderboard entries when available.
+
+It should not display raw CSV, raw debug strings, or long unbounded stat blobs.
 
 ## Settings
 
@@ -73,7 +81,7 @@ Current settings:
 - UI Volume
 - Language
 
-Settings are saved through `PlaytestSettings` and `localStorage` when available.
+Settings are persisted through `PlaytestSettings`, which now reads/writes through `SaveManager`.
 
 ## Immediate Apply Rule
 
@@ -101,6 +109,14 @@ Target layouts:
 - Desktop landscape: wider HUD, minimap in the upper-right area, buttons may use two columns where appropriate.
 - Mobile portrait: compact HUD, smaller minimap, Pause button in a non-overlapping safe-area corner, vertical menus and level-up cards.
 - Narrow landscape: compact spacing and smaller buttons.
+
+## Mobile Portrait Rules
+
+- Pause button must be visible and clickable.
+- Pause button must not overlap HP/EXP bars or minimap.
+- Minimap should move or shrink if it conflicts with Pause or stats.
+- Build rows should be limited and should not cover the virtual joystick.
+- Virtual joystick should sit away from the left and bottom edges.
 
 ## Pause Button Rule
 
@@ -130,13 +146,7 @@ Rules:
 
 Permanent HUD should avoid large persistent background panels. Detailed information belongs in PauseMenu Stats / Build.
 
-HUD build rows should display:
-
-```text
-[weapon icon] Weapon Lv.X / Y + [passive icon] Passive Lv.A / B
-```
-
-If too many rows exist, show a limited number and a `+N more` row.
+HUD build rows should display weapon plus matching passive on the same row. If too many rows exist, show a limited number and a `+N more` row.
 
 ## Help System
 

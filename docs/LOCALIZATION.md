@@ -89,8 +89,10 @@ Do not translate:
 - Data IDs such as `knife`, `spinach`, or `endless_overdrive`
 - Storage keys
 - GitHub Actions or package script names
+- Content pack IDs
+- Save schema field names
 
-If user-facing weapon, upgrade, or passive names need localization later, add `nameKey` / `descriptionKey` fields or a dedicated display mapping instead of changing data IDs.
+If user-facing weapon, upgrade, passive, enemy, character, stage, or map names need localization later, add `nameKey` / `descriptionKey` fields or a dedicated display mapping instead of changing data IDs.
 
 ## Current Usage
 
@@ -110,7 +112,7 @@ Some gameplay data names are still displayed from data/config and may remain Eng
 
 Potential future improvements:
 
-- Add `nameKey` and `descriptionKey` to weapons, passives, upgrades, and enemies.
+- Add `nameKey` and `descriptionKey` to weapons, passives, upgrades, enemies, characters, stages, and maps.
 - Add locale-aware formatting for numbers and time.
 - Add translation coverage tests for required UI keys.
 - Add better font fallback handling for CJK text.

@@ -1,27 +1,31 @@
 # Feature Overview
 
-This document summarizes the systems currently implemented in the prototype.
+This document summarizes systems currently implemented in the prototype. The project is not a finished game; it is a playable architecture and balance testbed.
 
 ## Core Loop
 
 1. Start from the Title Scene.
 2. Move around the map and avoid enemies.
 3. Defeat enemies with automatic weapons.
-4. Collect EXP gems.
+4. Collect EXP gems, now with pickup magnet animation.
 5. Level up and choose upgrades.
-6. Open treasure chests for bonus upgrades or weapon evolution.
-7. Survive until the Boss appears.
+6. Open treasure chests for bonus upgrades, weapon evolution, or endless rewards.
+7. Survive until the final Boss appears.
 8. Defeat the Boss to win, or continue into Endless Mode if enabled.
 9. Review results, local leaderboard data, and playtest statistics in the Result Scene.
 
-## Scenes
+## Architecture Foundations
 
-- `BootScene`
-- `PreloadScene`
-- `TitleScene`
-- `GameScene`
-- `UIScene`
-- `ResultScene`
+Current foundations:
+
+- Save system: `SaveData`, `SaveStorage`, `SaveMigrator`, `SaveManager`
+- Content registry: `ContentPack`, `ContentRegistry`, `ContentBootstrap`, `ContentValidator`, `ContentId`
+- Character / Stage / Map foundation: `CharacterManager`, `StageManager`, `MapManager`
+- Gameplay runtime split: `GameplayContext`, `GameplayInitializer`, `GameplayUpdater`
+- Centralized upgrade routing through `UpgradeFlow`
+- Enemy and Boss routing through `EnemyFlow`, `BossController`, and `EndlessBossManager`
+
+These foundations are in place for future multi-character, multi-stage, multi-map, custom content, and save-driven selection systems. Selection UI and mod loading are not implemented yet.
 
 ## Controls
 
@@ -48,56 +52,40 @@ Implemented player systems:
 
 Implemented enemy systems:
 
-- Data-driven enemy creation from JSON
+- Registry-backed enemy creation from built-in content
 - `EnemyFactory` with optional scaled stat overrides
 - `EnemyFlow` for enemy movement, cleanup, contact damage, kill recording, and shield absorption
 - Mini boss texture support for `slime_boss`, `bat_boss`, and `golem_boss`
+- Weapon knockback with enemy knockback immunity
 - Contact cooldowns and swept player contact checks
 - EXP gem drops and treasure chest drop chances
 
-Enemy types currently include:
-
-- Slime
-- Bat
-- Golem
-- Mini boss variants
-- Final Boss
+Enemy types currently include slime, bat, golem, mini boss variants, endless Boss types, and the final Boss.
 
 ## Weapons
 
-Base weapons:
+Implemented weapon features:
 
-| Weapon | Role |
-|---|---|
-| Knife | Straight projectile, early reliable damage |
-| Garlic | Close-range aura damage |
-| Bible | Orbiting weapon |
-| Magic Wand | Projectile weapon |
-| Axe | Arcing projectile weapon |
-
-Evolved weapons:
-
-| Evolution | Base Weapon | Role |
-|---|---|---|
-| Thousand Edge | Knife | High-rate multi-projectile weapon |
-| Soul Eater | Garlic | Stronger aura weapon |
-| Unholy Vespers | Bible | Stronger orbit weapon |
-| Holy Wand | Magic Wand | Fast projectile weapon |
-| Death Spiral | Axe | Stronger arcing/spread weapon |
-
-After evolution, the base weapon stops attacking, the evolved weapon attacks, and the original base weapon upgrade route can continue improving the evolved weapon up to its evolved route cap.
+- Base weapons: Knife, Garlic, Bible, Magic Wand, Axe
+- Evolved weapons: Thousand Edge, Soul Eater, Unholy Vespers, Holy Wand, Death Spiral
+- Weapon projectile animations from spritesheets where available
+- Knife / Thousand Edge projectile direction alignment
+- Axe / Death Spiral spiral projectile behavior
+- Magic Wand / Holy Wand explosion-on-hit behavior
+- Weapon knockback, with aura weapons excluded
+- Evolved weapons replace base weapons while base upgrade routes can continue improving evolved routes
 
 ## Passive Items
 
 Current passive items:
 
-| Passive | Effect |
-|---|---|
-| Spinach | Increases weapon damage multiplier |
-| Empty Tome | Reduces weapon cooldown multiplier |
-| Bracer | Increases projectile speed multiplier |
-| Clover | Increases treasure chest drop bonus |
-| Pummarola | Periodically restores HP |
+- Spinach
+- Empty Tome
+- Bracer
+- Clover
+- Pummarola
+
+Passive effects are tracked by `PassiveManager` and applied through weapon/passive synchronization.
 
 ## Upgrade System
 
@@ -114,41 +102,28 @@ Core pieces:
 - `AutoUpgradeSelector` selects weighted auto upgrades.
 - `UpgradeFlow` coordinates level-up, auto upgrade, treasure rewards, evolution, invalid rewards, and endless rewards.
 
-Upgrade categories:
-
-- Add new weapon
-- Improve base weapon or evolved route
-- Improve player stats
-- Improve passive items
-- Trigger weapon evolution through treasure chests
-- Endless post-cap rewards when normal upgrade options are exhausted
-
 ## Treasure Chests
-
-Treasure chests can drop from enemies and can provide bonus upgrades.
 
 Treasure behavior:
 
-- Player opens chests by moving into pickup range.
-- Chest rewards use the filtered upgrade pool.
-- If an evolution is already available, chest rewards prioritize evolution.
-- If a chest reward causes an evolution condition to become valid, evolution can trigger immediately after that reward.
+- Chests use magnet collection before opening.
+- Rewards use the filtered upgrade pool.
+- Available evolution is prioritized.
+- Normal chest upgrades and chest-triggered evolution are counted separately.
 - In Endless Mode after normal upgrades are exhausted, chests can grant endless rewards.
-- Endless-phase treasure drops are separately tracked.
+- Endless treasure drops and opens are tracked separately.
 
 ## Weapon Evolution
 
-Weapon evolution is triggered by treasure chests.
+Weapon evolution is triggered by treasure chests and uses `EvolutionManager`.
 
-Current evolution routes:
+Current routes:
 
-| Base Weapon | Required Passive | Evolution |
-|---|---|---|
-| Knife | Bracer | Thousand Edge |
-| Garlic | Pummarola | Soul Eater |
-| Bible | Empty Tome | Unholy Vespers |
-| Magic Wand | Spinach | Holy Wand |
-| Axe | Spinach | Death Spiral |
+- Knife + Bracer -> Thousand Edge
+- Garlic + Pummarola -> Soul Eater
+- Bible + Empty Tome -> Unholy Vespers
+- Magic Wand + Spinach -> Holy Wand
+- Axe + Spinach -> Death Spiral
 
 ## Boss Encounter
 
@@ -157,14 +132,14 @@ The final Boss appears after the survival phase.
 Implemented Boss systems:
 
 - `BossController`
-- Boss spawn timing and warning message
+- Stage-driven final Boss ID and timing
+- Boss warning message
 - Boss HP and contact damage from enemy data
 - Boss ranged warning attack
 - Boss dash attack
 - Boss dash hit statistics
 - Boss phase damage statistics
-- Boss kill victory condition
-- Post-Boss pressure through late waves and spawned enemies
+- Boss kill victory condition or Endless Mode transition
 
 ## Endless Mode
 
@@ -176,7 +151,8 @@ Implemented Endless systems:
 - Enemy quantity scaling by endless time
 - Enemy HP, damage, speed, and EXP scaling by endless time
 - Soft enemy count cap
-- Endless run result and local leaderboard
+- `EndlessBossManager` for rotating random endless Boss pressure
+- Local endless leaderboard
 - Endless treasure open/drop tracking
 
 ## Endless Rewards
@@ -194,14 +170,14 @@ When normal upgrades are exhausted during Endless Mode, the reward pool switches
 Implemented UI systems:
 
 - Title menu
-- HUD with HP/EXP bars, build lines, minimap, shield count, and Pause button
-- Level-up panel
+- HUD with HP/EXP bars, build lines, minimap, shield/endless text, and Pause button
+- Level-up panel with icon-first upgrade cards
 - Pause menu with Stats / Build details
-- Settings menu
-- Help overlay with tabbed guide content
-- Result screen with compact summary, CSV download, and endless leaderboard
-- Shared temporary UI theme
+- Unified SettingsMenu
+- HelpOverlay with tabbed guide content
+- ResultScene with compact summary, CSV download, and endless leaderboard
 - Responsive layout through `ScreenManager`, `LayoutConfig`, and `SafeArea`
+- Virtual joystick for mobile/narrow layouts
 
 ## Audio
 
@@ -234,7 +210,7 @@ Implemented test systems:
 - Fast Mode
 - Weighted upgrade selection for test variety
 - Evolution-focused auto upgrade behavior
-- Automatic restart from Result Scene
+- Automatic restart from ResultScene
 - Persistent CSV buffer through `localStorage`
 - Downloadable current-run and all-run CSV logs
 

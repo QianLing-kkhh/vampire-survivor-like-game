@@ -1,8 +1,8 @@
 # Vampire Survivor Like Game
 
-A playable **Vampire Survivors-like Phaser prototype** built with TypeScript, Phaser 3, and Vite.
+A **Phaser + TypeScript Vampire Survivors-like prototype** for testing survival gameplay systems, automated playtesting, balance data, and architecture foundations.
 
-This is not a finished game. It is a playable prototype for testing core survival gameplay, weapon progression, Boss pressure, endless mode, automated playtesting, CSV logging, responsive UI, temporary audio, and the current art pack.
+This is not a finished game. The current project focus is system architecture, gameplay prototyping, automated testing, CSV analysis, responsive UI, and content/save foundations for future expansion.
 
 ## Tech Stack
 
@@ -30,7 +30,7 @@ On Windows PowerShell, if `npm` is blocked by execution policy, use:
 npm.cmd run dev
 ```
 
-## Build
+## Build and Validation
 
 Create a production build:
 
@@ -44,7 +44,7 @@ Preview the production build:
 npm run preview
 ```
 
-Recommended validation commands during development:
+Recommended validation commands on Windows:
 
 ```sh
 npm.cmd exec tsc
@@ -52,6 +52,8 @@ npm.cmd run build
 ```
 
 GitHub Pages deployment is configured through GitHub Actions. In GitHub, set **Repository Settings -> Pages -> Source** to **GitHub Actions**.
+
+The current Vite production bundle can show a chunk-size warning. That warning is expected for now and does not by itself mean the build failed.
 
 ## Controls
 
@@ -61,39 +63,39 @@ GitHub Pages deployment is configured through GitHub Actions. In GitHub, set **R
 - ESC: Pause / Resume
 - Pause button: Available in all layouts
 
-## Basic Gameplay
+## Current Architecture Entry Points
 
-- Defeat enemies and collect EXP gems.
-- Level up to choose weapons, passives, stat upgrades, or endless rewards.
-- Open treasure chests for bonus upgrades or weapon evolution.
-- Survive until the final Boss appears.
-- Defeat the Boss to win, or continue into Endless Mode when enabled.
+- Save system: `SaveData`, `SaveStorage`, `SaveMigrator`, `SaveManager`
+- Content registry: `ContentPack`, `ContentRegistry`, `ContentBootstrap`, `ContentValidator`, `ContentId`
+- Character / Stage / Map definitions: `CharacterManager`, `StageManager`, `MapManager`
+- Gameplay runtime: `GameplayContext`, `GameplayInitializer`, `GameplayUpdater`
+- Progression: `UpgradeFlow`, `UpgradeSelector`, `UpgradeApplier`, weapon/passive/evolution managers
+- Enemy and Boss flow: `EnemyFlow`, `BossController`, `EndlessBossManager`
+- Endless mode: `EndlessManager`, `EndlessRewardManager`, `EndlessLeaderboard`
+- UI: responsive HUD, LevelUpPanel, PauseMenu, SettingsMenu, HelpOverlay, ResultScene
+- Support layers: AudioManager channels, i18n, art pack / spritesheet assets
 
 ## Current Systems
 
 Implemented systems currently include:
 
-- Refactored gameplay architecture with `GameplayContext`, `GameplayInitializer`, and `GameplayUpdater`
+- Refactored gameplay runtime with `GameplayContext`, `GameplayInitializer`, and `GameplayUpdater`
 - Centralized `UpgradeFlow` for level-up, treasure, evolution, and endless rewards
-- `EnemyFlow` for enemy movement, contact damage, kill handling, and shield absorption
-- `BossController` for final Boss spawn, ranged warning attack, dash, and Boss victory state
-- Base and evolved weapon systems
-- Passive items and weapon evolution through treasure chests
-- Endless Mode after Boss kill when enabled
-- Endless enemy quantity and stat scaling
-- Endless rewards: Emergency Heal, Overdrive, Time Slow, Shield, and Minor Growth
-- Local endless leaderboard
-- Title, HUD, LevelUpPanel, PauseMenu, SettingsMenu, HelpOverlay, and ResultScene
-- Responsive layout with safe areas, minimap placement, mobile joystick, and all-mode Pause button
+- `EnemyFlow`, `BossController`, and rotating Endless Boss architecture
+- Base and evolved weapons, passive items, weapon evolution, weapon knockback, and pickup magnet animation
+- Endless Mode with enemy quantity/stat scaling, post-cap rewards, local leaderboard, and endless Boss pressure
+- Save architecture for settings, progression, selections, cosmetics, and records
+- Content registry architecture for built-in content and future custom/mod content packs
+- Responsive UI, virtual joystick, SettingsMenu, tabbed HelpOverlay, and compact ResultScene
 - i18n support for `en-US`, `zh-CN`, and `ja-JP`
 - Channel-based audio settings for BGM, SFX, weapon, and UI sounds
-- Art pack and spritesheet assets under `public/assets/art/`
+- Unified art pack and spritesheet assets under `public/assets/art/`
 - Auto playtesting with separate Auto Movement, Auto Upgrade, and Fast Mode
 - Persistent CSV playtest logs
 
 ## Auto Playtest
 
-The Title Scene starts an Auto + Fast test automatically after 10 seconds with no user input.
+The Title Scene starts an Auto Movement + Auto Upgrade + Fast Mode test automatically after 10 seconds with no user input.
 
 Current automated settings are split:
 
@@ -118,18 +120,24 @@ Audio can be enabled and channel volumes can be changed in Settings. Missing aud
 ## Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/FUTURE_ARCHITECTURE.md`](docs/FUTURE_ARCHITECTURE.md)
+- [`docs/CONTENT_SYSTEM.md`](docs/CONTENT_SYSTEM.md)
+- [`docs/SAVE_SYSTEM.md`](docs/SAVE_SYSTEM.md)
+- [`docs/CUSTOM_CONTENT.md`](docs/CUSTOM_CONTENT.md)
 - [`docs/FEATURES.md`](docs/FEATURES.md)
 - [`docs/PLAYTESTING.md`](docs/PLAYTESTING.md)
+- [`docs/ASSETS.md`](docs/ASSETS.md)
 - [`docs/ENDLESS_MODE.md`](docs/ENDLESS_MODE.md)
 - [`docs/UI_AND_SETTINGS.md`](docs/UI_AND_SETTINGS.md)
 - [`docs/AUDIO.md`](docs/AUDIO.md)
 - [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md)
-- [`docs/ASSETS.md`](docs/ASSETS.md)
+- [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ## Known Issues / Temporary Items
 
 - Gameplay balance is still under active tuning.
+- Custom content and mod loading are not implemented yet; only architecture foundations exist.
+- Character, stage, map, cosmetic, and difficulty selection UI are planned, not implemented.
 - PNG and spritesheet assets are prototype assets.
 - Audio files are temporary or optional placeholders.
-- Phaser makes the production bundle relatively large, so `npm run build` may show a chunk size warning.
 - Auto playtest results can vary significantly depending on balance, Boss pressure, endless scaling, and evolution timing.

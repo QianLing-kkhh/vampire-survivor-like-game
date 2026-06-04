@@ -1,32 +1,86 @@
 # Architecture
 
-This document describes the current project architecture. The codebase is still a prototype, but the main runtime systems are now split into smaller layers.
+This document is the primary architecture reference for Codex and future development. The project is still a playable prototype, but major systems are now separated into explicit layers.
 
 ## Scene Layer
 
-Scenes own Phaser lifecycle, scene transitions, and high-level UI/gameplay coordination.
+Scenes own Phaser lifecycle, scene transitions, high-level UI/gameplay coordination, and scene events.
 
 - `BootScene`: bootstraps the scene flow.
 - `PreloadScene`: loads legacy assets, art pack assets, spritesheets, animations, and audio keys.
-- `TitleScene`: start screen, auto-test countdown, Settings, Help, and BGM entry point.
-- `GameScene`: main scene lifecycle, pause/resume, settings change handling, result transition, HUD emit, and gameplay runtime callbacks.
+- `TitleScene`: start screen, auto-test countdown, Settings, Help, and title BGM entry point.
+- `GameScene`: main lifecycle, pause/resume, settings change handling, result transition, HUD emit, and gameplay runtime callbacks.
 - `UIScene`: overlay scene for HUD, LevelUpPanel, PauseMenu, temporary messages, and UI events.
 - `ResultScene`: compact run summary, CSV download, auto restart, Settings, and endless leaderboard display.
 
-## Gameplay Runtime Layer
+## Runtime Layer
 
-The runtime layer keeps most per-run object references out of `GameScene`.
+The runtime layer keeps per-run object references and update order out of the scene as much as possible.
 
 - `GameplayContext`: per-run reference container for player, managers, flows, controllers, runtime settings, and active systems.
-- `GameplayInitializer`: creates the per-run systems in a stable order and returns a `GameplayContext`.
+- `GameplayInitializer`: creates per-run systems in a stable order and returns `GameplayContext`.
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
 
-Current data flow:
+Current flow:
 
 1. `GameScene` starts the run.
-2. `GameplayInitializer` creates the `GameplayContext`.
-3. `GameScene.update()` delegates gameplay update to `GameplayUpdater`.
-4. `GameScene` still handles pause gates, settings changes, HUD emit, and ResultScene transition.
+2. `GameScene` obtains selected character/stage/map through managers.
+3. `GameplayInitializer` builds the runtime systems and returns `GameplayContext`.
+4. `GameScene.update()` delegates runtime update to `GameplayUpdater`.
+5. `GameScene` still owns pause gates, settings changes, HUD emit, and ResultScene transition.
+
+## Content Layer
+
+The content layer is the current foundation for future custom content and mod content packs.
+
+- `ContentPack`: data bundle shape for weapons, enemies, passives, upgrades, waves, characters, stages, and maps.
+- `ContentRegistry`: unified in-memory read entry for registered content.
+- `ContentBootstrap`: imports built-in JSON and registers one builtin content pack.
+- `ContentValidator`: first-pass validation with warnings for missing references and required fields.
+- `ContentId`: default IDs for built-in character, stage, map, and wave set.
+- Built-in JSON content: current gameplay data under `src/data/`.
+
+Current status:
+
+- Only the builtin content pack is registered.
+- Custom/mod loading is not implemented yet.
+- New gameplay systems should avoid direct JSON imports and read definitions through `ContentRegistry` or managers that use it.
+
+## Save Layer
+
+The save layer is the current foundation for persistent settings, selections, progression, cosmetics, and future records.
+
+- `SaveData`: schema version and top-level save shape.
+- `SaveStorage`: localStorage read/write/clear with memory fallback.
+- `SaveMigrator`: default save creation, schema migration hook, and corrupted JSON fallback.
+- `SaveManager`: unified load/save/get/update/reset/subscribe entry point.
+- `PlaytestSettings`: public settings API remains stable but reads/writes through `SaveManager`.
+
+Current save domains:
+
+- `settings`
+- `progression`
+- `selections`
+- `cosmetics`
+- `records`
+
+CSV playtest logs are separate from formal save data unless explicitly integrated later.
+
+## Character / Stage / Map Layer
+
+These managers prepare the project for multi-character, multi-stage, and multi-map selection without adding UI yet.
+
+- `CharacterManager`: reads character definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `default`.
+- `StageManager`: reads stage definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `stage_001`.
+- `MapManager`: reads map definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `prototype_field`.
+
+Current defaults:
+
+- Character: `default`
+- Stage: `stage_001`
+- Map: `prototype_field`
+
+Selection UI is planned, not implemented.
 
 ## Progression Layer
 
@@ -42,24 +96,22 @@ Progression owns upgrade availability, upgrade application, passive effects, wea
 
 Important rule: `UpgradeFlow` is the preferred orchestration point. `GameScene` and `TreasureManager` should not duplicate upgrade/evolution details.
 
-## Combat / Enemy Layer
+## Combat Layer
 
-Enemy and Boss behavior is split from the main scene.
+Enemy, Boss, and combat behavior are split from the main scene.
 
 - `Enemy`: runtime enemy entity and per-enemy state.
-- `EnemyFactory`: creates enemies from data, with optional runtime stat overrides for Endless Mode.
+- `EnemyFactory`: creates enemies from registry-backed data, with optional runtime stat overrides.
 - `EnemyFlow`: updates enemy movement, removes dead enemies, applies contact damage, handles shield absorption, records kills, and triggers player damage reaction.
 - `BossController`: controls final Boss warning, spawn, ranged warning attack, dash, dash hit detection, Boss kill state, and Boss-related run stats.
-- `BossAttackController`: handles the Boss radial projectile warning and projectile lifecycle.
-- `BossSpawnDirector`: selects Boss spawn placement.
-
-Boss dash and Boss ranged projectiles are currently controlled by source constants and enemy config. Stage/Boss config files may be expanded later, but there is no full stage-selection UI yet.
+- `EndlessBossManager`: manages rotating endless Boss spawns, active Boss states, and endless Boss skills.
 
 ## Endless Layer
 
 Endless systems activate after the final Boss is killed when Endless Mode is enabled.
 
 - `EndlessManager`: starts endless state, spawns endless enemies in tiers, applies enemy stat scaling, and uses a soft enemy cap.
+- `EndlessBossManager`: periodically spawns random endless Bosses and allows multiple active Bosses with soft performance protection.
 - `EndlessRewardManager`: provides post-cap rewards, temporary buffs, permanent minor growth, shield stacks, and global enemy slow multiplier.
 - `EndlessLeaderboard`: stores local top-10 endless results in `localStorage`.
 
@@ -67,28 +119,22 @@ Endless systems activate after the final Boss is killed when Endless Mode is ena
 
 Run logging is separated from gameplay object ownership.
 
-- `RunState`: mutable per-run counters and paths, including upgrades, treasure, evolution, Boss, endless scaling, rewards, slow, and shield fields.
+- `RunState`: mutable per-run counters and paths, including upgrades, treasure, evolution, Boss, endless scaling, rewards, slow, shield, and endless Boss fields.
 - `RunResultBuilder`: gathers `RunState`, `RunStats`, managers, player state, and Boss state into ResultScene data and CSV data.
 - `PlaytestLog`: CSV schema and row generation.
 - `PlaytestLogBuffer`: persistent all-run CSV buffer in `localStorage`.
 - `RunStats`: damage, hit, kill, HP, and weapon stat aggregation.
 
-Current data flow:
-
-1. Runtime systems call `RunState.record...()` methods.
-2. At run end, `RunResultBuilder` builds ResultScene data.
-3. `RunResultBuilder` creates CSV through `PlaytestLog`.
-4. `PlaytestLogBuffer` appends and persists the CSV row.
-
 ## UI Layer
 
 UI classes should display state, not own gameplay rules.
 
-- `HUD`: HP/EXP bars, time, goal, build rows, minimap, shield text, and Pause button.
+- `HUD`: HP/EXP bars, time, goal, build rows, minimap, shield/endless text, and Pause button.
 - `LevelUpPanel`: displays upgrade options and optional auto-select behavior.
 - `PauseMenu`: main pause menu and Stats / Build detail page.
 - `SettingsMenu`: reusable settings overlay for Title, Pause, and Result flows.
-- `HelpOverlay`: tabbed help system built from `HelpContentBuilder`.
+- `HelpOverlay`: tabbed help system built from data/config where possible.
+- `ResultScene`: compact summary, CSV export, Settings, and leaderboard display.
 - `UITheme`: shared colors, font sizes, button metrics, and panel constants.
 
 ## Responsive Layer
@@ -96,12 +142,13 @@ UI classes should display state, not own gameplay rules.
 Responsive helpers centralize screen layout rules.
 
 - `ScreenManager`: wraps Phaser scale size, center, orientation, and resize subscriptions.
-- `LayoutConfig`: computes HUD, menu, result, help, title, level-up, minimap, and button layouts.
+- `LayoutConfig`: computes HUD, menu, result, help, title, level-up, minimap, joystick, and button layouts.
 - `SafeArea`: provides conservative edge insets for desktop and mobile-like screens.
 
 ## Asset / Audio / i18n Layer
 
 - `PreloadScene`: central asset/audio preload and spritesheet animation creation.
+- Art pack assets: `public/assets/art/` plus `animation_manifest.json`.
 - `AudioManager`: channel-based audio playback for BGM, SFX, weapon, and UI channels.
 - `I18n`: locale lookup, fallback, and interpolation.
 - `Locale`: supported locales and display names.
@@ -109,13 +156,17 @@ Responsive helpers centralize screen layout rules.
 ## High-Level Runtime Flow
 
 ```text
+BootScene / PreloadScene
+  -> preload assets and ensure runtime can use registered content
 TitleScene
   -> GameScene
+    -> managers resolve selected character/stage/map
     -> GameplayInitializer creates GameplayContext
     -> GameplayUpdater updates runtime systems
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
     -> EnemyFlow handles enemy update/contact damage
-    -> BossController handles Boss state and Boss attacks
+    -> BossController handles final Boss state and attacks
+    -> EndlessManager / EndlessBossManager handle post-Boss pressure
     -> RunState records per-run stats
     -> RunResultBuilder builds ResultScene data and CSV
   -> ResultScene
@@ -126,5 +177,8 @@ TitleScene
 - UI displays runtime state and sends user intents through scene events.
 - Upgrade and treasure reward rules should go through `UpgradeFlow`.
 - Enemy movement and contact damage should go through `EnemyFlow`.
-- Boss-specific state should go through `BossController`.
+- Final Boss-specific state should go through `BossController`.
+- Endless Boss state should go through `EndlessBossManager`.
 - Per-run result fields should be added to `RunState` and `RunResultBuilder`, not manually assembled in UI.
+- Persistent player selections and settings should go through `SaveManager`.
+- Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.

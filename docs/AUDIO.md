@@ -49,7 +49,7 @@ Example keys:
 - `boss_bgm`
 - `result_bgm`
 
-Only one BGM should play at a time.
+Only one BGM should play at a time. BGM should not stack across scene transitions.
 
 ### sfx
 
@@ -117,6 +117,8 @@ Volume buttons cycle through fixed steps:
 ```
 
 Changing BGM volume updates the currently playing BGM volume. Turning audio off stops BGM and prevents future sounds from playing.
+
+Settings are persisted through `PlaytestSettings`, which is backed by `SaveManager`.
 
 ## Missing Audio Fallback
 

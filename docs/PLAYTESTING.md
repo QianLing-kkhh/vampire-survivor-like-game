@@ -51,7 +51,7 @@ The auto player attempts to:
 - Stay within map boundaries.
 - Adjust movement strategy based on danger level and weapon behavior.
 
-The auto player is intended for balance testing, not for perfect play.
+The auto player is intended for balance testing, not perfect play.
 
 ## Auto Upgrade Selection
 
@@ -65,6 +65,27 @@ It attempts to:
 - Avoid invalid upgrades through the filtered upgrade pool.
 - Use post-cap endless rewards once normal upgrade options are exhausted.
 
+## Normal Mode Testing
+
+Recommended sample:
+
+1. Clear CSV Buffer.
+2. Disable Endless Mode.
+3. Run Auto Movement + Auto Upgrade + Fast Mode for 50 runs.
+4. Download All CSV.
+5. Check victory rate, Boss dash hit rate, Boss phase damage, evolution rate, and weapon damage distribution.
+
+Primary metrics:
+
+- Normal victory rate
+- Survival time
+- Boss fight duration
+- Boss phase damage taken
+- Boss dash hit rate
+- Evolution rate
+- Treasure open count
+- Death time distribution
+
 ## Endless Mode Testing
 
 To test Endless Mode:
@@ -75,6 +96,14 @@ To test Endless Mode:
 4. Let the run continue after the final Boss is killed.
 5. Death after Endless Mode starts is recorded as an endless result rather than normal Game Over.
 6. Review endless survival time and local leaderboard rank in the Result Scene.
+
+Recommended sample:
+
+1. Clear CSV Buffer.
+2. Enable Endless Mode.
+3. Run Auto Movement + Auto Upgrade + Fast Mode for 20 runs.
+4. Download All CSV.
+5. Check endless survival time, treasure counts, scaling level, reward counts, endless Boss counts, and leaderboard ranks.
 
 Important endless metrics:
 
@@ -97,6 +126,10 @@ Important endless metrics:
 - `endlessShieldConsumed`
 - `endlessShieldRemaining`
 - `endlessShieldAbsorbedDamage`
+- `endlessBossSpawnCount`
+- `endlessBossKillCount`
+- `maxSimultaneousEndlessBosses`
+- `activeEndlessBossCountAtDeath`
 
 ## CSV Export
 
@@ -111,7 +144,7 @@ Current CSV behavior:
 - The buffer keeps the latest 1000 runs.
 - Clear CSV Buffer removes both memory and persisted logs.
 
-If CSV schema changes, clear the buffer before comparing new results with old samples.
+If CSV schema changes, clear the buffer before comparing new results with old samples. Do not compare old and new schema rows mixed in All CSV.
 
 ## CSV Diagnostics
 
@@ -123,32 +156,7 @@ The CSV includes diagnostics for detecting missing or interrupted runs:
 - `previousRunTimestamp`
 - `realTimeGapSeconds`
 
-These help distinguish between:
-
-- Real gaps where the test was stopped.
-- Browser reloads.
-- Buffer resets.
-- Missing append events.
-
-## Main CSV Data Groups
-
-The CSV records data including:
-
-- Result type
-- Survival time
-- Final level and EXP
-- Kill count
-- Weapons owned
-- Passives owned
-- Upgrade path
-- Treasure drops and opened chests
-- Weapon evolution path
-- Weapon damage, hit, and kill stats
-- Boss spawn, kill, and fight duration
-- Boss dash count and hit count
-- Boss phase damage and kills
-- Auto/Fast settings
-- Endless mode, scaling, reward, shield, slow, and leaderboard fields
+These help distinguish between real pauses, browser reloads, buffer resets, and missing append events.
 
 ## Balance Metrics to Watch
 
@@ -159,13 +167,13 @@ The CSV records data including:
 | Boss fight duration | Boss phase pacing |
 | Boss phase damage taken | Boss phase pressure |
 | Boss dash hit rate | Dash effectiveness |
-| Evolution rate | Whether evolution appears often enough |
-| Weapon damage share | Weapon balance |
-| Treasure open count | Reward pacing |
-| Endless treasure count | Endless reward inflation risk |
-| Endless survival time | Endless difficulty and leaderboard pacing |
+| Endless Boss count | Late endless pressure and Boss stacking |
 | Endless scaling level | Enemy growth pressure |
 | Reward usage counts | Post-cap reward balance |
+| Shield gained/consumed | Defensive reward strength |
+| Treasure open count | Reward pacing and inflation risk |
+| Weapon damage share | Weapon balance |
+| Death time distribution | Whether deaths cluster too early or too late |
 
 ## Current Balance Targets
 
@@ -175,30 +183,14 @@ These are approximate testing targets, not strict rules:
 - Boss dash hit rate: around 10% to 25%
 - Boss fight duration: around 45 to 80 seconds
 - Evolution rate: enough to appear in some runs, but not guaranteed every run
-- Endless mode: should eventually kill the player through scaling pressure
+- Endless mode: should eventually kill the player through scaling, Boss pressure, and reward limits
 
-## Recommended Test Sets
-
-Normal mode sample:
-
-1. Clear CSV Buffer.
-2. Disable Endless Mode.
-3. Run Auto Movement + Auto Upgrade + Fast Mode for 50 runs.
-4. Download All CSV.
-5. Check victory rate, Boss stats, evolution rate, and weapon damage distribution.
-
-Endless sample:
-
-1. Clear CSV Buffer.
-2. Enable Endless Mode.
-3. Run Auto Movement + Auto Upgrade + Fast Mode for 20 runs.
-4. Download All CSV.
-5. Check endless survival time, treasure counts, scaling level, reward counts, and leaderboard ranks.
-
-Manual smoke test:
+## Manual Smoke Test
 
 1. Start Game with Auto Movement and Auto Upgrade disabled.
 2. Check keyboard, mouse, virtual joystick, pause, settings, level-up, treasure, Boss, Result, and CSV download.
+3. Toggle Auto Movement, Auto Upgrade, Fast Mode, Endless Mode, audio, and language from Settings.
+4. Confirm settings apply without scene restart.
 
 ## Common Interpretation Notes
 

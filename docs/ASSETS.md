@@ -24,7 +24,7 @@ assets/art/player/player_walk_sheet.png
 
 Do not use root-absolute `/assets/...` paths.
 
-## New Art Pack Structure
+## Art Pack Structure
 
 The current art pack is described by:
 
@@ -46,7 +46,7 @@ public/assets/art/
   world/
 ```
 
-## Manifest
+## Manifest and Spritesheets
 
 `animation_manifest.json` lists:
 
@@ -57,9 +57,7 @@ public/assets/art/
 - `frameHeight`
 - `frames`
 
-`PreloadScene` mirrors this manifest into `ART_MANIFEST_ASSETS`, loads images with `this.load.image`, and loads spritesheets with `this.load.spritesheet`.
-
-## Spritesheets
+`PreloadScene` mirrors the manifest into preload data, loads images with `this.load.image`, and loads spritesheets with `this.load.spritesheet`.
 
 Animated assets use horizontal spritesheets for Phaser.
 
@@ -74,6 +72,7 @@ Rules:
 Example animation keys:
 
 - `art_player_walk`
+- player 8-direction idle/walk aliases
 - `art_slime_walk`
 - `art_bat_fly`
 - `art_golem_walk`
@@ -100,11 +99,7 @@ Example animation keys:
 - `bat_boss`
 - `golem_boss`
 
-The art pack also contains:
-
-- `art_enemies_slime_boss_placeholder`
-- `art_enemies_bat_boss_placeholder`
-- `art_enemies_golem_boss_placeholder`
+The art pack also contains placeholder art keys for these mini boss variants.
 
 ## Common Texture Groups
 
@@ -121,7 +116,7 @@ Enemies:
 - `art_enemies_golem_walk_sheet`
 - `art_enemies_boss_lava_beast_idle_sheet`
 - mini boss placeholder PNGs
-- fallbacks: `slime`, `bat`, `golem`, `boss_lava_beast`
+- fallback graphics if textures are missing
 
 Weapons:
 
@@ -158,15 +153,6 @@ World:
 - `art_world_grass_tile`
 - `art_world_ground_tile`
 
-UI:
-
-- `art_ui_panel_bg`
-- `art_ui_hp_icon`
-- `art_ui_exp_icon`
-- `art_ui_time_icon`
-- `art_ui_weapon_frame`
-- `art_ui_passive_frame`
-
 Effects:
 
 - `art_effects_hit_flash_sheet`
@@ -199,9 +185,20 @@ Do not commit PNGs with:
 
 - White backgrounds baked into the image
 - Checkerboard backgrounds baked into the image
-- 0-byte or obviously incomplete files
+- 0-byte or incomplete files
 
-If a generated PNG has a white or checkerboard background, remove it before committing the file. Prefer edge-connected background removal so weapon highlights and glow effects are preserved.
+## Future Asset Key Resolver
+
+Texture keys and animation keys are still partly mapped in gameplay/UI classes. A future `AssetKeyResolver` should centralize:
+
+- weapon icon keys
+- passive icon keys
+- enemy texture keys
+- projectile animation keys
+- fallback texture rules
+- art pack vs legacy key mapping
+
+New code should avoid scattering new texture-key strings across unrelated systems.
 
 ## Audio Assets
 
