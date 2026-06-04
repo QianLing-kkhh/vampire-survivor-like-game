@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
@@ -204,37 +205,23 @@ export class OrbitWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): OrbitProjectileBody {
-    const artTextureKey = this.id === 'unholy_vespers'
-      ? 'art_weapons_unholy_vespers_orbit_book_sheet'
-      : 'art_weapons_bible_orbit_book_sheet';
-    const animationKey = this.id === 'unholy_vespers'
-      ? 'art_unholy_vespers_orbit_book_spin'
-      : 'art_bible_orbit_book_spin';
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
-    if (this.scene.textures.exists(artTextureKey) && this.scene.anims.exists(animationKey)) {
-      const body = this.scene.add.sprite(x, y, artTextureKey);
-      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    if (textureKey && animationKey) {
+      const body = this.scene.add.sprite(x, y, textureKey);
       body.setDisplaySize(displaySize, displaySize);
       body.play(animationKey);
 
       return body;
     }
 
-    const textureKey = this.id === 'unholy_vespers'
-      ? 'unholy_vespers_orbit_book'
-      : 'bible_orbit_projectile';
-
-    const useArtFallback = this.scene.textures.exists(artTextureKey);
-    const fallbackTextureKey = useArtFallback ? artTextureKey : textureKey;
-
-    if (!this.scene.textures.exists(fallbackTextureKey)) {
-      return this.scene.add.circle(x, y, VisualScale.getProjectileDisplaySize(this.id) / 2, 0xa78bfa);
+    if (!textureKey) {
+      return this.scene.add.circle(x, y, displaySize / 2, 0xa78bfa);
     }
 
-    const body = useArtFallback
-      ? this.scene.add.image(x, y, fallbackTextureKey, 0)
-      : this.scene.add.image(x, y, fallbackTextureKey);
-    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    const body = this.scene.add.image(x, y, textureKey);
     body.setDisplaySize(displaySize, displaySize);
 
     return body;

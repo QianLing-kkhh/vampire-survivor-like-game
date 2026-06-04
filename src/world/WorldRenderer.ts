@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { VisualScale } from '../visual/VisualScale';
 
 import { WorldConfig, WorldRenderConfig } from './WorldConfig';
@@ -22,13 +23,15 @@ export class WorldRenderer {
   }
 
   private renderBackground(): void {
-    if (this.scene.textures.exists('art_world_ground_tile')) {
+    const groundTextureKey = AssetKeyResolver.getWorldTileTextureKey(this.scene, 'ground_tile');
+
+    if (groundTextureKey) {
       const background = this.scene.add.tileSprite(
         this.config.width / 2,
         this.config.height / 2,
         this.config.width,
         this.config.height,
-        'art_world_ground_tile',
+        groundTextureKey,
       );
 
       background.setDepth(-100);
@@ -98,8 +101,10 @@ export class WorldRenderer {
   }
 
   private renderTree(x: number, y: number): void {
-    if (this.scene.textures.exists('art_world_tree_landmark')) {
-      const tree = this.scene.add.image(x, y, 'art_world_tree_landmark');
+    const textureKey = AssetKeyResolver.getWorldLandmarkTextureKey(this.scene, 'tree');
+
+    if (textureKey) {
+      const tree = this.scene.add.image(x, y, textureKey);
       const displaySize = VisualScale.getLandmarkDisplaySize('tree');
       tree.setDisplaySize(displaySize, displaySize);
       tree.setDepth(-79);
@@ -121,8 +126,10 @@ export class WorldRenderer {
   }
 
   private renderRock(x: number, y: number): void {
-    if (this.scene.textures.exists('art_world_rock_landmark')) {
-      const rockImage = this.scene.add.image(x, y, 'art_world_rock_landmark');
+    const textureKey = AssetKeyResolver.getWorldLandmarkTextureKey(this.scene, 'rock');
+
+    if (textureKey) {
+      const rockImage = this.scene.add.image(x, y, textureKey);
       const displaySize = VisualScale.getLandmarkDisplaySize('rock');
       rockImage.setDisplaySize(displaySize, displaySize);
       rockImage.setDepth(-80);
@@ -144,8 +151,10 @@ export class WorldRenderer {
   }
 
   private renderGrave(x: number, y: number): void {
-    if (this.scene.textures.exists('art_world_grave_landmark')) {
-      const graveImage = this.scene.add.image(x, y, 'art_world_grave_landmark');
+    const textureKey = AssetKeyResolver.getWorldLandmarkTextureKey(this.scene, 'grave');
+
+    if (textureKey) {
+      const graveImage = this.scene.add.image(x, y, textureKey);
       const displaySize = VisualScale.getLandmarkDisplaySize('grave');
       graveImage.setDisplaySize(displaySize, displaySize);
       graveImage.setDepth(-80);

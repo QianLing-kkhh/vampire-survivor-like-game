@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { AudioManager } from '../audio/AudioManager';
 
 type ArtManifestAsset = {
@@ -248,44 +249,10 @@ export class PreloadScene extends Phaser.Scene {
 
   private logTextureStatus(): void {
     const textureKeys = [
-      'player',
-      'slime',
-      'bat',
-      'golem',
-      'slime_boss',
-      'bat_boss',
-      'golem_boss',
-      'exp_gem',
-      'knife_projectile',
-      'hit_flash',
-      'bible_orbit_projectile',
-      'axe_projectile',
-      'magic_wand_projectile',
-      'treasure_chest',
-      'boss_lava_beast',
-      'thousand_edge_projectile',
-      'holy_wand_projectile',
-      'death_spiral_projectile',
-      'unholy_vespers_orbit_book',
-      'soul_eater_core',
+      ...AssetKeyResolver.getTextureStatusKeys(),
       'hp_icon',
       'exp_icon',
       'time_icon',
-      'knife_icon',
-      'garlic_icon',
-      'bible_icon',
-      'axe_icon',
-      'magic_wand_icon',
-      'thousand_edge_icon',
-      'holy_wand_icon',
-      'death_spiral_icon',
-      'unholy_vespers_icon',
-      'soul_eater_icon',
-      'spinach_icon',
-      'empty_tome_icon',
-      'bracer_icon',
-      'clover_icon',
-      'pummarola_icon',
       'art_ui_title_bg',
       'art_ui_result_bg',
       'art_ui_pause_panel_bg',

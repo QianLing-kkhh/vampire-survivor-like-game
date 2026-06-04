@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
 import { VisualScale } from '../visual/VisualScale';
@@ -35,32 +36,17 @@ export class EnemyFactory {
     }
 
     const enemy = new Enemy(this.scene, enemyId, stats, x, y);
-    const artTextureKey = this.getArtTextureKey(enemyId);
+    const textureKey = AssetKeyResolver.getEnemyTextureKey(this.scene, enemyId);
+    const animationKey = AssetKeyResolver.getEnemyAnimationKey(this.scene, enemyId);
 
-    if (artTextureKey && this.scene.textures.exists(artTextureKey)) {
-      const body = this.createArtBody(enemyId, stats, x, y, artTextureKey);
+    if (textureKey) {
+      const body = this.createArtBody(enemyId, stats, x, y, textureKey, animationKey);
 
       enemy.body.destroy();
       (enemy as unknown as { body: EnemyImageBody | EnemySpriteBody }).body = body;
 
       return enemy;
     }
-
-    const textureKey = enemyId === 'boss' ? 'boss_lava_beast' : enemyId;
-
-    if (!this.scene.textures.exists(textureKey)) {
-      return enemy;
-    }
-
-    const scale = stats.scale ?? 1;
-    const body = this.scene.add.image(x, y, textureKey) as EnemyImageBody;
-    const displaySize = VisualScale.getEnemyDisplaySize(enemyId, scale);
-    body.setDisplaySize(displaySize, displaySize);
-    body.radius = 12 * scale;
-    body.setFillStyle = () => body;
-
-    enemy.body.destroy();
-    (enemy as unknown as { body: EnemyImageBody }).body = body;
 
     return enemy;
   }
@@ -81,14 +67,15 @@ export class EnemyFactory {
     x: number,
     y: number,
     textureKey: string,
+    animationKey: string | null,
   ): EnemyImageBody | EnemySpriteBody {
     const scale = stats.scale ?? 1;
     const displaySize = VisualScale.getEnemyDisplaySize(enemyId, scale);
 
-    if (this.isAnimatedEnemy(enemyId)) {
+    if (animationKey) {
       const body = this.scene.add.sprite(x, y, textureKey) as EnemySpriteBody;
       body.setDisplaySize(displaySize, displaySize);
-      body.play(this.getArtAnimationKey(enemyId));
+      body.play(animationKey);
       body.radius = 12 * scale;
       body.setFillStyle = () => body;
       return body;
@@ -99,56 +86,5 @@ export class EnemyFactory {
     body.radius = 12 * scale;
     body.setFillStyle = () => body;
     return body;
-  }
-
-  private isAnimatedEnemy(enemyId: string): boolean {
-    return enemyId === 'slime'
-      || enemyId === 'bat'
-      || enemyId === 'golem'
-      || enemyId === 'boss';
-  }
-
-  private getArtTextureKey(enemyId: string): string | undefined {
-    switch (enemyId) {
-      case 'slime':
-        return 'art_enemies_slime_walk_sheet';
-      case 'bat':
-        return 'art_enemies_bat_fly_sheet';
-      case 'golem':
-        return 'art_enemies_golem_walk_sheet';
-      case 'boss':
-        return 'art_enemies_boss_lava_beast_idle_sheet';
-      case 'slime_boss':
-        return 'slime_boss';
-      case 'bat_boss':
-        return 'bat_boss';
-      case 'golem_boss':
-        return 'golem_boss';
-      case 'endless_berserker':
-      case 'endless_sniper':
-        return 'bat_boss';
-      case 'endless_summoner':
-        return 'slime_boss';
-      case 'endless_freezer':
-      case 'endless_tanker':
-        return 'golem_boss';
-      default:
-        return undefined;
-    }
-  }
-
-  private getArtAnimationKey(enemyId: string): string {
-    switch (enemyId) {
-      case 'slime':
-        return 'art_slime_walk';
-      case 'bat':
-        return 'art_bat_fly';
-      case 'golem':
-        return 'art_golem_walk';
-      case 'boss':
-        return 'art_boss_lava_beast_idle';
-      default:
-        return `${this.getArtTextureKey(enemyId) ?? enemyId}_anim`;
-    }
   }
 }

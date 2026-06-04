@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { AudioManager } from '../audio/AudioManager';
 import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
@@ -339,65 +340,29 @@ export class ProjectileWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): ProjectileBody {
-    const artTextureKey = this.getArtProjectileTextureKey();
-
-    const animationKey = this.getArtProjectileAnimationKey();
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
     if (
-      artTextureKey
-      && this.scene.textures.exists(artTextureKey)
-      && this.scene.anims.exists(animationKey)
-      && this.shouldUseAnimatedProjectile()
+      textureKey
+      && animationKey
     ) {
-      const body = this.scene.add.sprite(x, y, artTextureKey);
-      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+      const body = this.scene.add.sprite(x, y, textureKey);
       body.setDisplaySize(displaySize, displaySize);
       body.play(animationKey);
 
       return body;
     }
 
-    const textureKey = this.getProjectileTextureKey();
-    const useArtFallback = artTextureKey !== undefined && this.scene.textures.exists(artTextureKey);
-    const fallbackTextureKey = useArtFallback ? artTextureKey : textureKey;
-
-    if (!this.scene.textures.exists(fallbackTextureKey)) {
-      return this.scene.add.circle(x, y, VisualScale.getProjectileDisplaySize(this.id) / 2, 0xfacc15);
+    if (!textureKey) {
+      return this.scene.add.circle(x, y, displaySize / 2, 0xfacc15);
     }
 
-    const body = useArtFallback
-      ? this.scene.add.image(x, y, fallbackTextureKey, 0)
-      : this.scene.add.image(x, y, fallbackTextureKey);
-    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    const body = this.scene.add.image(x, y, textureKey);
     body.setDisplaySize(displaySize, displaySize);
 
     return body;
-  }
-
-  private getArtProjectileTextureKey(): string | undefined {
-    switch (this.id) {
-      case 'thousand_edge':
-        return 'art_weapons_thousand_edge_projectile_sheet';
-      case 'holy_wand':
-        return 'art_weapons_holy_wand_projectile_sheet';
-      default:
-        return 'art_weapons_knife_projectile_sheet';
-    }
-  }
-
-  private getArtProjectileAnimationKey(): string {
-    switch (this.id) {
-      case 'thousand_edge':
-        return 'art_thousand_edge_projectile_spin';
-      case 'holy_wand':
-        return 'art_holy_wand_projectile';
-      default:
-        return 'art_knife_projectile_spin';
-    }
-  }
-
-  private shouldUseAnimatedProjectile(): boolean {
-    return this.id !== 'knife' && this.id !== 'thousand_edge';
   }
 
   private alignProjectileToVelocity(projectile: Projectile): void {
@@ -421,14 +386,4 @@ export class ProjectileWeapon extends Weapon {
     }
   }
 
-  private getProjectileTextureKey(): string {
-    switch (this.id) {
-      case 'thousand_edge':
-        return 'thousand_edge_projectile';
-      case 'holy_wand':
-        return 'holy_wand_projectile';
-      default:
-        return 'knife_projectile';
-    }
-  }
 }

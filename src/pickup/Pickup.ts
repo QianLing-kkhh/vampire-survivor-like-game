@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { VisualScale } from '../visual/VisualScale';
 
 type PickupBody = Phaser.GameObjects.GameObject & {
@@ -111,20 +112,15 @@ export class Pickup {
   }
 
   private createBody(scene: Phaser.Scene, x: number, y: number): PickupBody {
-    if (scene.textures.exists('art_pickups_exp_gem')) {
-      const body = scene.add.image(x, y, 'art_pickups_exp_gem');
+    const textureKey = AssetKeyResolver.getPickupTextureKey(scene, 'exp_gem');
+
+    if (textureKey) {
+      const body = scene.add.image(x, y, textureKey);
       body.setDisplaySize(VisualScale.pickupDisplaySize, VisualScale.pickupDisplaySize);
 
       return body;
     }
 
-    if (!scene.textures.exists('exp_gem')) {
-      return scene.add.circle(x, y, VisualScale.pickupDisplaySize / 2, 0x38bdf8);
-    }
-
-    const body = scene.add.image(x, y, 'exp_gem');
-    body.setDisplaySize(VisualScale.pickupDisplaySize, VisualScale.pickupDisplaySize);
-
-    return body;
+    return scene.add.circle(x, y, VisualScale.pickupDisplaySize / 2, 0x38bdf8);
   }
 }

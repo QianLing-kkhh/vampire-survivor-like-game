@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
@@ -282,40 +283,25 @@ export class AxeWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): AxeProjectileBody {
-    const artTextureKey = this.id === 'death_spiral'
-      ? 'art_weapons_death_spiral_projectile_sheet'
-      : 'art_weapons_axe_projectile_sheet';
-    const animationKey = this.id === 'death_spiral'
-      ? 'art_death_spiral_projectile_spin'
-      : 'art_axe_projectile_spin';
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
-    if (this.scene.textures.exists(artTextureKey) && this.scene.anims.exists(animationKey)) {
-      const body = this.scene.add.sprite(x, y, artTextureKey);
-      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    if (textureKey && animationKey) {
+      const body = this.scene.add.sprite(x, y, textureKey);
       body.setDisplaySize(displaySize, displaySize);
       body.play(animationKey);
 
       return body;
     }
 
-    const textureKey = this.id === 'death_spiral'
-      ? 'death_spiral_projectile'
-      : 'axe_projectile';
-
-    const useArtFallback = this.scene.textures.exists(artTextureKey);
-    const fallbackTextureKey = useArtFallback ? artTextureKey : textureKey;
-
-    if (this.scene.textures.exists(fallbackTextureKey)) {
-      const body = useArtFallback
-        ? this.scene.add.image(x, y, fallbackTextureKey, 0)
-        : this.scene.add.image(x, y, fallbackTextureKey);
-      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    if (textureKey) {
+      const body = this.scene.add.image(x, y, textureKey);
       body.setDisplaySize(displaySize, displaySize);
 
       return body;
     }
 
-    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
     const body = this.scene.add.rectangle(x, y, displaySize, displaySize * 0.56, 0xf97316);
 
     body.setStrokeStyle(2, 0xffedd5, 0.8);

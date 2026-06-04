@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { DamageType } from '../combat/DamageType';
 import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
@@ -99,13 +100,11 @@ export class AuraWeapon extends Weapon {
       return;
     }
 
-    const artTextureKey = this.id === 'soul_eater'
-      ? 'art_weapons_soul_eater_core_sheet'
-      : 'art_weapons_garlic_core_sheet';
-    const animationKey = this.id === 'soul_eater' ? 'art_soul_eater_core' : 'art_garlic_core';
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
 
-    if (this.scene.textures.exists(artTextureKey) && this.scene.anims.exists(animationKey)) {
-      const icon = this.scene.add.sprite(context.player.x, context.player.y, artTextureKey);
+    if (textureKey && animationKey) {
+      const icon = this.scene.add.sprite(context.player.x, context.player.y, textureKey);
       icon.setDisplaySize(
         AuraWeapon.AURA_ICON_DISPLAY_SIZE,
         AuraWeapon.AURA_ICON_DISPLAY_SIZE,
@@ -117,22 +116,11 @@ export class AuraWeapon extends Weapon {
       return;
     }
 
-    if (this.scene.textures.exists(artTextureKey)) {
-      this.auraIcon = this.scene.add.image(context.player.x, context.player.y, artTextureKey, 0);
-      this.auraIcon.setDisplaySize(
-        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
-        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
-      );
-      this.auraIcon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
-      this.auraIcon.setAlpha(0.9);
+    if (!textureKey) {
       return;
     }
 
-    if (this.id !== 'soul_eater' || !this.scene.textures.exists('soul_eater_core')) {
-      return;
-    }
-
-    this.auraIcon = this.scene.add.image(context.player.x, context.player.y, 'soul_eater_core');
+    this.auraIcon = this.scene.add.image(context.player.x, context.player.y, textureKey);
     this.auraIcon.setDisplaySize(
       AuraWeapon.AURA_ICON_DISPLAY_SIZE,
       AuraWeapon.AURA_ICON_DISPLAY_SIZE,

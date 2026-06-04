@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { VisualScale } from '../visual/VisualScale';
 
 import { PlayerStats } from './PlayerStats';
@@ -294,26 +295,29 @@ export class PlayerController {
   }
 
   private createBody(x: number, y: number): PlayerBody {
-    if (this.scene.textures.exists('art_player_player_walk_sheet')) {
-      const body = this.scene.add.sprite(x, y, 'art_player_player_walk_sheet');
+    const textureKey = AssetKeyResolver.getPlayerTextureKey(this.scene);
+    const idleAnimationKey = AssetKeyResolver.getPlayerAnimationKey(this.scene, 'idle', 'down');
+
+    if (textureKey && idleAnimationKey) {
+      const body = this.scene.add.sprite(x, y, textureKey);
       body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
       body.setDepth(PlayerController.PLAYER_DEPTH);
-      this.playPlayerAnimation(body, 'art_player_idle_down');
+      this.playPlayerAnimation(body, idleAnimationKey);
 
       return Object.assign(body, { radius: 14 });
     }
 
-    if (!this.scene.textures.exists('player')) {
-      const body = this.scene.add.circle(x, y, 14, 0x4ade80);
+    if (textureKey) {
+      const body = this.scene.add.image(x, y, textureKey);
+      body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
       body.setDepth(PlayerController.PLAYER_DEPTH);
-      return body;
+
+      return Object.assign(body, { radius: 14 });
     }
 
-    const body = this.scene.add.image(x, y, 'player');
-    body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
+    const body = this.scene.add.circle(x, y, 14, 0x4ade80);
     body.setDepth(PlayerController.PLAYER_DEPTH);
-
-    return Object.assign(body, { radius: 14 });
+    return body;
   }
 
   private updateAnimation(): void {
@@ -332,9 +336,13 @@ export class PlayerController {
 
     this.setDirectionalFlip(body, direction);
 
-    const animationKey = `art_player_${isMoving ? 'walk' : 'idle'}_${direction}`;
+    const animationKey = AssetKeyResolver.getPlayerAnimationKey(
+      this.scene,
+      isMoving ? 'walk' : 'idle',
+      direction,
+    );
 
-    if (!body.play || !this.scene.anims.exists(animationKey)) {
+    if (!animationKey || !body.play) {
       return;
     }
 

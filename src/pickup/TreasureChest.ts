@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { VisualScale } from '../visual/VisualScale';
 
 export class TreasureChest {
@@ -25,10 +26,7 @@ export class TreasureChest {
     this.body = this.createBody(scene, x, y);
     this.body.setDepth(12);
 
-    if (
-      !scene.textures.exists('art_pickups_treasure_chest')
-      && !scene.textures.exists('treasure_chest')
-    ) {
+    if (!AssetKeyResolver.getPickupTextureKey(scene, 'treasure_chest')) {
       const lid = scene.add.rectangle(
         x,
         y - VisualScale.treasureDisplayHeight * 0.28,
@@ -139,15 +137,10 @@ export class TreasureChest {
     x: number,
     y: number,
   ): TreasureChest['body'] {
-    if (scene.textures.exists('art_pickups_treasure_chest')) {
-      const body = scene.add.image(x, y, 'art_pickups_treasure_chest');
-      body.setDisplaySize(VisualScale.treasureDisplayWidth, VisualScale.treasureDisplayHeight);
+    const textureKey = AssetKeyResolver.getPickupTextureKey(scene, 'treasure_chest');
 
-      return body;
-    }
-
-    if (scene.textures.exists('treasure_chest')) {
-      const body = scene.add.image(x, y, 'treasure_chest');
+    if (textureKey) {
+      const body = scene.add.image(x, y, textureKey);
       body.setDisplaySize(VisualScale.treasureDisplayWidth, VisualScale.treasureDisplayHeight);
 
       return body;

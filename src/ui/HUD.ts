@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
@@ -501,7 +502,7 @@ export class HUD {
 
     return weaponHudInfo.map((weapon) => ({
       id: weapon.weaponId,
-      textureKey: this.getWeaponIconTextureKey(weapon.weaponId),
+      textureKey: AssetKeyResolver.getWeaponIconKey(this.scene, weapon.weaponId) ?? undefined,
       label: this.getCompactWeaponLabel(weapon),
       fallback: this.getInitials(weapon.weaponId),
     }));
@@ -526,9 +527,12 @@ export class HUD {
 
     return state.weaponBuildHudInfo.map((info) => ({
       id: info.weaponId,
-      weaponIconKey: info.weaponIconKey,
+      weaponIconKey: AssetKeyResolver.getWeaponIconKey(this.scene, info.weaponId)
+        ?? info.weaponIconKey,
       weaponFallback: this.getInitials(info.weaponId),
-      passiveIconKey: info.passiveIconKey,
+      passiveIconKey: info.passiveId
+        ? AssetKeyResolver.getPassiveIconKey(this.scene, info.passiveId) ?? info.passiveIconKey
+        : info.passiveIconKey,
       passiveFallback: info.passiveId ? this.getInitials(info.passiveId) : undefined,
       label: this.getBuildLabel(info),
     }));
@@ -567,7 +571,7 @@ export class HUD {
       .filter((passive) => !matchedPassiveIds.has(passive.id))
       .map((passive) => ({
         id: passive.id,
-        textureKey: this.getPassiveIconTextureKey(passive.id),
+        textureKey: AssetKeyResolver.getPassiveIconKey(this.scene, passive.id) ?? undefined,
         label: `Other ${passive.name} Lv.${passive.level}`,
         fallback: this.getInitials(passive.id),
       }));
@@ -581,62 +585,10 @@ export class HUD {
   }> {
     return (state.passiveItems ?? []).map((passive) => ({
       id: passive.id,
-      textureKey: this.getPassiveIconTextureKey(passive.id),
+      textureKey: AssetKeyResolver.getPassiveIconKey(this.scene, passive.id) ?? undefined,
       label: `Lv.${passive.level}`,
       fallback: this.getInitials(passive.id),
     }));
-  }
-
-  private getWeaponIconTextureKey(weaponId: string): string | undefined {
-    switch (weaponId) {
-      case 'knife':
-        return 'knife_icon';
-      case 'garlic':
-        return this.getExistingTextureKey('art_weapons_garlic_core_sheet', 'garlic_icon');
-      case 'bible':
-        return this.getExistingTextureKey('art_weapons_bible_orbit_book_sheet', 'bible_icon');
-      case 'axe':
-        return this.getExistingTextureKey('art_weapons_axe_icon', 'axe_projectile');
-      case 'magic_wand':
-        return this.getExistingTextureKey('art_weapons_magic_wand_icon', 'magic_wand_projectile');
-      case 'thousand_edge':
-        return this.getExistingTextureKey('art_weapons_thousand_edge_icon', 'thousand_edge_projectile');
-      case 'holy_wand':
-        return this.getExistingTextureKey('art_weapons_holy_wand_icon', 'holy_wand_projectile');
-      case 'death_spiral':
-        return this.getExistingTextureKey('art_weapons_death_spiral_icon', 'death_spiral_projectile');
-      case 'unholy_vespers':
-        return this.getExistingTextureKey('art_weapons_unholy_vespers_icon', 'unholy_vespers_orbit_book');
-      case 'soul_eater':
-        return this.getExistingTextureKey('art_weapons_soul_eater_icon', 'soul_eater_core');
-      default:
-        return undefined;
-    }
-  }
-
-  private getPassiveIconTextureKey(passiveId: string): string | undefined {
-    switch (passiveId) {
-      case 'spinach':
-        return 'art_passives_spinach_icon';
-      case 'empty_tome':
-        return 'art_passives_empty_tome_icon';
-      case 'bracer':
-        return 'art_passives_bracer_icon';
-      case 'clover':
-        return 'art_passives_clover_icon';
-      case 'pummarola':
-        return 'art_passives_pummarola_icon';
-      default:
-        return undefined;
-    }
-  }
-
-  private getExistingTextureKey(primaryKey: string, fallbackKey: string): string | undefined {
-    if (this.scene.textures.exists(primaryKey)) {
-      return primaryKey;
-    }
-
-    return this.scene.textures.exists(fallbackKey) ? fallbackKey : undefined;
   }
 
   private getCompactWeaponLabel(weapon: { weaponId: string; upgradeSummary: string }): string {

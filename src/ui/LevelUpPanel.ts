@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetFallbacks } from '../assets/AssetFallbacks';
 import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
 import { UpgradeDisplayInfo } from '../progression/UpgradeApplier';
@@ -226,7 +227,7 @@ export class LevelUpPanel {
     iconBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
     this.container.add(iconBackground);
 
-    if (row.iconKey && scene.textures.exists(row.iconKey)) {
+    if (AssetFallbacks.hasTexture(scene, row.iconKey)) {
       const icon = scene.add.image(x, y, row.iconKey);
       icon.setDisplaySize(size * 0.78, size * 0.78);
       this.container.add(icon);
@@ -298,7 +299,7 @@ export class LevelUpPanel {
     iconBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.45);
     this.container.add(iconBackground);
 
-    if (row.iconKey && scene.textures.exists(row.iconKey)) {
+    if (AssetFallbacks.hasTexture(scene, row.iconKey)) {
       const icon = scene.add.image(x + 10, y + 10, row.iconKey);
       icon.setDisplaySize(16, 16);
       this.container.add(icon);
@@ -327,7 +328,7 @@ export class LevelUpPanel {
     row: { iconKey?: string; fallback: string; text: string },
     scene: Phaser.Scene,
   ): string {
-    if (!row.iconKey || !scene.textures.exists(row.iconKey)) {
+    if (!AssetFallbacks.hasTexture(scene, row.iconKey)) {
       return row.text;
     }
 

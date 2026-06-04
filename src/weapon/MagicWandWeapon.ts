@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { AudioManager } from '../audio/AudioManager';
 import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
@@ -189,37 +190,23 @@ export class MagicWandWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): MagicProjectileBody {
-    const artTextureKey = this.id === 'holy_wand'
-      ? 'art_weapons_holy_wand_projectile_sheet'
-      : 'art_weapons_magic_wand_projectile_sheet';
-    const animationKey = this.id === 'holy_wand'
-      ? 'art_holy_wand_projectile'
-      : 'art_magic_wand_projectile';
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
-    if (this.scene.textures.exists(artTextureKey) && this.scene.anims.exists(animationKey)) {
-      const body = this.scene.add.sprite(x, y, artTextureKey);
-      const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    if (textureKey && animationKey) {
+      const body = this.scene.add.sprite(x, y, textureKey);
       body.setDisplaySize(displaySize, displaySize);
       body.play(animationKey);
 
       return body;
     }
 
-    const textureKey = this.id === 'holy_wand'
-      ? 'holy_wand_projectile'
-      : 'magic_wand_projectile';
-
-    const useArtFallback = this.scene.textures.exists(artTextureKey);
-    const fallbackTextureKey = useArtFallback ? artTextureKey : textureKey;
-
-    if (!this.scene.textures.exists(fallbackTextureKey)) {
-      return this.scene.add.circle(x, y, VisualScale.getProjectileDisplaySize(this.id) / 2, 0x38bdf8);
+    if (!textureKey) {
+      return this.scene.add.circle(x, y, displaySize / 2, 0x38bdf8);
     }
 
-    const body = useArtFallback
-      ? this.scene.add.image(x, y, fallbackTextureKey, 0)
-      : this.scene.add.image(x, y, fallbackTextureKey);
-    const displaySize = VisualScale.getProjectileDisplaySize(this.id);
+    const body = this.scene.add.image(x, y, textureKey);
     body.setDisplaySize(displaySize, displaySize);
 
     return body;
