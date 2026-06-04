@@ -38,6 +38,46 @@
     "exp": 60,
     "scale": 2.6
   },
+  "endless_berserker": {
+    "hp": 900,
+    "moveSpeed": 110,
+    "damage": 28,
+    "exp": 0,
+    "scale": 3,
+    "bossLike": true
+  },
+  "endless_summoner": {
+    "hp": 750,
+    "moveSpeed": 65,
+    "damage": 18,
+    "exp": 0,
+    "scale": 2.8,
+    "bossLike": true
+  },
+  "endless_freezer": {
+    "hp": 800,
+    "moveSpeed": 75,
+    "damage": 20,
+    "exp": 0,
+    "scale": 2.8,
+    "bossLike": true
+  },
+  "endless_sniper": {
+    "hp": 650,
+    "moveSpeed": 70,
+    "damage": 24,
+    "exp": 0,
+    "scale": 2.6,
+    "bossLike": true
+  },
+  "endless_tanker": {
+    "hp": 1500,
+    "moveSpeed": 55,
+    "damage": 35,
+    "exp": 0,
+    "scale": 3.5,
+    "bossLike": true
+  },
   "boss": {
     "hp": 1200,
     "moveSpeed": 75,

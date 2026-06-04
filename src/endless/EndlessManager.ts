@@ -129,14 +129,25 @@ export class EndlessManager {
   }
 
   static getEnemyScale(endlessTimeSeconds: number): EndlessEnemyScaling {
-    const scalingLevel = Math.floor(Math.max(0, endlessTimeSeconds) / 60);
+    const safeEndlessTime = Math.max(0, endlessTimeSeconds);
+    const scalingLevel = Math.floor(safeEndlessTime / 45);
+    let hpMultiplier = 1 + scalingLevel * 0.45;
+    let damageMultiplier = 1 + scalingLevel * 0.28;
+
+    if (safeEndlessTime >= 900) {
+      hpMultiplier *= 1.30;
+      damageMultiplier *= 1.20;
+    } else if (safeEndlessTime >= 600) {
+      hpMultiplier *= 1.15;
+      damageMultiplier *= 1.10;
+    }
 
     return {
       scalingLevel,
-      hpMultiplier: 1 + scalingLevel * 0.35,
-      damageMultiplier: 1 + scalingLevel * 0.20,
-      speedMultiplier: Math.min(1 + scalingLevel * 0.05, 1.5),
-      expMultiplier: 1 + scalingLevel * 0.15,
+      hpMultiplier,
+      damageMultiplier,
+      speedMultiplier: Math.min(1 + scalingLevel * 0.055, 1.65),
+      expMultiplier: 1 + scalingLevel * 0.18,
     };
   }
 

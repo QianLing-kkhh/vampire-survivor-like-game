@@ -24,6 +24,7 @@ export class GameplayUpdater {
   update(context: GameplayContext, options: GameplayUpdateOptions): void {
     const { callbacks } = options;
     const effectiveDelta = options.deltaMs * callbacks.getGameplayTimeScale();
+    const playerDelta = effectiveDelta * context.endlessBossManager.getPlayerMoveSpeedMultiplier();
 
     context.virtualJoystick.setGameplayActive(
       !options.isLevelUpSelectionActive && !options.isAutoMovementEnabled,
@@ -33,18 +34,18 @@ export class GameplayUpdater {
     context.passiveManager.update(effectiveDelta, context.playerHealth);
 
     if (options.isAutoMovementEnabled) {
-      callbacks.updateAutoPlayer(effectiveDelta);
+      callbacks.updateAutoPlayer(playerDelta);
     } else if (context.virtualJoystick.hasInput()) {
-      callbacks.updatePlayerFromVirtualJoystick(effectiveDelta);
+      callbacks.updatePlayerFromVirtualJoystick(playerDelta);
     } else {
-      context.player.update(effectiveDelta);
+      context.player.update(playerDelta);
     }
 
     callbacks.updatePlayerHitRange();
     context.enemyFlow.removeDeadEnemies();
     context.spawnDirector.update(context.timeManager.gameTimeSeconds, effectiveDelta);
     context.bossController.update(context.timeManager.gameTimeSeconds, effectiveDelta);
-    this.updateEndlessState(context, effectiveDelta);
+    this.updateEndlessState(context, effectiveDelta, true);
     context.enemyFlow.update(context.timeManager.gameTimeSeconds, effectiveDelta);
 
     if (callbacks.isPlayerDead()) {
@@ -59,20 +60,24 @@ export class GameplayUpdater {
 
     context.weaponManager.update(context.player, context.enemies, effectiveDelta);
 
-    this.updateEndlessState(context, effectiveDelta);
+    this.updateEndlessState(context, effectiveDelta, false);
 
     if (callbacks.isFinalBossDefeated() && !context.playtestSettings.endlessMode) {
       callbacks.endGame('victory');
       return;
     }
 
-    context.pickupManager.update(context.player.body, context.playerPickupRange);
-    context.treasureManager.update(context.player.body, context.playerPickupRange);
+    context.pickupManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
+    context.treasureManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
     context.floatingTextManager.update(effectiveDelta);
     callbacks.emitHUDState();
   }
 
-  private updateEndlessState(context: GameplayContext, effectiveDelta: number): void {
+  private updateEndlessState(
+    context: GameplayContext,
+    effectiveDelta: number,
+    allowSpawns: boolean,
+  ): void {
     if (
       context.playtestSettings.endlessMode
       && context.bossController.hasBossBeenKilled()
@@ -80,6 +85,7 @@ export class GameplayUpdater {
     ) {
       context.runState.startEndless(context.timeManager.gameTimeSeconds);
       context.endlessManager.start(context.timeManager.gameTimeSeconds);
+      context.endlessBossManager.start(context.timeManager.gameTimeSeconds);
     }
 
     if (!context.runState.endlessStarted) {
@@ -87,6 +93,11 @@ export class GameplayUpdater {
     }
 
     context.runState.updateEndlessTime(context.timeManager.gameTimeSeconds);
+    if (!allowSpawns) {
+      return;
+    }
+
     context.endlessManager.update(context.timeManager.gameTimeSeconds, effectiveDelta);
+    context.endlessBossManager.update(context.timeManager.gameTimeSeconds, effectiveDelta);
   }
 }

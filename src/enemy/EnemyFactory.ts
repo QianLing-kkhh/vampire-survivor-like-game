@@ -117,6 +117,14 @@ export class EnemyFactory {
         return 'bat_boss';
       case 'golem_boss':
         return 'golem_boss';
+      case 'endless_berserker':
+      case 'endless_sniper':
+        return 'bat_boss';
+      case 'endless_summoner':
+        return 'slime_boss';
+      case 'endless_freezer':
+      case 'endless_tanker':
+        return 'golem_boss';
       default:
         return undefined;
     }

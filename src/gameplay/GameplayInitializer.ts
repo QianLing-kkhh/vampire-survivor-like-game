@@ -21,6 +21,7 @@ import { BossController } from '../enemy/BossController';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyFlow } from '../enemy/EnemyFlow';
 import { EnemyMovement } from '../enemy/EnemyMovement';
+import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
@@ -224,6 +225,21 @@ export class GameplayInitializer {
       contactDamageCooldownMs: config.contactDamageCooldownMs,
       onCenterMessage: config.callbacks.onCenterMessage,
     });
+    const endlessBossManager = new EndlessBossManager({
+      scene: config.scene,
+      enemyFactory,
+      enemies: enemiesList,
+      enemyFlow,
+      runState: config.runState,
+      getPlayerPosition: () => new Phaser.Math.Vector2(player.body.x, player.body.y),
+      getWorldSize: () => ({
+        width: config.worldWidth,
+        height: config.worldHeight,
+      }),
+      onEnemySpawned: (enemy) => {
+        config.callbacks.onEnemySpawned(enemy);
+      },
+    });
 
     weaponManager.addWeapon(weaponFactory.create(config.initialWeaponId));
     this.syncPassiveEffects(passiveManager, weaponManager, treasureManager);
@@ -257,6 +273,7 @@ export class GameplayInitializer {
       enemyFlow,
       bossController,
       endlessManager,
+      endlessBossManager,
       enemyFactory,
       weaponManager,
       pickupManager,

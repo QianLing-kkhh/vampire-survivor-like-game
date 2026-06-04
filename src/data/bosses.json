@@ -1,0 +1,64 @@
+{
+  "endlessBosses": {
+    "endless_berserker": {
+      "id": "endless_berserker",
+      "enemyId": "endless_berserker",
+      "weight": 1,
+      "baseHpMultiplier": 1,
+      "baseDamageMultiplier": 1,
+      "baseSpeedMultiplier": 1,
+      "skillType": "berserker_dash",
+      "skillCooldown": 7,
+      "warningDuration": 0.5,
+      "description": "Fast dash pressure boss"
+    },
+    "endless_summoner": {
+      "id": "endless_summoner",
+      "enemyId": "endless_summoner",
+      "weight": 1,
+      "baseHpMultiplier": 1,
+      "baseDamageMultiplier": 1,
+      "baseSpeedMultiplier": 1,
+      "skillType": "summoner_call",
+      "skillCooldown": 10,
+      "warningDuration": 0,
+      "description": "Summons scaled endless enemies"
+    },
+    "endless_freezer": {
+      "id": "endless_freezer",
+      "enemyId": "endless_freezer",
+      "weight": 1,
+      "baseHpMultiplier": 1,
+      "baseDamageMultiplier": 1,
+      "baseSpeedMultiplier": 1,
+      "skillType": "freezer_zone",
+      "skillCooldown": 12,
+      "warningDuration": 0.6,
+      "description": "Creates temporary player slow zones"
+    },
+    "endless_sniper": {
+      "id": "endless_sniper",
+      "enemyId": "endless_sniper",
+      "weight": 1,
+      "baseHpMultiplier": 1,
+      "baseDamageMultiplier": 1,
+      "baseSpeedMultiplier": 1,
+      "skillType": "sniper_beam",
+      "skillCooldown": 8,
+      "warningDuration": 0.8,
+      "description": "Telegraphed long beam boss"
+    },
+    "endless_tanker": {
+      "id": "endless_tanker",
+      "enemyId": "endless_tanker",
+      "weight": 1,
+      "baseHpMultiplier": 1,
+      "baseDamageMultiplier": 1,
+      "baseSpeedMultiplier": 1,
+      "skillType": "tanker_shockwave",
+      "skillCooldown": 9,
+      "warningDuration": 0.5,
+      "description": "Heavy close-range shockwave boss"
+    }
+  }
+}

@@ -33,17 +33,34 @@ export class PickupManager {
     return this.expManager.totalExp;
   }
 
-  update(playerPosition: Position, pickupRange: number): void {
-    const collectedPickups = this.findPickupsInRange(playerPosition, pickupRange);
+  update(playerPosition: Position, pickupRange: number, deltaMs = 16): void {
+    for (let index = this.pickups.length - 1; index >= 0; index -= 1) {
+      const pickup = this.pickups[index];
 
-    if (collectedPickups.length === 0) {
-      return;
-    }
+      if (pickup.isCollected) {
+        this.pickups.splice(index, 1);
+        continue;
+      }
 
-    this.removeCollectedPickups(collectedPickups);
+      if (pickup.isMagnetizing) {
+        pickup.updateMagnet(playerPosition.x, playerPosition.y, deltaMs);
 
-    for (const pickup of collectedPickups) {
-      this.expManager.addExp(pickup.collect());
+        if (pickup.canFinalizeCollect(playerPosition.x, playerPosition.y)) {
+          const gainedExp = pickup.collect();
+
+          if (gainedExp > 0) {
+            this.expManager.addExp(gainedExp);
+          }
+
+          this.pickups.splice(index, 1);
+        }
+
+        continue;
+      }
+
+      if (this.isPickupInRange(pickup, playerPosition, pickupRange)) {
+        pickup.startMagnet();
+      }
     }
   }
 
@@ -51,7 +68,7 @@ export class PickupManager {
     this.unsubscribeEnemyKilled();
 
     for (const pickup of this.pickups) {
-      pickup.body.destroy();
+      pickup.destroy();
     }
 
     this.pickups.length = 0;
@@ -61,26 +78,16 @@ export class PickupManager {
     this.pickups.push(new Pickup(this.scene, x, y, exp));
   }
 
-  private findPickupsInRange(playerPosition: Position, pickupRange: number): Pickup[] {
-    return this.pickups.filter((pickup) => (
-      Phaser.Math.Distance.Between(
-        playerPosition.x,
-        playerPosition.y,
-        pickup.body.x,
-        pickup.body.y,
-      ) <= pickupRange
-    ));
-  }
-
-  private removeCollectedPickups(collectedPickups: readonly Pickup[]): void {
-    const collectedSet = new Set(collectedPickups);
-
-    for (let index = this.pickups.length - 1; index >= 0; index -= 1) {
-      if (!collectedSet.has(this.pickups[index])) {
-        continue;
-      }
-
-      this.pickups.splice(index, 1);
-    }
+  private isPickupInRange(
+    pickup: Pickup,
+    playerPosition: Position,
+    pickupRange: number,
+  ): boolean {
+    return Phaser.Math.Distance.Between(
+      playerPosition.x,
+      playerPosition.y,
+      pickup.body.x,
+      pickup.body.y,
+    ) <= pickupRange;
   }
 }

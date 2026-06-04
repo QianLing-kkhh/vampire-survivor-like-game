@@ -42,6 +42,11 @@ interface ResultSceneData {
   endlessDamageTaken?: number;
   endlessLeaderboardRank?: number;
   endlessLeaderboardEntries?: EndlessLeaderboardEntry[];
+  endlessBossSpawnCount?: number;
+  endlessBossKillCount?: number;
+  endlessBossIdsKilled?: string[];
+  endlessBossSkillHitCount?: number;
+  endlessBossSkillUseCount?: number;
   weaponIds?: string[];
   passiveItems?: PassiveLevel[];
   upgradePath?: string[];
@@ -313,6 +318,9 @@ export class ResultScene extends Phaser.Scene {
       `${I18n.t('result.chestUpgrades')}: ${params.data.chestUpgradeCount ?? 0}`,
       `${I18n.t('result.chestEvolutions')}: ${params.data.chestEvolutionCount ?? 0}`,
       `${I18n.t('result.bossDashes')}: ${params.data.bossDashCount ?? 0} / ${I18n.t('result.bossDashHits')}: ${params.data.bossDashHitCount ?? 0}`,
+      ...(params.isEndlessResult ? [
+        `Endless Bosses: ${params.data.endlessBossKillCount ?? 0}/${params.data.endlessBossSpawnCount ?? 0} killed, skills ${params.data.endlessBossSkillHitCount ?? 0}/${params.data.endlessBossSkillUseCount ?? 0}`,
+      ] : []),
     ];
 
     if (lines.length <= params.maxRows) {

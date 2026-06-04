@@ -9,6 +9,7 @@ export interface EnemyStats {
   damage: number;
   exp: number;
   scale?: number;
+  bossLike?: boolean;
   dashEnabled?: boolean;
   dashCooldown?: number;
   dashWarningDuration?: number;
@@ -97,6 +98,7 @@ export class Enemy {
   readonly damage: number;
   readonly exp: number;
   readonly scale: number;
+  readonly bossLike: boolean;
   readonly dashEnabled: boolean;
   readonly dashCooldown: number;
   readonly dashWarningDuration: number;
@@ -138,6 +140,7 @@ export class Enemy {
     this.damage = stats.damage;
     this.exp = stats.exp;
     this.scale = stats.scale ?? 1;
+    this.bossLike = stats.bossLike === true;
     this.dashEnabled = this.id === 'boss' && stats.dashEnabled === true;
     this.dashCooldown = stats.dashCooldown ?? 0;
     this.dashWarningDuration = stats.dashWarningDuration ?? 0;
@@ -168,7 +171,7 @@ export class Enemy {
       x: this.body.x,
       y: this.body.y,
       damage: actualDamage,
-      isBoss: this.id.endsWith('_boss') || this.id === 'boss',
+      isBoss: this.bossLike || this.id.endsWith('_boss') || this.id === 'boss',
     });
 
     if (this.currentHp <= 0) {
@@ -224,6 +227,7 @@ export class Enemy {
   ): boolean {
     if (
       this.id === 'boss'
+      || this.bossLike
       || this.isDead
       || this.isWeaponKnockbackImmune()
       || strength <= 0

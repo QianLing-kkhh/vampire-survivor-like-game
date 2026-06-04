@@ -44,6 +44,14 @@ export class RunState {
   endlessShieldConsumed = 0;
   endlessShieldRemaining = 0;
   endlessShieldAbsorbedDamage = 0;
+  endlessBossSpawnCount = 0;
+  endlessBossKillCount = 0;
+  endlessBossDamageTakenByPlayer = 0;
+  endlessBossDamageDealtToPlayer = 0;
+  endlessBossIdsKilled: string[] = [];
+  endlessBossIdsSpawned: string[] = [];
+  endlessBossSkillHitCount = 0;
+  endlessBossSkillUseCount = 0;
 
   reset(): void {
     this.killCount = 0;
@@ -91,6 +99,14 @@ export class RunState {
     this.endlessShieldConsumed = 0;
     this.endlessShieldRemaining = 0;
     this.endlessShieldAbsorbedDamage = 0;
+    this.endlessBossSpawnCount = 0;
+    this.endlessBossKillCount = 0;
+    this.endlessBossDamageTakenByPlayer = 0;
+    this.endlessBossDamageDealtToPlayer = 0;
+    this.endlessBossIdsKilled = [];
+    this.endlessBossIdsSpawned = [];
+    this.endlessBossSkillHitCount = 0;
+    this.endlessBossSkillUseCount = 0;
   }
 
   recordKill(): void {
@@ -200,6 +216,26 @@ export class RunState {
     this.endlessShieldRemaining = Math.max(0, remainingStacks);
   }
 
+  recordEndlessBossSpawn(bossId: string): void {
+    this.endlessBossSpawnCount += 1;
+    this.endlessBossIdsSpawned.push(bossId);
+  }
+
+  recordEndlessBossKill(bossId: string): void {
+    this.endlessBossKillCount += 1;
+    this.endlessBossIdsKilled.push(bossId);
+  }
+
+  recordEndlessBossSkillUse(): void {
+    this.endlessBossSkillUseCount += 1;
+  }
+
+  recordEndlessBossSkillHit(actualDamage: number, incomingDamage: number): void {
+    this.endlessBossSkillHitCount += 1;
+    this.endlessBossDamageTakenByPlayer += Math.max(0, actualDamage);
+    this.endlessBossDamageDealtToPlayer += Math.max(0, incomingDamage);
+  }
+
   recordBossDash(): void {
     this.bossDashCount += 1;
   }
@@ -268,12 +304,23 @@ export class RunState {
   }
 
   private updateEndlessScaling(endlessTimeSeconds: number): void {
-    const scalingLevel = Math.floor(Math.max(0, endlessTimeSeconds) / 60);
+    const safeEndlessTime = Math.max(0, endlessTimeSeconds);
+    const scalingLevel = Math.floor(safeEndlessTime / 45);
+    let hpMultiplier = 1 + scalingLevel * 0.45;
+    let damageMultiplier = 1 + scalingLevel * 0.28;
+
+    if (safeEndlessTime >= 900) {
+      hpMultiplier *= 1.30;
+      damageMultiplier *= 1.20;
+    } else if (safeEndlessTime >= 600) {
+      hpMultiplier *= 1.15;
+      damageMultiplier *= 1.10;
+    }
 
     this.endlessScalingLevel = scalingLevel;
-    this.endlessHpMultiplier = 1 + scalingLevel * 0.35;
-    this.endlessDamageMultiplier = 1 + scalingLevel * 0.20;
-    this.endlessSpeedMultiplier = Math.min(1 + scalingLevel * 0.05, 1.5);
-    this.endlessExpMultiplier = 1 + scalingLevel * 0.15;
+    this.endlessHpMultiplier = hpMultiplier;
+    this.endlessDamageMultiplier = damageMultiplier;
+    this.endlessSpeedMultiplier = Math.min(1 + scalingLevel * 0.055, 1.65);
+    this.endlessExpMultiplier = 1 + scalingLevel * 0.18;
   }
 }

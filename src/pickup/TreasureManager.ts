@@ -56,18 +56,30 @@ export class TreasureManager {
     };
   }
 
-  update(playerPosition: Position, pickupRange: number): void {
-    const openedChests = this.findChestsInRange(playerPosition, pickupRange);
+  update(playerPosition: Position, pickupRange: number, deltaMs = 16): void {
+    for (let index = this.chests.length - 1; index >= 0; index -= 1) {
+      const chest = this.chests[index];
 
-    if (openedChests.length === 0) {
-      return;
-    }
+      if (chest.isOpened) {
+        this.chests.splice(index, 1);
+        continue;
+      }
 
-    this.removeOpenedChests(openedChests);
+      if (chest.isMagnetizing) {
+        chest.updateMagnet(playerPosition.x, playerPosition.y, deltaMs);
 
-    for (const chest of openedChests) {
-      chest.open();
-      this.applyRandomUpgrade();
+        if (chest.canFinalizeOpen(playerPosition.x, playerPosition.y)) {
+          chest.open();
+          this.applyRandomUpgrade();
+          this.chests.splice(index, 1);
+        }
+
+        continue;
+      }
+
+      if (this.isChestInRange(chest, playerPosition, pickupRange)) {
+        chest.startMagnet();
+      }
     }
   }
 
@@ -137,31 +149,18 @@ export class TreasureManager {
     this.onChestDropped?.();
   }
 
-  private findChestsInRange(
+  private isChestInRange(
+    chest: TreasureChest,
     playerPosition: Position,
     pickupRange: number,
-  ): TreasureChest[] {
-    return this.chests.filter((chest) => (
-      !chest.isOpened
+  ): boolean {
+    return !chest.isOpened
       && Phaser.Math.Distance.Between(
         playerPosition.x,
         playerPosition.y,
         chest.body.x,
         chest.body.y,
-      ) <= pickupRange
-    ));
-  }
-
-  private removeOpenedChests(openedChests: readonly TreasureChest[]): void {
-    const openedSet = new Set(openedChests);
-
-    for (let index = this.chests.length - 1; index >= 0; index -= 1) {
-      if (!openedSet.has(this.chests[index])) {
-        continue;
-      }
-
-      this.chests.splice(index, 1);
-    }
+      ) <= pickupRange;
   }
 
   private applyRandomUpgrade(): void {

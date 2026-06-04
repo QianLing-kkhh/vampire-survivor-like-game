@@ -15,6 +15,7 @@ import { TimeManager } from '../core/TimeManager';
 import { Enemy, GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyMovement } from '../enemy/EnemyMovement';
+import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
@@ -95,6 +96,7 @@ export class GameScene extends Phaser.Scene {
   private bossSpawnDirector?: BossSpawnDirector;
   private bossAttackController?: BossAttackController;
   private endlessManager?: EndlessManager;
+  private endlessBossManager?: EndlessBossManager;
   private enemyFactory?: EnemyFactory;
   private floatingTextManager?: FloatingTextManager;
   private virtualJoystick?: VirtualJoystick;
@@ -156,6 +158,7 @@ export class GameScene extends Phaser.Scene {
     this.bossSpawnDirector = undefined;
     this.bossAttackController = undefined;
     this.endlessManager = undefined;
+    this.endlessBossManager = undefined;
     this.enemyFactory = undefined;
     this.floatingTextManager = undefined;
     this.virtualJoystick = undefined;
@@ -369,6 +372,7 @@ export class GameScene extends Phaser.Scene {
     this.bossSpawnDirector = context.bossSpawnDirector;
     this.bossAttackController = context.bossAttackController;
     this.endlessManager = context.endlessManager;
+    this.endlessBossManager = context.endlessBossManager;
     this.enemyFactory = context.enemyFactory;
     this.floatingTextManager = context.floatingTextManager;
     this.virtualJoystick = context.virtualJoystick;
@@ -497,6 +501,7 @@ export class GameScene extends Phaser.Scene {
 
     this.runState.startEndless(this.timeManager.gameTimeSeconds);
     this.endlessManager?.start(this.timeManager.gameTimeSeconds);
+    this.endlessBossManager?.start(this.timeManager.gameTimeSeconds);
   }
 
   private syncCurrentBgm(): void {
@@ -643,7 +648,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getHUDMessage(): string | undefined {
-    return this.gameplayContext?.bossController.getHUDMessage();
+    return this.gameplayContext?.endlessBossManager.getHudMessage(this.timeManager.gameTimeSeconds)
+      ?? this.gameplayContext?.bossController.getHUDMessage();
   }
 
   private applyBossProjectileDamage(damage: number): void {
@@ -1414,6 +1420,8 @@ export class GameScene extends Phaser.Scene {
     this.bossAttackController = undefined;
     this.endlessManager?.reset();
     this.endlessManager = undefined;
+    this.endlessBossManager?.clear();
+    this.endlessBossManager = undefined;
     this.bossSpawnDirector = undefined;
     this.enemyFactory = undefined;
     this.virtualJoystick?.destroy();

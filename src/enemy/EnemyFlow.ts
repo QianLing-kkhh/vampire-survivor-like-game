@@ -37,6 +37,12 @@ export interface EnemyFlowConfig {
   onEnemyKilled?(event: GameEventMap['EnemyKilled']): void;
 }
 
+export interface PlayerDamageResult {
+  hit: boolean;
+  actualDamage: number;
+  shieldAbsorbed: boolean;
+}
+
 export class EnemyFlow {
   private readonly contactDamageCooldowns = new Map<Enemy, number>();
   private readonly unsubscribeEnemyKilled: () => void;
@@ -127,6 +133,45 @@ export class EnemyFlow {
     this.contactDamageCooldowns.set(enemy, this.config.contactDamageCooldownMs);
   }
 
+  applyPlayerDamage(
+    damage: number,
+    options?: {
+      sourceEnemy?: Enemy;
+      knockbackDirection?: Phaser.Math.Vector2;
+      knockbackDistance?: number;
+      triggerReaction?: boolean;
+    },
+  ): PlayerDamageResult {
+    const incomingDamage = Math.max(0, damage);
+    const shieldAbsorbed = incomingDamage > 0
+      && EndlessRewardManager.consumeGlobalShieldStack(incomingDamage);
+    const actualDamage = shieldAbsorbed
+      ? 0
+      : this.config.playerHealth.takeDamage(incomingDamage);
+
+    if (options?.sourceEnemy) {
+      this.setContactCooldown(options.sourceEnemy);
+    }
+
+    if (actualDamage > 0) {
+      this.recordPlayerDamage(actualDamage);
+    }
+
+    if (options?.knockbackDirection && (actualDamage > 0 || shieldAbsorbed)) {
+      this.knockPlayerBack(options.knockbackDirection, options.knockbackDistance ?? 0);
+    }
+
+    if ((actualDamage > 0 || shieldAbsorbed) && options?.triggerReaction !== false) {
+      this.triggerDamageReaction();
+    }
+
+    return {
+      hit: actualDamage > 0 || shieldAbsorbed,
+      actualDamage,
+      shieldAbsorbed,
+    };
+  }
+
   clear(): void {
     this.unsubscribeEnemyKilled();
     this.contactDamageCooldowns.clear();
@@ -187,20 +232,7 @@ export class EnemyFlow {
         continue;
       }
 
-      const hpBeforeDamage = this.config.playerHealth.currentHp;
-      const shieldAbsorbedDamage = EndlessRewardManager.consumeGlobalShieldStack(enemy.damage);
-      const actualDamage = shieldAbsorbedDamage
-        ? 0
-        : this.config.playerHealth.takeDamage(enemy.damage);
-      this.setContactCooldown(enemy);
-
-      if (actualDamage > 0) {
-        this.recordPlayerDamage(actualDamage);
-      }
-
-      if (shieldAbsorbedDamage || this.config.playerHealth.currentHp < hpBeforeDamage) {
-        this.triggerDamageReaction();
-      }
+      this.applyPlayerDamage(enemy.damage, { sourceEnemy: enemy });
     }
   }
 

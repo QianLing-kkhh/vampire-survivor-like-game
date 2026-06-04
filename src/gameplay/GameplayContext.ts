@@ -11,6 +11,7 @@ import { Enemy, GameEventMap } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyFlow } from '../enemy/EnemyFlow';
 import { EnemyMovement } from '../enemy/EnemyMovement';
+import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { VirtualJoystick } from '../input/VirtualJoystick';
@@ -57,6 +58,7 @@ export interface GameplayContext {
   enemyFlow: EnemyFlow;
   bossController: BossController;
   endlessManager: EndlessManager;
+  endlessBossManager: EndlessBossManager;
   enemyFactory: EnemyFactory;
   weaponManager: WeaponManager;
   pickupManager: PickupManager;

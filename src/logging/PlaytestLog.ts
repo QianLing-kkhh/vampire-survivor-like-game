@@ -65,6 +65,14 @@ export interface PlaytestLogData {
   endlessShieldConsumed: number;
   endlessShieldRemaining: number;
   endlessShieldAbsorbedDamage: number;
+  endlessBossSpawnCount: number;
+  endlessBossKillCount: number;
+  endlessBossDamageTakenByPlayer: number;
+  endlessBossDamageDealtToPlayer: number;
+  endlessBossIdsKilled: readonly string[];
+  endlessBossIdsSpawned: readonly string[];
+  endlessBossSkillHitCount: number;
+  endlessBossSkillUseCount: number;
   finalMoveSpeed: number;
   finalPickupRange: number;
   finalMaxHp: number;
@@ -141,6 +149,14 @@ export class PlaytestLog {
     'endlessShieldConsumed',
     'endlessShieldRemaining',
     'endlessShieldAbsorbedDamage',
+    'endlessBossSpawnCount',
+    'endlessBossKillCount',
+    'endlessBossDamageTakenByPlayer',
+    'endlessBossDamageDealtToPlayer',
+    'endlessBossIdsKilled',
+    'endlessBossIdsSpawned',
+    'endlessBossSkillHitCount',
+    'endlessBossSkillUseCount',
     'finalMoveSpeed',
     'finalPickupRange',
     'finalMaxHp',
@@ -225,6 +241,14 @@ export class PlaytestLog {
       data.endlessShieldConsumed.toString(),
       data.endlessShieldRemaining.toString(),
       Math.floor(data.endlessShieldAbsorbedDamage).toString(),
+      data.endlessBossSpawnCount.toString(),
+      data.endlessBossKillCount.toString(),
+      Math.floor(data.endlessBossDamageTakenByPlayer).toString(),
+      Math.floor(data.endlessBossDamageDealtToPlayer).toString(),
+      data.endlessBossIdsKilled.join('|'),
+      data.endlessBossIdsSpawned.join('|'),
+      data.endlessBossSkillHitCount.toString(),
+      data.endlessBossSkillUseCount.toString(),
       PlaytestLog.formatNumber(data.finalMoveSpeed),
       PlaytestLog.formatNumber(data.finalPickupRange),
       PlaytestLog.formatNumber(data.finalMaxHp),

@@ -117,36 +117,32 @@ export class LevelUpPanel {
     const optionBackground = scene.add.rectangle(x, y, layout.cardWidth, layout.cardHeight, UITheme.buttonBgColor, 1);
     optionBackground.setStrokeStyle(1, UITheme.panelBorderColor, 1);
     optionBackground.setInteractive({ useHandCursor: true });
+    this.container.add(optionBackground);
 
-    const name = scene.add.text(x - layout.cardWidth / 2 + 18, y - layout.cardHeight / 2 + 16, option.name, {
+    const label = scene.add.text(x, y - layout.cardHeight / 2 + 16, this.getOptionLabel(option), {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
       fontSize: layout.fontSize,
       fontStyle: 'bold',
-      wordWrap: { width: layout.cardWidth - 36 },
+      align: 'center',
+      wordWrap: { width: layout.cardWidth - 28 },
     });
+    label.setOrigin(0.5, 0);
 
-    const visibleRows = option.displayInfo?.rows.slice(0, this.screenManager.isPortrait() ? 2 : 3) ?? [];
-    const rowStartY = y - layout.cardHeight / 2 + 48;
-    visibleRows.forEach((row, rowIndex) => {
-      this.addInfoRow(
-        scene,
-        x - layout.cardWidth / 2 + 18,
-        rowStartY + rowIndex * 24,
-        layout.cardWidth - 36,
-        row,
-      );
-    });
-    const previewY = rowStartY + Math.max(1, visibleRows.length) * 24 + 4;
+    const visibleRows = option.displayInfo?.rows.slice(0, this.screenManager.isPortrait() ? 3 : 4) ?? [];
+    const iconStartY = y - layout.cardHeight / 2 + 46;
+    const previewY = option.displayInfo
+      ? this.addIconSummary(scene, x, iconStartY, layout.cardWidth, visibleRows) + 8
+      : y - layout.cardHeight / 2 + 50;
     const descriptionHeight = y + layout.cardHeight / 2 - previewY - 12;
-    const description = scene.add.text(x - layout.cardWidth / 2 + 18, y - layout.cardHeight / 2 + 48, option.preview ?? option.description, {
+    const description = scene.add.text(x - layout.cardWidth / 2 + 18, previewY, option.preview ?? option.description, {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
       fontSize: layout.descriptionFontSize,
+      align: 'center',
       lineSpacing: this.screenManager.isPortrait() ? 2 : 4,
       wordWrap: { width: layout.cardWidth - 36 },
     });
-    description.setPosition(x - layout.cardWidth / 2 + 18, option.displayInfo ? previewY : y - layout.cardHeight / 2 + 48);
     description.setMaxLines(Math.max(1, Math.floor(descriptionHeight / 16)));
 
     optionBackground.on('pointerover', () => {
@@ -163,7 +159,116 @@ export class LevelUpPanel {
       this.onSelected(option);
     });
 
-    this.container.add([optionBackground, name, description]);
+    this.container.add([label, description]);
+  }
+
+  private addIconSummary(
+    scene: Phaser.Scene,
+    centerX: number,
+    startY: number,
+    cardWidth: number,
+    rows: Array<{ iconKey?: string; fallback: string; text: string }>,
+  ): number {
+    const mainRow = rows[0];
+
+    if (!mainRow) {
+      return startY;
+    }
+
+    const mainIconSize = this.screenManager.isPortrait() ? 42 : 54;
+    const auxIconSize = this.screenManager.isPortrait() ? 28 : 34;
+    const mainY = startY + mainIconSize / 2;
+
+    this.addIcon(scene, centerX, mainY, mainIconSize, mainRow);
+    const mainLevel = scene.add.text(centerX, mainY + mainIconSize / 2 + 4, this.getLevelText(mainRow), {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: this.screenManager.isPortrait() ? '11px' : '12px',
+      align: 'center',
+    });
+    mainLevel.setOrigin(0.5, 0);
+    this.container.add(mainLevel);
+
+    const auxRows = rows.slice(1, this.screenManager.isPortrait() ? 3 : 4);
+    const auxY = mainY + mainIconSize / 2 + 34;
+    const auxGap = 12;
+    const totalAuxWidth = auxRows.length * auxIconSize + Math.max(0, auxRows.length - 1) * auxGap;
+    const auxStartX = centerX - totalAuxWidth / 2 + auxIconSize / 2;
+
+    auxRows.forEach((row, index) => {
+      const iconX = auxStartX + index * (auxIconSize + auxGap);
+      this.addIcon(scene, iconX, auxY, auxIconSize, row);
+      const level = scene.add.text(iconX, auxY + auxIconSize / 2 + 3, this.getLevelText(row), {
+        color: UITheme.mutedTextColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: '10px',
+        align: 'center',
+        wordWrap: { width: Math.min(76, cardWidth / Math.max(1, auxRows.length)) },
+      });
+      level.setOrigin(0.5, 0);
+      level.setMaxLines(1);
+      this.container.add(level);
+    });
+
+    return auxRows.length > 0
+      ? auxY + auxIconSize / 2 + 18
+      : mainY + mainIconSize / 2 + 22;
+  }
+
+  private addIcon(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    size: number,
+    row: { iconKey?: string; fallback: string; text: string },
+  ): void {
+    const iconBackground = scene.add.rectangle(x, y, size, size, UITheme.iconBgColor, 0.85);
+    iconBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
+    this.container.add(iconBackground);
+
+    if (row.iconKey && scene.textures.exists(row.iconKey)) {
+      const icon = scene.add.image(x, y, row.iconKey);
+      icon.setDisplaySize(size * 0.78, size * 0.78);
+      this.container.add(icon);
+      return;
+    }
+
+    const fallback = scene.add.text(x, y, row.fallback, {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: `${Math.max(10, Math.floor(size * 0.28))}px`,
+      fontStyle: 'bold',
+      align: 'center',
+    });
+    fallback.setOrigin(0.5);
+    this.container.add(fallback);
+  }
+
+  private getLevelText(row: { text: string }): string {
+    return /(Lv\.\d+\s*\/\s*\d+)/.exec(row.text)?.[1] ?? row.text;
+  }
+
+  private getOptionLabel(option: UpgradeOptionView): string {
+    const identityName = option.displayInfo?.rows[0]?.text.replace(/\s+Lv\..*$/, '').trim();
+    let label = option.name;
+
+    if (identityName) {
+      label = label.replace(new RegExp(`^${this.escapeRegExp(identityName)}\\s+`, 'i'), '');
+    }
+
+    label = label
+      .replace(/\b(Knife|Axe|Magic Wand|Garlic|Bible|Thousand Edge|Holy Wand|Death Spiral|Unholy Vespers|Soul Eater|Spinach|Empty Tome|Bracer|Clover|Pummarola)\b\s*/gi, '')
+      .trim();
+
+    if (/^add_/i.test(option.id)) {
+      return 'New Weapon';
+    }
+
+    return label || 'Upgrade';
+  }
+
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   private addPanelImage(
