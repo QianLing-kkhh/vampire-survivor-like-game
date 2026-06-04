@@ -45,6 +45,7 @@ Future architecture should assume support for:
 - Optional online leaderboard or cloud save adapters
 - Remote provider adapters for leaderboards, saves, challenges, custom stages, and future pack sources
 - Maintenance/audit commands and reports
+- Performance profiling and object pooling for late-endless object pressure
 
 ## Current Architecture Principles
 
@@ -73,6 +74,7 @@ Future architecture should assume support for:
 23. Remote providers should remain adapters; they should not bypass `SaveManager`, `ContentRegistry`, validation, leaderboard keys, or compatibility checks.
 24. Developer/debug tooling should be opt-in and should not mutate gameplay state while collecting diagnostics.
 25. Foundation systems that are not fully active should be documented as foundation/planned rather than removed as dead code.
+26. Object pooling should start with low-risk visuals and move into gameplay-critical entities only after profiling and cleanup verification.
 
 ## Current Audit Snapshot
 
@@ -90,6 +92,7 @@ Foundation-only systems that should be preserved unless their future scope chang
 - Relic runtime foundation with no relic drops/UI
 - Replay recording/export/import without playback
 - Playtest scenario runner shell
+- Performance monitor and object pooling foundation
 - Daily challenge foundation with local minimal UI and no remote service
 - Achievement/milestone/unlock/tutorial foundations
 - Appearance theme/skin foundation with only the default theme active
@@ -100,6 +103,7 @@ Known architecture follow-ups:
 - Continue reducing `GameScene` orchestration as smaller services mature.
 - Gate or remove developer console output that is not part of tool fallback behavior.
 - Keep direct JSON imports limited to bootstrap/config/help boundaries or migrate them through registry-backed display builders.
+- Profile late-endless object pressure before pooling projectiles, pickups, Boss skill graphics, or enemies.
 
 ## Seeded Runs And Replay
 
@@ -241,6 +245,7 @@ Content should eventually split into resolvers and registries:
 - Remote provider interfaces for leaderboard, save, challenge, and custom stage services
 - Developer debug panel for opt-in diagnostics
 - Playtest scenario runner shell for future queued balance batches
+- Performance monitor, pool manager, and object pool primitives for future high-volume object reuse
 
 ## Risk Areas
 
@@ -262,3 +267,4 @@ Content should eventually split into resolvers and registries:
 - Challenge activation bypassing `SelectionManager` or mixing challenge leaderboards with normal/endless records
 - Remote content or cloud data bypassing validation, migration, compatibility checks, or explicit user-controlled registration
 - Treating interface-only remote providers, replay playback, relic drops, or mod loading as implemented gameplay features
+- Pooling gameplay-critical objects without preserving cleanup, visual reset, and behavior semantics

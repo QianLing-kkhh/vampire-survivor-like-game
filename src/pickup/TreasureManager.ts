@@ -104,6 +104,10 @@ export class TreasureManager {
       }));
   }
 
+  getActiveCount(): number {
+    return this.chests.filter((chest) => !chest.isOpened).length;
+  }
+
   setBonusDropChance(bonusDropChance: number): void {
     this.bonusDropChance = Math.max(0, bonusDropChance);
   }

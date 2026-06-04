@@ -41,6 +41,8 @@ The runtime also creates a `ReplayRecorder`. Current replay records include run 
 
 Developer DebugPanel foundation is available for local diagnostics. It is disabled by default and can be toggled with F3 through `DeveloperSettings.showDebugPanel`. It shows compact run/version/seed/content, selected stage/map/character, FPS, enemy/Boss counts, endless state, CSV buffer size, and recent event count without changing gameplay.
 
+Performance profiling foundation is available through `PerformanceMonitor`, `PoolManager`, and DebugPanel stats. Current pooled object coverage is intentionally narrow: floating combat text is pooled, while enemies, projectiles, pickups, treasure chests, and Boss skill graphics still use their existing create/destroy paths. This keeps gameplay behavior stable while exposing late-endless object pressure for future profiling.
+
 Playtest scenario runner foundation exists under `src/playtest/`. It defines scenario data, a queue, built-in scenario presets, and a runner shell for future batches across character, stage, difficulty, seed, mutator, and Endless combinations. It is inactive by default and does not change the current Title Scene Auto Test or Result Scene auto-restart behavior.
 
 Maintenance/audit command tooling is not currently a runtime feature. Architecture audits should rely on TypeScript/build validation, targeted repository scans, and documentation synchronization until a dedicated maintenance command layer exists.
@@ -207,6 +209,19 @@ Testing notes:
 - If a new listener is added, listener failures should log a warning and not interrupt gameplay.
 - `GameEventRecorder` keeps only a bounded recent timeline for debugging.
 - Full replay still requires seed, input samples, deterministic timing, and content/version hashes.
+
+## Performance Diagnostics
+
+When DebugPanel is enabled, watch:
+
+- FPS
+- Active enemy count
+- Active Boss count
+- Active floating text count
+- Total pooled objects
+- Created / reused / destroyed pooled object counts in expanded debug mode
+
+Performance diagnostics are not CSV fields and should not be used as balance metrics without a dedicated profiling run. Future pooling candidates include projectile bodies, pickup bodies, treasure chest visuals, Boss skill warning lines/circles, explosion circles, and hit flashes.
 
 ## Replay Diagnostics
 

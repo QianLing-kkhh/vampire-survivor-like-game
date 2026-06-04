@@ -19,6 +19,8 @@ import { GameEventRecorder } from '../events/GameEventRecorder';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PickupManager } from '../pickup/PickupManager';
+import { PerformanceMonitor } from '../performance/PerformanceMonitor';
+import { PoolManager } from '../performance/PoolManager';
 import { TreasureManager } from '../pickup/TreasureManager';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerController } from '../player/PlayerController';
@@ -60,6 +62,8 @@ export interface GameplayContext {
   enemyMovement: EnemyMovement;
   timeManager: TimeManager;
   randomManager: RandomManager;
+  performanceMonitor: PerformanceMonitor;
+  poolManager: PoolManager;
   runSeed: string;
   replayRecorder?: ReplayRecorder;
   runRuleSet: RunRuleSet;

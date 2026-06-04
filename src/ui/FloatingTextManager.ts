@@ -1,13 +1,47 @@
 import Phaser from 'phaser';
 
-import { FloatingText } from './FloatingText';
+import { ObjectPool } from '../performance/ObjectPool';
+import { PerformanceMonitor } from '../performance/PerformanceMonitor';
+import { PoolManager } from '../performance/PoolManager';
+import { PooledObjectFactory } from '../performance/PooledObjectFactory';
+
+import { FloatingText, FloatingTextConfig } from './FloatingText';
 
 export class FloatingTextManager {
   private static readonly MAX_ACTIVE_TEXTS = 60;
+  private static readonly MAX_POOL_SIZE = 80;
 
   private readonly texts: FloatingText[] = [];
+  private readonly pool: ObjectPool<FloatingText>;
 
-  constructor(private readonly scene: Phaser.Scene) {}
+  constructor(
+    private readonly scene: Phaser.Scene,
+    private readonly performanceMonitor?: PerformanceMonitor,
+    poolManager?: PoolManager,
+  ) {
+    const factory: PooledObjectFactory<FloatingText> = {
+      create: (...args: unknown[]) => {
+        this.performanceMonitor?.recordCreated('floatingText');
+        const [x, y, value, config] = args;
+
+        return new FloatingText(
+          scene,
+          Number(x),
+          Number(y),
+          String(value),
+          config as FloatingTextConfig,
+        );
+      },
+      destroy: (text: FloatingText) => {
+        this.performanceMonitor?.recordDestroyed('floatingText');
+        text.destroy();
+      },
+    };
+
+    this.pool = poolManager
+      ? poolManager.createPool('floatingText', factory, FloatingTextManager.MAX_POOL_SIZE)
+      : new ObjectPool<FloatingText>(factory, FloatingTextManager.MAX_POOL_SIZE);
+  }
 
   showEnemyDamage(x: number, y: number, damage: number, isBoss = false): void {
     this.spawn(
@@ -41,16 +75,26 @@ export class FloatingTextManager {
         continue;
       }
 
-      this.texts.splice(index, 1);
+      const text = this.texts.splice(index, 1)[0];
+      this.pool.release(text);
     }
   }
 
   destroy(): void {
     for (const text of this.texts) {
-      text.destroy();
+      this.pool.release(text);
     }
 
     this.texts.length = 0;
+    this.pool.clear();
+  }
+
+  getActiveCount(): number {
+    return this.texts.length;
+  }
+
+  getPoolStats() {
+    return this.pool.getStats();
   }
 
   private spawn(
@@ -64,9 +108,19 @@ export class FloatingTextManager {
   ): void {
     if (this.texts.length >= FloatingTextManager.MAX_ACTIVE_TEXTS) {
       const oldest = this.texts.shift();
-      oldest?.destroy();
+      if (oldest) {
+        this.pool.release(oldest);
+      }
     }
 
-    this.texts.push(new FloatingText(this.scene, x, y, value, config));
+    const beforeStats = this.pool.getStats();
+    const text = this.pool.acquire(x, y, value, config);
+    const afterStats = this.pool.getStats();
+
+    if (afterStats.reusedCount > beforeStats.reusedCount) {
+      this.performanceMonitor?.recordReused('floatingText');
+    }
+
+    this.texts.push(text);
   }
 }

@@ -33,6 +33,10 @@ export class PickupManager {
     return this.expManager.totalExp;
   }
 
+  getActiveCount(): number {
+    return this.pickups.filter((pickup) => !pickup.isCollected).length;
+  }
+
   update(playerPosition: Position, pickupRange: number, deltaMs = 16): void {
     for (let index = this.pickups.length - 1; index >= 0; index -= 1) {
       const pickup = this.pickups[index];

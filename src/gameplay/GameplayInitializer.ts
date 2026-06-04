@@ -31,6 +31,8 @@ import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import { createLeaderboardKey, serializeLeaderboardKey } from '../leaderboard/LeaderboardKey';
 import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PickupManager } from '../pickup/PickupManager';
+import { PerformanceMonitor } from '../performance/PerformanceMonitor';
+import { PoolManager } from '../performance/PoolManager';
 import { TreasureManager } from '../pickup/TreasureManager';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerController } from '../player/PlayerController';
@@ -118,6 +120,8 @@ export class GameplayInitializer {
     const selection = SelectionManager.getSelection();
     const runSeed = RunSeed.createSeedFromSelection(selection);
     const randomManager = new RandomManager(runSeed);
+    const performanceMonitor = new PerformanceMonitor();
+    const poolManager = new PoolManager();
     const versionInfo = getCurrentVersionInfo();
     const gameEventBus = new GameEventBus();
     const gameEventRecorder = new GameEventRecorder();
@@ -195,7 +199,11 @@ export class GameplayInitializer {
       runStats,
       passiveManager,
     );
-    const floatingTextManager = new FloatingTextManager(config.scene);
+    const floatingTextManager = new FloatingTextManager(
+      config.scene,
+      performanceMonitor,
+      poolManager,
+    );
     const player = new PlayerController(
       config.scene,
       playerStats,
@@ -439,6 +447,8 @@ export class GameplayInitializer {
       enemyMovement: config.enemyMovement,
       timeManager: config.timeManager,
       randomManager,
+      performanceMonitor,
+      poolManager,
       runSeed,
       replayRecorder,
       runRuleSet,

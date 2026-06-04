@@ -8,6 +8,7 @@ export class DebugDataCollector {
   collect(context: GameplayContext): DebugPanelData {
     const versionInfo = getCurrentVersionInfo();
     const runState = context.runState;
+    const performanceStats = context.performanceMonitor.getStats();
 
     return {
       gameVersion: runState.gameVersion || versionInfo.gameVersion,
@@ -18,10 +19,10 @@ export class DebugDataCollector {
       stageId: runState.stageId,
       mapId: runState.mapId,
       difficultyId: runState.difficultyId,
-      fps: context.scene.game.loop.actualFps,
+      fps: performanceStats.fps || context.scene.game.loop.actualFps,
       gameTimeSeconds: context.timeManager.gameTimeSeconds,
-      enemyCount: context.enemies.filter((enemy) => !enemy.isDead).length,
-      activeBossCount: context.enemies.filter((enemy) => (
+      enemyCount: performanceStats.enemyCount || context.enemies.filter((enemy) => !enemy.isDead).length,
+      activeBossCount: performanceStats.activeBossCount ?? context.enemies.filter((enemy) => (
         !enemy.isDead && this.isBossLikeEnemyId(enemy.id)
       )).length,
       endlessStarted: runState.endlessStarted,
@@ -32,6 +33,13 @@ export class DebugDataCollector {
       playerMaxHp: context.playerHealth.maxHp,
       csvBufferSize: PlaytestLogBuffer.getCount(),
       recentEventCount: context.gameEventRecorder?.getRecentEvents().length,
+      pickupCount: performanceStats.pickupCount,
+      treasureCount: performanceStats.treasureCount,
+      floatingTextCount: performanceStats.floatingTextCount,
+      pooledObjectCount: performanceStats.pooledObjectCount,
+      createdObjectCount: performanceStats.createdObjectCount,
+      reusedObjectCount: performanceStats.reusedObjectCount,
+      destroyedObjectCount: performanceStats.destroyedObjectCount,
     };
   }
 
@@ -41,4 +49,3 @@ export class DebugDataCollector {
       || enemyId.startsWith('endless_');
   }
 }
-

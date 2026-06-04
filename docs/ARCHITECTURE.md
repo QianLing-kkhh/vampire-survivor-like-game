@@ -27,6 +27,8 @@ The runtime layer keeps per-run object references and update order out of the sc
 - `GameplayContext`: per-run reference container for player, managers, flows, controllers, runtime settings, and active systems.
 - `GameplayInitializer`: creates per-run systems in a stable order and returns `GameplayContext`.
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
+- `PerformanceMonitor`: per-run lightweight stats collector for FPS, counts, and object lifecycle counters.
+- `PoolManager`: per-run object pool registry for reusable runtime visuals and future high-volume objects.
 
 Current flow:
 
@@ -356,6 +358,26 @@ UI classes should display state, not own gameplay rules.
 - `DebugPanel`: developer-only diagnostics overlay, hidden by default.
 - `UITheme`: shared colors, font sizes, button metrics, and panel constants.
 
+`FloatingTextManager` is the first low-risk object-pool integration. It reuses floating text objects through `ObjectPool` while preserving the same visual behavior. Other high-volume objects such as projectiles, pickups, Boss warning graphics, explosion circles, and hit flashes remain create/destroy based until they can be profiled and migrated safely.
+
+## Performance Layer
+
+The performance layer is the foundation for late-endless profiling and future object pooling.
+
+- `PerformanceStats`: shared stats shape for FPS, delta, entity counts, pool counts, and object lifecycle counters.
+- `PerformanceMonitor`: lightweight per-run stats collector updated by `GameplayUpdater`.
+- `Poolable`: interface for objects that can reset, release, and report active pool state.
+- `ObjectPool`: generic bounded pool for reusable `Poolable` objects.
+- `PoolManager`: central per-run registry for named pools.
+- `PooledObjectFactory`: factory contract used by pools.
+
+Current status:
+
+- DebugPanel can show floating text and pool counts.
+- Floating text is pooled.
+- Enemies, projectiles, pickups, treasure chests, and Boss skill graphics are not pooled yet.
+- Performance monitoring must not change gameplay behavior or CSV schemas.
+
 ## Responsive Layer
 
 Responsive helpers centralize screen layout rules.
@@ -411,6 +433,7 @@ TitleScene
     -> TutorialManager subscribes to GameEventBus for low-risk one-time guide prompts
     -> UnlockManager ensures built-in default content is unlocked
     -> RelicManager is created empty for future rule-changing run items
+    -> PerformanceMonitor / PoolManager start per-run diagnostics and reusable object pools
     -> GameplayUpdater updates runtime systems
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
     -> EnemyFlow handles enemy update/contact damage
@@ -444,3 +467,4 @@ TitleScene
 - Unlock state should go through `UnlockManager`; Character/Stage/Map managers should not own unlock rules.
 - Existing `core/EventBus` and callbacks are still valid during migration; do not delete them until the dependent systems have moved.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.
+- Future high-volume runtime visuals should use `PoolManager` / `ObjectPool` only after behavior-preserving profiling. Do not pool gameplay-critical entities without tests and shutdown cleanup.

@@ -66,6 +66,7 @@ export class DebugPanel {
       `char ${data.characterId ?? '-'} diff ${data.difficultyId ?? '-'}`,
       `fps ${this.format(data.fps)} t ${this.format(data.gameTimeSeconds)}s`,
       `enemies ${data.enemyCount ?? 0} bosses ${data.activeBossCount ?? 0}`,
+      `float ${data.floatingTextCount ?? 0} pool ${data.pooledObjectCount ?? 0}`,
       `endless ${data.endlessStarted ? 'on' : 'off'} ${this.format(data.endlessTimeSeconds)}s lv ${data.endlessScalingLevel ?? 0}`,
       `player Lv.${data.playerLevel ?? 1} HP ${this.format(data.playerHp)}/${this.format(data.playerMaxHp)}`,
       `csv ${data.csvBufferSize ?? 0} events ${data.recentEventCount ?? 0}`,
@@ -73,6 +74,9 @@ export class DebugPanel {
 
     if (!compact) {
       lines.splice(2, 0, `run ${data.runId ?? '-'}`);
+      lines.push(
+        `pool c/r/d ${data.createdObjectCount ?? 0}/${data.reusedObjectCount ?? 0}/${data.destroyedObjectCount ?? 0}`,
+      );
     }
 
     return lines;
@@ -88,4 +92,3 @@ export class DebugPanel {
       : value.toFixed(1);
   }
 }
-

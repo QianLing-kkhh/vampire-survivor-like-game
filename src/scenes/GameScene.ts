@@ -1619,6 +1619,7 @@ export class GameScene extends Phaser.Scene {
     this.orientationOverlay = undefined;
     this.floatingTextManager?.destroy();
     this.floatingTextManager = undefined;
+    this.gameplayContext?.poolManager.clear();
     this.evolutionManager = undefined;
     this.gameplayContext = undefined;
   }

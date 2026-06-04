@@ -19,5 +19,11 @@ export interface DebugPanelData {
   playerMaxHp?: number;
   csvBufferSize?: number;
   recentEventCount?: number;
+  pickupCount?: number;
+  treasureCount?: number;
+  floatingTextCount?: number;
+  pooledObjectCount?: number;
+  createdObjectCount?: number;
+  reusedObjectCount?: number;
+  destroyedObjectCount?: number;
 }
-

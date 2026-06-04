@@ -28,6 +28,7 @@ export class GameplayUpdater {
     const effectiveDelta = options.deltaMs * callbacks.getGameplayTimeScale();
     const playerDelta = effectiveDelta * context.endlessBossManager.getPlayerMoveSpeedMultiplier();
 
+    context.performanceMonitor.update(effectiveDelta);
     context.virtualJoystick.setGameplayActive(
       !options.isLevelUpSelectionActive && !options.isAutoMovementEnabled,
     );
@@ -72,7 +73,28 @@ export class GameplayUpdater {
     context.pickupManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
     context.treasureManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
     context.floatingTextManager.update(effectiveDelta);
+    this.updatePerformanceCounts(context, effectiveDelta);
     callbacks.emitHUDState();
+  }
+
+  private updatePerformanceCounts(context: GameplayContext, deltaMs: number): void {
+    const poolStats = context.poolManager.getStats();
+
+    context.performanceMonitor.updateCounts({
+      deltaMs,
+      enemyCount: context.enemies.filter((enemy) => !enemy.isDead).length,
+      pickupCount: context.pickupManager.getActiveCount(),
+      treasureCount: context.treasureManager.getActiveCount(),
+      floatingTextCount: context.floatingTextManager.getActiveCount(),
+      activeBossCount: context.enemies.filter((enemy) => (
+        !enemy.isDead
+        && (enemy.id === 'boss' || enemy.id.endsWith('_boss') || enemy.id.startsWith('endless_'))
+      )).length,
+      pooledObjectCount: poolStats.activeCount + poolStats.availableCount,
+      createdObjectCount: poolStats.createdCount,
+      reusedObjectCount: poolStats.reusedCount,
+      destroyedObjectCount: poolStats.destroyedCount,
+    });
   }
 
   private updateEndlessState(
