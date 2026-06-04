@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
+import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
@@ -156,6 +157,11 @@ export class PauseMenu {
 
     if (this.statsData.character.endlessMode || this.statsData.character.endlessStarted) {
       this.addStatRow('Endless Time', this.formatTime(this.statsData.character.endlessTimeSeconds), 'time_icon');
+      const shield = EndlessRewardManager.getGlobalShieldStatus();
+
+      this.addStatRow('Shield Stacks', `${shield.stacks} / ${shield.maxStacks}`);
+      this.addStatRow('Shield Consumed', `${shield.consumed}`);
+      this.addStatRow('Shield Absorbed Damage', this.formatInteger(shield.absorbedDamage));
     }
 
     this.addSectionTitle('Weapons');

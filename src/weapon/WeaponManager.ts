@@ -99,6 +99,8 @@ export class WeaponManager {
     cooldownMultiplier: 1,
     projectileSpeedMultiplier: 1,
   };
+  private endlessDamageMultiplierProvider?: () => number;
+  private currentEndlessDamageMultiplier = 1;
 
   constructor(
     private readonly runStats?: RunStats,
@@ -110,7 +112,7 @@ export class WeaponManager {
       weapon.setRunStats(this.runStats);
     }
 
-    weapon.setPassiveModifiers(this.passiveModifiers);
+    weapon.setPassiveModifiers(this.getCombinedPassiveModifiers());
     this.weapons.push(weapon);
   }
 
@@ -121,9 +123,12 @@ export class WeaponManager {
   }): void {
     this.passiveModifiers = modifiers;
 
-    for (const weapon of this.weapons) {
-      weapon.setPassiveModifiers(modifiers);
-    }
+    this.applyCurrentPassiveModifiers();
+  }
+
+  setEndlessDamageMultiplierProvider(provider: () => number): void {
+    this.endlessDamageMultiplierProvider = provider;
+    this.refreshEndlessDamageMultiplier();
   }
 
   hasWeapon(weaponId: string): boolean {
@@ -471,6 +476,7 @@ export class WeaponManager {
   }
 
   update(player: PlayerController, enemies: readonly Enemy[], deltaMs: number): void {
+    this.refreshEndlessDamageMultiplier();
     const activeEnemies = enemies.filter((enemy) => !enemy.isDead);
 
     for (const weapon of this.weapons) {
@@ -496,6 +502,40 @@ export class WeaponManager {
     this.retiredWeaponDamageStats.clear();
     this.weaponUpgradeCounts.clear();
     this.evolvedBaseWeapons.clear();
+    this.endlessDamageMultiplierProvider = undefined;
+    this.currentEndlessDamageMultiplier = 1;
+  }
+
+  private refreshEndlessDamageMultiplier(): void {
+    const nextMultiplier = this.endlessDamageMultiplierProvider?.() ?? 1;
+
+    if (Math.abs(nextMultiplier - this.currentEndlessDamageMultiplier) < 0.0001) {
+      return;
+    }
+
+    this.currentEndlessDamageMultiplier = nextMultiplier;
+    this.applyCurrentPassiveModifiers();
+  }
+
+  private applyCurrentPassiveModifiers(): void {
+    const modifiers = this.getCombinedPassiveModifiers();
+
+    for (const weapon of this.weapons) {
+      weapon.setPassiveModifiers(modifiers);
+    }
+  }
+
+  private getCombinedPassiveModifiers(): {
+    damageMultiplier: number;
+    cooldownMultiplier: number;
+    projectileSpeedMultiplier: number;
+  } {
+    return {
+      damageMultiplier: this.passiveModifiers.damageMultiplier
+        * this.currentEndlessDamageMultiplier,
+      cooldownMultiplier: this.passiveModifiers.cooldownMultiplier,
+      projectileSpeedMultiplier: this.passiveModifiers.projectileSpeedMultiplier,
+    };
   }
 
   private recordWeaponUpgrade(weaponId: string, upgradeId: string): void {

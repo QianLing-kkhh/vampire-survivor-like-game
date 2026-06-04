@@ -52,6 +52,19 @@ export interface PlaytestLogData {
   endlessDamageMultiplier: number;
   endlessSpeedMultiplier: number;
   endlessExpMultiplier: number;
+  endlessRewardCount: number;
+  endlessHealCount: number;
+  endlessOverdriveCount: number;
+  endlessGrowthCount: number;
+  endlessPermanentDamageMultiplier: number;
+  endlessMaxOverdriveStacksReached: number;
+  endlessOverdriveActiveTime: number;
+  endlessEnemySlowCount: number;
+  endlessEnemySlowActiveTime: number;
+  endlessShieldGained: number;
+  endlessShieldConsumed: number;
+  endlessShieldRemaining: number;
+  endlessShieldAbsorbedDamage: number;
   finalMoveSpeed: number;
   finalPickupRange: number;
   finalMaxHp: number;
@@ -115,6 +128,19 @@ export class PlaytestLog {
     'endlessDamageMultiplier',
     'endlessSpeedMultiplier',
     'endlessExpMultiplier',
+    'endlessRewardCount',
+    'endlessHealCount',
+    'endlessOverdriveCount',
+    'endlessGrowthCount',
+    'endlessPermanentDamageMultiplier',
+    'endlessMaxOverdriveStacksReached',
+    'endlessOverdriveActiveTime',
+    'endlessEnemySlowCount',
+    'endlessEnemySlowActiveTime',
+    'endlessShieldGained',
+    'endlessShieldConsumed',
+    'endlessShieldRemaining',
+    'endlessShieldAbsorbedDamage',
     'finalMoveSpeed',
     'finalPickupRange',
     'finalMaxHp',
@@ -186,6 +212,19 @@ export class PlaytestLog {
       PlaytestLog.formatNumber(data.endlessDamageMultiplier),
       PlaytestLog.formatNumber(data.endlessSpeedMultiplier),
       PlaytestLog.formatNumber(data.endlessExpMultiplier),
+      data.endlessRewardCount.toString(),
+      data.endlessHealCount.toString(),
+      data.endlessOverdriveCount.toString(),
+      data.endlessGrowthCount.toString(),
+      PlaytestLog.formatNumber(data.endlessPermanentDamageMultiplier),
+      data.endlessMaxOverdriveStacksReached.toString(),
+      PlaytestLog.formatNumber(data.endlessOverdriveActiveTime),
+      data.endlessEnemySlowCount.toString(),
+      PlaytestLog.formatNumber(data.endlessEnemySlowActiveTime),
+      data.endlessShieldGained.toString(),
+      data.endlessShieldConsumed.toString(),
+      data.endlessShieldRemaining.toString(),
+      Math.floor(data.endlessShieldAbsorbedDamage).toString(),
       PlaytestLog.formatNumber(data.finalMoveSpeed),
       PlaytestLog.formatNumber(data.finalPickupRange),
       PlaytestLog.formatNumber(data.finalMaxHp),

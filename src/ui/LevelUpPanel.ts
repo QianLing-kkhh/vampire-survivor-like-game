@@ -214,7 +214,27 @@ export class LevelUpPanel {
       fontSize: '12px',
       wordWrap: { width: width - 30 },
     });
+    text.setText(this.formatIconRowText(row, scene));
     this.container.add(text);
+  }
+
+  private formatIconRowText(
+    row: { iconKey?: string; fallback: string; text: string },
+    scene: Phaser.Scene,
+  ): string {
+    if (!row.iconKey || !scene.textures.exists(row.iconKey)) {
+      return row.text;
+    }
+
+    const levelMatch = /(Lv\.\d+\s*\/\s*\d+)/.exec(row.text);
+
+    if (levelMatch) {
+      return levelMatch[1];
+    }
+
+    return row.text
+      .replace(/^[A-Za-z ]+:\s*/, '')
+      .replace(/^[A-Za-z ]+\s+/, '');
   }
 
   private scheduleAutoSelect(

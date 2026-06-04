@@ -175,6 +175,17 @@ export class UpgradeApplier {
     }
   }
 
+  applyEndlessHeal(amount: number): boolean {
+    if (!this.playerHealth || this.playerHealth.isDead) {
+      return false;
+    }
+
+    const previousHp = this.playerHealth.currentHp;
+    this.playerHealth.setCurrentHp(previousHp + amount);
+
+    return this.playerHealth.currentHp > previousHp;
+  }
+
   getUpgradeDisplayInfo(
     option: UpgradeOption,
     evolutionManager?: EvolutionManager,

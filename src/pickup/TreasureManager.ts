@@ -44,6 +44,18 @@ export class TreasureManager {
     });
   }
 
+  static getTreasureConfig(): {
+    normalDropChance: number;
+    endlessDropWindowSeconds: number;
+    endlessMaxDropsPerWindow: number;
+  } {
+    return {
+      normalDropChance: TreasureManager.NORMAL_DROP_CHANCE,
+      endlessDropWindowSeconds: TreasureManager.ENDLESS_DROP_WINDOW_SECONDS,
+      endlessMaxDropsPerWindow: TreasureManager.ENDLESS_MAX_DROPS_PER_WINDOW,
+    };
+  }
+
   update(playerPosition: Position, pickupRange: number): void {
     const openedChests = this.findChestsInRange(playerPosition, pickupRange);
 

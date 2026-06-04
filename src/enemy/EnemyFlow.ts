@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { AudioManager } from '../audio/AudioManager';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
+import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { RunState } from '../run/RunState';
@@ -142,12 +143,18 @@ export class EnemyFlow {
   }
 
   private updateEnemyMovement(deltaMs: number): void {
+    const enemySpeedMultiplier = EndlessRewardManager.getGlobalEnemySpeedMultiplier();
+
     for (const enemy of this.config.enemies) {
       if (enemy.isDead || enemy.dashEnabled) {
         continue;
       }
 
-      this.config.enemyMovement.moveToward(enemy, this.config.player.body, deltaMs);
+      this.config.enemyMovement.moveToward(
+        enemy,
+        this.config.player.body,
+        deltaMs * enemySpeedMultiplier,
+      );
     }
   }
 
@@ -174,14 +181,17 @@ export class EnemyFlow {
       }
 
       const hpBeforeDamage = this.config.playerHealth.currentHp;
-      const actualDamage = this.config.playerHealth.takeDamage(enemy.damage);
+      const shieldAbsorbedDamage = EndlessRewardManager.consumeGlobalShieldStack(enemy.damage);
+      const actualDamage = shieldAbsorbedDamage
+        ? 0
+        : this.config.playerHealth.takeDamage(enemy.damage);
       this.setContactCooldown(enemy);
 
       if (actualDamage > 0) {
         this.recordPlayerDamage(actualDamage);
       }
 
-      if (this.config.playerHealth.currentHp < hpBeforeDamage) {
+      if (shieldAbsorbedDamage || this.config.playerHealth.currentHp < hpBeforeDamage) {
         this.triggerDamageReaction();
       }
     }

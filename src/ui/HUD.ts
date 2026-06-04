@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
@@ -102,6 +103,7 @@ export class HUD {
   private readonly timeText: Phaser.GameObjects.Text;
   private readonly goalText: Phaser.GameObjects.Text;
   private readonly messageText: Phaser.GameObjects.Text;
+  private readonly shieldText: Phaser.GameObjects.Text;
   private readonly evolutionDebugText: Phaser.GameObjects.Text;
   private readonly buildEntries: BuildEntry[] = [];
   private readonly weaponEntries: IconEntry[] = [];
@@ -135,6 +137,7 @@ export class HUD {
     this.timeText = this.createText(16, 98, UITheme.smallFontSize);
     this.goalText = this.createText(16, 118, UITheme.smallFontSize, UITheme.mutedTextColor);
     this.messageText = this.createText(16, 140, UITheme.smallFontSize, UITheme.successTextColor);
+    this.shieldText = this.createText(16, 160, UITheme.smallFontSize, UITheme.successTextColor);
     this.evolutionDebugText = this.createText(16, 520, '12px', UITheme.mutedTextColor);
 
     this.minimapX = scene.scale.width - HUD.MINIMAP_WIDTH - 16;
@@ -200,6 +203,7 @@ export class HUD {
     this.timeText.destroy();
     this.goalText.destroy();
     this.messageText.destroy();
+    this.shieldText.destroy();
     this.evolutionDebugText.destroy();
     this.minimapBackground.destroy();
     this.minimapImage?.destroy();
@@ -232,6 +236,7 @@ export class HUD {
     this.timeText.setText(`${I18n.t('hud.time')} ${this.formatTime(state.timeSeconds)}`);
     this.goalText.setText(this.getGoalText(state));
     this.messageText.setText(state.message ?? '');
+    this.updateShieldText();
     this.updateIconList(
       this.passiveEntries,
       this.getOtherPassiveIconItems(state),
@@ -741,6 +746,8 @@ export class HUD {
     this.messageText.setPosition(layout.bossTextPosition.x, layout.bossTextPosition.y);
     this.messageText.setOrigin(0.5);
     this.messageText.setFontSize(layout.fontSize);
+    this.shieldText.setPosition(stats.x, stats.y + 126);
+    this.shieldText.setFontSize(layout.fontSize);
     this.evolutionDebugText.setPosition(stats.x, this.screenManager.height - 96);
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
     this.minimapBackground.setPosition(this.minimapX, this.minimapY);
@@ -861,6 +868,13 @@ export class HUD {
 
   private formatInteger(value: number): string {
     return Math.round(value).toString();
+  }
+
+  private updateShieldText(): void {
+    const shield = EndlessRewardManager.getGlobalShieldStatus();
+
+    this.shieldText.setVisible(shield.stacks > 0);
+    this.shieldText.setText(shield.stacks > 0 ? `Shield x${shield.stacks}` : '');
   }
 
   private formatTime(timeSeconds: number): string {

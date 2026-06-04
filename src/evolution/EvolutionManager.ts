@@ -35,6 +35,10 @@ export class EvolutionManager {
     return this.rules.some((rule) => this.canEvolve(rule, context));
   }
 
+  getEvolutionRules(): readonly EvolutionRule[] {
+    return this.rules;
+  }
+
   getRuleForWeapon(weaponId: string): EvolutionRule | undefined {
     return this.rules.find((rule) => (
       rule.baseWeaponId === weaponId || rule.evolvedWeaponId === weaponId
