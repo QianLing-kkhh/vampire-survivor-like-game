@@ -187,6 +187,26 @@ If CSV schema, content hash, or game version changes, keep samples separate. Do 
 
 CSV, replay, leaderboard, and ResultScene data should continue to use the same `RunMetadata` snapshot captured at run start. Do not rebuild these fields from current selection state at run end.
 
+## CSV Balance Analyzer
+
+Use the offline CSV analyzer for quick balance summaries:
+
+```sh
+npm.cmd run analyze:csv -- path/to/playtest.csv
+```
+
+The analyzer reads a PlaytestLog CSV file and prints a Markdown report with:
+
+- total runs, Victory/GameOver counts, and victory rate;
+- average survival time and death time buckets;
+- Boss spawn/kill rate, Boss dash hit rate, and Boss phase damage;
+- average final level, kills, treasure drops/opens, and evolution rate;
+- Endless entry rate, average/max endless survival, reward usage, and level interval;
+- weapon damage share when `weaponDamageStats` exists;
+- schema/content-hash groups and warnings for mixed samples.
+
+The tool is read-only. It does not modify CSV files, change CSV schema, or propose aggressive balance changes. Missing fields are skipped rather than treated as errors so older CSV files remain analyzable.
+
 ## CSV Diagnostics
 
 The CSV includes diagnostics for detecting missing or interrupted runs:

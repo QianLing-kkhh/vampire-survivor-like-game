@@ -12,6 +12,7 @@
     "validate:content": "node scripts/check-content-audit.mjs",
     "validate:assets": "node scripts/check-assets.mjs",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
+    "analyze:csv": "node scripts/analyze-playtest-csv.mjs",
     "pre-release": "node scripts/pre-release-check.mjs"
   },
   "dependencies": {
