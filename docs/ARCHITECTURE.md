@@ -52,6 +52,26 @@ Current status:
 - `GameScene`, `TreasureManager`, `UpgradeFlow`, and `EnemyFlow` emit selected new events without replacing existing gameplay statistics.
 - `RunState` still owns gameplay counters directly; it is not fully event-driven yet, which avoids duplicate counting during migration.
 
+## Achievement / Milestone Layer
+
+The achievement layer is the foundation for future achievements, tasks, unlocks, tutorial goals, daily challenge objectives, and meta progression.
+
+- `AchievementDefinition`: data shape for achievement id, i18n keys, trigger type, conditions, rewards, and category.
+- `AchievementProgress`: persistent per-achievement unlock/progress state stored in save data.
+- `AchievementRegistry`: registers built-in and future content/mod achievement definitions.
+- `AchievementEvaluator`: evaluates `GameEvent` and run-end summaries against definition conditions.
+- `AchievementManager`: subscribes to `GameEventBus`, unlocks non-repeatable achievements, and writes progress through `SaveManager`.
+- `AchievementReward`: reward data shape for future character/stage/map/cosmetic/currency unlocks.
+- `MilestoneDefinition` / `MilestoneManager`: shell for future multi-threshold counters such as kill 100 / 1000 / 10000.
+- `BuiltInAchievements`: small starter set used to validate the event-driven foundation.
+
+Current status:
+
+- There is no Achievement UI yet.
+- Unlock side effects are not applied yet; rewards are data only.
+- Built-in achievements listen to events such as `enemy.killed`, `player.levelUp`, `pickup.treasureOpened`, `weapon.evolved`, `boss.killed`, `endless.started`, and `run.ended`.
+- Achievement progress is formal save data under `SaveData.progression.achievements`, not CSV playtest data.
+
 ## Content Layer
 
 The content layer is the current foundation for future custom content and mod content packs.
@@ -249,6 +269,7 @@ TitleScene
     -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
     -> GameEventBus / GameEventRecorder / GameEventBridge start per-run event capture
+    -> AchievementManager subscribes to GameEventBus for low-risk achievement unlocks
     -> GameplayUpdater updates runtime systems
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
     -> EnemyFlow handles enemy update/contact damage
@@ -275,5 +296,6 @@ TitleScene
 - Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.
 - Gameplay randomness should go through injected `RandomSource` streams from `RandomManager`.
 - New achievements, tutorials, unlocks, replay diagnostics, audio listeners, or floating-text listeners should subscribe to `GameEventBus` rather than scene callbacks.
+- Achievement and milestone progress should persist through `SaveManager.progression`, not localStorage owned by individual systems.
 - Existing `core/EventBus` and callbacks are still valid during migration; do not delete them until the dependent systems have moved.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.

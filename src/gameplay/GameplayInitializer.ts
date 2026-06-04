@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AchievementManager } from '../achievement/AchievementManager';
 import { AutoPlayer } from '../auto/AutoPlayer';
 import {
   AutoUpgradeSelectionContext,
@@ -147,6 +148,16 @@ export class GameplayInitializer {
       mutatorConfigs,
       mutatorContext,
     );
+    const achievementManager = new AchievementManager({
+      characterId: selectedCharacter.id,
+      stageId: selectedStage.id,
+      mapId: selectedMap.id,
+      difficultyId: selectedDifficulty.id,
+      customStageId: selection.customStageId,
+      seed: selection.seed,
+    });
+
+    achievementManager.initialize(gameEventBus);
     const weaponConfigs = ContentRegistry.listWeapons();
     const enemyConfigs = ContentRegistry.listEnemies();
     const passiveItems = ContentRegistry.listPassives();

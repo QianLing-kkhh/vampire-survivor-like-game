@@ -60,6 +60,11 @@ Current unlock defaults:
 - `stage_001` stage
 - `prototype_field` map
 
+Achievement and milestone progress:
+
+- `progression.achievements`: achievement progress by achievement id.
+- `progression.milestones`: reserved milestone progress placeholder.
+
 ## SaveStorage
 
 `SaveStorage` owns localStorage access.
@@ -137,6 +142,8 @@ Import supports both raw `SaveData` JSON and `SaveExportPackage` JSON. Imported 
 
 `resetSave()` restores default formal save data only. It does not clear the CSV playtest buffer, browser-wide localStorage, custom stage storage, or other unrelated storage keys.
 
+Because achievements and milestones are formal progression data, `resetSave()` clears their progress along with other save-backed progression.
+
 ## Settings Integration
 
 `SettingsManager` is the current domain-based settings entry point and reads/writes through `SaveManager.settings`.
@@ -168,6 +175,18 @@ Current behavior:
 - No appearance selection UI is implemented.
 - Default theme overrides are empty, so saved appearance data does not change visuals.
 - Future skins, themes, and mod art packs should store persistent selections in `cosmetics` and resolve runtime keys through `AssetKeyResolver`.
+
+## Achievement Integration
+
+`AchievementManager` listens to the per-run `GameEventBus` and writes unlock state into `SaveData.progression.achievements`.
+
+Current behavior:
+
+- A small built-in achievement set exists for foundation testing.
+- There is no Achievement UI yet.
+- `AchievementReward` is data-only until an unlock layer is connected.
+- Milestone storage is reserved but not yet wired into gameplay counters.
+- Achievement progress is not part of CSV playtest logs.
 
 ## Records and Leaderboards
 

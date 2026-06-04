@@ -51,14 +51,74 @@ export class SaveMigrator {
     return {
       schemaVersion: SAVE_SCHEMA_VERSION,
       settings: this.migrateSettings(save.settings),
-      progression: {
-        ...defaultSave.progression,
-        ...save.progression,
-      },
+      progression: this.migrateProgression(save.progression),
       selections: this.migrateSelections(save.selections),
       cosmetics: this.migrateCosmetics(save.cosmetics, save.selections),
       records: this.migrateRecords(save.records),
     };
+  }
+
+  private migrateProgression(
+    progression: Partial<SaveData['progression']> | undefined,
+  ): SaveData['progression'] {
+    const defaultProgression = createDefaultSaveData().progression;
+
+    if (!this.isObject(progression)) {
+      return defaultProgression;
+    }
+
+    return {
+      ...defaultProgression,
+      unlockedCharacterIds: Array.isArray(progression.unlockedCharacterIds)
+        ? this.readStringArray(progression.unlockedCharacterIds)
+        : defaultProgression.unlockedCharacterIds,
+      unlockedStageIds: Array.isArray(progression.unlockedStageIds)
+        ? this.readStringArray(progression.unlockedStageIds)
+        : defaultProgression.unlockedStageIds,
+      unlockedMapIds: Array.isArray(progression.unlockedMapIds)
+        ? this.readStringArray(progression.unlockedMapIds)
+        : defaultProgression.unlockedMapIds,
+      unlockedCosmeticIds: Array.isArray(progression.unlockedCosmeticIds)
+        ? this.readStringArray(progression.unlockedCosmeticIds)
+        : defaultProgression.unlockedCosmeticIds,
+      achievements: this.isObject(progression.achievements)
+        ? this.normalizeAchievementProgress(progression.achievements)
+        : defaultProgression.achievements,
+      milestones: this.isObject(progression.milestones)
+        ? progression.milestones
+        : defaultProgression.milestones,
+    };
+  }
+
+  private normalizeAchievementProgress(
+    achievements: Record<string, unknown>,
+  ): SaveData['progression']['achievements'] {
+    return Object.entries(achievements).reduce<SaveData['progression']['achievements']>(
+      (result, [achievementId, value]) => {
+        if (!this.isObject(value)) {
+          return result;
+        }
+
+        result[achievementId] = {
+          achievementId: this.readString(value.achievementId, achievementId),
+          unlocked: value.unlocked === true,
+          unlockedAt: this.readOptionalString(value.unlockedAt),
+          progressValue: typeof value.progressValue === 'number'
+            ? value.progressValue
+            : undefined,
+          targetValue: typeof value.targetValue === 'number'
+            ? value.targetValue
+            : undefined,
+          seen: value.seen === true,
+          repeatCount: typeof value.repeatCount === 'number'
+            ? Math.max(0, value.repeatCount)
+            : undefined,
+        };
+
+        return result;
+      },
+      {},
+    );
   }
 
   private migrateSelections(

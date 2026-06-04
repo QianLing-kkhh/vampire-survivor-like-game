@@ -176,6 +176,8 @@ export class SaveManager {
         ?? saveData.selections.selectedThemeId,
       settingsCount: Object.values(saveData.settings)
         .reduce((total, domain) => total + Object.keys(domain).length, 0),
+      achievementCount: Object.values(saveData.progression.achievements)
+        .filter((progress) => progress.unlocked).length,
       leaderboardCount: Object.values(saveData.records.leaderboardsByKey)
         .reduce((total, records) => total + records.length, 0),
     };

@@ -18,6 +18,7 @@ Future architecture should assume support for:
 - Mod art packs and theme asset overrides
 - Unlocks and meta progression
 - Achievements and quests
+- Milestones, starter goals, and achievement-driven unlock rewards
 - Daily challenges and seed challenges
 - Multi-dimensional leaderboards
 - Difficulty system
@@ -56,6 +57,7 @@ Future architecture should assume support for:
 14. Future CharacterSelect, StageSelect, CustomStageSelect, daily challenge, and seeded-run flows should write through `SelectionManager`.
 15. Gameplay randomness should use injected `RandomSource` streams from `RandomManager`, not direct `Math.random()`.
 16. New cross-system observers should subscribe to `GameEventBus` instead of wiring directly into `GameScene`, manager callbacks, or UI events.
+17. Achievements, milestones, quests, and unlock triggers should evaluate data-driven definitions and persist through `SaveManager.progression`.
 
 ## Seeded Runs And Replay
 
@@ -79,6 +81,18 @@ Important boundaries:
 - `GameEventBridge` mirrors selected legacy events so new systems can start listening without risky rewrites.
 - `GameEventRecorder` stores a bounded recent event timeline, but it is not a full replay system.
 - Complete replay still requires run seed, input samples, deterministic timing, content/version hashes, and compatible update order.
+
+## Achievements And Milestones
+
+`AchievementManager`, `AchievementRegistry`, and `AchievementEvaluator` provide an event-driven foundation for achievements, tutorial goals, challenge objectives, and future unlock rewards.
+
+Important boundaries:
+
+- Achievement logic should be expressed as `AchievementDefinition` conditions, not as `GameScene` conditionals.
+- Achievement progress is stored in formal save progression data.
+- `AchievementReward` is a data shape for future unlock integration; complex unlock execution is not implemented yet.
+- Milestones are intended for reusable threshold counters, such as kills, treasures, evolutions, and endless survival targets.
+- Future Character / Stage / Skin unlocks should integrate through an unlock layer or manager, then be referenced by achievement rewards.
 
 ## Planned Domain Splits
 
@@ -105,6 +119,7 @@ Content should eventually split into resolvers and registries:
 - RunRuleSet as the single per-run rule composition point
 - Selection manager for character, stage, map, difficulty, challenge, custom stage, seed, and ruleset IDs
 - Game event bus and recorder for achievements, tutorials, replay diagnostics, unlocks, and listener cleanup
+- Achievement and milestone registries for event-driven goals and future unlock rewards
 
 ## Risk Areas
 
@@ -118,3 +133,4 @@ Content should eventually split into resolvers and registries:
 - Theme or skin systems bypassing `AssetKeyResolver` and becoming impossible to swap per appearance selection
 - Selection UI directly mutating individual managers instead of using `SelectionManager`
 - Event consumers wiring directly into `GameScene` or manager callbacks instead of using `GameEventBus`
+- Achievement or quest progress being stored outside `SaveManager`

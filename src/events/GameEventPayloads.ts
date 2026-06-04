@@ -16,7 +16,10 @@ export interface RunEndedPayload extends TimedPayload {
   runId: string;
   resultType: 'gameOver' | 'victory';
   survivalTime: number;
+  endlessSurvivalTime?: number;
   killCount: number;
+  treasureOpenCount?: number;
+  evolutionCount?: number;
   endlessStarted: boolean;
 }
 

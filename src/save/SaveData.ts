@@ -18,9 +18,10 @@ import {
   DEFAULT_INPUT_SETTINGS,
   InputSettingsData,
 } from '../settings/InputSettings';
+import { AchievementProgress } from '../achievement/AchievementProgress';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 
-export const SAVE_SCHEMA_VERSION = 6;
+export const SAVE_SCHEMA_VERSION = 7;
 
 export interface SaveData {
   schemaVersion: number;
@@ -36,6 +37,8 @@ export interface SaveData {
     unlockedStageIds: string[];
     unlockedMapIds: string[];
     unlockedCosmeticIds: string[];
+    achievements: Record<string, AchievementProgress>;
+    milestones: Record<string, unknown>;
   };
   selections: {
     selectedCharacterId: string;
@@ -69,6 +72,7 @@ export interface SaveSummary {
   selectedDifficultyId: string;
   selectedThemeId: string;
   settingsCount?: number;
+  achievementCount?: number;
   leaderboardCount: number;
   customStageCount?: number;
 }
@@ -88,6 +92,8 @@ export function createDefaultSaveData(): SaveData {
       unlockedStageIds: ['stage_001'],
       unlockedMapIds: ['prototype_field'],
       unlockedCosmeticIds: [],
+      achievements: {},
+      milestones: {},
     },
     selections: {
       selectedCharacterId: 'default',

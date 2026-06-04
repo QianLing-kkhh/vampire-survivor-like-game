@@ -1196,7 +1196,10 @@ export class GameScene extends Phaser.Scene {
       runId: this.runId,
       resultType,
       survivalTime,
+      endlessSurvivalTime: this.runState.endlessSurvivalTime,
       killCount: this.runState.killCount,
+      treasureOpenCount: this.runState.treasureOpenCount,
+      evolutionCount: this.runState.evolutionPath.length,
       endlessStarted: this.runState.endlessStarted,
       gameTimeSeconds: survivalTime,
     }, {
