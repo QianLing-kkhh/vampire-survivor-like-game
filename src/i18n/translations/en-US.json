@@ -61,6 +61,18 @@
     "title": "Stage Select"
   },
   "customStage": {
+    "editorTitle": "Custom Stage Editor Lite",
+    "new": "New",
+    "load": "Load Saved",
+    "editBasic": "Edit Basic",
+    "editWaves": "Edit Waves",
+    "addWave": "Add Wave",
+    "editWave": "Edit Wave",
+    "removeWave": "Remove Wave",
+    "waveCount": "Wave Count",
+    "mapSize": "Map Size",
+    "bossTime": "Boss Time",
+    "exportJson": "Export JSON",
     "title": "Custom Stage Tool",
     "pasteJson": "Paste JSON",
     "validate": "Validate",

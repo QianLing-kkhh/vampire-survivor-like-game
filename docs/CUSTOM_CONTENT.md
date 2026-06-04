@@ -35,6 +35,9 @@ The current custom stage foundation lives under `src/custom/`:
 - Save valid packages to `CustomStageStorage`.
 - List stored custom stage IDs.
 - Export stored package JSON through clipboard or console fallback.
+- Open `CustomStageEditorLiteScene` for prompt-driven basic field and wave editing.
+
+`CustomStageEditorLiteScene` is an editor-lite, not a full map editor. It can create or load a package, edit package/stage/map basics, edit a simple wave list, validate, save, and export JSON. It does not support terrain painting, custom enemies, custom weapons, custom assets, online sharing, or direct play from the editor.
 
 Saved valid custom stage packages can now be selected from `StageSelectScene` and launched through the normal `GameScene` flow. The tool itself still does not start gameplay directly; it only validates, saves, lists, and exports packages.
 

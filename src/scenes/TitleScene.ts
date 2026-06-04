@@ -22,6 +22,7 @@ export class TitleScene extends Phaser.Scene {
   private selectCharacterButton?: Phaser.GameObjects.Text;
   private selectStageButton?: Phaser.GameObjects.Text;
   private customStageToolButton?: Phaser.GameObjects.Text;
+  private customStageEditorButton?: Phaser.GameObjects.Text;
   private recordsButton?: Phaser.GameObjects.Text;
   private replayToolButton?: Phaser.GameObjects.Text;
   private dailyChallengeButton?: Phaser.GameObjects.Text;
@@ -115,6 +116,11 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('CustomStageToolScene');
     });
 
+    this.customStageEditorButton = this.createButton(centerX, centerY + 250, I18n.t('customStage.editorTitle'), () => {
+      this.cancelAutoStartCountdown();
+      this.scene.start('CustomStageEditorLiteScene');
+    });
+
     this.recordsButton = this.createButton(centerX, centerY + 250, I18n.t('title.records'), () => {
       this.cancelAutoStartCountdown();
       this.scene.start('RecordsScene');
@@ -198,6 +204,7 @@ export class TitleScene extends Phaser.Scene {
       this.selectCharacterButton,
       this.selectStageButton,
       this.customStageToolButton,
+      this.customStageEditorButton,
       this.recordsButton,
       this.replayToolButton,
       this.dailyChallengeButton,
@@ -273,6 +280,7 @@ export class TitleScene extends Phaser.Scene {
     this.selectCharacterButton?.setText(I18n.t('title.selectCharacter'));
     this.selectStageButton?.setText(I18n.t('title.selectStage'));
     this.customStageToolButton?.setText(I18n.t('title.customStageTool'));
+    this.customStageEditorButton?.setText(I18n.t('customStage.editorTitle'));
     this.recordsButton?.setText(I18n.t('title.records'));
     this.replayToolButton?.setText(I18n.t('title.replayTool'));
     this.dailyChallengeButton?.setText(I18n.t('title.dailyChallenge'));

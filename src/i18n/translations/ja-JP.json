@@ -46,6 +46,18 @@
     "title": "ステージ選択"
   },
   "customStage": {
+    "editorTitle": "カスタムステージ簡易エディター",
+    "new": "新規",
+    "load": "保存済みを読み込み",
+    "editBasic": "基本を編集",
+    "editWaves": "ウェーブを編集",
+    "addWave": "ウェーブ追加",
+    "editWave": "ウェーブ編集",
+    "removeWave": "ウェーブ削除",
+    "waveCount": "ウェーブ数",
+    "mapSize": "マップサイズ",
+    "bossTime": "Boss時間",
+    "exportJson": "JSONをエクスポート",
     "title": "カスタムステージツール",
     "pasteJson": "JSONを貼り付け",
     "validate": "検証",

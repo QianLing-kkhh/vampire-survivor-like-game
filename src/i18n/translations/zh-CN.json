@@ -46,6 +46,18 @@
     "title": "关卡选择"
   },
   "customStage": {
+    "editorTitle": "自定义关卡轻量编辑器",
+    "new": "新建",
+    "load": "加载已保存",
+    "editBasic": "编辑基础",
+    "editWaves": "编辑波次",
+    "addWave": "添加波次",
+    "editWave": "编辑波次",
+    "removeWave": "移除波次",
+    "waveCount": "波次数",
+    "mapSize": "地图尺寸",
+    "bossTime": "Boss 时间",
+    "exportJson": "导出 JSON",
     "title": "自定义关卡工具",
     "pasteJson": "粘贴 JSON",
     "validate": "验证",

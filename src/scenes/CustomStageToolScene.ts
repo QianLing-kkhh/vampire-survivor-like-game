@@ -67,6 +67,7 @@ export class CustomStageToolScene extends Phaser.Scene {
       this.createButton(I18n.t('customStage.validate'), () => this.validateDraft()),
       this.createButton(I18n.t('customStage.save'), () => this.saveDraft()),
       this.createButton(I18n.t('customStage.export'), () => this.exportSelected()),
+      this.createButton(I18n.t('customStage.editorTitle'), () => this.scene.start('CustomStageEditorLiteScene')),
       this.createButton(I18n.t('customStage.back'), () => this.scene.start('TitleScene')),
     ];
     this.refreshStoredList();
