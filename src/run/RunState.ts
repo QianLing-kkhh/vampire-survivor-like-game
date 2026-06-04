@@ -52,6 +52,9 @@ export class RunState {
   endlessBossIdsSpawned: string[] = [];
   endlessBossSkillHitCount = 0;
   endlessBossSkillUseCount = 0;
+  maxSimultaneousEndlessBosses = 0;
+  activeEndlessBossCountAtDeath = 0;
+  endlessBossSpawnSkippedBySoftCapCount = 0;
   finalExpRequirementMultiplier = 1;
   maxExpRequirementMultiplier = 1;
   endlessLevelUpCount = 0;
@@ -112,6 +115,9 @@ export class RunState {
     this.endlessBossIdsSpawned = [];
     this.endlessBossSkillHitCount = 0;
     this.endlessBossSkillUseCount = 0;
+    this.maxSimultaneousEndlessBosses = 0;
+    this.activeEndlessBossCountAtDeath = 0;
+    this.endlessBossSpawnSkippedBySoftCapCount = 0;
     this.finalExpRequirementMultiplier = 1;
     this.maxExpRequirementMultiplier = 1;
     this.endlessLevelUpCount = 0;
@@ -230,14 +236,29 @@ export class RunState {
     this.endlessShieldRemaining = Math.max(0, remainingStacks);
   }
 
-  recordEndlessBossSpawn(bossId: string): void {
+  recordEndlessBossSpawn(bossId: string, activeBossCount = 1): void {
     this.endlessBossSpawnCount += 1;
     this.endlessBossIdsSpawned.push(bossId);
+    this.recordEndlessBossActiveCount(activeBossCount);
   }
 
   recordEndlessBossKill(bossId: string): void {
     this.endlessBossKillCount += 1;
     this.endlessBossIdsKilled.push(bossId);
+  }
+
+  recordEndlessBossActiveCount(activeBossCount: number): void {
+    const safeCount = Math.max(0, activeBossCount);
+
+    this.activeEndlessBossCountAtDeath = safeCount;
+    this.maxSimultaneousEndlessBosses = Math.max(
+      this.maxSimultaneousEndlessBosses,
+      safeCount,
+    );
+  }
+
+  recordEndlessBossSpawnSkippedBySoftCap(): void {
+    this.endlessBossSpawnSkippedBySoftCapCount += 1;
   }
 
   recordEndlessBossSkillUse(): void {

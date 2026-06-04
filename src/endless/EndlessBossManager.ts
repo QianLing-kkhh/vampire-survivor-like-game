@@ -32,10 +32,20 @@ interface ActiveZone {
   visual: Phaser.GameObjects.Arc;
 }
 
+interface ActiveEndlessBossState {
+  enemy: Enemy;
+  config: EndlessBossConfig;
+  skillRuntime: BossSkillRuntime;
+  spawnedAtGameTimeSeconds: number;
+  spawnedAtEndlessTimeSeconds: number;
+}
+
 export class EndlessBossManager {
   private static readonly FIRST_SPAWN_DELAY_SECONDS = 60;
   private static readonly WARNING_SECONDS = 5;
   private static readonly MAX_ENEMIES = 250;
+  private static readonly ACTIVE_BOSS_SOFT_CAP = 6;
+  private static readonly SOFT_CAP_RETRY_SECONDS = 10;
 
   private readonly scene: Phaser.Scene;
   private readonly enemyFactory: EnemyFactory;
@@ -49,9 +59,7 @@ export class EndlessBossManager {
   private active = false;
   private endlessStartTime = 0;
   private nextSpawnTime = 0;
-  private activeBoss: Enemy | null = null;
-  private activeBossConfig: EndlessBossConfig | null = null;
-  private activeBossSkillRuntime: BossSkillRuntime | null = null;
+  private readonly activeBosses: ActiveEndlessBossState[] = [];
   private lastBossId: EndlessBossId | null = null;
   private currentGameTimeSeconds = 0;
   private readonly activeZones: ActiveZone[] = [];
@@ -79,10 +87,8 @@ export class EndlessBossManager {
 
   stop(): void {
     this.active = false;
-    this.activeBoss = null;
-    this.activeBossConfig = null;
-    this.activeBossSkillRuntime?.clear();
-    this.activeBossSkillRuntime = null;
+    this.activeBosses.forEach((bossState) => bossState.skillRuntime.clear());
+    this.activeBosses.length = 0;
     this.clearZones();
   }
 
@@ -99,32 +105,29 @@ export class EndlessBossManager {
 
     this.currentGameTimeSeconds = gameTimeSeconds;
     this.updateZones(deltaMs);
+    this.cleanupDeadBosses();
 
-    if (this.activeBoss?.isDead) {
-      this.handleBossKilled(gameTimeSeconds);
-      return;
+    for (const bossState of this.activeBosses) {
+      bossState.skillRuntime.update(deltaMs);
     }
 
-    if (!this.activeBoss) {
-      if (gameTimeSeconds >= this.nextSpawnTime) {
-        this.spawnBoss(gameTimeSeconds);
-      }
-      return;
-    }
+    this.runState.recordEndlessBossActiveCount(this.activeBosses.length);
 
-    this.activeBossSkillRuntime?.update(deltaMs);
+    if (gameTimeSeconds >= this.nextSpawnTime) {
+      this.trySpawnBoss(gameTimeSeconds);
+    }
   }
 
   hasActiveBoss(): boolean {
-    return this.activeBoss !== null && !this.activeBoss.isDead;
+    return this.activeBosses.length > 0;
   }
 
   getActiveBossId(): string | null {
-    return this.hasActiveBoss() ? this.activeBossConfig?.id ?? null : null;
+    return this.activeBosses.length === 1 ? this.activeBosses[0].config.id : null;
   }
 
   getNextBossSpawnInSeconds(gameTimeSeconds: number): number {
-    if (!this.active || this.hasActiveBoss()) {
+    if (!this.active) {
       return 0;
     }
 
@@ -132,7 +135,7 @@ export class EndlessBossManager {
   }
 
   getEndlessBossWarningText(gameTimeSeconds: number): string | null {
-    if (!this.active || this.hasActiveBoss()) {
+    if (!this.active) {
       return null;
     }
 
@@ -150,12 +153,17 @@ export class EndlessBossManager {
       return warningText;
     }
 
-    if (!this.hasActiveBoss() || !this.activeBossConfig || !this.activeBoss) {
+    if (!this.hasActiveBoss()) {
       return null;
     }
 
-    const hpRatio = Math.max(0, this.activeBoss.currentHp / Math.max(1, this.activeBoss.maxHp));
-    return `Endless Boss: ${this.formatBossName(this.activeBossConfig.id)} ${Math.ceil(hpRatio * 100)}%`;
+    if (this.activeBosses.length > 1) {
+      return `Endless Bosses: ${this.activeBosses.length}`;
+    }
+
+    const bossState = this.activeBosses[0];
+    const hpRatio = Math.max(0, bossState.enemy.currentHp / Math.max(1, bossState.enemy.maxHp));
+    return `Endless Boss: ${this.formatBossName(bossState.config.id)} ${Math.ceil(hpRatio * 100)}%`;
   }
 
   getPlayerMoveSpeedMultiplier(): number {
@@ -174,33 +182,48 @@ export class EndlessBossManager {
     );
   }
 
-  private spawnBoss(gameTimeSeconds: number): void {
+  private trySpawnBoss(gameTimeSeconds: number): void {
+    if (this.activeBosses.length >= EndlessBossManager.ACTIVE_BOSS_SOFT_CAP) {
+      this.runState.recordEndlessBossSpawnSkippedBySoftCap();
+      this.nextSpawnTime = gameTimeSeconds + EndlessBossManager.SOFT_CAP_RETRY_SECONDS;
+      return;
+    }
+
     const config = this.chooseBossConfig();
     const position = this.getBossSpawnPosition();
     const stats = this.getScaledBossStats(config, gameTimeSeconds);
     const boss = this.enemyFactory.create(config.enemyId, position.x, position.y, stats);
+    const endlessTimeSeconds = Math.max(0, gameTimeSeconds - this.endlessStartTime);
+    const bossState: ActiveEndlessBossState = {
+      enemy: boss,
+      config,
+      skillRuntime: new BossSkillRuntime(
+        BossSkillFactory.createSkills(config.skills),
+        () => this.createSkillContext(boss),
+      ),
+      spawnedAtGameTimeSeconds: gameTimeSeconds,
+      spawnedAtEndlessTimeSeconds: endlessTimeSeconds,
+    };
 
-    this.activeBoss = boss;
-    this.activeBossConfig = config;
-    this.activeBossSkillRuntime = new BossSkillRuntime(
-      BossSkillFactory.createSkills(config.skills),
-      () => this.createSkillContext(boss),
-    );
+    this.activeBosses.push(bossState);
+    this.lastBossId = config.id;
     this.onEnemySpawned(boss);
-    this.runState.recordEndlessBossSpawn(config.id);
+    this.runState.recordEndlessBossSpawn(config.id, this.activeBosses.length);
+    this.nextSpawnTime = gameTimeSeconds + this.getSpawnInterval(endlessTimeSeconds);
   }
 
-  private handleBossKilled(gameTimeSeconds: number): void {
-    if (this.activeBossConfig) {
-      this.runState.recordEndlessBossKill(this.activeBossConfig.id);
-      this.lastBossId = this.activeBossConfig.id;
-    }
+  private cleanupDeadBosses(): void {
+    for (let index = this.activeBosses.length - 1; index >= 0; index -= 1) {
+      const bossState = this.activeBosses[index];
 
-    this.activeBossSkillRuntime?.clear();
-    this.activeBossSkillRuntime = null;
-    this.activeBoss = null;
-    this.activeBossConfig = null;
-    this.nextSpawnTime = gameTimeSeconds + this.getSpawnInterval(gameTimeSeconds - this.endlessStartTime);
+      if (!bossState.enemy.isDead) {
+        continue;
+      }
+
+      this.runState.recordEndlessBossKill(bossState.config.id);
+      bossState.skillRuntime.clear();
+      this.activeBosses.splice(index, 1);
+    }
   }
 
   private createSkillContext(boss: Enemy): BossSkillContext {
@@ -331,6 +354,12 @@ export class EndlessBossManager {
   }
 
   private getSpawnInterval(endlessTimeSeconds: number): number {
+    if (endlessTimeSeconds >= 1800) {
+      return 20;
+    }
+    if (endlessTimeSeconds >= 1200) {
+      return 25;
+    }
     if (endlessTimeSeconds >= 900) {
       return 35;
     }

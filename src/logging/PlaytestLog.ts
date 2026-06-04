@@ -73,6 +73,9 @@ export interface PlaytestLogData {
   endlessBossIdsSpawned: readonly string[];
   endlessBossSkillHitCount: number;
   endlessBossSkillUseCount: number;
+  maxSimultaneousEndlessBosses: number;
+  activeEndlessBossCountAtDeath: number;
+  endlessBossSpawnSkippedBySoftCapCount: number;
   finalExpRequirementMultiplier: number;
   maxExpRequirementMultiplier: number;
   endlessLevelUpCount: number;
@@ -161,6 +164,9 @@ export class PlaytestLog {
     'endlessBossIdsSpawned',
     'endlessBossSkillHitCount',
     'endlessBossSkillUseCount',
+    'maxSimultaneousEndlessBosses',
+    'activeEndlessBossCountAtDeath',
+    'endlessBossSpawnSkippedBySoftCapCount',
     'finalExpRequirementMultiplier',
     'maxExpRequirementMultiplier',
     'endlessLevelUpCount',
@@ -257,6 +263,9 @@ export class PlaytestLog {
       data.endlessBossIdsSpawned.join('|'),
       data.endlessBossSkillHitCount.toString(),
       data.endlessBossSkillUseCount.toString(),
+      data.maxSimultaneousEndlessBosses.toString(),
+      data.activeEndlessBossCountAtDeath.toString(),
+      data.endlessBossSpawnSkippedBySoftCapCount.toString(),
       PlaytestLog.formatNumber(data.finalExpRequirementMultiplier),
       PlaytestLog.formatNumber(data.maxExpRequirementMultiplier),
       data.endlessLevelUpCount.toString(),

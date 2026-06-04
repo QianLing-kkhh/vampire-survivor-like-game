@@ -55,6 +55,9 @@ Current goals:
 - No artificial endless time cap.
 - Boss spawn intervals shrink as endless time increases.
 - Boss lifecycle is managed by `EndlessBossManager`.
+- Multiple endless Bosses can be active at the same time.
+- Existing active Bosses do not pause the next Boss spawn countdown.
+- A soft active Boss cap protects performance; it delays retries rather than ending endless pressure.
 - Concrete skills are created through `BossSkillFactory` from `bosses.json` skill configs.
 - Bosses use scaled stats at spawn time.
 
@@ -67,6 +70,7 @@ Implemented endless Boss roles include:
 - Tanker
 
 Boss pressure should come from varied data-driven skills, not unavoidable instant kills.
+If player damage falls behind, active Bosses are allowed to stack naturally and become part of the late endless pressure curve.
 
 ## Post-Cap Rewards
 
