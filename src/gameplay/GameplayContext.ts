@@ -42,6 +42,7 @@ import { WeaponManager } from '../weapon/WeaponManager';
 
 export interface GameplayContext {
   scene: Phaser.Scene;
+  runId: string;
   playtestSettings: PlaytestSettingsState;
   autoMode: boolean;
   autoMovementEnabled: boolean;

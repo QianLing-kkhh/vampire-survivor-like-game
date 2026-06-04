@@ -39,6 +39,8 @@ The runtime also creates a per-run `GameEventBus` and bounded `GameEventRecorder
 
 The runtime also creates a `ReplayRecorder`. Current replay records include run seed, selection snapshot, settings snapshot, selected key events, and run result summary. Input samples are reserved but not populated until an input mapping layer exists.
 
+Developer DebugPanel foundation is available for local diagnostics. It is disabled by default and can be toggled with F3 through `DeveloperSettings.showDebugPanel`. It shows compact run/version/seed/content, selected stage/map/character, FPS, enemy/Boss counts, endless state, CSV buffer size, and recent event count without changing gameplay.
+
 Useful combinations:
 
 - Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.

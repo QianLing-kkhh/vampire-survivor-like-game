@@ -12,6 +12,7 @@ import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
 import { TimeManager } from '../core/TimeManager';
+import { DebugDataCollector } from '../debug/DebugDataCollector';
 import { Enemy, GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyMovement } from '../enemy/EnemyMovement';
@@ -47,6 +48,7 @@ import {
   PlaytestSettings,
   PlaytestSettingsState,
 } from '../settings/PlaytestSettings';
+import { SettingsManager } from '../settings/SettingsManager';
 import { SpawnDirector } from '../spawn/SpawnDirector';
 import { StageDefinition } from '../stage/StageDefinition';
 import { StageManager } from '../stage/StageManager';
@@ -74,6 +76,7 @@ export class GameScene extends Phaser.Scene {
   private readonly damageCalculator = new DamageCalculator();
   private readonly gameplayInitializer = new GameplayInitializer();
   private readonly gameplayUpdater = new GameplayUpdater();
+  private readonly debugDataCollector = new DebugDataCollector();
   private readonly stageManager = new StageManager();
   private readonly mapManager = new MapManager();
   private playtestSettings: PlaytestSettingsState = PlaytestSettings.get();
@@ -382,6 +385,7 @@ export class GameScene extends Phaser.Scene {
     uiScene.events.on('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
     this.events.on('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.on('keydown-ESC', this.handleEscapePressed, this);
+    this.input.keyboard?.on('keydown-F3', this.toggleDebugPanel, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
   }
@@ -428,6 +432,7 @@ export class GameScene extends Phaser.Scene {
         emitHUDState: () => this.emitHUDState(),
       },
     });
+    this.emitDebugPanelData();
   }
 
   getPlayerHealth(): PlayerHealth | undefined {
@@ -681,6 +686,25 @@ export class GameScene extends Phaser.Scene {
       endlessMode: this.playtestSettings.endlessMode,
       endlessStarted: this.runState.endlessStarted,
       endlessTimeSeconds: this.runState.endlessSurvivalTime,
+    });
+  }
+
+  private emitDebugPanelData(): void {
+    if (!this.gameplayContext) {
+      return;
+    }
+
+    this.scene.get('UIScene').events.emit(
+      'UpdateDebugPanel',
+      this.debugDataCollector.collect(this.gameplayContext),
+    );
+  }
+
+  private toggleDebugPanel(): void {
+    const developerSettings = SettingsManager.getDeveloper();
+
+    SettingsManager.updateDeveloper({
+      showDebugPanel: !developerSettings.showDebugPanel,
     });
   }
 
@@ -1571,6 +1595,7 @@ export class GameScene extends Phaser.Scene {
     this.uiScene?.events.off('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
     this.events.off('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.off('keydown-ESC', this.handleEscapePressed, this);
+    this.input.keyboard?.off('keydown-F3', this.toggleDebugPanel, this);
     this.scale.off('resize', this.handleResize, this);
     this.uiScene = undefined;
     this.gameplayContext?.enemyFlow.clear();

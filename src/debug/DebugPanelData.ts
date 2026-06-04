@@ -1,0 +1,23 @@
+export interface DebugPanelData {
+  gameVersion?: string;
+  contentHash?: string;
+  runId?: string;
+  runSeed?: string;
+  characterId?: string;
+  stageId?: string;
+  mapId?: string;
+  difficultyId?: string;
+  fps?: number;
+  gameTimeSeconds?: number;
+  enemyCount?: number;
+  activeBossCount?: number;
+  endlessStarted?: boolean;
+  endlessTimeSeconds?: number;
+  endlessScalingLevel?: number;
+  playerLevel?: number;
+  playerHp?: number;
+  playerMaxHp?: number;
+  csvBufferSize?: number;
+  recentEventCount?: number;
+}
+

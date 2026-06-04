@@ -106,6 +106,8 @@ Settings storage is split into domains behind `SettingsManager`:
 - `InputSettings`
 - `DeveloperSettings`
 
+`DeveloperSettings` includes a developer-only DebugPanel toggle and presentation settings. The panel is disabled by default, can be toggled with F3, and is intended for local diagnostics rather than player-facing UI.
+
 `PlaytestSettings` remains as a compatibility facade so existing UI and runtime callers keep working. New systems should use `SettingsManager` directly when they belong to a specific settings domain.
 
 ## Appearance
@@ -182,6 +184,8 @@ Rules:
 Permanent HUD should avoid large persistent background panels. Detailed information belongs in PauseMenu Stats / Build.
 
 HUD build rows should display weapon plus matching passive on the same row. If too many rows exist, show a limited number and a `+N more` row.
+
+DebugPanel is not part of the permanent HUD. It should remain hidden unless developer settings enable it, and it should stay below modal UI such as PauseMenu.
 
 ## Help System
 

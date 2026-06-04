@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { DebugPanelData } from '../debug/DebugPanelData';
+import { DebugPanelManager } from '../debug/DebugPanelManager';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import { HUD, HUDState } from '../ui/HUD';
 import { HelpPanel } from '../ui/HelpPanel';
@@ -18,6 +20,7 @@ export class UIScene extends Phaser.Scene {
   private levelUpPanel?: LevelUpPanel;
   private pauseMenu?: PauseMenu;
   private helpPanel?: HelpPanel;
+  private debugPanelManager?: DebugPanelManager;
   private temporaryMessage?: Phaser.GameObjects.Text;
 
   constructor() {
@@ -28,7 +31,9 @@ export class UIScene extends Phaser.Scene {
     this.hud = new HUD(this, () => {
       this.events.emit('HudPausePressed');
     });
+    this.debugPanelManager = new DebugPanelManager(this);
     this.events.on('UpdateHUD', this.updateHUD, this);
+    this.events.on('UpdateDebugPanel', this.updateDebugPanel, this);
     this.events.on('ShowLevelUpOptions', this.showLevelUpOptions, this);
     this.events.on('ShowTemporaryMessage', this.showTemporaryMessage, this);
     this.events.on('ShowPauseMenu', this.showPauseMenu, this);
@@ -39,6 +44,10 @@ export class UIScene extends Phaser.Scene {
 
   private updateHUD(state: HUDState): void {
     this.hud?.update(state);
+  }
+
+  private updateDebugPanel(data: DebugPanelData): void {
+    this.debugPanelManager?.update(data);
   }
 
   private showLevelUpOptions(payload: LevelUpOptionsPayload): void {
@@ -166,6 +175,7 @@ export class UIScene extends Phaser.Scene {
 
   private cleanup(): void {
     this.events.off('UpdateHUD', this.updateHUD, this);
+    this.events.off('UpdateDebugPanel', this.updateDebugPanel, this);
     this.events.off('ShowLevelUpOptions', this.showLevelUpOptions, this);
     this.events.off('ShowTemporaryMessage', this.showTemporaryMessage, this);
     this.events.off('ShowPauseMenu', this.showPauseMenu, this);
@@ -178,6 +188,8 @@ export class UIScene extends Phaser.Scene {
     this.helpPanel = undefined;
     this.temporaryMessage?.destroy();
     this.temporaryMessage = undefined;
+    this.debugPanelManager?.destroy();
+    this.debugPanelManager = undefined;
     this.hud?.destroy();
     this.hud = undefined;
   }

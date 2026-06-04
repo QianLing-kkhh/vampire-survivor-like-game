@@ -83,7 +83,14 @@ export class SettingsManager {
   }
 
   static updateDeveloper(partial: Partial<DeveloperSettingsData>): SettingsData {
-    return SettingsManager.updateDomain('developer', partial);
+    const clampedPartial = SettingsManager.withoutUndefined({
+      ...partial,
+      debugPanelOpacity: typeof partial.debugPanelOpacity === 'number'
+        ? Math.max(0.25, Math.min(1, partial.debugPanelOpacity))
+        : undefined,
+    });
+
+    return SettingsManager.updateDomain('developer', clampedPartial);
   }
 
   static updateSelectedTheme(themeId: string): AppearanceSelection {

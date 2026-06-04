@@ -390,6 +390,7 @@ export class GameplayInitializer {
 
     return {
       scene: config.scene,
+      runId: config.runId,
       playtestSettings: config.playtestSettings,
       autoMode: config.playtestSettings.autoMode,
       autoMovementEnabled: config.playtestSettings.autoMovement,
