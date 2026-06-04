@@ -53,6 +53,18 @@ Future architecture should assume support for:
 12. Difficulty, challenge, and custom rule changes should prefer `RunRuleSet` mutators over direct runtime if/else branches.
 13. Future skins/themes should use `AppearanceManager`, `AppearanceRegistry`, and `AssetKeyResolver` rather than direct texture strings.
 14. Future CharacterSelect, StageSelect, CustomStageSelect, daily challenge, and seeded-run flows should write through `SelectionManager`.
+15. Gameplay randomness should use injected `RandomSource` streams from `RandomManager`, not direct `Math.random()`.
+
+## Seeded Runs And Replay
+
+`RandomManager`, `SeededRandom`, and `RunSeed` provide the foundation for seeded gameplay randomness. A `runSeed` is recorded in playtest CSV, and random streams are split by domain so visual randomness does not disturb gameplay-critical streams.
+
+Important boundaries:
+
+- A seed can reproduce random decisions only when version, content, settings, selection, and update order are also compatible.
+- A complete replay still needs input recording, content/version hashes, and deterministic timing.
+- Daily challenges, random stages, seeded custom stages, and leaderboard fairness should set or preserve `SelectionState.seed`.
+- New random systems should request a domain stream such as upgrade, spawn, treasure, endless, Boss, or visual from `RandomManager`.
 
 ## Planned Domain Splits
 

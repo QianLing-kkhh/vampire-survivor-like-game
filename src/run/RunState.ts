@@ -1,4 +1,5 @@
 export class RunState {
+  runSeed = '';
   killCount = 0;
   treasureDropCount = 0;
   treasureOpenCount = 0;
@@ -65,6 +66,7 @@ export class RunState {
   private lastEndlessLevelUpTime: number | null = null;
 
   reset(): void {
+    this.runSeed = '';
     this.killCount = 0;
     this.treasureDropCount = 0;
     this.treasureOpenCount = 0;
@@ -135,6 +137,10 @@ export class RunState {
     this.difficultyId = difficultyId || 'normal';
     this.mutatorIds = [...mutatorIds];
     this.rulesetId = rulesetId || this.difficultyId;
+  }
+
+  setRunSeed(runSeed: string): void {
+    this.runSeed = runSeed;
   }
 
   recordKill(): void {

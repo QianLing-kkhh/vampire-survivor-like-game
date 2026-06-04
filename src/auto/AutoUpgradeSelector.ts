@@ -1,5 +1,7 @@
 import { EVOLUTION_RULES, EvolutionRule } from '../evolution/EvolutionRule';
 import { UpgradeOption } from '../progression/UpgradeOption';
+import { RandomSource } from '../random/RandomSource';
+import { SeededRandom } from '../random/SeededRandom';
 
 export type AutoUpgradeSelectionMode = 'weighted_random';
 
@@ -24,6 +26,11 @@ export class AutoUpgradeSelector {
   private static readonly MAX_WEIGHT = 8;
 
   readonly mode: AutoUpgradeSelectionMode = 'weighted_random';
+  private random: RandomSource = new SeededRandom('auto-upgrade-fallback');
+
+  setRandomSource(random: RandomSource): void {
+    this.random = random;
+  }
 
   select(
     options: readonly UpgradeOption[],
@@ -135,9 +142,7 @@ export class AutoUpgradeSelector {
     const highestRules = rules.filter((rule) => (
       context.getWeaponUpgradeTotal(rule.baseWeaponId) === highestUpgradeTotal
     ));
-    const randomIndex = Math.floor(Math.random() * highestRules.length);
-
-    return highestRules[randomIndex];
+    return this.random.pick(highestRules);
   }
 
   private selectMissingEvolutionRequirement(
@@ -195,7 +200,7 @@ export class AutoUpgradeSelector {
       0,
     );
 
-    let roll = Math.random() * totalWeight;
+    let roll = this.random.nextFloat(0, totalWeight);
 
     for (const weightedOption of weightedOptions) {
       roll -= weightedOption.weight;
@@ -232,9 +237,7 @@ export class AutoUpgradeSelector {
     const highestRules = candidateRules.filter((rule) => (
       context.getWeaponUpgradeTotal(rule.baseWeaponId) === highestUpgradeTotal
     ));
-    const randomIndex = Math.floor(Math.random() * highestRules.length);
-
-    return highestRules[randomIndex];
+    return this.random.pick(highestRules);
   }
 
   private isFocusCandidate(upgradeId: string, rule: EvolutionRule): boolean {

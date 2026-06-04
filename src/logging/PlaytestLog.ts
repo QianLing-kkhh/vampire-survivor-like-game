@@ -6,6 +6,7 @@ export type UpgradeSelectionModeLog = 'weighted_random';
 
 export interface PlaytestLogData {
   runId: string;
+  runSeed: string;
   timestamp: string;
   autoMode: boolean;
   fastMode: boolean;
@@ -100,6 +101,7 @@ export interface PlaytestLogData {
 export class PlaytestLog {
   private static readonly HEADER = [
     'runId',
+    'runSeed',
     'timestamp',
     'autoMode',
     'fastMode',
@@ -202,6 +204,7 @@ export class PlaytestLog {
   static createCsv(data: PlaytestLogData): string {
     const values = [
       data.runId,
+      data.runSeed,
       data.timestamp,
       data.autoMode ? 'true' : 'false',
       data.fastMode ? 'true' : 'false',

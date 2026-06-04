@@ -185,7 +185,7 @@ export class PlaytestLogBuffer {
   }
 
   private static extractTimestamp(csvRow: string): string {
-    return this.parseCsvLine(csvRow)[1] ?? '';
+    return this.parseCsvLine(csvRow)[2] ?? '';
   }
 
   private static calculateGapSeconds(

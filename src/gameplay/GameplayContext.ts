@@ -21,6 +21,7 @@ import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
+import { RandomManager } from '../random/RandomManager';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
@@ -49,6 +50,8 @@ export interface GameplayContext {
   damageCalculator: DamageCalculator;
   enemyMovement: EnemyMovement;
   timeManager: TimeManager;
+  randomManager: RandomManager;
+  runSeed: string;
   runRuleSet: RunRuleSet;
   runState: RunState;
   runStats: RunStats;

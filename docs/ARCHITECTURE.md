@@ -154,6 +154,18 @@ The rules layer is the foundation for future difficulty, challenge, custom stage
 
 Current default behavior is `normal` difficulty with no mutators, so gameplay values remain unchanged. Future systems should add rule changes through `RunRuleSet` rather than direct `GameScene`, `SpawnDirector`, or `EnemyFactory` conditionals.
 
+## Random Layer
+
+The random layer is the foundation for seeded runs, replay debugging, daily challenges, random stages, and fair leaderboard grouping.
+
+- `RandomSource`: common random interface for numbers, chance, pick, weighted pick, shuffle, and forked streams.
+- `SeededRandom`: deterministic string-seeded PRNG.
+- `RandomManager`: per-run root random plus domain streams for gameplay, upgrades, spawn, treasure, endless, Boss, and visual randomness.
+- `RunSeed`: creates or normalizes run seeds from selection state.
+- `RandomUtils`: shared geometry and weighted-choice helpers.
+
+`GameplayInitializer` creates one `RandomManager` per run. New gameplay randomness should receive a `RandomSource` or `RandomManager` through constructor/config injection rather than using `Math.random()` or a global singleton.
+
 ## Endless Layer
 
 Endless systems activate after the final Boss is killed when Endless Mode is enabled.
@@ -213,6 +225,7 @@ TitleScene
   -> GameScene
     -> SelectionManager / managers resolve selected character/stage/map
     -> Custom stage packages, when selected, provide runtime stage/map/waves
+    -> RunSeed / RandomManager create seeded random streams
     -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
     -> GameplayUpdater updates runtime systems
@@ -239,4 +252,5 @@ TitleScene
 - Future character/stage/map/custom-stage UI should write through `SelectionManager`.
 - Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.
 - Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.
+- Gameplay randomness should go through injected `RandomSource` streams from `RandomManager`.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.

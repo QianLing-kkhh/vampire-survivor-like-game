@@ -64,6 +64,7 @@ export class RunResultBuilder {
       : Math.max(0, context.survivalTime - context.runState.evolutionTime);
     const playtestCsv = PlaytestLog.createCsv({
       runId: context.runId,
+      runSeed: context.runState.runSeed,
       timestamp: new Date().toISOString(),
       autoMode: context.autoMode,
       fastMode: context.fastMode,
@@ -243,6 +244,7 @@ export class RunResultBuilder {
       weaponKillStats: runStatsSummary.weaponKillStats,
       upgradeCountStats: runStatsSummary.upgradeCountStats,
       runId: context.runId,
+      runSeed: context.runState.runSeed,
       autoMode: context.autoMode,
       fastMode: context.fastMode,
       timeScale: context.timeScale,

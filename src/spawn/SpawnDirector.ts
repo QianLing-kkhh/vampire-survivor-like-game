@@ -7,6 +7,8 @@ import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { Position } from '../enemy/EnemyMovement';
 import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
+import { RandomSource } from '../random/RandomSource';
+import { SeededRandom } from '../random/SeededRandom';
 import { RunRuleSet } from '../rules/RunRuleSet';
 import { SpawnWave } from './SpawnWave';
 
@@ -36,6 +38,7 @@ export class SpawnDirector {
     private readonly getWorldSize: () => { width: number; height: number },
     private readonly onEnemySpawned: (enemy: Enemy) => void,
     private readonly runRuleSet?: RunRuleSet,
+    private readonly random: RandomSource = new SeededRandom('spawn-fallback'),
   ) {
     ContentBootstrap.ensureInitialized();
     this.pendingWaves = [...waves].sort((a, b) => a.time - b.time);
@@ -47,6 +50,7 @@ export class SpawnDirector {
     getWorldSize: () => { width: number; height: number },
     onEnemySpawned: (enemy: Enemy) => void,
     runRuleSet?: RunRuleSet,
+    random?: RandomSource,
   ): SpawnDirector {
     ContentBootstrap.ensureInitialized();
     return new SpawnDirector(
@@ -56,6 +60,7 @@ export class SpawnDirector {
       getWorldSize,
       onEnemySpawned,
       runRuleSet,
+      random,
     );
   }
 
@@ -152,20 +157,20 @@ export class SpawnDirector {
 
     switch (side) {
       case 0:
-        x = Phaser.Math.Between(cameraView.left - margin, cameraView.right + margin);
+        x = this.random.nextInt(cameraView.left - margin, cameraView.right + margin);
         y = cameraView.top - margin;
         break;
       case 1:
         x = cameraView.right + margin;
-        y = Phaser.Math.Between(cameraView.top - margin, cameraView.bottom + margin);
+        y = this.random.nextInt(cameraView.top - margin, cameraView.bottom + margin);
         break;
       case 2:
-        x = Phaser.Math.Between(cameraView.left - margin, cameraView.right + margin);
+        x = this.random.nextInt(cameraView.left - margin, cameraView.right + margin);
         y = cameraView.bottom + margin;
         break;
       default:
         x = cameraView.left - margin;
-        y = Phaser.Math.Between(cameraView.top - margin, cameraView.bottom + margin);
+        y = this.random.nextInt(cameraView.top - margin, cameraView.bottom + margin);
         break;
     }
 
@@ -182,20 +187,20 @@ export class SpawnDirector {
 
     switch (side) {
       case 0:
-        x = Phaser.Math.Between(worldBounds.left, worldBounds.right);
+        x = this.random.nextInt(worldBounds.left, worldBounds.right);
         y = worldBounds.top;
         break;
       case 1:
         x = worldBounds.right;
-        y = Phaser.Math.Between(worldBounds.top, worldBounds.bottom);
+        y = this.random.nextInt(worldBounds.top, worldBounds.bottom);
         break;
       case 2:
-        x = Phaser.Math.Between(worldBounds.left, worldBounds.right);
+        x = this.random.nextInt(worldBounds.left, worldBounds.right);
         y = worldBounds.bottom;
         break;
       default:
         x = worldBounds.left;
-        y = Phaser.Math.Between(worldBounds.top, worldBounds.bottom);
+        y = this.random.nextInt(worldBounds.top, worldBounds.bottom);
         break;
     }
 

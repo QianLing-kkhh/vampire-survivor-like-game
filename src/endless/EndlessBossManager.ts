@@ -7,6 +7,8 @@ import { BossSkillRuntime } from '../boss/skills/BossSkillRuntime';
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyFlow } from '../enemy/EnemyFlow';
+import { RandomSource } from '../random/RandomSource';
+import { SeededRandom } from '../random/SeededRandom';
 import { RunState } from '../run/RunState';
 
 import { EndlessManager } from './EndlessManager';
@@ -21,6 +23,7 @@ interface EndlessBossManagerConfig {
   getPlayerPosition: () => Phaser.Math.Vector2;
   getWorldSize: () => { width: number; height: number };
   onEnemySpawned: (enemy: Enemy) => void;
+  random?: RandomSource;
 }
 
 interface ActiveZone {
@@ -55,6 +58,7 @@ export class EndlessBossManager {
   private readonly getPlayerPosition: () => Phaser.Math.Vector2;
   private readonly getWorldSize: () => { width: number; height: number };
   private readonly onEnemySpawned: (enemy: Enemy) => void;
+  private readonly random: RandomSource;
 
   private active = false;
   private endlessStartTime = 0;
@@ -73,6 +77,7 @@ export class EndlessBossManager {
     this.getPlayerPosition = config.getPlayerPosition;
     this.getWorldSize = config.getWorldSize;
     this.onEnemySpawned = config.onEnemySpawned;
+    this.random = config.random ?? new SeededRandom('endless-boss-fallback');
   }
 
   start(endlessStartTime: number): void {
@@ -340,17 +345,9 @@ export class EndlessBossManager {
     const candidates = ENDLESS_BOSS_CONFIGS.filter((config) => (
       ENDLESS_BOSS_CONFIGS.length <= 1 || config.id !== this.lastBossId
     ));
-    const totalWeight = candidates.reduce((sum, config) => sum + Math.max(0, config.weight), 0);
-    let roll = Math.random() * totalWeight;
-
-    for (const config of candidates) {
-      roll -= Math.max(0, config.weight);
-      if (roll <= 0) {
-        return config;
-      }
-    }
-
-    return candidates[0] ?? ENDLESS_BOSS_CONFIGS[0];
+    return this.random.weightedPick(candidates, (config) => config.weight)
+      ?? candidates[0]
+      ?? ENDLESS_BOSS_CONFIGS[0];
   }
 
   private getSpawnInterval(endlessTimeSeconds: number): number {
@@ -380,7 +377,7 @@ export class EndlessBossManager {
     const worldSize = this.getWorldSize();
 
     for (let attempt = 0; attempt < 12; attempt += 1) {
-      const angle = Math.random() * Math.PI * 2;
+      const angle = this.random.nextFloat(0, Math.PI * 2);
       const candidate = this.clampToWorld(new Phaser.Math.Vector2(
         playerPosition.x + Math.cos(angle) * 720,
         playerPosition.y + Math.sin(angle) * 720,

@@ -33,6 +33,8 @@ import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
+import { RandomManager } from '../random/RandomManager';
+import { RunSeed } from '../random/RunSeed';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
@@ -102,6 +104,8 @@ export class GameplayInitializer {
     const mapManager = new MapManager();
     const difficultyManager = new DifficultyManager();
     const selection = SelectionManager.getSelection();
+    const runSeed = RunSeed.createSeedFromSelection(selection);
+    const randomManager = new RandomManager(runSeed);
     const selectedCharacter = characterManager.getSelectedCharacter();
     const selectedStageRuntime = stageManager.getSelectedStageRuntimeDefinition();
     const selectedStage = selectedStageRuntime.stage;
@@ -157,7 +161,11 @@ export class GameplayInitializer {
     const virtualJoystick = new VirtualJoystick(config.scene, config.callbacks.onPauseRequested);
     const expManager = new ExpManager(config.eventBus);
     const levelManager = new LevelManager(expManager, config.eventBus);
-    const upgradeSelector = new UpgradeSelector([...upgradeOptions, ...passiveItems]);
+    config.autoUpgradeSelector.setRandomSource(randomManager.getUpgradeRandom());
+    const upgradeSelector = new UpgradeSelector(
+      [...upgradeOptions, ...passiveItems],
+      randomManager.getUpgradeRandom(),
+    );
     const evolutionManager = new EvolutionManager(EVOLUTION_RULES);
     const upgradeFlow = new UpgradeFlow({
       upgradeSelector,
@@ -181,6 +189,7 @@ export class GameplayInitializer {
       config.callbacks.onChestOpened,
       () => (config.runState.endlessStarted ? config.runState.endlessSurvivalTime : null),
       runRuleSet,
+      randomManager.getTreasureRandom(),
     );
     const enemyFactory = new EnemyFactory(config.scene, enemyConfigs, runRuleSet);
     const bossFactory = new BossFactory(config.scene, enemyConfigs, runRuleSet);
@@ -191,6 +200,7 @@ export class GameplayInitializer {
       runRuleSet.getMutatorIds(),
       runRuleSet.rulesetId,
     );
+    config.runState.setRunSeed(runSeed);
     const spawnDirector = new SpawnDirector(
       waveSet,
       enemyFactory,
@@ -200,6 +210,7 @@ export class GameplayInitializer {
         config.callbacks.onEnemySpawned(enemy);
       },
       runRuleSet,
+      randomManager.getSpawnRandom(),
     );
     const bossSpawnDirector = new BossSpawnDirector(
       bossFactory,
@@ -225,6 +236,7 @@ export class GameplayInitializer {
         config.callbacks.onEnemySpawned(enemy);
       },
       runRuleSet,
+      random: randomManager.getEndlessRandom(),
     });
     let bossController: BossController;
     const enemyFlow = new EnemyFlow({
@@ -291,6 +303,7 @@ export class GameplayInitializer {
       onEnemySpawned: (enemy) => {
         config.callbacks.onEnemySpawned(enemy);
       },
+      random: randomManager.getBossRandom(),
     });
 
     weaponManager.addWeapon(weaponFactory.create(selectedCharacter.startingWeaponId));
@@ -315,6 +328,8 @@ export class GameplayInitializer {
       damageCalculator: config.damageCalculator,
       enemyMovement: config.enemyMovement,
       timeManager: config.timeManager,
+      randomManager,
+      runSeed,
       runRuleSet,
       runState: config.runState,
       runStats,

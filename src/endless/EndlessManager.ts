@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
+import { RandomSource } from '../random/RandomSource';
+import { SeededRandom } from '../random/SeededRandom';
 import { RunRuleSet } from '../rules/RunRuleSet';
 
 interface EndlessSpawnRule {
@@ -37,6 +39,7 @@ export interface EndlessManagerConfig {
   getWorldSize: () => { width: number; height: number };
   onEnemySpawned(enemy: Enemy): void;
   runRuleSet?: RunRuleSet;
+  random?: RandomSource;
 }
 
 export class EndlessManager {
@@ -81,8 +84,11 @@ export class EndlessManager {
   private startTimeSeconds = 0;
   private activeTierIndex = -1;
   private ruleStates: EndlessRuleState[] = [];
+  private readonly random: RandomSource;
 
-  constructor(private readonly config: EndlessManagerConfig) {}
+  constructor(private readonly config: EndlessManagerConfig) {
+    this.random = config.random ?? new SeededRandom('endless-fallback');
+  }
 
   start(gameTimeSeconds: number): void {
     if (this.started) {
@@ -213,7 +219,7 @@ export class EndlessManager {
     const cameraView = this.config.scene.cameras.main.worldView;
 
     for (let attempt = 0; attempt < 20; attempt += 1) {
-      const side = Phaser.Math.Between(0, 3);
+      const side = this.random.nextInt(0, 3);
       const position = this.getCameraEdgePosition(cameraView, world, side);
 
       if (Phaser.Math.Distance.Between(position.x, position.y, player.x, player.y)
@@ -236,20 +242,20 @@ export class EndlessManager {
 
     switch (side) {
       case 0:
-        x = Phaser.Math.Between(cameraView.left - margin, cameraView.right + margin);
+        x = this.random.nextInt(cameraView.left - margin, cameraView.right + margin);
         y = cameraView.top - margin;
         break;
       case 1:
         x = cameraView.right + margin;
-        y = Phaser.Math.Between(cameraView.top - margin, cameraView.bottom + margin);
+        y = this.random.nextInt(cameraView.top - margin, cameraView.bottom + margin);
         break;
       case 2:
-        x = Phaser.Math.Between(cameraView.left - margin, cameraView.right + margin);
+        x = this.random.nextInt(cameraView.left - margin, cameraView.right + margin);
         y = cameraView.bottom + margin;
         break;
       default:
         x = cameraView.left - margin;
-        y = Phaser.Math.Between(cameraView.top - margin, cameraView.bottom + margin);
+        y = this.random.nextInt(cameraView.top - margin, cameraView.bottom + margin);
         break;
     }
 

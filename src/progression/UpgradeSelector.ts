@@ -1,5 +1,7 @@
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { RandomSource } from '../random/RandomSource';
+import { SeededRandom } from '../random/SeededRandom';
 
 import { UpgradeOption } from './UpgradeOption';
 
@@ -24,12 +26,19 @@ export interface UpgradeSelectionContext {
 }
 
 export class UpgradeSelector {
-  constructor(upgrades?: readonly UpgradeOption[]) {
+  constructor(
+    upgrades?: readonly UpgradeOption[],
+    private random: RandomSource = new SeededRandom('upgrade-selector-fallback'),
+  ) {
     ContentBootstrap.ensureInitialized();
     this.upgrades = upgrades ?? ContentRegistry.getUpgradeOptions();
   }
 
   private readonly upgrades: readonly UpgradeOption[];
+
+  setRandomSource(random: RandomSource): void {
+    this.random = random;
+  }
 
   selectOptions(count = 3, context?: UpgradeSelectionContext): UpgradeOption[] {
     const availableUpgrades = this.getAvailableUpgrades(context);
@@ -238,9 +247,7 @@ export class UpgradeSelector {
       return undefined;
     }
 
-    const randomIndex = Math.floor(Math.random() * availableNewWeaponUpgrades.length);
-
-    return availableNewWeaponUpgrades[randomIndex];
+    return this.random.pick(availableNewWeaponUpgrades);
   }
 
   private isNewWeaponUpgrade(upgradeId: string): boolean {
@@ -291,13 +298,6 @@ export class UpgradeSelector {
   }
 
   private shuffleUpgrades(upgrades: readonly UpgradeOption[]): UpgradeOption[] {
-    const shuffled = [...upgrades];
-
-    for (let index = shuffled.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1));
-      [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
-    }
-
-    return shuffled;
+    return this.random.shuffle(upgrades);
   }
 }

@@ -29,6 +29,8 @@ Settings are intended to apply immediately during a run.
 
 Current runs use `normal` difficulty with no mutators unless future test harnesses or custom content explicitly provide a different `RunRuleSet`. Difficulty and mutator IDs are recorded in CSV so future samples can be separated by ruleset.
 
+Each run also records a `runSeed`. If `SelectionState.seed` is empty, a new seed is generated for the run. A fixed seed is a foundation for debugging and future daily challenges, but it is not a complete replay by itself; version, content, settings, timing, and player input also matter.
+
 Useful combinations:
 
 - Manual movement + manual upgrade: both Auto Movement and Auto Upgrade off.
@@ -137,6 +139,7 @@ Important endless metrics:
 - `difficultyId`
 - `mutatorIds`
 - `rulesetId`
+- `runSeed`
 
 ## CSV Export
 
@@ -147,7 +150,7 @@ Current CSV behavior:
 - Current run data is generated at the end of each run.
 - All-run CSV data is stored in a playtest log buffer.
 - The buffer is persisted to `localStorage`.
-- Refreshing the page should restore existing buffered logs.
+- Entering the Title Scene clears the current playtest buffer, including after a page refresh.
 - The buffer keeps the latest 1000 runs.
 - Clear CSV Buffer removes both memory and persisted logs.
 
