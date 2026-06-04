@@ -25,6 +25,7 @@ import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
 import { RandomManager } from '../random/RandomManager';
+import { RelicManager } from '../relic/RelicManager';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
@@ -59,6 +60,7 @@ export interface GameplayContext {
   randomManager: RandomManager;
   runSeed: string;
   runRuleSet: RunRuleSet;
+  relicManager: RelicManager;
   runState: RunState;
   runStats: RunStats;
   player: PlayerController;

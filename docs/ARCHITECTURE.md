@@ -189,6 +189,30 @@ Progression owns upgrade availability, upgrade application, passive effects, wea
 
 Important rule: `UpgradeFlow` is the preferred orchestration point. `GameScene` and `TreasureManager` should not duplicate upgrade/evolution details.
 
+## Relic Layer
+
+Relics are the foundation for future rule-changing items and special run mechanics. They are intentionally separate from passives.
+
+- `RelicDefinition`: data shape for relic id, i18n keys, rarity, tags, and effect configs.
+- `RelicEffect`: optional effect hooks for attach/detach/update, weapon damage, treasure chance, damage taken, and game events.
+- `RelicEffectContext`: runtime dependencies passed to effects without exposing `GameScene`.
+- `RelicEffectFactory`: creates built-in relic effects from effect configs.
+- `RelicRegistry`: registers built-in or future custom/mod relic definitions.
+- `RelicManager`: owns active run relics and applies effect modifiers.
+- Built-in effect classes currently cover treasure-rate, weapon-tag damage, damage-taken, and event-triggered foundations.
+
+Current status:
+
+- `GameplayInitializer` creates an empty `RelicManager` for each run and stores it in `GameplayContext`.
+- No relic drops, relic choices, relic UI, or save persistence are implemented yet.
+- With no active relics, all modifiers return the original value and gameplay is unchanged.
+
+Boundary:
+
+- Passive = upgradeable numeric growth.
+- Relic = rule changes or special mechanics.
+- Do not put relic-style rule changes into `PassiveManager`.
+
 ## Combat Layer
 
 Enemy, Boss, and combat behavior are split from the main scene.
@@ -291,6 +315,7 @@ TitleScene
     -> GameEventBus / GameEventRecorder / GameEventBridge start per-run event capture
     -> AchievementManager subscribes to GameEventBus for low-risk achievement unlocks
     -> UnlockManager ensures built-in default content is unlocked
+    -> RelicManager is created empty for future rule-changing run items
     -> GameplayUpdater updates runtime systems
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
     -> EnemyFlow handles enemy update/contact damage
@@ -306,6 +331,7 @@ TitleScene
 - UI displays runtime state and sends user intents through scene events.
 - Upgrade and treasure reward rules should go through `UpgradeFlow`.
 - Weapon archetype interactions should prefer tags/behavior config over weapon-id-only conditionals when possible.
+- Relic-style rule changes should go through `RelicManager` and `RelicEffect`, not `PassiveManager`.
 - Enemy movement and contact damage should go through `EnemyFlow`.
 - Enemy affixes should go through `EnemyModifierRuntime`; do not create a new enemy ID for every stat/behavior combination.
 - Final Boss-specific state should go through `BossController`.

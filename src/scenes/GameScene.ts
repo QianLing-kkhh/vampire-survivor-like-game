@@ -1562,6 +1562,7 @@ export class GameScene extends Phaser.Scene {
     this.uiScene = undefined;
     this.gameplayContext?.enemyFlow.clear();
     this.gameplayContext?.bossController.clear();
+    this.gameplayContext?.relicManager.destroy();
     this.clearGameplayResources();
     this.destroyEnemies();
     this.clearCenterMessages();

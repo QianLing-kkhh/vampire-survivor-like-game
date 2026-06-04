@@ -38,6 +38,7 @@ import { PlayerStats } from '../player/PlayerStats';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { RandomManager } from '../random/RandomManager';
+import { RelicManager } from '../relic/RelicManager';
 import { RunSeed } from '../random/RunSeed';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
@@ -150,6 +151,11 @@ export class GameplayInitializer {
       mutatorConfigs,
       mutatorContext,
     );
+    const relicManager = new RelicManager({
+      gameEventBus,
+      runRuleSet,
+      getGameTimeSeconds: () => config.timeManager.gameTimeSeconds,
+    });
     const achievementManager = new AchievementManager({
       characterId: selectedCharacter.id,
       stageId: selectedStage.id,
@@ -372,6 +378,7 @@ export class GameplayInitializer {
       randomManager,
       runSeed,
       runRuleSet,
+      relicManager,
       runState: config.runState,
       runStats,
       player,

@@ -31,6 +31,7 @@ Future architecture should assume support for:
 - Weapon tags and build archetypes
 - Weapon behavior configs as the gradual path toward custom/mod weapon runtimes
 - Relics, equipment, and one-use items
+- Relic effects for rule-changing run items separate from passive numeric growth
 - Active skills
 - Input configuration and controller support
 - Tutorial system
@@ -60,6 +61,7 @@ Future architecture should assume support for:
 16. New cross-system observers should subscribe to `GameEventBus` instead of wiring directly into `GameScene`, manager callbacks, or UI events.
 17. Achievements, milestones, quests, and unlock triggers should evaluate data-driven definitions and persist through `SaveManager.progression`.
 18. Unlock state should be owned by `UnlockManager`; content managers can query it but should not duplicate unlock rules.
+19. Relic-style rule changes should use `RelicManager` / `RelicEffect`, not passive upgrades or scene conditionals.
 
 ## Seeded Runs And Replay
 
@@ -108,6 +110,18 @@ Important boundaries:
 - Selection and content managers may check `UnlockManager`, but they should not store unlock state themselves.
 - Unlock data is stored in formal save progression data.
 
+## Relics
+
+Relics are intended for rule-changing items, challenge rewards, stage rewards, character build identity, and custom content mechanics. They should remain separate from passives.
+
+Important boundaries:
+
+- Passive effects are upgradeable numeric growth.
+- Relic effects are special rules or mechanics.
+- Relics should be represented by `RelicDefinition` and `RelicEffectConfig`.
+- Runtime behavior should flow through `RelicManager` and effect hooks.
+- Relic drops, relic selection UI, relic save persistence, and custom relic content are not implemented yet.
+
 ## Planned Domain Splits
 
 Settings should eventually split into domains:
@@ -135,6 +149,7 @@ Content should eventually split into resolvers and registries:
 - Game event bus and recorder for achievements, tutorials, replay diagnostics, unlocks, and listener cleanup
 - Achievement and milestone registries for event-driven goals and future unlock rewards
 - Unlock registry and manager for content access state and reward application
+- Relic registry and manager for rule-changing run items
 
 ## Risk Areas
 
@@ -150,3 +165,4 @@ Content should eventually split into resolvers and registries:
 - Event consumers wiring directly into `GameScene` or manager callbacks instead of using `GameEventBus`
 - Achievement or quest progress being stored outside `SaveManager`
 - Character, stage, map, or cosmetic managers duplicating unlock storage instead of using `UnlockManager`
+- Relic effects being implemented as passive upgrades or ad hoc `GameScene` conditionals
