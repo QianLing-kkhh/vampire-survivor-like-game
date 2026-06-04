@@ -171,7 +171,7 @@ export class SaveManager {
       selectedCharacterId: saveData.selections.selectedCharacterId,
       selectedStageId: saveData.selections.selectedStageId,
       selectedMapId: saveData.selections.selectedMapId,
-      selectedDifficultyId: saveData.selections.selectedDifficultyId,
+      selectedDifficultyId: saveData.selections.selectedDifficultyId ?? 'normal',
       selectedThemeId: saveData.cosmetics.selectedThemeId
         ?? saveData.selections.selectedThemeId,
       settingsCount: Object.values(saveData.settings)

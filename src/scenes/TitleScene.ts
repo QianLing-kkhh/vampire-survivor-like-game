@@ -5,6 +5,7 @@ import { I18n } from '../i18n/I18n';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { SettingsMenu } from '../ui/SettingsMenu';
@@ -14,6 +15,7 @@ export class TitleScene extends Phaser.Scene {
   private static readonly AUTO_START_SECONDS = 10;
 
   private statusText?: Phaser.GameObjects.Text;
+  private selectionText?: Phaser.GameObjects.Text;
   private titleText?: Phaser.GameObjects.Text;
   private startButton?: Phaser.GameObjects.Text;
   private autoTestButton?: Phaser.GameObjects.Text;
@@ -58,6 +60,14 @@ export class TitleScene extends Phaser.Scene {
       lineSpacing: 8,
     });
     this.statusText.setOrigin(0.5);
+
+    this.selectionText = this.add.text(centerX, centerY - 122, this.formatSelectionSummary(), {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
+      align: 'center',
+    });
+    this.selectionText.setOrigin(0.5);
 
     this.autoStartText = this.add.text(centerX, centerY - 44, '', {
       color: UITheme.mutedTextColor,
@@ -162,6 +172,8 @@ export class TitleScene extends Phaser.Scene {
 
     this.titleText?.setPosition(layout.titlePosition.x, layout.titlePosition.y);
     this.titleText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).title);
+    this.selectionText?.setPosition(layout.statusPosition.x, layout.statusPosition.y - 30);
+    this.selectionText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
     this.statusText?.setPosition(layout.statusPosition.x, layout.statusPosition.y);
     this.statusText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
     this.autoStartText?.setPosition(layout.countdownPosition.x, layout.countdownPosition.y);
@@ -217,6 +229,7 @@ export class TitleScene extends Phaser.Scene {
     this.autoTestButton?.setText(I18n.t('title.startAutoTest'));
     this.settingsButton?.setText(this.t('title.settings', 'Settings'));
     this.helpButton?.setText(I18n.t('common.help'));
+    this.selectionText?.setText(this.formatSelectionSummary());
     this.refreshStatus();
 
     if (this.autoStartCanceled) {
@@ -300,6 +313,16 @@ export class TitleScene extends Phaser.Scene {
       `Endless Mode: ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')}`,
       `${I18n.t('common.timeScale')}: ${this.getDisplayedTimeScale(settings)}x`,
     ].join('\n');
+  }
+
+  private formatSelectionSummary(): string {
+    const summary = SelectionManager.getSummary();
+
+    return I18n.t('title.currentSelection', {
+      character: summary.characterName,
+      stage: summary.stageName,
+      map: summary.mapName,
+    });
   }
 
   private getDisplayedTimeScale(settings: PlaytestSettingsState): number {

@@ -40,6 +40,7 @@ import { DifficultyManager } from '../rules/DifficultyManager';
 import { MutatorFactory } from '../rules/MutatorFactory';
 import { MutatorContext } from '../rules/MutatorContext';
 import { RunRuleSet } from '../rules/RunRuleSet';
+import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SpawnDirector } from '../spawn/SpawnDirector';
 import { StageManager } from '../stage/StageManager';
@@ -99,6 +100,7 @@ export class GameplayInitializer {
     const stageManager = new StageManager();
     const mapManager = new MapManager();
     const difficultyManager = new DifficultyManager();
+    const selection = SelectionManager.getSelection();
     const selectedCharacter = characterManager.getSelectedCharacter();
     const selectedStage = stageManager.getSelectedStage();
     const selectedMap = mapManager.getSelectedMap();
@@ -113,6 +115,7 @@ export class GameplayInitializer {
       stageId: selectedStage.id,
       mapId: selectedMap.id,
       mode: 'normal',
+      seed: selection.seed,
       contentSource: 'builtin',
     };
     const runRuleSet = new RunRuleSet(

@@ -55,12 +55,33 @@ export class SaveMigrator {
         ...defaultSave.progression,
         ...save.progression,
       },
-      selections: {
-        ...defaultSave.selections,
-        ...save.selections,
-      },
+      selections: this.migrateSelections(save.selections),
       cosmetics: this.migrateCosmetics(save.cosmetics, save.selections),
       records: this.migrateRecords(save.records),
+    };
+  }
+
+  private migrateSelections(
+    selections: Partial<SaveData['selections']> | undefined,
+  ): SaveData['selections'] {
+    const defaultSelections = createDefaultSaveData().selections;
+
+    if (!this.isObject(selections)) {
+      return defaultSelections;
+    }
+
+    return {
+      ...defaultSelections,
+      selectedCharacterId: this.readString(selections.selectedCharacterId, defaultSelections.selectedCharacterId),
+      selectedStageId: this.readString(selections.selectedStageId, defaultSelections.selectedStageId),
+      selectedMapId: this.readString(selections.selectedMapId, defaultSelections.selectedMapId),
+      selectedDifficultyId: this.readOptionalString(selections.selectedDifficultyId)
+        ?? defaultSelections.selectedDifficultyId,
+      selectedChallengeId: this.readOptionalString(selections.selectedChallengeId),
+      selectedCustomStageId: this.readOptionalString(selections.selectedCustomStageId),
+      selectedSeed: this.readOptionalString(selections.selectedSeed),
+      selectedRulesetId: this.readOptionalString(selections.selectedRulesetId),
+      selectedThemeId: this.readString(selections.selectedThemeId, defaultSelections.selectedThemeId),
     };
   }
 
@@ -366,6 +387,14 @@ export class SaveMigrator {
 
   private readVolume(value: unknown): number {
     return this.readNumber(value, 0, 0, 1);
+  }
+
+  private readString(value: unknown, fallback: string): string {
+    return typeof value === 'string' ? value : fallback;
+  }
+
+  private readOptionalString(value: unknown): string | undefined {
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
   }
 
   private readNumber(

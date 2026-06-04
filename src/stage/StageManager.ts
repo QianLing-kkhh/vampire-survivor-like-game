@@ -23,10 +23,16 @@ export class StageManager {
   private readonly stageData: StageData;
 
   getSelectedStage(): StageDefinition {
-    return this.getStage(this.selectedStageId);
+    return this.getStage(this.getSelectedStageId());
   }
 
   getSelectedStageId(): string {
+    const savedStageId = SaveManager.get().selections.selectedStageId;
+
+    this.selectedStageId = this.stageData[savedStageId]
+      ? savedStageId
+      : DEFAULT_CONTENT_IDS.stage;
+
     return this.selectedStageId;
   }
 
@@ -35,7 +41,6 @@ export class StageManager {
 
     SaveManager.update({
       selections: {
-        ...SaveManager.get().selections,
         selectedStageId: this.selectedStageId,
       },
     });

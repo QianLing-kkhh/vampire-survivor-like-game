@@ -28,10 +28,16 @@ export class CharacterManager {
   private readonly characterData: CharacterData;
 
   getSelectedCharacter(): CharacterDefinition {
-    return this.getCharacter(this.selectedCharacterId);
+    return this.getCharacter(this.getSelectedCharacterId());
   }
 
   getSelectedCharacterId(): string {
+    const savedCharacterId = SaveManager.get().selections.selectedCharacterId;
+
+    this.selectedCharacterId = this.characterData[savedCharacterId]
+      ? savedCharacterId
+      : DEFAULT_CONTENT_IDS.character;
+
     return this.selectedCharacterId;
   }
 
@@ -42,7 +48,6 @@ export class CharacterManager {
 
     SaveManager.update({
       selections: {
-        ...SaveManager.get().selections,
         selectedCharacterId: this.selectedCharacterId,
       },
     });

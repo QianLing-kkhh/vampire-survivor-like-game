@@ -76,7 +76,7 @@ export class GameScene extends Phaser.Scene {
   private readonly mapManager = new MapManager();
   private playtestSettings: PlaytestSettingsState = PlaytestSettings.get();
   private currentStage: StageDefinition = this.stageManager.getSelectedStage();
-  private currentMap: MapDefinition = this.mapManager.getMap(this.currentStage.mapId);
+  private currentMap: MapDefinition = this.mapManager.getSelectedMap();
   private gameplayContext?: GameplayContext;
   private player?: PlayerController;
   private playerHitRange?: Phaser.GameObjects.Arc;
@@ -201,7 +201,7 @@ export class GameScene extends Phaser.Scene {
     this.finalBossSpawnTime = 0;
     this.finalBossKillTime = 0;
     this.currentStage = this.stageManager.getSelectedStage();
-    this.currentMap = this.mapManager.getMap(this.currentStage.mapId);
+    this.currentMap = this.mapManager.getSelectedMap();
 
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;

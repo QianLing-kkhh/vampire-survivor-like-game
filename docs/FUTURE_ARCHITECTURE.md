@@ -52,6 +52,7 @@ Future architecture should assume support for:
 11. Enemy variants should prefer `EnemyModifier` configs over combinatorial enemy IDs.
 12. Difficulty, challenge, and custom rule changes should prefer `RunRuleSet` mutators over direct runtime if/else branches.
 13. Future skins/themes should use `AppearanceManager`, `AppearanceRegistry`, and `AssetKeyResolver` rather than direct texture strings.
+14. Future CharacterSelect, StageSelect, CustomStageSelect, daily challenge, and seeded-run flows should write through `SelectionManager`.
 
 ## Planned Domain Splits
 
@@ -76,6 +77,7 @@ Content should eventually split into resolvers and registries:
 - Weapon behavior registry for future custom weapon behavior types
 - Difficulty manager and mutator registry for future challenge rules
 - RunRuleSet as the single per-run rule composition point
+- Selection manager for character, stage, map, difficulty, challenge, custom stage, seed, and ruleset IDs
 
 ## Risk Areas
 
@@ -87,3 +89,4 @@ Content should eventually split into resolvers and registries:
 - Leaderboards mixing incompatible schemas, seeds, difficulties, or content versions
 - Rule changes bypassing `RunRuleSet` and becoming invisible to CSV or leaderboard keys
 - Theme or skin systems bypassing `AssetKeyResolver` and becoming impossible to swap per appearance selection
+- Selection UI directly mutating individual managers instead of using `SelectionManager`

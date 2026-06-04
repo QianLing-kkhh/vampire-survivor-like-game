@@ -23,10 +23,16 @@ export class MapManager {
   private readonly mapData: MapData;
 
   getSelectedMap(): MapDefinition {
-    return this.getMap(this.selectedMapId);
+    return this.getMap(this.getSelectedMapId());
   }
 
   getSelectedMapId(): string {
+    const savedMapId = SaveManager.get().selections.selectedMapId;
+
+    this.selectedMapId = this.mapData[savedMapId]
+      ? savedMapId
+      : DEFAULT_CONTENT_IDS.map;
+
     return this.selectedMapId;
   }
 
@@ -35,7 +41,6 @@ export class MapManager {
 
     SaveManager.update({
       selections: {
-        ...SaveManager.get().selections,
         selectedMapId: this.selectedMapId,
       },
     });

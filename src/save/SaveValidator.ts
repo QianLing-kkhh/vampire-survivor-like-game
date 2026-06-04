@@ -85,6 +85,10 @@ export class SaveValidator {
     this.validateOptionalString(value, 'selectedStageId', 'selections.selectedStageId', issues);
     this.validateOptionalString(value, 'selectedMapId', 'selections.selectedMapId', issues);
     this.validateOptionalString(value, 'selectedDifficultyId', 'selections.selectedDifficultyId', issues);
+    this.validateOptionalString(value, 'selectedChallengeId', 'selections.selectedChallengeId', issues);
+    this.validateOptionalString(value, 'selectedCustomStageId', 'selections.selectedCustomStageId', issues);
+    this.validateOptionalString(value, 'selectedSeed', 'selections.selectedSeed', issues);
+    this.validateOptionalString(value, 'selectedRulesetId', 'selections.selectedRulesetId', issues);
     this.validateOptionalString(value, 'selectedThemeId', 'selections.selectedThemeId', issues);
   }
 

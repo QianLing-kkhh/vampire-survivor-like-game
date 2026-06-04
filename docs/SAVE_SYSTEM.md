@@ -35,7 +35,15 @@ Current default selections:
 - Character: `default`
 - Stage: `stage_001`
 - Map: `prototype_field`
+- Difficulty: `normal`
 - Theme: `default`
+
+Reserved future selection fields:
+
+- challenge ID
+- custom stage ID
+- seed
+- ruleset ID
 
 Current cosmetics fields:
 
@@ -141,11 +149,14 @@ Legacy PlaytestSettings localStorage can migrate into the new save when no save 
 
 The current selected IDs are save-backed:
 
+- `SelectionManager`
 - `CharacterManager`
 - `StageManager`
 - `MapManager`
 
-There is no selection UI yet. Managers fall back to defaults if a saved ID is missing from registered content.
+`SelectionManager` is the future facade for character/stage/map/difficulty/challenge/custom selections. There is no formal selection UI yet. Managers fall back to defaults if a saved ID is missing from registered content.
+
+Future custom stage selection should write `selectedCustomStageId`, `selectedSeed`, and `selectedRulesetId` through `SelectionManager` rather than directly changing `StageManager`.
 
 ## Appearance Integration
 

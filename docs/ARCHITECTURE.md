@@ -92,6 +92,9 @@ Current status:
 
 These managers prepare the project for multi-character, multi-stage, and multi-map selection without adding UI yet.
 
+- `SelectionManager`: future-facing facade for character, stage, map, difficulty, challenge, custom stage, seed, and ruleset selections.
+- `SelectionState`: serializable selected IDs for the current intended run.
+- `SelectionSummary`: display-friendly current selection validation and names for Title/future selection scenes.
 - `CharacterManager`: reads character definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `default`.
 - `StageManager`: reads stage definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `stage_001`.
 - `MapManager`: reads map definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `prototype_field`.
@@ -102,7 +105,7 @@ Current defaults:
 - Stage: `stage_001`
 - Map: `prototype_field`
 
-Selection UI is planned, not implemented.
+Selection UI is planned, not implemented. `TitleScene` may show a compact current-selection summary, but it does not provide a formal selector.
 
 ## Progression Layer
 
@@ -201,7 +204,7 @@ BootScene / PreloadScene
   -> preload assets and ensure runtime can use registered content
 TitleScene
   -> GameScene
-    -> managers resolve selected character/stage/map
+    -> SelectionManager / managers resolve selected character/stage/map
     -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
     -> GameplayUpdater updates runtime systems
@@ -225,6 +228,7 @@ TitleScene
 - Endless Boss lifecycle should go through `EndlessBossManager`; concrete Boss skills should go through `BossSkillFactory` and `BossSkillRuntime`.
 - Per-run result fields should be added to `RunState` and `RunResultBuilder`, not manually assembled in UI.
 - Persistent player selections and settings should go through `SaveManager`.
+- Future character/stage/map/custom-stage UI should write through `SelectionManager`.
 - Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.
 - Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.
