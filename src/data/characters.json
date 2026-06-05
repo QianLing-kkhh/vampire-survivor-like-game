@@ -8,12 +8,27 @@
       "maxHp": 90,
       "moveSpeed": 230,
       "pickupRange": 2.0,
-      "expMultiplier": 1
+      "expMultiplier": 1,
+      "damageMultiplier": 1,
+      "physicalDamageMultiplier": 1.02,
+      "projectileDamageMultiplier": 1.02,
+      "critChance": 0.04,
+      "critDamageMultiplier": 1.5,
+      "knockbackPowerMultiplier": 1.03,
+      "damageTakenMultiplier": 1,
+      "healingMultiplier": 1,
+      "shieldGainMultiplier": 1,
+      "expGainMultiplier": 1,
+      "treasureDropMultiplier": 1,
+      "upgradeChoiceBonus": 0
     },
     "growthPerLevel": {
       "maxHp": 0.8,
       "moveSpeed": 0.6,
-      "pickupRange": 0.01
+      "pickupRange": 0.01,
+      "physicalDamageMultiplier": 0.0005,
+      "projectileDamageMultiplier": 0.0005,
+      "critChance": 0.0005
     },
     "levelUpEffect": {
       "type": "healLostHpPercent",
@@ -39,13 +54,26 @@
       "maxHp": 75,
       "moveSpeed": 195,
       "pickupRange": 2.1,
-      "expMultiplier": 1
+      "expMultiplier": 1,
+      "damageMultiplier": 1,
+      "magicDamageMultiplier": 1.04,
+      "explosionDamageMultiplier": 1.03,
+      "critChance": 0.02,
+      "critDamageMultiplier": 1.55,
+      "damageTakenMultiplier": 1.03,
+      "healingMultiplier": 1,
+      "shieldGainMultiplier": 0.95,
+      "expGainMultiplier": 1,
+      "treasureDropMultiplier": 1,
+      "upgradeChoiceBonus": 0
     },
     "growthPerLevel": {
       "maxHp": 0.5,
       "moveSpeed": 0.35,
       "pickupRange": 0.015,
-      "weaponDamageMultiplier": 0.006
+      "magicDamageMultiplier": 0.001,
+      "explosionDamageMultiplier": 0.001,
+      "damageMultiplier": 0.0005
     },
     "levelUpEffect": {
       "type": "none"
@@ -70,12 +98,24 @@
       "maxHp": 115,
       "moveSpeed": 185,
       "pickupRange": 2.2,
-      "expMultiplier": 1
+      "expMultiplier": 1,
+      "damageMultiplier": 1,
+      "orbitDamageMultiplier": 1.03,
+      "areaDamageMultiplier": 1.01,
+      "damageTakenMultiplier": 0.98,
+      "healingMultiplier": 1.15,
+      "shieldGainMultiplier": 1.1,
+      "expGainMultiplier": 1,
+      "treasureDropMultiplier": 1,
+      "upgradeChoiceBonus": 0
     },
     "growthPerLevel": {
       "maxHp": 1.2,
       "moveSpeed": 0.25,
-      "pickupRange": 0.012
+      "pickupRange": 0.012,
+      "healingMultiplier": 0.001,
+      "shieldGainMultiplier": 0.001,
+      "orbitDamageMultiplier": 0.0005
     },
     "levelUpEffect": {
       "type": "healLostHpPercent",
@@ -101,12 +141,26 @@
       "maxHp": 130,
       "moveSpeed": 175,
       "pickupRange": 1.9,
-      "expMultiplier": 1
+      "expMultiplier": 1,
+      "damageMultiplier": 1,
+      "physicalDamageMultiplier": 1.04,
+      "areaDamageMultiplier": 1.03,
+      "knockbackPowerMultiplier": 1.08,
+      "damageTakenMultiplier": 0.95,
+      "armorFlat": 1,
+      "healingMultiplier": 1,
+      "shieldGainMultiplier": 1.05,
+      "expGainMultiplier": 1,
+      "treasureDropMultiplier": 1,
+      "upgradeChoiceBonus": 0
     },
     "growthPerLevel": {
       "maxHp": 1.5,
       "moveSpeed": 0.2,
-      "pickupRange": 0.008
+      "pickupRange": 0.008,
+      "physicalDamageMultiplier": 0.0005,
+      "areaDamageMultiplier": 0.0005,
+      "armorFlat": 0.02
     },
     "levelUpEffect": {
       "type": "none"

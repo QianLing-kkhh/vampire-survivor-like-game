@@ -13,7 +13,7 @@ Do not add another broad manager, registry, provider, or shell unless it is requ
 Future architecture should assume support for:
 
 - Multiple characters
-- Character archetypes with initial stats, level growth, starting weapons, level-up effects, damage reactions, skins, and future exclusive upgrade/evolution routes
+- Character archetypes with initial stats, level growth, combat/defense/resource attributes, weapon-tag damage multipliers, starting weapons, level-up effects, damage reactions, skins, and future exclusive upgrade/evolution routes
 - Multiple stages
 - Multiple maps
 - Random stages
@@ -71,7 +71,7 @@ Future architecture should assume support for:
 12. Difficulty, challenge, and custom rule changes should prefer `RunRuleSet` mutators over direct runtime if/else branches.
 13. Future skins/themes should use `AppearanceManager`, `AppearanceRegistry`, and `AssetKeyResolver` rather than direct texture strings.
 14. Future CharacterSelect, StageSelect, CustomStageSelect, daily challenge, and seeded-run flows should write through `SelectionManager`.
-15. Character-specific growth and reaction behavior should live in `CharacterRuntime` and character configs, not `GameScene`.
+15. Character-specific growth, weapon-tag multipliers, and reaction behavior should live in `CharacterRuntime`, `PlayerStats`, `WeaponManager`, and character configs, not `GameScene`.
 16. Gameplay randomness should use injected `RandomSource` streams from `RandomManager`, not direct `Math.random()`.
 17. New cross-system observers should subscribe to `GameEventBus` instead of wiring directly into `GameScene`, manager callbacks, or UI events.
 18. Achievements, milestones, quests, and unlock triggers should evaluate data-driven definitions and persist through `SaveManager.progression`.

@@ -202,6 +202,7 @@ These managers prepare the project for multi-character, multi-stage, and multi-m
 - `SelectionSummary`: display-friendly current selection validation and names for Title/future selection scenes.
 - `CharacterManager`: reads character definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `default`.
 - `CharacterRuntime`: per-run character runtime for starting weapon, skin id, level-based base stat growth, level-up effects, and damage reaction skills.
+- `CharacterStats` / `PlayerStats`: shared stat model for character combat, defense, and resource identity, including generic damage, weapon tag multipliers, crit fields, cooldown, knockback, damage taken, armor, healing, shield gain, EXP, treasure, and future upgrade choice bonuses.
 - `CharacterLevelUpEffect`: data-driven level-up effects such as the Assassin's lost-HP heal.
 - `CharacterDamageReactionSkill`: data-driven damage reactions such as shockwave and future blink/zone/sanctuary behaviors.
 - `StageManager`: reads stage definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `stage_001`.
@@ -213,7 +214,7 @@ Current defaults:
 - Stage: `stage_001`
 - Map: `prototype_field`
 
-Minimal Character/Stage selection UI exists. Character definitions now include initial stats, per-level growth, starting weapon, optional skin id, level-up effect, damage reaction skill, and reserved exclusive upgrade/evolution ids. Custom stages can appear in Stage Select after validation and local storage. Map selection, random stage selection, difficulty selection, detailed previews, unlock presentation, and custom challenge selection remain planned.
+Minimal Character/Stage selection UI exists. Character definitions now include initial stats, per-level growth, starting weapon, optional skin id, level-up effect, damage reaction skill, and reserved exclusive upgrade/evolution ids. The stat model can express physical, magic, projectile, aura, orbit, area, and explosion damage multipliers for future weapon-tag interactions; random crit/dodge, resource multipliers, and deeper defense hooks remain intentionally low-risk/foundation until dedicated gameplay tasks wire them in. Custom stages can appear in Stage Select after validation and local storage. Map selection, random stage selection, difficulty selection, detailed previews, unlock presentation, and custom challenge selection remain planned.
 
 Valid custom stages saved through `CustomStageStorage` are exposed by `StageManager.listSelectableStages()` and can be selected in `StageSelectScene`. They are not registered into the builtin `ContentRegistry`; `SelectionManager` stores `selectedCustomStageId`, while `StageManager`, `MapManager`, and `GameplayInitializer` resolve the package at runtime.
 

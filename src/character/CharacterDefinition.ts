@@ -4,13 +4,9 @@ import {
   CharacterGrowthPerLevel,
   CharacterInitialStats,
 } from './CharacterStats';
+import { PlayerStatsData } from '../player/PlayerStats';
 
-export interface CharacterBaseStats {
-  maxHp: number;
-  moveSpeed: number;
-  pickupRange: number;
-  expMultiplier: number;
-}
+export type CharacterBaseStats = PlayerStatsData;
 
 export interface CharacterDefinition {
   id: string;

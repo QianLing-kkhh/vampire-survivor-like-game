@@ -5,6 +5,7 @@ import { RunStats } from '../stats/RunStats';
 import { Weapon, WeaponConfig } from './Weapon';
 import { WeaponFactory } from './WeaponFactory';
 import { WeaponTag } from './tags/WeaponTag';
+import { WeaponTagQuery } from './tags/WeaponTagQuery';
 
 type ManagedWeapon = Weapon & {
   destroy?: () => void;
@@ -73,6 +74,19 @@ export interface WeaponAutoContext {
   bibleRadiusPx?: number;
 }
 
+export interface WeaponCharacterStatModifiers {
+  damageMultiplier: number;
+  physicalDamageMultiplier: number;
+  magicDamageMultiplier: number;
+  projectileDamageMultiplier: number;
+  auraDamageMultiplier: number;
+  orbitDamageMultiplier: number;
+  areaDamageMultiplier: number;
+  explosionDamageMultiplier: number;
+  cooldownMultiplier: number;
+  projectileSpeedMultiplier: number;
+}
+
 export class WeaponManager {
   private static readonly DEFAULT_WEAPON_UPGRADE_LIMIT = 6;
   private static readonly EVOLVED_WEAPON_UPGRADE_LIMIT = 10;
@@ -100,6 +114,18 @@ export class WeaponManager {
     cooldownMultiplier: 1,
     projectileSpeedMultiplier: 1,
   };
+  private characterStatModifiers: WeaponCharacterStatModifiers = {
+    damageMultiplier: 1,
+    physicalDamageMultiplier: 1,
+    magicDamageMultiplier: 1,
+    projectileDamageMultiplier: 1,
+    auraDamageMultiplier: 1,
+    orbitDamageMultiplier: 1,
+    areaDamageMultiplier: 1,
+    explosionDamageMultiplier: 1,
+    cooldownMultiplier: 1,
+    projectileSpeedMultiplier: 1,
+  };
   private endlessDamageMultiplierProvider?: () => number;
   private currentEndlessDamageMultiplier = 1;
 
@@ -113,7 +139,7 @@ export class WeaponManager {
       weapon.setRunStats(this.runStats);
     }
 
-    weapon.setPassiveModifiers(this.getCombinedPassiveModifiers());
+    weapon.setPassiveModifiers(this.getCombinedPassiveModifiers(weapon));
     this.weapons.push(weapon);
   }
 
@@ -123,6 +149,23 @@ export class WeaponManager {
     projectileSpeedMultiplier: number;
   }): void {
     this.passiveModifiers = modifiers;
+
+    this.applyCurrentPassiveModifiers();
+  }
+
+  setCharacterStatModifiers(modifiers: Partial<WeaponCharacterStatModifiers>): void {
+    this.characterStatModifiers = {
+      damageMultiplier: modifiers.damageMultiplier ?? 1,
+      physicalDamageMultiplier: modifiers.physicalDamageMultiplier ?? 1,
+      magicDamageMultiplier: modifiers.magicDamageMultiplier ?? 1,
+      projectileDamageMultiplier: modifiers.projectileDamageMultiplier ?? 1,
+      auraDamageMultiplier: modifiers.auraDamageMultiplier ?? 1,
+      orbitDamageMultiplier: modifiers.orbitDamageMultiplier ?? 1,
+      areaDamageMultiplier: modifiers.areaDamageMultiplier ?? 1,
+      explosionDamageMultiplier: modifiers.explosionDamageMultiplier ?? 1,
+      cooldownMultiplier: modifiers.cooldownMultiplier ?? 1,
+      projectileSpeedMultiplier: modifiers.projectileSpeedMultiplier ?? 1,
+    };
 
     this.applyCurrentPassiveModifiers();
   }
@@ -526,24 +569,61 @@ export class WeaponManager {
   }
 
   private applyCurrentPassiveModifiers(): void {
-    const modifiers = this.getCombinedPassiveModifiers();
-
     for (const weapon of this.weapons) {
-      weapon.setPassiveModifiers(modifiers);
+      weapon.setPassiveModifiers(this.getCombinedPassiveModifiers(weapon));
     }
   }
 
-  private getCombinedPassiveModifiers(): {
+  private getCombinedPassiveModifiers(weapon: ManagedWeapon): {
     damageMultiplier: number;
     cooldownMultiplier: number;
     projectileSpeedMultiplier: number;
   } {
     return {
       damageMultiplier: this.passiveModifiers.damageMultiplier
-        * this.currentEndlessDamageMultiplier,
-      cooldownMultiplier: this.passiveModifiers.cooldownMultiplier,
-      projectileSpeedMultiplier: this.passiveModifiers.projectileSpeedMultiplier,
+        * this.currentEndlessDamageMultiplier
+        * this.getCharacterTagDamageMultiplier(weapon),
+      cooldownMultiplier: this.passiveModifiers.cooldownMultiplier
+        * this.characterStatModifiers.cooldownMultiplier,
+      projectileSpeedMultiplier: this.passiveModifiers.projectileSpeedMultiplier
+        * this.characterStatModifiers.projectileSpeedMultiplier,
     };
+  }
+
+  private getCharacterTagDamageMultiplier(weapon: ManagedWeapon): number {
+    const config = (weapon as unknown as { config?: WeaponConfig } | undefined)?.config;
+    const tags = config?.tags;
+    let multiplier = this.characterStatModifiers.damageMultiplier;
+
+    if (WeaponTagQuery.hasTag(tags, 'physical')) {
+      multiplier *= this.characterStatModifiers.physicalDamageMultiplier;
+    }
+
+    if (WeaponTagQuery.hasTag(tags, 'magic')) {
+      multiplier *= this.characterStatModifiers.magicDamageMultiplier;
+    }
+
+    if (WeaponTagQuery.hasTag(tags, 'projectile')) {
+      multiplier *= this.characterStatModifiers.projectileDamageMultiplier;
+    }
+
+    if (WeaponTagQuery.hasTag(tags, 'aura')) {
+      multiplier *= this.characterStatModifiers.auraDamageMultiplier;
+    }
+
+    if (WeaponTagQuery.hasTag(tags, 'orbit')) {
+      multiplier *= this.characterStatModifiers.orbitDamageMultiplier;
+    }
+
+    if (WeaponTagQuery.hasTag(tags, 'area')) {
+      multiplier *= this.characterStatModifiers.areaDamageMultiplier;
+    }
+
+    if (WeaponTagQuery.hasTag(tags, 'explosive')) {
+      multiplier *= this.characterStatModifiers.explosionDamageMultiplier;
+    }
+
+    return multiplier;
   }
 
   private recordWeaponUpgrade(weaponId: string, upgradeId: string): void {
