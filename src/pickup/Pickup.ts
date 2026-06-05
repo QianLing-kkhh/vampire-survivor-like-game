@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 
 type PickupBody = Phaser.GameObjects.GameObject & {
@@ -23,6 +24,7 @@ export class Pickup {
   readonly body: PickupBody;
   isMagnetizing = false;
   isCollected = false;
+  private shadow?: Phaser.GameObjects.Ellipse;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -31,6 +33,7 @@ export class Pickup {
     readonly exp: number,
   ) {
     this.body = this.createBody(scene, x, y);
+    this.shadow = ShadowFactory.createShadow(scene, this.body, 'pickup');
   }
 
   startMagnet(): void {
@@ -62,6 +65,7 @@ export class Pickup {
 
     this.body.x += ((playerX - this.body.x) / distance) * step;
     this.body.y += ((playerY - this.body.y) / distance) * step;
+    this.updateShadow();
 
     const scale = Phaser.Math.Clamp(distance / 140, 0.6, 1);
     this.body.setScale?.(scale);
@@ -86,6 +90,8 @@ export class Pickup {
 
     this.isCollected = true;
     this.createCollectFlash();
+    ShadowFactory.destroyShadow(this.shadow);
+    this.shadow = undefined;
     this.body.destroy();
     return this.exp;
   }
@@ -96,7 +102,15 @@ export class Pickup {
     }
 
     this.isCollected = true;
+    ShadowFactory.destroyShadow(this.shadow);
+    this.shadow = undefined;
     this.body.destroy();
+  }
+
+  private updateShadow(): void {
+    this.shadow = this.shadow
+      ? ShadowFactory.updateShadow(this.shadow, this.body, 'pickup')
+      : ShadowFactory.createShadow(this.scene, this.body, 'pickup');
   }
 
   private createCollectFlash(): void {

@@ -40,6 +40,8 @@ The runtime layer keeps per-run object references and update order out of the sc
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
 - `PerformanceMonitor`: per-run lightweight stats collector for FPS, counts, and object lifecycle counters.
 - `PoolManager`: per-run object pool registry for reusable runtime visuals and future high-volume objects.
+- `VisualSettings`: settings-backed helper for display quality, asset style, shadows, and graphics fallback decisions.
+- `ShadowFactory`: creates non-colliding Phaser ellipse shadows for world objects when display settings allow them.
 - `check-architecture-boundaries.mjs`: warning-only static guard for direct JSON imports, direct `Math.random`, direct `localStorage`, scattered asset keys, and `GameScene` growth.
 
 Current flow:
@@ -186,12 +188,15 @@ The appearance layer is the foundation for future themes, skins, UI themes, map 
 - `SkinDefinition`: describes target-specific skins for characters, weapons, enemies, bosses, UI, world, and effects.
 - `ThemeAssetOverrides`: maps logical asset keys to concrete Phaser texture, animation, icon, UI, world, or audio keys.
 - `AssetKeyResolver`: remains the single runtime asset-key path. It checks active appearance overrides first, then falls back to the default art-pack/legacy key map.
+- `VisualSettings`: lets the resolver prefer new art, legacy art, or graphics fallback for gameplay world objects.
+- `ShadowFactory`: adds optional object shadows for player, enemies, treasure, pickups, landmarks, and selected large projectiles without changing hitboxes.
 
 Current status:
 
 - Only the `default` theme is registered.
 - No appearance selection UI or mod art loader exists yet.
 - Default appearance overrides are empty, so current visuals remain unchanged.
+- `displayQuality` / `assetStyle` settings can choose new art, legacy art, or graphics fallback. Minimal quality disables shadows and avoids gameplay PNGs where callers have graphics fallbacks.
 
 ## Character / Stage / Map Layer
 
@@ -408,6 +413,7 @@ Responsive helpers centralize screen layout rules.
 - `PreloadScene`: central asset/audio preload and spritesheet animation creation.
 - Art pack assets: `public/assets/art/` plus `animation_manifest.json`.
 - `AssetKeyResolver`: centralized texture, animation, icon, and fallback resolution, including the appearance override hook.
+- `ShadowFactory`: centralized optional shadow creation for visible gameplay objects.
 - `AudioManager`: channel-based audio playback for BGM, SFX, weapon, and UI channels.
 - `I18n`: locale lookup, fallback, and interpolation.
 - `Locale`: supported locales and display names.

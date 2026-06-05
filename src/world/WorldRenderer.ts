@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 
 import { WorldConfig, WorldRenderConfig } from './WorldConfig';
@@ -108,6 +109,7 @@ export class WorldRenderer {
       const displaySize = VisualScale.getLandmarkDisplaySize('tree');
       tree.setDisplaySize(displaySize, displaySize);
       tree.setDepth(-79);
+      ShadowFactory.createShadow(this.scene, tree, 'landmark');
       return;
     }
 
@@ -123,6 +125,7 @@ export class WorldRenderer {
 
     trunk.setDepth(-80);
     leaves.setDepth(-79);
+    ShadowFactory.createShadow(this.scene, leaves, 'landmark');
   }
 
   private renderRock(x: number, y: number): void {
@@ -133,6 +136,7 @@ export class WorldRenderer {
       const displaySize = VisualScale.getLandmarkDisplaySize('rock');
       rockImage.setDisplaySize(displaySize, displaySize);
       rockImage.setDepth(-80);
+      ShadowFactory.createShadow(this.scene, rockImage, 'landmark');
       return;
     }
 
@@ -148,6 +152,7 @@ export class WorldRenderer {
 
     rock.setStrokeStyle(2, 0x94a3b8, 0.5);
     rock.setDepth(-80);
+    ShadowFactory.createShadow(this.scene, rock, 'landmark');
   }
 
   private renderGrave(x: number, y: number): void {
@@ -158,6 +163,7 @@ export class WorldRenderer {
       const displaySize = VisualScale.getLandmarkDisplaySize('grave');
       graveImage.setDisplaySize(displaySize, displaySize);
       graveImage.setDepth(-80);
+      ShadowFactory.createShadow(this.scene, graveImage, 'landmark');
       return;
     }
 
@@ -182,5 +188,6 @@ export class WorldRenderer {
     top.setStrokeStyle(2, 0x9ca3af, 0.5);
     grave.setDepth(-80);
     top.setDepth(-79);
+    ShadowFactory.createShadow(this.scene, grave, 'landmark');
   }
 }

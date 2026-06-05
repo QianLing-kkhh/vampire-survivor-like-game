@@ -75,7 +75,26 @@ export class SettingsManager {
   }
 
   static updateDisplay(partial: Partial<DisplaySettingsData>): SettingsData {
-    return SettingsManager.updateDomain('display', partial);
+    const nextPartial = { ...partial };
+
+    switch (partial.displayQuality) {
+      case 'high':
+        nextPartial.assetStyle = 'newArt';
+        nextPartial.shadowsEnabled = true;
+        break;
+      case 'low':
+        nextPartial.assetStyle = 'legacy';
+        nextPartial.shadowsEnabled = false;
+        break;
+      case 'minimal':
+        nextPartial.assetStyle = 'graphics';
+        nextPartial.shadowsEnabled = false;
+        break;
+      default:
+        break;
+    }
+
+    return SettingsManager.updateDomain('display', nextPartial);
   }
 
   static updateInput(partial: Partial<InputSettingsData>): SettingsData {

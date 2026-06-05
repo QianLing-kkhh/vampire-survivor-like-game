@@ -117,6 +117,9 @@ Current settings:
 - SFX Volume
 - Weapon Volume
 - UI Volume
+- Graphics Quality
+- Asset Style
+- Shadows
 - Language
 
 Settings are persisted through `PlaytestSettings`, which now reads/writes through `SaveManager`.
@@ -132,6 +135,15 @@ Settings storage is split into domains behind `SettingsManager`:
 `DeveloperSettings` includes a developer-only DebugPanel toggle and presentation settings. The panel is disabled by default, can be toggled with F3, and is intended for local diagnostics rather than player-facing UI.
 
 `PlaytestSettings` remains as a compatibility facade so existing UI and runtime callers keep working. New systems should use `SettingsManager` directly when they belong to a specific settings domain.
+
+Display quality is stored in `settings.display`:
+
+- `high`: new art is preferred and shadows are enabled.
+- `medium`: new art is preferred; shadows remain user-controlled.
+- `low`: legacy art is preferred and shadows are disabled by default.
+- `minimal`: gameplay world objects prefer Phaser graphics fallbacks and shadows are disabled.
+
+`assetStyle` can be `newArt`, `legacy`, or `graphics`. The `graphics` style is intended for low-end fallback testing; UI icons may still use PNGs so menus remain readable.
 
 ## Appearance
 
@@ -153,6 +165,8 @@ Settings should apply immediately to the current run.
 - Endless Mode changes final Boss result behavior.
 - Audio and volume settings affect playback immediately.
 - Language changes refresh current Settings UI and uses i18n lookup elsewhere.
+- Shadow toggles apply to most newly updated runtime objects immediately; objects that are not updated every frame may apply on the next run.
+- Asset style and quality affect newly resolved gameplay art immediately for new objects. Existing sprites may keep their current texture until they are recreated.
 
 Do not restart the scene just to apply settings.
 

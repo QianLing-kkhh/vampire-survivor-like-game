@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 
 export class TreasureChest {
@@ -21,10 +22,12 @@ export class TreasureChest {
   };
   isMagnetizing = false;
   isOpened = false;
+  private shadow?: Phaser.GameObjects.Ellipse;
 
   constructor(private readonly scene: Phaser.Scene, x: number, y: number) {
     this.body = this.createBody(scene, x, y);
     this.body.setDepth(12);
+    this.shadow = ShadowFactory.createShadow(scene, this.body, 'treasure');
 
     if (!AssetKeyResolver.getPickupTextureKey(scene, 'treasure_chest')) {
       const lid = scene.add.rectangle(
@@ -83,6 +86,7 @@ export class TreasureChest {
 
     this.body.x += ((playerX - this.body.x) / distance) * step;
     this.body.y += ((playerY - this.body.y) / distance) * step;
+    this.updateShadow();
 
     const lid = this.getLid();
     if (lid) {
@@ -104,6 +108,8 @@ export class TreasureChest {
 
   destroy(): void {
     this.getLid()?.destroy();
+    ShadowFactory.destroyShadow(this.shadow);
+    this.shadow = undefined;
     this.body.destroy();
   }
 
@@ -130,6 +136,12 @@ export class TreasureChest {
 
   private getLid(): Phaser.GameObjects.Rectangle | undefined {
     return this.body.getData('lid') as Phaser.GameObjects.Rectangle | undefined;
+  }
+
+  private updateShadow(): void {
+    this.shadow = this.shadow
+      ? ShadowFactory.updateShadow(this.shadow, this.body, 'treasure')
+      : ShadowFactory.createShadow(this.scene, this.body, 'treasure');
   }
 
   private createBody(

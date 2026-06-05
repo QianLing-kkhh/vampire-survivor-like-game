@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { Enemy } from '../enemy/Enemy';
+import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
@@ -24,6 +25,7 @@ type AxeProjectileBody = Phaser.GameObjects.GameObject & {
 
 interface AxeProjectile {
   body: AxeProjectileBody;
+  shadow?: Phaser.GameObjects.Ellipse;
   startX: number;
   startY: number;
   direction: Phaser.Math.Vector2;
@@ -74,6 +76,7 @@ export class AxeWeapon extends Weapon {
 
   clearProjectiles(): void {
     for (const projectile of this.projectiles) {
+      ShadowFactory.destroyShadow(projectile.shadow);
       projectile.body.destroy();
     }
 
@@ -128,9 +131,15 @@ export class AxeWeapon extends Weapon {
 
     for (const direction of this.getProjectileDirections(baseDirection)) {
       const body = this.createProjectileBody(context.player.x, context.player.y);
+      const shadow = ShadowFactory.createShadow(
+        this.scene,
+        body,
+        this.id === 'death_spiral' ? 'largeProjectile' : 'axeProjectile',
+      );
 
       this.projectiles.push({
         body,
+        shadow,
         startX: context.player.x,
         startY: context.player.y,
         direction,
@@ -159,6 +168,7 @@ export class AxeWeapon extends Weapon {
         continue;
       }
 
+      ShadowFactory.destroyShadow(projectile.shadow);
       projectile.body.destroy();
       this.projectiles.splice(index, 1);
     }
@@ -190,6 +200,17 @@ export class AxeWeapon extends Weapon {
     projectile.body.x += projectile.perpendicularDirection.x * spiralOffset;
     projectile.body.y += projectile.perpendicularDirection.y * spiralOffset;
     projectile.body.rotation += 0.28;
+    projectile.shadow = projectile.shadow
+      ? ShadowFactory.updateShadow(
+        projectile.shadow,
+        projectile.body,
+        this.id === 'death_spiral' ? 'largeProjectile' : 'axeProjectile',
+      )
+      : ShadowFactory.createShadow(
+        this.scene,
+        projectile.body,
+        this.id === 'death_spiral' ? 'largeProjectile' : 'axeProjectile',
+      );
   }
 
   private checkProjectileHits(

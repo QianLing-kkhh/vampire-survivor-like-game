@@ -74,6 +74,7 @@ export class EnemyFactory {
 
       enemy.body.destroy();
       (enemy as unknown as { body: EnemyImageBody | EnemySpriteBody }).body = body;
+      enemy.refreshShadow();
 
       return enemy;
     }

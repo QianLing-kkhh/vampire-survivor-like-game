@@ -4,7 +4,9 @@ import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { SettingsManager } from '../settings/SettingsManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
+import { ASSET_STYLES, AssetStyle, DISPLAY_QUALITIES, DisplayQuality } from '../visual/DisplayQuality';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type SettingsMenuHandler = () => void;
@@ -74,6 +76,7 @@ export class SettingsMenu {
     this.buttons.length = 0;
     this.title.setText(this.t('settings.title', 'Settings'));
     const settings = PlaytestSettings.get();
+    const display = SettingsManager.getDisplay();
     const entries = [
       {
         label: `${this.t('settings.autoMovement', 'Auto Movement')}: ${this.formatOnOff(settings.autoMovement)}`,
@@ -110,6 +113,20 @@ export class SettingsMenu {
       {
         label: `${this.t('settings.uiVolume', 'UI Volume')}: ${this.formatVolume(settings.uiVolume)}`,
         action: () => this.toggle(() => this.cycleVolume('ui')),
+      },
+      {
+        label: `${this.t('settings.graphicsQuality', 'Graphics Quality')}: ${this.formatDisplayQuality(display.displayQuality)}`,
+        action: () => this.toggle(() => this.cycleDisplayQuality(display.displayQuality)),
+      },
+      {
+        label: `${this.t('settings.assetStyle', 'Asset Style')}: ${this.formatAssetStyle(display.assetStyle)}`,
+        action: () => this.toggle(() => this.cycleAssetStyle(display.assetStyle)),
+      },
+      {
+        label: `${this.t('settings.shadows', 'Shadows')}: ${this.formatOnOff(display.shadowsEnabled)}`,
+        action: () => this.toggle(() => SettingsManager.updateDisplay({
+          shadowsEnabled: !SettingsManager.getDisplay().shadowsEnabled,
+        })),
       },
       {
         label: `${this.t('settings.language', I18n.t('common.language'))}: ${I18n.getLocaleDisplayName()}`,
@@ -244,6 +261,50 @@ export class SettingsMenu {
 
   private formatVolume(volume: number): string {
     return `${Math.round(volume * 100)}%`;
+  }
+
+  private cycleDisplayQuality(current: DisplayQuality): void {
+    const nextQuality = this.getNextValue(DISPLAY_QUALITIES, current);
+
+    SettingsManager.updateDisplay({ displayQuality: nextQuality });
+  }
+
+  private cycleAssetStyle(current: AssetStyle): void {
+    const nextStyle = this.getNextValue(ASSET_STYLES, current);
+
+    SettingsManager.updateDisplay({ assetStyle: nextStyle });
+  }
+
+  private formatDisplayQuality(quality: DisplayQuality): string {
+    switch (quality) {
+      case 'medium':
+        return this.t('settings.qualityMedium', 'Medium');
+      case 'low':
+        return this.t('settings.qualityLow', 'Low');
+      case 'minimal':
+        return this.t('settings.qualityMinimal', 'Minimal');
+      case 'high':
+      default:
+        return this.t('settings.qualityHigh', 'High');
+    }
+  }
+
+  private formatAssetStyle(assetStyle: AssetStyle): string {
+    switch (assetStyle) {
+      case 'legacy':
+        return this.t('settings.assetStyleLegacy', 'Legacy');
+      case 'graphics':
+        return this.t('settings.assetStyleGraphics', 'Graphics');
+      case 'newArt':
+      default:
+        return this.t('settings.assetStyleNew', 'New');
+    }
+  }
+
+  private getNextValue<T extends string>(values: readonly T[], current: T): T {
+    const currentIndex = values.indexOf(current);
+
+    return values[(currentIndex + 1) % values.length] ?? values[0];
   }
 
   private syncSceneBgm(): void {

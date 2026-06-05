@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AppearanceManager } from '../appearance/AppearanceManager';
+import { VisualSettings } from '../visual/VisualSettings';
 import { AssetFallbacks } from './AssetFallbacks';
 import {
   AssetKeyEntry,
@@ -96,6 +97,7 @@ export class AssetKeyResolver {
         scene,
         { primary: `art_player_${candidateSkinId}_portrait` },
         `player.${candidateSkinId}.portrait`,
+        'icons',
       );
 
       if (portraitKey) {
@@ -268,10 +270,28 @@ export class AssetKeyResolver {
     logicalKey?: string,
     overrideDomain: 'textures' | 'icons' | 'world' | 'ui' = 'textures',
   ): string | null {
+    if (
+      VisualSettings.shouldUseGraphicsFallback()
+      && (overrideDomain === 'textures' || overrideDomain === 'world')
+    ) {
+      return null;
+    }
+
     const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, overrideDomain);
 
     if (AssetFallbacks.hasTexture(scene, overrideKey)) {
       return overrideKey;
+    }
+
+    if (VisualSettings.shouldUseLegacyArt()) {
+      const legacyKey = AssetFallbacks.resolveTexture(scene, entry.fallbacks?.[0], [
+        ...(entry.fallbacks?.slice(1) ?? []),
+        entry.primary,
+      ]);
+
+      if (legacyKey) {
+        return legacyKey;
+      }
     }
 
     return AssetFallbacks.resolveTexture(scene, entry.primary, entry.fallbacks ?? []);
@@ -282,6 +302,10 @@ export class AssetKeyResolver {
     entry: AssetKeyEntry,
     logicalKey?: string,
   ): string | null {
+    if (VisualSettings.shouldUseGraphicsFallback()) {
+      return null;
+    }
+
     const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, 'animations');
 
     if (AssetFallbacks.hasAnimation(scene, overrideKey)) {

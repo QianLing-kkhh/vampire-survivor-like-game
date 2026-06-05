@@ -251,6 +251,7 @@ export class EnemyFlow {
       enemy.updateModifiers(deltaMs);
 
       if (enemy.isDead || enemy.dashEnabled) {
+        enemy.updateShadow();
         continue;
       }
 
@@ -258,6 +259,7 @@ export class EnemyFlow {
         width: this.config.worldWidth,
         height: this.config.worldHeight,
       })) {
+        enemy.updateShadow();
         continue;
       }
 
@@ -267,6 +269,7 @@ export class EnemyFlow {
         deltaMs,
         enemySpeedMultiplier * this.getZoneEnemySpeedMultiplier(enemy),
       );
+      enemy.updateShadow();
     }
   }
 

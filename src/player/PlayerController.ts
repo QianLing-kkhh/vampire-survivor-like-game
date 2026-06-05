@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 
 import { PlayerStats } from './PlayerStats';
@@ -47,6 +48,7 @@ export class PlayerController {
   private externalMoveDirection?: Phaser.Math.Vector2;
   private lastFacingDirection: FacingDirection8 = 'right';
   private currentAnimationKey?: string;
+  private shadow?: Phaser.GameObjects.Ellipse;
   private temporaryMoveSpeedMultiplier = 1;
   private temporaryMoveSpeedRemainingMs = 0;
 
@@ -59,6 +61,7 @@ export class PlayerController {
     private readonly skinId?: string,
   ) {
     this.body = this.createBody(x, y);
+    this.shadow = ShadowFactory.createShadow(scene, this.body, 'player');
     this.previousPosition = new Phaser.Math.Vector2(x, y);
     this.lastFramePosition = new Phaser.Math.Vector2(x, y);
 
@@ -102,6 +105,7 @@ export class PlayerController {
     this.moveByVelocity(deltaSeconds);
     this.rollbackAbnormalMovement(deltaSeconds, direction, source);
     this.updateAnimation();
+    this.updateShadow();
     this.lastFramePosition.set(this.body.x, this.body.y);
   }
 
@@ -115,6 +119,7 @@ export class PlayerController {
     this.body.y += displacement.y;
     this.clampToWorldBounds();
     this.updateAnimation();
+    this.updateShadow();
     this.lastFramePosition.set(this.body.x, this.body.y);
   }
 
@@ -124,6 +129,12 @@ export class PlayerController {
 
   clearExternalMoveDirection(): void {
     this.externalMoveDirection = undefined;
+  }
+
+  destroy(): void {
+    ShadowFactory.destroyShadow(this.shadow);
+    this.shadow = undefined;
+    this.body.destroy();
   }
 
   getPreviousPosition(): Phaser.Math.Vector2 {
@@ -402,6 +413,12 @@ export class PlayerController {
     }
 
     this.playPlayerAnimation(body, animationKey);
+  }
+
+  private updateShadow(): void {
+    this.shadow = this.shadow
+      ? ShadowFactory.updateShadow(this.shadow, this.body, 'player')
+      : ShadowFactory.createShadow(this.scene, this.body, 'player');
   }
 
   private playPlayerAnimation(

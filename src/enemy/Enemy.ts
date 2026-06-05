@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { DamageTargetContext } from '../combat/DamageCalculator';
 import { HitResult } from '../combat/HitResult';
 import { EventBus } from '../core/EventBus';
+import { ShadowConfig, ShadowType } from '../visual/ShadowConfig';
+import { ShadowFactory } from '../visual/ShadowFactory';
 import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
 import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
 
@@ -131,6 +133,8 @@ export class Enemy {
   private knockbackRemainingMs = 0;
   private weaponKnockbackImmunityMs = 0;
   private modifierRuntime?: EnemyModifierRuntime;
+  private shadow?: Phaser.GameObjects.Ellipse;
+  private readonly shadowType: ShadowType;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -154,6 +158,8 @@ export class Enemy {
     this.dashDamageMultiplier = stats.dashDamageMultiplier ?? 1;
     this.dashTimerMs = this.dashCooldown * 1000;
     this.body = scene.add.circle(x, y, 12 * this.scale, 0xef4444);
+    this.shadowType = this.resolveShadowType();
+    this.shadow = ShadowFactory.createShadow(scene, this.body, this.shadowType, this.getShadowOptions());
     this.captureBaseScale(this.body);
   }
 
@@ -213,6 +219,17 @@ export class Enemy {
 
   updateModifiers(deltaMs: number): void {
     this.modifierRuntime?.update(deltaMs);
+  }
+
+  refreshShadow(): void {
+    ShadowFactory.destroyShadow(this.shadow);
+    this.shadow = ShadowFactory.createShadow(this.scene, this.body, this.shadowType, this.getShadowOptions());
+  }
+
+  updateShadow(): void {
+    this.shadow = this.shadow
+      ? ShadowFactory.updateShadow(this.shadow, this.body, this.shadowType, this.getShadowOptions())
+      : ShadowFactory.createShadow(this.scene, this.body, this.shadowType, this.getShadowOptions());
   }
 
   getDamageTargetContext(): DamageTargetContext {
@@ -337,6 +354,7 @@ export class Enemy {
       this.knockbackVelocity.set(0, 0);
     }
 
+    this.updateShadow();
     return true;
   }
 
@@ -401,6 +419,8 @@ export class Enemy {
 
   destroy(): void {
     this.destroyDashWarnings();
+    ShadowFactory.destroyShadow(this.shadow);
+    this.shadow = undefined;
     this.body.destroy();
   }
 
@@ -455,6 +475,7 @@ export class Enemy {
 
     this.body.setPosition(nextX, nextY);
     this.dashCurrentPosition.set(this.body.x, this.body.y);
+    this.updateShadow();
     this.dashTimerMs -= deltaMs;
 
     if (this.dashTimerMs <= 0 || hitBoundary) {
@@ -582,6 +603,30 @@ export class Enemy {
     const body = this.body as Phaser.GameObjects.GameObject & { radius?: number };
 
     return body.radius ?? 12 * this.scale;
+  }
+
+  private resolveShadowType(): ShadowType {
+    if (this.id === 'boss' || (this.id.startsWith('endless_') && this.bossLike)) {
+      return 'boss';
+    }
+
+    if (this.bossLike || this.id.endsWith('_boss')) {
+      return 'miniBoss';
+    }
+
+    return 'enemy';
+  }
+
+  private getShadowOptions(): Partial<ShadowConfig> | undefined {
+    if (this.shadowType === 'enemy') {
+      return undefined;
+    }
+
+    return {
+      width: this.shadowType === 'boss' ? 120 * this.scale : 72 * this.scale,
+      height: this.shadowType === 'boss' ? 40 * this.scale : 24 * this.scale,
+      offsetY: this.shadowType === 'boss' ? 60 * this.scale : 36 * this.scale,
+    };
   }
 
   private playHitFeedback(): void {
