@@ -64,6 +64,7 @@ import { UnlockManager } from '../unlock/UnlockManager';
 import { WeaponFactory } from '../weapon/WeaponFactory';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { MapManager } from '../map/MapManager';
+import { MapMechanicRuntime } from '../map/mechanics/MapMechanicRuntime';
 import { getCurrentVersionInfo } from '../version/VersionInfo';
 
 import { GameplayContext } from './GameplayContext';
@@ -256,6 +257,13 @@ export class GameplayInitializer {
     const enemyFactory = new EnemyFactory(config.scene, enemyConfigs, runRuleSet);
     const bossFactory = new BossFactory(config.scene, enemyConfigs, runRuleSet);
     const enemiesList: Enemy[] = [];
+    const mapMechanicRuntime = new MapMechanicRuntime(selectedMap.mechanics, {
+      scene: config.scene,
+      player,
+      enemies: enemiesList,
+      worldWidth: config.worldWidth,
+      worldHeight: config.worldHeight,
+    });
     config.runState.endlessMode = config.playtestSettings.endlessMode;
     config.runState.setRuleSetInfo(
       runRuleSet.difficulty.id,
@@ -379,6 +387,7 @@ export class GameplayInitializer {
       playerHitRadius: config.playerHitRadius,
       contactDamageCooldownMs: config.contactDamageCooldownMs,
       characterRuntime,
+      mapMechanicRuntime,
       isBossPhaseActive: () => bossController?.hasBossSpawned() === true,
       onEnemyKilled: (event) => bossController?.handleEnemyKilled(
         event,
@@ -461,6 +470,7 @@ export class GameplayInitializer {
       runRuleSet,
       relicManager,
       characterRuntime,
+      mapMechanicRuntime,
       syncCharacterCombatModifiers: () => {
         weaponManager.setCharacterStatModifiers(playerStats.getCombatModifierSnapshot());
       },

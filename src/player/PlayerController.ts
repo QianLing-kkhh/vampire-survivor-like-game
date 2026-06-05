@@ -51,6 +51,7 @@ export class PlayerController {
   private currentAnimationKey?: string;
   private shadow?: Phaser.GameObjects.Ellipse;
   private temporaryMoveSpeedMultiplier = 1;
+  private mapMoveSpeedMultiplier = 1;
   private temporaryMoveSpeedRemainingMs = 0;
   private unsubscribeSettings?: () => void;
 
@@ -128,6 +129,24 @@ export class PlayerController {
     this.updateAnimation();
     this.updateShadow();
     this.lastFramePosition.set(this.body.x, this.body.y);
+  }
+
+  setPosition(x: number, y: number): void {
+    this.previousPosition.set(this.body.x, this.body.y);
+    this.body.x = x;
+    this.body.y = y;
+    this.clampToWorldBounds();
+    this.updateAnimation();
+    this.updateShadow();
+    this.lastFramePosition.set(this.body.x, this.body.y);
+  }
+
+  stopMovement(): void {
+    this.velocity.set(0, 0);
+  }
+
+  setMapMoveSpeedMultiplier(multiplier: number): void {
+    this.mapMoveSpeedMultiplier = Math.max(0.1, multiplier);
   }
 
   setExternalMoveDirection(direction?: Phaser.Math.Vector2): void {
@@ -276,7 +295,9 @@ export class PlayerController {
   }
 
   private getEffectiveMoveSpeed(): number {
-    return this.stats.moveSpeed * this.temporaryMoveSpeedMultiplier;
+    return this.stats.moveSpeed
+      * this.temporaryMoveSpeedMultiplier
+      * this.mapMoveSpeedMultiplier;
   }
 
   private updateTemporaryMoveSpeed(deltaMs: number): void {

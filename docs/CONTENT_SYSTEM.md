@@ -26,6 +26,8 @@ The content system is the architecture foundation for built-in content, future c
 - `stages`
 - `maps`
 
+Map definitions may include optional `mechanics` entries for map-specific gameplay objects. Current built-in runtime supports `obstacle`, `slowZone`, `portal`, and visual-only `lightSource`; future definitions may add hazards, altars, destructibles, spawners, darkness, safe zones, wind fields, high ground, phase changes, and resource nodes.
+
 `ContentPackManifest` is the future metadata wrapper for custom, mod, and remote packs. It records pack id, name, version, author, source, optional content hash, compatible game-version range, dependencies, and declared provided IDs. A manifest is not a loaded pack and does not imply registration.
 
 `ContentPackSource` describes where a pack can come from: builtin, local, custom, mod, or remote. Remote sources are only metadata in the current build.
@@ -36,6 +38,7 @@ Current status:
 
 - Built-in content is registered as one builtin content pack.
 - Built-in content includes `graveyard_map` and `graveyard_stage` as the first multi-map / multi-stage content proof, using existing enemies, existing final Boss, and the `graveyard_waves` wave set.
+- `graveyard_map` also contains the first map mechanics proof: grave/tree/rock obstacles, a slowing river, paired player portals, and visual light sources.
 - Custom/mod loading is not implemented yet.
 - Remote content loading is not implemented yet.
 - The registry is not a mod loader yet.
@@ -119,6 +122,7 @@ Current validation warns for:
 - Character references to missing starting weapon
 - Evolution route references to missing weapon/passive IDs
 - Wave references to missing enemy IDs
+- Map mechanics with unsupported types are ignored by runtime until their mechanic implementation exists
 - Missing basic fields in weapons, enemies, passives, or upgrades
 - Unknown weapon tags
 - Unknown or suspicious weapon behavior config

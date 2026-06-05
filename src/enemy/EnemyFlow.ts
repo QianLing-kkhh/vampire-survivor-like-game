@@ -7,6 +7,7 @@ import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { GameEventBus } from '../events/GameEventBus';
+import { MapMechanicRuntime } from '../map/mechanics/MapMechanicRuntime';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { RunState } from '../run/RunState';
@@ -37,6 +38,7 @@ export interface EnemyFlowConfig {
   playerHitRadius: number;
   contactDamageCooldownMs: number;
   characterRuntime?: CharacterRuntime;
+  mapMechanicRuntime?: MapMechanicRuntime;
   isBossPhaseActive(): boolean;
   onEnemyKilled?(event: GameEventMap['EnemyKilled']): void;
 }
@@ -267,10 +269,21 @@ export class EnemyFlow {
         enemy,
         this.config.player.body,
         deltaMs,
-        enemySpeedMultiplier * this.getZoneEnemySpeedMultiplier(enemy),
+        enemySpeedMultiplier
+          * this.getZoneEnemySpeedMultiplier(enemy)
+          * this.getMapEnemySpeedMultiplier(enemy),
       );
+      this.config.mapMechanicRuntime?.resolveEnemyObstacleCollision(enemy);
       enemy.updateShadow();
     }
+  }
+
+  private getMapEnemySpeedMultiplier(enemy: Enemy): number {
+    return this.config.mapMechanicRuntime?.getEnemySpeedMultiplierAt(
+      enemy.body.x,
+      enemy.body.y,
+      enemy,
+    ) ?? 1;
   }
 
   private getZoneEnemySpeedMultiplier(enemy: Enemy): number {

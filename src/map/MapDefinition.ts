@@ -1,3 +1,5 @@
+import { MapMechanicDefinition } from './mechanics/MapMechanicDefinition';
+
 export interface MapDefinition {
   id: string;
   name: string;
@@ -16,4 +18,5 @@ export interface MapDefinition {
       grave?: number;
     };
   };
+  mechanics?: MapMechanicDefinition[];
 }

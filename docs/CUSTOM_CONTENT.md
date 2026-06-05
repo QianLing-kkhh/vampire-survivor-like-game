@@ -83,8 +83,13 @@ The first future version should only support:
 - Custom stage
 - Custom map
 - Custom waves using existing enemies and Bosses
+- Future custom map mechanics using the same `MapMechanicDefinition` shape as built-in maps
 
 The current custom stage schema follows that scope: it only references existing enemies/Bosses and does not allow custom weapons, enemies, passives, or Boss skills. Those belong to later mod content once validators are more mature.
+
+Custom stage map mechanics are not wired into `CustomStageSchema` yet. When added, they should reuse the built-in map mechanic definitions for `obstacle`, `slowZone`, `portal`, and `lightSource`, then expand only after validation rules can catch missing portal targets, blocked spawn areas, and excessive obstacle density.
+
+Planned map mechanic extensions include destructible objects, hazards, altars, map spawners, darkness and light-source visibility, safe zones, wind fields, high-ground rules, Boss phase map changes, and resource nodes.
 
 ## Difficulty And Mutators
 

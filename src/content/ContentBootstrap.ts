@@ -8,6 +8,7 @@ import waves from '../data/waves.json';
 import weapons from '../data/weapons.json';
 
 import { CharacterDefinition } from '../character/CharacterDefinition';
+import { MapDefinition } from '../map/MapDefinition';
 import { PassiveItem } from '../passive/PassiveItem';
 import { WeaponConfig } from '../weapon/Weapon';
 
@@ -59,7 +60,7 @@ export class ContentBootstrap {
       waves: this.toWaveSetRecord(waves),
       characters: this.charactersToRecord(characters as CharacterJson),
       stages,
-      maps,
+      maps: maps as Record<string, MapDefinition>,
     };
   }
 

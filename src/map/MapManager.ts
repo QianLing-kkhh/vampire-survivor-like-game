@@ -123,6 +123,7 @@ export class MapManager {
       worldHeight: stagePackage.map.height,
       gridSize: DEFAULT_GRID_SIZE,
       landmarkSpacing: DEFAULT_LANDMARK_SPACING,
+      mechanics: [],
     };
   }
 }

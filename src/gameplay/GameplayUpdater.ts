@@ -35,6 +35,13 @@ export class GameplayUpdater {
 
     context.timeManager.update(effectiveDelta);
     context.passiveManager.update(effectiveDelta, context.playerHealth);
+    context.mapMechanicRuntime.update(effectiveDelta);
+    context.player.setMapMoveSpeedMultiplier(
+      context.mapMechanicRuntime.getPlayerSpeedMultiplierAt(
+        context.player.body.x,
+        context.player.body.y,
+      ),
+    );
 
     if (options.isAutoMovementEnabled) {
       callbacks.updateAutoPlayer(playerDelta);
@@ -44,6 +51,8 @@ export class GameplayUpdater {
       context.player.update(playerDelta);
     }
 
+    context.mapMechanicRuntime.resolvePlayerObstacleCollision(context.player);
+    context.mapMechanicRuntime.tryTeleportPlayer(context.player);
     callbacks.updatePlayerHitRange();
     context.enemyFlow.removeDeadEnemies();
     context.spawnDirector.update(context.timeManager.gameTimeSeconds, effectiveDelta);

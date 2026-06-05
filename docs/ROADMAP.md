@@ -72,6 +72,7 @@ Status: foundation complete enough for content proof. Pause broad new architectu
 - `AssetKeyResolver`
 - Settings domain split and `SettingsManager`
 - `CustomStage` schema, validator, serializer, storage, tool, editor-lite, and play integration
+- `MapMechanicRuntime` for low-risk map-specific obstacles, slow zones, portals, and visual light sources
 - Structured `LeaderboardKey` and local leaderboard records
 - `RunMetadata`, seeded RNG, version/content hash, replay record foundation
 - GameEvent, Achievement, Tutorial, Unlock, Relic, Difficulty/Mutator, EnemyModifier, BossSkill, WeaponTag/Behavior foundations
@@ -117,6 +118,7 @@ Status: pause unless content proof creates demand.
 
 - Add 2 characters.
 - Added `graveyard_map` and `graveyard_stage` as the first content proof for multi-map / multi-stage flow, using existing enemies and Boss.
+- Added first differentiated map mechanics proof for `graveyard_map`: obstacles, a slow river, paired portals, and light-source visuals.
 - Add 1 sample custom stage package.
 - Add 1 new Boss config using `BossSkillFactory`.
 - Add 3 relics and connect them through `RelicManager`.

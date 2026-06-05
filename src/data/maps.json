@@ -24,6 +24,137 @@
         "tree": 2,
         "rock": 1
       }
-    }
+    },
+    "mechanics": [
+      {
+        "id": "grave_cluster_north",
+        "type": "obstacle",
+        "x": 1450,
+        "y": 640,
+        "width": 220,
+        "height": 160,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "grave"
+      },
+      {
+        "id": "dead_tree_west",
+        "type": "obstacle",
+        "x": 1040,
+        "y": 1550,
+        "width": 180,
+        "height": 180,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "tree"
+      },
+      {
+        "id": "grave_cluster_center",
+        "type": "obstacle",
+        "x": 2420,
+        "y": 1180,
+        "width": 280,
+        "height": 180,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "grave"
+      },
+      {
+        "id": "rock_south",
+        "type": "obstacle",
+        "x": 3280,
+        "y": 2460,
+        "width": 180,
+        "height": 150,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "rock"
+      },
+      {
+        "id": "grave_cluster_east",
+        "type": "obstacle",
+        "x": 4200,
+        "y": 1120,
+        "width": 240,
+        "height": 180,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "grave"
+      },
+      {
+        "id": "graveyard_river",
+        "type": "slowZone",
+        "x": 2850,
+        "y": 1770,
+        "width": 4300,
+        "height": 260,
+        "shape": "rect",
+        "playerSpeedMultiplier": 0.75,
+        "enemySpeedMultiplier": 0.65,
+        "affectsBossLike": false,
+        "visualType": "river"
+      },
+      {
+        "id": "portal_a",
+        "type": "portal",
+        "x": 900,
+        "y": 760,
+        "radius": 90,
+        "targetPortalId": "portal_b",
+        "cooldownMs": 1500,
+        "visualType": "purple"
+      },
+      {
+        "id": "portal_b",
+        "type": "portal",
+        "x": 4550,
+        "y": 2550,
+        "radius": 90,
+        "targetPortalId": "portal_a",
+        "cooldownMs": 1500,
+        "visualType": "blue"
+      },
+      {
+        "id": "lamp_west",
+        "type": "lightSource",
+        "x": 1220,
+        "y": 980,
+        "radius": 320,
+        "intensity": 1,
+        "visualType": "lamp"
+      },
+      {
+        "id": "lamp_center",
+        "type": "lightSource",
+        "x": 2600,
+        "y": 1520,
+        "radius": 340,
+        "intensity": 1.1,
+        "visualType": "torch"
+      },
+      {
+        "id": "lamp_east",
+        "type": "lightSource",
+        "x": 3950,
+        "y": 2260,
+        "radius": 320,
+        "intensity": 1,
+        "visualType": "lamp"
+      },
+      {
+        "id": "crystal_south",
+        "type": "lightSource",
+        "x": 2140,
+        "y": 2600,
+        "radius": 300,
+        "intensity": 0.9,
+        "visualType": "crystal"
+      }
+    ]
   }
 }

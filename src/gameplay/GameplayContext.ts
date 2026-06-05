@@ -19,6 +19,7 @@ import { GameEventBus } from '../events/GameEventBus';
 import { GameEventRecorder } from '../events/GameEventRecorder';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { VirtualJoystick } from '../input/VirtualJoystick';
+import { MapMechanicRuntime } from '../map/mechanics/MapMechanicRuntime';
 import { PickupManager } from '../pickup/PickupManager';
 import { PerformanceMonitor } from '../performance/PerformanceMonitor';
 import { PoolManager } from '../performance/PoolManager';
@@ -69,6 +70,7 @@ export interface GameplayContext {
   replayRecorder?: ReplayRecorder;
   runRuleSet: RunRuleSet;
   relicManager: RelicManager;
+  mapMechanicRuntime: MapMechanicRuntime;
   characterRuntime: CharacterRuntime;
   syncCharacterCombatModifiers(): void;
   runState: RunState;
