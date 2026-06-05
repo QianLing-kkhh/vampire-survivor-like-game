@@ -154,6 +154,29 @@
     "random": {
       "name": "Random Stage",
       "description": "Random unlocked stage each run"
+    },
+    "graveyard": {
+      "name": "Graveyard Night",
+      "description": "A graveyard stage with dense obstacles, portals, and lamps."
+    },
+    "swampMarsh": {
+      "name": "Swamp Marsh",
+      "description": "Large slow terrain affects both the player and enemies."
+    },
+    "ruinedGate": {
+      "name": "Ruined Gate",
+      "description": "A ruined stage shaped by broken walls and paired portals."
+    }
+  },
+  "map": {
+    "graveyard": {
+      "name": "Graveyard"
+    },
+    "swampMarsh": {
+      "name": "Swamp Marsh"
+    },
+    "ruinedGate": {
+      "name": "Ruined Gate"
     }
   },
   "stageSelection": {
@@ -258,6 +281,44 @@
     "bossDashHits": "Boss Dash Hits"
   },
   "help": {
+    "tab": {
+      "basics": "Basics",
+      "characters": "Characters",
+      "weapons": "Weapons",
+      "evolutions": "Evolutions",
+      "passives": "Passives",
+      "maps": "Maps",
+      "endless": "Endless",
+      "settings": "Settings",
+      "testing": "Testing / Data"
+    },
+    "basics": {
+      "title": "Basics"
+    },
+    "characters": {
+      "title": "Characters"
+    },
+    "weapons": {
+      "title": "Weapons"
+    },
+    "evolutions": {
+      "title": "Evolutions"
+    },
+    "passives": {
+      "title": "Passives"
+    },
+    "maps": {
+      "title": "Maps"
+    },
+    "endless": {
+      "title": "Endless Mode"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "testing": {
+      "title": "Testing / Data"
+    },
     "title": "Help",
     "moveKeyboard": "WASD / Arrow Keys: Move",
     "moveMouse": "Hold Left Mouse: Move toward cursor",

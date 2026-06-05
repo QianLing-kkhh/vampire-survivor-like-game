@@ -18,5 +18,25 @@
     "finalBossSpawnTimeSeconds": 300,
     "warningBeforeSpawnSeconds": 30,
     "allowEndless": true
+  },
+  "swamp_marsh_stage": {
+    "id": "swamp_marsh_stage",
+    "name": "Swamp Marsh",
+    "mapId": "swamp_marsh_map",
+    "waveSetId": "swamp_marsh_waves",
+    "finalBossId": "boss",
+    "finalBossSpawnTimeSeconds": 300,
+    "warningBeforeSpawnSeconds": 30,
+    "allowEndless": true
+  },
+  "ruined_gate_stage": {
+    "id": "ruined_gate_stage",
+    "name": "Ruined Gate",
+    "mapId": "ruined_gate_map",
+    "waveSetId": "ruined_gate_waves",
+    "finalBossId": "boss",
+    "finalBossSpawnTimeSeconds": 300,
+    "warningBeforeSpawnSeconds": 30,
+    "allowEndless": true
   }
 }

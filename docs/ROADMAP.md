@@ -119,6 +119,7 @@ Status: pause unless content proof creates demand.
 - Add 2 characters.
 - Added `graveyard_map` and `graveyard_stage` as the first content proof for multi-map / multi-stage flow, using existing enemies and Boss.
 - Added first differentiated map mechanics proof for `graveyard_map`: obstacles, a slow river, paired portals, and light-source visuals.
+- Added a broader differentiated map content proof: Prototype Field is the open baseline, Graveyard Night emphasizes obstacles and portals, Swamp Marsh emphasizes wide slow terrain, and Ruined Gate emphasizes wall routes and paired portals.
 - Add 1 sample custom stage package.
 - Add 1 new Boss config using `BossSkillFactory`.
 - Add 3 relics and connect them through `RelicManager`.

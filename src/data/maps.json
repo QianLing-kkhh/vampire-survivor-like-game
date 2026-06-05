@@ -2,48 +2,66 @@
   "prototype_field": {
     "id": "prototype_field",
     "name": "Prototype Field",
-    "worldWidth": 4000,
-    "worldHeight": 4000,
-    "gridSize": 128,
-    "landmarkSpacing": 512
-  },
-  "graveyard_map": {
-    "id": "graveyard_map",
-    "name": "Graveyard",
     "worldWidth": 5200,
     "worldHeight": 3200,
     "gridSize": 128,
-    "landmarkSpacing": 448,
+    "landmarkSpacing": 640,
     "render": {
-      "backgroundColor": 1718318,
-      "gridColor": 3818588,
-      "gridAlpha": 0.22,
-      "groundTileKey": "graveyard_ground_tile",
+      "backgroundColor": 1193046,
+      "gridColor": 3359587,
+      "gridAlpha": 0.28,
+      "groundTileKey": "grass_tile",
+      "landmarkDensity": 0.75,
       "landmarkWeights": {
-        "grave": 5,
         "tree": 2,
-        "rock": 1
-      }
+        "rock": 1,
+        "grave": 0
+      },
+      "themeId": "field"
     },
     "mechanics": [
       {
-        "id": "grave_cluster_north",
+        "id": "field_rock_west",
         "type": "obstacle",
-        "x": 1450,
-        "y": 640,
-        "width": 220,
-        "height": 160,
-        "shape": "rect",
+        "x": 1540,
+        "y": 940,
+        "width": 150,
+        "height": 120,
+        "shape": "circle",
         "blocksPlayer": true,
         "blocksEnemies": true,
-        "visualType": "grave"
+        "visualType": "rock"
       },
       {
-        "id": "dead_tree_west",
+        "id": "field_tree_north",
         "type": "obstacle",
-        "x": 1040,
-        "y": 1550,
-        "width": 180,
+        "x": 2600,
+        "y": 780,
+        "width": 160,
+        "height": 170,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "tree"
+      },
+      {
+        "id": "field_rock_south",
+        "type": "obstacle",
+        "x": 3180,
+        "y": 2450,
+        "width": 170,
+        "height": 130,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "rock"
+      },
+      {
+        "id": "field_tree_east",
+        "type": "obstacle",
+        "x": 4380,
+        "y": 1660,
+        "width": 170,
         "height": 180,
         "shape": "circle",
         "blocksPlayer": true,
@@ -51,35 +69,90 @@
         "visualType": "tree"
       },
       {
-        "id": "grave_cluster_center",
+        "id": "field_training_portal_a",
+        "type": "portal",
+        "x": 1180,
+        "y": 2580,
+        "radius": 80,
+        "targetPortalId": "field_training_portal_b",
+        "cooldownMs": 1800,
+        "visualType": "blue"
+      },
+      {
+        "id": "field_training_portal_b",
+        "type": "portal",
+        "x": 4560,
+        "y": 780,
+        "radius": 80,
+        "targetPortalId": "field_training_portal_a",
+        "cooldownMs": 1800,
+        "visualType": "green"
+      }
+    ]
+  },
+  "graveyard_map": {
+    "id": "graveyard_map",
+    "name": "Graveyard",
+    "worldWidth": 4600,
+    "worldHeight": 3000,
+    "gridSize": 128,
+    "landmarkSpacing": 420,
+    "render": {
+      "backgroundColor": 1718318,
+      "gridColor": 3818588,
+      "gridAlpha": 0.22,
+      "groundTileKey": "graveyard_ground_tile",
+      "landmarkDensity": 1.25,
+      "landmarkWeights": {
+        "grave": 6,
+        "tree": 2,
+        "rock": 1
+      },
+      "themeId": "graveyard"
+    },
+    "mechanics": [
+      {
+        "id": "grave_cluster_northwest",
         "type": "obstacle",
-        "x": 2420,
-        "y": 1180,
-        "width": 280,
-        "height": 180,
+        "x": 1360,
+        "y": 760,
+        "width": 240,
+        "height": 150,
         "shape": "rect",
         "blocksPlayer": true,
         "blocksEnemies": true,
         "visualType": "grave"
       },
       {
-        "id": "rock_south",
+        "id": "grave_cluster_midwest",
         "type": "obstacle",
-        "x": 3280,
-        "y": 2460,
+        "x": 1760,
+        "y": 1470,
+        "width": 280,
+        "height": 170,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "grave"
+      },
+      {
+        "id": "dead_tree_north",
+        "type": "obstacle",
+        "x": 2460,
+        "y": 760,
         "width": 180,
-        "height": 150,
+        "height": 190,
         "shape": "circle",
         "blocksPlayer": true,
         "blocksEnemies": true,
-        "visualType": "rock"
+        "visualType": "tree"
       },
       {
         "id": "grave_cluster_east",
         "type": "obstacle",
-        "x": 4200,
-        "y": 1120,
-        "width": 240,
+        "x": 3480,
+        "y": 1180,
+        "width": 260,
         "height": 180,
         "shape": "rect",
         "blocksPlayer": true,
@@ -87,72 +160,349 @@
         "visualType": "grave"
       },
       {
-        "id": "graveyard_river",
-        "type": "slowZone",
-        "x": 2850,
-        "y": 1770,
-        "width": 4300,
-        "height": 260,
-        "shape": "rect",
-        "playerSpeedMultiplier": 0.75,
-        "enemySpeedMultiplier": 0.65,
-        "affectsBossLike": false,
-        "visualType": "river"
+        "id": "dead_tree_south",
+        "type": "obstacle",
+        "x": 2860,
+        "y": 2280,
+        "width": 190,
+        "height": 190,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "tree"
       },
       {
-        "id": "portal_a",
+        "id": "graveyard_mist_mud",
+        "type": "slowZone",
+        "x": 2360,
+        "y": 1850,
+        "width": 2500,
+        "height": 240,
+        "shape": "rect",
+        "playerSpeedMultiplier": 0.85,
+        "enemySpeedMultiplier": 0.75,
+        "affectsBossLike": false,
+        "visualType": "mud"
+      },
+      {
+        "id": "grave_portal_a",
         "type": "portal",
-        "x": 900,
-        "y": 760,
+        "x": 820,
+        "y": 720,
         "radius": 90,
-        "targetPortalId": "portal_b",
+        "targetPortalId": "grave_portal_b",
         "cooldownMs": 1500,
         "visualType": "purple"
       },
       {
-        "id": "portal_b",
+        "id": "grave_portal_b",
         "type": "portal",
-        "x": 4550,
-        "y": 2550,
+        "x": 3980,
+        "y": 2440,
         "radius": 90,
-        "targetPortalId": "portal_a",
+        "targetPortalId": "grave_portal_a",
         "cooldownMs": 1500,
         "visualType": "blue"
       },
       {
-        "id": "lamp_west",
+        "id": "grave_lamp_west",
         "type": "lightSource",
-        "x": 1220,
+        "x": 1180,
         "y": 980,
         "radius": 320,
         "intensity": 1,
         "visualType": "lamp"
       },
       {
-        "id": "lamp_center",
+        "id": "grave_torch_center",
         "type": "lightSource",
-        "x": 2600,
-        "y": 1520,
+        "x": 2340,
+        "y": 1420,
         "radius": 340,
         "intensity": 1.1,
         "visualType": "torch"
       },
       {
-        "id": "lamp_east",
+        "id": "grave_lamp_east",
         "type": "lightSource",
-        "x": 3950,
-        "y": 2260,
+        "x": 3540,
+        "y": 2140,
         "radius": 320,
         "intensity": 1,
         "visualType": "lamp"
       },
       {
-        "id": "crystal_south",
+        "id": "grave_crystal_south",
         "type": "lightSource",
-        "x": 2140,
-        "y": 2600,
+        "x": 1920,
+        "y": 2480,
         "radius": 300,
         "intensity": 0.9,
+        "visualType": "crystal"
+      }
+    ]
+  },
+  "swamp_marsh_map": {
+    "id": "swamp_marsh_map",
+    "name": "Swamp Marsh",
+    "worldWidth": 6000,
+    "worldHeight": 3400,
+    "gridSize": 128,
+    "landmarkSpacing": 560,
+    "render": {
+      "backgroundColor": 1455635,
+      "gridColor": 3170846,
+      "gridAlpha": 0.2,
+      "groundTileKey": "swamp_ground_tile",
+      "landmarkDensity": 0.9,
+      "landmarkWeights": {
+        "tree": 3,
+        "rock": 1,
+        "grave": 0
+      },
+      "themeId": "swamp"
+    },
+    "mechanics": [
+      {
+        "id": "swamp_channel_west",
+        "type": "slowZone",
+        "x": 1850,
+        "y": 1360,
+        "width": 2200,
+        "height": 360,
+        "shape": "rect",
+        "playerSpeedMultiplier": 0.75,
+        "enemySpeedMultiplier": 0.68,
+        "affectsBossLike": false,
+        "visualType": "river"
+      },
+      {
+        "id": "swamp_channel_east",
+        "type": "slowZone",
+        "x": 4300,
+        "y": 2280,
+        "width": 2500,
+        "height": 400,
+        "shape": "rect",
+        "playerSpeedMultiplier": 0.75,
+        "enemySpeedMultiplier": 0.68,
+        "affectsBossLike": false,
+        "visualType": "river"
+      },
+      {
+        "id": "swamp_pool_north",
+        "type": "slowZone",
+        "x": 3320,
+        "y": 920,
+        "radius": 340,
+        "shape": "circle",
+        "playerSpeedMultiplier": 0.7,
+        "enemySpeedMultiplier": 0.65,
+        "affectsBossLike": false,
+        "visualType": "swamp"
+      },
+      {
+        "id": "swamp_tree_west",
+        "type": "obstacle",
+        "x": 1420,
+        "y": 2360,
+        "width": 180,
+        "height": 190,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "tree"
+      },
+      {
+        "id": "swamp_rock_mid",
+        "type": "obstacle",
+        "x": 3080,
+        "y": 1780,
+        "width": 170,
+        "height": 130,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "rock"
+      },
+      {
+        "id": "swamp_deadwood_east",
+        "type": "obstacle",
+        "x": 5120,
+        "y": 1280,
+        "width": 190,
+        "height": 190,
+        "shape": "circle",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "tree"
+      },
+      {
+        "id": "swamp_crystal_west",
+        "type": "lightSource",
+        "x": 980,
+        "y": 1840,
+        "radius": 300,
+        "intensity": 0.9,
+        "visualType": "crystal"
+      },
+      {
+        "id": "swamp_crystal_center",
+        "type": "lightSource",
+        "x": 3640,
+        "y": 1560,
+        "radius": 320,
+        "intensity": 1,
+        "visualType": "crystal"
+      },
+      {
+        "id": "swamp_crystal_east",
+        "type": "lightSource",
+        "x": 5060,
+        "y": 2620,
+        "radius": 300,
+        "intensity": 0.9,
+        "visualType": "crystal"
+      }
+    ]
+  },
+  "ruined_gate_map": {
+    "id": "ruined_gate_map",
+    "name": "Ruined Gate",
+    "worldWidth": 5000,
+    "worldHeight": 2800,
+    "gridSize": 128,
+    "landmarkSpacing": 520,
+    "render": {
+      "backgroundColor": 1842204,
+      "gridColor": 5592405,
+      "gridAlpha": 0.3,
+      "groundTileKey": "ruins_ground_tile",
+      "landmarkDensity": 0.65,
+      "landmarkWeights": {
+        "tree": 0,
+        "rock": 4,
+        "grave": 1
+      },
+      "themeId": "ruins"
+    },
+    "mechanics": [
+      {
+        "id": "ruins_wall_north",
+        "type": "obstacle",
+        "x": 2250,
+        "y": 760,
+        "width": 900,
+        "height": 120,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "wall"
+      },
+      {
+        "id": "ruins_wall_south",
+        "type": "obstacle",
+        "x": 2860,
+        "y": 2050,
+        "width": 980,
+        "height": 120,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "wall"
+      },
+      {
+        "id": "ruins_wall_west",
+        "type": "obstacle",
+        "x": 1460,
+        "y": 1580,
+        "width": 130,
+        "height": 740,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "wall"
+      },
+      {
+        "id": "ruins_wall_east",
+        "type": "obstacle",
+        "x": 3880,
+        "y": 1320,
+        "width": 130,
+        "height": 760,
+        "shape": "rect",
+        "blocksPlayer": true,
+        "blocksEnemies": true,
+        "visualType": "wall"
+      },
+      {
+        "id": "ruins_magic_slow",
+        "type": "slowZone",
+        "x": 2600,
+        "y": 1420,
+        "radius": 300,
+        "shape": "circle",
+        "playerSpeedMultiplier": 0.9,
+        "enemySpeedMultiplier": 0.8,
+        "affectsBossLike": false,
+        "visualType": "swamp"
+      },
+      {
+        "id": "ruins_portal_blue_a",
+        "type": "portal",
+        "x": 820,
+        "y": 660,
+        "radius": 85,
+        "targetPortalId": "ruins_portal_blue_b",
+        "cooldownMs": 1500,
+        "visualType": "blue"
+      },
+      {
+        "id": "ruins_portal_blue_b",
+        "type": "portal",
+        "x": 4220,
+        "y": 2200,
+        "radius": 85,
+        "targetPortalId": "ruins_portal_blue_a",
+        "cooldownMs": 1500,
+        "visualType": "blue"
+      },
+      {
+        "id": "ruins_portal_green_a",
+        "type": "portal",
+        "x": 1120,
+        "y": 2320,
+        "radius": 85,
+        "targetPortalId": "ruins_portal_green_b",
+        "cooldownMs": 1500,
+        "visualType": "green"
+      },
+      {
+        "id": "ruins_portal_green_b",
+        "type": "portal",
+        "x": 4440,
+        "y": 720,
+        "radius": 85,
+        "targetPortalId": "ruins_portal_green_a",
+        "cooldownMs": 1500,
+        "visualType": "green"
+      },
+      {
+        "id": "ruins_crystal_west",
+        "type": "lightSource",
+        "x": 1780,
+        "y": 1080,
+        "radius": 330,
+        "intensity": 1.1,
+        "visualType": "crystal"
+      },
+      {
+        "id": "ruins_crystal_east",
+        "type": "lightSource",
+        "x": 3660,
+        "y": 1860,
+        "radius": 330,
+        "intensity": 1.1,
         "visualType": "crystal"
       }
     ]

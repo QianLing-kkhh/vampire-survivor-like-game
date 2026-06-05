@@ -91,6 +91,29 @@
     "random": {
       "name": "ランダムステージ",
       "description": "毎回アンロック済みステージからランダム選択"
+    },
+    "graveyard": {
+      "name": "墓地の夜",
+      "description": "障害物、ポータル、灯りがある墓地ステージ。"
+    },
+    "swampMarsh": {
+      "name": "沼地",
+      "description": "広い減速地形がプレイヤーと敵に影響します。"
+    },
+    "ruinedGate": {
+      "name": "遺跡の門",
+      "description": "壊れた壁とポータルで構成された遺跡ステージ。"
+    }
+  },
+  "map": {
+    "graveyard": {
+      "name": "墓地"
+    },
+    "swampMarsh": {
+      "name": "沼地"
+    },
+    "ruinedGate": {
+      "name": "遺跡の門"
     }
   },
   "stageSelection": {
@@ -162,6 +185,44 @@
     "bossDashHits": "Bossダッシュ命中"
   },
   "help": {
+    "tab": {
+      "basics": "基本",
+      "characters": "キャラクター",
+      "weapons": "武器",
+      "evolutions": "進化",
+      "passives": "パッシブ",
+      "maps": "マップ",
+      "endless": "エンドレス",
+      "settings": "設定",
+      "testing": "テスト/データ"
+    },
+    "basics": {
+      "title": "基本"
+    },
+    "characters": {
+      "title": "キャラクター"
+    },
+    "weapons": {
+      "title": "武器"
+    },
+    "evolutions": {
+      "title": "進化"
+    },
+    "passives": {
+      "title": "パッシブ"
+    },
+    "maps": {
+      "title": "マップ"
+    },
+    "endless": {
+      "title": "エンドレス"
+    },
+    "settings": {
+      "title": "設定"
+    },
+    "testing": {
+      "title": "テスト/データ"
+    },
     "title": "ヘルプ",
     "moveKeyboard": "WASD / 矢印キー：移動",
     "moveMouse": "左クリック長押し：カーソル方向へ移動",

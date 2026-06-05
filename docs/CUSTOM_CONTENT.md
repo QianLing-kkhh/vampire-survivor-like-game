@@ -87,7 +87,7 @@ The first future version should only support:
 
 The current custom stage schema follows that scope: it only references existing enemies/Bosses and does not allow custom weapons, enemies, passives, or Boss skills. Those belong to later mod content once validators are more mature.
 
-Custom stage map mechanics are not wired into `CustomStageSchema` yet. When added, they should reuse the built-in map mechanic definitions for `obstacle`, `slowZone`, `portal`, and `lightSource`, then expand only after validation rules can catch missing portal targets, blocked spawn areas, and excessive obstacle density.
+Custom stage map mechanics are not wired into `CustomStageSchema` yet. Built-in maps now use the shared map mechanic definition shape for obstacles, slow zones, portals, and visual light sources; custom stages should reuse that same shape when the schema is expanded. When added, validation should catch missing portal targets, blocked spawn areas, excessive obstacle density, and slow zones that fully cut off routes.
 
 Planned map mechanic extensions include destructible objects, hazards, altars, map spawners, darkness and light-source visibility, safe zones, wind fields, high-ground rules, Boss phase map changes, and resource nodes.
 

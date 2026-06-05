@@ -206,5 +206,171 @@
       "count": 40,
       "interval": 1.7
     }
+  ],
+  "swamp_marsh_waves": [
+    {
+      "time": 0,
+      "enemy": "slime",
+      "count": 100,
+      "interval": 1.05
+    },
+    {
+      "time": 45,
+      "enemy": "slime",
+      "count": 100,
+      "interval": 0.95
+    },
+    {
+      "time": 75,
+      "enemy": "bat",
+      "count": 38,
+      "interval": 1.35
+    },
+    {
+      "time": 105,
+      "enemy": "slime",
+      "count": 110,
+      "interval": 0.9
+    },
+    {
+      "time": 135,
+      "enemy": "bat",
+      "count": 60,
+      "interval": 1.1
+    },
+    {
+      "time": 170,
+      "enemy": "golem",
+      "count": 16,
+      "interval": 2.4
+    },
+    {
+      "time": 205,
+      "enemy": "slime",
+      "count": 130,
+      "interval": 0.8
+    },
+    {
+      "time": 230,
+      "enemy": "bat",
+      "count": 90,
+      "interval": 0.9
+    },
+    {
+      "time": 255,
+      "enemy": "golem",
+      "count": 24,
+      "interval": 2.0
+    },
+    {
+      "time": 285,
+      "enemy": "slime",
+      "count": 150,
+      "interval": 0.7
+    },
+    {
+      "time": 300,
+      "enemy": "bat",
+      "count": 120,
+      "interval": 0.8
+    },
+    {
+      "time": 300,
+      "enemy": "slime",
+      "count": 130,
+      "interval": 0.95
+    },
+    {
+      "time": 330,
+      "enemy": "golem",
+      "count": 36,
+      "interval": 1.8
+    }
+  ],
+  "ruined_gate_waves": [
+    {
+      "time": 0,
+      "enemy": "slime",
+      "count": 80,
+      "interval": 1.05
+    },
+    {
+      "time": 35,
+      "enemy": "bat",
+      "count": 32,
+      "interval": 1.35
+    },
+    {
+      "time": 60,
+      "enemy": "bat",
+      "count": 52,
+      "interval": 1.15
+    },
+    {
+      "time": 90,
+      "enemy": "slime",
+      "count": 90,
+      "interval": 0.95
+    },
+    {
+      "time": 125,
+      "enemy": "golem",
+      "count": 12,
+      "interval": 2.5
+    },
+    {
+      "time": 150,
+      "enemy": "bat",
+      "count": 78,
+      "interval": 0.95
+    },
+    {
+      "time": 185,
+      "enemy": "slime",
+      "count": 110,
+      "interval": 0.85
+    },
+    {
+      "time": 215,
+      "enemy": "golem",
+      "count": 22,
+      "interval": 2.1
+    },
+    {
+      "time": 235,
+      "enemy": "bat",
+      "count": 105,
+      "interval": 0.78
+    },
+    {
+      "time": 265,
+      "enemy": "slime",
+      "count": 120,
+      "interval": 0.78
+    },
+    {
+      "time": 285,
+      "enemy": "golem",
+      "count": 30,
+      "interval": 1.85
+    },
+    {
+      "time": 300,
+      "enemy": "bat",
+      "count": 135,
+      "interval": 0.72
+    },
+    {
+      "time": 300,
+      "enemy": "slime",
+      "count": 110,
+      "interval": 0.95
+    },
+    {
+      "time": 330,
+      "enemy": "golem",
+      "count": 42,
+      "interval": 1.7
+    }
   ]
 }

@@ -91,6 +91,29 @@
     "random": {
       "name": "随机关卡",
       "description": "每局从已解锁关卡中随机选择"
+    },
+    "graveyard": {
+      "name": "墓地之夜",
+      "description": "障碍较多、带有传送门和路灯的墓地关卡。"
+    },
+    "swampMarsh": {
+      "name": "沼泽湿地",
+      "description": "大片减速地形会同时影响玩家和敌人。"
+    },
+    "ruinedGate": {
+      "name": "遗迹之门",
+      "description": "断墙与传送门构成的遗迹关卡。"
+    }
+  },
+  "map": {
+    "graveyard": {
+      "name": "墓地"
+    },
+    "swampMarsh": {
+      "name": "沼泽湿地"
+    },
+    "ruinedGate": {
+      "name": "遗迹之门"
     }
   },
   "stageSelection": {
@@ -162,6 +185,44 @@
     "bossDashHits": "Boss 冲刺命中"
   },
   "help": {
+    "tab": {
+      "basics": "基础",
+      "characters": "角色",
+      "weapons": "武器",
+      "evolutions": "进化",
+      "passives": "被动",
+      "maps": "地图",
+      "endless": "无尽",
+      "settings": "设置",
+      "testing": "测试/数据"
+    },
+    "basics": {
+      "title": "基础"
+    },
+    "characters": {
+      "title": "角色"
+    },
+    "weapons": {
+      "title": "武器"
+    },
+    "evolutions": {
+      "title": "进化"
+    },
+    "passives": {
+      "title": "被动"
+    },
+    "maps": {
+      "title": "地图"
+    },
+    "endless": {
+      "title": "无尽模式"
+    },
+    "settings": {
+      "title": "设置"
+    },
+    "testing": {
+      "title": "测试/数据"
+    },
     "title": "帮助",
     "moveKeyboard": "WASD / 方向键：移动",
     "moveMouse": "按住鼠标左键：朝光标移动",
