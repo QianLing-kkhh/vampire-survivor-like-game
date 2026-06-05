@@ -238,6 +238,10 @@
       "minimal": "简洁"
     },
     "uiStyleReopenNotice": "部分UI风格变化将在重新打开菜单后生效。",
+    "scrollHint": "滚动",
+    "page": "页",
+    "previousPage": "上一页",
+    "nextPage": "下一页",
     "back": "返回"
   },
   "records": {

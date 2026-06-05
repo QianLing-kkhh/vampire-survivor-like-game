@@ -238,6 +238,10 @@
       "minimal": "ミニマル"
     },
     "uiStyleReopenNotice": "一部のUIスタイル変更はメニューを開き直すと反映されます。",
+    "scrollHint": "スクロール",
+    "page": "ページ",
+    "previousPage": "前へ",
+    "nextPage": "次へ",
     "back": "戻る"
   },
   "records": {

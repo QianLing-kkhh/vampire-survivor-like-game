@@ -100,6 +100,8 @@ SettingsMenu is organized into tabs:
 
 Boolean settings use graphical toggle switches. Multi-value settings such as graphics quality, asset style, language, volume, joystick size, and debug opacity use cycle rows. The Close / Back button stays fixed at the bottom of the panel.
 
+Tab content paginates when the visible content area cannot fit every row. Display and Developer tabs may contain more settings than can fit on small screens, but every setting remains accessible through Prev / Next controls. The Close / Back button stays fixed below the page controls, and SettingsMenu must not replace inaccessible rows with a final `+N more` item.
+
 The Display tab includes `UI Style`, which can cycle between:
 
 - Classic: compatibility styling close to the original UI.

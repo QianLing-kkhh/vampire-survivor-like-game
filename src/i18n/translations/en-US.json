@@ -90,6 +90,10 @@
       "minimal": "Minimal"
     },
     "uiStyleReopenNotice": "Some UI style changes apply after reopening this menu.",
+    "scrollHint": "Scroll",
+    "page": "Page",
+    "previousPage": "Prev",
+    "nextPage": "Next",
     "back": "Back"
   },
   "title": {

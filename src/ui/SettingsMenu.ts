@@ -53,8 +53,18 @@ export class SettingsMenu {
   private readonly panelImage?: Phaser.GameObjects.Image;
   private readonly title: Phaser.GameObjects.Text;
   private readonly closeButton: Phaser.GameObjects.Text;
+  private readonly prevPageButton: Phaser.GameObjects.Text;
+  private readonly nextPageButton: Phaser.GameObjects.Text;
+  private readonly pageText: Phaser.GameObjects.Text;
   private readonly tabButtons: TabButton[] = [];
   private readonly rowControls: RowControl[] = [];
+  private readonly pageByTab: Record<SettingsTabId, number> = {
+    gameplay: 0,
+    audio: 0,
+    display: 0,
+    input: 0,
+    developer: 0,
+  };
   private selectedTab: SettingsTabId = 'gameplay';
   private uiStyleReopenNotice = false;
   private unsubscribeResize?: () => void;
@@ -88,10 +98,26 @@ export class SettingsMenu {
     });
     this.title.setOrigin(0.5);
     this.closeButton = this.createCloseButton();
+    this.prevPageButton = this.createPageButton(this.t('settings.previousPage', 'Prev'), () => {
+      this.setCurrentPage(this.getCurrentPage() - 1);
+    });
+    this.nextPageButton = this.createPageButton(this.t('settings.nextPage', 'Next'), () => {
+      this.setCurrentPage(this.getCurrentPage() + 1);
+    });
+    this.pageText = scene.add.text(0, 0, '', {
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
+      align: 'center',
+    });
+    this.pageText.setOrigin(0.5);
     this.container.add([
       this.background,
       ...(this.panelImage ? [this.panelImage] : []),
       this.title,
+      this.prevPageButton,
+      this.nextPageButton,
+      this.pageText,
       this.closeButton,
     ]);
     this.createTabs();
@@ -127,6 +153,7 @@ export class SettingsMenu {
       background.on('pointerdown', () => {
         AudioManager.playUi(this.scene, 'ui_click');
         this.selectedTab = tabId;
+        this.pageByTab[tabId] = 0;
         this.renderRows();
         this.applyLayout();
       });
@@ -281,12 +308,16 @@ export class SettingsMenu {
     const tabAreaBottom = tabTop + tabRows * tabHeight + Math.max(0, tabRows - 1) * tabGap;
     const closeY = panel.y + panel.height - (compact ? 28 : 34);
     const contentTop = tabAreaBottom + (compact ? 12 : 18);
-    const contentBottom = closeY - (compact ? 34 : 42);
+    const pagingAreaHeight = compact ? 28 : 32;
+    const contentBottom = closeY - (compact ? 64 : 74);
     const rowGap = compact ? 7 : 9;
     const rowHeight = compact ? 38 : 42;
-    const maxRows = Math.max(1, Math.floor((contentBottom - contentTop + rowGap) / (rowHeight + rowGap)));
-    const visibleRows = this.rowControls.slice(0, maxRows);
-    const hiddenRows = Math.max(0, this.rowControls.length - visibleRows.length);
+    const rowsPerPage = Math.max(1, Math.floor((contentBottom - contentTop + rowGap) / (rowHeight + rowGap)));
+    const pageCount = Math.max(1, Math.ceil(this.rowControls.length / rowsPerPage));
+    const currentPage = Math.min(this.getCurrentPage(), pageCount - 1);
+    const pageStart = currentPage * rowsPerPage;
+    const pageEnd = pageStart + rowsPerPage;
+    this.pageByTab[this.selectedTab] = currentPage;
     const rowWidth = panel.content.width;
 
     this.background.setPosition(centerX, centerY);
@@ -302,14 +333,15 @@ export class SettingsMenu {
     this.layoutTabs(panel.content.x, tabTop, tabColumns, tabWidth, tabHeight, tabGap);
 
     this.rowControls.forEach((row, index) => {
-      if (index >= maxRows) {
+      if (index < pageStart || index >= pageEnd) {
         row.container.setVisible(false);
         return;
       }
 
+      const visibleIndex = index - pageStart;
       row.container.setVisible(true);
       row.label.setText(row.definition.label);
-      row.container.setPosition(panel.content.x + rowWidth / 2, contentTop + index * (rowHeight + rowGap));
+      row.container.setPosition(panel.content.x + rowWidth / 2, contentTop + visibleIndex * (rowHeight + rowGap));
       row.background.setSize(rowWidth, rowHeight);
       row.label.setPosition(-rowWidth / 2 + 14, rowHeight / 2);
       row.label.setFontSize(row.definition.type === 'info' ? fonts.small : fonts.body);
@@ -327,16 +359,7 @@ export class SettingsMenu {
       }
     });
 
-    if (hiddenRows > 0 && visibleRows.length > 0) {
-      const lastRow = visibleRows[visibleRows.length - 1];
-      lastRow.label.setText(`+${hiddenRows} more`);
-      lastRow.label.setPosition(-rowWidth / 2 + 14, rowHeight / 2);
-      lastRow.track?.setVisible(false);
-      lastRow.knob?.setVisible(false);
-      lastRow.value?.setVisible(false);
-      lastRow.leftArrow?.setVisible(false);
-      lastRow.rightArrow?.setVisible(false);
-    }
+    this.layoutPagingControls(panel.content.x, closeY - pagingAreaHeight - 4, rowWidth, pageCount, currentPage, compact);
 
     const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
     this.closeButton.setPosition(centerX, closeY);
@@ -344,6 +367,55 @@ export class SettingsMenu {
     this.closeButton.setFixedSize(metrics.width, metrics.height);
     this.closeButton.setColor(UITheme.textColor);
     this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+  }
+
+  private layoutPagingControls(
+    left: number,
+    y: number,
+    width: number,
+    pageCount: number,
+    currentPage: number,
+    compact: boolean,
+  ): void {
+    const visible = pageCount > 1;
+    const buttonWidth = compact ? 74 : 86;
+    const buttonHeight = compact ? 24 : 28;
+    const fontSize = compact ? '10px' : UITheme.smallFontSize;
+
+    this.prevPageButton.setVisible(visible);
+    this.nextPageButton.setVisible(visible);
+    this.pageText.setVisible(visible);
+
+    if (!visible) {
+      return;
+    }
+
+    this.prevPageButton.setText(this.t('settings.previousPage', 'Prev'));
+    this.nextPageButton.setText(this.t('settings.nextPage', 'Next'));
+    this.pageText.setText(`${this.t('settings.page', 'Page')} ${currentPage + 1}/${pageCount}`);
+    this.pageText.setPosition(left + width / 2, y);
+    this.pageText.setFontSize(fontSize);
+    this.pageText.setColor(UITheme.mutedTextColor);
+
+    this.layoutPageButton(this.prevPageButton, left + buttonWidth / 2, y, buttonWidth, buttonHeight, fontSize, currentPage > 0);
+    this.layoutPageButton(this.nextPageButton, left + width - buttonWidth / 2, y, buttonWidth, buttonHeight, fontSize, currentPage < pageCount - 1);
+  }
+
+  private layoutPageButton(
+    button: Phaser.GameObjects.Text,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    fontSize: string,
+    enabled: boolean,
+  ): void {
+    button.setPosition(x, y);
+    button.setFontSize(fontSize);
+    button.setFixedSize(width, height);
+    button.setColor(enabled ? UITheme.textColor : UITheme.mutedTextColor);
+    button.setAlpha(enabled ? 1 : 0.45);
+    button.setBackgroundColor(toCssColor(enabled ? UITheme.buttonBgColor : UITheme.iconBgColor));
   }
 
   private layoutTabs(
@@ -432,6 +504,50 @@ export class SettingsMenu {
     });
 
     return button;
+  }
+
+  private createPageButton(label: string, onClick: () => void): Phaser.GameObjects.Text {
+    const button = this.scene.add.text(0, 0, label, {
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
+      align: 'center',
+      fixedWidth: 86,
+      fixedHeight: 28,
+      padding: { x: 0, y: 5 },
+    });
+    button.setOrigin(0.5);
+    button.setInteractive({ useHandCursor: true });
+    button.on('pointerover', () => {
+      if (button.alpha >= 1) {
+        button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
+      }
+    });
+    button.on('pointerout', () => {
+      if (button.alpha >= 1) {
+        button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+      }
+    });
+    button.on('pointerdown', () => {
+      if (button.alpha < 1) {
+        return;
+      }
+
+      AudioManager.playUi(this.scene, 'ui_click');
+      onClick();
+    });
+    button.setVisible(false);
+    return button;
+  }
+
+  private getCurrentPage(): number {
+    return this.pageByTab[this.selectedTab] ?? 0;
+  }
+
+  private setCurrentPage(page: number): void {
+    this.pageByTab[this.selectedTab] = Math.max(0, page);
+    this.applyLayout();
   }
 
   private getRowsForTab(tabId: SettingsTabId): SettingRowDefinition[] {
