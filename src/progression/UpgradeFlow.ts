@@ -121,17 +121,13 @@ export class UpgradeFlow {
     );
 
     if (options.length === 0) {
-      if (this.params.runState.endlessStarted) {
-        const reward = this.selectRandomEndlessReward();
+      const fallbackRewardId = this.applyTreasureFallbackReward();
 
-        if (reward && this.endlessRewardManager.applyReward(reward.id, 'chest')) {
-          this.emitEndlessRewardChosen(reward.id, 'chest');
-          this.emitUpgradeApplied(reward.id, 'endlessReward');
-          return {
-            type: 'upgrade',
-            upgradeId: reward.id,
-          };
-        }
+      if (fallbackRewardId) {
+        return {
+          type: 'upgrade',
+          upgradeId: fallbackRewardId,
+        };
       }
 
       console.warn('Treasure chest opened, but no upgrade options were available');
@@ -143,6 +139,15 @@ export class UpgradeFlow {
 
     if (!this.applyUpgrade(upgrade, `chest:${upgrade.id}`)) {
       console.warn(`Treasure chest selected invalid upgrade: ${upgrade.id}`);
+      const fallbackRewardId = this.applyTreasureFallbackReward();
+
+      if (fallbackRewardId) {
+        return {
+          type: 'upgrade',
+          upgradeId: fallbackRewardId,
+        };
+      }
+
       return { type: 'none' };
     }
 
@@ -224,6 +229,21 @@ export class UpgradeFlow {
     }
 
     return rewards[Math.floor(Math.random() * rewards.length)];
+  }
+
+  private applyTreasureFallbackReward(): string | null {
+    const reward = this.selectRandomEndlessReward();
+    const rewardId = this.endlessRewardManager.applyChestFallbackReward(reward?.id);
+
+    if (!rewardId) {
+      this.recordInvalidUpgrade('chest:no_available_fallback_reward');
+      return null;
+    }
+
+    this.emitEndlessRewardChosen(rewardId, 'chest');
+    this.emitUpgradeApplied(rewardId, 'endlessReward');
+    this.params.onUpgradeApplied?.();
+    return rewardId;
   }
 
   private emitUpgradeApplied(

@@ -172,6 +172,31 @@ export class EndlessRewardManager {
       return false;
     }
 
+    return this.applyRewardInternal(rewardId, source);
+  }
+
+  applyChestFallbackReward(preferredRewardId?: string): string | null {
+    const rewardIds = [
+      ...(preferredRewardId && this.isRewardId(preferredRewardId) ? [preferredRewardId] : []),
+      ...this.getRewardOptions().map((option) => option.id),
+      'endless_shield',
+      'endless_growth_damage',
+    ].filter((rewardId, index, rewardIds) => rewardIds.indexOf(rewardId) === index);
+
+    for (const rewardId of rewardIds) {
+      if (!this.isRewardId(rewardId)) {
+        continue;
+      }
+
+      if (this.applyRewardInternal(rewardId, 'chest')) {
+        return rewardId;
+      }
+    }
+
+    return null;
+  }
+
+  private applyRewardInternal(rewardId: EndlessRewardId, source: 'level' | 'chest'): boolean {
     switch (rewardId) {
       case 'endless_heal':
         return this.applyHeal(source);
@@ -263,7 +288,7 @@ export class EndlessRewardManager {
   }
 
   consumeShieldStack(incomingDamage: number): boolean {
-    if (!this.params.runState.endlessStarted || this.shieldStacks <= 0) {
+    if (this.shieldStacks <= 0) {
       return false;
     }
 
