@@ -14,6 +14,25 @@
     "timeScale": "Time Scale",
     "none": "None"
   },
+  "ui": {
+    "chooseReward": "Choose one reward",
+    "weapon": "Weapon",
+    "passive": "Passive",
+    "stat": "Stat",
+    "evolution": "Evolution",
+    "new": "New",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "random": "Random",
+    "randomUnlockedEachRun": "Random unlocked each run",
+    "resume": "Resume",
+    "restart": "Restart",
+    "returnToTitle": "Return to Title",
+    "downloadCsv": "Download CSV",
+    "summary": "Summary",
+    "build": "Build",
+    "leaderboard": "Leaderboard"
+  },
   "settings": {
     "title": "Settings",
     "tab": {
@@ -64,6 +83,13 @@
     "debugPanelCompact": "Compact Debug Panel",
     "debugPanelOpacity": "Debug Panel Opacity",
     "language": "Language",
+    "uiStyle": {
+      "_label": "UI Style",
+      "classic": "Classic",
+      "arcaneSlate": "Arcane Slate",
+      "minimal": "Minimal"
+    },
+    "uiStyleReopenNotice": "Some UI style changes apply after reopening this menu.",
     "back": "Back"
   },
   "title": {

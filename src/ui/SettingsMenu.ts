@@ -5,6 +5,8 @@ import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SettingsManager } from '../settings/SettingsManager';
+import { UIStyle } from './theme/UIStyle';
+import { UIThemeRegistry } from './theme/UIThemeRegistry';
 import { ASSET_STYLES, AssetStyle, DISPLAY_QUALITIES, DisplayQuality } from '../visual/DisplayQuality';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
@@ -54,6 +56,7 @@ export class SettingsMenu {
   private readonly tabButtons: TabButton[] = [];
   private readonly rowControls: RowControl[] = [];
   private selectedTab: SettingsTabId = 'gameplay';
+  private uiStyleReopenNotice = false;
   private unsubscribeResize?: () => void;
 
   constructor(
@@ -288,10 +291,14 @@ export class SettingsMenu {
 
     this.background.setPosition(centerX, centerY);
     this.background.setSize(panel.width, panel.height);
+    this.background.setFillStyle(UITheme.panelBgColor, UITheme.panelBgAlpha);
+    this.background.setStrokeStyle(UITheme.panel.borderWidth, UITheme.panelBorderColor, 0.85);
     this.panelImage?.setPosition(centerX, centerY);
+    this.panelImage?.setAlpha(UITheme.pausePanelAlpha);
     this.coverImage(this.panelImage, panel.width, panel.height);
     this.title.setPosition(centerX, panel.content.y + 24);
     this.title.setFontSize(fonts.header);
+    this.title.setColor(UITheme.textColor);
     this.layoutTabs(panel.content.x, tabTop, tabColumns, tabWidth, tabHeight, tabGap);
 
     this.rowControls.forEach((row, index) => {
@@ -335,6 +342,8 @@ export class SettingsMenu {
     this.closeButton.setPosition(centerX, closeY);
     this.closeButton.setFontSize(metrics.fontSize);
     this.closeButton.setFixedSize(metrics.width, metrics.height);
+    this.closeButton.setColor(UITheme.textColor);
+    this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
   }
 
   private layoutTabs(
@@ -493,6 +502,14 @@ export class SettingsMenu {
         onCycleNext: () => this.cycleAssetStyle(SettingsManager.getDisplay().assetStyle, 1),
         onCyclePrev: () => this.cycleAssetStyle(SettingsManager.getDisplay().assetStyle, -1),
       },
+      {
+        id: 'uiStyle',
+        label: this.t('settings.uiStyle', 'UI Style'),
+        type: 'cycle',
+        getDisplayValue: () => this.formatUIStyle(SettingsManager.getDisplay().uiStyle),
+        onCycleNext: () => this.cycleUIStyle(SettingsManager.getDisplay().uiStyle, 1),
+        onCyclePrev: () => this.cycleUIStyle(SettingsManager.getDisplay().uiStyle, -1),
+      },
       this.numberCycleRow(
         'modelScale',
         this.t('settings.modelScale', 'Model Scale'),
@@ -531,6 +548,17 @@ export class SettingsMenu {
         label: this.t(
           'settings.nextRunNotice',
           'Some visual settings apply after restart or next run.',
+        ),
+        type: 'info',
+      });
+    }
+
+    if (this.uiStyleReopenNotice) {
+      rows.push({
+        id: 'uiStyleReopenNotice',
+        label: this.t(
+          'settings.uiStyleReopenNotice',
+          'Some UI style changes apply after reopening this menu.',
         ),
         type: 'info',
       });
@@ -679,6 +707,18 @@ export class SettingsMenu {
     });
   }
 
+  private cycleUIStyle(current: UIStyle, direction: 1 | -1): void {
+    const styles = UIThemeRegistry.listStyles();
+    const currentIndex = styles.indexOf(current);
+    const nextIndex = currentIndex < 0
+      ? 0
+      : (currentIndex + direction + styles.length) % styles.length;
+    this.uiStyleReopenNotice = true;
+    SettingsManager.updateDisplay({
+      uiStyle: styles[nextIndex] ?? 'classic',
+    });
+  }
+
   private cycleVolume(channel: 'bgm' | 'sfx' | 'weapon' | 'ui', direction: 1 | -1): void {
     const currentVolume = AudioManager.getChannelVolume(channel);
     const steps = [0, 0.25, 0.5, 0.75, 1];
@@ -714,6 +754,10 @@ export class SettingsMenu {
       default:
         return this.t('settings.assetStyleNew', 'New');
     }
+  }
+
+  private formatUIStyle(uiStyle: UIStyle): string {
+    return this.t(`settings.uiStyle.${uiStyle}`, UIThemeRegistry.getTheme(uiStyle).id);
   }
 
   private formatVolume(volume: number): string {

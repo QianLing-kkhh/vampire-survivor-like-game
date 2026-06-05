@@ -38,6 +38,7 @@ The runtime layer keeps per-run object references and update order out of the sc
 - `GameplayContext`: per-run reference container for player, managers, flows, controllers, runtime settings, and active systems.
 - `GameplayInitializer`: creates per-run systems in a stable order and returns `GameplayContext`.
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
+- `MapMechanicRuntime`: creates per-map mechanics for the selected map and applies low-risk terrain behavior such as obstacles, slow zones, player portals, and visual light sources.
 - `PerformanceMonitor`: per-run lightweight stats collector for FPS, counts, and object lifecycle counters.
 - `PoolManager`: per-run object pool registry for reusable runtime visuals and future high-volume objects.
 - `VisualSettings`: settings-backed helper for display quality, asset style, shadows, and graphics fallback decisions.
@@ -212,6 +213,7 @@ These managers prepare the project for multi-character, multi-stage, and multi-m
 - `CharacterDamageReactionSkill`: data-driven damage reactions such as shockwave, blink-forward escape, Witch slow-trail zones, Priest holy sanctuary, Warrior iron counter, and future defensive behaviors.
 - `StageManager`: reads stage definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `stage_001`.
 - `MapManager`: reads map definitions from `ContentRegistry`, selected ID from `SaveManager`, and falls back to `prototype_field`.
+- `MapMechanicDefinition` / `MapMechanicRuntime`: map-specific content may define obstacles, slow zones, portals, and light sources without changing character, weapon, enemy, or Boss base stats. Projectile collision is intentionally not affected by map obstacles in the first implementation, and Boss-like enemies ignore obstacle blocking by default.
 
 Current defaults:
 
@@ -378,7 +380,10 @@ UI classes should display state, not own gameplay rules.
 - `DailyChallengePanel` and `ChallengeSummaryPanel`: daily challenge summary components.
 - `CustomStageEditorPanel`, `CustomWaveEditorPanel`, and `CustomStageValidationPanel`: custom stage tool/editor components.
 - `DebugPanel`: developer-only diagnostics overlay, hidden by default.
-- `UITheme`: shared colors, font sizes, button metrics, and panel constants.
+- `UIThemeRegistry`: resolves the active UI style from display settings.
+- `UITheme`: compatibility facade for shared colors, font sizes, button metrics, and panel constants.
+
+UI theme selection lives under `settings.display.uiStyle` with `classic`, `arcaneSlate`, and `minimal` styles. Classic is the default compatibility style; Arcane Slate is the dark fantasy panel style; Minimal is a low-decoration style. UI style must not alter gameplay, CSV fields, content data, or visual asset quality semantics. New UI work should use shared components and active theme tokens instead of hardcoding a single style.
 
 `FloatingTextManager` is the first low-risk object-pool integration. It reuses floating text objects through `ObjectPool` while preserving the same visual behavior. Other high-volume objects such as projectiles, pickups, Boss warning graphics, explosion circles, and hit flashes remain create/destroy based until they can be profiled and migrated safely.
 
@@ -453,6 +458,7 @@ TitleScene
     -> RunSeed / RandomManager create seeded random streams
     -> DifficultyManager and stage mutator configs create RunRuleSet
     -> GameplayInitializer creates GameplayContext
+    -> MapMechanicRuntime creates selected-map mechanics and visual markers
     -> GameEventBus / GameEventRecorder / GameEventBridge start per-run event capture
     -> ReplayRecorder starts a per-run replay shell from seed, selection, settings, and key events
     -> AchievementManager subscribes to GameEventBus for low-risk achievement unlocks
@@ -461,6 +467,7 @@ TitleScene
     -> RelicManager is created empty for future rule-changing run items
     -> PerformanceMonitor / PoolManager start per-run diagnostics and reusable object pools
     -> GameplayUpdater updates runtime systems
+    -> MapMechanicRuntime applies player terrain speed, obstacle push-out, and player portal teleport
     -> UpgradeFlow handles level-up, treasure, evolution, and endless rewards
     -> EnemyFlow handles enemy update/contact damage
     -> BossController handles final Boss state and attacks
@@ -484,6 +491,7 @@ TitleScene
 - Persistent player selections and settings should go through `SaveManager`.
 - Future character/stage/map/custom-stage UI should write through `SelectionManager`.
 - Gameplay content should go through `ContentRegistry` or managers backed by it, not direct JSON imports.
+- Map-specific gameplay differences should be authored in map mechanics data and handled by `MapMechanicRuntime`, not hardcoded into `WorldRenderer`, `GameScene`, characters, weapons, enemies, or Boss configs.
 - Difficulty, challenge, custom-stage, and mod rule changes should go through `RunRuleSet`.
 - Gameplay randomness should go through injected `RandomSource` streams from `RandomManager`.
 - New achievements, tutorials, unlocks, replay diagnostics, audio listeners, or floating-text listeners should subscribe to `GameEventBus` rather than scene callbacks.

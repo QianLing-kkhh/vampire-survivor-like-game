@@ -2,12 +2,16 @@ import Phaser from 'phaser';
 
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
+import { SafeArea } from '../responsive/SafeArea';
 import { ScreenManager } from '../responsive/ScreenManager';
-import {
-  UITheme,
-  getButtonMetrics,
-  toCssColor,
-} from './UITheme';
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIBadge } from './components/UIBadge';
+import { UIButton } from './components/UIButton';
+import { UICard } from './components/UICard';
+import { UIIconFrame } from './components/UIIconFrame';
+import { UIStatRow } from './components/UIStatRow';
+import { UITheme } from './UITheme';
 
 export interface SelectionListItem {
   id: string;
@@ -27,14 +31,7 @@ export interface SelectionListPanelConfig {
 export class SelectionListPanel {
   private readonly container: Phaser.GameObjects.Container;
   private readonly screenManager: ScreenManager;
-  private readonly rowObjects: Array<{
-    text: Phaser.GameObjects.Text;
-    portrait?: Phaser.GameObjects.Image;
-  }> = [];
-  private readonly background: Phaser.GameObjects.Rectangle;
-  private readonly titleText: Phaser.GameObjects.Text;
-  private readonly confirmButton: Phaser.GameObjects.Text;
-  private readonly backButton: Phaser.GameObjects.Text;
+  private readonly pageItems: Phaser.GameObjects.GameObject[] = [];
   private unsubscribeResize?: () => void;
   private selectedIndex: number;
 
@@ -48,33 +45,9 @@ export class SelectionListPanel {
       config.items.findIndex((item) => item.id === config.selectedId),
     );
     this.container = scene.add.container(0, 0);
-    this.container.setDepth(1000);
-    this.background = scene.add.rectangle(0, 0, 400, 460, UITheme.panelBgColor, UITheme.panelBgAlpha);
-    this.background.setStrokeStyle(2, UITheme.panelBorderColor, 0.9);
-    this.titleText = scene.add.text(0, 0, config.title, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
-    });
-    this.titleText.setOrigin(0.5);
-    this.confirmButton = this.createButton(I18n.t('selection.confirm'), () => {
-      const item = this.config.items[this.selectedIndex];
-
-      if (item) {
-        this.config.onConfirm(item.id);
-      }
-    });
-    this.backButton = this.createButton(I18n.t('selection.back'), this.config.onBack);
-    this.container.add([
-      this.background,
-      this.titleText,
-      this.confirmButton,
-      this.backButton,
-    ]);
-    this.renderRows();
-    this.applyLayout();
-    this.unsubscribeResize = this.screenManager.onResize(() => this.applyLayout());
+    this.container.setDepth(UITheme.depth.modal);
+    this.render();
+    this.unsubscribeResize = this.screenManager.onResize(() => this.render());
     this.scene.input.keyboard?.on('keydown-UP', this.selectPrevious, this);
     this.scene.input.keyboard?.on('keydown-DOWN', this.selectNext, this);
     this.scene.input.keyboard?.on('keydown-ENTER', this.confirmSelected, this);
@@ -92,139 +65,206 @@ export class SelectionListPanel {
     this.container.destroy(true);
   }
 
-  private renderRows(): void {
-    this.rowObjects.forEach((row) => {
-      row.text.destroy();
-      row.portrait?.destroy();
+  private render(): void {
+    this.container.removeAll(true);
+    this.pageItems.length = 0;
+
+    const safe = SafeArea.getInsets(this.screenManager);
+    const portrait = this.screenManager.isPortrait();
+    const panelWidth = Math.min(
+      portrait ? this.screenManager.width - safe.left - safe.right - 8 : 940,
+      this.screenManager.width - safe.left - safe.right,
+    );
+    const panelHeight = Math.min(
+      portrait ? this.screenManager.height - safe.top - safe.bottom : 620,
+      this.screenManager.height - safe.top - safe.bottom,
+    );
+    const centerX = this.screenManager.centerX;
+    const centerY = this.screenManager.centerY;
+    const top = centerY - panelHeight / 2;
+    const left = centerX - panelWidth / 2;
+    const frame = PanelFrame.create(this.scene, {
+      x: centerX,
+      y: centerY,
+      width: panelWidth,
+      height: panelHeight,
+      alpha: UITheme.panelBgAlpha,
+      variant: 'modal',
     });
-    this.rowObjects.length = 0;
-
-    const visibleItems = this.getVisibleItems();
-
-    visibleItems.forEach((item, index) => {
-      const row = this.scene.add.text(0, 0, this.formatRow(item), {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.bodyFontSize,
-        fixedWidth: 340,
-        fixedHeight: 42,
-        padding: { x: 12, y: 10 },
-      });
-      row.setOrigin(0.5);
-      row.setInteractive({ useHandCursor: item.id !== 'more' });
-      row.on('pointerdown', () => {
-        if (item.id === 'more') {
-          return;
-        }
-
-        this.selectedIndex = index;
-        this.applySelectionStyles();
-      });
-      const portrait = item.portraitKey && this.scene.textures.exists(item.portraitKey)
-        ? this.scene.add.image(0, 0, item.portraitKey)
-        : undefined;
-
-      portrait?.setDisplaySize(36, 36);
-      portrait?.setInteractive({ useHandCursor: item.id !== 'more' });
-      portrait?.on('pointerdown', () => {
-        if (item.id === 'more') {
-          return;
-        }
-
-        this.selectedIndex = index;
-        this.applySelectionStyles();
-      });
-
-      this.rowObjects.push({ text: row, portrait });
-      this.container.add(row);
-
-      if (portrait) {
-        this.container.add(portrait);
-      }
+    const header = PanelHeader.create(this.scene, {
+      x: centerX,
+      y: top + 40,
+      width: panelWidth,
+      title: this.config.title,
+      subtitle: this.getSelectedItem()?.description,
     });
+    this.container.add([frame, header]);
 
-    this.applySelectionStyles();
+    const contentTop = top + (portrait ? 92 : 96);
+    const buttonHeight = LayoutConfig.getButtonLayout(this.screenManager, 1).height;
+    const buttonY = top + panelHeight - buttonHeight / 2 - 24;
+    const contentBottom = buttonY - buttonHeight / 2 - 18;
+
+    if (portrait) {
+      const listHeight = Math.max(150, Math.floor((contentBottom - contentTop) * 0.52));
+      this.renderList(left + 18, contentTop, panelWidth - 36, listHeight);
+      this.renderDetail(left + 18, contentTop + listHeight + 14, panelWidth - 36, contentBottom - contentTop - listHeight - 14);
+    } else {
+      const listWidth = Math.min(360, panelWidth * 0.38);
+      this.renderList(left + 24, contentTop, listWidth, contentBottom - contentTop);
+      this.renderDetail(left + listWidth + 40, contentTop, panelWidth - listWidth - 64, contentBottom - contentTop);
+    }
+
+    this.renderButtons(centerX, buttonY, panelWidth);
   }
 
-  private applyLayout(): void {
-    const panel = LayoutConfig.getPanelLayout(this.screenManager, {
-      maxWidth: this.screenManager.isPortrait() ? 360 : 560,
-      maxHeight: this.screenManager.isPortrait() ? 560 : 500,
-      padding: 24,
+  private renderList(x: number, y: number, width: number, height: number): void {
+    const visibleItems = this.getVisibleItems();
+    const rowGap = 10;
+    const rowHeight = Math.min(72, Math.max(48, (height - rowGap * (visibleItems.length - 1)) / Math.max(1, visibleItems.length)));
+
+    visibleItems.forEach((item, index) => {
+      const rowY = y + rowHeight / 2 + index * (rowHeight + rowGap);
+      const selected = index === this.selectedIndex;
+      const card = new UICard(this.scene, {
+        x: x + width / 2,
+        y: rowY,
+        width,
+        height: rowHeight,
+        selected,
+        disabled: item.id === 'more',
+        onClick: () => {
+          if (item.id !== 'more') {
+            this.selectedIndex = index;
+            this.render();
+          }
+        },
+      });
+      const icon = UIIconFrame.create(this.scene, {
+        x: x + 32,
+        y: rowY,
+        size: Math.min(48, rowHeight - 12),
+        textureKey: item.portraitKey,
+        fallback: item.id === 'random_unlocked' ? '?' : this.getInitials(item.name),
+      });
+      const name = this.scene.add.text(x + 66, rowY - 13, item.name, {
+        color: selected ? UITheme.colors.accentGoldCss : UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).body,
+        fontStyle: 'bold',
+        wordWrap: { width: width - 84 },
+      });
+      const desc = this.scene.add.text(x + 66, rowY + 8, item.description ?? item.id, {
+        color: UITheme.mutedTextColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).small,
+        wordWrap: { width: width - 84 },
+      });
+      desc.setMaxLines(1);
+      this.container.add([card.container, icon, name, desc]);
+      this.pageItems.push(card.container, icon, name, desc);
     });
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
-    const buttonMode = this.screenManager.isPortrait() ? 'vertical' : 'twoColumn';
+  }
+
+  private renderDetail(x: number, y: number, width: number, height: number): void {
+    const item = this.getSelectedItem();
+
+    if (!item) {
+      return;
+    }
+
+    const card = new UICard(this.scene, {
+      x: x + width / 2,
+      y: y + height / 2,
+      width,
+      height,
+      selected: true,
+    });
+    const portraitSize = Math.min(this.screenManager.isPortrait() ? 86 : 140, height - 64, width * 0.32);
+    const portraitX = this.screenManager.isPortrait() ? x + portraitSize / 2 + 18 : x + portraitSize / 2 + 26;
+    const portraitY = y + portraitSize / 2 + 24;
+    const portrait = UIIconFrame.create(this.scene, {
+      x: portraitX,
+      y: portraitY,
+      size: portraitSize,
+      textureKey: item.portraitKey,
+      fallback: item.id === 'random_unlocked' ? '?' : this.getInitials(item.name),
+    });
+    const textX = portraitX + portraitSize / 2 + 22;
+    const title = this.scene.add.text(textX, y + 26, item.name, {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).header,
+      fontStyle: 'bold',
+      wordWrap: { width: Math.max(80, x + width - textX - 16) },
+    });
+    const random = item.id === 'random_unlocked';
+    const badges = this.getRoleBadges(item.id);
+    const badgeY = y + (this.screenManager.isPortrait() ? 76 : 82);
+    badges.forEach((label, index) => {
+      const badge = UIBadge.create(this.scene, textX + 44 + index * 88, badgeY, label, random ? UITheme.colors.accentGold : UITheme.colors.accentBlue);
+      this.container.add(badge);
+      this.pageItems.push(badge);
+    });
+    const description = this.scene.add.text(textX, badgeY + 22, random ? I18n.t('ui.randomUnlockedEachRun') : item.description ?? item.id, {
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).body,
+      lineSpacing: 4,
+      wordWrap: { width: Math.max(100, x + width - textX - 18) },
+    });
+    description.setMaxLines(this.screenManager.isPortrait() ? 2 : 3);
+
+    const statsTop = y + height - (this.screenManager.isPortrait() ? 74 : 104);
+    const rowWidth = Math.min(width - 32, 440);
+    const statRows = this.getDetailRows(item);
+    statRows.slice(0, this.screenManager.isPortrait() ? 2 : 3).forEach((row, index) => {
+      const stat = UIStatRow.create(this.scene, x + width / 2, statsTop + index * 30, rowWidth, row.label, row.value);
+      this.container.add(stat);
+      this.pageItems.push(stat);
+      stat.setScale(Math.min(1, rowWidth / 440), 1);
+    });
+
+    this.container.add([card.container, portrait, title, description]);
+    this.pageItems.push(card.container, portrait, title, description);
+  }
+
+  private renderButtons(centerX: number, y: number, panelWidth: number): void {
     const buttonLayout = LayoutConfig.getButtonListLayout({
       screen: this.screenManager,
       count: 2,
-      centerX: this.screenManager.centerX,
-      startY: panel.y + panel.height - metrics.height / 2 - 24,
-      mode: buttonMode,
-      gap: metrics.height + 8,
+      centerX,
+      startY: y,
+      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
+      gap: LayoutConfig.getButtonLayout(this.screenManager, 1).height + 8,
     });
-    const rowStartY = panel.y + 92;
-    const rowGap = this.screenManager.isPortrait() ? 48 : 50;
-
-    this.background.setPosition(this.screenManager.centerX, this.screenManager.centerY);
-    this.background.setSize(panel.width, panel.height);
-    this.titleText.setPosition(this.screenManager.centerX, panel.y + 40);
-    this.titleText.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
-
-    this.rowObjects.forEach((row, index) => {
-      const rowWidth = Math.min(panel.content.width, 420);
-      const rowY = rowStartY + index * rowGap;
-
-      row.text.setPosition(this.screenManager.centerX, rowY);
-      row.text.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).body);
-      row.text.setFixedSize(rowWidth, 42);
-      row.portrait?.setPosition(this.screenManager.centerX - rowWidth / 2 + 26, rowY);
+    const confirm = new UIButton(this.scene, {
+      x: buttonLayout.positions[0].x,
+      y: buttonLayout.positions[0].y,
+      label: I18n.t('selection.confirm'),
+      width: Math.min(buttonLayout.width, panelWidth / (this.screenManager.isPortrait() ? 1.4 : 2.4)),
+      height: buttonLayout.height,
+      onClick: () => this.confirmSelected(),
     });
-
-    [this.confirmButton, this.backButton].forEach((button, index) => {
-      const position = buttonLayout.positions[index];
-      button.setPosition(position.x, position.y);
-      button.setFontSize(buttonLayout.fontSize);
-      button.setFixedSize(buttonLayout.width, buttonLayout.height);
+    const back = new UIButton(this.scene, {
+      x: buttonLayout.positions[1].x,
+      y: buttonLayout.positions[1].y,
+      label: I18n.t('selection.back'),
+      width: Math.min(buttonLayout.width, panelWidth / (this.screenManager.isPortrait() ? 1.4 : 2.4)),
+      height: buttonLayout.height,
+      onClick: this.config.onBack,
     });
-  }
-
-  private createButton(label: string, onClick: () => void): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
-    const button = this.scene.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: { x: 0, y: Math.max(0, Math.floor((metrics.height - 22) / 2)) },
-    });
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor)));
-    button.on('pointerout', () => button.setBackgroundColor(toCssColor(UITheme.buttonBgColor)));
-    button.on('pointerdown', onClick);
-    return button;
-  }
-
-  private applySelectionStyles(): void {
-    this.rowObjects.forEach((row, index) => {
-      const isSelected = index === this.selectedIndex;
-      row.text.setBackgroundColor(toCssColor(isSelected ? UITheme.buttonHoverColor : UITheme.buttonBgColor));
-      row.text.setColor(isSelected ? UITheme.successTextColor : UITheme.textColor);
-      row.portrait?.setAlpha(isSelected ? 1 : 0.78);
-    });
+    this.container.add([confirm.container, back.container]);
   }
 
   private selectPrevious(): void {
     this.selectedIndex = Math.max(0, this.selectedIndex - 1);
-    this.applySelectionStyles();
+    this.render();
   }
 
   private selectNext(): void {
     this.selectedIndex = Math.min(this.getSelectableItemCount() - 1, this.selectedIndex + 1);
-    this.applySelectionStyles();
+    this.render();
   }
 
   private confirmSelected(): void {
@@ -235,8 +275,12 @@ export class SelectionListPanel {
     }
   }
 
+  private getSelectedItem(): SelectionListItem | undefined {
+    return this.config.items[this.selectedIndex];
+  }
+
   private getVisibleItems(): SelectionListItem[] {
-    const maxItems = this.screenManager.isPortrait() ? 6 : 7;
+    const maxItems = this.screenManager.isPortrait() ? 5 : 7;
 
     if (this.config.items.length <= maxItems) {
       return this.config.items;
@@ -252,20 +296,50 @@ export class SelectionListPanel {
   }
 
   private getSelectableItemCount(): number {
-    const maxItems = this.screenManager.isPortrait() ? 6 : 7;
+    const maxItems = this.screenManager.isPortrait() ? 5 : 7;
 
     return this.config.items.length > maxItems
       ? maxItems - 1
       : this.config.items.length;
   }
 
-  private formatRow(item: SelectionListItem): string {
-    const prefix = item.portraitKey ? '      ' : '';
+  private getRoleBadges(id: string): string[] {
+    switch (id) {
+      case 'assassin':
+        return ['Mobility', 'Crit', 'Knife'];
+      case 'witch':
+        return ['Magic', 'Slow', 'Explosion'];
+      case 'priest':
+        return ['Shield', 'Heal', 'Orbit'];
+      case 'warrior':
+        return ['Armor', 'Knockback', 'Axe'];
+      case 'random_unlocked':
+        return [I18n.t('ui.random')];
+      default:
+        return [I18n.t('ui.summary')];
+    }
+  }
 
-    if (item.description) {
-      return `${prefix}${item.name}  ${item.description}`;
+  private getDetailRows(item: SelectionListItem): Array<{ label: string; value: string }> {
+    if (item.id === 'random_unlocked') {
+      return [
+        { label: I18n.t('ui.random'), value: I18n.t('ui.unlocked') },
+        { label: I18n.t('ui.build'), value: I18n.t('ui.randomUnlockedEachRun') },
+      ];
     }
 
-    return `${prefix}${item.name}  ${item.id}`;
+    return [
+      { label: 'Role', value: this.getRoleBadges(item.id).join(' / ') },
+      { label: 'Starting Weapon', value: this.getRoleBadges(item.id)[this.getRoleBadges(item.id).length - 1] ?? '-' },
+      { label: 'Damage Reaction', value: item.id },
+    ];
+  }
+
+  private getInitials(value: string): string {
+    return value
+      .split(/\s|_/)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2);
   }
 }

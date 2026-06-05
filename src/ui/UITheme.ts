@@ -1,43 +1,154 @@
+import { UIThemeRegistry } from './theme/UIThemeRegistry';
+
 export const UITheme = {
-  themeId: 'default',
-  paletteId: 'default',
-  buttonStyleId: 'default',
-  fontFamily: 'Arial, Helvetica, sans-serif',
-  titleFontSize: '40px',
-  headerFontSize: '28px',
-  bodyFontSize: '18px',
-  smallFontSize: '14px',
-  panelBgColor: 0x020617,
-  panelBgAlpha: 0.9,
-  panelBorderColor: 0x94a3b8,
-  buttonBgColor: 0x1f2937,
-  buttonHoverColor: 0x334155,
-  buttonWidth: 260,
-  buttonHeight: 48,
-  buttonGap: 54,
-  buttonFontSize: '18px',
-  compactButtonWidth: 220,
-  compactButtonHeight: 42,
-  compactButtonFontSize: '15px',
-  smallButtonWidth: 190,
-  smallButtonHeight: 38,
-  smallButtonFontSize: '13px',
-  pausePanelAlpha: 0.8,
-  hudPanelAlpha: 0.55,
-  helpPanelAlpha: 0.85,
-  levelUpPanelAlpha: 0.9,
-  textColor: '#f8fafc',
-  mutedTextColor: '#cbd5e1',
-  dangerTextColor: '#ef4444',
-  successTextColor: '#22c55e',
-  successAccentColor: 0x22c55e,
-  toggleOnColor: 0x22c55e,
-  toggleOffColor: 0x475569,
-  toggleKnobColor: 0xf8fafc,
-  barBgColor: 0x1f2937,
-  hpBarColor: 0xef4444,
-  expBarColor: 0x38bdf8,
-  iconBgColor: 0x111827,
+  current: () => UIThemeRegistry.getCurrentTheme(),
+  get themeId(): string {
+    return UITheme.current().id;
+  },
+  get paletteId(): string {
+    return UITheme.current().id;
+  },
+  get buttonStyleId(): string {
+    return UITheme.current().id;
+  },
+  get colors() {
+    return UITheme.current().colors;
+  },
+  get alpha() {
+    return UITheme.current().alpha;
+  },
+  get radius() {
+    return UITheme.current().radius;
+  },
+  get spacing() {
+    return UITheme.current().spacing;
+  },
+  get sizes() {
+    return UITheme.current().sizes;
+  },
+  get depth() {
+    return UITheme.current().depth;
+  },
+  get panel() {
+    return UITheme.current().panel;
+  },
+  get button() {
+    return UITheme.current().button;
+  },
+  get card() {
+    return UITheme.current().card;
+  },
+  get tab() {
+    return UITheme.current().tab;
+  },
+  get fontFamily(): string {
+    return UITheme.current().fonts.family;
+  },
+  get titleFontSize(): string {
+    return UITheme.current().fonts.title;
+  },
+  get headerFontSize(): string {
+    return UITheme.current().fonts.header;
+  },
+  get bodyFontSize(): string {
+    return UITheme.current().fonts.body;
+  },
+  get smallFontSize(): string {
+    return UITheme.current().fonts.small;
+  },
+  get panelBgColor(): number {
+    return UITheme.current().colors.panelBase;
+  },
+  get panelBgAlpha(): number {
+    return UITheme.current().alpha.modal;
+  },
+  get panelBorderColor(): number {
+    return UITheme.current().colors.borderPrimary;
+  },
+  get buttonBgColor(): number {
+    return UITheme.current().colors.panelRaised;
+  },
+  get buttonHoverColor(): number {
+    return UITheme.current().id === 'minimal' ? 0x263449 : 0x334155;
+  },
+  get buttonWidth(): number {
+    return UITheme.current().sizes.button.medium.width;
+  },
+  get buttonHeight(): number {
+    return UITheme.current().sizes.button.medium.height;
+  },
+  get buttonGap(): number {
+    return UITheme.current().sizes.button.medium.height + 6;
+  },
+  get buttonFontSize(): string {
+    return UITheme.current().sizes.button.medium.fontSize;
+  },
+  get compactButtonWidth(): number {
+    return Math.min(220, UITheme.current().sizes.button.medium.width);
+  },
+  get compactButtonHeight(): number {
+    return Math.min(42, UITheme.current().sizes.button.medium.height);
+  },
+  get compactButtonFontSize(): string {
+    return UITheme.current().id === 'minimal' ? '14px' : '15px';
+  },
+  get smallButtonWidth(): number {
+    return UITheme.current().sizes.button.small.width;
+  },
+  get smallButtonHeight(): number {
+    return UITheme.current().sizes.button.small.height;
+  },
+  get smallButtonFontSize(): string {
+    return UITheme.current().sizes.button.small.fontSize;
+  },
+  get pausePanelAlpha(): number {
+    return UITheme.current().id === 'classic' ? 0.8 : UITheme.current().alpha.modal;
+  },
+  get hudPanelAlpha(): number {
+    return UITheme.current().alpha.hud;
+  },
+  get helpPanelAlpha(): number {
+    return UITheme.current().id === 'classic' ? 0.85 : UITheme.current().alpha.modal;
+  },
+  get levelUpPanelAlpha(): number {
+    return UITheme.current().alpha.modal;
+  },
+  get textColor(): string {
+    return UITheme.current().colors.textPrimary;
+  },
+  get mutedTextColor(): string {
+    return UITheme.current().colors.textSecondary;
+  },
+  get dangerTextColor(): string {
+    return UITheme.current().colors.danger;
+  },
+  get successTextColor(): string {
+    return UITheme.current().colors.success;
+  },
+  get successAccentColor(): number {
+    return 0x22c55e;
+  },
+  get toggleOnColor(): number {
+    return 0x22c55e;
+  },
+  get toggleOffColor(): number {
+    return 0x475569;
+  },
+  get toggleKnobColor(): number {
+    return 0xf8fafc;
+  },
+  get barBgColor(): number {
+    return UITheme.current().colors.panelRaised;
+  },
+  get hpBarColor(): number {
+    return 0xef4444;
+  },
+  get expBarColor(): number {
+    return 0x38bdf8;
+  },
+  get iconBgColor(): number {
+    return UITheme.current().colors.panelInner;
+  },
 };
 
 export function getButtonMetrics(width: number, height: number): {

@@ -7,6 +7,7 @@ import { isSupportedLocale } from '../i18n/Locale';
 import { DEFAULT_AUDIO_SETTINGS } from '../settings/AudioSettings';
 import { DEFAULT_DEVELOPER_SETTINGS } from '../settings/DeveloperSettings';
 import { DEFAULT_DISPLAY_SETTINGS } from '../settings/DisplaySettings';
+import { isUIStyle } from '../ui/theme/UIStyle';
 import { DEFAULT_GAMEPLAY_SETTINGS } from '../settings/GameplaySettings';
 import { DEFAULT_INPUT_SETTINGS } from '../settings/InputSettings';
 import {
@@ -525,6 +526,9 @@ export class SaveMigrator {
           locale: isSupportedLocale(display?.locale)
             ? display.locale
             : DEFAULT_DISPLAY_SETTINGS.locale,
+          uiStyle: isUIStyle(display?.uiStyle)
+            ? display.uiStyle
+            : DEFAULT_DISPLAY_SETTINGS.uiStyle,
           visualModelScale: this.normalizeVisualModelScale(display?.visualModelScale),
         },
         input: {

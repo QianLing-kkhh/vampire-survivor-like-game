@@ -26,7 +26,10 @@ export class CharacterSelectScene extends Phaser.Scene {
         name: I18n.t(character.nameKey),
         description: character.id === 'random_unlocked'
           ? I18n.t('characterSelection.randomUnlocked')
-          : character.id,
+          : [
+            I18n.t(character.descriptionKey),
+            `${I18n.t('selection.current')}: ${character.startingWeaponId}`,
+          ].join(' / '),
         portraitKey: character.id === 'random_unlocked'
           ? null
           : AssetKeyResolver.getPlayerPortraitKey(this, character.skinId, character.id),

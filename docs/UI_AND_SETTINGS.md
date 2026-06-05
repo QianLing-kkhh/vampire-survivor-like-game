@@ -69,7 +69,7 @@ The permanent HUD should stay lightweight and avoid large background panels that
 
 ### LevelUpPanel
 
-The LevelUpPanel displays available upgrade cards. It uses icon-first weapon/passive presentation where possible. Auto Upgrade can select a card after a short delay when enabled.
+The LevelUpPanel displays available upgrade cards. It uses Arcane Slate panel framing, header hierarchy, badges, icon frames, compact stat rows, and icon-first weapon/passive presentation where possible. Auto Upgrade can select a card after a short delay when enabled.
 
 ### PauseMenu
 
@@ -99,6 +99,14 @@ SettingsMenu is organized into tabs:
 - Developer
 
 Boolean settings use graphical toggle switches. Multi-value settings such as graphics quality, asset style, language, volume, joystick size, and debug opacity use cycle rows. The Close / Back button stays fixed at the bottom of the panel.
+
+The Display tab includes `UI Style`, which can cycle between:
+
+- Classic: compatibility styling close to the original UI.
+- Arcane Slate: dark fantasy, blue-slate, card-focused styling.
+- Minimal: lower-decoration, high-readability styling for compact or low-visual-noise layouts.
+
+UI Style is independent from Display Quality, Asset Style, and Model Scale. It does not change gameplay, CSV output, character data, weapon data, enemy data, or any numeric tuning. Some screens still use legacy raw Phaser UI and will progressively migrate; they should remain readable and should fall back to the active theme colors where possible.
 
 ### HelpOverlay
 
@@ -165,9 +173,12 @@ Graphics quality and asset style do not intentionally resize gameplay objects. P
 
 Appearance selection is save-backed but has no UI yet.
 
-- Current theme: `default`
+- Current UI style default: `classic`
 - `AppearanceManager` owns selected theme and skin IDs.
-- `UITheme` remains the active default UI style constants.
+- `UIThemeRegistry` reads `settings.display.uiStyle` and resolves the current UI style definition.
+- `UITheme` remains a compatibility facade for active UI style constants and exposes palette, spacing, radius, alpha, button, card, icon, and depth tokens.
+- Shared Phaser-only UI components live under `src/ui/components/`: `PanelFrame`, `PanelHeader`, `UIButton`, `UITabBar`, `UICard`, `UIIconFrame`, `UIBadge`, `UIStatRow`, and `UIProgressBar`.
+- Major panels should compose these components instead of recreating raw rectangle/text button styling in each screen. Components should use `UIThemeRegistry` / `UITheme` rather than hardcoding one visual style.
 - Future theme/skin controls should live in `SettingsMenu` or a dedicated appearance screen, not scattered across Title/Pause/Result.
 - Runtime asset lookup should continue through `AssetKeyResolver` so active themes can override texture, animation, icon, world, UI, or audio keys later.
 

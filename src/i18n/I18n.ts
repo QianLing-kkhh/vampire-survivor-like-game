@@ -58,7 +58,15 @@ export class I18n {
       return node[part];
     }, translations);
 
-    return typeof value === 'string' ? value : undefined;
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (value && typeof value !== 'string' && typeof value._label === 'string') {
+      return value._label;
+    }
+
+    return undefined;
   }
 
   private static interpolate(text: string, params: Params): string {

@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, SupportedLocale } from '../i18n/Locale';
+import { UIStyle } from '../ui/theme/UIStyle';
 import { AssetStyle, DisplayQuality } from '../visual/DisplayQuality';
 
 export type VisualModelScale = 1 | 1.5 | 2;
@@ -12,6 +13,7 @@ export interface DisplaySettingsData {
   themeId: string;
   displayQuality: DisplayQuality;
   assetStyle: AssetStyle;
+  uiStyle: UIStyle;
   shadowsEnabled: boolean;
   visualModelScale: VisualModelScale;
 }
@@ -25,6 +27,7 @@ export const DEFAULT_DISPLAY_SETTINGS: DisplaySettingsData = {
   themeId: 'default',
   displayQuality: 'high',
   assetStyle: 'newArt',
+  uiStyle: 'classic',
   shadowsEnabled: true,
   visualModelScale: 1,
 };

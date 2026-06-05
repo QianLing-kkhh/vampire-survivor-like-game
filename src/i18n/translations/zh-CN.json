@@ -14,6 +14,25 @@
     "timeScale": "时间倍率",
     "none": "无"
   },
+  "ui": {
+    "chooseReward": "选择一个奖励",
+    "weapon": "武器",
+    "passive": "被动",
+    "stat": "属性",
+    "evolution": "进化",
+    "new": "新",
+    "locked": "已锁定",
+    "unlocked": "已解锁",
+    "random": "随机",
+    "randomUnlockedEachRun": "每局随机已解锁角色",
+    "resume": "继续",
+    "restart": "重新开始",
+    "returnToTitle": "返回标题",
+    "downloadCsv": "下载 CSV",
+    "summary": "摘要",
+    "build": "构筑",
+    "leaderboard": "排行榜"
+  },
   "title": {
     "gameTitle": "Vampire Survivor 原型",
     "startGame": "开始游戏",
@@ -212,6 +231,13 @@
     "debugPanelCompact": "紧凑调试面板",
     "debugPanelOpacity": "调试面板透明度",
     "language": "语言",
+    "uiStyle": {
+      "_label": "UI风格",
+      "classic": "经典",
+      "arcaneSlate": "奥术石板",
+      "minimal": "简洁"
+    },
+    "uiStyleReopenNotice": "部分UI风格变化将在重新打开菜单后生效。",
     "back": "返回"
   },
   "records": {

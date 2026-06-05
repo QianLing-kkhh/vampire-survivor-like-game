@@ -14,6 +14,25 @@
     "timeScale": "時間倍率",
     "none": "なし"
   },
+  "ui": {
+    "chooseReward": "報酬を1つ選択",
+    "weapon": "武器",
+    "passive": "パッシブ",
+    "stat": "ステータス",
+    "evolution": "進化",
+    "new": "新規",
+    "locked": "ロック中",
+    "unlocked": "解除済み",
+    "random": "ランダム",
+    "randomUnlockedEachRun": "毎回解除済みからランダム",
+    "resume": "再開",
+    "restart": "リスタート",
+    "returnToTitle": "タイトルへ戻る",
+    "downloadCsv": "CSVをダウンロード",
+    "summary": "概要",
+    "build": "ビルド",
+    "leaderboard": "ランキング"
+  },
   "title": {
     "gameTitle": "Vampire Survivor プロトタイプ",
     "startGame": "ゲーム開始",
@@ -212,6 +231,13 @@
     "debugPanelCompact": "コンパクトデバッグパネル",
     "debugPanelOpacity": "デバッグパネル透明度",
     "language": "言語",
+    "uiStyle": {
+      "_label": "UIスタイル",
+      "classic": "クラシック",
+      "arcaneSlate": "アーケインスレート",
+      "minimal": "ミニマル"
+    },
+    "uiStyleReopenNotice": "一部のUIスタイル変更はメニューを開き直すと反映されます。",
     "back": "戻る"
   },
   "records": {

@@ -7,6 +7,12 @@ import { UpgradeDisplayInfo } from '../progression/UpgradeApplier';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIBadge } from './components/UIBadge';
+import { UICard } from './components/UICard';
+import { UIIconFrame } from './components/UIIconFrame';
+import { UIStatRow } from './components/UIStatRow';
 import { UITheme } from './UITheme';
 
 type UpgradeSelectedHandler = (option: UpgradeOption) => void;
@@ -69,19 +75,26 @@ export class LevelUpPanel {
     this.container.removeAll(true);
     this.container.setPosition(layout.panelCenter.x, layout.panelCenter.y);
 
-    const background = scene.add.rectangle(0, 0, layout.panelWidth, layout.panelHeight, UITheme.panelBgColor, UITheme.levelUpPanelAlpha);
-    background.setStrokeStyle(2, UITheme.panelBorderColor, 1);
-    this.container.add(background);
+    const frame = PanelFrame.create(scene, {
+      x: 0,
+      y: 0,
+      width: layout.panelWidth,
+      height: layout.panelHeight,
+      alpha: UITheme.levelUpPanelAlpha,
+      variant: 'modal',
+      dim: true,
+    });
+    this.container.add(frame);
     this.addPanelImage(scene, layout.panelWidth, layout.panelHeight);
 
-    const title = scene.add.text(0, -layout.panelHeight / 2 + 32, I18n.t('levelUp.title'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
+    const header = PanelHeader.create(scene, {
+      x: 0,
+      y: -layout.panelHeight / 2 + 40,
+      width: layout.panelWidth,
+      title: I18n.t('levelUp.title').toUpperCase(),
+      subtitle: I18n.t('levelUp.chooseUpgrade'),
     });
-    title.setOrigin(0.5);
-    this.container.add(title);
+    this.container.add(header);
 
     if (this.options.length === 0) {
       const emptyText = scene.add.text(0, 8, 'No upgrades available', {
@@ -113,14 +126,30 @@ export class LevelUpPanel {
       ? -totalWidth / 2 + layout.cardWidth / 2 + index * (layout.cardWidth + layout.cardGap)
       : 0;
     const y = layout.layoutMode === 'vertical'
-      ? -totalHeight / 2 + layout.cardHeight / 2 + index * (layout.cardHeight + layout.cardGap) + 26
-      : 28;
-    const optionBackground = scene.add.rectangle(x, y, layout.cardWidth, layout.cardHeight, UITheme.buttonBgColor, 1);
-    optionBackground.setStrokeStyle(1, UITheme.panelBorderColor, 1);
-    optionBackground.setInteractive({ useHandCursor: true });
-    this.container.add(optionBackground);
+      ? -totalHeight / 2 + layout.cardHeight / 2 + index * (layout.cardHeight + layout.cardGap) + 58
+      : 42;
+    const card = new UICard(scene, {
+      x,
+      y,
+      width: layout.cardWidth,
+      height: layout.cardHeight,
+      onClick: () => {
+        AudioManager.playSfx(scene, 'upgrade_selected');
+        this.onSelected(option);
+      },
+    });
+    this.container.add(card.container);
 
-    const label = scene.add.text(x, y - layout.cardHeight / 2 + 16, this.getOptionLabel(option), {
+    const badge = UIBadge.create(
+      scene,
+      x - layout.cardWidth / 2 + 56,
+      y - layout.cardHeight / 2 + 20,
+      this.getOptionKind(option),
+      this.getOptionKindColor(option),
+    );
+    this.container.add(badge);
+
+    const label = scene.add.text(x, y - layout.cardHeight / 2 + (layout.layoutMode === 'vertical' ? 32 : 40), this.getOptionLabel(option), {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
       fontSize: layout.fontSize,
@@ -131,11 +160,12 @@ export class LevelUpPanel {
     label.setOrigin(0.5, 0);
 
     const visibleRows = option.displayInfo?.rows.slice(0, this.screenManager.isPortrait() ? 3 : 4) ?? [];
-    const iconStartY = y - layout.cardHeight / 2 + 46;
+    const iconStartY = y - layout.cardHeight / 2 + (layout.layoutMode === 'vertical' ? 58 : 76);
     const previewY = option.displayInfo
       ? this.addIconSummary(scene, x, iconStartY, layout.cardWidth, visibleRows) + 8
-      : y - layout.cardHeight / 2 + 50;
-    const descriptionHeight = y + layout.cardHeight / 2 - previewY - 12;
+      : y - layout.cardHeight / 2 + 84;
+    const statRowsTop = y + layout.cardHeight / 2 - (this.screenManager.isPortrait() ? 34 : 44);
+    const descriptionHeight = statRowsTop - previewY - 6;
     const description = scene.add.text(x - layout.cardWidth / 2 + 18, previewY, option.preview ?? option.description, {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
@@ -144,22 +174,8 @@ export class LevelUpPanel {
       lineSpacing: this.screenManager.isPortrait() ? 2 : 4,
       wordWrap: { width: layout.cardWidth - 36 },
     });
-    description.setMaxLines(Math.max(1, Math.floor(descriptionHeight / 16)));
-
-    optionBackground.on('pointerover', () => {
-      optionBackground.setFillStyle(UITheme.buttonHoverColor, 1);
-    });
-
-    optionBackground.on('pointerout', () => {
-      optionBackground.setFillStyle(UITheme.buttonBgColor, 1);
-    });
-
-    optionBackground.on('pointerdown', () => {
-      AudioManager.playUi(scene, 'ui_click');
-      AudioManager.playSfx(scene, 'upgrade_selected');
-      this.onSelected(option);
-    });
-
+    description.setMaxLines(Math.max(1, Math.floor(descriptionHeight / (this.screenManager.isPortrait() ? 14 : 17))));
+    this.addDeltaRows(scene, x, statRowsTop, layout.cardWidth, visibleRows);
     this.container.add([label, description]);
   }
 
@@ -180,15 +196,8 @@ export class LevelUpPanel {
     const auxIconSize = this.screenManager.isPortrait() ? 28 : 34;
     const mainY = startY + mainIconSize / 2;
 
-    this.addIcon(scene, centerX, mainY, mainIconSize, mainRow);
-    const mainLevel = scene.add.text(centerX, mainY + mainIconSize / 2 + 4, this.getLevelText(mainRow), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: this.screenManager.isPortrait() ? '11px' : '12px',
-      align: 'center',
-    });
-    mainLevel.setOrigin(0.5, 0);
-    this.container.add(mainLevel);
+    const mainLevel = this.getLevelText(mainRow);
+    this.addIcon(scene, centerX, mainY, mainIconSize, mainRow, mainLevel.startsWith('Lv') ? mainLevel : undefined);
 
     const auxRows = rows.slice(1, this.screenManager.isPortrait() ? 3 : 4);
     const auxY = mainY + mainIconSize / 2 + 34;
@@ -198,22 +207,13 @@ export class LevelUpPanel {
 
     auxRows.forEach((row, index) => {
       const iconX = auxStartX + index * (auxIconSize + auxGap);
-      this.addIcon(scene, iconX, auxY, auxIconSize, row);
-      const level = scene.add.text(iconX, auxY + auxIconSize / 2 + 3, this.getLevelText(row), {
-        color: UITheme.mutedTextColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '10px',
-        align: 'center',
-        wordWrap: { width: Math.min(76, cardWidth / Math.max(1, auxRows.length)) },
-      });
-      level.setOrigin(0.5, 0);
-      level.setMaxLines(1);
-      this.container.add(level);
+      const levelText = this.getLevelText(row);
+      this.addIcon(scene, iconX, auxY, auxIconSize, row, levelText.startsWith('Lv') ? levelText : undefined);
     });
 
     return auxRows.length > 0
-      ? auxY + auxIconSize / 2 + 18
-      : mainY + mainIconSize / 2 + 22;
+      ? auxY + auxIconSize / 2 + 10
+      : mainY + mainIconSize / 2 + 12;
   }
 
   private addIcon(
@@ -222,27 +222,17 @@ export class LevelUpPanel {
     y: number,
     size: number,
     row: { iconKey?: string; fallback: string; text: string },
+    levelText?: string,
   ): void {
-    const iconBackground = scene.add.rectangle(x, y, size, size, UITheme.iconBgColor, 0.85);
-    iconBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
-    this.container.add(iconBackground);
-
-    if (AssetFallbacks.hasTexture(scene, row.iconKey)) {
-      const icon = scene.add.image(x, y, row.iconKey);
-      icon.setDisplaySize(size * 0.78, size * 0.78);
-      this.container.add(icon);
-      return;
-    }
-
-    const fallback = scene.add.text(x, y, row.fallback, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: `${Math.max(10, Math.floor(size * 0.28))}px`,
-      fontStyle: 'bold',
-      align: 'center',
+    const icon = UIIconFrame.create(scene, {
+      x,
+      y,
+      size,
+      textureKey: AssetFallbacks.hasTexture(scene, row.iconKey) ? row.iconKey : null,
+      fallback: row.fallback,
+      levelText,
     });
-    fallback.setOrigin(0.5);
-    this.container.add(fallback);
+    this.container.add(icon);
   }
 
   private getLevelText(row: { text: string }): string {
@@ -266,6 +256,61 @@ export class LevelUpPanel {
     }
 
     return label || 'Upgrade';
+  }
+
+  private getOptionKind(option: UpgradeOptionView): string {
+    if (/evol/i.test(option.id) || /evol/i.test(option.name)) {
+      return I18n.t('ui.evolution');
+    }
+
+    if (/passive|spinach|tome|bracer|clover|pummarola/i.test(option.id)) {
+      return I18n.t('ui.passive');
+    }
+
+    if (/stat|endless|shield|speed|damage|cooldown|growth/i.test(option.id)) {
+      return I18n.t('ui.stat');
+    }
+
+    return /^add_/i.test(option.id) ? I18n.t('ui.new') : I18n.t('ui.weapon');
+  }
+
+  private getOptionKindColor(option: UpgradeOptionView): number {
+    const kind = this.getOptionKind(option);
+
+    if (kind === I18n.t('ui.passive')) {
+      return UITheme.colors.accentGold;
+    }
+
+    if (kind === I18n.t('ui.stat')) {
+      return UITheme.successAccentColor;
+    }
+
+    return UITheme.colors.accentBlue;
+  }
+
+  private addDeltaRows(
+    scene: Phaser.Scene,
+    centerX: number,
+    y: number,
+    cardWidth: number,
+    rows: Array<{ text: string }>,
+  ): void {
+    const visible = rows.slice(0, this.screenManager.isPortrait() ? 1 : 2);
+    const rowWidth = cardWidth - 30;
+
+    visible.forEach((row, index) => {
+      const clean = row.text.replace(/\s+/g, ' ').trim();
+      const match = /^(.+?)\s+(Lv\.\d+\s*\/\s*\d+|[+\-→].*)$/.exec(clean);
+      const statRow = UIStatRow.create(
+        scene,
+        centerX,
+        y + index * 28,
+        rowWidth,
+        match?.[1] ?? I18n.t('ui.stat'),
+        match?.[2] ?? clean,
+      );
+      this.container.add(statRow);
+    });
   }
 
   private escapeRegExp(value: string): string {
