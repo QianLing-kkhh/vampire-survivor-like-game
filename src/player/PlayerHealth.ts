@@ -1,6 +1,7 @@
 export class PlayerHealth {
   private hp: number;
   private dead = false;
+  private invulnerableRemainingMs = 0;
 
   constructor(private maximumHp: number) {
     this.maximumHp = Math.round(maximumHp);
@@ -19,13 +20,35 @@ export class PlayerHealth {
     return this.dead;
   }
 
+  isInvulnerable(): boolean {
+    return this.invulnerableRemainingMs > 0;
+  }
+
+  setInvulnerable(durationMs: number): void {
+    this.invulnerableRemainingMs = Math.max(
+      this.invulnerableRemainingMs,
+      Math.max(0, durationMs),
+    );
+  }
+
+  updateInvulnerability(deltaMs: number): void {
+    if (this.invulnerableRemainingMs <= 0) {
+      return;
+    }
+
+    this.invulnerableRemainingMs = Math.max(
+      0,
+      this.invulnerableRemainingMs - Math.max(0, deltaMs),
+    );
+  }
+
   setCurrentHp(value: number): void {
     this.hp = Math.min(Math.max(Math.round(value), 0), this.maximumHp);
     this.dead = this.hp <= 0;
   }
 
   takeDamage(amount: number): number {
-    if (this.dead) {
+    if (this.dead || this.isInvulnerable()) {
       return 0;
     }
 
@@ -69,5 +92,6 @@ export class PlayerHealth {
   reset(): void {
     this.hp = this.maximumHp;
     this.dead = false;
+    this.invulnerableRemainingMs = 0;
   }
 }

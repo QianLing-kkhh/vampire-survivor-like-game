@@ -45,8 +45,10 @@ export class PlayerController {
   private readonly lastFramePosition: Phaser.Math.Vector2;
   private readonly velocity = new Phaser.Math.Vector2(0, 0);
   private externalMoveDirection?: Phaser.Math.Vector2;
-  private lastFacingDirection: FacingDirection8 = 'down';
+  private lastFacingDirection: FacingDirection8 = 'right';
   private currentAnimationKey?: string;
+  private temporaryMoveSpeedMultiplier = 1;
+  private temporaryMoveSpeedRemainingMs = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -90,8 +92,10 @@ export class PlayerController {
   ): void {
     const deltaSeconds = Math.max(0, deltaMs / 1000);
 
+    this.updateTemporaryMoveSpeed(deltaMs);
     this.rollbackAbnormalExternalJump(deltaSeconds, direction, source);
     this.previousPosition.set(this.body.x, this.body.y);
+    this.updateFacingFromInput(direction);
     this.updateVelocity(direction, deltaSeconds);
     this.moveByVelocity(deltaSeconds);
     this.rollbackAbnormalMovement(deltaSeconds, direction, source);
@@ -124,6 +128,23 @@ export class PlayerController {
     return this.previousPosition.clone();
   }
 
+  getLastFacingDirection(): Phaser.Math.Vector2 {
+    return this.getVectorFromDirection8(this.lastFacingDirection);
+  }
+
+  setTemporaryMoveSpeedMultiplier(multiplier: number, durationMs: number): void {
+    const nextDurationMs = Math.max(0, durationMs);
+
+    if (nextDurationMs <= 0) {
+      this.temporaryMoveSpeedMultiplier = 1;
+      this.temporaryMoveSpeedRemainingMs = 0;
+      return;
+    }
+
+    this.temporaryMoveSpeedMultiplier = Math.max(0.1, multiplier);
+    this.temporaryMoveSpeedRemainingMs = nextDurationMs;
+  }
+
   private moveBy(direction: Phaser.Math.Vector2, distance: number): void {
     const steps = Math.max(1, Math.ceil(distance / PlayerController.MAX_MOVEMENT_STEP));
     const stepDistance = distance / steps;
@@ -137,16 +158,17 @@ export class PlayerController {
 
   private updateVelocity(direction: Phaser.Math.Vector2, deltaSeconds: number): void {
     const hasInput = direction.lengthSq() > 0;
+    const moveSpeed = this.getEffectiveMoveSpeed();
     const desiredVelocity = hasInput
-      ? direction.clone().normalize().scale(this.stats.moveSpeed)
+      ? direction.clone().normalize().scale(moveSpeed)
       : new Phaser.Math.Vector2(0, 0);
     const maxVelocityDelta = (hasInput ? this.stats.acceleration : this.stats.deceleration)
       * deltaSeconds;
 
     this.moveVelocityToward(desiredVelocity, maxVelocityDelta);
 
-    if (this.velocity.length() > this.stats.moveSpeed) {
-      this.velocity.normalize().scale(this.stats.moveSpeed);
+    if (this.velocity.length() > moveSpeed) {
+      this.velocity.normalize().scale(moveSpeed);
     }
   }
 
@@ -212,7 +234,26 @@ export class PlayerController {
   }
 
   private getMaxExpectedMove(deltaSeconds: number): number {
-    return Math.max(300, this.stats.moveSpeed * deltaSeconds + 50);
+    return Math.max(300, this.getEffectiveMoveSpeed() * deltaSeconds + 50);
+  }
+
+  private getEffectiveMoveSpeed(): number {
+    return this.stats.moveSpeed * this.temporaryMoveSpeedMultiplier;
+  }
+
+  private updateTemporaryMoveSpeed(deltaMs: number): void {
+    if (this.temporaryMoveSpeedRemainingMs <= 0) {
+      return;
+    }
+
+    this.temporaryMoveSpeedRemainingMs = Math.max(
+      0,
+      this.temporaryMoveSpeedRemainingMs - Math.max(0, deltaMs),
+    );
+
+    if (this.temporaryMoveSpeedRemainingMs === 0) {
+      this.temporaryMoveSpeedMultiplier = 1;
+    }
   }
 
   private warnAbnormalJump(
@@ -376,6 +417,36 @@ export class PlayerController {
       || direction === 'down_left'
       || direction === 'up_left',
     );
+  }
+
+  private updateFacingFromInput(direction: Phaser.Math.Vector2): void {
+    if (direction.lengthSq() === 0) {
+      return;
+    }
+
+    this.lastFacingDirection = this.getDirection8FromVector(direction.x, direction.y);
+  }
+
+  private getVectorFromDirection8(direction: FacingDirection8): Phaser.Math.Vector2 {
+    switch (direction) {
+      case 'down_right':
+        return new Phaser.Math.Vector2(1, 1).normalize();
+      case 'down':
+        return new Phaser.Math.Vector2(0, 1);
+      case 'down_left':
+        return new Phaser.Math.Vector2(-1, 1).normalize();
+      case 'left':
+        return new Phaser.Math.Vector2(-1, 0);
+      case 'up_left':
+        return new Phaser.Math.Vector2(-1, -1).normalize();
+      case 'up':
+        return new Phaser.Math.Vector2(0, -1);
+      case 'up_right':
+        return new Phaser.Math.Vector2(1, -1).normalize();
+      case 'right':
+      default:
+        return new Phaser.Math.Vector2(1, 0);
+    }
   }
 
   private getDirection8FromVector(vx: number, vy: number): FacingDirection8 {

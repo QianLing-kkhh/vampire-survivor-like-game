@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { Enemy } from '../enemy/Enemy';
 import { PlayerController } from '../player/PlayerController';
+import { PlayerHealth } from '../player/PlayerHealth';
 
 export type CharacterDamageReactionType =
   | 'shockwave'
@@ -32,6 +33,7 @@ export interface CharacterDamageReactionConfig {
 export interface CharacterDamageReactionContext {
   scene: Phaser.Scene;
   player: PlayerController;
+  playerHealth: PlayerHealth;
   enemies: Enemy[];
   damageCalculator: DamageCalculator;
   worldWidth: number;
@@ -176,18 +178,40 @@ export class BlinkForwardDamageReactionSkill extends BaseCharacterDamageReaction
   readonly type = 'blinkForward';
 
   protected activate(context: CharacterDamageReactionContext): boolean {
-    const direction = new Phaser.Math.Vector2(
-      context.player.body.x - context.player.getPreviousPosition().x,
-      context.player.body.y - context.player.getPreviousPosition().y,
+    const direction = context.player.getLastFacingDirection();
+    const blinkDistance = Math.max(0, this.config.blinkDistance ?? 0);
+    const invulnerableMs = Math.max(0, this.config.invulnerableMs ?? 0);
+    const speedMultiplier = Math.max(0.1, this.config.moveSpeedMultiplier ?? 1);
+    const speedBuffMs = Math.max(0, this.config.speedBuffMs ?? 0);
+
+    context.player.applyExternalDisplacement(direction.scale(blinkDistance));
+    context.playerHealth.setInvulnerable(invulnerableMs);
+    context.player.setTemporaryMoveSpeedMultiplier(speedMultiplier, speedBuffMs);
+    this.invulnerableUntilMs = context.nowMs + invulnerableMs;
+    this.showBlinkFeedback(context);
+    return true;
+  }
+
+  private showBlinkFeedback(context: CharacterDamageReactionContext): void {
+    const flash = context.scene.add.circle(
+      context.player.body.x,
+      context.player.body.y,
+      22,
+      0x93c5fd,
+      0.28,
     );
 
-    if (direction.lengthSq() === 0) {
-      direction.set(1, 0);
-    }
-
-    direction.normalize().scale(Math.max(0, this.config.blinkDistance ?? 0));
-    context.player.applyExternalDisplacement(direction);
-    this.invulnerableUntilMs = context.nowMs + Math.max(0, this.config.invulnerableMs ?? 0);
-    return true;
+    flash.setStrokeStyle(1, 0xdbeafe, 0.75);
+    flash.setDepth(25);
+    context.scene.tweens.add({
+      targets: flash,
+      alpha: 0,
+      scaleX: 1.7,
+      scaleY: 1.7,
+      duration: 160,
+      onComplete: () => {
+        flash.destroy();
+      },
+    });
   }
 }

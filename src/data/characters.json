@@ -35,11 +35,12 @@
       "lostHpRatio": 0.2
     },
     "damageReactionSkill": {
-      "type": "shockwave",
-      "radius": 120,
-      "damage": 20,
-      "knockbackDistance": 80,
-      "cooldownMs": 0
+      "type": "blinkForward",
+      "blinkDistance": 220,
+      "invulnerableMs": 1200,
+      "moveSpeedMultiplier": 1.5,
+      "speedBuffMs": 1200,
+      "cooldownMs": 10000
     },
     "exclusiveUpgradeIds": [],
     "exclusivePassiveIds": [],

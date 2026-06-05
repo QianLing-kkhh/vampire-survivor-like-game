@@ -75,6 +75,7 @@ export class EnemyFlow {
   }
 
   update(_timeSeconds: number, deltaMs: number): void {
+    this.config.playerHealth.updateInvulnerability(deltaMs);
     this.removeDeadEnemies();
     this.updateEnemyMovement(deltaMs);
     this.updateContactDamage(deltaMs);
@@ -148,7 +149,13 @@ export class EnemyFlow {
     const incomingDamage = Math.max(0, damage);
     const nowMs = this.config.scene.time.now;
 
-    if (incomingDamage > 0 && this.config.characterRuntime?.isDamageInvulnerable(nowMs)) {
+    if (
+      incomingDamage > 0
+      && (
+        this.config.playerHealth.isInvulnerable()
+        || this.config.characterRuntime?.isDamageInvulnerable(nowMs)
+      )
+    ) {
       return {
         hit: false,
         actualDamage: 0,
@@ -333,6 +340,7 @@ export class EnemyFlow {
     this.config.characterRuntime?.tryTriggerDamageReaction({
       scene: this.config.scene,
       player: this.config.player,
+      playerHealth: this.config.playerHealth,
       enemies: this.config.enemies,
       damageCalculator: this.config.damageCalculator,
       worldWidth: this.config.worldWidth,
