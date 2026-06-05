@@ -220,6 +220,10 @@ export class SettingsManager {
         partial.visualScalePreset !== undefined
         && partial.visualScalePreset !== previousDisplay.visualScalePreset
       )
+      || (
+        partial.visualModelScale !== undefined
+        && partial.visualModelScale !== previousDisplay.visualModelScale
+      )
     );
   }
 }

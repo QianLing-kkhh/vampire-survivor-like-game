@@ -37,6 +37,7 @@
     "uiVolume": "UI Volume",
     "graphicsQuality": "Graphics Quality",
     "assetStyle": "Asset Style",
+    "modelScale": "Model Scale",
     "shadows": "Shadows",
     "qualityHigh": "High",
     "qualityMedium": "Medium",

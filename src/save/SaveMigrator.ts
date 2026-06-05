@@ -525,6 +525,7 @@ export class SaveMigrator {
           locale: isSupportedLocale(display?.locale)
             ? display.locale
             : DEFAULT_DISPLAY_SETTINGS.locale,
+          visualModelScale: display?.visualModelScale === 2 ? 2 : 1,
         },
         input: {
           ...DEFAULT_INPUT_SETTINGS,

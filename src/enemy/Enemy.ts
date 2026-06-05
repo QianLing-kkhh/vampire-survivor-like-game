@@ -227,6 +227,25 @@ export class Enemy {
     this.shadow = ShadowFactory.createShadow(this.scene, this.body, this.shadowType, this.getShadowOptions());
   }
 
+  refreshVisualScale(): void {
+    const displaySize = VisualScale.getEnemyDisplaySize(this.id, this.scale)
+      * VisualScale.getEnemyVisualDisplayMultiplier(this.id);
+    const body = this.body as Phaser.GameObjects.GameObject & {
+      radius?: number;
+      setDisplaySize?: (width: number, height: number) => void;
+      setScale?: (x: number, y?: number) => void;
+    };
+
+    if (body.setDisplaySize) {
+      body.setDisplaySize(displaySize, displaySize);
+    } else {
+      body.setScale?.(VisualScale.getEnemyFallbackVisualRadius(this.id, this.scale) / this.getBodyRadius());
+    }
+
+    this.captureBaseScale(body, true);
+    this.updateShadow();
+  }
+
   updateShadow(): void {
     this.shadow = this.shadow
       ? ShadowFactory.updateShadow(this.shadow, this.body, this.shadowType, this.getShadowOptions())
@@ -676,8 +695,9 @@ export class Enemy {
 
   private captureBaseScale(
     body: Phaser.GameObjects.GameObject & { scaleX?: number; scaleY?: number },
+    force = false,
   ): void {
-    if (this.baseScaleBody === body) {
+    if (!force && this.baseScaleBody === body) {
       return;
     }
 

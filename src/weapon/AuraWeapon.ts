@@ -93,6 +93,10 @@ export class AuraWeapon extends Weapon {
     this.auraBody.setPosition(context.player.x, context.player.y);
     this.auraBody.setRadius(this.radiusPixels);
     this.auraIcon?.setPosition(context.player.x, context.player.y);
+    this.auraIcon?.setDisplaySize(
+      VisualScale.getAuraCoreDisplaySize(this.id),
+      VisualScale.getAuraCoreDisplaySize(this.id),
+    );
   }
 
   private ensureAuraIcon(context: WeaponUpdateContext): void {

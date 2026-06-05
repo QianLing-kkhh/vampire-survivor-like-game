@@ -29,6 +29,16 @@ export class VisualSettings {
     }
   }
 
+  static getModelScaleMultiplier(): number {
+    try {
+      const scale = SettingsManager.getDisplay().visualModelScale;
+
+      return scale === 2 ? 2 : 1;
+    } catch {
+      return 1;
+    }
+  }
+
   static shouldUsePngAssets(): boolean {
     return !VisualSettings.shouldUseGraphicsFallback();
   }

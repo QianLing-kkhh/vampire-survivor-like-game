@@ -185,6 +185,7 @@
     "uiVolume": "界面音量",
     "graphicsQuality": "画面质量",
     "assetStyle": "素材风格",
+    "modelScale": "模型倍率",
     "shadows": "阴影",
     "qualityHigh": "高",
     "qualityMedium": "中",

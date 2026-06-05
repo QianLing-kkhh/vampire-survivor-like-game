@@ -155,7 +155,9 @@ Display quality is stored in `settings.display`:
 
 `assetStyle` can be `newArt`, `legacy`, or `graphics`. The `graphics` style is intended for low-end fallback testing; UI icons may still use PNGs so menus remain readable.
 
-Graphics quality and asset style do not intentionally resize gameplay objects. Player, enemy, boss, pickup, treasure, projectile, aura-core, and landmark display sizes are centralized in `VisualScale`; graphics fallback/minimal mode should stay close to the same visual footprint as PNG modes while preserving original hitboxes and pickup distances.
+`visualModelScale` can be `1x` or `2x`. It multiplies gameplay object display sizes for the player, enemies, bosses, pickups, treasure, projectiles, aura cores, shadows, and landmarks. It does not change collision radii, weapon hit radii, pickup range, Boss Dash checks, damage ranges, or gameplay stats.
+
+Graphics quality and asset style do not intentionally resize gameplay objects. Player, enemy, boss, pickup, treasure, projectile, aura-core, and landmark display sizes are centralized in `VisualScale`; graphics fallback/minimal mode should stay close to the same visual footprint as PNG modes while preserving original hitboxes and pickup distances. Model scale is independent from graphics quality and asset style, so High/New Art, Low/Legacy, and Minimal/Graphics all respect the same 1x/2x display multiplier.
 
 `SettingsManager` keeps a runtime-only visual restart flag when display quality, asset style, or visual scale changes. This flag is not saved; it only drives Settings UI messaging until the player reaches Title or starts/restarts a run.
 
@@ -180,6 +182,7 @@ Settings should apply immediately to the current run.
 - Audio and volume settings affect playback immediately.
 - Language changes refresh current Settings UI and uses i18n lookup elsewhere.
 - Shadow toggles apply to most newly updated runtime objects immediately; objects that are not updated every frame may apply on the next run.
+- Model Scale updates the player and shadows immediately where possible. Existing enemies, pickups, treasure, landmarks, and projectiles may fully converge on the selected scale after they are recreated or on the next run.
 - Asset style and quality affect newly resolved gameplay art immediately for new objects. Existing sprites may keep their current texture until they are recreated.
 - SettingsMenu shows a restart/next-run notice in the Display tab after changing display quality or asset style. PauseMenu does not force a restart; the same SettingsMenu notice is the source of truth.
 - Minimal graphics mode is safest when starting a fresh run because existing PNG-backed objects may keep their already-created sprites until the scene recreates them.

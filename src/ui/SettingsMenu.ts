@@ -493,6 +493,14 @@ export class SettingsMenu {
         onCycleNext: () => this.cycleAssetStyle(SettingsManager.getDisplay().assetStyle, 1),
         onCyclePrev: () => this.cycleAssetStyle(SettingsManager.getDisplay().assetStyle, -1),
       },
+      this.numberCycleRow(
+        'modelScale',
+        this.t('settings.modelScale', 'Model Scale'),
+        () => SettingsManager.getDisplay().visualModelScale,
+        [1, 2],
+        (value) => SettingsManager.updateDisplay({ visualModelScale: value === 2 ? 2 : 1 }),
+        (value) => `${value}x`,
+      ),
       this.toggleRow('shadows', this.t('settings.shadows', 'Shadows'), display.shadowsEnabled, () => {
         SettingsManager.updateDisplay({ shadowsEnabled: !SettingsManager.getDisplay().shadowsEnabled });
       }),

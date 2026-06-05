@@ -130,11 +130,12 @@ export class Pickup {
 
     if (textureKey) {
       const body = scene.add.image(x, y, textureKey);
-      body.setDisplaySize(VisualScale.pickupDisplaySize, VisualScale.pickupDisplaySize);
+      const displaySize = VisualScale.getPickupDisplaySize();
+      body.setDisplaySize(displaySize, displaySize);
 
       return body;
     }
 
-    return scene.add.circle(x, y, VisualScale.pickupDisplaySize / 2, 0x38bdf8);
+    return scene.add.circle(x, y, VisualScale.getPickupDisplaySize() / 2, 0x38bdf8);
   }
 }

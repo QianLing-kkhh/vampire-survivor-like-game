@@ -1,6 +1,8 @@
 import { DEFAULT_LOCALE, SupportedLocale } from '../i18n/Locale';
 import { AssetStyle, DisplayQuality } from '../visual/DisplayQuality';
 
+export type VisualModelScale = 1 | 2;
+
 export interface DisplaySettingsData {
   locale: SupportedLocale;
   showDamageNumbers: boolean;
@@ -11,6 +13,7 @@ export interface DisplaySettingsData {
   displayQuality: DisplayQuality;
   assetStyle: AssetStyle;
   shadowsEnabled: boolean;
+  visualModelScale: VisualModelScale;
 }
 
 export const DEFAULT_DISPLAY_SETTINGS: DisplaySettingsData = {
@@ -23,4 +26,5 @@ export const DEFAULT_DISPLAY_SETTINGS: DisplaySettingsData = {
   displayQuality: 'high',
   assetStyle: 'newArt',
   shadowsEnabled: true,
+  visualModelScale: 1,
 };

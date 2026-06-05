@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { SettingsManager } from '../settings/SettingsManager';
 import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 
@@ -51,6 +52,7 @@ export class PlayerController {
   private shadow?: Phaser.GameObjects.Ellipse;
   private temporaryMoveSpeedMultiplier = 1;
   private temporaryMoveSpeedRemainingMs = 0;
+  private unsubscribeSettings?: () => void;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -64,6 +66,11 @@ export class PlayerController {
     this.shadow = ShadowFactory.createShadow(scene, this.body, 'player');
     this.previousPosition = new Phaser.Math.Vector2(x, y);
     this.lastFramePosition = new Phaser.Math.Vector2(x, y);
+    this.unsubscribeSettings = SettingsManager.subscribe((domain, settingName) => {
+      if (domain === 'display' && settingName === 'visualModelScale') {
+        this.refreshVisualScale();
+      }
+    });
 
     this.keys = scene.input.keyboard!.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.UP,
@@ -132,6 +139,8 @@ export class PlayerController {
   }
 
   destroy(): void {
+    this.unsubscribeSettings?.();
+    this.unsubscribeSettings = undefined;
     ShadowFactory.destroyShadow(this.shadow);
     this.shadow = undefined;
     this.body.destroy();
@@ -156,6 +165,22 @@ export class PlayerController {
 
     this.temporaryMoveSpeedMultiplier = Math.max(0.1, multiplier);
     this.temporaryMoveSpeedRemainingMs = nextDurationMs;
+  }
+
+  refreshVisualScale(): void {
+    const body = this.body as PlayerBody & {
+      setDisplaySize?: (width: number, height: number) => void;
+      setScale?: (x: number, y?: number) => void;
+    };
+
+    if (body.setDisplaySize) {
+      const displaySize = VisualScale.getPlayerDisplaySize();
+      body.setDisplaySize(displaySize, displaySize);
+    } else {
+      body.setScale?.(VisualScale.getPlayerFallbackVisualRadius() / body.radius);
+    }
+
+    this.updateShadow();
   }
 
   private moveBy(direction: Phaser.Math.Vector2, distance: number): void {
@@ -364,7 +389,8 @@ export class PlayerController {
 
     if (textureKey && idleAnimationKey) {
       const body = this.scene.add.sprite(x, y, textureKey);
-      body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
+      const displaySize = VisualScale.getPlayerDisplaySize();
+      body.setDisplaySize(displaySize, displaySize);
       body.setDepth(PlayerController.PLAYER_DEPTH);
       this.playPlayerAnimation(body, idleAnimationKey);
 
@@ -373,7 +399,8 @@ export class PlayerController {
 
     if (textureKey) {
       const body = this.scene.add.image(x, y, textureKey);
-      body.setDisplaySize(VisualScale.playerDisplaySize, VisualScale.playerDisplaySize);
+      const displaySize = VisualScale.getPlayerDisplaySize();
+      body.setDisplaySize(displaySize, displaySize);
       body.setDepth(PlayerController.PLAYER_DEPTH);
 
       return Object.assign(body, { radius: 14 });

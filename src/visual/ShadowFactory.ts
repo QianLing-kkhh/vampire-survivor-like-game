@@ -16,7 +16,7 @@ export class ShadowFactory {
     type: ShadowType,
     options: Partial<ShadowConfig> = {},
   ): Phaser.GameObjects.Ellipse | undefined {
-    const config = { ...SHADOW_CONFIGS[type], ...options };
+    const config = ShadowFactory.getScaledConfig(type, options);
 
     if (!config.enabled || !VisualSettings.areShadowsEnabled()) {
       return undefined;
@@ -51,7 +51,7 @@ export class ShadowFactory {
       return undefined;
     }
 
-    const config = { ...SHADOW_CONFIGS[type], ...options };
+    const config = ShadowFactory.getScaledConfig(type, options);
     shadow.setPosition(owner.x + config.offsetX, owner.y + config.offsetY);
     shadow.setSize(config.width, config.height);
     shadow.setAlpha(config.alpha);
@@ -63,5 +63,21 @@ export class ShadowFactory {
     if (shadow?.active) {
       shadow.destroy();
     }
+  }
+
+  private static getScaledConfig(
+    type: ShadowType,
+    options: Partial<ShadowConfig>,
+  ): ShadowConfig {
+    const config = { ...SHADOW_CONFIGS[type], ...options };
+    const modelScale = VisualSettings.getModelScaleMultiplier();
+
+    return {
+      ...config,
+      width: config.width * modelScale,
+      height: config.height * modelScale,
+      offsetX: config.offsetX * modelScale,
+      offsetY: config.offsetY * modelScale,
+    };
   }
 }

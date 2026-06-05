@@ -30,11 +30,13 @@ export class TreasureChest {
     this.shadow = ShadowFactory.createShadow(scene, this.body, 'treasure');
 
     if (!AssetKeyResolver.getPickupTextureKey(scene, 'treasure_chest')) {
+      const displayWidth = VisualScale.getTreasureDisplayWidth();
+      const displayHeight = VisualScale.getTreasureDisplayHeight();
       const lid = scene.add.rectangle(
         x,
-        y - VisualScale.treasureDisplayHeight * 0.28,
-        VisualScale.treasureDisplayWidth,
-        VisualScale.treasureDisplayHeight * 0.24,
+        y - displayHeight * 0.28,
+        displayWidth,
+        displayHeight * 0.24,
         0xb45309,
         0.95,
       );
@@ -153,7 +155,10 @@ export class TreasureChest {
 
     if (textureKey) {
       const body = scene.add.image(x, y, textureKey);
-      body.setDisplaySize(VisualScale.treasureDisplayWidth, VisualScale.treasureDisplayHeight);
+      body.setDisplaySize(
+        VisualScale.getTreasureDisplayWidth(),
+        VisualScale.getTreasureDisplayHeight(),
+      );
 
       return body;
     }
@@ -161,8 +166,8 @@ export class TreasureChest {
     const body = scene.add.rectangle(
       x,
       y,
-      VisualScale.treasureDisplayWidth,
-      VisualScale.treasureDisplayHeight * 0.78,
+      VisualScale.getTreasureDisplayWidth(),
+      VisualScale.getTreasureDisplayHeight() * 0.78,
       0xf59e0b,
       0.95,
     );
