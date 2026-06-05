@@ -112,11 +112,25 @@ UI Style is independent from Display Quality, Asset Style, and Model Scale. It d
 
 ### HelpOverlay
 
-HelpOverlay uses tab buttons and data-driven help sections. It includes controls, weapons, UI, evolution, passives, upgrades, treasures, and endless help.
+HelpOverlay is the in-game encyclopedia entry. It uses wrapped tab buttons, fixed Close controls, and paginated content so small screens can access every section without hidden `+N more` rows.
 
-Help text should avoid hardcoded gameplay values when a manager/config can provide those values.
+Current encyclopedia tabs:
 
-The Guide tab documents the non-blocking tutorial hint layer. HelpOverlay remains static help; event-triggered prompts belong to `TutorialManager`.
+- Basics
+- Characters
+- Weapons
+- Evolutions
+- Passives
+- Maps
+- Endless
+- Settings
+- Testing / Data
+
+Help content is built through `src/ui/help/HelpContentBuilder.ts` from the current built-in data where practical: characters, weapons, passives, evolution rules, stages, and maps. Static explanatory sections cover Endless, settings behavior, random selection, CSV metadata, auto testing, replay foundations, and validation scripts.
+
+Help text should avoid hardcoded gameplay values when data/config can provide those values. Evolution routes should come from the current evolution rules, not handwritten examples.
+
+HelpOverlay remains static help; event-triggered tutorial prompts belong to `TutorialManager`.
 
 ### ResultScene
 
@@ -263,7 +277,7 @@ Help content should prefer:
 - Tab icons over long button labels
 - Data-driven values where possible
 - Short visible text on small screens
-- Truncation instead of overlap when content exceeds available space
+- Pagination instead of overlap or inaccessible truncation when content exceeds available space
 
 CSV field names, internal IDs, and debug keys should not be translated for display unless a dedicated display layer is added.
 

@@ -1,16 +1,23 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
-import { HelpContentBuilder } from '../help/HelpContentBuilder';
-import { HelpSection } from '../help/HelpTab';
+import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { HelpContentBuilder } from './help/HelpContentBuilder';
+import { HelpLine } from './help/HelpSection';
+import { HelpTabDefinition } from './help/HelpTabDefinition';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type TabButton = {
   container: Phaser.GameObjects.Container;
   background: Phaser.GameObjects.Rectangle;
-  section: HelpSection;
+  tab: HelpTabDefinition;
+};
+
+type PageRange = {
+  start: number;
+  end: number;
 };
 
 export class HelpOverlay {
@@ -24,15 +31,19 @@ export class HelpOverlay {
   private readonly panelImage?: Phaser.GameObjects.Image;
   private readonly title: Phaser.GameObjects.Text;
   private readonly closeButton: Phaser.GameObjects.Text;
-  private readonly sections: HelpSection[];
+  private readonly prevPageButton: Phaser.GameObjects.Text;
+  private readonly nextPageButton: Phaser.GameObjects.Text;
+  private readonly pageText: Phaser.GameObjects.Text;
+  private readonly tabs: HelpTabDefinition[];
   private readonly tabButtons: TabButton[] = [];
   private readonly contentItems: Phaser.GameObjects.Container[] = [];
-  private selectedSectionIndex = 0;
+  private selectedTabIndex = 0;
+  private pageByTab: Record<string, number> = {};
   private unsubscribeResize?: () => void;
 
   constructor(scene: Phaser.Scene, onClose?: () => void) {
     this.screenManager = new ScreenManager(scene);
-    this.sections = new HelpContentBuilder().buildSections();
+    this.tabs = new HelpContentBuilder().buildTabs();
     this.container = scene.add.container(0, 0);
     this.container.setDepth(1400);
 
@@ -69,32 +80,23 @@ export class HelpOverlay {
     });
     this.title.setOrigin(0.5);
 
-    this.closeButton = scene.add.text(0, 0, 'Close', {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.bodyFontSize,
-      align: 'center',
-      fixedWidth: getButtonMetrics(scene.scale.width, scene.scale.height).width,
-      fixedHeight: getButtonMetrics(scene.scale.width, scene.scale.height).height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((getButtonMetrics(scene.scale.width, scene.scale.height).height - 22) / 2)),
-      },
-    });
-    this.closeButton.setOrigin(0.5);
-    this.closeButton.setInteractive({ useHandCursor: true });
-    this.closeButton.on('pointerover', () => {
-      this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-    });
-    this.closeButton.on('pointerout', () => {
-      this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-    });
-    this.closeButton.on('pointerdown', () => {
-      AudioManager.playUi(scene, 'ui_click');
+    this.closeButton = this.createTextButton(scene, I18n.t('common.close'), () => {
       this.destroy();
       onClose?.();
     });
+    this.prevPageButton = this.createTextButton(scene, I18n.t('settings.previousPage'), () => {
+      this.changePage(scene, -1);
+    });
+    this.nextPageButton = this.createTextButton(scene, I18n.t('settings.nextPage'), () => {
+      this.changePage(scene, 1);
+    });
+    this.pageText = scene.add.text(0, 0, '', {
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
+      align: 'center',
+    });
+    this.pageText.setOrigin(0.5);
 
     this.container.add([
       this.dimmer,
@@ -102,6 +104,9 @@ export class HelpOverlay {
       ...(this.panelImage ? [this.panelImage] : []),
       this.title,
       this.closeButton,
+      this.prevPageButton,
+      this.nextPageButton,
+      this.pageText,
     ]);
 
     this.createTabs(scene);
@@ -119,8 +124,49 @@ export class HelpOverlay {
     this.container.destroy(true);
   }
 
+  private createTextButton(
+    scene: Phaser.Scene,
+    label: string,
+    onClick: () => void,
+  ): Phaser.GameObjects.Text {
+    const metrics = getButtonMetrics(scene.scale.width, scene.scale.height);
+    const button = scene.add.text(0, 0, label, {
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: metrics.fontSize,
+      align: 'center',
+      fixedWidth: metrics.width,
+      fixedHeight: metrics.height,
+      padding: {
+        x: 0,
+        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
+      },
+    });
+    button.setOrigin(0.5);
+    button.setInteractive({ useHandCursor: true });
+    button.on('pointerover', () => {
+      if (button.alpha >= 1) {
+        button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
+      }
+    });
+    button.on('pointerout', () => {
+      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+    });
+    button.on('pointerdown', () => {
+      if (button.alpha < 1) {
+        return;
+      }
+
+      AudioManager.playUi(scene, 'ui_click');
+      onClick();
+    });
+
+    return button;
+  }
+
   private createTabs(scene: Phaser.Scene): void {
-    for (const section of this.sections) {
+    for (const tabDefinition of this.tabs) {
       const tab = scene.add.container(0, 0);
       const background = scene.add.rectangle(
         0,
@@ -134,12 +180,12 @@ export class HelpOverlay {
       background.setInteractive({ useHandCursor: true });
       tab.add(background);
 
-      if (section.iconKey && scene.textures.exists(section.iconKey)) {
-        const icon = scene.add.image(0, -3, section.iconKey);
+      if (tabDefinition.iconKey && scene.textures.exists(tabDefinition.iconKey)) {
+        const icon = scene.add.image(0, -3, tabDefinition.iconKey);
         icon.setDisplaySize(28, 28);
         tab.add(icon);
       } else {
-        const fallback = scene.add.text(0, -5, section.fallback, {
+        const fallback = scene.add.text(0, -5, tabDefinition.fallback, {
           color: UITheme.textColor,
           fontFamily: UITheme.fontFamily,
           fontSize: '12px',
@@ -149,7 +195,7 @@ export class HelpOverlay {
         tab.add(fallback);
       }
 
-      const shortLabel = scene.add.text(0, 13, section.fallback, {
+      const shortLabel = scene.add.text(0, 13, tabDefinition.fallback, {
         color: UITheme.mutedTextColor,
         fontFamily: UITheme.fontFamily,
         fontSize: '9px',
@@ -159,12 +205,13 @@ export class HelpOverlay {
 
       background.on('pointerdown', () => {
         AudioManager.playUi(scene, 'ui_click');
-        this.selectedSectionIndex = this.sections.indexOf(section);
+        this.selectedTabIndex = this.tabs.indexOf(tabDefinition);
+        this.pageByTab[tabDefinition.id] = 0;
         this.renderContent(scene);
         this.applyLayout();
       });
 
-      this.tabButtons.push({ container: tab, background, section });
+      this.tabButtons.push({ container: tab, background, tab: tabDefinition });
       this.container.add(tab);
     }
   }
@@ -175,47 +222,115 @@ export class HelpOverlay {
     }
 
     this.contentItems.length = 0;
-    const section = this.sections[this.selectedSectionIndex];
-    this.title.setText(section.title);
+    const tab = this.tabs[this.selectedTabIndex];
+    this.title.setText(tab.title);
 
-    for (const line of section.lines) {
-      const row = scene.add.container(0, 0);
-      const bg = scene.add.rectangle(
-        0,
-        0,
-        HelpOverlay.CONTENT_ICON_SIZE,
-        HelpOverlay.CONTENT_ICON_SIZE,
-        UITheme.iconBgColor,
-        0.78,
-      );
-      bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
-      row.add(bg);
-
-      if (line.iconKey && scene.textures.exists(line.iconKey)) {
-        const icon = scene.add.image(0, 0, line.iconKey);
-        icon.setDisplaySize(20, 20);
-        row.add(icon);
-      } else {
-        const fallback = scene.add.text(0, 0, line.fallback, {
-          color: UITheme.textColor,
-          fontFamily: UITheme.fontFamily,
-          fontSize: '10px',
-          fontStyle: 'bold',
-        });
-        fallback.setOrigin(0.5);
-        row.add(fallback);
+    for (const section of tab.sections) {
+      this.addContentItem(scene, { type: 'subtitle', text: section.title });
+      for (const line of section.lines) {
+        this.addContentItem(scene, line);
       }
+      this.addContentItem(scene, { type: 'divider' });
+    }
+  }
 
-      const text = scene.add.text(20, -9, line.text, {
+  private addContentItem(scene: Phaser.Scene, line: HelpLine): void {
+    const row = scene.add.container(0, 0);
+    const height = this.getLineHeight(line.type);
+    row.setData('lineType', line.type);
+    row.setData('height', height);
+
+    if (line.type === 'divider') {
+      const divider = scene.add.rectangle(0, 0, 1, 1, UITheme.panelBorderColor, 0.45);
+      divider.setOrigin(0, 0.5);
+      row.add(divider);
+      this.contentItems.push(row);
+      this.container.add(row);
+      return;
+    }
+
+    if (line.type === 'subtitle') {
+      const label = scene.add.text(0, 0, line.text ?? '', {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: UITheme.bodyFontSize,
+        fontStyle: 'bold',
+      });
+      row.add(label);
+      this.contentItems.push(row);
+      this.container.add(row);
+      return;
+    }
+
+    if (line.type === 'statRow') {
+      const label = scene.add.text(0, 0, line.label ?? '', {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: UITheme.smallFontSize,
+        fontStyle: 'bold',
+      });
+      const value = scene.add.text(150, 0, line.value ?? '', {
         color: UITheme.mutedTextColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: UITheme.smallFontSize,
+        wordWrap: { width: 360 },
+      });
+      row.add([label, value]);
+      this.contentItems.push(row);
+      this.container.add(row);
+      return;
+    }
+
+    if (line.type === 'paragraph' || line.type === 'bullet') {
+      const text = scene.add.text(0, 0, line.type === 'bullet' ? `- ${line.text ?? ''}` : line.text ?? '', {
+        color: line.type === 'bullet' ? UITheme.textColor : UITheme.mutedTextColor,
         fontFamily: UITheme.fontFamily,
         fontSize: UITheme.smallFontSize,
         wordWrap: { width: 520 },
       });
+      text.setMaxLines(line.type === 'bullet' ? 2 : 3);
       row.add(text);
       this.contentItems.push(row);
       this.container.add(row);
+      return;
     }
+
+    const bg = scene.add.rectangle(
+      0,
+      0,
+      HelpOverlay.CONTENT_ICON_SIZE,
+      HelpOverlay.CONTENT_ICON_SIZE,
+      UITheme.iconBgColor,
+      0.78,
+    );
+    bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
+    row.add(bg);
+
+    if (line.iconKey && scene.textures.exists(line.iconKey)) {
+      const icon = scene.add.image(0, 0, line.iconKey);
+      icon.setDisplaySize(20, 20);
+      row.add(icon);
+    } else {
+      const fallback = scene.add.text(0, 0, line.fallback ?? '?', {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: '10px',
+        fontStyle: 'bold',
+      });
+      fallback.setOrigin(0.5);
+      row.add(fallback);
+    }
+
+    const text = scene.add.text(20, -9, line.text ?? '', {
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
+      wordWrap: { width: 520 },
+    });
+    text.setMaxLines(3);
+    row.add(text);
+    this.contentItems.push(row);
+    this.container.add(row);
   }
 
   private applyLayout(): void {
@@ -239,9 +354,10 @@ export class HelpOverlay {
     const bodyWidth = verticalTabs
       ? layout.panelWidth - 132
       : layout.panelWidth - 68;
-    const contentBottom = center.y + layout.panelHeight / 2 - 82;
-    const rowGap = this.screenManager.isPortrait() ? 30 : 32;
-    const maxRows = Math.max(1, Math.floor((contentBottom - contentTop) / rowGap));
+    const closeY = center.y + layout.panelHeight / 2 - 44;
+    const pageControlY = closeY - 44;
+    const contentBottom = pageControlY - 22;
+    const availableHeight = Math.max(80, contentBottom - contentTop);
 
     this.dimmer.setPosition(center.x, center.y);
     this.dimmer.setSize(this.screenManager.width, this.screenManager.height);
@@ -252,35 +368,115 @@ export class HelpOverlay {
     this.title.setPosition(center.x, top + 42);
     this.title.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
     this.layoutTabs(left, top, layout.panelWidth, layout.panelHeight, tabGap);
+    this.layoutContent(contentLeft, contentTop, bodyWidth, availableHeight, layout.fontSize);
+    this.layoutPageControls(center.x, pageControlY, closeY);
+  }
+
+  private layoutContent(
+    contentLeft: number,
+    contentTop: number,
+    bodyWidth: number,
+    availableHeight: number,
+    fontSize: string,
+  ): void {
+    this.contentItems.forEach((item) => {
+      this.updateContentItemMetrics(item, bodyWidth, fontSize);
+    });
+
+    const pages = this.buildPages(availableHeight);
+    const tab = this.tabs[this.selectedTabIndex];
+    const pageIndex = Phaser.Math.Clamp(this.pageByTab[tab.id] ?? 0, 0, Math.max(0, pages.length - 1));
+    this.pageByTab[tab.id] = pageIndex;
+    const page = pages[pageIndex] ?? { start: 0, end: this.contentItems.length };
+    let y = contentTop;
 
     this.contentItems.forEach((item, index) => {
-      if (index >= maxRows) {
-        item.setVisible(false);
+      const visible = index >= page.start && index < page.end;
+      item.setVisible(visible);
+
+      if (!visible) {
         return;
       }
 
-      item.setVisible(true);
-      item.setPosition(contentLeft + 12, contentTop + index * rowGap);
-
-      const text = item.list
-        .find((child) => child instanceof Phaser.GameObjects.Text && child.x === 20);
-
-      if (text instanceof Phaser.GameObjects.Text) {
-        text.setFontSize(layout.fontSize);
-        text.setWordWrapWidth(bodyWidth - 44);
-      }
+      const type = item.getData('lineType') as HelpLine['type'];
+      item.setPosition(contentLeft + (type === 'iconRow' ? 12 : 0), y);
+      y += (item.getData('height') as number) + 7;
     });
 
-    if (this.contentItems.length > maxRows) {
-      this.showOverflowHint(contentLeft, contentTop + (maxRows - 1) * rowGap, bodyWidth);
+    const pageCount = Math.max(1, pages.length);
+    this.pageText.setText(`${I18n.t('settings.page')} ${pageIndex + 1}/${pageCount}`);
+    this.setPagingButtonEnabled(this.prevPageButton, pageIndex > 0);
+    this.setPagingButtonEnabled(this.nextPageButton, pageIndex < pageCount - 1);
+  }
+
+  private updateContentItemMetrics(
+    item: Phaser.GameObjects.Container,
+    bodyWidth: number,
+    fontSize: string,
+  ): void {
+    const type = item.getData('lineType') as HelpLine['type'];
+    for (const child of item.list) {
+      if (child instanceof Phaser.GameObjects.Text) {
+        child.setFontSize(type === 'subtitle' ? UITheme.bodyFontSize : fontSize);
+        if (type === 'statRow' && child.x > 0) {
+          child.setX(Math.min(150, Math.floor(bodyWidth * 0.34)));
+          child.setWordWrapWidth(Math.max(160, bodyWidth - child.x));
+        } else if (type !== 'subtitle') {
+          child.setWordWrapWidth(Math.max(160, bodyWidth - (type === 'iconRow' ? 44 : 0)));
+        }
+      } else if (child instanceof Phaser.GameObjects.Rectangle && type === 'divider') {
+        child.setSize(bodyWidth, 1);
+      }
+    }
+  }
+
+  private buildPages(availableHeight: number): PageRange[] {
+    const pages: PageRange[] = [];
+    let start = 0;
+    let usedHeight = 0;
+
+    this.contentItems.forEach((item, index) => {
+      const height = (item.getData('height') as number) + 7;
+      if (index > start && usedHeight + height > availableHeight) {
+        pages.push({ start, end: index });
+        start = index;
+        usedHeight = 0;
+      }
+
+      usedHeight += height;
+    });
+
+    pages.push({ start, end: this.contentItems.length });
+    return pages.filter((page) => page.end > page.start);
+  }
+
+  private layoutPageControls(centerX: number, pageControlY: number, closeY: number): void {
+    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
+    const pageButtonWidth = Math.max(72, Math.floor(metrics.width * 0.58));
+    this.prevPageButton.setPosition(centerX - pageButtonWidth - 54, pageControlY);
+    this.nextPageButton.setPosition(centerX + pageButtonWidth + 54, pageControlY);
+    this.pageText.setPosition(centerX, pageControlY);
+
+    for (const button of [this.prevPageButton, this.nextPageButton]) {
+      button.setFontSize(Math.max(11, Number.parseInt(`${metrics.fontSize}`, 10) - 1));
+      button.setFixedSize(pageButtonWidth, Math.max(30, metrics.height - 8));
+      button.setPadding(0, Math.max(0, Math.floor((Math.max(30, metrics.height - 8) - 22) / 2)), 0, 0);
     }
 
-    this.closeButton.setPosition(center.x, center.y + layout.panelHeight / 2 - 44);
-    this.closeButton.setFontSize(getButtonMetrics(this.screenManager.width, this.screenManager.height).fontSize);
-    this.closeButton.setFixedSize(
-      getButtonMetrics(this.screenManager.width, this.screenManager.height).width,
-      getButtonMetrics(this.screenManager.width, this.screenManager.height).height,
-    );
+    this.closeButton.setPosition(centerX, closeY);
+    this.closeButton.setFontSize(metrics.fontSize);
+    this.closeButton.setFixedSize(metrics.width, metrics.height);
+  }
+
+  private setPagingButtonEnabled(button: Phaser.GameObjects.Text, enabled: boolean): void {
+    button.setAlpha(enabled ? 1 : 0.35);
+    button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+  }
+
+  private changePage(scene: Phaser.Scene, delta: number): void {
+    const tab = this.tabs[this.selectedTabIndex];
+    this.pageByTab[tab.id] = Math.max(0, (this.pageByTab[tab.id] ?? 0) + delta);
+    this.applyLayout();
   }
 
   private layoutTabs(
@@ -293,9 +489,9 @@ export class HelpOverlay {
     const verticalTabs = this.usesVerticalTabs(panelHeight);
 
     this.tabButtons.forEach((tab, index) => {
-      const selected = index === this.selectedSectionIndex;
+      const selected = index === this.selectedTabIndex;
       tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
-      tab.background.setStrokeStyle(2, selected ? 0x22c55e : UITheme.panelBorderColor, selected ? 1 : 0.75);
+      tab.background.setStrokeStyle(2, selected ? UITheme.colors.accentBlue : UITheme.panelBorderColor, selected ? 1 : 0.75);
 
       if (verticalTabs) {
         tab.container.setPosition(left + 46, top + 90 + index * (HelpOverlay.TAB_SIZE + gap));
@@ -314,7 +510,7 @@ export class HelpOverlay {
 
   private usesVerticalTabs(panelHeight: number): boolean {
     return this.screenManager.isLandscape()
-      && panelHeight >= 460
+      && panelHeight >= 560
       && this.tabButtons.length * (HelpOverlay.TAB_SIZE + 8) <= panelHeight - 110;
   }
 
@@ -324,22 +520,23 @@ export class HelpOverlay {
     return Math.ceil(this.tabButtons.length / columns);
   }
 
-  private showOverflowHint(x: number, y: number, width: number): void {
-    const lastVisibleItem = this.contentItems.find((item) => item.visible);
-
-    if (!lastVisibleItem) {
-      return;
+  private getLineHeight(type: HelpLine['type']): number {
+    switch (type) {
+      case 'subtitle':
+        return 28;
+      case 'paragraph':
+        return 48;
+      case 'bullet':
+      case 'iconRow':
+        return 40;
+      case 'statRow':
+        return 36;
+      case 'divider':
+        return 10;
+      case 'title':
+      default:
+        return 32;
     }
-
-    const text = lastVisibleItem.list
-      .find((child) => child instanceof Phaser.GameObjects.Text && child.x === 20);
-
-    if (text instanceof Phaser.GameObjects.Text) {
-      text.setText('...');
-      text.setWordWrapWidth(width - 44);
-    }
-
-    lastVisibleItem.setPosition(x + 12, y);
   }
 
   private coverImage(
