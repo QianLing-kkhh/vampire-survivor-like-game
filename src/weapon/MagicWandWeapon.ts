@@ -121,7 +121,7 @@ export class MagicWandWeapon extends Weapon {
         continue;
       }
 
-      const actualDamage = projectile.target.takeDamage(this.createHitResult());
+      const actualDamage = projectile.target.takeDamage(this.createHitResult(projectile.target));
 
       this.recordEnemyHit(projectile.target, actualDamage);
       this.applyWeaponKnockback(
@@ -243,7 +243,7 @@ export class MagicWandWeapon extends Weapon {
         continue;
       }
 
-      const actualDamage = enemy.takeDamage(this.createHitResultFromDamage(explosionDamage));
+      const actualDamage = enemy.takeDamage(this.createHitResultFromDamage(explosionDamage, enemy));
 
       this.recordEnemyHit(enemy, actualDamage);
       this.applyWeaponKnockback(

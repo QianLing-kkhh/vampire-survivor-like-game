@@ -18,11 +18,20 @@ export interface DamageCalculationModifiers {
   critDamageMultiplier?: number;
 }
 
+export interface DamageTargetContext {
+  enemyId: string;
+  isBoss: boolean;
+  isElite: boolean;
+  isMiniBoss: boolean;
+  isEndlessBoss: boolean;
+}
+
 export interface TaggedDamageCalculationOptions {
   damageType?: DamageType;
   isCritical?: boolean;
   tags?: readonly WeaponTag[];
   modifiers?: DamageCalculationModifiers;
+  targetContext?: DamageTargetContext;
 }
 
 export class DamageCalculator {
@@ -44,7 +53,9 @@ export class DamageCalculator {
   ): HitResult {
     const damageType = options.damageType ?? DamageType.Normal;
     const isCritical = options.isCritical ?? false;
-    const damage = baseDamage * this.getTagDamageMultiplier(options.tags, options.modifiers)
+    const damage = baseDamage
+      * this.getTagDamageMultiplier(options.tags, options.modifiers)
+      * this.getTargetDamageMultiplier(options.targetContext, options.modifiers)
       * (isCritical ? (options.modifiers?.critDamageMultiplier ?? 1.5) : 1);
 
     return {
@@ -93,5 +104,24 @@ export class DamageCalculator {
     }
 
     return multiplier;
+  }
+
+  getTargetDamageMultiplier(
+    targetContext: DamageTargetContext | undefined,
+    modifiers: DamageCalculationModifiers | undefined,
+  ): number {
+    if (!targetContext || !modifiers) {
+      return 1;
+    }
+
+    if (targetContext.isBoss || targetContext.isEndlessBoss) {
+      return modifiers.bossDamageMultiplier ?? 1;
+    }
+
+    if (targetContext.isElite || targetContext.isMiniBoss) {
+      return modifiers.eliteDamageMultiplier ?? 1;
+    }
+
+    return 1;
   }
 }

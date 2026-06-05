@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
-import { DamageType } from '../combat/DamageType';
 import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
@@ -150,24 +149,22 @@ export class AuraWeapon extends Weapon {
 
   private createAuraHitResult(enemy: Enemy) {
     if (this.id === 'garlic') {
-      return {
-        damage: this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(AuraWeapon.GARLIC_PERCENT_DAMAGE),
-        isCritical: false,
-        damageType: DamageType.Normal,
-      };
+      return this.createHitResultFromDamage(
+        this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(AuraWeapon.GARLIC_PERCENT_DAMAGE),
+        enemy,
+      );
     }
 
     if (this.id === 'soul_eater') {
-      return {
-        damage: this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(
+      return this.createHitResultFromDamage(
+        this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(
           AuraWeapon.SOUL_EATER_PERCENT_DAMAGE,
         ),
-        isCritical: false,
-        damageType: DamageType.Normal,
-      };
+        enemy,
+      );
     }
 
-    return this.createHitResult();
+    return this.createHitResult(enemy);
   }
 
   private getPercentMaxHpDamage(defaultValue: number): number {

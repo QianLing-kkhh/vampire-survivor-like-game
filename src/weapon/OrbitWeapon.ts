@@ -143,7 +143,7 @@ export class OrbitWeapon extends Weapon {
         continue;
       }
 
-      const actualDamage = enemy.takeDamage(this.createHitResult());
+      const actualDamage = enemy.takeDamage(this.createHitResult(enemy));
 
       this.recordEnemyHit(enemy, actualDamage);
       this.applyWeaponKnockback(

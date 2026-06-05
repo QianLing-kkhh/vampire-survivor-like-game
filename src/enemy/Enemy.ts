@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { DamageTargetContext } from '../combat/DamageCalculator';
 import { HitResult } from '../combat/HitResult';
 import { EventBus } from '../core/EventBus';
 import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
@@ -212,6 +213,21 @@ export class Enemy {
 
   updateModifiers(deltaMs: number): void {
     this.modifierRuntime?.update(deltaMs);
+  }
+
+  getDamageTargetContext(): DamageTargetContext {
+    const isEndlessBoss = this.id.startsWith('endless_') && this.bossLike;
+    const isMiniBoss = this.id.endsWith('_boss');
+    const isBoss = this.id === 'boss' || isEndlessBoss;
+    const isElite = !isBoss && (isMiniBoss || this.bossLike);
+
+    return {
+      enemyId: this.id,
+      isBoss,
+      isElite,
+      isMiniBoss,
+      isEndlessBoss,
+    };
   }
 
   triggerModifierDeathEffects(context: Omit<EnemyModifierDeathContext, 'enemy'>): void {

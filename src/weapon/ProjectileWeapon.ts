@@ -182,7 +182,7 @@ export class ProjectileWeapon extends Weapon {
           projectile.hitEnemies.size,
         );
         const actualDamage = hitEnemy.takeDamage(
-          this.createHitResultWithMultiplier(damageMultiplier),
+          this.createHitResultWithMultiplier(damageMultiplier, hitEnemy),
         );
 
         this.recordEnemyHit(hitEnemy, actualDamage);
@@ -311,7 +311,7 @@ export class ProjectileWeapon extends Weapon {
         continue;
       }
 
-      const actualDamage = enemy.takeDamage(this.createHitResultFromDamage(explosionDamage));
+      const actualDamage = enemy.takeDamage(this.createHitResultFromDamage(explosionDamage, enemy));
 
       this.recordEnemyHit(enemy, actualDamage);
       this.applyWeaponKnockback(

@@ -46,6 +46,8 @@ export abstract class Weapon {
   protected projectileSpeed: number;
   private runStats?: RunStats;
   private passiveDamageMultiplier = 1;
+  private passiveBossDamageMultiplier = 1;
+  private passiveEliteDamageMultiplier = 1;
   private passiveCooldownMultiplier = 1;
   private passiveProjectileSpeedMultiplier = 1;
   private passiveKnockbackPowerMultiplier = 1;
@@ -83,11 +85,15 @@ export abstract class Weapon {
 
   setPassiveModifiers(modifiers: {
     damageMultiplier: number;
+    bossDamageMultiplier?: number;
+    eliteDamageMultiplier?: number;
     cooldownMultiplier: number;
     projectileSpeedMultiplier: number;
     knockbackPowerMultiplier?: number;
   }): void {
     this.passiveDamageMultiplier = modifiers.damageMultiplier;
+    this.passiveBossDamageMultiplier = modifiers.bossDamageMultiplier ?? 1;
+    this.passiveEliteDamageMultiplier = modifiers.eliteDamageMultiplier ?? 1;
     this.passiveCooldownMultiplier = modifiers.cooldownMultiplier;
     this.passiveProjectileSpeedMultiplier = modifiers.projectileSpeedMultiplier;
     this.passiveKnockbackPowerMultiplier = modifiers.knockbackPowerMultiplier ?? 1;
@@ -97,23 +103,23 @@ export abstract class Weapon {
     return this.totalDamage;
   }
 
-  protected createHitResult(): HitResult {
+  protected createHitResult(enemy?: Enemy): HitResult {
     return this.damageCalculator.calculateDamage(
-      this.modifiedDamage,
+      this.getTargetModifiedDamage(this.modifiedDamage, enemy),
       DamageType.Normal,
     );
   }
 
-  protected createHitResultWithMultiplier(multiplier: number): HitResult {
+  protected createHitResultWithMultiplier(multiplier: number, enemy?: Enemy): HitResult {
     return this.damageCalculator.calculateDamage(
-      this.modifiedDamage * multiplier,
+      this.getTargetModifiedDamage(this.modifiedDamage * multiplier, enemy),
       DamageType.Normal,
     );
   }
 
-  protected createHitResultFromDamage(damage: number): HitResult {
+  protected createHitResultFromDamage(damage: number, enemy?: Enemy): HitResult {
     return this.damageCalculator.calculateDamage(
-      damage,
+      this.getTargetModifiedDamage(damage, enemy),
       DamageType.Normal,
     );
   }
@@ -128,6 +134,16 @@ export abstract class Weapon {
 
   protected get modifiedProjectileSpeed(): number {
     return this.projectileSpeed * this.passiveProjectileSpeedMultiplier;
+  }
+
+  private getTargetModifiedDamage(damage: number, enemy: Enemy | undefined): number {
+    return damage * this.damageCalculator.getTargetDamageMultiplier(
+      enemy?.getDamageTargetContext(),
+      {
+        bossDamageMultiplier: this.passiveBossDamageMultiplier,
+        eliteDamageMultiplier: this.passiveEliteDamageMultiplier,
+      },
+    );
   }
 
   protected increaseDamage(rate: number): void {

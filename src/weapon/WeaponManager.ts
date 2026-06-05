@@ -153,6 +153,8 @@ export class WeaponManager {
 
   setPassiveModifiers(modifiers: {
     damageMultiplier: number;
+    bossDamageMultiplier?: number;
+    eliteDamageMultiplier?: number;
     cooldownMultiplier: number;
     projectileSpeedMultiplier: number;
   }): void {
@@ -589,6 +591,8 @@ export class WeaponManager {
 
   private getCombinedPassiveModifiers(weapon: ManagedWeapon): {
     damageMultiplier: number;
+    bossDamageMultiplier: number;
+    eliteDamageMultiplier: number;
     cooldownMultiplier: number;
     projectileSpeedMultiplier: number;
     knockbackPowerMultiplier: number;
@@ -597,6 +601,8 @@ export class WeaponManager {
       damageMultiplier: this.passiveModifiers.damageMultiplier
         * this.currentEndlessDamageMultiplier
         * this.getCharacterTagDamageMultiplier(weapon),
+      bossDamageMultiplier: this.characterStatModifiers.bossDamageMultiplier,
+      eliteDamageMultiplier: this.characterStatModifiers.eliteDamageMultiplier,
       cooldownMultiplier: this.passiveModifiers.cooldownMultiplier
         * this.characterStatModifiers.cooldownMultiplier,
       projectileSpeedMultiplier: this.passiveModifiers.projectileSpeedMultiplier

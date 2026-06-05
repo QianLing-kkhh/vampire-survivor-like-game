@@ -214,7 +214,7 @@ Current defaults:
 - Stage: `stage_001`
 - Map: `prototype_field`
 
-Minimal Character/Stage selection UI exists. Character definitions now include initial stats, per-level growth, starting weapon, optional skin id, level-up effect, damage reaction skill, and reserved exclusive upgrade/evolution ids. The runtime syncs deterministic character combat modifiers into `WeaponManager`: global damage, physical, magic, projectile, aura, orbit, area, explosion, cooldown, projectile speed, and knockback multipliers can affect weapon behavior through weapon tags. Crit chance/damage, dodge, resource multipliers, and deeper defense hooks remain reserved until dedicated gameplay tasks wire them in. Custom stages can appear in Stage Select after validation and local storage. Map selection, random stage selection, difficulty selection, detailed previews, unlock presentation, and custom challenge selection remain planned.
+Minimal Character/Stage selection UI exists. Character definitions now include initial stats, per-level growth, starting weapon, optional skin id, level-up effect, damage reaction skill, and reserved exclusive upgrade/evolution ids. The runtime syncs deterministic character combat modifiers into `WeaponManager`: global damage, physical, magic, projectile, aura, orbit, area, explosion, Boss, elite, cooldown, projectile speed, and knockback multipliers can affect weapon behavior through weapon tags and target context. Crit chance/damage, dodge, resource multipliers, and deeper defense hooks remain reserved until dedicated gameplay tasks wire them in. Custom stages can appear in Stage Select after validation and local storage. Map selection, random stage selection, difficulty selection, detailed previews, unlock presentation, and custom challenge selection remain planned.
 
 Valid custom stages saved through `CustomStageStorage` are exposed by `StageManager.listSelectableStages()` and can be selected in `StageSelectScene`. They are not registered into the builtin `ContentRegistry`; `SelectionManager` stores `selectedCustomStageId`, while `StageManager`, `MapManager`, and `GameplayInitializer` resolve the package at runtime.
 
@@ -264,6 +264,7 @@ Boundary:
 Enemy, Boss, and combat behavior are split from the main scene.
 
 - `Enemy`: runtime enemy entity and per-enemy state.
+- `Enemy.getDamageTargetContext()`: exposes deterministic target type context for weapon damage modifiers without changing enemy stats.
 - `EnemyFactory`: creates enemies from registry-backed data, with optional runtime stat overrides.
 - `EnemyFlow`: updates enemy movement, removes dead enemies, applies contact damage, handles shield absorption, records kills, and triggers player damage reaction.
 - `EnemyModifierRuntime`: optional per-enemy modifier lifecycle for future elite enemies, affixes, custom waves, and mod content.
