@@ -46,6 +46,7 @@ export class EndlessManager {
   private static readonly SAFE_SPAWN_RADIUS = 500;
   private static readonly SPAWN_MARGIN = 120;
   private static readonly MAX_ENEMIES = 250;
+  private static readonly MAX_SPAWN_BATCHES_PER_FRAME = 10;
   private static readonly TIERS: EndlessTier[] = [
     {
       startTimeSeconds: 0,
@@ -85,6 +86,8 @@ export class EndlessManager {
   private activeTierIndex = -1;
   private ruleStates: EndlessRuleState[] = [];
   private readonly random: RandomSource;
+  private spawnClampCount = 0;
+  private lastFrameSpawnClamped = false;
 
   constructor(private readonly config: EndlessManagerConfig) {
     this.random = config.random ?? new SeededRandom('endless-fallback');
@@ -102,7 +105,10 @@ export class EndlessManager {
   }
 
   update(gameTimeSeconds: number, deltaMs: number): void {
-    if (!this.started || this.getAliveEnemyCount() >= EndlessManager.MAX_ENEMIES) {
+    this.lastFrameSpawnClamped = false;
+    let aliveEnemyCount = this.getAliveEnemyCount();
+
+    if (!this.started || aliveEnemyCount >= EndlessManager.MAX_ENEMIES) {
       return;
     }
 
@@ -115,17 +121,34 @@ export class EndlessManager {
     }
 
     const tier = EndlessManager.TIERS[this.activeTierIndex];
+    let remainingSpawnBudget = EndlessManager.MAX_SPAWN_BATCHES_PER_FRAME;
 
     tier.rules.forEach((rule, index) => {
+      if (remainingSpawnBudget <= 0) {
+        return;
+      }
+
       const state = this.ruleStates[index];
       state.elapsedMs += deltaMs;
 
       while (
-        this.getAliveEnemyCount() < EndlessManager.MAX_ENEMIES
+        remainingSpawnBudget > 0
+        && aliveEnemyCount < EndlessManager.MAX_ENEMIES
         && state.elapsedMs >= this.getEffectiveIntervalMs(rule.intervalSeconds)
       ) {
         state.elapsedMs -= this.getEffectiveIntervalMs(rule.intervalSeconds);
         this.spawnBatch(rule.enemyId, rule.count, endlessTimeSeconds, rule.modifiers);
+        aliveEnemyCount += rule.count;
+        remainingSpawnBudget -= 1;
+      }
+
+      if (
+        remainingSpawnBudget <= 0
+        && aliveEnemyCount < EndlessManager.MAX_ENEMIES
+        && state.elapsedMs >= this.getEffectiveIntervalMs(rule.intervalSeconds)
+      ) {
+        this.lastFrameSpawnClamped = true;
+        this.spawnClampCount += 1;
       }
     });
   }
@@ -173,6 +196,25 @@ export class EndlessManager {
     this.startTimeSeconds = 0;
     this.activeTierIndex = -1;
     this.ruleStates = [];
+    this.spawnClampCount = 0;
+    this.lastFrameSpawnClamped = false;
+  }
+
+  getDebugStats(): {
+    activeTierIndex: number;
+    spawnClampCount: number;
+    maxAccumulatorMs: number;
+    lastFrameSpawnClamped: boolean;
+  } {
+    return {
+      activeTierIndex: this.activeTierIndex,
+      spawnClampCount: this.spawnClampCount,
+      maxAccumulatorMs: this.ruleStates.reduce(
+        (max, state) => Math.max(max, state.elapsedMs),
+        0,
+      ),
+      lastFrameSpawnClamped: this.lastFrameSpawnClamped,
+    };
   }
 
   private getTierIndex(endlessTimeSeconds: number): number {

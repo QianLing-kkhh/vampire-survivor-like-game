@@ -55,6 +55,10 @@ export class ProjectileWeapon extends Weapon {
     this.projectiles.length = 0;
   }
 
+  getActiveProjectileCount(): number {
+    return this.projectiles.length;
+  }
+
   override applyUpgrade(upgradeId: string): boolean {
     if (this.id !== 'knife') {
       return false;

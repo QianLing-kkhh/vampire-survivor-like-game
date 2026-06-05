@@ -64,9 +64,9 @@ export class DebugPanel {
       `seed ${data.runSeed ?? '-'}`,
       `stage ${data.stageId ?? '-'} / ${data.mapId ?? '-'}`,
       `char ${data.characterId ?? '-'} diff ${data.difficultyId ?? '-'}`,
-      `fps ${this.format(data.fps)} t ${this.format(data.gameTimeSeconds)}s`,
-      `enemies ${data.enemyCount ?? 0} bosses ${data.activeBossCount ?? 0}`,
-      `float ${data.floatingTextCount ?? 0} pool ${data.pooledObjectCount ?? 0}`,
+      `fps ${this.format(data.fps)} d ${this.format(data.averageDeltaMs)}ms speed ${this.format(data.gameSecondsPerRealSecond)}x`,
+      `scale cfg ${this.format(data.configuredTimeScale)} eff ${this.format(data.effectiveTimeScale)} scene ${this.format(data.sceneTimeScale)}`,
+      `en ${data.enemyCount ?? 0} pick ${data.pickupCount ?? 0} proj ${data.projectileCount ?? 0} boss ${data.activeBossCount ?? 0} float ${data.floatingTextActiveCount ?? data.floatingTextCount ?? 0}`,
       `endless ${data.endlessStarted ? 'on' : 'off'} ${this.format(data.endlessTimeSeconds)}s lv ${data.endlessScalingLevel ?? 0}`,
       `player Lv.${data.playerLevel ?? 1} HP ${this.format(data.playerHp)}/${this.format(data.playerMaxHp)}`,
       `csv ${data.csvBufferSize ?? 0} events ${data.recentEventCount ?? 0}`,
@@ -75,6 +75,10 @@ export class DebugPanel {
     if (!compact) {
       lines.splice(2, 0, `run ${data.runId ?? '-'}`);
       lines.push(
+        `objects render ${data.totalRenderableWorldObjects ?? 0} gems ${data.pickupGemCount ?? 0} chests ${data.chestCount ?? 0}`,
+        `map visuals ${data.mapMechanicVisualCount ?? 0} slow ${data.slowZoneCount ?? 0} tweens ${data.activeTweenCount ?? 0} timers ${data.activeTimerCount ?? 0}`,
+        `spawn ${data.spawnAccumulatorSummary ?? '-'} pickupMerge ${data.pickupMergeCount ?? 0}`,
+        `float pool ${data.floatingTextPoolSize ?? 0} total pool ${data.pooledObjectCount ?? 0}`,
         `pool c/r/d ${data.createdObjectCount ?? 0}/${data.reusedObjectCount ?? 0}/${data.destroyedObjectCount ?? 0}`,
       );
     }

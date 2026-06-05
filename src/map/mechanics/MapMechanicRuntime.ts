@@ -48,6 +48,20 @@ export class MapMechanicRuntime {
     this.destroy();
   }
 
+  getDebugStats(): {
+    obstacleCount: number;
+    slowZoneCount: number;
+    portalCount: number;
+    visualCount: number;
+  } {
+    return {
+      obstacleCount: this.obstacles.length,
+      slowZoneCount: this.slowZones.length,
+      portalCount: this.portals.length,
+      visualCount: this.interactables.length,
+    };
+  }
+
   getPlayerSpeedMultiplierAt(x: number, y: number): number {
     return Math.max(
       MIN_SLOW_MULTIPLIER,

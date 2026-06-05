@@ -39,9 +39,9 @@ The runtime also creates a per-run `GameEventBus` and bounded `GameEventRecorder
 
 The runtime also creates a `ReplayRecorder`. Current replay records include run metadata, selection snapshot, settings snapshot, selected key events, and run result summary. Input samples are reserved but not populated until an input mapping layer exists.
 
-Developer DebugPanel foundation is available for local diagnostics. It is disabled by default and can be toggled with F3 through `DeveloperSettings.showDebugPanel`. It shows compact run/version/seed/content, selected stage/map/character, FPS, enemy/Boss counts, endless state, CSV buffer size, and recent event count without changing gameplay.
+Developer DebugPanel foundation is available for local diagnostics. It is disabled by default and can be toggled with F3 through `DeveloperSettings.showDebugPanel`. It shows compact run/version/seed/content, selected stage/map/character, FPS, real delta, configured/effective time scale, measured game seconds per real second, enemy/pickup/projectile/Boss/floating text counts, endless state, CSV buffer size, and recent event count without changing gameplay.
 
-Performance profiling foundation is available through `PerformanceMonitor`, `PoolManager`, and DebugPanel stats. Current pooled object coverage is intentionally narrow: floating combat text is pooled, while enemies, projectiles, pickups, treasure chests, and Boss skill graphics still use their existing create/destroy paths. This keeps gameplay behavior stable while exposing late-endless object pressure for future profiling.
+Performance profiling foundation is available through `PerformanceMonitor`, `PoolManager`, and DebugPanel stats. Current pooled object coverage is intentionally narrow: floating combat text is pooled, while enemies, projectiles, pickups, treasure chests, and Boss skill graphics still use their existing create/destroy paths. This keeps gameplay behavior stable while exposing late-endless object pressure for future profiling. Runtime time scale is applied through the gameplay delta path; Phaser scene and physics clocks are kept at 1x so Fast Mode does not double-scale timers.
 
 Playtest scenario runner foundation exists under `src/playtest/`. It defines scenario data, a queue, built-in scenario presets, and a runner shell for future batches across character, stage, difficulty, seed, mutator, and Endless combinations. It is inactive by default and does not change the current Title Scene Auto Test or Result Scene auto-restart behavior.
 
@@ -249,13 +249,22 @@ Testing notes:
 When DebugPanel is enabled, watch:
 
 - FPS
+- Real delta in milliseconds
+- Configured/effective time scale
+- `gameSecondsPerRealSecond`, which should be close to 3 while Fast Mode is configured to 3x
 - Active enemy count
 - Active Boss count
+- Active projectile count
+- Active pickup/gem and chest counts
 - Active floating text count
+- Map mechanic visual and slow-zone counts
+- Spawn accumulator and clamp count in expanded mode
 - Total pooled objects
 - Created / reused / destroyed pooled object counts in expanded debug mode
 
-Performance diagnostics are not CSV fields and should not be used as balance metrics without a dedicated profiling run. Future pooling candidates include projectile bodies, pickup bodies, treasure chest visuals, Boss skill warning lines/circles, explosion circles, and hit flashes.
+Performance diagnostics are not CSV fields and should not be used as balance metrics without a dedicated profiling run. In late-endless 3x testing, first confirm that `gameSecondsPerRealSecond` stays near the configured scale, then watch which object count grows: pickups, projectiles, active enemies/Bosses, floating text, tweens, timers, or map visuals. `PerformanceMonitor` prints a throttled slowdown warning when 3x runs spend more than 5 seconds below the configured performance target.
+
+Spawn accumulators have a per-frame spawn budget so a stalled frame does not try to catch up by spawning an unbounded burst in one update. Remaining accumulator time is retained for later frames. EXP gems use a far-distance soft merge when the active pickup count grows too high; nearby or magnetizing rewards are not deleted, and merged gems preserve total EXP value.
 
 ## Replay Diagnostics
 

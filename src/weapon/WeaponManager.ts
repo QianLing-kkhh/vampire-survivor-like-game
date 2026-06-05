@@ -11,6 +11,7 @@ import { WeaponTag } from './tags/WeaponTag';
 type ManagedWeapon = Weapon & {
   destroy?: () => void;
   clearProjectiles?: () => void;
+  getActiveProjectileCount?: () => number;
 };
 
 type WeaponStat = 'damage'
@@ -404,6 +405,13 @@ export class WeaponManager {
       garlicRadiusPx: garlicRadius === undefined ? undefined : garlicRadius * 48,
       bibleRadiusPx: bibleRadius === undefined ? undefined : bibleRadius * 48,
     };
+  }
+
+  getProjectileCount(): number {
+    return this.weapons.reduce(
+      (total, weapon) => total + (weapon.getActiveProjectileCount?.() ?? 0),
+      0,
+    );
   }
 
   getWeaponStat(weaponId: string, stat: WeaponStat): number | undefined {

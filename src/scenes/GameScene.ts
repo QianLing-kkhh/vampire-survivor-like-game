@@ -309,6 +309,7 @@ export class GameScene extends Phaser.Scene {
       },
     });
     this.applyGameplayContext(context);
+    this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
     this.emitRunStarted();
     this.unsubscribeSettings = PlaytestSettings.subscribe((settingName, state) => {
       this.handleSettingsChanged(settingName, state);
@@ -556,8 +557,7 @@ export class GameScene extends Phaser.Scene {
     this.gameplayContext.autoUpgradeEnabled = this.playtestSettings.autoUpgrade;
     this.gameplayContext.fastMode = this.playtestSettings.fastMode;
     this.gameplayContext.endlessMode = this.playtestSettings.endlessMode;
-    this.gameplayContext.timeScale = this.getGameplayTimeScale();
-    this.gameplayContext.effectiveTimeScale = this.gameplayContext.timeScale;
+    this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
     this.runState.endlessMode = this.playtestSettings.endlessMode;
   }
 
@@ -1251,6 +1251,7 @@ export class GameScene extends Phaser.Scene {
 
     this.isPauseMenuOpen = false;
     this.isGameplayPaused = false;
+    this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
     this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
     this.gameplayContext?.gameEventBus.emit('ui.pauseClosed', {
       gameTimeSeconds: this.timeManager.gameTimeSeconds,
@@ -1398,11 +1399,32 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getGameplayTimeScale(): number {
+    return this.gameplayContext?.effectiveTimeScale
+      ?? this.getConfiguredGameplayTimeScale();
+  }
+
+  private getConfiguredGameplayTimeScale(): number {
     if (!this.playtestSettings.fastMode) {
       return 1;
     }
 
     return this.playtestSettings.autoTimeScale;
+  }
+
+  private applyRuntimeTimeScale(scale: number): void {
+    const safeScale = Math.max(0.1, scale);
+
+    // GameplayUpdater is the single runtime timeScale path. Phaser clocks stay
+    // unscaled so managers receive one consistently scaled delta.
+    this.time.timeScale = 1;
+    (this.physics.world as unknown as { timeScale?: number }).timeScale = 1;
+
+    if (!this.gameplayContext) {
+      return;
+    }
+
+    this.gameplayContext.timeScale = safeScale;
+    this.gameplayContext.effectiveTimeScale = safeScale;
   }
 
   private cleanup(): void {

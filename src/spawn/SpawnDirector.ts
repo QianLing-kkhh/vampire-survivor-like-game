@@ -26,10 +26,13 @@ export class SpawnDirector {
   private static readonly SAFE_SPAWN_RADIUS = 500;
   private static readonly SPAWN_MARGIN = 100;
   private static readonly MAX_SPAWN_ATTEMPTS = 20;
+  private static readonly MAX_SPAWN_BATCHES_PER_FRAME = 24;
 
   private readonly pendingWaves: RuntimeSpawnWave[];
   private readonly activeWaves: ActiveWave[] = [];
   private spawnCount = 0;
+  private spawnClampCount = 0;
+  private lastFrameSpawnClamped = false;
 
   constructor(
     waves: readonly RuntimeSpawnWave[],
@@ -69,6 +72,25 @@ export class SpawnDirector {
     this.updateActiveWaves(deltaMs);
   }
 
+  getDebugStats(): {
+    activeWaveCount: number;
+    pendingWaveCount: number;
+    spawnClampCount: number;
+    maxAccumulatorMs: number;
+    lastFrameSpawnClamped: boolean;
+  } {
+    return {
+      activeWaveCount: this.activeWaves.length,
+      pendingWaveCount: this.pendingWaves.length,
+      spawnClampCount: this.spawnClampCount,
+      maxAccumulatorMs: this.activeWaves.reduce(
+        (max, activeWave) => Math.max(max, activeWave.elapsedSinceSpawn),
+        0,
+      ),
+      lastFrameSpawnClamped: this.lastFrameSpawnClamped,
+    };
+  }
+
   private activateReadyWaves(gameTimeSeconds: number): void {
     while (this.pendingWaves.length > 0 && this.pendingWaves[0].time <= gameTimeSeconds) {
       const wave = this.pendingWaves.shift();
@@ -86,19 +108,35 @@ export class SpawnDirector {
   }
 
   private updateActiveWaves(deltaMs: number): void {
+    let remainingSpawnBudget = SpawnDirector.MAX_SPAWN_BATCHES_PER_FRAME;
+    this.lastFrameSpawnClamped = false;
+
     for (const activeWave of this.activeWaves) {
       activeWave.elapsedSinceSpawn += deltaMs;
 
       while (
+        remainingSpawnBudget > 0
+        &&
         activeWave.spawnedCount < activeWave.wave.count
         && activeWave.elapsedSinceSpawn >= this.getEffectiveIntervalMs(activeWave.wave.interval)
       ) {
         activeWave.elapsedSinceSpawn -= this.getEffectiveIntervalMs(activeWave.wave.interval);
         activeWave.spawnedCount += 1;
+        remainingSpawnBudget -= 1;
         this.spawnEnemy(
           activeWave.wave.enemy,
           activeWave.wave.modifiers,
         );
+      }
+
+      if (
+        remainingSpawnBudget <= 0
+        && activeWave.spawnedCount < activeWave.wave.count
+        && activeWave.elapsedSinceSpawn >= this.getEffectiveIntervalMs(activeWave.wave.interval)
+      ) {
+        this.lastFrameSpawnClamped = true;
+        this.spawnClampCount += 1;
+        break;
       }
     }
 

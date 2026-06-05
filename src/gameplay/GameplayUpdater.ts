@@ -25,10 +25,11 @@ export interface GameplayUpdateOptions {
 export class GameplayUpdater {
   update(context: GameplayContext, options: GameplayUpdateOptions): void {
     const { callbacks } = options;
-    const effectiveDelta = options.deltaMs * callbacks.getGameplayTimeScale();
+    const configuredTimeScale = callbacks.getGameplayTimeScale();
+    const effectiveDelta = options.deltaMs * configuredTimeScale;
     const playerDelta = effectiveDelta * context.endlessBossManager.getPlayerMoveSpeedMultiplier();
 
-    context.performanceMonitor.update(effectiveDelta);
+    context.performanceMonitor.update(options.deltaMs, effectiveDelta);
     context.virtualJoystick.setGameplayActive(
       !options.isLevelUpSelectionActive && !options.isAutoMovementEnabled,
     );
@@ -82,28 +83,103 @@ export class GameplayUpdater {
     context.pickupManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
     context.treasureManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
     context.floatingTextManager.update(effectiveDelta);
-    this.updatePerformanceCounts(context, effectiveDelta);
+    this.updatePerformanceCounts(context, options.deltaMs, configuredTimeScale);
     callbacks.emitHUDState();
   }
 
-  private updatePerformanceCounts(context: GameplayContext, deltaMs: number): void {
+  private updatePerformanceCounts(
+    context: GameplayContext,
+    realDeltaMs: number,
+    configuredTimeScale: number,
+  ): void {
     const poolStats = context.poolManager.getStats();
+    const floatingTextPoolStats = context.floatingTextManager.getPoolStats();
+    const activeEnemies = context.enemies.filter((enemy) => !enemy.isDead);
+    const activeBossCount = activeEnemies.filter((enemy) => this.isBossLikeEnemyId(enemy.id)).length;
+    const projectileCount = context.weaponManager.getProjectileCount();
+    const pickupStats = context.pickupManager.getDebugStats();
+    const spawnStats = context.spawnDirector.getDebugStats();
+    const endlessStats = context.endlessManager.getDebugStats();
+    const mapMechanicStats = context.mapMechanicRuntime.getDebugStats();
+    const spawnClampCount = spawnStats.spawnClampCount + endlessStats.spawnClampCount;
+    const pickupCount = pickupStats.activeCount;
+    const treasureCount = context.treasureManager.getActiveCount();
+    const floatingTextCount = floatingTextPoolStats.activeCount;
+    const totalRenderableWorldObjects = activeEnemies.length
+      + projectileCount
+      + pickupCount
+      + treasureCount
+      + floatingTextCount
+      + mapMechanicStats.visualCount;
 
     context.performanceMonitor.updateCounts({
-      deltaMs,
-      enemyCount: context.enemies.filter((enemy) => !enemy.isDead).length,
-      pickupCount: context.pickupManager.getActiveCount(),
-      treasureCount: context.treasureManager.getActiveCount(),
-      floatingTextCount: context.floatingTextManager.getActiveCount(),
-      activeBossCount: context.enemies.filter((enemy) => (
-        !enemy.isDead
-        && (enemy.id === 'boss' || enemy.id.endsWith('_boss') || enemy.id.startsWith('endless_'))
-      )).length,
+      deltaMs: realDeltaMs,
+      configuredTimeScale,
+      effectiveTimeScale: context.effectiveTimeScale,
+      sceneTimeScale: context.scene.time.timeScale,
+      physicsTimeScale: this.getPhysicsTimeScale(context),
+      enemyCount: activeEnemies.length,
+      projectileCount,
+      pickupCount,
+      pickupGemCount: pickupCount,
+      pickupMergeCount: pickupStats.mergedPickupCount,
+      treasureCount,
+      chestCount: treasureCount,
+      floatingTextCount,
+      floatingTextActiveCount: floatingTextCount,
+      floatingTextPoolSize: floatingTextPoolStats.availableCount,
+      activeBossCount,
+      endlessEnemyCount: context.runState.endlessStarted
+        ? activeEnemies.filter((enemy) => !this.isBossLikeEnemyId(enemy.id)).length
+        : 0,
+      endlessBossCount: context.runState.endlessStarted ? activeBossCount : 0,
+      activeTweenCount: this.getActiveTweenCount(context),
+      activeTimerCount: this.getActiveTimerCount(context),
+      mapMechanicVisualCount: mapMechanicStats.visualCount,
+      slowZoneCount: mapMechanicStats.slowZoneCount,
+      totalRenderableWorldObjects,
+      spawnAccumulatorSummary: [
+        `wave=${Math.round(spawnStats.maxAccumulatorMs)}ms`,
+        `endless=${Math.round(endlessStats.maxAccumulatorMs)}ms`,
+        `clamp=${spawnClampCount}`,
+      ].join(' '),
+      spawnClampCount,
       pooledObjectCount: poolStats.activeCount + poolStats.availableCount,
       createdObjectCount: poolStats.createdCount,
       reusedObjectCount: poolStats.reusedCount,
       destroyedObjectCount: poolStats.destroyedCount,
     });
+  }
+
+  private isBossLikeEnemyId(enemyId: string): boolean {
+    return enemyId === 'boss'
+      || enemyId.endsWith('_boss')
+      || enemyId.startsWith('endless_');
+  }
+
+  private getPhysicsTimeScale(context: GameplayContext): number {
+    const world = context.scene.physics.world as unknown as { timeScale?: number };
+
+    return world.timeScale ?? 1;
+  }
+
+  private getActiveTweenCount(context: GameplayContext): number {
+    const tweens = context.scene.tweens as unknown as {
+      getTweens?: () => unknown[];
+      getAllTweens?: () => unknown[];
+    };
+
+    return tweens.getTweens?.().length
+      ?? tweens.getAllTweens?.().length
+      ?? 0;
+  }
+
+  private getActiveTimerCount(context: GameplayContext): number {
+    const clock = context.scene.time as unknown as {
+      getAllEvents?: () => unknown[];
+    };
+
+    return clock.getAllEvents?.().length ?? 0;
   }
 
   private updateEndlessState(

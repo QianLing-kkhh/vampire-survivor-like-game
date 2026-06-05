@@ -39,7 +39,7 @@ The runtime layer keeps per-run object references and update order out of the sc
 - `GameplayInitializer`: creates per-run systems in a stable order and returns `GameplayContext`.
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
 - `MapMechanicRuntime`: creates per-map mechanics for the selected map and applies low-risk terrain behavior such as obstacles, slow zones, player portals, and visual light sources.
-- `PerformanceMonitor`: per-run lightweight stats collector for FPS, counts, and object lifecycle counters.
+- `PerformanceMonitor`: per-run lightweight stats collector for FPS, real delta, effective runtime speed, counts, object lifecycle counters, and late-endless slowdown warnings.
 - `PoolManager`: per-run object pool registry for reusable runtime visuals and future high-volume objects.
 - `VisualSettings`: settings-backed helper for display quality, asset style, shadows, and graphics fallback decisions.
 - `ShadowFactory`: creates non-colliding Phaser ellipse shadows for world objects when display settings allow them.
@@ -385,7 +385,7 @@ UI classes should display state, not own gameplay rules.
 
 UI theme selection lives under `settings.display.uiStyle` with `classic`, `arcaneSlate`, and `minimal` styles. Classic is the default compatibility style; Arcane Slate is the dark fantasy panel style; Minimal is a low-decoration style. UI style must not alter gameplay, CSV fields, content data, or visual asset quality semantics. New UI work should use shared components and active theme tokens instead of hardcoding a single style.
 
-`FloatingTextManager` is the first low-risk object-pool integration. It reuses floating text objects through `ObjectPool` while preserving the same visual behavior. Other high-volume objects such as projectiles, pickups, Boss warning graphics, explosion circles, and hit flashes remain create/destroy based until they can be profiled and migrated safely.
+`FloatingTextManager` is the first low-risk object-pool integration. It reuses floating text objects through `ObjectPool` while preserving the same visual behavior. EXP pickups are still ordinary runtime objects, but `PickupManager` can merge far-away inactive gems when endless runs exceed the soft pickup cap so total EXP is preserved without allowing unbounded renderable growth. Other high-volume objects such as projectiles, Boss warning graphics, explosion circles, and hit flashes remain create/destroy based until they can be profiled and migrated safely.
 
 ## Performance Layer
 
@@ -400,9 +400,11 @@ The performance layer is the foundation for late-endless profiling and future ob
 
 Current status:
 
-- DebugPanel can show floating text and pool counts.
+- Runtime time scale has one source of truth: `GameplayUpdater` multiplies real frame delta by `GameplayContext.effectiveTimeScale`. `GameScene` keeps Phaser scene time and physics world time scale at 1x to avoid double-scaling timers or drifting manager state.
+- DebugPanel can show real FPS/delta, configured/effective time scale, measured game seconds per real second, floating text, projectile, pickup, Boss, map mechanic, spawn accumulator, and pool counts.
 - Floating text is pooled.
 - Enemies, projectiles, pickups, treasure chests, and Boss skill graphics are not pooled yet.
+- Spawn directors use per-frame spawn budgets to prevent accumulator catch-up bursts after a long frame; leftover accumulator time remains queued for subsequent frames.
 - Performance monitoring must not change gameplay behavior or CSV schemas.
 
 ## Responsive Layer
