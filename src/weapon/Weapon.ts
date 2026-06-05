@@ -48,6 +48,7 @@ export abstract class Weapon {
   private passiveDamageMultiplier = 1;
   private passiveCooldownMultiplier = 1;
   private passiveProjectileSpeedMultiplier = 1;
+  private passiveKnockbackPowerMultiplier = 1;
 
   protected constructor(
     protected readonly scene: Phaser.Scene,
@@ -84,10 +85,12 @@ export abstract class Weapon {
     damageMultiplier: number;
     cooldownMultiplier: number;
     projectileSpeedMultiplier: number;
+    knockbackPowerMultiplier?: number;
   }): void {
     this.passiveDamageMultiplier = modifiers.damageMultiplier;
     this.passiveCooldownMultiplier = modifiers.cooldownMultiplier;
     this.passiveProjectileSpeedMultiplier = modifiers.projectileSpeedMultiplier;
+    this.passiveKnockbackPowerMultiplier = modifiers.knockbackPowerMultiplier ?? 1;
   }
 
   get totalDamageDealt(): number {
@@ -175,7 +178,7 @@ export abstract class Weapon {
     const strength = (
       knockbackPower
       + Math.max(0, hitSpeed) * (this.config.knockbackSpeedFactor ?? 0)
-    ) * strengthMultiplier;
+    ) * strengthMultiplier * this.passiveKnockbackPowerMultiplier;
 
     enemy.applyWeaponKnockback(
       direction,

@@ -70,6 +70,7 @@ export interface GameplayContext {
   runRuleSet: RunRuleSet;
   relicManager: RelicManager;
   characterRuntime: CharacterRuntime;
+  syncCharacterCombatModifiers(): void;
   runState: RunState;
   runStats: RunStats;
   player: PlayerController;

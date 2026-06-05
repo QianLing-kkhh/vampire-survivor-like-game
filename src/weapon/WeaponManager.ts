@@ -1,11 +1,12 @@
 import { Enemy } from '../enemy/Enemy';
 import { PlayerController } from '../player/PlayerController';
+import { PlayerCombatModifierSnapshot } from '../player/PlayerStats';
 import { RunStats } from '../stats/RunStats';
 
+import { DamageCalculator } from '../combat/DamageCalculator';
 import { Weapon, WeaponConfig } from './Weapon';
 import { WeaponFactory } from './WeaponFactory';
 import { WeaponTag } from './tags/WeaponTag';
-import { WeaponTagQuery } from './tags/WeaponTagQuery';
 
 type ManagedWeapon = Weapon & {
   destroy?: () => void;
@@ -83,8 +84,11 @@ export interface WeaponCharacterStatModifiers {
   orbitDamageMultiplier: number;
   areaDamageMultiplier: number;
   explosionDamageMultiplier: number;
+  bossDamageMultiplier: number;
+  eliteDamageMultiplier: number;
   cooldownMultiplier: number;
   projectileSpeedMultiplier: number;
+  knockbackPowerMultiplier: number;
 }
 
 export class WeaponManager {
@@ -123,9 +127,13 @@ export class WeaponManager {
     orbitDamageMultiplier: 1,
     areaDamageMultiplier: 1,
     explosionDamageMultiplier: 1,
+    bossDamageMultiplier: 1,
+    eliteDamageMultiplier: 1,
     cooldownMultiplier: 1,
     projectileSpeedMultiplier: 1,
+    knockbackPowerMultiplier: 1,
   };
+  private readonly damageCalculator = new DamageCalculator();
   private endlessDamageMultiplierProvider?: () => number;
   private currentEndlessDamageMultiplier = 1;
 
@@ -153,7 +161,9 @@ export class WeaponManager {
     this.applyCurrentPassiveModifiers();
   }
 
-  setCharacterStatModifiers(modifiers: Partial<WeaponCharacterStatModifiers>): void {
+  setCharacterStatModifiers(
+    modifiers: Partial<WeaponCharacterStatModifiers> | PlayerCombatModifierSnapshot,
+  ): void {
     this.characterStatModifiers = {
       damageMultiplier: modifiers.damageMultiplier ?? 1,
       physicalDamageMultiplier: modifiers.physicalDamageMultiplier ?? 1,
@@ -163,8 +173,11 @@ export class WeaponManager {
       orbitDamageMultiplier: modifiers.orbitDamageMultiplier ?? 1,
       areaDamageMultiplier: modifiers.areaDamageMultiplier ?? 1,
       explosionDamageMultiplier: modifiers.explosionDamageMultiplier ?? 1,
+      bossDamageMultiplier: modifiers.bossDamageMultiplier ?? 1,
+      eliteDamageMultiplier: modifiers.eliteDamageMultiplier ?? 1,
       cooldownMultiplier: modifiers.cooldownMultiplier ?? 1,
       projectileSpeedMultiplier: modifiers.projectileSpeedMultiplier ?? 1,
+      knockbackPowerMultiplier: modifiers.knockbackPowerMultiplier ?? 1,
     };
 
     this.applyCurrentPassiveModifiers();
@@ -578,6 +591,7 @@ export class WeaponManager {
     damageMultiplier: number;
     cooldownMultiplier: number;
     projectileSpeedMultiplier: number;
+    knockbackPowerMultiplier: number;
   } {
     return {
       damageMultiplier: this.passiveModifiers.damageMultiplier
@@ -587,43 +601,17 @@ export class WeaponManager {
         * this.characterStatModifiers.cooldownMultiplier,
       projectileSpeedMultiplier: this.passiveModifiers.projectileSpeedMultiplier
         * this.characterStatModifiers.projectileSpeedMultiplier,
+      knockbackPowerMultiplier: this.characterStatModifiers.knockbackPowerMultiplier,
     };
   }
 
   private getCharacterTagDamageMultiplier(weapon: ManagedWeapon): number {
     const config = (weapon as unknown as { config?: WeaponConfig } | undefined)?.config;
-    const tags = config?.tags;
-    let multiplier = this.characterStatModifiers.damageMultiplier;
 
-    if (WeaponTagQuery.hasTag(tags, 'physical')) {
-      multiplier *= this.characterStatModifiers.physicalDamageMultiplier;
-    }
-
-    if (WeaponTagQuery.hasTag(tags, 'magic')) {
-      multiplier *= this.characterStatModifiers.magicDamageMultiplier;
-    }
-
-    if (WeaponTagQuery.hasTag(tags, 'projectile')) {
-      multiplier *= this.characterStatModifiers.projectileDamageMultiplier;
-    }
-
-    if (WeaponTagQuery.hasTag(tags, 'aura')) {
-      multiplier *= this.characterStatModifiers.auraDamageMultiplier;
-    }
-
-    if (WeaponTagQuery.hasTag(tags, 'orbit')) {
-      multiplier *= this.characterStatModifiers.orbitDamageMultiplier;
-    }
-
-    if (WeaponTagQuery.hasTag(tags, 'area')) {
-      multiplier *= this.characterStatModifiers.areaDamageMultiplier;
-    }
-
-    if (WeaponTagQuery.hasTag(tags, 'explosive')) {
-      multiplier *= this.characterStatModifiers.explosionDamageMultiplier;
-    }
-
-    return multiplier;
+    return this.damageCalculator.getTagDamageMultiplier(
+      config?.tags,
+      this.characterStatModifiers,
+    );
   }
 
   private recordWeaponUpgrade(weaponId: string, upgradeId: string): void {

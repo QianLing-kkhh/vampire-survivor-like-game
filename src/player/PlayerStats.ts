@@ -32,6 +32,22 @@ export interface PlayerStatsData {
   deceleration?: number;
 }
 
+export interface PlayerCombatModifierSnapshot {
+  damageMultiplier: number;
+  physicalDamageMultiplier: number;
+  magicDamageMultiplier: number;
+  projectileDamageMultiplier: number;
+  auraDamageMultiplier: number;
+  orbitDamageMultiplier: number;
+  areaDamageMultiplier: number;
+  explosionDamageMultiplier: number;
+  bossDamageMultiplier: number;
+  eliteDamageMultiplier: number;
+  cooldownMultiplier: number;
+  projectileSpeedMultiplier: number;
+  knockbackPowerMultiplier: number;
+}
+
 export class PlayerStats {
   readonly maxMoveSpeed = 420;
   readonly maxPickupRange = 6.0;
@@ -221,6 +237,24 @@ export class PlayerStats {
     this.recalculateFinalStats();
 
     return this.pickupRange > previousPickupRange;
+  }
+
+  getCombatModifierSnapshot(): PlayerCombatModifierSnapshot {
+    return {
+      damageMultiplier: this.damageMultiplier,
+      physicalDamageMultiplier: this.physicalDamageMultiplier,
+      magicDamageMultiplier: this.magicDamageMultiplier,
+      projectileDamageMultiplier: this.projectileDamageMultiplier,
+      auraDamageMultiplier: this.auraDamageMultiplier,
+      orbitDamageMultiplier: this.orbitDamageMultiplier,
+      areaDamageMultiplier: this.areaDamageMultiplier,
+      explosionDamageMultiplier: this.explosionDamageMultiplier,
+      bossDamageMultiplier: this.bossDamageMultiplier,
+      eliteDamageMultiplier: this.eliteDamageMultiplier,
+      cooldownMultiplier: this.cooldownMultiplier,
+      projectileSpeedMultiplier: this.projectileSpeedMultiplier,
+      knockbackPowerMultiplier: this.knockbackPowerMultiplier,
+    };
   }
 
   private recalculateFinalStats(): void {

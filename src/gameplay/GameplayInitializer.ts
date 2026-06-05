@@ -451,6 +451,9 @@ export class GameplayInitializer {
       runRuleSet,
       relicManager,
       characterRuntime,
+      syncCharacterCombatModifiers: () => {
+        weaponManager.setCharacterStatModifiers(playerStats.getCombatModifierSnapshot());
+      },
       runState: config.runState,
       runStats,
       player,
@@ -490,10 +493,11 @@ export class GameplayInitializer {
     const effects = passiveManager.getEffects();
 
     weaponManager.setPassiveModifiers({
-      damageMultiplier: effects.damageMultiplier * playerStats.weaponDamageMultiplier,
-      cooldownMultiplier: effects.cooldownMultiplier * playerStats.cooldownMultiplier,
+      damageMultiplier: effects.damageMultiplier,
+      cooldownMultiplier: effects.cooldownMultiplier,
       projectileSpeedMultiplier: effects.projectileSpeedMultiplier,
     });
+    weaponManager.setCharacterStatModifiers(playerStats.getCombatModifierSnapshot());
     treasureManager.setBonusDropChance(effects.treasureDropBonus);
   }
 

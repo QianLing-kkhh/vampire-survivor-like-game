@@ -1357,10 +1357,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.weaponManager?.setPassiveModifiers({
-      damageMultiplier: effects.damageMultiplier * (this.playerStats?.weaponDamageMultiplier ?? 1),
-      cooldownMultiplier: effects.cooldownMultiplier * (this.playerStats?.cooldownMultiplier ?? 1),
+      damageMultiplier: effects.damageMultiplier,
+      cooldownMultiplier: effects.cooldownMultiplier,
       projectileSpeedMultiplier: effects.projectileSpeedMultiplier,
     });
+    this.gameplayContext?.syncCharacterCombatModifiers();
     this.treasureManager?.setBonusDropChance(effects.treasureDropBonus);
   }
 
