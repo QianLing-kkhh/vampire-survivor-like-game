@@ -167,7 +167,10 @@ export class EnemyFlow {
     }
 
     const shieldAbsorbed = incomingDamage > 0
-      && EndlessRewardManager.consumeGlobalShieldStack(incomingDamage);
+      && (
+        this.config.playerHealth.consumeShieldStack()
+        || EndlessRewardManager.consumeGlobalShieldStack(incomingDamage)
+      );
     const actualDamage = shieldAbsorbed
       ? 0
       : this.config.playerHealth.takeDamage(incomingDamage);
@@ -362,6 +365,13 @@ export class EnemyFlow {
       worldWidth: this.config.worldWidth,
       worldHeight: this.config.worldHeight,
       nowMs: this.config.scene.time.now,
+      showPlayerHeal: (healAmount) => {
+        this.config.floatingTextManager.showPlayerHeal(
+          this.config.player.body.x,
+          this.config.player.body.y,
+          healAmount,
+        );
+      },
     });
   }
 

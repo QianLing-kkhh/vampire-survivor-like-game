@@ -125,11 +125,13 @@
       "lostHpRatio": 0.25
     },
     "damageReactionSkill": {
-      "type": "shockwave",
-      "radius": 115,
-      "damage": 14,
-      "knockbackDistance": 95,
-      "cooldownMs": 0
+      "type": "holySanctuary",
+      "cooldownMs": 12000,
+      "radius": 140,
+      "knockbackDistance": 120,
+      "healAmount": 10,
+      "shieldStacks": 1,
+      "zoneDurationMs": 1200
     },
     "exclusiveUpgradeIds": [],
     "exclusivePassiveIds": [],

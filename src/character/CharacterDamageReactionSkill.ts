@@ -17,8 +17,10 @@ export interface CharacterDamageReactionConfig {
   type: CharacterDamageReactionType;
   cooldownMs?: number;
   damage?: number;
+  healAmount?: number;
   radius?: number;
   knockbackDistance?: number;
+  shieldStacks?: number;
   blinkDistance?: number;
   invulnerableMs?: number;
   moveSpeedMultiplier?: number;
@@ -39,6 +41,7 @@ export interface CharacterDamageReactionContext {
   worldWidth: number;
   worldHeight: number;
   nowMs: number;
+  showPlayerHeal?: (healAmount: number) => void;
 }
 
 export interface CharacterDamageReactionSkill {
@@ -400,6 +403,160 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
         ?? SlowTrailDamageReactionSkill.DEFAULT_ENEMY_SPEED_MULTIPLIER,
       0,
       1,
+    );
+  }
+}
+
+export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactionSkill {
+  private static readonly DEFAULT_RADIUS = 140;
+  private static readonly DEFAULT_KNOCKBACK_DISTANCE = 120;
+  private static readonly DEFAULT_HEAL_AMOUNT = 10;
+  private static readonly DEFAULT_SHIELD_STACKS = 1;
+  private static readonly DEFAULT_ZONE_DURATION_MS = 1200;
+
+  readonly type = 'holySanctuary';
+
+  private readonly activeVisuals: Phaser.GameObjects.Arc[] = [];
+
+  clear(): void {
+    super.clear();
+    this.activeVisuals.forEach((visual) => {
+      if (visual.active) {
+        visual.destroy();
+      }
+    });
+    this.activeVisuals.length = 0;
+  }
+
+  protected activate(context: CharacterDamageReactionContext): boolean {
+    this.showSanctuaryVisual(context);
+    this.knockEnemiesBack(context);
+    const healAmount = context.playerHealth.heal(this.getHealAmount());
+
+    if (healAmount > 0) {
+      context.showPlayerHeal?.(healAmount);
+    }
+
+    context.playerHealth.addShieldStacks(this.getShieldStacks());
+    return true;
+  }
+
+  private showSanctuaryVisual(context: CharacterDamageReactionContext): void {
+    const visual = context.scene.add.circle(
+      context.player.body.x,
+      context.player.body.y,
+      this.getRadius(),
+      0xfacc15,
+      0.12,
+    );
+
+    visual.setStrokeStyle(3, 0xfef3c7, 0.55);
+    visual.setDepth(9);
+    this.activeVisuals.push(visual);
+    context.scene.tweens.add({
+      targets: visual,
+      alpha: 0,
+      scaleX: 1.12,
+      scaleY: 1.12,
+      duration: this.getZoneDurationMs(),
+      onComplete: () => {
+        this.destroyVisual(visual);
+      },
+    });
+  }
+
+  private knockEnemiesBack(context: CharacterDamageReactionContext): void {
+    const radius = this.getRadius();
+
+    for (const enemy of context.enemies) {
+      if (enemy.isDead || this.isKnockbackImmune(enemy)) {
+        continue;
+      }
+
+      if (
+        Phaser.Math.Distance.Between(
+          context.player.body.x,
+          context.player.body.y,
+          enemy.body.x,
+          enemy.body.y,
+        ) > radius
+      ) {
+        continue;
+      }
+
+      this.knockEnemyBack(enemy, context);
+    }
+  }
+
+  private knockEnemyBack(enemy: Enemy, context: CharacterDamageReactionContext): void {
+    const direction = new Phaser.Math.Vector2(
+      enemy.body.x - context.player.body.x,
+      enemy.body.y - context.player.body.y,
+    );
+
+    if (direction.lengthSq() === 0) {
+      direction.set(1, 0);
+    }
+
+    const miniBossMultiplier = enemy.id.endsWith('_boss') ? 0.5 : 1;
+    direction.normalize().scale(this.getKnockbackDistance() * miniBossMultiplier);
+
+    const enemyRadius = this.getEnemyRadius(enemy);
+    enemy.body.x = Phaser.Math.Clamp(
+      enemy.body.x + direction.x,
+      enemyRadius,
+      context.worldWidth - enemyRadius,
+    );
+    enemy.body.y = Phaser.Math.Clamp(
+      enemy.body.y + direction.y,
+      enemyRadius,
+      context.worldHeight - enemyRadius,
+    );
+  }
+
+  private destroyVisual(visual: Phaser.GameObjects.Arc): void {
+    const index = this.activeVisuals.indexOf(visual);
+
+    if (index >= 0) {
+      this.activeVisuals.splice(index, 1);
+    }
+
+    if (visual.active) {
+      visual.destroy();
+    }
+  }
+
+  private isKnockbackImmune(enemy: Enemy): boolean {
+    return enemy.bossLike || enemy.id === 'boss' || enemy.id.startsWith('endless_');
+  }
+
+  private getRadius(): number {
+    return Math.max(0, this.config.radius ?? HolySanctuaryDamageReactionSkill.DEFAULT_RADIUS);
+  }
+
+  private getKnockbackDistance(): number {
+    return Math.max(
+      0,
+      this.config.knockbackDistance
+        ?? HolySanctuaryDamageReactionSkill.DEFAULT_KNOCKBACK_DISTANCE,
+    );
+  }
+
+  private getHealAmount(): number {
+    return Math.max(0, this.config.healAmount ?? HolySanctuaryDamageReactionSkill.DEFAULT_HEAL_AMOUNT);
+  }
+
+  private getShieldStacks(): number {
+    return Math.max(
+      0,
+      Math.floor(this.config.shieldStacks ?? HolySanctuaryDamageReactionSkill.DEFAULT_SHIELD_STACKS),
+    );
+  }
+
+  private getZoneDurationMs(): number {
+    return Math.max(
+      0,
+      this.config.zoneDurationMs ?? HolySanctuaryDamageReactionSkill.DEFAULT_ZONE_DURATION_MS,
     );
   }
 }

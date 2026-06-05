@@ -2,6 +2,7 @@ export class PlayerHealth {
   private hp: number;
   private dead = false;
   private invulnerableRemainingMs = 0;
+  private shieldStacks = 0;
 
   constructor(private maximumHp: number) {
     this.maximumHp = Math.round(maximumHp);
@@ -22,6 +23,30 @@ export class PlayerHealth {
 
   isInvulnerable(): boolean {
     return this.invulnerableRemainingMs > 0;
+  }
+
+  getShieldStacks(): number {
+    return this.shieldStacks;
+  }
+
+  addShieldStacks(count: number): number {
+    const stacksToAdd = Math.max(0, Math.floor(count));
+
+    if (stacksToAdd <= 0) {
+      return this.shieldStacks;
+    }
+
+    this.shieldStacks += stacksToAdd;
+    return this.shieldStacks;
+  }
+
+  consumeShieldStack(): boolean {
+    if (this.shieldStacks <= 0) {
+      return false;
+    }
+
+    this.shieldStacks -= 1;
+    return true;
   }
 
   setInvulnerable(durationMs: number): void {
@@ -49,6 +74,10 @@ export class PlayerHealth {
 
   takeDamage(amount: number): number {
     if (this.dead || this.isInvulnerable()) {
+      return 0;
+    }
+
+    if (amount > 0 && this.consumeShieldStack()) {
       return 0;
     }
 
@@ -89,9 +118,20 @@ export class PlayerHealth {
     return Math.max(0, this.hp - previousHp);
   }
 
+  heal(amount: number): number {
+    if (this.dead) {
+      return 0;
+    }
+
+    const previousHp = this.hp;
+    this.setCurrentHp(this.hp + Math.max(0, amount));
+    return Math.max(0, this.hp - previousHp);
+  }
+
   reset(): void {
     this.hp = this.maximumHp;
     this.dead = false;
     this.invulnerableRemainingMs = 0;
+    this.shieldStacks = 0;
   }
 }
