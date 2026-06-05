@@ -184,6 +184,7 @@
     "assetStyleNew": "新アート",
     "assetStyleLegacy": "旧素材",
     "assetStyleGraphics": "図形",
+    "visualRestartRequired": "一部の表示設定は再開または次のランで反映されます。",
     "language": "言語",
     "back": "戻る"
   },

@@ -157,6 +157,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    SettingsManager.clearVisualRestartRequired();
     this.enemies = [];
     this.contactDamageCooldowns.clear();
     this.timeManager.reset();

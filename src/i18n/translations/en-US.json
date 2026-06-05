@@ -36,6 +36,7 @@
     "assetStyleNew": "New",
     "assetStyleLegacy": "Legacy",
     "assetStyleGraphics": "Graphics",
+    "visualRestartRequired": "Some visual settings apply after restart or next run.",
     "language": "Language",
     "back": "Back"
   },

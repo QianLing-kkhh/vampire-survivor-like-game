@@ -17,6 +17,7 @@ export class SettingsMenu {
   private readonly background: Phaser.GameObjects.Rectangle;
   private readonly panelImage?: Phaser.GameObjects.Image;
   private readonly title: Phaser.GameObjects.Text;
+  private readonly visualRestartNotice: Phaser.GameObjects.Text;
   private readonly buttons: Phaser.GameObjects.Text[] = [];
   private unsubscribeResize?: () => void;
 
@@ -47,11 +48,20 @@ export class SettingsMenu {
       fontStyle: 'bold',
     });
     this.title.setOrigin(0.5);
+    this.visualRestartNotice = scene.add.text(0, 0, '', {
+      color: UITheme.successTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
+      align: 'center',
+      wordWrap: { width: 330 },
+    });
+    this.visualRestartNotice.setOrigin(0.5);
 
     this.container = scene.add.container(0, 0, [
       this.background,
       ...(this.panelImage ? [this.panelImage] : []),
       this.title,
+      this.visualRestartNotice,
     ]);
     this.container.setDepth(2200);
     this.renderButtons();
@@ -77,6 +87,17 @@ export class SettingsMenu {
     this.title.setText(this.t('settings.title', 'Settings'));
     const settings = PlaytestSettings.get();
     const display = SettingsManager.getDisplay();
+    const showVisualRestartNotice = SettingsManager.isVisualRestartRequired();
+
+    this.visualRestartNotice.setText(
+      showVisualRestartNotice
+        ? this.t(
+          'settings.visualRestartRequired',
+          'Some visual settings apply after restart or next run.',
+        )
+        : '',
+    );
+    this.visualRestartNotice.setVisible(showVisualRestartNotice);
     const entries = [
       {
         label: `${this.t('settings.autoMovement', 'Auto Movement')}: ${this.formatOnOff(settings.autoMovement)}`,
@@ -196,7 +217,7 @@ export class SettingsMenu {
   private applyLayout(): void {
     const panel = LayoutConfig.getPanelLayout(this.screenManager, {
       maxWidth: this.screenManager.isPortrait() ? 360 : 480,
-      maxHeight: this.screenManager.isPortrait() ? 680 : 620,
+      maxHeight: this.screenManager.isPortrait() ? 720 : 660,
       padding: 28,
     });
     const centerX = this.screenManager.centerX;
@@ -204,7 +225,8 @@ export class SettingsMenu {
     const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
     const useTwoColumn = this.screenManager.isLandscape() && this.screenManager.height <= 520;
     const rows = useTwoColumn ? Math.ceil(this.buttons.length / 2) : this.buttons.length;
-    const availableHeight = panel.content.height - 78;
+    const noticeVisible = this.visualRestartNotice.visible;
+    const availableHeight = panel.content.height - (noticeVisible ? 112 : 78);
     const gap = Math.min(
       metrics.gap,
       Math.max(metrics.height + 4, availableHeight / Math.max(rows - 1, 1)),
@@ -213,7 +235,7 @@ export class SettingsMenu {
       screen: this.screenManager,
       count: this.buttons.length,
       centerX,
-      startY: panel.content.y + 64,
+      startY: panel.content.y + (noticeVisible ? 94 : 64),
       mode: useTwoColumn ? 'twoColumn' : 'vertical',
       gap,
     });
@@ -224,6 +246,9 @@ export class SettingsMenu {
     this.coverImage(this.panelImage, panel.width, panel.height);
     this.title.setPosition(centerX, panel.content.y + 26);
     this.title.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
+    this.visualRestartNotice.setPosition(centerX, panel.content.y + 60);
+    this.visualRestartNotice.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
+    this.visualRestartNotice.setWordWrapWidth(panel.content.width - 12);
 
     this.buttons.forEach((button, index) => {
       const position = buttonLayout.positions[index];

@@ -7,6 +7,7 @@ import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { SettingsManager } from '../settings/SettingsManager';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { SettingsMenu } from '../ui/SettingsMenu';
 import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
@@ -43,6 +44,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    SettingsManager.clearVisualRestartRequired();
     PlaytestLogBuffer.clear();
     console.info('Playtest CSV buffer cleared on TitleScene entry.');
     this.screenManager = new ScreenManager(this);

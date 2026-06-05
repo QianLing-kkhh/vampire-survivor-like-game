@@ -145,6 +145,8 @@ Display quality is stored in `settings.display`:
 
 `assetStyle` can be `newArt`, `legacy`, or `graphics`. The `graphics` style is intended for low-end fallback testing; UI icons may still use PNGs so menus remain readable.
 
+`SettingsManager` keeps a runtime-only visual restart flag when display quality, asset style, or visual scale changes. This flag is not saved; it only drives Settings UI messaging until the player reaches Title or starts/restarts a run.
+
 ## Appearance
 
 Appearance selection is save-backed but has no UI yet.
@@ -167,6 +169,8 @@ Settings should apply immediately to the current run.
 - Language changes refresh current Settings UI and uses i18n lookup elsewhere.
 - Shadow toggles apply to most newly updated runtime objects immediately; objects that are not updated every frame may apply on the next run.
 - Asset style and quality affect newly resolved gameplay art immediately for new objects. Existing sprites may keep their current texture until they are recreated.
+- SettingsMenu shows a restart/next-run notice after changing display quality or asset style. PauseMenu does not force a restart; the same SettingsMenu notice is the source of truth.
+- Minimal graphics mode is safest when starting a fresh run because existing PNG-backed objects may keep their already-created sprites until the scene recreates them.
 
 Do not restart the scene just to apply settings.
 

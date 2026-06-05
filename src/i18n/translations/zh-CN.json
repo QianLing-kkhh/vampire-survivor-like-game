@@ -184,6 +184,7 @@
     "assetStyleNew": "新版",
     "assetStyleLegacy": "旧版",
     "assetStyleGraphics": "图形",
+    "visualRestartRequired": "部分画面设置将在重开或下一局后生效。",
     "language": "语言",
     "back": "返回"
   },

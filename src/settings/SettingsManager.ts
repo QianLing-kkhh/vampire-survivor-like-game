@@ -26,6 +26,7 @@ export type SettingsChangeListener = (
 
 export class SettingsManager {
   private static readonly listeners = new Set<SettingsChangeListener>();
+  private static visualRestartRequired = false;
 
   static getAll(): SettingsData {
     return SettingsManager.clone(SaveManager.get().settings);
@@ -75,6 +76,7 @@ export class SettingsManager {
   }
 
   static updateDisplay(partial: Partial<DisplaySettingsData>): SettingsData {
+    const previousDisplay = SettingsManager.getDisplay();
     const nextPartial = { ...partial };
 
     switch (partial.displayQuality) {
@@ -94,7 +96,19 @@ export class SettingsManager {
         break;
     }
 
+    if (SettingsManager.doesDisplayChangeRequireRestart(previousDisplay, nextPartial)) {
+      SettingsManager.visualRestartRequired = true;
+    }
+
     return SettingsManager.updateDomain('display', nextPartial);
+  }
+
+  static isVisualRestartRequired(): boolean {
+    return SettingsManager.visualRestartRequired;
+  }
+
+  static clearVisualRestartRequired(): void {
+    SettingsManager.visualRestartRequired = false;
   }
 
   static updateInput(partial: Partial<InputSettingsData>): SettingsData {
@@ -193,5 +207,19 @@ export class SettingsManager {
 
   private static clone(settings: SettingsData): SettingsData {
     return JSON.parse(JSON.stringify(settings)) as SettingsData;
+  }
+
+  private static doesDisplayChangeRequireRestart(
+    previousDisplay: DisplaySettingsData,
+    partial: Partial<DisplaySettingsData>,
+  ): boolean {
+    return (
+      (partial.displayQuality !== undefined && partial.displayQuality !== previousDisplay.displayQuality)
+      || (partial.assetStyle !== undefined && partial.assetStyle !== previousDisplay.assetStyle)
+      || (
+        partial.visualScalePreset !== undefined
+        && partial.visualScalePreset !== previousDisplay.visualScalePreset
+      )
+    );
   }
 }
