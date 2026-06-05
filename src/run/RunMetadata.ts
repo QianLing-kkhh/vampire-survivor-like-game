@@ -8,6 +8,8 @@ export interface RunMetadata {
   csvSchemaVersion: number;
   replaySchemaVersion?: number;
   customStageSchemaVersion?: number;
+  selectedCharacterId?: string;
+  characterSelectionMode?: 'fixed' | 'random_unlocked';
   characterId: string;
   stageId: string;
   mapId: string;
@@ -32,6 +34,8 @@ export function createDefaultRunMetadata(): RunMetadata {
     csvSchemaVersion: 0,
     replaySchemaVersion: 0,
     customStageSchemaVersion: 0,
+    selectedCharacterId: 'default',
+    characterSelectionMode: 'fixed',
     characterId: 'default',
     stageId: 'stage_001',
     mapId: 'prototype_field',

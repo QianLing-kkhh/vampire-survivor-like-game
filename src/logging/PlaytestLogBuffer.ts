@@ -198,7 +198,7 @@ export class PlaytestLogBuffer {
   }
 
   private static extractTimestamp(csvRow: string): string {
-    return this.parseCsvLine(csvRow)[25] ?? '';
+    return this.parseCsvLine(csvRow)[this.getPlaytestColumnIndex('timestamp')] ?? '';
   }
 
   private static isCurrentCsvRow(csvRow: string): boolean {
@@ -266,6 +266,10 @@ export class PlaytestLogBuffer {
 
     values.push(currentValue);
     return values;
+  }
+
+  private static getPlaytestColumnIndex(columnName: string): number {
+    return this.parseCsvLine(PlaytestLog.getHeader()).indexOf(columnName);
   }
 
   private static escapeCsvValue(value: string): string {

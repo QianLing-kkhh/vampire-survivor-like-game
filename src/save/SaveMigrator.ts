@@ -230,7 +230,8 @@ export class SaveMigrator {
 
     return {
       ...defaultSelections,
-      selectedCharacterId: this.readString(selections.selectedCharacterId, defaultSelections.selectedCharacterId),
+      selectedCharacterId: this.readOptionalString(selections.selectedCharacterId)
+        ?? defaultSelections.selectedCharacterId,
       selectedStageId: this.readString(selections.selectedStageId, defaultSelections.selectedStageId),
       selectedMapId: this.readString(selections.selectedMapId, defaultSelections.selectedMapId),
       selectedDifficultyId: this.readOptionalString(selections.selectedDifficultyId)

@@ -62,6 +62,8 @@ The Result Scene can automatically start the next run after 10 seconds.
 
 Current Auto Test is still the legacy single-mode flow. Future scenario batches should route through `PlaytestScenarioRunner` so CSV, replay, leaderboard, seed, and selection metadata can be grouped by scenario.
 
+Character selection can be set to `random_unlocked`. In that mode each new run resolves one real unlocked character from the run seed, including ResultScene Restart and Auto Restart. This is useful for long automatic batches that compare Assassin, Witch, Priest, and Warrior without manually changing selection between runs.
+
 ## Auto Player Behavior
 
 The auto player attempts to:
@@ -186,6 +188,8 @@ Current CSV behavior:
 If CSV schema, content hash, or game version changes, keep samples separate. Do not compare old and new schema/content/version rows mixed in All CSV.
 
 CSV, replay, leaderboard, and ResultScene data should continue to use the same `RunMetadata` snapshot captured at run start. Do not rebuild these fields from current selection state at run end.
+
+Character metadata uses two fields: `selectedCharacterId` is the saved selection and may be `random_unlocked`, while `characterId` is the real character resolved for that run. `characterSelectionMode` is `fixed` for concrete characters and `random_unlocked` for random rotation. Balance analysis should group per-character performance by `characterId`.
 
 CSV metadata fields are intentionally broader than the systems currently active. In addition to core run metadata, rows include `autoMovement`, `autoUpgrade`, `replayId`, custom stage schema/content metadata, challenge type/date, and reserved summary fields such as `relicIds`, `activeSkillIds`, `activeSkillUseStats`, `enemyModifierSpawnStats`, `enemyModifierKillStats`, `weaponTagDamageStats`, `weaponTagKillStats`, `achievementUnlockCount`, and `tutorialShownCount`.
 

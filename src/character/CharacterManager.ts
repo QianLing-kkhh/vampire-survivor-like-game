@@ -1,7 +1,9 @@
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { RandomSource } from '../random/RandomSource';
 import { SaveManager } from '../save/SaveManager';
+import { RANDOM_UNLOCKED_CHARACTER_ID } from '../selection/SelectionState';
 import { UnlockManager } from '../unlock/UnlockManager';
 
 import { CharacterDefinition } from './CharacterDefinition';
@@ -27,6 +29,8 @@ type CharacterDataEntry = Partial<CharacterDefinition['baseStats']> & {
 };
 type CharacterData = Record<string, CharacterDataEntry>;
 
+export type CharacterSelectionMode = 'fixed' | 'random_unlocked';
+
 const DEFAULT_STARTING_WEAPON_ID = 'knife';
 const DEFAULT_CHARACTER_INITIAL_STATS: CharacterInitialStats = {
   maxHp: 100,
@@ -43,7 +47,10 @@ export class CharacterManager {
     ContentBootstrap.ensureInitialized();
     this.characterData = characterData ?? this.getCharacterDataFromRegistry();
 
-    if (!this.characterData[this.selectedCharacterId]) {
+    if (
+      this.selectedCharacterId !== RANDOM_UNLOCKED_CHARACTER_ID
+      && !this.characterData[this.selectedCharacterId]
+    ) {
       this.selectedCharacterId = DEFAULT_CONTENT_IDS.character;
     }
   }
@@ -51,23 +58,19 @@ export class CharacterManager {
   private readonly characterData: CharacterData;
 
   getSelectedCharacter(): CharacterDefinition {
-    return this.getCharacter(this.getSelectedCharacterId());
+    return this.resolveCharacterForRun(this.getSelectedCharacterId());
   }
 
   getSelectedCharacterId(): string {
     const savedCharacterId = SaveManager.get().selections.selectedCharacterId;
 
-    this.selectedCharacterId = this.characterData[savedCharacterId]
-      ? savedCharacterId
-      : DEFAULT_CONTENT_IDS.character;
+    this.selectedCharacterId = this.resolveSelectionId(savedCharacterId);
 
     return this.selectedCharacterId;
   }
 
   setSelectedCharacterId(characterId: string): void {
-    this.selectedCharacterId = this.characterData[characterId]
-      ? characterId
-      : DEFAULT_CONTENT_IDS.character;
+    this.selectedCharacterId = this.resolveSelectionId(characterId);
 
     SaveManager.update({
       selections: {
@@ -104,6 +107,8 @@ export class CharacterManager {
   }
 
   listCharacters(options: { includeLocked?: boolean } = {}): CharacterDefinition[] {
+    UnlockManager.initialize();
+
     const characters = Object.keys(this.characterData)
       .map((characterId) => this.getCharacter(characterId));
 
@@ -114,9 +119,70 @@ export class CharacterManager {
     return characters.filter((character) => this.isCharacterUnlocked(character.id));
   }
 
+  listSelectableCharacters(options: { includeLocked?: boolean } = {}): CharacterDefinition[] {
+    return [
+      this.getRandomUnlockedCharacterSelection(),
+      ...this.listCharacters(options),
+    ];
+  }
+
+  listPlayableCharacters(): CharacterDefinition[] {
+    UnlockManager.initialize();
+
+    const unlockedCharacters = this.listCharacters({ includeLocked: false });
+
+    return unlockedCharacters.length > 0
+      ? unlockedCharacters
+      : [this.getCharacter(DEFAULT_CONTENT_IDS.character)];
+  }
+
+  resolveCharacterForRun(
+    selectedCharacterId: string,
+    randomSource?: RandomSource,
+  ): CharacterDefinition {
+    if (!this.isRandomCharacterSelection(selectedCharacterId)) {
+      return this.getCharacter(selectedCharacterId);
+    }
+
+    const playableCharacters = this.listPlayableCharacters();
+
+    return randomSource?.pick(playableCharacters)
+      ?? playableCharacters[0]
+      ?? this.getCharacter(DEFAULT_CONTENT_IDS.character);
+  }
+
+  isRandomCharacterSelection(characterId: string): boolean {
+    return characterId === RANDOM_UNLOCKED_CHARACTER_ID;
+  }
+
+  getCharacterSelectionMode(characterId: string): CharacterSelectionMode {
+    return this.isRandomCharacterSelection(characterId) ? 'random_unlocked' : 'fixed';
+  }
+
   isCharacterUnlocked(characterId: string): boolean {
     return this.characterData[characterId] !== undefined
-      && (UnlockManager.isUnlocked('character', characterId) || characterId !== '');
+      && UnlockManager.isUnlocked('character', characterId);
+  }
+
+  private getRandomUnlockedCharacterSelection(): CharacterDefinition {
+    const initialStats = this.getInitialStats({});
+
+    return {
+      id: RANDOM_UNLOCKED_CHARACTER_ID,
+      name: 'character.random.name',
+      nameKey: 'character.random.name',
+      descriptionKey: 'character.random.description',
+      startingWeaponId: '',
+      initialStats,
+      growthPerLevel: {},
+      exclusiveUpgradeIds: [],
+      exclusivePassiveIds: [],
+      exclusiveEvolutionRouteIds: [],
+      baseStats: {
+        ...initialStats,
+        expMultiplier: initialStats.expMultiplier ?? 1,
+      },
+    };
   }
 
   private getCharacterDataFromRegistry(): CharacterData {
@@ -127,6 +193,16 @@ export class CharacterManager {
       };
       return record;
     }, {});
+  }
+
+  private resolveSelectionId(characterId: string): string {
+    if (characterId === RANDOM_UNLOCKED_CHARACTER_ID) {
+      return RANDOM_UNLOCKED_CHARACTER_ID;
+    }
+
+    return this.characterData[characterId]
+      ? characterId
+      : DEFAULT_CONTENT_IDS.character;
   }
 
   private getInitialStats(character: CharacterDataEntry): CharacterInitialStats {

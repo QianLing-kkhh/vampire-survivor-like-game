@@ -179,6 +179,8 @@ export class RunState {
   setSelectionInfo(characterId: string, stageId: string, mapId: string): void {
     this.setRunMetadata({
       ...this.metadata,
+      selectedCharacterId: characterId,
+      characterSelectionMode: 'fixed',
       characterId,
       stageId,
       mapId,
@@ -198,6 +200,8 @@ export class RunState {
       ...metadata,
       runId: metadata.runId || this.metadata.runId,
       runSeed: metadata.runSeed || this.metadata.runSeed,
+      selectedCharacterId: metadata.selectedCharacterId || metadata.characterId || 'default',
+      characterSelectionMode: metadata.characterSelectionMode || 'fixed',
       characterId: metadata.characterId || 'default',
       stageId: metadata.stageId || 'stage_001',
       mapId: metadata.mapId || 'prototype_field',

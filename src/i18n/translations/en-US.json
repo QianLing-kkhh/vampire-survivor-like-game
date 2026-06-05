@@ -58,6 +58,10 @@
     "title": "Character Select"
   },
   "character": {
+    "random": {
+      "name": "Random",
+      "description": "Random unlocked character each run"
+    },
     "assassin": {
       "name": "Assassin",
       "description": "A highly mobile character who wins with speed and blades."
@@ -74,6 +78,10 @@
       "name": "Warrior",
       "description": "A melee-oriented character with high health and low mobility."
     }
+  },
+  "characterSelection": {
+    "randomUnlocked": "Random unlocked",
+    "fixed": "Fixed"
   },
   "stageSelect": {
     "title": "Stage Select"

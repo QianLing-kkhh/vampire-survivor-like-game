@@ -2,6 +2,8 @@ import { VersionInfo } from '../version/VersionInfo';
 import { RunMetadata } from '../run/RunMetadata';
 
 export interface ReplaySelectionSnapshot {
+  selectedCharacterId?: string;
+  characterSelectionMode?: 'fixed' | 'random_unlocked';
   characterId: string;
   stageId: string;
   mapId: string;

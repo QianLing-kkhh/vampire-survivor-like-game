@@ -20,10 +20,12 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#020617');
     this.panel = new SelectionListPanel(this, {
       title: I18n.t('characterSelect.title'),
-      items: characterManager.listCharacters().map((character) => ({
+      items: characterManager.listSelectableCharacters().map((character) => ({
         id: character.id,
-        name: character.name,
-        description: character.id,
+        name: I18n.t(character.nameKey),
+        description: character.id === 'random_unlocked'
+          ? I18n.t('characterSelection.randomUnlocked')
+          : character.id,
       })),
       selectedId: selection.characterId,
       onConfirm: (id) => {

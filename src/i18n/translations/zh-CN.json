@@ -43,6 +43,10 @@
     "title": "角色选择"
   },
   "character": {
+    "random": {
+      "name": "随机角色",
+      "description": "每局从已解锁角色中随机选择"
+    },
     "assassin": {
       "name": "刺客",
       "description": "以速度和刀刃取胜的高机动角色。"
@@ -59,6 +63,10 @@
       "name": "战士",
       "description": "高生命值、低机动但能承受压力的近战型角色。"
     }
+  },
+  "characterSelection": {
+    "randomUnlocked": "随机已解锁角色",
+    "fixed": "固定"
   },
   "stageSelect": {
     "title": "关卡选择"

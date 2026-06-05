@@ -10,8 +10,10 @@ export interface SelectionState {
   challengeDateKey?: string;
 }
 
+export const RANDOM_UNLOCKED_CHARACTER_ID = 'random_unlocked';
+
 export const DEFAULT_SELECTION_STATE: SelectionState = {
-  characterId: 'default',
+  characterId: RANDOM_UNLOCKED_CHARACTER_ID,
   stageId: 'stage_001',
   mapId: 'prototype_field',
   difficultyId: 'normal',

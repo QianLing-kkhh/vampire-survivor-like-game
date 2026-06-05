@@ -12,6 +12,8 @@ export interface PlaytestLogData {
   gameVersion: string;
   contentHash: string;
   csvSchemaVersion: number;
+  selectedCharacterId?: string;
+  characterSelectionMode?: 'fixed' | 'random_unlocked';
   characterId: string;
   stageId: string;
   mapId: string;
@@ -133,7 +135,9 @@ export class PlaytestLog {
     'gameVersion',
     'contentHash',
     'csvSchemaVersion',
+    'selectedCharacterId',
     'characterId',
+    'characterSelectionMode',
     'stageId',
     'mapId',
     'customStageId',
@@ -266,7 +270,9 @@ export class PlaytestLog {
       data.gameVersion,
       data.contentHash,
       data.csvSchemaVersion.toString(),
+      data.selectedCharacterId ?? data.characterId,
       data.characterId,
+      data.characterSelectionMode ?? 'fixed',
       data.stageId,
       data.mapId,
       data.customStageId ?? '',

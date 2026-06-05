@@ -136,7 +136,11 @@ export class GameplayInitializer {
       replayRecorder.recordEvent(event);
       config.runState.recordGameEvent();
     });
-    const selectedCharacter = characterManager.getSelectedCharacter();
+    const selectedCharacter = characterManager.resolveCharacterForRun(
+      selection.characterId,
+      randomManager.getSource('character'),
+    );
+    const characterSelectionMode = characterManager.getCharacterSelectionMode(selection.characterId);
     const selectedStageRuntime = stageManager.getSelectedStageRuntimeDefinition();
     const selectedStage = selectedStageRuntime.stage;
     const selectedMap = mapManager.getSelectedMap();
@@ -279,6 +283,8 @@ export class GameplayInitializer {
       csvSchemaVersion: versionInfo.csvSchemaVersion,
       replaySchemaVersion: versionInfo.replaySchemaVersion,
       customStageSchemaVersion: versionInfo.customStageSchemaVersion,
+      selectedCharacterId: selection.characterId,
+      characterSelectionMode,
       characterId: selectedCharacter.id,
       stageId: selectedStage.id,
       mapId: selectedMap.id,
@@ -293,6 +299,8 @@ export class GameplayInitializer {
       runId: config.runId,
       runSeed,
       selection: {
+        selectedCharacterId: selection.characterId,
+        characterSelectionMode,
         characterId: selectedCharacter.id,
         stageId: selectedStage.id,
         mapId: selectedMap.id,

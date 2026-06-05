@@ -24,6 +24,7 @@ import {
   DEFAULT_TUTORIAL_STATE,
   TutorialState,
 } from '../tutorial/TutorialState';
+import { RANDOM_UNLOCKED_CHARACTER_ID } from '../selection/SelectionState';
 import { SAVE_SCHEMA_VERSION } from '../version/SchemaVersion';
 import { VersionInfo, getCurrentVersionInfo } from '../version/VersionInfo';
 
@@ -142,7 +143,7 @@ export function createDefaultSaveData(): SaveData {
       completedChallengeIds: [],
     },
     selections: {
-      selectedCharacterId: 'default',
+      selectedCharacterId: RANDOM_UNLOCKED_CHARACTER_ID,
       selectedStageId: 'stage_001',
       selectedMapId: 'prototype_field',
       selectedDifficultyId: 'normal',

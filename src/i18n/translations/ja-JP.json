@@ -43,6 +43,10 @@
     "title": "キャラクター選択"
   },
   "character": {
+    "random": {
+      "name": "ランダム",
+      "description": "毎回アンロック済みキャラクターからランダム選択"
+    },
     "assassin": {
       "name": "アサシン",
       "description": "速度と刃で勝負する高機動キャラクター。"
@@ -59,6 +63,10 @@
       "name": "戦士",
       "description": "高い体力と低い機動力を持つ近接型キャラクター。"
     }
+  },
+  "characterSelection": {
+    "randomUnlocked": "ランダム選択",
+    "fixed": "固定"
   },
   "stageSelect": {
     "title": "ステージ選択"

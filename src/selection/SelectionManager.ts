@@ -2,6 +2,7 @@ import { CharacterManager } from '../character/CharacterManager';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
 import { CustomStageStorage } from '../custom/CustomStageStorage';
 import { CustomStageValidator } from '../custom/CustomStageValidator';
+import { I18n } from '../i18n/I18n';
 import { MapManager } from '../map/MapManager';
 import { SaveManager } from '../save/SaveManager';
 import { StageManager } from '../stage/StageManager';
@@ -9,6 +10,7 @@ import { UnlockManager } from '../unlock/UnlockManager';
 
 import {
   DEFAULT_SELECTION_STATE,
+  RANDOM_UNLOCKED_CHARACTER_ID,
   SelectionState,
 } from './SelectionState';
 import { SelectionSummary } from './SelectionSummary';
@@ -20,10 +22,9 @@ export class SelectionManager {
 
   static getSelection(): SelectionState {
     const saveSelection = SaveManager.get().selections;
-    const characterManager = new CharacterManager();
     const stageManager = new StageManager();
     const mapManager = new MapManager();
-    const characterId = characterManager.getCharacter(saveSelection.selectedCharacterId).id;
+    const characterId = this.getValidCharacterSelectionId(saveSelection.selectedCharacterId);
     const stage = stageManager.getStage(saveSelection.selectedStageId);
     const map = mapManager.getMap(saveSelection.selectedMapId);
     const customStageId = this.getValidCustomStageId(saveSelection.selectedCustomStageId);
@@ -44,6 +45,12 @@ export class SelectionManager {
 
   static setCharacterId(id: string): boolean {
     const characterManager = new CharacterManager();
+
+    if (characterManager.isRandomCharacterSelection(id)) {
+      characterManager.setSelectedCharacterId(id);
+      this.notify();
+      return true;
+    }
 
     if (characterManager.getCharacter(id).id !== id) {
       console.warn(`Selection character id not found: ${id}`);
@@ -216,14 +223,17 @@ export class SelectionManager {
 
   static getSummary(): SelectionSummary {
     const selection = this.getSelection();
-    const character = new CharacterManager().getCharacter(selection.characterId);
+    const characterManager = new CharacterManager();
+    const character = characterManager.isRandomCharacterSelection(selection.characterId)
+      ? characterManager.listSelectableCharacters()[0]
+      : characterManager.getCharacter(selection.characterId);
     const stage = new StageManager().getStage(selection.stageId);
     const map = new MapManager().getMap(selection.mapId);
     const validation = this.validateSelection();
 
     return {
       characterId: character.id,
-      characterName: character.name,
+      characterName: I18n.t(character.nameKey),
       stageId: stage.id,
       stageName: stage.name,
       mapId: map.id,
@@ -239,8 +249,13 @@ export class SelectionManager {
     const saveSelection = SaveManager.get().selections;
     const warnings: string[] = [];
 
-    if (new CharacterManager().getCharacter(saveSelection.selectedCharacterId).id !== saveSelection.selectedCharacterId) {
-      warnings.push(`Character fallback: ${DEFAULT_CONTENT_IDS.character}`);
+    const characterManager = new CharacterManager();
+
+    if (
+      !characterManager.isRandomCharacterSelection(saveSelection.selectedCharacterId)
+      && characterManager.getCharacter(saveSelection.selectedCharacterId).id !== saveSelection.selectedCharacterId
+    ) {
+      warnings.push(`Character fallback: ${RANDOM_UNLOCKED_CHARACTER_ID}`);
     }
 
     if (new StageManager().getStage(saveSelection.selectedStageId).id !== saveSelection.selectedStageId) {
@@ -299,5 +314,19 @@ export class SelectionManager {
     return new CustomStageValidator().validate(stagePackage).valid
       ? stagePackage.id
       : undefined;
+  }
+
+  private static getValidCharacterSelectionId(characterId: string): string {
+    const characterManager = new CharacterManager();
+
+    if (characterManager.isRandomCharacterSelection(characterId)) {
+      return RANDOM_UNLOCKED_CHARACTER_ID;
+    }
+
+    const resolvedCharacter = characterManager.getCharacter(characterId);
+
+    return resolvedCharacter.id === characterId
+      ? characterId
+      : RANDOM_UNLOCKED_CHARACTER_ID;
   }
 }
