@@ -76,6 +76,9 @@ export class EnemyFlow {
 
   update(_timeSeconds: number, deltaMs: number): void {
     this.config.playerHealth.updateInvulnerability(deltaMs);
+    this.config.characterRuntime?.updateDamageReaction(deltaMs, {
+      player: this.config.player,
+    });
     this.removeDeadEnemies();
     this.updateEnemyMovement(deltaMs);
     this.updateContactDamage(deltaMs);
@@ -218,6 +221,7 @@ export class EnemyFlow {
 
   clear(): void {
     this.unsubscribeEnemyKilled();
+    this.config.characterRuntime?.clear();
     this.contactDamageCooldowns.clear();
   }
 
@@ -254,9 +258,21 @@ export class EnemyFlow {
       this.config.enemyMovement.moveToward(
         enemy,
         this.config.player.body,
-        deltaMs * enemySpeedMultiplier,
+        deltaMs,
+        enemySpeedMultiplier * this.getZoneEnemySpeedMultiplier(enemy),
       );
     }
+  }
+
+  private getZoneEnemySpeedMultiplier(enemy: Enemy): number {
+    if (enemy.bossLike || enemy.id === 'boss' || enemy.id.startsWith('endless_')) {
+      return 1;
+    }
+
+    return this.config.characterRuntime?.getEnemySpeedMultiplierAt(
+      enemy.body.x,
+      enemy.body.y,
+    ) ?? 1;
   }
 
   private updateContactDamage(deltaMs: number): void {

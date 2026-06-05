@@ -4,6 +4,7 @@ import {
   CharacterDamageReactionSkill,
   NoneCharacterDamageReactionSkill,
   ShockwaveDamageReactionSkill,
+  SlowTrailDamageReactionSkill,
 } from './CharacterDamageReactionSkill';
 
 export class CharacterDamageReactionFactory {
@@ -20,6 +21,7 @@ export class CharacterDamageReactionFactory {
       case 'blinkForward':
         return new BlinkForwardDamageReactionSkill(config);
       case 'slowTrail':
+        return new SlowTrailDamageReactionSkill(config);
       case 'holySanctuary':
       case 'gainShield':
         console.warn(`Character damage reaction is reserved but not implemented: ${config.type}`);

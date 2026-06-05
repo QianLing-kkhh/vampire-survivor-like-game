@@ -13,7 +13,7 @@ export class EnemyMovement {
 
   private readonly trackedEnemies = new Set<Enemy>();
 
-  moveToward(enemy: Enemy, target: Position, deltaMs: number): void {
+  moveToward(enemy: Enemy, target: Position, deltaMs: number, speedMultiplier = 1): void {
     this.trackEnemy(enemy);
 
     const direction = new Phaser.Math.Vector2(
@@ -27,10 +27,11 @@ export class EnemyMovement {
 
     direction.normalize();
 
-    const distance = enemy.moveSpeed * (deltaMs / 1000);
+    const effectiveSpeedMultiplier = Math.max(0, speedMultiplier);
+    const distance = enemy.moveSpeed * effectiveSpeedMultiplier * (deltaMs / 1000);
     enemy.body.x += direction.x * distance;
     enemy.body.y += direction.y * distance;
-    this.applySeparation(enemy, deltaMs);
+    this.applySeparation(enemy, deltaMs * effectiveSpeedMultiplier);
   }
 
   private trackEnemy(enemy: Enemy): void {

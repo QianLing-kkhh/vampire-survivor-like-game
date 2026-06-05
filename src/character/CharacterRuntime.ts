@@ -56,7 +56,22 @@ export class CharacterRuntime {
     return this.damageReactionSkill.tryTrigger(context);
   }
 
+  updateDamageReaction(
+    deltaMs: number,
+    context: { player: CharacterDamageReactionContext['player'] },
+  ): void {
+    this.damageReactionSkill.update(deltaMs, context.player);
+  }
+
   isDamageInvulnerable(nowMs: number): boolean {
     return this.damageReactionSkill.isInvulnerable(nowMs);
+  }
+
+  getEnemySpeedMultiplierAt(x: number, y: number): number {
+    return this.damageReactionSkill.getEnemySpeedMultiplierAt(x, y);
+  }
+
+  clear(): void {
+    this.damageReactionSkill.clear();
   }
 }

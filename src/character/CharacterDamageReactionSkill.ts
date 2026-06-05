@@ -44,7 +44,10 @@ export interface CharacterDamageReactionContext {
 export interface CharacterDamageReactionSkill {
   readonly type: CharacterDamageReactionType;
   tryTrigger(context: CharacterDamageReactionContext): boolean;
+  update(deltaMs: number, player: PlayerController): void;
   isInvulnerable(nowMs: number): boolean;
+  getEnemySpeedMultiplierAt(x: number, y: number): number;
+  clear(): void;
 }
 
 export class NoneCharacterDamageReactionSkill implements CharacterDamageReactionSkill {
@@ -54,9 +57,17 @@ export class NoneCharacterDamageReactionSkill implements CharacterDamageReaction
     return false;
   }
 
+  update(_deltaMs: number, _player: PlayerController): void {}
+
   isInvulnerable(): boolean {
     return false;
   }
+
+  getEnemySpeedMultiplierAt(_x: number, _y: number): number {
+    return 1;
+  }
+
+  clear(): void {}
 }
 
 abstract class BaseCharacterDamageReactionSkill implements CharacterDamageReactionSkill {
@@ -83,6 +94,17 @@ abstract class BaseCharacterDamageReactionSkill implements CharacterDamageReacti
 
   isInvulnerable(nowMs: number): boolean {
     return nowMs < this.invulnerableUntilMs;
+  }
+
+  update(_deltaMs: number, _player: PlayerController): void {}
+
+  getEnemySpeedMultiplierAt(_x: number, _y: number): number {
+    return 1;
+  }
+
+  clear(): void {
+    this.nextReadyAtMs = 0;
+    this.invulnerableUntilMs = 0;
   }
 
   protected abstract activate(context: CharacterDamageReactionContext): boolean;
@@ -213,5 +235,171 @@ export class BlinkForwardDamageReactionSkill extends BaseCharacterDamageReaction
         flash.destroy();
       },
     });
+  }
+}
+
+interface SlowTrailZone {
+  x: number;
+  y: number;
+  radius: number;
+  remainingMs: number;
+  enemySpeedMultiplier: number;
+  visual: Phaser.GameObjects.Arc;
+}
+
+export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSkill {
+  private static readonly DEFAULT_TRAIL_DURATION_MS = 3000;
+  private static readonly DEFAULT_TICK_INTERVAL_MS = 200;
+  private static readonly DEFAULT_ZONE_RADIUS = 90;
+  private static readonly DEFAULT_ZONE_DURATION_MS = 3000;
+  private static readonly DEFAULT_ENEMY_SPEED_MULTIPLIER = 0.5;
+  private static readonly MAX_ACTIVE_ZONES = 40;
+
+  readonly type = 'slowTrail';
+
+  private scene?: Phaser.Scene;
+  private activeRemainingMs = 0;
+  private tickRemainingMs = 0;
+  private readonly activeZones: SlowTrailZone[] = [];
+
+  update(deltaMs: number, player: PlayerController): void {
+    const effectiveDeltaMs = Math.max(0, deltaMs);
+
+    this.updateZones(effectiveDeltaMs);
+
+    if (this.activeRemainingMs <= 0 || !this.scene) {
+      return;
+    }
+
+    this.activeRemainingMs = Math.max(0, this.activeRemainingMs - effectiveDeltaMs);
+    this.tickRemainingMs -= effectiveDeltaMs;
+
+    while (this.tickRemainingMs <= 0 && this.activeRemainingMs > 0) {
+      this.createZone(player);
+      this.tickRemainingMs += this.getTickIntervalMs();
+    }
+  }
+
+  getEnemySpeedMultiplierAt(x: number, y: number): number {
+    let multiplier = 1;
+
+    for (const zone of this.activeZones) {
+      if (Phaser.Math.Distance.Between(x, y, zone.x, zone.y) > zone.radius) {
+        continue;
+      }
+
+      multiplier = Math.min(multiplier, zone.enemySpeedMultiplier);
+    }
+
+    return multiplier;
+  }
+
+  clear(): void {
+    super.clear();
+    this.activeRemainingMs = 0;
+    this.tickRemainingMs = 0;
+    this.clearZones();
+    this.scene = undefined;
+  }
+
+  protected activate(context: CharacterDamageReactionContext): boolean {
+    this.scene = context.scene;
+    this.activeRemainingMs = this.getTrailDurationMs();
+    this.tickRemainingMs = 0;
+    this.createZone(context.player);
+    this.tickRemainingMs = this.getTickIntervalMs();
+    return true;
+  }
+
+  private createZone(player: PlayerController): void {
+    if (!this.scene) {
+      return;
+    }
+
+    const radius = this.getZoneRadius();
+    const visual = this.scene.add.circle(
+      player.body.x,
+      player.body.y,
+      radius,
+      0x7c3aed,
+      0.12,
+    );
+
+    visual.setStrokeStyle(2, 0xa78bfa, 0.42);
+    visual.setDepth(8);
+    this.activeZones.push({
+      x: player.body.x,
+      y: player.body.y,
+      radius,
+      remainingMs: this.getZoneDurationMs(),
+      enemySpeedMultiplier: this.getEnemySpeedMultiplier(),
+      visual,
+    });
+
+    if (this.activeZones.length > SlowTrailDamageReactionSkill.MAX_ACTIVE_ZONES) {
+      this.destroyZone(this.activeZones.shift());
+    }
+  }
+
+  private updateZones(deltaMs: number): void {
+    for (let index = this.activeZones.length - 1; index >= 0; index -= 1) {
+      const zone = this.activeZones[index];
+      zone.remainingMs -= deltaMs;
+
+      if (zone.remainingMs > 0) {
+        continue;
+      }
+
+      this.destroyZone(zone);
+      this.activeZones.splice(index, 1);
+    }
+  }
+
+  private clearZones(): void {
+    this.activeZones.forEach((zone) => this.destroyZone(zone));
+    this.activeZones.length = 0;
+  }
+
+  private destroyZone(zone: SlowTrailZone | undefined): void {
+    if (zone?.visual.active) {
+      zone.visual.destroy();
+    }
+  }
+
+  private getTrailDurationMs(): number {
+    return Math.max(
+      0,
+      this.config.trailDurationMs ?? SlowTrailDamageReactionSkill.DEFAULT_TRAIL_DURATION_MS,
+    );
+  }
+
+  private getTickIntervalMs(): number {
+    return Math.max(
+      16,
+      this.config.tickIntervalMs ?? SlowTrailDamageReactionSkill.DEFAULT_TICK_INTERVAL_MS,
+    );
+  }
+
+  private getZoneRadius(): number {
+    return Math.max(
+      0,
+      this.config.zoneRadius ?? SlowTrailDamageReactionSkill.DEFAULT_ZONE_RADIUS,
+    );
+  }
+
+  private getZoneDurationMs(): number {
+    return Math.max(
+      0,
+      this.config.zoneDurationMs ?? SlowTrailDamageReactionSkill.DEFAULT_ZONE_DURATION_MS,
+    );
+  }
+
+  private getEnemySpeedMultiplier(): number {
+    return Phaser.Math.Clamp(
+      this.config.enemySpeedMultiplier
+        ?? SlowTrailDamageReactionSkill.DEFAULT_ENEMY_SPEED_MULTIPLIER,
+      0,
+      1,
+    );
   }
 }

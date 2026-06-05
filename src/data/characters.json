@@ -80,11 +80,13 @@
       "type": "none"
     },
     "damageReactionSkill": {
-      "type": "shockwave",
-      "radius": 100,
-      "damage": 12,
-      "knockbackDistance": 60,
-      "cooldownMs": 0
+      "type": "slowTrail",
+      "cooldownMs": 12000,
+      "trailDurationMs": 3000,
+      "tickIntervalMs": 200,
+      "zoneRadius": 90,
+      "zoneDurationMs": 3000,
+      "enemySpeedMultiplier": 0.5
     },
     "exclusiveUpgradeIds": [],
     "exclusivePassiveIds": [],
