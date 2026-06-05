@@ -12,6 +12,27 @@ export const BUILT_IN_UNLOCKS: UnlockDefinition[] = [
     defaultUnlocked: true,
   },
   {
+    id: 'unlock_character_witch',
+    type: 'character',
+    targetId: 'witch',
+    nameKey: 'unlock.character.witch.name',
+    defaultUnlocked: true,
+  },
+  {
+    id: 'unlock_character_priest',
+    type: 'character',
+    targetId: 'priest',
+    nameKey: 'unlock.character.priest.name',
+    defaultUnlocked: true,
+  },
+  {
+    id: 'unlock_character_warrior',
+    type: 'character',
+    targetId: 'warrior',
+    nameKey: 'unlock.character.warrior.name',
+    defaultUnlocked: true,
+  },
+  {
     id: 'unlock_stage_stage_001',
     type: 'stage',
     targetId: DEFAULT_CONTENT_IDS.stage,

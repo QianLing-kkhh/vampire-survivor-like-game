@@ -50,6 +50,8 @@ export class SelectionManager {
       return false;
     }
 
+    UnlockManager.initialize();
+
     if (!UnlockManager.isUnlocked('character', id)) {
       console.warn(`Selection character is locked: ${id}`);
       return false;
