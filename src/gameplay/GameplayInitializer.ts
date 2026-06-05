@@ -212,6 +212,8 @@ export class GameplayInitializer {
       playerStats,
       config.centerX,
       config.centerY,
+      selectedCharacter.id,
+      selectedCharacter.skinId,
     );
     const virtualJoystick = new VirtualJoystick(config.scene, config.callbacks.onPauseRequested);
     const expManager = new ExpManager(config.eventBus);

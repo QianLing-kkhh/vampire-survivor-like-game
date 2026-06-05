@@ -32,6 +32,19 @@ export const PLAYER_DIRECTIONS_8: readonly PlayerDirection8[] = [
   'up_right',
 ];
 
+export const PLAYER_SKIN_IDS = [
+  'assassin_default',
+  'witch_default',
+  'priest_default',
+  'warrior_default',
+] as const;
+
+export type PlayerSkinId = typeof PLAYER_SKIN_IDS[number];
+
+export const PLAYER_SKIN_TEXTURE_KEYS: readonly string[] = PLAYER_SKIN_IDS.map(
+  (skinId) => `art_player_${skinId}_walk_sheet`,
+);
+
 const createPlayerAnimationMap = (
   state: PlayerAnimationState,
 ): Record<PlayerDirection8, AssetKeyEntry> => PLAYER_DIRECTIONS_8.reduce(
@@ -220,6 +233,7 @@ export const DEFAULT_ASSET_KEY_MAP = {
 export const TEXTURE_STATUS_KEYS: readonly string[] = [
   DEFAULT_ASSET_KEY_MAP.player.texture.primary,
   ...(DEFAULT_ASSET_KEY_MAP.player.texture.fallbacks ?? []),
+  ...PLAYER_SKIN_TEXTURE_KEYS,
   ...Object.values(DEFAULT_ASSET_KEY_MAP.enemies).flatMap((entry) => [
     entry.texture.primary,
     ...(entry.texture.fallbacks ?? []),

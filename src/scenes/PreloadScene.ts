@@ -31,7 +31,11 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'passives/spinach_icon.png', key: 'art_passives_spinach_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'pickups/exp_gem.png', key: 'art_pickups_exp_gem', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
   { path: 'pickups/treasure_chest.png', key: 'art_pickups_treasure_chest', type: 'image', frameWidth: 64, frameHeight: 56, frames: 1 },
+  { path: 'player/assassin_default_walk_sheet.png', key: 'art_player_assassin_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
   { path: 'player/player_walk_sheet.png', key: 'art_player_player_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
+  { path: 'player/priest_default_walk_sheet.png', key: 'art_player_priest_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
+  { path: 'player/warrior_default_walk_sheet.png', key: 'art_player_warrior_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
+  { path: 'player/witch_default_walk_sheet.png', key: 'art_player_witch_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
   { path: 'ui/exp_icon.png', key: 'art_ui_exp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'ui/hp_icon.png', key: 'art_ui_hp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'ui/panel_bg.png', key: 'art_ui_panel_bg', type: 'image', frameWidth: 256, frameHeight: 128, frames: 1 },
@@ -205,12 +209,6 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createPlayerDirectionAnimations(): void {
-    const textureKey = 'art_player_player_walk_sheet';
-
-    if (!this.textures.exists(textureKey)) {
-      return;
-    }
-
     const directions = [
       'down',
       'up',
@@ -222,9 +220,28 @@ export class PreloadScene extends Phaser.Scene {
       'up_right',
     ];
 
+    this.createPlayerDirectionAnimationSet('art_player_player_walk_sheet', 'art_player', directions);
+    this.createPlayerDirectionAnimationSet('art_player_assassin_default_walk_sheet', 'art_player_assassin_default', directions);
+    this.createPlayerDirectionAnimationSet('art_player_witch_default_walk_sheet', 'art_player_witch_default', directions);
+    this.createPlayerDirectionAnimationSet('art_player_priest_default_walk_sheet', 'art_player_priest_default', directions);
+    this.createPlayerDirectionAnimationSet('art_player_warrior_default_walk_sheet', 'art_player_warrior_default', directions);
+  }
+
+  private createPlayerDirectionAnimationSet(
+    textureKey: string,
+    animationPrefix: string,
+    directions: readonly string[],
+  ): void {
+    if (!this.textures.exists(textureKey)) {
+      return;
+    }
+
+    this.createPlayerAnimationAlias(`${animationPrefix}_walk`, textureKey, 0, 3, -1);
+    this.createPlayerAnimationAlias(`${animationPrefix}_idle`, textureKey, 0, 0, 0);
+
     for (const direction of directions) {
-      this.createPlayerAnimationAlias(`art_player_walk_${direction}`, textureKey, 0, 3, -1);
-      this.createPlayerAnimationAlias(`art_player_idle_${direction}`, textureKey, 0, 0, 0);
+      this.createPlayerAnimationAlias(`${animationPrefix}_walk_${direction}`, textureKey, 0, 3, -1);
+      this.createPlayerAnimationAlias(`${animationPrefix}_idle_${direction}`, textureKey, 0, 0, 0);
     }
   }
 

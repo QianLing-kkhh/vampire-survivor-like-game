@@ -55,6 +55,8 @@ export class PlayerController {
     private readonly stats: PlayerStats,
     x: number,
     y: number,
+    private readonly characterId?: string,
+    private readonly skinId?: string,
   ) {
     this.body = this.createBody(x, y);
     this.previousPosition = new Phaser.Math.Vector2(x, y);
@@ -336,8 +338,18 @@ export class PlayerController {
   }
 
   private createBody(x: number, y: number): PlayerBody {
-    const textureKey = AssetKeyResolver.getPlayerTextureKey(this.scene);
-    const idleAnimationKey = AssetKeyResolver.getPlayerAnimationKey(this.scene, 'idle', 'down');
+    const textureKey = AssetKeyResolver.getPlayerTextureKey(
+      this.scene,
+      this.skinId,
+      this.characterId,
+    );
+    const idleAnimationKey = AssetKeyResolver.getPlayerAnimationKey(
+      this.scene,
+      'idle',
+      'down',
+      this.skinId,
+      this.characterId,
+    );
 
     if (textureKey && idleAnimationKey) {
       const body = this.scene.add.sprite(x, y, textureKey);
@@ -381,6 +393,8 @@ export class PlayerController {
       this.scene,
       isMoving ? 'walk' : 'idle',
       direction,
+      this.skinId,
+      this.characterId,
     );
 
     if (!animationKey || !body.play) {
