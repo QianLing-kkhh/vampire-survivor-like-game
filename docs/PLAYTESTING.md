@@ -187,6 +187,10 @@ If CSV schema, content hash, or game version changes, keep samples separate. Do 
 
 CSV, replay, leaderboard, and ResultScene data should continue to use the same `RunMetadata` snapshot captured at run start. Do not rebuild these fields from current selection state at run end.
 
+CSV metadata fields are intentionally broader than the systems currently active. In addition to core run metadata, rows include `autoMovement`, `autoUpgrade`, `replayId`, custom stage schema/content metadata, challenge type/date, and reserved summary fields such as `relicIds`, `activeSkillIds`, `activeSkillUseStats`, `enemyModifierSpawnStats`, `enemyModifierKillStats`, `weaponTagDamageStats`, `weaponTagKillStats`, `achievementUnlockCount`, and `tutorialShownCount`.
+
+Empty CSV fields mean the system was not enabled for that run, is not applicable, or has not been connected to CSV summaries yet. Future systems should fill these summary fields using compact formats such as `id|id|id` or `key:value|key:value`; do not store full Replay, SaveData, CustomStagePackage, or raw JSON payloads in Playtest CSV rows.
+
 ## CSV Balance Analyzer
 
 Use the offline CSV analyzer for quick balance summaries:

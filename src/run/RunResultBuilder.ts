@@ -7,6 +7,7 @@ import { UpgradeSelectionModeLog } from '../logging/PlaytestLog';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
+import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { RunStats } from '../stats/RunStats';
 import { WeaponManager } from '../weapon/WeaponManager';
 
@@ -46,6 +47,7 @@ export class RunResultBuilder {
     const passiveItems = context.passiveManager?.getPassiveLevels() ?? [];
     const weaponDamageStats = context.weaponManager?.getWeaponDamageStats() ?? [];
     const runStatsSummary = context.runStats.getSummary();
+    const playtestSettings = PlaytestSettings.get();
     const finalLevel = context.levelManager?.currentLevel ?? 1;
     const finalExp = context.expManager?.totalExp ?? 0;
     const finalMoveSpeed = context.playerStats?.moveSpeed ?? 0;
@@ -67,6 +69,7 @@ export class RunResultBuilder {
     const playtestCsv = PlaytestLog.createCsv({
       runId: context.runId,
       runSeed: metadata.runSeed,
+      replayId: metadata.replayId ?? context.runState.replayId,
       gameVersion: metadata.gameVersion,
       contentHash: metadata.contentHash,
       csvSchemaVersion: metadata.csvSchemaVersion,
@@ -74,11 +77,24 @@ export class RunResultBuilder {
       stageId: metadata.stageId,
       mapId: metadata.mapId,
       customStageId: metadata.customStageId,
+      customStageSchemaVersion: metadata.customStageId
+        ? metadata.customStageSchemaVersion
+        : undefined,
+      customStageContentHash: metadata.customStageId
+        ? metadata.customStageContentHash
+        : undefined,
       challengeId: metadata.challengeId,
+      challengeType: metadata.challengeId ? metadata.challengeType : undefined,
+      challengeDate: metadata.challengeType === 'daily' ? metadata.challengeDate : undefined,
       seed: metadata.seed,
       leaderboardKey: metadata.leaderboardKey,
+      difficultyId: metadata.difficultyId ?? context.runState.difficultyId,
+      mutatorIds: context.runState.mutatorIds,
+      rulesetId: metadata.rulesetId ?? context.runState.rulesetId,
       timestamp: new Date().toISOString(),
       autoMode: context.autoMode,
+      autoMovement: playtestSettings.autoMovement,
+      autoUpgrade: playtestSettings.autoUpgrade,
       fastMode: context.fastMode,
       timeScale: context.timeScale,
       upgradeSelectionMode: context.upgradeSelectionMode,
@@ -151,9 +167,6 @@ export class RunResultBuilder {
       maxExpRequirementMultiplier: context.runState.maxExpRequirementMultiplier,
       endlessLevelUpCount: context.runState.endlessLevelUpCount,
       averageEndlessLevelIntervalSeconds: context.runState.averageEndlessLevelIntervalSeconds,
-      difficultyId: context.runState.difficultyId,
-      mutatorIds: context.runState.mutatorIds,
-      rulesetId: context.runState.rulesetId,
       finalMoveSpeed,
       finalPickupRange,
       finalMaxHp,
@@ -166,6 +179,15 @@ export class RunResultBuilder {
       weaponHitStats: runStatsSummary.weaponHitStats,
       weaponKillStats: runStatsSummary.weaponKillStats,
       upgradeCountStats: runStatsSummary.upgradeCountStats,
+      relicIds: [],
+      activeSkillIds: [],
+      activeSkillUseStats: [],
+      enemyModifierSpawnStats: [],
+      enemyModifierKillStats: [],
+      weaponTagDamageStats: [],
+      weaponTagKillStats: [],
+      achievementUnlockCount: 0,
+      tutorialShownCount: 0,
     });
 
     PlaytestLogBuffer.append(playtestCsv);

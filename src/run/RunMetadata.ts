@@ -1,6 +1,7 @@
 export interface RunMetadata {
   runId: string;
   runSeed: string;
+  replayId?: string;
   gameVersion: string;
   contentHash: string;
   saveSchemaVersion: number;
@@ -12,7 +13,10 @@ export interface RunMetadata {
   mapId: string;
   difficultyId?: string;
   customStageId?: string;
+  customStageContentHash?: string;
   challengeId?: string;
+  challengeType?: string;
+  challengeDate?: string;
   rulesetId?: string;
   seed?: string;
   leaderboardKey?: string;
@@ -35,4 +39,3 @@ export function createDefaultRunMetadata(): RunMetadata {
     rulesetId: 'normal',
   };
 }
-

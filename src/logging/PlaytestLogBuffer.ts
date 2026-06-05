@@ -198,23 +198,23 @@ export class PlaytestLogBuffer {
   }
 
   private static extractTimestamp(csvRow: string): string {
-    return this.parseCsvLine(csvRow)[12] ?? '';
+    return this.parseCsvLine(csvRow)[25] ?? '';
   }
 
   private static isCurrentCsvRow(csvRow: string): boolean {
     const parsedRow = this.parseCsvLine(csvRow);
     const currentVersionInfo = getCurrentVersionInfo();
 
-    return parsedRow[4] === PlaytestLog.getCsvSchemaVersion().toString()
-      && parsedRow[3] === currentVersionInfo.contentHash
-      && parsedRow[2] === currentVersionInfo.gameVersion;
+    return parsedRow[5] === PlaytestLog.getCsvSchemaVersion().toString()
+      && parsedRow[4] === currentVersionInfo.contentHash
+      && parsedRow[3] === currentVersionInfo.gameVersion;
   }
 
   private static areRowsCompatible(leftRow: string, rightRow: string): boolean {
     const left = this.parseCsvLine(leftRow);
     const right = this.parseCsvLine(rightRow);
 
-    return left[4] === right[4] && left[3] === right[3] && left[2] === right[2];
+    return left[5] === right[5] && left[4] === right[4] && left[3] === right[3];
   }
 
   private static calculateGapSeconds(

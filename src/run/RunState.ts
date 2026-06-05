@@ -212,6 +212,7 @@ export class RunState {
     this.mapId = this.metadata.mapId;
     this.difficultyId = this.metadata.difficultyId ?? 'normal';
     this.rulesetId = this.metadata.rulesetId ?? this.difficultyId;
+    this.replayId = this.metadata.replayId ?? this.replayId;
   }
 
   getRunMetadata(): RunMetadata {
@@ -220,6 +221,10 @@ export class RunState {
 
   setReplayId(replayId: string): void {
     this.replayId = replayId;
+    this.setRunMetadata({
+      ...this.metadata,
+      replayId,
+    });
   }
 
   recordGameEvent(): void {

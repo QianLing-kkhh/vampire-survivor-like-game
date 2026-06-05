@@ -8,6 +8,7 @@ export type UpgradeSelectionModeLog = 'weighted_random';
 export interface PlaytestLogData {
   runId: string;
   runSeed: string;
+  replayId?: string;
   gameVersion: string;
   contentHash: string;
   csvSchemaVersion: number;
@@ -15,11 +16,20 @@ export interface PlaytestLogData {
   stageId: string;
   mapId: string;
   customStageId?: string;
+  customStageSchemaVersion?: number | string;
+  customStageContentHash?: string;
   challengeId?: string;
+  challengeType?: string;
+  challengeDate?: string;
   seed?: string;
   leaderboardKey?: string;
+  difficultyId: string;
+  mutatorIds: readonly string[];
+  rulesetId: string;
   timestamp: string;
   autoMode: boolean;
+  autoMovement: boolean;
+  autoUpgrade: boolean;
   fastMode: boolean;
   timeScale: number;
   upgradeSelectionMode: UpgradeSelectionModeLog;
@@ -92,9 +102,6 @@ export interface PlaytestLogData {
   maxExpRequirementMultiplier: number;
   endlessLevelUpCount: number;
   averageEndlessLevelIntervalSeconds: number;
-  difficultyId: string;
-  mutatorIds: readonly string[];
-  rulesetId: string;
   finalMoveSpeed: number;
   finalPickupRange: number;
   finalMaxHp: number;
@@ -107,12 +114,22 @@ export interface PlaytestLogData {
   weaponHitStats: readonly KeyValueStat[];
   weaponKillStats: readonly KeyValueStat[];
   upgradeCountStats: readonly KeyValueStat[];
+  relicIds: readonly string[];
+  activeSkillIds: readonly string[];
+  activeSkillUseStats: readonly KeyValueStat[];
+  enemyModifierSpawnStats: readonly KeyValueStat[];
+  enemyModifierKillStats: readonly KeyValueStat[];
+  weaponTagDamageStats: readonly KeyValueStat[];
+  weaponTagKillStats: readonly KeyValueStat[];
+  achievementUnlockCount: number;
+  tutorialShownCount: number;
 }
 
 export class PlaytestLog {
   private static readonly HEADER = [
     'runId',
     'runSeed',
+    'replayId',
     'gameVersion',
     'contentHash',
     'csvSchemaVersion',
@@ -120,13 +137,22 @@ export class PlaytestLog {
     'stageId',
     'mapId',
     'customStageId',
+    'customStageSchemaVersion',
+    'customStageContentHash',
     'challengeId',
+    'challengeType',
+    'challengeDate',
     'seed',
     'leaderboardKey',
-    'timestamp',
+    'difficultyId',
+    'mutatorIds',
+    'rulesetId',
     'autoMode',
+    'autoMovement',
+    'autoUpgrade',
     'fastMode',
     'timeScale',
+    'timestamp',
     'upgradeSelectionMode',
     'resultType',
     'survivalTime',
@@ -197,9 +223,6 @@ export class PlaytestLog {
     'maxExpRequirementMultiplier',
     'endlessLevelUpCount',
     'averageEndlessLevelIntervalSeconds',
-    'difficultyId',
-    'mutatorIds',
-    'rulesetId',
     'finalMoveSpeed',
     'finalPickupRange',
     'finalMaxHp',
@@ -212,6 +235,15 @@ export class PlaytestLog {
     'weaponHitStats',
     'weaponKillStats',
     'upgradeCountStats',
+    'relicIds',
+    'activeSkillIds',
+    'activeSkillUseStats',
+    'enemyModifierSpawnStats',
+    'enemyModifierKillStats',
+    'weaponTagDamageStats',
+    'weaponTagKillStats',
+    'achievementUnlockCount',
+    'tutorialShownCount',
   ].join(',');
 
   static createRunId(): string {
@@ -230,6 +262,7 @@ export class PlaytestLog {
     const values = [
       data.runId,
       data.runSeed,
+      data.replayId ?? '',
       data.gameVersion,
       data.contentHash,
       data.csvSchemaVersion.toString(),
@@ -237,13 +270,22 @@ export class PlaytestLog {
       data.stageId,
       data.mapId,
       data.customStageId ?? '',
+      data.customStageSchemaVersion === undefined ? '' : data.customStageSchemaVersion.toString(),
+      data.customStageContentHash ?? '',
       data.challengeId ?? '',
+      data.challengeType ?? '',
+      data.challengeDate ?? '',
       data.seed ?? '',
       data.leaderboardKey ?? '',
-      data.timestamp,
+      data.difficultyId,
+      data.mutatorIds.join('|'),
+      data.rulesetId,
       data.autoMode ? 'true' : 'false',
+      data.autoMovement ? 'true' : 'false',
+      data.autoUpgrade ? 'true' : 'false',
       data.fastMode ? 'true' : 'false',
       data.timeScale.toString(),
+      data.timestamp,
       data.upgradeSelectionMode,
       data.resultType,
       Math.floor(data.survivalTime).toString(),
@@ -314,9 +356,6 @@ export class PlaytestLog {
       PlaytestLog.formatNumber(data.maxExpRequirementMultiplier),
       data.endlessLevelUpCount.toString(),
       PlaytestLog.formatNumber(data.averageEndlessLevelIntervalSeconds),
-      data.difficultyId,
-      data.mutatorIds.join('|'),
-      data.rulesetId,
       PlaytestLog.formatNumber(data.finalMoveSpeed),
       PlaytestLog.formatNumber(data.finalPickupRange),
       PlaytestLog.formatNumber(data.finalMaxHp),
@@ -331,6 +370,15 @@ export class PlaytestLog {
       PlaytestLog.formatKeyValueStats(data.weaponHitStats),
       PlaytestLog.formatKeyValueStats(data.weaponKillStats),
       PlaytestLog.formatKeyValueStats(data.upgradeCountStats),
+      data.relicIds.join('|'),
+      data.activeSkillIds.join('|'),
+      PlaytestLog.formatKeyValueStats(data.activeSkillUseStats),
+      PlaytestLog.formatKeyValueStats(data.enemyModifierSpawnStats),
+      PlaytestLog.formatKeyValueStats(data.enemyModifierKillStats),
+      PlaytestLog.formatKeyValueStats(data.weaponTagDamageStats),
+      PlaytestLog.formatKeyValueStats(data.weaponTagKillStats),
+      data.achievementUnlockCount.toString(),
+      data.tutorialShownCount.toString(),
     ];
 
     return values.map(PlaytestLog.escapeCsvValue).join(',');
