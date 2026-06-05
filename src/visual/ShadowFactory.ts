@@ -12,10 +12,14 @@ type ShadowOwner = Phaser.GameObjects.GameObject & {
 export class ShadowFactory {
   static createShadow(
     scene: Phaser.Scene,
-    owner: ShadowOwner,
+    owner: ShadowOwner | undefined | null,
     type: ShadowType,
     options: Partial<ShadowConfig> = {},
   ): Phaser.GameObjects.Ellipse | undefined {
+    if (!scene || !ShadowFactory.isLiveGameObject(owner)) {
+      return undefined;
+    }
+
     const config = ShadowFactory.getScaledConfig(type, options);
 
     if (!config.enabled || !VisualSettings.areShadowsEnabled()) {
@@ -37,18 +41,22 @@ export class ShadowFactory {
   }
 
   static updateShadow(
-    shadow: Phaser.GameObjects.Ellipse | undefined,
-    owner: ShadowOwner,
+    shadow: Phaser.GameObjects.Ellipse | undefined | null,
+    owner: ShadowOwner | undefined | null,
     type: ShadowType,
     options: Partial<ShadowConfig> = {},
   ): Phaser.GameObjects.Ellipse | undefined {
-    if (!shadow) {
+    if (!ShadowFactory.isLiveGameObject(shadow)) {
       return undefined;
     }
 
     if (!VisualSettings.areShadowsEnabled()) {
       ShadowFactory.destroyShadow(shadow);
       return undefined;
+    }
+
+    if (!ShadowFactory.isLiveGameObject(owner)) {
+      return shadow;
     }
 
     const config = ShadowFactory.getScaledConfig(type, options);
@@ -59,10 +67,12 @@ export class ShadowFactory {
     return shadow;
   }
 
-  static destroyShadow(shadow: Phaser.GameObjects.Ellipse | undefined): void {
-    if (shadow?.active) {
-      shadow.destroy();
+  static destroyShadow(shadow: Phaser.GameObjects.GameObject | undefined | null): void {
+    if (!ShadowFactory.isLiveGameObject(shadow)) {
+      return;
     }
+
+    shadow.destroy();
   }
 
   private static getScaledConfig(
@@ -79,5 +89,15 @@ export class ShadowFactory {
       offsetX: config.offsetX * modelScale,
       offsetY: config.offsetY * modelScale,
     };
+  }
+
+  private static isLiveGameObject<T extends Phaser.GameObjects.GameObject>(
+    gameObject: T | undefined | null,
+  ): gameObject is T {
+    return Boolean(
+      gameObject
+      && gameObject.scene
+      && gameObject.active !== false,
+    );
   }
 }

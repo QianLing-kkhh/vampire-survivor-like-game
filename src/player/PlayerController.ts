@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { SettingsManager } from '../settings/SettingsManager';
 import { ShadowFactory } from '../visual/ShadowFactory';
+import { VisualSettings } from '../visual/VisualSettings';
 import { VisualScale } from '../visual/VisualScale';
 
 import { PlayerStats } from './PlayerStats';
@@ -68,7 +69,14 @@ export class PlayerController {
     this.previousPosition = new Phaser.Math.Vector2(x, y);
     this.lastFramePosition = new Phaser.Math.Vector2(x, y);
     this.unsubscribeSettings = SettingsManager.subscribe((domain, settingName) => {
-      if (domain === 'display' && settingName === 'visualModelScale') {
+      if (
+        domain === 'display'
+        && (
+          settingName === 'visualModelScale'
+          || settingName === 'shadowsEnabled'
+          || settingName === 'displayQuality'
+        )
+      ) {
         this.refreshVisualScale();
       }
     });
@@ -187,6 +195,12 @@ export class PlayerController {
   }
 
   refreshVisualScale(): void {
+    if (!this.isBodyUsable()) {
+      ShadowFactory.destroyShadow(this.shadow);
+      this.shadow = undefined;
+      return;
+    }
+
     const body = this.body as PlayerBody & {
       setDisplaySize?: (width: number, height: number) => void;
       setScale?: (x: number, y?: number) => void;
@@ -199,7 +213,15 @@ export class PlayerController {
       body.setScale?.(VisualScale.getPlayerFallbackVisualRadius() / body.radius);
     }
 
-    this.updateShadow();
+    if (!VisualSettings.areShadowsEnabled()) {
+      ShadowFactory.destroyShadow(this.shadow);
+      this.shadow = undefined;
+      return;
+    }
+
+    this.shadow = this.shadow
+      ? ShadowFactory.updateShadow(this.shadow, this.body, 'player')
+      : ShadowFactory.createShadow(this.scene, this.body, 'player');
   }
 
   private moveBy(direction: Phaser.Math.Vector2, distance: number): void {
@@ -466,9 +488,28 @@ export class PlayerController {
   }
 
   private updateShadow(): void {
+    if (!this.isBodyUsable()) {
+      this.shadow = undefined;
+      return;
+    }
+
+    if (!VisualSettings.areShadowsEnabled()) {
+      ShadowFactory.destroyShadow(this.shadow);
+      this.shadow = undefined;
+      return;
+    }
+
     this.shadow = this.shadow
       ? ShadowFactory.updateShadow(this.shadow, this.body, 'player')
       : ShadowFactory.createShadow(this.scene, this.body, 'player');
+  }
+
+  private isBodyUsable(): boolean {
+    return Boolean(
+      this.body
+      && this.body.scene
+      && this.body.active !== false,
+    );
   }
 
   private playPlayerAnimation(
