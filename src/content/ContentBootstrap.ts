@@ -15,6 +15,7 @@ import { ContentPack } from './ContentPack';
 import { ContentRegistry } from './ContentRegistry';
 import { ContentValidator } from './ContentValidator';
 import { DEFAULT_CONTENT_IDS } from './ContentId';
+import { SpawnWave } from '../spawn/SpawnWave';
 
 type CharacterJson = Record<string, Partial<CharacterDefinition['baseStats']> & {
   name?: string;
@@ -55,13 +56,21 @@ export class ContentBootstrap {
       enemies,
       passives: this.passivesToRecord(passives),
       upgrades,
-      waves: {
-        [DEFAULT_CONTENT_IDS.waveSet]: waves,
-      },
+      waves: this.toWaveSetRecord(waves),
       characters: this.charactersToRecord(characters as CharacterJson),
       stages,
       maps,
     };
+  }
+
+  private static toWaveSetRecord(waveData: unknown): Record<string, readonly SpawnWave[]> {
+    if (Array.isArray(waveData)) {
+      return {
+        [DEFAULT_CONTENT_IDS.waveSet]: waveData as readonly SpawnWave[],
+      };
+    }
+
+    return waveData as Record<string, readonly SpawnWave[]>;
   }
 
   private static passivesToRecord(passiveList: readonly PassiveItem[]): Record<string, PassiveItem> {

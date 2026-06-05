@@ -10,4 +10,9 @@ export interface WorldRenderConfig {
   height: number;
   gridSize: number;
   landmarkSpacing: number;
+  backgroundColor?: number;
+  gridColor?: number;
+  gridAlpha?: number;
+  groundTileKey?: string;
+  landmarkWeights?: Partial<Record<'tree' | 'rock' | 'grave', number>>;
 }

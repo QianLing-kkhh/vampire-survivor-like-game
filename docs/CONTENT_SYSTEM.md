@@ -35,6 +35,7 @@ Weapon definitions may include optional `tags` and `behavior` metadata. Tags des
 Current status:
 
 - Built-in content is registered as one builtin content pack.
+- Built-in content includes `graveyard_map` and `graveyard_stage` as the first multi-map / multi-stage content proof, using existing enemies, existing final Boss, and the `graveyard_waves` wave set.
 - Custom/mod loading is not implemented yet.
 - Remote content loading is not implemented yet.
 - The registry is not a mod loader yet.
@@ -65,7 +66,7 @@ Current built-in content comes from:
 - `src/data/stages.json`
 - `src/data/maps.json`
 
-`ContentBootstrap` converts arrays where needed, wraps the default wave set, validates the pack, and registers it.
+`ContentBootstrap` converts arrays where needed, supports built-in wave set records such as `default` and `graveyard_waves`, validates the pack, and registers it.
 
 ## ContentRegistry
 

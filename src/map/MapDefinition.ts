@@ -5,4 +5,15 @@ export interface MapDefinition {
   worldHeight: number;
   gridSize: number;
   landmarkSpacing: number;
+  render?: {
+    backgroundColor?: number;
+    gridColor?: number;
+    gridAlpha?: number;
+    groundTileKey?: string;
+    landmarkWeights?: {
+      tree?: number;
+      rock?: number;
+      grave?: number;
+    };
+  };
 }

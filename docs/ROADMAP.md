@@ -116,7 +116,7 @@ Status: pause unless content proof creates demand.
 ### Phase B: Content Proof
 
 - Add 2 characters.
-- Add 1 new map and 1 new stage.
+- Added `graveyard_map` and `graveyard_stage` as the first content proof for multi-map / multi-stage flow, using existing enemies and Boss.
 - Add 1 sample custom stage package.
 - Add 1 new Boss config using `BossSkillFactory`.
 - Add 3 relics and connect them through `RelicManager`.

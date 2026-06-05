@@ -256,7 +256,8 @@ export class AssetKeyResolver {
   }
 
   static getWorldTileTextureKey(scene: Phaser.Scene, tileType: string): string | null {
-    return AssetKeyResolver.getWorldTextureKey(scene, tileType);
+    return AssetKeyResolver.getWorldTextureKey(scene, tileType)
+      ?? (tileType === 'ground_tile' ? null : AssetKeyResolver.getWorldTextureKey(scene, 'ground_tile'));
   }
 
   static getEffectTextureKey(scene: Phaser.Scene, effectType: string): string | null {

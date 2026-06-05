@@ -235,6 +235,10 @@ export const DEFAULT_ASSET_KEY_MAP = {
     grave: { primary: 'art_world_grave_landmark' },
     grass_tile: { primary: 'art_world_grass_tile' },
     ground_tile: { primary: 'art_world_ground_tile' },
+    graveyard_ground_tile: {
+      primary: 'art_world_graveyard_ground_tile',
+      fallbacks: ['art_world_ground_tile'],
+    },
   },
   effects: {
     hit_flash: {

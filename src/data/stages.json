@@ -3,8 +3,20 @@
     "id": "stage_001",
     "name": "Prototype Field",
     "mapId": "prototype_field",
+    "waveSetId": "default",
     "finalBossId": "boss",
     "finalBossSpawnTimeSeconds": 300,
-    "warningBeforeSpawnSeconds": 30
+    "warningBeforeSpawnSeconds": 30,
+    "allowEndless": true
+  },
+  "graveyard_stage": {
+    "id": "graveyard_stage",
+    "name": "Graveyard Night",
+    "mapId": "graveyard_map",
+    "waveSetId": "graveyard_waves",
+    "finalBossId": "boss",
+    "finalBossSpawnTimeSeconds": 300,
+    "warningBeforeSpawnSeconds": 30,
+    "allowEndless": true
   }
 }

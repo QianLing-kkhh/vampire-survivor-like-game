@@ -6,5 +6,24 @@
     "worldHeight": 4000,
     "gridSize": 128,
     "landmarkSpacing": 512
+  },
+  "graveyard_map": {
+    "id": "graveyard_map",
+    "name": "Graveyard",
+    "worldWidth": 5200,
+    "worldHeight": 3200,
+    "gridSize": 128,
+    "landmarkSpacing": 448,
+    "render": {
+      "backgroundColor": 1718318,
+      "gridColor": 3818588,
+      "gridAlpha": 0.22,
+      "groundTileKey": "graveyard_ground_tile",
+      "landmarkWeights": {
+        "grave": 5,
+        "tree": 2,
+        "rock": 1
+      }
+    }
   }
 }

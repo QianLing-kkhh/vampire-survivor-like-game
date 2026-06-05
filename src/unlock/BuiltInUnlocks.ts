@@ -40,10 +40,24 @@ export const BUILT_IN_UNLOCKS: UnlockDefinition[] = [
     defaultUnlocked: true,
   },
   {
+    id: 'unlock_stage_graveyard_stage',
+    type: 'stage',
+    targetId: 'graveyard_stage',
+    nameKey: 'unlock.stage.graveyard_stage.name',
+    defaultUnlocked: true,
+  },
+  {
     id: 'unlock_map_prototype_field',
     type: 'map',
     targetId: DEFAULT_CONTENT_IDS.map,
     nameKey: 'unlock.map.prototype_field.name',
+    defaultUnlocked: true,
+  },
+  {
+    id: 'unlock_map_graveyard_map',
+    type: 'map',
+    targetId: 'graveyard_map',
+    nameKey: 'unlock.map.graveyard_map.name',
     defaultUnlocked: true,
   },
   {

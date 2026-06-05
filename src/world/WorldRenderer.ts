@@ -24,7 +24,10 @@ export class WorldRenderer {
   }
 
   private renderBackground(): void {
-    const groundTextureKey = AssetKeyResolver.getWorldTileTextureKey(this.scene, 'ground_tile');
+    const groundTextureKey = AssetKeyResolver.getWorldTileTextureKey(
+      this.scene,
+      this.config.groundTileKey ?? 'ground_tile',
+    );
 
     if (groundTextureKey) {
       const background = this.scene.add.tileSprite(
@@ -44,7 +47,7 @@ export class WorldRenderer {
       this.config.height / 2,
       this.config.width,
       this.config.height,
-      0x111827,
+      this.config.backgroundColor ?? 0x111827,
     );
 
     background.setDepth(-100);
@@ -53,7 +56,11 @@ export class WorldRenderer {
   private renderGrid(): void {
     const graphics = this.scene.add.graphics();
     graphics.setDepth(-90);
-    graphics.lineStyle(1, WorldRenderer.GRID_COLOR, 0.35);
+    graphics.lineStyle(
+      1,
+      this.config.gridColor ?? WorldRenderer.GRID_COLOR,
+      this.config.gridAlpha ?? 0.35,
+    );
 
     for (let x = 0; x <= this.config.width; x += this.config.gridSize) {
       graphics.lineBetween(x, 0, x, this.config.height);
@@ -77,14 +84,23 @@ export class WorldRenderer {
         y < this.config.height;
         y += this.config.landmarkSpacing
       ) {
-        const type = WorldRenderer.LANDMARK_TYPES[
-          landmarkIndex % WorldRenderer.LANDMARK_TYPES.length
-        ];
+        const type = this.getLandmarkType(landmarkIndex);
 
         this.renderLandmark(type, x, y);
         landmarkIndex += 1;
       }
     }
+  }
+
+  private getLandmarkType(index: number): LandmarkType {
+    const weightedTypes = WorldRenderer.LANDMARK_TYPES.flatMap((type) => {
+      const weight = Math.max(0, Math.floor(this.config.landmarkWeights?.[type] ?? 1));
+
+      return Array.from({ length: weight }, () => type);
+    });
+    const types = weightedTypes.length > 0 ? weightedTypes : WorldRenderer.LANDMARK_TYPES;
+
+    return types[index % types.length];
   }
 
   private renderLandmark(type: LandmarkType, x: number, y: number): void {

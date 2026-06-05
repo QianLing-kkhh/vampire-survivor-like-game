@@ -186,7 +186,7 @@ export class GameplayInitializer {
     const upgradeOptions = ContentRegistry.getUpgradeOptions();
     const waveSet = selectedStageRuntime.customStagePackage
       ? this.toSpawnWaves(selectedStageRuntime.customStagePackage.waves)
-      : ContentRegistry.getWaveSet(DEFAULT_CONTENT_IDS.waveSet) ?? [];
+      : ContentRegistry.getWaveSet(selectedStage.waveSetId ?? DEFAULT_CONTENT_IDS.waveSet) ?? [];
     const characterRuntime = new CharacterRuntime(selectedCharacter);
     const playerStats = PlayerStats.fromConfig(characterRuntime.getBaseStats());
     const runStats = new RunStats(playerStats.maxHp);

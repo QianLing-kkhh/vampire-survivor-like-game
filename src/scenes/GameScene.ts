@@ -147,12 +147,18 @@ export class GameScene extends Phaser.Scene {
     height: number;
     gridSize: number;
     landmarkSpacing: number;
+    backgroundColor?: number;
+    gridColor?: number;
+    gridAlpha?: number;
+    groundTileKey?: string;
+    landmarkWeights?: Partial<Record<'tree' | 'rock' | 'grave', number>>;
   } {
     return {
       width: this.currentMap.worldWidth,
       height: this.currentMap.worldHeight,
       gridSize: this.currentMap.gridSize,
       landmarkSpacing: this.currentMap.landmarkSpacing,
+      ...this.currentMap.render,
     };
   }
 

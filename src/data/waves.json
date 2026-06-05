@@ -1,116 +1,210 @@
-[
-  {
-    "time": 0,
-    "enemy": "slime",
-    "count": 90,
-    "interval": 1.0
-  },
-  {
-    "time": 45,
-    "enemy": "slime",
-    "count": 90,
-    "interval": 0.9
-  },
-  {
-    "time": 60,
-    "enemy": "bat",
-    "count": 40,
-    "interval": 1.4
-  },
-  {
-    "time": 90,
-    "enemy": "bat",
-    "count": 60,
-    "interval": 1.1
-  },
-  {
-    "time": 180,
-    "enemy": "golem",
-    "count": 30,
-    "interval": 2.0
-  },
-  {
-    "time": 210,
-    "enemy": "bat",
-    "count": 100,
-    "interval": 0.8
-  },
-  {
-    "time": 300,
-    "enemy": "bat",
-    "count": 120,
-    "interval": 0.8
-  },
-  {
-    "time": 300,
-    "enemy": "slime",
-    "count": 120,
-    "interval": 1.0
-  },
-  {
-    "time": 330,
-    "enemy": "golem",
-    "count": 40,
-    "interval": 1.7
-  },
-  {
-    "time": 345,
-    "enemy": "bat",
-    "count": 120,
-    "interval": 0.39
-  },
-  {
-    "time": 360,
-    "enemy": "slime",
-    "count": 160,
-    "interval": 0.46
-  },
-  {
-    "time": 375,
-    "enemy": "golem",
-    "count": 60,
-    "interval": 0.98
-  },
-  {
-    "time": 390,
-    "enemy": "bat",
-    "count": 180,
-    "interval": 0.29
-  },
-  {
-    "time": 420,
-    "enemy": "golem",
-    "count": 120,
-    "interval": 0.68
-  },
-  {
-    "time": 420,
-    "enemy": "slime",
-    "count": 220,
-    "interval": 0.48
-  },
-  {
-    "time": 420,
-    "enemy": "bat",
-    "count": 180,
-    "interval": 0.38
-  },
-  {
-    "time": 450,
-    "enemy": "bat",
-    "count": 220,
-    "interval": 0.35
-  },
-  {
-    "time": 450,
-    "enemy": "slime",
-    "count": 220,
-    "interval": 0.5
-  },
-  {
-    "time": 450,
-    "enemy": "golem",
-    "count": 100,
-    "interval": 0.85
-  }
-]
+{
+  "default": [
+    {
+      "time": 0,
+      "enemy": "slime",
+      "count": 90,
+      "interval": 1.0
+    },
+    {
+      "time": 45,
+      "enemy": "slime",
+      "count": 90,
+      "interval": 0.9
+    },
+    {
+      "time": 60,
+      "enemy": "bat",
+      "count": 40,
+      "interval": 1.4
+    },
+    {
+      "time": 90,
+      "enemy": "bat",
+      "count": 60,
+      "interval": 1.1
+    },
+    {
+      "time": 180,
+      "enemy": "golem",
+      "count": 30,
+      "interval": 2.0
+    },
+    {
+      "time": 210,
+      "enemy": "bat",
+      "count": 100,
+      "interval": 0.8
+    },
+    {
+      "time": 300,
+      "enemy": "bat",
+      "count": 120,
+      "interval": 0.8
+    },
+    {
+      "time": 300,
+      "enemy": "slime",
+      "count": 120,
+      "interval": 1.0
+    },
+    {
+      "time": 330,
+      "enemy": "golem",
+      "count": 40,
+      "interval": 1.7
+    },
+    {
+      "time": 345,
+      "enemy": "bat",
+      "count": 120,
+      "interval": 0.39
+    },
+    {
+      "time": 360,
+      "enemy": "slime",
+      "count": 160,
+      "interval": 0.46
+    },
+    {
+      "time": 375,
+      "enemy": "golem",
+      "count": 60,
+      "interval": 0.98
+    },
+    {
+      "time": 390,
+      "enemy": "bat",
+      "count": 180,
+      "interval": 0.29
+    },
+    {
+      "time": 420,
+      "enemy": "golem",
+      "count": 120,
+      "interval": 0.68
+    },
+    {
+      "time": 420,
+      "enemy": "slime",
+      "count": 220,
+      "interval": 0.48
+    },
+    {
+      "time": 420,
+      "enemy": "bat",
+      "count": 180,
+      "interval": 0.38
+    },
+    {
+      "time": 450,
+      "enemy": "bat",
+      "count": 220,
+      "interval": 0.35
+    },
+    {
+      "time": 450,
+      "enemy": "slime",
+      "count": 220,
+      "interval": 0.5
+    },
+    {
+      "time": 450,
+      "enemy": "golem",
+      "count": 100,
+      "interval": 0.85
+    }
+  ],
+  "graveyard_waves": [
+    {
+      "time": 0,
+      "enemy": "slime",
+      "count": 80,
+      "interval": 1.05
+    },
+    {
+      "time": 30,
+      "enemy": "bat",
+      "count": 24,
+      "interval": 1.5
+    },
+    {
+      "time": 60,
+      "enemy": "slime",
+      "count": 90,
+      "interval": 0.95
+    },
+    {
+      "time": 75,
+      "enemy": "bat",
+      "count": 50,
+      "interval": 1.15
+    },
+    {
+      "time": 120,
+      "enemy": "bat",
+      "count": 70,
+      "interval": 1.0
+    },
+    {
+      "time": 150,
+      "enemy": "slime",
+      "count": 100,
+      "interval": 0.9
+    },
+    {
+      "time": 165,
+      "enemy": "golem",
+      "count": 18,
+      "interval": 2.25
+    },
+    {
+      "time": 210,
+      "enemy": "bat",
+      "count": 95,
+      "interval": 0.85
+    },
+    {
+      "time": 225,
+      "enemy": "golem",
+      "count": 24,
+      "interval": 2.0
+    },
+    {
+      "time": 240,
+      "enemy": "slime",
+      "count": 120,
+      "interval": 0.75
+    },
+    {
+      "time": 255,
+      "enemy": "bat",
+      "count": 120,
+      "interval": 0.75
+    },
+    {
+      "time": 285,
+      "enemy": "golem",
+      "count": 30,
+      "interval": 1.8
+    },
+    {
+      "time": 300,
+      "enemy": "bat",
+      "count": 120,
+      "interval": 0.8
+    },
+    {
+      "time": 300,
+      "enemy": "slime",
+      "count": 120,
+      "interval": 1.0
+    },
+    {
+      "time": 330,
+      "enemy": "golem",
+      "count": 40,
+      "interval": 1.7
+    }
+  ]
+}
