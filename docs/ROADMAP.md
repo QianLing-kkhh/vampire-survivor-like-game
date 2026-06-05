@@ -2,6 +2,8 @@
 
 This roadmap is directional. It distinguishes implemented foundations from complete player-facing features.
 
+For the current system relationship map and ownership boundaries, see [`docs/SYSTEM_MAP.md`](SYSTEM_MAP.md). The project is currently in content proof: existing foundations should be validated with real content before adding more broad architecture.
+
 ## Architecture Readiness Review
 
 Current conclusion: the project has enough architecture foundation to enter a content proof phase. Further broad foundation work should pause unless a concrete content feature exposes a missing boundary. The next stage should validate existing systems with real playable content, small UI polish passes, and repeatable test workflows.

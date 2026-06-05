@@ -2,6 +2,8 @@
 
 This document is the primary architecture reference for Codex and future development. The project is still a playable prototype, but major systems are now separated into explicit layers.
 
+For a visual system map, see [`docs/SYSTEM_MAP.md`](SYSTEM_MAP.md).
+
 ## Implementation Readiness
 
 The broad architecture foundation is complete enough to stop adding new generic systems and begin content proof work. New architecture should now be justified by a concrete playable feature, tool workflow, or validation gap.

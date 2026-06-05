@@ -128,6 +128,7 @@ Audio can be enabled and channel volumes can be changed in Settings. Missing aud
 
 ## Documentation
 
+- [`docs/SYSTEM_MAP.md`](docs/SYSTEM_MAP.md)
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/FUTURE_ARCHITECTURE.md`](docs/FUTURE_ARCHITECTURE.md)
 - [`docs/CONTENT_SYSTEM.md`](docs/CONTENT_SYSTEM.md)
