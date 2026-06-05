@@ -203,6 +203,8 @@ export class RunState {
       selectedCharacterId: metadata.selectedCharacterId || metadata.characterId || 'default',
       characterSelectionMode: metadata.characterSelectionMode || 'fixed',
       characterId: metadata.characterId || 'default',
+      selectedStageId: metadata.selectedStageId || metadata.stageId || 'stage_001',
+      stageSelectionMode: metadata.stageSelectionMode || 'fixed',
       stageId: metadata.stageId || 'stage_001',
       mapId: metadata.mapId || 'prototype_field',
       difficultyId: metadata.difficultyId || 'normal',

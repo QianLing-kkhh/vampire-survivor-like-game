@@ -11,6 +11,8 @@ export interface RunMetadata {
   selectedCharacterId?: string;
   characterSelectionMode?: 'fixed' | 'random_unlocked';
   characterId: string;
+  selectedStageId?: string;
+  stageSelectionMode?: 'fixed' | 'random_unlocked';
   stageId: string;
   mapId: string;
   difficultyId?: string;
@@ -37,6 +39,8 @@ export function createDefaultRunMetadata(): RunMetadata {
     selectedCharacterId: 'default',
     characterSelectionMode: 'fixed',
     characterId: 'default',
+    selectedStageId: 'random_unlocked_stage',
+    stageSelectionMode: 'random_unlocked',
     stageId: 'stage_001',
     mapId: 'prototype_field',
     difficultyId: 'normal',

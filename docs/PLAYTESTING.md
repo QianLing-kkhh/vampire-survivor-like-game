@@ -64,6 +64,8 @@ Current Auto Test is still the legacy single-mode flow. Future scenario batches 
 
 Character selection can be set to `random_unlocked`. In that mode each new run resolves one real unlocked character from the run seed, including ResultScene Restart and Auto Restart. This is useful for long automatic batches that compare Assassin, Witch, Priest, and Warrior without manually changing selection between runs.
 
+Stage selection can be set to `random_unlocked_stage`. In that mode each new run resolves one real unlocked built-in stage from the run seed, including ResultScene Restart and Auto Restart. This is useful for long automatic batches that compare Prototype Field, Graveyard Night, and future unlocked stages without manually changing selection between runs.
+
 ## Auto Player Behavior
 
 The auto player attempts to:
@@ -164,6 +166,8 @@ Important endless metrics:
 - `contentHash`
 - `csvSchemaVersion`
 - `characterId`
+- `selectedStageId`
+- `stageSelectionMode`
 - `stageId`
 - `mapId`
 - `customStageId`
@@ -190,6 +194,8 @@ If CSV schema, content hash, or game version changes, keep samples separate. Do 
 CSV, replay, leaderboard, and ResultScene data should continue to use the same `RunMetadata` snapshot captured at run start. Do not rebuild these fields from current selection state at run end.
 
 Character metadata uses two fields: `selectedCharacterId` is the saved selection and may be `random_unlocked`, while `characterId` is the real character resolved for that run. `characterSelectionMode` is `fixed` for concrete characters and `random_unlocked` for random rotation. Balance analysis should group per-character performance by `characterId`.
+
+Stage metadata follows the same split: `selectedStageId` is the saved selection and may be `random_unlocked_stage`, while `stageId` and `mapId` are the real resolved stage and map used for that run. `stageSelectionMode` is `fixed` for concrete stages and `random_unlocked` for random stage rotation. Balance analysis should group per-stage performance by the actual `stageId` and `mapId`.
 
 CSV metadata fields are intentionally broader than the systems currently active. In addition to core run metadata, rows include `autoMovement`, `autoUpgrade`, `replayId`, custom stage schema/content metadata, challenge type/date, and reserved summary fields such as `relicIds`, `activeSkillIds`, `activeSkillUseStats`, `enemyModifierSpawnStats`, `enemyModifierKillStats`, `weaponTagDamageStats`, `weaponTagKillStats`, `achievementUnlockCount`, and `tutorialShownCount`.
 

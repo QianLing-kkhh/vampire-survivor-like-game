@@ -4,12 +4,16 @@ import { ContentRegistry } from '../content/ContentRegistry';
 import { CustomStagePackage } from '../custom/CustomStageSchema';
 import { CustomStageStorage } from '../custom/CustomStageStorage';
 import { CustomStageValidator } from '../custom/CustomStageValidator';
+import { RandomSource } from '../random/RandomSource';
 import { SaveManager } from '../save/SaveManager';
+import { RANDOM_UNLOCKED_STAGE_ID } from '../selection/SelectionState';
 import { UnlockManager } from '../unlock/UnlockManager';
 
 import { StageDefinition } from './StageDefinition';
 
 type StageData = Record<string, StageDefinition>;
+
+export { RANDOM_UNLOCKED_STAGE_ID };
 
 export interface SelectableStageEntry {
   id: string;
@@ -36,7 +40,7 @@ export class StageManager {
     ContentBootstrap.ensureInitialized();
     this.stageData = stageData ?? this.getStageDataFromRegistry();
 
-    if (!this.stageData[this.selectedStageId]) {
+    if (!this.isRandomStageSelection(this.selectedStageId) && !this.stageData[this.selectedStageId]) {
       this.selectedStageId = DEFAULT_CONTENT_IDS.stage;
     }
   }
@@ -60,7 +64,9 @@ export class StageManager {
 
     return {
       source: 'builtin',
-      stage: this.getStage(this.getSelectedStageId()),
+      stage: this.isRandomStageSelection(this.getSelectedStageId())
+        ? this.getStage(DEFAULT_CONTENT_IDS.stage)
+        : this.getStage(this.getSelectedStageId()),
     };
   }
 
@@ -73,7 +79,7 @@ export class StageManager {
 
     const savedStageId = SaveManager.get().selections.selectedStageId;
 
-    this.selectedStageId = this.stageData[savedStageId]
+    this.selectedStageId = this.isRandomStageSelection(savedStageId) || this.stageData[savedStageId]
       ? savedStageId
       : DEFAULT_CONTENT_IDS.stage;
 
@@ -81,7 +87,9 @@ export class StageManager {
   }
 
   setSelectedStageId(stageId: string): void {
-    this.selectedStageId = this.stageData[stageId] ? stageId : DEFAULT_CONTENT_IDS.stage;
+    this.selectedStageId = this.isRandomStageSelection(stageId) || this.stageData[stageId]
+      ? stageId
+      : DEFAULT_CONTENT_IDS.stage;
 
     SaveManager.update({
       selections: {
@@ -115,7 +123,35 @@ export class StageManager {
     return UnlockManager.isUnlocked('stage', stageId);
   }
 
+  isRandomStageSelection(stageId: string): boolean {
+    return stageId === RANDOM_UNLOCKED_STAGE_ID;
+  }
+
+  listPlayableStages(): StageDefinition[] {
+    return this.listStages({ includeLocked: false });
+  }
+
+  resolveStageForRun(selectedStageId: string, randomSource: RandomSource): StageDefinition {
+    if (!this.isRandomStageSelection(selectedStageId)) {
+      return this.getStage(selectedStageId);
+    }
+
+    const playableStages = this.listPlayableStages();
+    const randomStage = randomSource.pick(playableStages);
+
+    return randomStage ?? this.getStage(DEFAULT_CONTENT_IDS.stage);
+  }
+
   listSelectableStages(): SelectableStageEntry[] {
+    const randomStage: SelectableStageEntry = {
+      id: RANDOM_UNLOCKED_STAGE_ID,
+      name: 'Random Stage',
+      source: 'builtin',
+      mapId: DEFAULT_CONTENT_IDS.map,
+      description: 'Random unlocked stage each run',
+      valid: true,
+      warnings: [],
+    };
     const builtinStages = this.listStages({ includeLocked: false }).map((stage) => ({
       id: stage.id,
       name: stage.name,
@@ -141,7 +177,7 @@ export class StageManager {
       };
     });
 
-    return [...builtinStages, ...customStages];
+    return [randomStage, ...builtinStages, ...customStages];
   }
 
   getFinalBossWarningTimeSeconds(stage: StageDefinition): number {

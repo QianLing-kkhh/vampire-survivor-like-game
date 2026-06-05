@@ -150,6 +150,16 @@
     "randomUnlocked": "Random unlocked",
     "fixed": "Fixed"
   },
+  "stage": {
+    "random": {
+      "name": "Random Stage",
+      "description": "Random unlocked stage each run"
+    }
+  },
+  "stageSelection": {
+    "randomUnlocked": "Random unlocked stage",
+    "fixed": "Fixed"
+  },
   "stageSelect": {
     "title": "Stage Select"
   },

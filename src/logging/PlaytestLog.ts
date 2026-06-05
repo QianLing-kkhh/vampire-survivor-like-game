@@ -15,6 +15,8 @@ export interface PlaytestLogData {
   selectedCharacterId?: string;
   characterSelectionMode?: 'fixed' | 'random_unlocked';
   characterId: string;
+  selectedStageId?: string;
+  stageSelectionMode?: 'fixed' | 'random_unlocked';
   stageId: string;
   mapId: string;
   customStageId?: string;
@@ -138,6 +140,8 @@ export class PlaytestLog {
     'selectedCharacterId',
     'characterId',
     'characterSelectionMode',
+    'selectedStageId',
+    'stageSelectionMode',
     'stageId',
     'mapId',
     'customStageId',
@@ -273,6 +277,8 @@ export class PlaytestLog {
       data.selectedCharacterId ?? data.characterId,
       data.characterId,
       data.characterSelectionMode ?? 'fixed',
+      data.selectedStageId ?? data.stageId,
+      data.stageSelectionMode ?? 'fixed',
       data.stageId,
       data.mapId,
       data.customStageId ?? '',

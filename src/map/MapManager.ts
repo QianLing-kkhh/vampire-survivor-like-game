@@ -5,6 +5,7 @@ import { CustomStagePackage } from '../custom/CustomStageSchema';
 import { CustomStageStorage } from '../custom/CustomStageStorage';
 import { CustomStageValidator } from '../custom/CustomStageValidator';
 import { SaveManager } from '../save/SaveManager';
+import { StageDefinition } from '../stage/StageDefinition';
 import { UnlockManager } from '../unlock/UnlockManager';
 
 import { MapDefinition } from './MapDefinition';
@@ -68,6 +69,10 @@ export class MapManager {
     }
 
     return this.mapData[mapId] ?? this.mapData[DEFAULT_CONTENT_IDS.map];
+  }
+
+  resolveMapForStage(stage: StageDefinition): MapDefinition {
+    return this.getMap(stage.mapId);
   }
 
   listMaps(options: { includeLocked?: boolean } = {}): MapDefinition[] {

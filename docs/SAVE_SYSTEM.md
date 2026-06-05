@@ -35,9 +35,9 @@ The save system is the persistence foundation for settings, selections, progress
 
 Current default selections:
 
-- Character: `default`
-- Stage: `stage_001`
-- Map: `prototype_field`
+- Character: `random_unlocked`
+- Stage: `random_unlocked_stage`
+- Map: resolved from the actual stage at run start
 - Difficulty: `normal`
 - Theme: `default`
 
@@ -59,9 +59,10 @@ Current cosmetics fields:
 
 Current unlock defaults:
 
-- `default` character
-- `stage_001` stage
-- `prototype_field` map
+- all current built-in characters
+- all current built-in stages
+- all current built-in maps
+- `default` theme
 
 Achievement and milestone progress:
 
@@ -163,6 +164,7 @@ Import supports both raw `SaveData` JSON and `SaveExportPackage` JSON. Imported 
 Because achievements and milestones are formal progression data, `resetSave()` clears their progress along with other save-backed progression.
 
 Reset also restores default unlock state, leaving the current default character, stage, map, and theme unlocked.
+During the current content proof phase, reset also restores all current built-in stage and map unlocks so automated testing can compare built-in content without manual unlock setup.
 
 ## Settings Integration
 
@@ -184,6 +186,8 @@ The current selected IDs are save-backed:
 - `MapManager`
 
 `SelectionManager` is the future facade for character/stage/map/difficulty/challenge/custom selections. There is no formal selection UI yet. Managers fall back to defaults if a saved ID is missing from registered content.
+
+New saves default to `selectedStageId: random_unlocked_stage`. Existing saves keep their concrete `selectedStageId` when present, while missing or empty stage selections migrate to the random-stage default. `random_unlocked_stage` is a selection virtual id; run metadata and CSV record it as `selectedStageId`, while actual `stageId` and `mapId` are resolved at run start.
 
 Future custom stage selection should write `selectedCustomStageId`, `selectedSeed`, and `selectedRulesetId` through `SelectionManager` rather than directly changing `StageManager`.
 
@@ -216,7 +220,7 @@ Current behavior:
 
 Current behavior:
 
-- Existing default character, stage, map, and theme are unlocked.
+- Current built-in characters, stages, maps, and the default theme are unlocked for content proof testing.
 - No unlock UI is implemented yet.
 - `CharacterManager`, `StageManager`, and `MapManager` expose unlock-aware listing helpers.
 - Achievement rewards can call `UnlockManager`, but reward failure should not block achievement unlock.

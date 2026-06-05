@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 import { I18n } from '../i18n/I18n';
 import { SelectionManager } from '../selection/SelectionManager';
-import { StageManager } from '../stage/StageManager';
+import { RANDOM_UNLOCKED_STAGE_ID, StageManager } from '../stage/StageManager';
 import { SelectionListPanel } from '../ui/SelectionListPanel';
 
 export class StageSelectScene extends Phaser.Scene {
@@ -23,12 +23,16 @@ export class StageSelectScene extends Phaser.Scene {
       title: I18n.t('stageSelect.title'),
       items: selectableStages.map((stage) => ({
         id: stage.id,
-        name: stage.name,
-        description: [
-          stage.source === 'custom' ? 'Custom' : 'Built-in',
-          `${I18n.t('selection.map')}: ${stage.mapId}`,
-          stage.warnings && stage.warnings.length > 0 ? `${stage.warnings.length} warnings` : '',
-        ].filter(Boolean).join(' / '),
+        name: stage.id === RANDOM_UNLOCKED_STAGE_ID
+          ? I18n.t('stage.random.name')
+          : stage.name,
+        description: stage.id === RANDOM_UNLOCKED_STAGE_ID
+          ? I18n.t('stage.random.description')
+          : [
+            stage.source === 'custom' ? 'Custom' : 'Built-in',
+            `${I18n.t('selection.map')}: ${stage.mapId}`,
+            stage.warnings && stage.warnings.length > 0 ? `${stage.warnings.length} warnings` : '',
+          ].filter(Boolean).join(' / '),
       })),
       selectedId: selection.customStageId ?? selection.stageId,
       onConfirm: (id) => {

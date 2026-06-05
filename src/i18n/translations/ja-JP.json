@@ -87,6 +87,16 @@
     "randomUnlocked": "ランダム選択",
     "fixed": "固定"
   },
+  "stage": {
+    "random": {
+      "name": "ランダムステージ",
+      "description": "毎回アンロック済みステージからランダム選択"
+    }
+  },
+  "stageSelection": {
+    "randomUnlocked": "ランダムステージ",
+    "fixed": "固定"
+  },
   "stageSelect": {
     "title": "ステージ選択"
   },

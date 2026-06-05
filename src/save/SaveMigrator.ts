@@ -233,7 +233,8 @@ export class SaveMigrator {
       ...defaultSelections,
       selectedCharacterId: this.readOptionalString(selections.selectedCharacterId)
         ?? defaultSelections.selectedCharacterId,
-      selectedStageId: this.readString(selections.selectedStageId, defaultSelections.selectedStageId),
+      selectedStageId: this.readOptionalString(selections.selectedStageId)
+        ?? defaultSelections.selectedStageId,
       selectedMapId: this.readString(selections.selectedMapId, defaultSelections.selectedMapId),
       selectedDifficultyId: this.readOptionalString(selections.selectedDifficultyId)
         ?? defaultSelections.selectedDifficultyId,

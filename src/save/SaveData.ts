@@ -24,7 +24,10 @@ import {
   DEFAULT_TUTORIAL_STATE,
   TutorialState,
 } from '../tutorial/TutorialState';
-import { RANDOM_UNLOCKED_CHARACTER_ID } from '../selection/SelectionState';
+import {
+  RANDOM_UNLOCKED_CHARACTER_ID,
+  RANDOM_UNLOCKED_STAGE_ID,
+} from '../selection/SelectionState';
 import { SAVE_SCHEMA_VERSION } from '../version/SchemaVersion';
 import { VersionInfo, getCurrentVersionInfo } from '../version/VersionInfo';
 
@@ -115,8 +118,8 @@ export function createDefaultSaveData(): SaveData {
     },
     progression: {
       unlockedCharacterIds: ['default'],
-      unlockedStageIds: ['stage_001'],
-      unlockedMapIds: ['prototype_field'],
+      unlockedStageIds: ['stage_001', 'graveyard_stage'],
+      unlockedMapIds: ['prototype_field', 'graveyard_map'],
       unlockedWeaponIds: [],
       unlockedPassiveIds: [],
       unlockedCosmeticIds: [],
@@ -130,7 +133,13 @@ export function createDefaultSaveData(): SaveData {
         'stage:stage_001': {
           unlocked: true,
         },
+        'stage:graveyard_stage': {
+          unlocked: true,
+        },
         'map:prototype_field': {
+          unlocked: true,
+        },
+        'map:graveyard_map': {
           unlocked: true,
         },
         'theme:default': {
@@ -144,7 +153,7 @@ export function createDefaultSaveData(): SaveData {
     },
     selections: {
       selectedCharacterId: RANDOM_UNLOCKED_CHARACTER_ID,
-      selectedStageId: 'stage_001',
+      selectedStageId: RANDOM_UNLOCKED_STAGE_ID,
       selectedMapId: 'prototype_field',
       selectedDifficultyId: 'normal',
       selectedThemeId: 'default',

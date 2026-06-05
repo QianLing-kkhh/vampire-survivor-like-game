@@ -87,6 +87,16 @@
     "randomUnlocked": "随机已解锁角色",
     "fixed": "固定"
   },
+  "stage": {
+    "random": {
+      "name": "随机关卡",
+      "description": "每局从已解锁关卡中随机选择"
+    }
+  },
+  "stageSelection": {
+    "randomUnlocked": "随机已解锁关卡",
+    "fixed": "固定"
+  },
   "stageSelect": {
     "title": "关卡选择"
   },

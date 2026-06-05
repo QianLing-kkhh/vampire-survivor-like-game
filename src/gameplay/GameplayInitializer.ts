@@ -143,8 +143,15 @@ export class GameplayInitializer {
     );
     const characterSelectionMode = characterManager.getCharacterSelectionMode(selection.characterId);
     const selectedStageRuntime = stageManager.getSelectedStageRuntimeDefinition();
-    const selectedStage = selectedStageRuntime.stage;
-    const selectedMap = mapManager.getSelectedMap();
+    const selectedStage = selectedStageRuntime.source === 'custom'
+      ? selectedStageRuntime.stage
+      : stageManager.resolveStageForRun(selection.stageId, randomManager.getSource('stage'));
+    const stageSelectionMode = stageManager.isRandomStageSelection(selection.stageId)
+      ? 'random_unlocked'
+      : 'fixed';
+    const selectedMap = selectedStageRuntime.source === 'custom'
+      ? mapManager.getSelectedMap()
+      : mapManager.resolveMapForStage(selectedStage);
     const selectedDifficulty = selectedStage.difficultyId
       ? difficultyManager.getDifficulty(selectedStage.difficultyId)
       : difficultyManager.getSelectedDifficulty();
@@ -296,6 +303,8 @@ export class GameplayInitializer {
       selectedCharacterId: selection.characterId,
       characterSelectionMode,
       characterId: selectedCharacter.id,
+      selectedStageId: selection.stageId,
+      stageSelectionMode,
       stageId: selectedStage.id,
       mapId: selectedMap.id,
       difficultyId: selectedDifficulty.id,
@@ -312,6 +321,8 @@ export class GameplayInitializer {
         selectedCharacterId: selection.characterId,
         characterSelectionMode,
         characterId: selectedCharacter.id,
+        selectedStageId: selection.stageId,
+        stageSelectionMode,
         stageId: selectedStage.id,
         mapId: selectedMap.id,
         difficultyId: selectedDifficulty.id,

@@ -11,6 +11,7 @@ import { UnlockManager } from '../unlock/UnlockManager';
 import {
   DEFAULT_SELECTION_STATE,
   RANDOM_UNLOCKED_CHARACTER_ID,
+  RANDOM_UNLOCKED_STAGE_ID,
   SelectionState,
 } from './SelectionState';
 import { SelectionSummary } from './SelectionSummary';
@@ -25,14 +26,17 @@ export class SelectionManager {
     const stageManager = new StageManager();
     const mapManager = new MapManager();
     const characterId = this.getValidCharacterSelectionId(saveSelection.selectedCharacterId);
-    const stage = stageManager.getStage(saveSelection.selectedStageId);
+    const stageId = stageManager.isRandomStageSelection(saveSelection.selectedStageId)
+      ? RANDOM_UNLOCKED_STAGE_ID
+      : stageManager.getStage(saveSelection.selectedStageId).id;
     const map = mapManager.getMap(saveSelection.selectedMapId);
     const customStageId = this.getValidCustomStageId(saveSelection.selectedCustomStageId);
 
     return {
       ...DEFAULT_SELECTION_STATE,
       characterId,
-      stageId: stage.id,
+      stageId,
+      selectedStageId: stageId,
       mapId: map.id,
       difficultyId: saveSelection.selectedDifficultyId ?? DEFAULT_SELECTION_STATE.difficultyId,
       challengeId: saveSelection.selectedChallengeId,
@@ -71,6 +75,19 @@ export class SelectionManager {
 
   static setStageId(id: string): boolean {
     const stageManager = new StageManager();
+
+    if (stageManager.isRandomStageSelection(id)) {
+      SaveManager.update({
+        selections: {
+          selectedStageId: RANDOM_UNLOCKED_STAGE_ID,
+          selectedMapId: DEFAULT_CONTENT_IDS.map,
+          selectedCustomStageId: undefined,
+        },
+      });
+      this.notify();
+      return true;
+    }
+
     const stage = stageManager.getStage(id);
 
     if (stage.id !== id) {
@@ -227,17 +244,21 @@ export class SelectionManager {
     const character = characterManager.isRandomCharacterSelection(selection.characterId)
       ? characterManager.listSelectableCharacters()[0]
       : characterManager.getCharacter(selection.characterId);
-    const stage = new StageManager().getStage(selection.stageId);
+    const stageManager = new StageManager();
+    const isRandomStage = stageManager.isRandomStageSelection(selection.stageId);
+    const stage = isRandomStage
+      ? undefined
+      : stageManager.getStage(selection.stageId);
     const map = new MapManager().getMap(selection.mapId);
     const validation = this.validateSelection();
 
     return {
       characterId: character.id,
       characterName: I18n.t(character.nameKey),
-      stageId: stage.id,
-      stageName: stage.name,
+      stageId: isRandomStage ? RANDOM_UNLOCKED_STAGE_ID : stage?.id ?? DEFAULT_CONTENT_IDS.stage,
+      stageName: isRandomStage ? I18n.t('stage.random.name') : stage?.name ?? DEFAULT_CONTENT_IDS.stage,
       mapId: map.id,
-      mapName: map.name,
+      mapName: isRandomStage ? I18n.t('stageSelection.randomUnlocked') : map.name,
       difficultyId: selection.difficultyId,
       seed: selection.seed,
       valid: validation.valid,
@@ -258,7 +279,12 @@ export class SelectionManager {
       warnings.push(`Character fallback: ${RANDOM_UNLOCKED_CHARACTER_ID}`);
     }
 
-    if (new StageManager().getStage(saveSelection.selectedStageId).id !== saveSelection.selectedStageId) {
+    const stageManager = new StageManager();
+
+    if (
+      !stageManager.isRandomStageSelection(saveSelection.selectedStageId)
+      && stageManager.getStage(saveSelection.selectedStageId).id !== saveSelection.selectedStageId
+    ) {
       warnings.push(`Stage fallback: ${DEFAULT_CONTENT_IDS.stage}`);
     }
 

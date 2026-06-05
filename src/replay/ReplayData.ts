@@ -5,6 +5,8 @@ export interface ReplaySelectionSnapshot {
   selectedCharacterId?: string;
   characterSelectionMode?: 'fixed' | 'random_unlocked';
   characterId: string;
+  selectedStageId?: string;
+  stageSelectionMode?: 'fixed' | 'random_unlocked';
   stageId: string;
   mapId: string;
   difficultyId?: string;

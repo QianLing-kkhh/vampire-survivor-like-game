@@ -36,6 +36,8 @@ import { PlayerStats } from '../player/PlayerStats';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { ReplayStorage } from '../replay/ReplayStorage';
+import { RandomManager } from '../random/RandomManager';
+import { RunSeed } from '../random/RunSeed';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeOption } from '../progression/UpgradeOption';
@@ -208,8 +210,7 @@ export class GameScene extends Phaser.Scene {
     this.finalBossDefeated = false;
     this.finalBossSpawnTime = 0;
     this.finalBossKillTime = 0;
-    this.currentStage = this.stageManager.getSelectedStage();
-    this.currentMap = this.mapManager.getSelectedMap();
+    this.resolveCurrentRunContent();
 
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
@@ -466,6 +467,20 @@ export class GameScene extends Phaser.Scene {
     this.floatingTextManager = context.floatingTextManager;
     this.virtualJoystick = context.virtualJoystick;
     this.playerPickupRange = context.playerPickupRange;
+  }
+
+  private resolveCurrentRunContent(): void {
+    const selection = SelectionManager.getSelection();
+    const runSeed = RunSeed.createSeedFromSelection(selection);
+    const randomManager = new RandomManager(runSeed);
+    const selectedStageRuntime = this.stageManager.getSelectedStageRuntimeDefinition();
+
+    this.currentStage = selectedStageRuntime.source === 'custom'
+      ? selectedStageRuntime.stage
+      : this.stageManager.resolveStageForRun(selection.stageId, randomManager.getSource('stage'));
+    this.currentMap = selectedStageRuntime.source === 'custom'
+      ? this.mapManager.getSelectedMap()
+      : this.mapManager.resolveMapForStage(this.currentStage);
   }
 
   private emitRunStarted(): void {
