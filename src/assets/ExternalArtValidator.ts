@@ -108,6 +108,18 @@ export class ExternalArtValidator {
       result.errors.push(`${label} has unsupported direction: ${value.direction}`);
     }
 
+    if (
+      value.logicalKeys !== undefined
+      && (
+        !Array.isArray(value.logicalKeys)
+        || value.logicalKeys.some((logicalKey) => (
+          typeof logicalKey !== 'string' || logicalKey.length === 0
+        ))
+      )
+    ) {
+      result.errors.push(`${label} logicalKeys must be an array of non-empty strings when provided.`);
+    }
+
     return result;
   }
 

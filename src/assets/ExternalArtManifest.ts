@@ -46,6 +46,7 @@ export interface ExternalArtAsset {
   textureKey: string;
   animationKey?: string;
   logicalKey?: string;
+  logicalKeys?: string[];
   frameWidth?: number;
   frameHeight?: number;
   frameCount?: number;

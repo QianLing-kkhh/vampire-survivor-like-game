@@ -74,7 +74,9 @@ export class ExternalArtRegistry {
   }
 
   static getAssetByLogicalKey(logicalKey: string): ExternalArtAsset | undefined {
-    return this.getAssets().find((asset) => asset.logicalKey === logicalKey);
+    return this.getAssets().find((asset) => (
+      asset.logicalKey === logicalKey || asset.logicalKeys?.includes(logicalKey)
+    ));
   }
 
   static getPlayerSkinAsset(
