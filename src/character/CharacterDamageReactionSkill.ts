@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { Enemy } from '../enemy/Enemy';
 import { PlayerController } from '../player/PlayerController';
@@ -44,6 +45,8 @@ export interface CharacterDamageReactionContext {
   worldWidth: number;
   worldHeight: number;
   nowMs: number;
+  characterId?: string;
+  skinId?: string;
   showPlayerHeal?: (healAmount: number) => void;
 }
 
@@ -119,6 +122,34 @@ abstract class BaseCharacterDamageReactionSkill implements CharacterDamageReacti
     const body = enemy.body as Phaser.GameObjects.GameObject & { radius?: number };
 
     return body.radius ?? 12;
+  }
+
+  protected createEffectImage(
+    context: CharacterDamageReactionContext,
+    effectId: string,
+    x: number,
+    y: number,
+    displayWidth: number,
+    displayHeight: number,
+    depth: number,
+    alpha = 1,
+  ): Phaser.GameObjects.Image | null {
+    const textureKey = AssetKeyResolver.getPlayerEffectTextureKey(
+      context.scene,
+      effectId,
+      context.skinId,
+      context.characterId,
+    );
+
+    if (!textureKey) {
+      return null;
+    }
+
+    const image = context.scene.add.image(x, y, textureKey);
+    image.setDisplaySize(displayWidth, displayHeight);
+    image.setDepth(depth);
+    image.setAlpha(alpha);
+    return image;
   }
 }
 
@@ -211,26 +242,75 @@ export class BlinkForwardDamageReactionSkill extends BaseCharacterDamageReaction
     const invulnerableMs = Math.max(0, this.config.invulnerableMs ?? 0);
     const speedMultiplier = Math.max(0.1, this.config.moveSpeedMultiplier ?? 1);
     const speedBuffMs = Math.max(0, this.config.speedBuffMs ?? 0);
+    const startX = context.player.body.x;
+    const startY = context.player.body.y;
 
     context.player.applyExternalDisplacement(direction.scale(blinkDistance));
     context.playerHealth.setInvulnerable(invulnerableMs);
     context.player.setTemporaryMoveSpeedMultiplier(speedMultiplier, speedBuffMs);
     this.invulnerableUntilMs = context.nowMs + invulnerableMs;
-    this.showBlinkFeedback(context);
+    this.showBlinkFeedback(context, startX, startY);
     return true;
   }
 
-  private showBlinkFeedback(context: CharacterDamageReactionContext): void {
-    const flash = context.scene.add.circle(
+  private showBlinkFeedback(
+    context: CharacterDamageReactionContext,
+    startX: number,
+    startY: number,
+  ): void {
+    const trail = this.createEffectImage(context, 'blink_trail', startX, startY, 96, 48, 24, 0.65);
+    trail?.setRotation(Phaser.Math.Angle.Between(
+      startX,
+      startY,
       context.player.body.x,
       context.player.body.y,
-      22,
-      0x93c5fd,
-      0.28,
+    ));
+
+    if (trail) {
+      context.scene.tweens.add({
+        targets: trail,
+        alpha: 0,
+        scaleX: 1.15,
+        duration: 180,
+        onComplete: () => trail.destroy(),
+      });
+    }
+
+    const flash = this.createEffectImage(
+      context,
+      'blink_flash',
+      context.player.body.x,
+      context.player.body.y,
+      52,
+      52,
+      25,
+      0.72,
     );
 
-    flash.setStrokeStyle(1, 0xdbeafe, 0.75);
-    flash.setDepth(25);
+    if (!flash) {
+      const fallback = context.scene.add.circle(
+        context.player.body.x,
+        context.player.body.y,
+        22,
+        0x93c5fd,
+        0.28,
+      );
+
+      fallback.setStrokeStyle(1, 0xdbeafe, 0.75);
+      fallback.setDepth(25);
+      context.scene.tweens.add({
+        targets: fallback,
+        alpha: 0,
+        scaleX: 1.7,
+        scaleY: 1.7,
+        duration: 160,
+        onComplete: () => {
+          fallback.destroy();
+        },
+      });
+      return;
+    }
+
     context.scene.tweens.add({
       targets: flash,
       alpha: 0,
@@ -250,7 +330,7 @@ interface SlowTrailZone {
   radius: number;
   remainingMs: number;
   enemySpeedMultiplier: number;
-  visual: Phaser.GameObjects.Arc;
+  visual: Phaser.GameObjects.GameObject & { active: boolean; destroy(): void };
 }
 
 export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSkill {
@@ -323,15 +403,24 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
     }
 
     const radius = this.getZoneRadius();
-    const visual = this.scene.add.circle(
-      player.body.x,
-      player.body.y,
-      radius,
-      0x7c3aed,
-      0.12,
+    const textureKey = AssetKeyResolver.getPlayerEffectTextureKey(
+      this.scene,
+      'slow_zone',
+      'witch_default',
+      'witch',
     );
+    const visual = textureKey
+      ? this.scene.add.image(player.body.x, player.body.y, textureKey)
+      : this.scene.add.circle(player.body.x, player.body.y, radius, 0x7c3aed, 0.12);
 
-    visual.setStrokeStyle(2, 0xa78bfa, 0.42);
+    if ('setDisplaySize' in visual) {
+      visual.setDisplaySize(radius * 2, radius * 2);
+    }
+
+    if ('setStrokeStyle' in visual) {
+      visual.setStrokeStyle(2, 0xa78bfa, 0.42);
+    }
+
     visual.setDepth(8);
     this.activeZones.push({
       x: player.body.x,
@@ -419,7 +508,7 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
 
   readonly type = 'holySanctuary';
 
-  private readonly activeVisuals: Phaser.GameObjects.Arc[] = [];
+  private readonly activeVisuals: Array<Phaser.GameObjects.GameObject & { active: boolean; destroy(): void }> = [];
 
   clear(): void {
     super.clear();
@@ -445,15 +534,27 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
   }
 
   private showSanctuaryVisual(context: CharacterDamageReactionContext): void {
-    const visual = context.scene.add.circle(
+    const visual = this.createEffectImage(
+      context,
+      'sanctuary_circle',
       context.player.body.x,
       context.player.body.y,
-      this.getRadius(),
-      0xfacc15,
-      0.12,
-    );
+      this.getRadius() * 2,
+      this.getRadius() * 2,
+      9,
+      0.7,
+    ) ?? context.scene.add.circle(
+        context.player.body.x,
+        context.player.body.y,
+        this.getRadius(),
+        0xfacc15,
+        0.12,
+      );
 
-    visual.setStrokeStyle(3, 0xfef3c7, 0.55);
+    if ('setStrokeStyle' in visual) {
+      visual.setStrokeStyle(3, 0xfef3c7, 0.55);
+    }
+
     visual.setDepth(9);
     this.activeVisuals.push(visual);
     context.scene.tweens.add({
@@ -517,7 +618,7 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
     );
   }
 
-  private destroyVisual(visual: Phaser.GameObjects.Arc): void {
+  private destroyVisual(visual: Phaser.GameObjects.GameObject & { active: boolean; destroy(): void }): void {
     const index = this.activeVisuals.indexOf(visual);
 
     if (index >= 0) {
@@ -574,7 +675,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
 
   readonly type = 'ironCounter';
 
-  private readonly activeVisuals: Phaser.GameObjects.Arc[] = [];
+  private readonly activeVisuals: Array<Phaser.GameObjects.GameObject & { active: boolean; destroy(): void }> = [];
 
   clear(): void {
     super.clear();
@@ -597,15 +698,27 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
   }
 
   private showCounterVisual(context: CharacterDamageReactionContext): void {
-    const visual = context.scene.add.circle(
+    const visual = this.createEffectImage(
+      context,
+      'counter_wave',
       context.player.body.x,
       context.player.body.y,
-      this.getRadius(),
-      0xf97316,
-      0.08,
-    );
+      this.getRadius() * 2,
+      this.getRadius() * 2,
+      25,
+      0.72,
+    ) ?? context.scene.add.circle(
+        context.player.body.x,
+        context.player.body.y,
+        this.getRadius(),
+        0xf97316,
+        0.08,
+      );
 
-    visual.setStrokeStyle(3, 0xfdba74, 0.6);
+    if ('setStrokeStyle' in visual) {
+      visual.setStrokeStyle(3, 0xfdba74, 0.6);
+    }
+
     visual.setScale(0.05);
     visual.setDepth(25);
     this.activeVisuals.push(visual);
@@ -674,7 +787,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
     );
   }
 
-  private destroyVisual(visual: Phaser.GameObjects.Arc): void {
+  private destroyVisual(visual: Phaser.GameObjects.GameObject & { active: boolean; destroy(): void }): void {
     const index = this.activeVisuals.indexOf(visual);
 
     if (index >= 0) {

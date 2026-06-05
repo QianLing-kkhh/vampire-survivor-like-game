@@ -106,15 +106,21 @@ The art pack also contains placeholder art keys for these mini boss variants.
 Player:
 
 - `art_player_player_walk_sheet`
-- `art_player_assassin_default_walk_sheet`
-- `art_player_witch_default_walk_sheet`
-- `art_player_priest_default_walk_sheet`
-- `art_player_warrior_default_walk_sheet`
+- `art_player_assassin_default_walk_{direction}`
+- `art_player_assassin_default_idle_{direction}`
+- `art_player_witch_default_walk_{direction}`
+- `art_player_witch_default_idle_{direction}`
+- `art_player_priest_default_walk_{direction}`
+- `art_player_priest_default_idle_{direction}`
+- `art_player_warrior_default_walk_{direction}`
+- `art_player_warrior_default_idle_{direction}`
+- character portrait keys such as `art_player_witch_default_portrait`
+- character VFX keys such as `art_player_witch_default_hit_fx` and `art_player_priest_default_sanctuary_circle`
 - `art_player_walk`
 - player 8-direction keys such as `art_player_walk_down`, `art_player_walk_up`, and `art_player_idle_down`
 - fallback: `player`
 
-Current player direction keys are animation aliases generated from one 4-frame sheet per character skin. They allow skin-aware runtime selection, direction-aware animation keys, and horizontal flip behavior, but they are not yet true per-direction artwork.
+Current playable character skins have true 8-direction placeholder spritesheets for both walk and idle. Each direction/state is a separate transparent PNG spritesheet, so `PlayerController` can play skin-specific direction art without relying on a single shared walk sheet. The older flat walk sheets remain as compatibility fallbacks.
 
 Enemies:
 
@@ -206,7 +212,7 @@ Do not commit PNGs with:
 - art pack vs legacy key mapping
 - skin-aware player texture and animation lookup
 
-`PlayerController` passes the resolved character id and optional `skinId` to `AssetKeyResolver`. The resolver first tries skin-specific player keys such as `player.assassin_default.walk.down` / `art_player_assassin_default_walk_down`, then skin-generic keys, then default direction aliases, then default generic walk/idle animations, then texture/static fallbacks. Current built-in character skins (`assassin_default`, `witch_default`, `priest_default`, `warrior_default`) have first-pass dedicated walk sheets in the art manifest. They are visually distinct placeholders, not final 8-direction character art.
+`PlayerController` passes the resolved character id and optional `skinId` to `AssetKeyResolver`. The resolver first tries skin-specific player keys such as `player.assassin_default.walk.down` / `art_player_assassin_default_walk_down`, then skin-generic keys, then default direction aliases, then default generic walk/idle animations, then texture/static fallbacks. Current built-in character skins (`assassin_default`, `witch_default`, `priest_default`, `warrior_default`) have dedicated placeholder walk/idle sheets, portraits, hit effects, and first-pass skill VFX in the art manifest. They are usable prototype art and can be replaced by final art without changing gameplay systems.
 
 New code should avoid scattering new texture-key strings across unrelated systems.
 

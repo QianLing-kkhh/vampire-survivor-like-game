@@ -12,6 +12,61 @@ type ArtManifestAsset = {
   frames: number;
 };
 
+const PLAYER_ART_SKIN_IDS = [
+  'assassin_default',
+  'witch_default',
+  'priest_default',
+  'warrior_default',
+] as const;
+
+const PLAYER_ART_DIRECTIONS = [
+  'up',
+  'up_right',
+  'right',
+  'down_right',
+  'down',
+  'down_left',
+  'left',
+  'up_left',
+] as const;
+
+const PLAYER_CHARACTER_ANIMATION_ASSETS: ArtManifestAsset[] = PLAYER_ART_SKIN_IDS.flatMap(
+  (skinId) => ['walk', 'idle'].flatMap((state) => PLAYER_ART_DIRECTIONS.map((direction) => ({
+    path: `player/${skinId}/${state}_${direction}.png`,
+    key: `art_player_${skinId}_${state}_${direction}`,
+    type: 'spritesheet' as const,
+    frameWidth: 64,
+    frameHeight: 64,
+    frames: 4,
+  }))),
+);
+
+const PLAYER_CHARACTER_IMAGE_ASSETS: ArtManifestAsset[] = [
+  ...PLAYER_ART_SKIN_IDS.flatMap((skinId) => [
+    {
+      path: `player/${skinId}/portrait.png`,
+      key: `art_player_${skinId}_portrait`,
+      type: 'image' as const,
+      frameWidth: 128,
+      frameHeight: 128,
+      frames: 1,
+    },
+    {
+      path: `player/${skinId}/hit_fx.png`,
+      key: `art_player_${skinId}_hit_fx`,
+      type: 'image' as const,
+      frameWidth: 96,
+      frameHeight: 96,
+      frames: 1,
+    },
+  ]),
+  { path: 'player/assassin_default/blink_trail.png', key: 'art_player_assassin_default_blink_trail', type: 'image' as const, frameWidth: 128, frameHeight: 64, frames: 1 },
+  { path: 'player/assassin_default/blink_flash.png', key: 'art_player_assassin_default_blink_flash', type: 'image' as const, frameWidth: 96, frameHeight: 96, frames: 1 },
+  { path: 'player/witch_default/slow_zone.png', key: 'art_player_witch_default_slow_zone', type: 'image' as const, frameWidth: 192, frameHeight: 192, frames: 1 },
+  { path: 'player/priest_default/sanctuary_circle.png', key: 'art_player_priest_default_sanctuary_circle', type: 'image' as const, frameWidth: 224, frameHeight: 224, frames: 1 },
+  { path: 'player/warrior_default/counter_wave.png', key: 'art_player_warrior_default_counter_wave', type: 'image' as const, frameWidth: 192, frameHeight: 192, frames: 1 },
+];
+
 const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'effects/boss_dash_impact_sheet.png', key: 'art_effects_boss_dash_impact_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
   { path: 'effects/boss_dash_warning.png', key: 'art_effects_boss_dash_warning', type: 'image', frameWidth: 256, frameHeight: 64, frames: 1 },
@@ -36,6 +91,8 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'player/priest_default_walk_sheet.png', key: 'art_player_priest_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
   { path: 'player/warrior_default_walk_sheet.png', key: 'art_player_warrior_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
   { path: 'player/witch_default_walk_sheet.png', key: 'art_player_witch_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
+  ...PLAYER_CHARACTER_ANIMATION_ASSETS,
+  ...PLAYER_CHARACTER_IMAGE_ASSETS,
   { path: 'ui/exp_icon.png', key: 'art_ui_exp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'ui/hp_icon.png', key: 'art_ui_hp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'ui/panel_bg.png', key: 'art_ui_panel_bg', type: 'image', frameWidth: 256, frameHeight: 128, frames: 1 },
@@ -221,10 +278,42 @@ export class PreloadScene extends Phaser.Scene {
     ];
 
     this.createPlayerDirectionAnimationSet('art_player_player_walk_sheet', 'art_player', directions);
-    this.createPlayerDirectionAnimationSet('art_player_assassin_default_walk_sheet', 'art_player_assassin_default', directions);
-    this.createPlayerDirectionAnimationSet('art_player_witch_default_walk_sheet', 'art_player_witch_default', directions);
-    this.createPlayerDirectionAnimationSet('art_player_priest_default_walk_sheet', 'art_player_priest_default', directions);
-    this.createPlayerDirectionAnimationSet('art_player_warrior_default_walk_sheet', 'art_player_warrior_default', directions);
+
+    for (const skinId of PLAYER_ART_SKIN_IDS) {
+      this.createPlayerAnimationAlias(
+        `art_player_${skinId}_walk`,
+        `art_player_${skinId}_walk_sheet`,
+        0,
+        3,
+        -1,
+      );
+      this.createPlayerAnimationAlias(
+        `art_player_${skinId}_idle`,
+        `art_player_${skinId}_walk_sheet`,
+        0,
+        0,
+        0,
+      );
+    }
+
+    for (const skinId of PLAYER_ART_SKIN_IDS) {
+      for (const direction of PLAYER_ART_DIRECTIONS) {
+        this.createPlayerAnimationAlias(
+          `art_player_${skinId}_walk_${direction}`,
+          `art_player_${skinId}_walk_${direction}`,
+          0,
+          3,
+          -1,
+        );
+        this.createPlayerAnimationAlias(
+          `art_player_${skinId}_idle_${direction}`,
+          `art_player_${skinId}_idle_${direction}`,
+          0,
+          3,
+          -1,
+        );
+      }
+    }
   }
 
   private createPlayerDirectionAnimationSet(
@@ -252,7 +341,7 @@ export class PreloadScene extends Phaser.Scene {
     end: number,
     repeat: number,
   ): void {
-    if (this.anims.exists(animationKey)) {
+    if (this.anims.exists(animationKey) || !this.textures.exists(textureKey)) {
       return;
     }
 

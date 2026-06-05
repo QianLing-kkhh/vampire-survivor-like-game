@@ -387,8 +387,6 @@ export class PlayerController {
       this.lastFacingDirection = direction;
     }
 
-    this.setDirectionalFlip(body, direction);
-
     const animationKey = AssetKeyResolver.getPlayerAnimationKey(
       this.scene,
       isMoving ? 'walk' : 'idle',
@@ -396,6 +394,8 @@ export class PlayerController {
       this.skinId,
       this.characterId,
     );
+
+    this.setDirectionalFlip(body, direction, animationKey);
 
     if (!animationKey || !body.play) {
       return;
@@ -425,11 +425,22 @@ export class PlayerController {
       setFlipX?: (value: boolean) => Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
     },
     direction: FacingDirection8,
+    animationKey: string | null,
   ): void {
+    const usesSkinDirectionalArt = (
+      animationKey !== null
+      && this.skinId !== undefined
+      && animationKey.startsWith(`art_player_${this.skinId}_`)
+      && animationKey.endsWith(`_${direction}`)
+    );
+
     body.setFlipX?.(
-      direction === 'left'
-      || direction === 'down_left'
-      || direction === 'up_left',
+      !usesSkinDirectionalArt
+      && (
+        direction === 'left'
+        || direction === 'down_left'
+        || direction === 'up_left'
+      ),
     );
   }
 

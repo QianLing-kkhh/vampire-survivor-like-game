@@ -45,6 +45,25 @@ export const PLAYER_SKIN_TEXTURE_KEYS: readonly string[] = PLAYER_SKIN_IDS.map(
   (skinId) => `art_player_${skinId}_walk_sheet`,
 );
 
+export const PLAYER_SKIN_DIRECTION_TEXTURE_KEYS: readonly string[] = PLAYER_SKIN_IDS.flatMap(
+  (skinId) => PLAYER_DIRECTIONS_8.flatMap((direction) => [
+    `art_player_${skinId}_walk_${direction}`,
+    `art_player_${skinId}_idle_${direction}`,
+  ]),
+);
+
+export const PLAYER_SKIN_IMAGE_KEYS: readonly string[] = [
+  ...PLAYER_SKIN_IDS.flatMap((skinId) => [
+    `art_player_${skinId}_portrait`,
+    `art_player_${skinId}_hit_fx`,
+  ]),
+  'art_player_assassin_default_blink_trail',
+  'art_player_assassin_default_blink_flash',
+  'art_player_witch_default_slow_zone',
+  'art_player_priest_default_sanctuary_circle',
+  'art_player_warrior_default_counter_wave',
+];
+
 const createPlayerAnimationMap = (
   state: PlayerAnimationState,
 ): Record<PlayerDirection8, AssetKeyEntry> => PLAYER_DIRECTIONS_8.reduce(
@@ -234,6 +253,8 @@ export const TEXTURE_STATUS_KEYS: readonly string[] = [
   DEFAULT_ASSET_KEY_MAP.player.texture.primary,
   ...(DEFAULT_ASSET_KEY_MAP.player.texture.fallbacks ?? []),
   ...PLAYER_SKIN_TEXTURE_KEYS,
+  ...PLAYER_SKIN_DIRECTION_TEXTURE_KEYS,
+  ...PLAYER_SKIN_IMAGE_KEYS,
   ...Object.values(DEFAULT_ASSET_KEY_MAP.enemies).flatMap((entry) => [
     entry.texture.primary,
     ...(entry.texture.fallbacks ?? []),

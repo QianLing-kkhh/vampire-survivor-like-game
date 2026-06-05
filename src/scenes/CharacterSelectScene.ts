@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { CharacterManager } from '../character/CharacterManager';
 import { I18n } from '../i18n/I18n';
 import { SelectionManager } from '../selection/SelectionManager';
@@ -26,6 +27,9 @@ export class CharacterSelectScene extends Phaser.Scene {
         description: character.id === 'random_unlocked'
           ? I18n.t('characterSelection.randomUnlocked')
           : character.id,
+        portraitKey: character.id === 'random_unlocked'
+          ? null
+          : AssetKeyResolver.getPlayerPortraitKey(this, character.skinId, character.id),
       })),
       selectedId: selection.characterId,
       onConfirm: (id) => {

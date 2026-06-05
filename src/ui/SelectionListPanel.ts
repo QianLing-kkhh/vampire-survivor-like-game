@@ -13,6 +13,7 @@ export interface SelectionListItem {
   id: string;
   name: string;
   description?: string;
+  portraitKey?: string | null;
 }
 
 export interface SelectionListPanelConfig {
@@ -26,7 +27,10 @@ export interface SelectionListPanelConfig {
 export class SelectionListPanel {
   private readonly container: Phaser.GameObjects.Container;
   private readonly screenManager: ScreenManager;
-  private readonly rowObjects: Phaser.GameObjects.Text[] = [];
+  private readonly rowObjects: Array<{
+    text: Phaser.GameObjects.Text;
+    portrait?: Phaser.GameObjects.Image;
+  }> = [];
   private readonly background: Phaser.GameObjects.Rectangle;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly confirmButton: Phaser.GameObjects.Text;
@@ -89,7 +93,10 @@ export class SelectionListPanel {
   }
 
   private renderRows(): void {
-    this.rowObjects.forEach((row) => row.destroy());
+    this.rowObjects.forEach((row) => {
+      row.text.destroy();
+      row.portrait?.destroy();
+    });
     this.rowObjects.length = 0;
 
     const visibleItems = this.getVisibleItems();
@@ -113,8 +120,27 @@ export class SelectionListPanel {
         this.selectedIndex = index;
         this.applySelectionStyles();
       });
-      this.rowObjects.push(row);
+      const portrait = item.portraitKey && this.scene.textures.exists(item.portraitKey)
+        ? this.scene.add.image(0, 0, item.portraitKey)
+        : undefined;
+
+      portrait?.setDisplaySize(36, 36);
+      portrait?.setInteractive({ useHandCursor: item.id !== 'more' });
+      portrait?.on('pointerdown', () => {
+        if (item.id === 'more') {
+          return;
+        }
+
+        this.selectedIndex = index;
+        this.applySelectionStyles();
+      });
+
+      this.rowObjects.push({ text: row, portrait });
       this.container.add(row);
+
+      if (portrait) {
+        this.container.add(portrait);
+      }
     });
 
     this.applySelectionStyles();
@@ -145,9 +171,13 @@ export class SelectionListPanel {
     this.titleText.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
 
     this.rowObjects.forEach((row, index) => {
-      row.setPosition(this.screenManager.centerX, rowStartY + index * rowGap);
-      row.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).body);
-      row.setFixedSize(Math.min(panel.content.width, 420), 42);
+      const rowWidth = Math.min(panel.content.width, 420);
+      const rowY = rowStartY + index * rowGap;
+
+      row.text.setPosition(this.screenManager.centerX, rowY);
+      row.text.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).body);
+      row.text.setFixedSize(rowWidth, 42);
+      row.portrait?.setPosition(this.screenManager.centerX - rowWidth / 2 + 26, rowY);
     });
 
     [this.confirmButton, this.backButton].forEach((button, index) => {
@@ -181,8 +211,9 @@ export class SelectionListPanel {
   private applySelectionStyles(): void {
     this.rowObjects.forEach((row, index) => {
       const isSelected = index === this.selectedIndex;
-      row.setBackgroundColor(toCssColor(isSelected ? UITheme.buttonHoverColor : UITheme.buttonBgColor));
-      row.setColor(isSelected ? UITheme.successTextColor : UITheme.textColor);
+      row.text.setBackgroundColor(toCssColor(isSelected ? UITheme.buttonHoverColor : UITheme.buttonBgColor));
+      row.text.setColor(isSelected ? UITheme.successTextColor : UITheme.textColor);
+      row.portrait?.setAlpha(isSelected ? 1 : 0.78);
     });
   }
 
@@ -229,10 +260,12 @@ export class SelectionListPanel {
   }
 
   private formatRow(item: SelectionListItem): string {
+    const prefix = item.portraitKey ? '      ' : '';
+
     if (item.description) {
-      return `${item.name}  ${item.description}`;
+      return `${prefix}${item.name}  ${item.description}`;
     }
 
-    return `${item.name}  ${item.id}`;
+    return `${prefix}${item.name}  ${item.id}`;
   }
 }

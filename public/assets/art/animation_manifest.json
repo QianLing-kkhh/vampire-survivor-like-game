@@ -167,6 +167,622 @@
       "frames": 4
     },
     {
+      "path": "player/assassin_default/walk_up.png",
+      "key": "art_player_assassin_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/walk_up_right.png",
+      "key": "art_player_assassin_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/walk_right.png",
+      "key": "art_player_assassin_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/walk_down_right.png",
+      "key": "art_player_assassin_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/walk_down.png",
+      "key": "art_player_assassin_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/walk_down_left.png",
+      "key": "art_player_assassin_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/walk_left.png",
+      "key": "art_player_assassin_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/walk_up_left.png",
+      "key": "art_player_assassin_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_up.png",
+      "key": "art_player_assassin_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_up_right.png",
+      "key": "art_player_assassin_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_right.png",
+      "key": "art_player_assassin_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_down_right.png",
+      "key": "art_player_assassin_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_down.png",
+      "key": "art_player_assassin_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_down_left.png",
+      "key": "art_player_assassin_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_left.png",
+      "key": "art_player_assassin_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/idle_up_left.png",
+      "key": "art_player_assassin_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/assassin_default/portrait.png",
+      "key": "art_player_assassin_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/assassin_default/hit_fx.png",
+      "key": "art_player_assassin_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/witch_default/walk_up.png",
+      "key": "art_player_witch_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/walk_up_right.png",
+      "key": "art_player_witch_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/walk_right.png",
+      "key": "art_player_witch_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/walk_down_right.png",
+      "key": "art_player_witch_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/walk_down.png",
+      "key": "art_player_witch_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/walk_down_left.png",
+      "key": "art_player_witch_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/walk_left.png",
+      "key": "art_player_witch_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/walk_up_left.png",
+      "key": "art_player_witch_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_up.png",
+      "key": "art_player_witch_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_up_right.png",
+      "key": "art_player_witch_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_right.png",
+      "key": "art_player_witch_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_down_right.png",
+      "key": "art_player_witch_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_down.png",
+      "key": "art_player_witch_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_down_left.png",
+      "key": "art_player_witch_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_left.png",
+      "key": "art_player_witch_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/idle_up_left.png",
+      "key": "art_player_witch_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/witch_default/portrait.png",
+      "key": "art_player_witch_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/witch_default/hit_fx.png",
+      "key": "art_player_witch_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/priest_default/walk_up.png",
+      "key": "art_player_priest_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/walk_up_right.png",
+      "key": "art_player_priest_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/walk_right.png",
+      "key": "art_player_priest_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/walk_down_right.png",
+      "key": "art_player_priest_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/walk_down.png",
+      "key": "art_player_priest_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/walk_down_left.png",
+      "key": "art_player_priest_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/walk_left.png",
+      "key": "art_player_priest_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/walk_up_left.png",
+      "key": "art_player_priest_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_up.png",
+      "key": "art_player_priest_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_up_right.png",
+      "key": "art_player_priest_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_right.png",
+      "key": "art_player_priest_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_down_right.png",
+      "key": "art_player_priest_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_down.png",
+      "key": "art_player_priest_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_down_left.png",
+      "key": "art_player_priest_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_left.png",
+      "key": "art_player_priest_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/idle_up_left.png",
+      "key": "art_player_priest_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/priest_default/portrait.png",
+      "key": "art_player_priest_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/priest_default/hit_fx.png",
+      "key": "art_player_priest_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/warrior_default/walk_up.png",
+      "key": "art_player_warrior_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/walk_up_right.png",
+      "key": "art_player_warrior_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/walk_right.png",
+      "key": "art_player_warrior_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/walk_down_right.png",
+      "key": "art_player_warrior_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/walk_down.png",
+      "key": "art_player_warrior_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/walk_down_left.png",
+      "key": "art_player_warrior_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/walk_left.png",
+      "key": "art_player_warrior_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/walk_up_left.png",
+      "key": "art_player_warrior_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_up.png",
+      "key": "art_player_warrior_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_up_right.png",
+      "key": "art_player_warrior_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_right.png",
+      "key": "art_player_warrior_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_down_right.png",
+      "key": "art_player_warrior_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_down.png",
+      "key": "art_player_warrior_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_down_left.png",
+      "key": "art_player_warrior_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_left.png",
+      "key": "art_player_warrior_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/idle_up_left.png",
+      "key": "art_player_warrior_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "player/warrior_default/portrait.png",
+      "key": "art_player_warrior_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/warrior_default/hit_fx.png",
+      "key": "art_player_warrior_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/assassin_default/blink_trail.png",
+      "key": "art_player_assassin_default_blink_trail",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "player/assassin_default/blink_flash.png",
+      "key": "art_player_assassin_default_blink_flash",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/witch_default/slow_zone.png",
+      "key": "art_player_witch_default_slow_zone",
+      "type": "image",
+      "frameWidth": 192,
+      "frameHeight": 192,
+      "frames": 1
+    },
+    {
+      "path": "player/priest_default/sanctuary_circle.png",
+      "key": "art_player_priest_default_sanctuary_circle",
+      "type": "image",
+      "frameWidth": 224,
+      "frameHeight": 224,
+      "frames": 1
+    },
+    {
+      "path": "player/warrior_default/counter_wave.png",
+      "key": "art_player_warrior_default_counter_wave",
+      "type": "image",
+      "frameWidth": 192,
+      "frameHeight": 192,
+      "frames": 1
+    },
+    {
       "path": "player/priest_default_walk_sheet.png",
       "key": "art_player_priest_default_walk_sheet",
       "type": "spritesheet",

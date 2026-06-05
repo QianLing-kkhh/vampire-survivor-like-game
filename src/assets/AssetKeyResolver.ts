@@ -24,8 +24,12 @@ export class AssetKeyResolver {
       const skinTextureKey = AssetKeyResolver.resolveTexture(
         scene,
         {
-          primary: `art_player_${candidateSkinId}_walk_sheet`,
-          fallbacks: [`art_player_${candidateSkinId}_texture`],
+          primary: `art_player_${candidateSkinId}_idle_down`,
+          fallbacks: [
+            `art_player_${candidateSkinId}_walk_down`,
+            `art_player_${candidateSkinId}_walk_sheet`,
+            `art_player_${candidateSkinId}_texture`,
+          ],
         },
         `player.${candidateSkinId}.texture`,
       );
@@ -80,6 +84,47 @@ export class AssetKeyResolver {
       DEFAULT_ASSET_KEY_MAP.player.animations[state][direction],
       `player.default.animation.${state}.${direction}`,
     );
+  }
+
+  static getPlayerPortraitKey(
+    scene: Phaser.Scene,
+    skinId?: string,
+    characterId?: string,
+  ): string | null {
+    for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
+      const portraitKey = AssetKeyResolver.resolveTexture(
+        scene,
+        { primary: `art_player_${candidateSkinId}_portrait` },
+        `player.${candidateSkinId}.portrait`,
+      );
+
+      if (portraitKey) {
+        return portraitKey;
+      }
+    }
+
+    return AssetKeyResolver.getPlayerTextureKey(scene, skinId, characterId);
+  }
+
+  static getPlayerEffectTextureKey(
+    scene: Phaser.Scene,
+    effectId: string,
+    skinId?: string,
+    characterId?: string,
+  ): string | null {
+    for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
+      const effectTextureKey = AssetKeyResolver.resolveTexture(
+        scene,
+        { primary: `art_player_${candidateSkinId}_${effectId}` },
+        `player.${candidateSkinId}.effect.${effectId}`,
+      );
+
+      if (effectTextureKey) {
+        return effectTextureKey;
+      }
+    }
+
+    return null;
   }
 
   static getEnemyTextureKey(scene: Phaser.Scene, enemyId: string): string | null {

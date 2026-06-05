@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { AudioManager } from '../audio/AudioManager';
 import { CharacterRuntime } from '../character/CharacterRuntime';
 import { DamageCalculator } from '../combat/DamageCalculator';
@@ -100,6 +101,7 @@ export class EnemyFlow {
       this.config.player.body.y,
       actualDamage,
     );
+    this.showCharacterHitFx();
     this.config.runStats.recordDamageTaken(
       actualDamage,
       this.config.playerHealth.currentHp,
@@ -366,6 +368,8 @@ export class EnemyFlow {
       worldWidth: this.config.worldWidth,
       worldHeight: this.config.worldHeight,
       nowMs: this.config.scene.time.now,
+      characterId: this.config.characterRuntime?.getCharacterId(),
+      skinId: this.config.characterRuntime?.getSkinId(),
       showPlayerHeal: (healAmount) => {
         this.config.floatingTextManager.showPlayerHeal(
           this.config.player.body.x,
@@ -373,6 +377,37 @@ export class EnemyFlow {
           healAmount,
         );
       },
+    });
+  }
+
+  private showCharacterHitFx(): void {
+    const textureKey = AssetKeyResolver.getPlayerEffectTextureKey(
+      this.config.scene,
+      'hit_fx',
+      this.config.characterRuntime?.getSkinId(),
+      this.config.characterRuntime?.getCharacterId(),
+    );
+
+    if (!textureKey) {
+      return;
+    }
+
+    const hitFx = this.config.scene.add.image(
+      this.config.player.body.x,
+      this.config.player.body.y,
+      textureKey,
+    );
+
+    hitFx.setDisplaySize(58, 58);
+    hitFx.setDepth(26);
+    hitFx.setAlpha(0.72);
+    this.config.scene.tweens.add({
+      targets: hitFx,
+      alpha: 0,
+      scaleX: 1.25,
+      scaleY: 1.25,
+      duration: 180,
+      onComplete: () => hitFx.destroy(),
     });
   }
 
