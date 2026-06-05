@@ -33,7 +33,11 @@ export class VisualSettings {
     try {
       const scale = SettingsManager.getDisplay().visualModelScale;
 
-      return scale === 2 ? 2 : 1;
+      if (scale === 1.5 || scale === 2) {
+        return scale;
+      }
+
+      return 1;
     } catch {
       return 1;
     }

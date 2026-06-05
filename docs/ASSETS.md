@@ -203,7 +203,7 @@ UI icons are allowed to continue using PNGs in graphics/minimal modes so menus r
 
 All gameplay object display sizes should flow through `VisualScale` in both PNG and graphics fallback modes. `VisualScale` stores base 1x display sizes and applies the saved `visualModelScale` multiplier at runtime. Graphics fallbacks may scale a simple circle or rectangle visually while preserving the original collision radius or pickup distance, so minimal mode remains readable without changing gameplay hitboxes. Display quality and asset style should not shrink objects; they only choose art source, fallback style, and shadow behavior.
 
-`visualModelScale` supports 1x and 2x. It applies to the player, enemies, bosses, projectiles, pickups, treasure, world landmarks, aura cores, and shadows. It must not be used for collision radius, weapon hit radius, pickup range, damage area, Boss Dash checks, or any gameplay value.
+`visualModelScale` supports 1x, 1.5x, and 2x. It applies to the player, enemies, bosses, projectiles, pickups, treasure, world landmarks, aura cores, and shadows. It must not be used for collision radius, weapon hit radius, pickup range, damage area, Boss Dash checks, or any gameplay value.
 
 The final boss uses a visual-only display multiplier so it remains larger than mini bosses without overwhelming the screen. This multiplier does not change boss hit radius, dash distance, damage, or contact checks.
 

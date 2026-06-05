@@ -155,9 +155,9 @@ Display quality is stored in `settings.display`:
 
 `assetStyle` can be `newArt`, `legacy`, or `graphics`. The `graphics` style is intended for low-end fallback testing; UI icons may still use PNGs so menus remain readable.
 
-`visualModelScale` can be `1x` or `2x`. It multiplies gameplay object display sizes for the player, enemies, bosses, pickups, treasure, projectiles, aura cores, shadows, and landmarks. It does not change collision radii, weapon hit radii, pickup range, Boss Dash checks, damage ranges, or gameplay stats.
+`visualModelScale` can be `1x`, `1.5x`, or `2x`. It multiplies gameplay object display sizes for the player, enemies, bosses, pickups, treasure, projectiles, aura cores, shadows, and landmarks. It does not change collision radii, weapon hit radii, pickup range, Boss Dash checks, damage ranges, or gameplay stats.
 
-Graphics quality and asset style do not intentionally resize gameplay objects. Player, enemy, boss, pickup, treasure, projectile, aura-core, and landmark display sizes are centralized in `VisualScale`; graphics fallback/minimal mode should stay close to the same visual footprint as PNG modes while preserving original hitboxes and pickup distances. Model scale is independent from graphics quality and asset style, so High/New Art, Low/Legacy, and Minimal/Graphics all respect the same 1x/2x display multiplier.
+Graphics quality and asset style do not intentionally resize gameplay objects. Player, enemy, boss, pickup, treasure, projectile, aura-core, and landmark display sizes are centralized in `VisualScale`; graphics fallback/minimal mode should stay close to the same visual footprint as PNG modes while preserving original hitboxes and pickup distances. Model scale is independent from graphics quality and asset style, so High/New Art, Low/Legacy, and Minimal/Graphics all respect the same 1x/1.5x/2x display multiplier.
 
 `SettingsManager` keeps a runtime-only visual restart flag when display quality, asset style, or visual scale changes. This flag is not saved; it only drives Settings UI messaging until the player reaches Title or starts/restarts a run.
 

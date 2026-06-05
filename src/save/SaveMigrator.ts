@@ -525,7 +525,7 @@ export class SaveMigrator {
           locale: isSupportedLocale(display?.locale)
             ? display.locale
             : DEFAULT_DISPLAY_SETTINGS.locale,
-          visualModelScale: display?.visualModelScale === 2 ? 2 : 1,
+          visualModelScale: this.normalizeVisualModelScale(display?.visualModelScale),
         },
         input: {
           ...DEFAULT_INPUT_SETTINGS,
@@ -583,6 +583,10 @@ export class SaveMigrator {
 
   private readVolume(value: unknown): number {
     return this.readNumber(value, 0, 0, 1);
+  }
+
+  private normalizeVisualModelScale(value: unknown): SaveData['settings']['display']['visualModelScale'] {
+    return value === 1.5 || value === 2 ? value : 1;
   }
 
   private readString(value: unknown, fallback: string): string {

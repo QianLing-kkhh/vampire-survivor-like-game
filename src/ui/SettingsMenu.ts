@@ -497,8 +497,10 @@ export class SettingsMenu {
         'modelScale',
         this.t('settings.modelScale', 'Model Scale'),
         () => SettingsManager.getDisplay().visualModelScale,
-        [1, 2],
-        (value) => SettingsManager.updateDisplay({ visualModelScale: value === 2 ? 2 : 1 }),
+        [1, 1.5, 2],
+        (value) => SettingsManager.updateDisplay({
+          visualModelScale: value === 1.5 || value === 2 ? value : 1,
+        }),
         (value) => `${value}x`,
       ),
       this.toggleRow('shadows', this.t('settings.shadows', 'Shadows'), display.shadowsEnabled, () => {

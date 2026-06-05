@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE, SupportedLocale } from '../i18n/Locale';
 import { AssetStyle, DisplayQuality } from '../visual/DisplayQuality';
 
-export type VisualModelScale = 1 | 2;
+export type VisualModelScale = 1 | 1.5 | 2;
 
 export interface DisplaySettingsData {
   locale: SupportedLocale;
