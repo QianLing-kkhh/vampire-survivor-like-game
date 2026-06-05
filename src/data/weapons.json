@@ -26,9 +26,9 @@
       "knockback": false,
       "percentMaxHpDamage": 0.004
     },
-    "damage": 2,
+    "damage": 2.4,
     "cooldown": 0.35,
-    "radius": 2.5,
+    "radius": 2.85,
     "knockbackPower": 0
   },
   "bible": {
@@ -38,7 +38,7 @@
       "type": "orbit"
     },
     "damage": 10,
-    "cooldown": 0.5,
+    "cooldown": 0.475,
     "radius": 3.2,
     "orbitSpeed": 240,
     "orbitCount": 3,
@@ -55,7 +55,7 @@
       "explosionDamageMultiplier": 0.4
     },
     "damage": 14,
-    "cooldown": 1.2,
+    "cooldown": 1.1,
     "projectileSpeed": 280,
     "projectileCount": 1,
     "knockbackPower": 70,
@@ -146,7 +146,7 @@
       "maxSpiralRadius": 110,
       "acceleration": 280
     },
-    "damage": 28,
+    "damage": 24,
     "cooldown": 1.2,
     "projectileSpeed": 620,
     "projectileCount": 5,
@@ -165,7 +165,7 @@
       "knockback": false,
       "percentMaxHpDamage": 0.005
     },
-    "damage": 5,
+    "damage": 5.6,
     "cooldown": 0.3,
     "radius": 4.0,
     "knockbackPower": 0
