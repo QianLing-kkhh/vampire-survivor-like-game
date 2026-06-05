@@ -171,11 +171,14 @@
       "type": "none"
     },
     "damageReactionSkill": {
-      "type": "shockwave",
-      "radius": 130,
-      "damage": 18,
-      "knockbackDistance": 110,
-      "cooldownMs": 0
+      "type": "ironCounter",
+      "cooldownMs": 10000,
+      "radius": 150,
+      "damage": 15,
+      "knockbackDistance": 150,
+      "damageReductionMultiplier": 0.65,
+      "damageReductionDurationMs": 2500,
+      "zoneDurationMs": 500
     },
     "exclusiveUpgradeIds": [],
     "exclusivePassiveIds": [],

@@ -76,6 +76,7 @@ export class EnemyFlow {
 
   update(_timeSeconds: number, deltaMs: number): void {
     this.config.playerHealth.updateInvulnerability(deltaMs);
+    this.config.playerHealth.updateTemporaryEffects(deltaMs);
     this.config.characterRuntime?.updateDamageReaction(deltaMs, {
       player: this.config.player,
     });

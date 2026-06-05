@@ -3,6 +3,7 @@ import {
   CharacterDamageReactionConfig,
   CharacterDamageReactionSkill,
   HolySanctuaryDamageReactionSkill,
+  IronCounterDamageReactionSkill,
   NoneCharacterDamageReactionSkill,
   ShockwaveDamageReactionSkill,
   SlowTrailDamageReactionSkill,
@@ -25,6 +26,8 @@ export class CharacterDamageReactionFactory {
         return new SlowTrailDamageReactionSkill(config);
       case 'holySanctuary':
         return new HolySanctuaryDamageReactionSkill(config);
+      case 'ironCounter':
+        return new IronCounterDamageReactionSkill(config);
       case 'gainShield':
         console.warn(`Character damage reaction is reserved but not implemented: ${config.type}`);
         return new NoneCharacterDamageReactionSkill();

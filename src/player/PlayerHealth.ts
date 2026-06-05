@@ -3,6 +3,10 @@ export class PlayerHealth {
   private dead = false;
   private invulnerableRemainingMs = 0;
   private shieldStacks = 0;
+  private readonly temporaryDamageTakenMultipliers: Array<{
+    multiplier: number;
+    remainingMs: number;
+  }> = [];
 
   constructor(private maximumHp: number) {
     this.maximumHp = Math.round(maximumHp);
@@ -67,6 +71,43 @@ export class PlayerHealth {
     );
   }
 
+  addTemporaryDamageTakenMultiplier(multiplier: number, durationMs: number): void {
+    const remainingMs = Math.max(0, durationMs);
+
+    if (remainingMs <= 0) {
+      return;
+    }
+
+    this.temporaryDamageTakenMultipliers.push({
+      multiplier: Math.max(0, multiplier),
+      remainingMs,
+    });
+  }
+
+  updateTemporaryEffects(deltaMs: number): void {
+    const effectiveDeltaMs = Math.max(0, deltaMs);
+
+    for (let index = this.temporaryDamageTakenMultipliers.length - 1; index >= 0; index -= 1) {
+      const effect = this.temporaryDamageTakenMultipliers[index];
+      effect.remainingMs -= effectiveDeltaMs;
+
+      if (effect.remainingMs <= 0) {
+        this.temporaryDamageTakenMultipliers.splice(index, 1);
+      }
+    }
+  }
+
+  getCurrentDamageTakenMultiplier(): number {
+    if (this.temporaryDamageTakenMultipliers.length === 0) {
+      return 1;
+    }
+
+    return this.temporaryDamageTakenMultipliers.reduce(
+      (lowestMultiplier, effect) => Math.min(lowestMultiplier, effect.multiplier),
+      1,
+    );
+  }
+
   setCurrentHp(value: number): void {
     this.hp = Math.min(Math.max(Math.round(value), 0), this.maximumHp);
     this.dead = this.hp <= 0;
@@ -82,8 +123,9 @@ export class PlayerHealth {
     }
 
     const previousHp = this.hp;
+    const reducedAmount = Math.max(0, amount) * this.getCurrentDamageTakenMultiplier();
 
-    this.setCurrentHp(this.hp - Math.max(0, amount));
+    this.setCurrentHp(this.hp - reducedAmount);
 
     return Math.max(0, previousHp - this.hp);
   }
@@ -133,5 +175,6 @@ export class PlayerHealth {
     this.dead = false;
     this.invulnerableRemainingMs = 0;
     this.shieldStacks = 0;
+    this.temporaryDamageTakenMultipliers.length = 0;
   }
 }

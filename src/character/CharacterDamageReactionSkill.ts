@@ -10,6 +10,7 @@ export type CharacterDamageReactionType =
   | 'blinkForward'
   | 'slowTrail'
   | 'holySanctuary'
+  | 'ironCounter'
   | 'gainShield'
   | 'none';
 
@@ -30,6 +31,8 @@ export interface CharacterDamageReactionConfig {
   zoneRadius?: number;
   zoneDurationMs?: number;
   enemySpeedMultiplier?: number;
+  damageReductionMultiplier?: number;
+  damageReductionDurationMs?: number;
 }
 
 export interface CharacterDamageReactionContext {
@@ -557,6 +560,176 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
     return Math.max(
       0,
       this.config.zoneDurationMs ?? HolySanctuaryDamageReactionSkill.DEFAULT_ZONE_DURATION_MS,
+    );
+  }
+}
+
+export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionSkill {
+  private static readonly DEFAULT_RADIUS = 150;
+  private static readonly DEFAULT_DAMAGE = 15;
+  private static readonly DEFAULT_KNOCKBACK_DISTANCE = 150;
+  private static readonly DEFAULT_DAMAGE_REDUCTION_MULTIPLIER = 0.65;
+  private static readonly DEFAULT_DAMAGE_REDUCTION_DURATION_MS = 2500;
+  private static readonly DEFAULT_ZONE_DURATION_MS = 500;
+
+  readonly type = 'ironCounter';
+
+  private readonly activeVisuals: Phaser.GameObjects.Arc[] = [];
+
+  clear(): void {
+    super.clear();
+    this.activeVisuals.forEach((visual) => {
+      if (visual.active) {
+        visual.destroy();
+      }
+    });
+    this.activeVisuals.length = 0;
+  }
+
+  protected activate(context: CharacterDamageReactionContext): boolean {
+    this.showCounterVisual(context);
+    this.hitAndKnockEnemies(context);
+    context.playerHealth.addTemporaryDamageTakenMultiplier(
+      this.getDamageReductionMultiplier(),
+      this.getDamageReductionDurationMs(),
+    );
+    return true;
+  }
+
+  private showCounterVisual(context: CharacterDamageReactionContext): void {
+    const visual = context.scene.add.circle(
+      context.player.body.x,
+      context.player.body.y,
+      this.getRadius(),
+      0xf97316,
+      0.08,
+    );
+
+    visual.setStrokeStyle(3, 0xfdba74, 0.6);
+    visual.setScale(0.05);
+    visual.setDepth(25);
+    this.activeVisuals.push(visual);
+    context.scene.tweens.add({
+      targets: visual,
+      scaleX: 1.12,
+      scaleY: 1.12,
+      alpha: 0,
+      duration: this.getZoneDurationMs(),
+      onComplete: () => {
+        this.destroyVisual(visual);
+      },
+    });
+  }
+
+  private hitAndKnockEnemies(context: CharacterDamageReactionContext): void {
+    const radius = this.getRadius();
+    const hitResult = context.damageCalculator.calculateDamage(this.getDamage());
+
+    for (const enemy of context.enemies) {
+      if (enemy.isDead || this.isFinalOrEndlessBoss(enemy)) {
+        continue;
+      }
+
+      if (
+        Phaser.Math.Distance.Between(
+          context.player.body.x,
+          context.player.body.y,
+          enemy.body.x,
+          enemy.body.y,
+        ) > radius
+      ) {
+        continue;
+      }
+
+      enemy.takeDamage(hitResult);
+
+      if (!enemy.isDead && !this.isKnockbackImmune(enemy)) {
+        this.knockEnemyBack(enemy, context);
+      }
+    }
+  }
+
+  private knockEnemyBack(enemy: Enemy, context: CharacterDamageReactionContext): void {
+    const direction = new Phaser.Math.Vector2(
+      enemy.body.x - context.player.body.x,
+      enemy.body.y - context.player.body.y,
+    );
+
+    if (direction.lengthSq() === 0) {
+      direction.set(1, 0);
+    }
+
+    direction.normalize().scale(this.getKnockbackDistance());
+
+    const enemyRadius = this.getEnemyRadius(enemy);
+    enemy.body.x = Phaser.Math.Clamp(
+      enemy.body.x + direction.x,
+      enemyRadius,
+      context.worldWidth - enemyRadius,
+    );
+    enemy.body.y = Phaser.Math.Clamp(
+      enemy.body.y + direction.y,
+      enemyRadius,
+      context.worldHeight - enemyRadius,
+    );
+  }
+
+  private destroyVisual(visual: Phaser.GameObjects.Arc): void {
+    const index = this.activeVisuals.indexOf(visual);
+
+    if (index >= 0) {
+      this.activeVisuals.splice(index, 1);
+    }
+
+    if (visual.active) {
+      visual.destroy();
+    }
+  }
+
+  private isFinalOrEndlessBoss(enemy: Enemy): boolean {
+    return enemy.id === 'boss' || enemy.id.startsWith('endless_');
+  }
+
+  private isKnockbackImmune(enemy: Enemy): boolean {
+    return enemy.bossLike || this.isFinalOrEndlessBoss(enemy);
+  }
+
+  private getRadius(): number {
+    return Math.max(0, this.config.radius ?? IronCounterDamageReactionSkill.DEFAULT_RADIUS);
+  }
+
+  private getDamage(): number {
+    return Math.max(0, this.config.damage ?? IronCounterDamageReactionSkill.DEFAULT_DAMAGE);
+  }
+
+  private getKnockbackDistance(): number {
+    return Math.max(
+      0,
+      this.config.knockbackDistance ?? IronCounterDamageReactionSkill.DEFAULT_KNOCKBACK_DISTANCE,
+    );
+  }
+
+  private getDamageReductionMultiplier(): number {
+    return Phaser.Math.Clamp(
+      this.config.damageReductionMultiplier
+        ?? IronCounterDamageReactionSkill.DEFAULT_DAMAGE_REDUCTION_MULTIPLIER,
+      0,
+      1,
+    );
+  }
+
+  private getDamageReductionDurationMs(): number {
+    return Math.max(
+      0,
+      this.config.damageReductionDurationMs
+        ?? IronCounterDamageReactionSkill.DEFAULT_DAMAGE_REDUCTION_DURATION_MS,
+    );
+  }
+
+  private getZoneDurationMs(): number {
+    return Math.max(
+      0,
+      this.config.zoneDurationMs ?? IronCounterDamageReactionSkill.DEFAULT_ZONE_DURATION_MS,
     );
   }
 }
