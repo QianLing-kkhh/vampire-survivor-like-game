@@ -379,7 +379,9 @@ export class PlayerController {
       return Object.assign(body, { radius: 14 });
     }
 
-    const body = this.scene.add.circle(x, y, 14, 0x4ade80);
+    const collisionRadius = 14;
+    const body = this.scene.add.circle(x, y, collisionRadius, 0x4ade80);
+    body.setScale(VisualScale.getPlayerFallbackVisualRadius() / collisionRadius);
     body.setDepth(PlayerController.PLAYER_DEPTH);
     return body;
   }

@@ -5,6 +5,7 @@ import { HitResult } from '../combat/HitResult';
 import { EventBus } from '../core/EventBus';
 import { ShadowConfig, ShadowType } from '../visual/ShadowConfig';
 import { ShadowFactory } from '../visual/ShadowFactory';
+import { VisualScale } from '../visual/VisualScale';
 import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
 import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
 
@@ -157,7 +158,7 @@ export class Enemy {
     this.dashSpeed = stats.dashSpeed ?? 0;
     this.dashDamageMultiplier = stats.dashDamageMultiplier ?? 1;
     this.dashTimerMs = this.dashCooldown * 1000;
-    this.body = scene.add.circle(x, y, 12 * this.scale, 0xef4444);
+    this.body = this.createFallbackBody(scene, x, y);
     this.shadowType = this.resolveShadowType();
     this.shadow = ShadowFactory.createShadow(scene, this.body, this.shadowType, this.getShadowOptions());
     this.captureBaseScale(this.body);
@@ -603,6 +604,15 @@ export class Enemy {
     const body = this.body as Phaser.GameObjects.GameObject & { radius?: number };
 
     return body.radius ?? 12 * this.scale;
+  }
+
+  private createFallbackBody(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Arc {
+    const collisionRadius = 12 * this.scale;
+    const visualRadius = VisualScale.getEnemyFallbackVisualRadius(this.id, this.scale);
+    const body = scene.add.circle(x, y, collisionRadius, 0xef4444);
+
+    body.setScale(visualRadius / Math.max(1, collisionRadius));
+    return body;
   }
 
   private resolveShadowType(): ShadowType {

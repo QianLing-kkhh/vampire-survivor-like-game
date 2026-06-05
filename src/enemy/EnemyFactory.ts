@@ -121,7 +121,7 @@ export class EnemyFactory {
   ): EnemyImageBody | EnemySpriteBody {
     const scale = stats.scale ?? 1;
     const displaySize = VisualScale.getEnemyDisplaySize(enemyId, scale)
-      * this.getVisualDisplayMultiplier(enemyId);
+      * VisualScale.getEnemyVisualDisplayMultiplier(enemyId);
 
     if (animationKey) {
       const body = this.scene.add.sprite(x, y, textureKey) as EnemySpriteBody;
@@ -137,9 +137,5 @@ export class EnemyFactory {
     body.radius = 12 * scale;
     body.setFillStyle = () => body;
     return body;
-  }
-
-  private getVisualDisplayMultiplier(enemyId: string): number {
-    return enemyId === 'boss' ? 0.5 : 1;
   }
 }

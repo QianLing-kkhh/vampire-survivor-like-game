@@ -155,6 +155,8 @@ Display quality is stored in `settings.display`:
 
 `assetStyle` can be `newArt`, `legacy`, or `graphics`. The `graphics` style is intended for low-end fallback testing; UI icons may still use PNGs so menus remain readable.
 
+Graphics quality and asset style do not intentionally resize gameplay objects. Player, enemy, boss, pickup, treasure, projectile, aura-core, and landmark display sizes are centralized in `VisualScale`; graphics fallback/minimal mode should stay close to the same visual footprint as PNG modes while preserving original hitboxes and pickup distances.
+
 `SettingsManager` keeps a runtime-only visual restart flag when display quality, asset style, or visual scale changes. This flag is not saved; it only drives Settings UI messaging until the player reaches Title or starts/restarts a run.
 
 ## Appearance

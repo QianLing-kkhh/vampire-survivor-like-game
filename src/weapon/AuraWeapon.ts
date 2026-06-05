@@ -14,7 +14,6 @@ export class AuraWeapon extends Weapon {
   private static readonly AURA_FILL_ALPHA = 0.12;
   private static readonly AURA_STROKE_ALPHA = 0.5;
   private static readonly AURA_ICON_DEPTH = 22;
-  private static readonly AURA_ICON_DISPLAY_SIZE = 30;
 
   private auraBody?: Phaser.GameObjects.Arc;
   private auraIcon?: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
@@ -103,13 +102,11 @@ export class AuraWeapon extends Weapon {
 
     const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
     const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const iconDisplaySize = VisualScale.getAuraCoreDisplaySize(this.id);
 
     if (textureKey && animationKey) {
       const icon = this.scene.add.sprite(context.player.x, context.player.y, textureKey);
-      icon.setDisplaySize(
-        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
-        AuraWeapon.AURA_ICON_DISPLAY_SIZE,
-      );
+      icon.setDisplaySize(iconDisplaySize, iconDisplaySize);
       icon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
       icon.setAlpha(0.9);
       icon.play(animationKey);
@@ -122,10 +119,7 @@ export class AuraWeapon extends Weapon {
     }
 
     this.auraIcon = this.scene.add.image(context.player.x, context.player.y, textureKey);
-    this.auraIcon.setDisplaySize(
-      AuraWeapon.AURA_ICON_DISPLAY_SIZE,
-      AuraWeapon.AURA_ICON_DISPLAY_SIZE,
-    );
+    this.auraIcon.setDisplaySize(iconDisplaySize, iconDisplaySize);
     this.auraIcon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
     this.auraIcon.setAlpha(0.9);
   }

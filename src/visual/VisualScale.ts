@@ -1,12 +1,17 @@
 export type LandmarkVisualType = 'tree' | 'rock' | 'grave';
 
 export const VisualScale = {
-  playerDisplaySize: 64,
+  playerDisplaySize: 72,
   pickupDisplaySize: 36,
   treasureDisplayWidth: 72,
   treasureDisplayHeight: 64,
   auraStrokeWidth: 4,
   auraAlpha: 0.24,
+  finalBossVisualDisplayMultiplier: 0.75,
+
+  getPlayerFallbackVisualRadius(): number {
+    return this.playerDisplaySize / 2;
+  },
 
   getEnemyDisplaySize(enemyId: string, logicalScale = 1): number {
     if (enemyId === 'boss') {
@@ -22,6 +27,17 @@ export const VisualScale = {
     }
 
     return 52 * logicalScale;
+  },
+
+  getEnemyVisualDisplayMultiplier(enemyId: string): number {
+    return enemyId === 'boss' ? this.finalBossVisualDisplayMultiplier : 1;
+  },
+
+  getEnemyFallbackVisualRadius(enemyId: string, logicalScale = 1): number {
+    return (
+      this.getEnemyDisplaySize(enemyId, logicalScale)
+      * this.getEnemyVisualDisplayMultiplier(enemyId)
+    ) / 2;
   },
 
   getProjectileDisplaySize(weaponId: string): number {
