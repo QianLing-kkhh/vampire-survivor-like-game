@@ -9,7 +9,9 @@ import {
   PlayerAnimationState,
   PlayerDirection8,
   TEXTURE_STATUS_KEYS,
+  getPlayerSkinLogicalKey,
 } from './AssetKeyMap';
+import { ExternalArtRegistry } from './ExternalArtRegistry';
 
 export class AssetKeyResolver {
   static getTextureStatusKeys(): readonly string[] {
@@ -22,6 +24,20 @@ export class AssetKeyResolver {
     characterId?: string,
   ): string | null {
     for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
+      const externalTextureAsset = ExternalArtRegistry.getPlayerSkinAsset(
+        candidateSkinId,
+        'idle',
+        'down',
+      ) ?? ExternalArtRegistry.getPlayerSkinAsset(candidateSkinId, 'walk', 'down');
+
+      if (
+        externalTextureAsset
+        && !VisualSettings.shouldUseGraphicsFallback()
+        && AssetFallbacks.hasTexture(scene, externalTextureAsset.textureKey)
+      ) {
+        return externalTextureAsset.textureKey;
+      }
+
       const skinTextureKey = AssetKeyResolver.resolveTexture(
         scene,
         {
@@ -55,12 +71,27 @@ export class AssetKeyResolver {
     characterId?: string,
   ): string | null {
     for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
+      const externalAnimationAsset = ExternalArtRegistry.getPlayerSkinAsset(
+        candidateSkinId,
+        state,
+        direction,
+      );
+      const externalAnimationKey = externalAnimationAsset?.animationKey;
+
+      if (
+        externalAnimationKey
+        && !VisualSettings.shouldUseGraphicsFallback()
+        && AssetFallbacks.hasAnimation(scene, externalAnimationKey)
+      ) {
+        return externalAnimationKey;
+      }
+
       const skinDirectionAnimationKey = AssetKeyResolver.resolveAnimation(
         scene,
         {
           primary: `art_player_${candidateSkinId}_${state}_${direction}`,
         },
-        `player.${candidateSkinId}.${state}.${direction}`,
+        getPlayerSkinLogicalKey(candidateSkinId, state, direction),
       );
 
       if (skinDirectionAnimationKey) {
@@ -93,6 +124,12 @@ export class AssetKeyResolver {
     characterId?: string,
   ): string | null {
     for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
+      const externalPortrait = ExternalArtRegistry.getPortrait(candidateSkinId);
+
+      if (AssetFallbacks.hasTexture(scene, externalPortrait?.textureKey)) {
+        return externalPortrait.textureKey;
+      }
+
       const portraitKey = AssetKeyResolver.resolveTexture(
         scene,
         { primary: `art_player_${candidateSkinId}_portrait` },
@@ -183,6 +220,11 @@ export class AssetKeyResolver {
 
   static getWeaponIconKey(scene: Phaser.Scene, weaponId: string): string | null {
     const entry = AssetKeyResolver.getWeaponEntry(weaponId);
+    const externalIcon = ExternalArtRegistry.getWeaponIcon(weaponId);
+
+    if (AssetFallbacks.hasTexture(scene, externalIcon?.textureKey)) {
+      return externalIcon.textureKey;
+    }
 
     return entry?.icon
       ? AssetKeyResolver.resolveTexture(scene, entry.icon, `weapon.${weaponId}.icon`, 'icons')
@@ -221,6 +263,14 @@ export class AssetKeyResolver {
     const entry = DEFAULT_ASSET_KEY_MAP.effects[
       effectType as keyof typeof DEFAULT_ASSET_KEY_MAP.effects
     ];
+    const externalEffect = ExternalArtRegistry.getEffect(effectType);
+
+    if (
+      !VisualSettings.shouldUseGraphicsFallback()
+      && AssetFallbacks.hasTexture(scene, externalEffect?.textureKey)
+    ) {
+      return externalEffect.textureKey;
+    }
 
     return entry?.texture
       ? AssetKeyResolver.resolveTexture(scene, entry.texture, `effect.${effectType}.texture`)
@@ -231,6 +281,15 @@ export class AssetKeyResolver {
     const entry = DEFAULT_ASSET_KEY_MAP.effects[
       effectType as keyof typeof DEFAULT_ASSET_KEY_MAP.effects
     ];
+    const externalEffect = ExternalArtRegistry.getEffect(effectType);
+
+    if (
+      externalEffect?.animationKey
+      && !VisualSettings.shouldUseGraphicsFallback()
+      && AssetFallbacks.hasAnimation(scene, externalEffect.animationKey)
+    ) {
+      return externalEffect.animationKey;
+    }
 
     return entry && 'animation' in entry && entry.animation
       ? AssetKeyResolver.resolveAnimation(scene, entry.animation, `effect.${effectType}.animation`)
@@ -277,6 +336,15 @@ export class AssetKeyResolver {
       return null;
     }
 
+    const externalOverrideKey = AssetKeyResolver.getExternalOverride(
+      logicalKey ?? entry.logicalKey,
+      overrideDomain,
+    );
+
+    if (AssetFallbacks.hasTexture(scene, externalOverrideKey)) {
+      return externalOverrideKey;
+    }
+
     const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, overrideDomain);
 
     if (AssetFallbacks.hasTexture(scene, overrideKey)) {
@@ -306,6 +374,15 @@ export class AssetKeyResolver {
       return null;
     }
 
+    const externalOverrideKey = AssetKeyResolver.getExternalOverride(
+      logicalKey ?? entry.logicalKey,
+      'animations',
+    );
+
+    if (AssetFallbacks.hasAnimation(scene, externalOverrideKey)) {
+      return externalOverrideKey;
+    }
+
     const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, 'animations');
 
     if (AssetFallbacks.hasAnimation(scene, overrideKey)) {
@@ -328,5 +405,24 @@ export class AssetKeyResolver {
     } catch {
       return undefined;
     }
+  }
+
+  private static getExternalOverride(
+    logicalKey: string | undefined,
+    domain: 'textures' | 'animations' | 'icons' | 'ui' | 'world',
+  ): string | undefined {
+    if (!logicalKey) {
+      return undefined;
+    }
+
+    const externalAsset = ExternalArtRegistry.getAssetByLogicalKey(logicalKey);
+
+    if (!externalAsset) {
+      return undefined;
+    }
+
+    return domain === 'animations'
+      ? externalAsset.animationKey
+      : externalAsset.textureKey;
   }
 }

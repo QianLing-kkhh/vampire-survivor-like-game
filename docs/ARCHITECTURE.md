@@ -412,6 +412,9 @@ Responsive helpers centralize screen layout rules.
 
 - `PreloadScene`: central asset/audio preload and spritesheet animation creation.
 - Art pack assets: `public/assets/art/` plus `animation_manifest.json`.
+- External art imports: optional `public/assets/imports/manifest.json` plus PNG files under `public/assets/imports/`.
+- `ExternalArtRegistry`: validated query-only registry for imported art metadata; it does not change gameplay.
+- `ExternalArtValidator`: manifest/schema validation for runtime warnings and local scripts.
 - `AssetKeyResolver`: centralized texture, animation, icon, and fallback resolution, including the appearance override hook.
 - `ShadowFactory`: centralized optional shadow creation for visible gameplay objects.
 - `AudioManager`: channel-based audio playback for BGM, SFX, weapon, and UI channels.
@@ -490,5 +493,6 @@ TitleScene
 - Unlock state should go through `UnlockManager`; Character/Stage/Map managers should not own unlock rules.
 - Existing `core/EventBus` and callbacks are still valid during migration; do not delete them until the dependent systems have moved.
 - Future skins, themes, and art packs should go through `AppearanceManager` and `AssetKeyResolver`, not direct texture strings in gameplay/UI classes.
+- External final art should enter through `public/assets/imports/manifest.json`; Codex should validate, register, connect, and preserve fallback behavior rather than designing final art or changing gameplay files.
 - Future high-volume runtime visuals should use `PoolManager` / `ObjectPool` only after behavior-preserving profiling. Do not pool gameplay-critical entities without tests and shutdown cleanup.
 - Use `npm.cmd run check:architecture` to surface soft boundary warnings. The script is not ESLint and does not fail by default; intentional compatibility paths should be documented or whitelisted.

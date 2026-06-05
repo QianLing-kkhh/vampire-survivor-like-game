@@ -41,6 +41,12 @@ export const PLAYER_SKIN_IDS = [
 
 export type PlayerSkinId = typeof PLAYER_SKIN_IDS[number];
 
+export const getPlayerSkinLogicalKey = (
+  skinId: string,
+  state: PlayerAnimationState,
+  direction: PlayerDirection8,
+): string => `player.${skinId}.${state}.${direction}`;
+
 export const PLAYER_SKIN_TEXTURE_KEYS: readonly string[] = PLAYER_SKIN_IDS.map(
   (skinId) => `art_player_${skinId}_walk_sheet`,
 );

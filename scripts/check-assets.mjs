@@ -4,6 +4,8 @@ import path from 'node:path';
 const root = process.cwd();
 const publicAssetsDir = path.join(root, 'public', 'assets');
 const artDir = path.join(publicAssetsDir, 'art');
+const importsDir = path.join(publicAssetsDir, 'imports');
+const importExampleManifestPath = path.join(importsDir, 'manifest.example.json');
 const manifestPath = path.join(artDir, 'animation_manifest.json');
 const requiredArtDirs = ['player', 'enemies', 'weapons', 'passives', 'pickups', 'ui'];
 const errors = [];
@@ -50,6 +52,10 @@ if (!fs.existsSync(artDir)) {
   addError('Missing public/assets/art directory.');
 }
 
+if (!fs.existsSync(importsDir) || !fs.statSync(importsDir).isDirectory()) {
+  addError('Missing public/assets/imports directory.');
+}
+
 for (const dirName of requiredArtDirs) {
   const dirPath = path.join(artDir, dirName);
   if (!fs.existsSync(dirPath) || !fs.statSync(dirPath).isDirectory()) {
@@ -80,6 +86,17 @@ if (!fs.existsSync(manifestPath)) {
     console.info(`[assets] Parsed animation manifest with ${entries.length} file references.`);
   } catch (error) {
     addError(`Invalid animation_manifest.json: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+if (fs.existsSync(importExampleManifestPath)) {
+  try {
+    JSON.parse(fs.readFileSync(importExampleManifestPath, 'utf8'));
+    console.info('[assets] Parsed external art example manifest.');
+  } catch (error) {
+    addError(`Invalid public/assets/imports/manifest.example.json: ${
+      error instanceof Error ? error.message : String(error)
+    }`);
   }
 }
 

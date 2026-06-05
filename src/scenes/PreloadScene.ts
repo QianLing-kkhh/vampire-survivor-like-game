@@ -1,6 +1,12 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import {
+  EXTERNAL_ART_MANIFEST_CACHE_KEY,
+  EXTERNAL_ART_MANIFEST_PATH,
+  ExternalArtAsset,
+} from '../assets/ExternalArtManifest';
+import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
 import { AudioManager } from '../audio/AudioManager';
 
 type ArtManifestAsset = {
@@ -186,6 +192,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('art_ui_help_panel_bg', 'assets/art/ui/panel_bg.png');
     this.load.image('art_ui_levelup_panel_bg', 'assets/art/ui/panel_bg.png');
     this.loadArtManifestAssets();
+    this.loadExternalArtManifest();
     this.load.audio('enemy_hit', 'assets/audio/enemy_hit.wav');
     this.load.audio('enemy_killed', 'assets/audio/enemy_killed.wav');
     this.load.audio('player_hit', 'assets/audio/player_hit.wav');
@@ -217,8 +224,10 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
+    ExternalArtRegistry.loadManifest(this);
     this.createArtManifestAnimations();
     this.createPlayerDirectionAnimations();
+    this.createExternalArtAnimations();
     this.logTextureStatus();
     this.logAudioStatus();
     this.scene.start('TitleScene');
@@ -238,6 +247,73 @@ export class PreloadScene extends Phaser.Scene {
       }
 
       this.load.image(asset.key, path);
+    }
+  }
+
+  private loadExternalArtManifest(): void {
+    ExternalArtRegistry.clear();
+
+    this.load.once(`filecomplete-json-${EXTERNAL_ART_MANIFEST_CACHE_KEY}`, () => {
+      ExternalArtRegistry.loadManifest(this);
+      this.loadExternalArtAssets();
+    });
+    this.load.once('loaderror', (file: { key?: string }) => {
+      if (file.key === EXTERNAL_ART_MANIFEST_CACHE_KEY) {
+        console.warn('[external-art] No external art manifest found; using built-in assets.');
+      }
+    });
+    this.load.json(EXTERNAL_ART_MANIFEST_CACHE_KEY, EXTERNAL_ART_MANIFEST_PATH);
+  }
+
+  private loadExternalArtAssets(): void {
+    for (const asset of ExternalArtRegistry.getAssets()) {
+      const path = this.getExternalAssetPath(asset);
+
+      if (asset.type === 'spritesheet') {
+        if (!asset.frameWidth || !asset.frameHeight) {
+          console.warn(`[external-art] Skipping spritesheet without frame size: ${asset.id}`);
+          continue;
+        }
+
+        this.load.spritesheet(asset.textureKey, path, {
+          frameWidth: asset.frameWidth,
+          frameHeight: asset.frameHeight,
+          endFrame: asset.frameCount ? asset.frameCount - 1 : undefined,
+        });
+        continue;
+      }
+
+      this.load.image(asset.textureKey, path);
+    }
+  }
+
+  private getExternalAssetPath(asset: ExternalArtAsset): string {
+    const manifest = ExternalArtRegistry.loadManifest(this);
+    const basePath = manifest?.basePath || 'assets/imports';
+
+    return `${basePath.replace(/\/$/, '')}/${asset.path}`;
+  }
+
+  private createExternalArtAnimations(): void {
+    for (const asset of ExternalArtRegistry.getAssets()) {
+      if (
+        asset.type !== 'spritesheet'
+        || !asset.animationKey
+        || this.anims.exists(asset.animationKey)
+        || !this.textures.exists(asset.textureKey)
+      ) {
+        continue;
+      }
+
+      this.anims.create({
+        key: asset.animationKey,
+        frames: this.anims.generateFrameNumbers(asset.textureKey, {
+          start: 0,
+          end: (asset.frameCount ?? 1) - 1,
+        }),
+        frameRate: asset.frameRate ?? 8,
+        repeat: asset.repeat ?? -1,
+      });
     }
   }
 
@@ -366,6 +442,7 @@ export class PreloadScene extends Phaser.Scene {
       'art_ui_help_panel_bg',
       'art_ui_levelup_panel_bg',
       ...ART_MANIFEST_ASSETS.map((asset) => asset.key),
+      ...ExternalArtRegistry.getAssets().map((asset) => asset.textureKey),
     ];
 
     for (const textureKey of textureKeys) {

@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "name": "Example external art pack",
+  "author": "External art tool",
+  "description": "Template only. These files do not need to exist unless copied to manifest.json.",
+  "basePath": "assets/imports",
+  "assets": [
+    {
+      "id": "assassin_default_walk_down",
+      "type": "spritesheet",
+      "category": "player",
+      "path": "player/assassin_default/walk_down.png",
+      "textureKey": "external_player_assassin_default_walk_down",
+      "animationKey": "external_player_assassin_default_walk_down_anim",
+      "logicalKey": "player.assassin_default.walk.down",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "frameRate": 8,
+      "repeat": -1,
+      "state": "walk",
+      "direction": "down",
+      "targetId": "assassin",
+      "skinId": "assassin_default"
+    },
+    {
+      "id": "assassin_default_idle_down",
+      "type": "spritesheet",
+      "category": "player",
+      "path": "player/assassin_default/idle_down.png",
+      "textureKey": "external_player_assassin_default_idle_down",
+      "animationKey": "external_player_assassin_default_idle_down_anim",
+      "logicalKey": "player.assassin_default.idle.down",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "frameRate": 6,
+      "repeat": -1,
+      "state": "idle",
+      "direction": "down",
+      "targetId": "assassin",
+      "skinId": "assassin_default"
+    },
+    {
+      "id": "assassin_default_portrait",
+      "type": "portrait",
+      "category": "player",
+      "path": "player/assassin_default/portrait.png",
+      "textureKey": "external_player_assassin_default_portrait",
+      "logicalKey": "player.assassin_default.portrait",
+      "targetId": "assassin",
+      "skinId": "assassin_default"
+    },
+    {
+      "id": "witch_slow_zone_effect",
+      "type": "effect",
+      "category": "effect",
+      "path": "effects/witch_slow_zone.png",
+      "textureKey": "external_effect_witch_slow_zone",
+      "logicalKey": "effect.slow_zone.texture",
+      "targetId": "slow_zone"
+    },
+    {
+      "id": "knife_icon",
+      "type": "icon",
+      "category": "weapon",
+      "path": "weapons/knife_icon.png",
+      "textureKey": "external_weapon_knife_icon",
+      "logicalKey": "weapon.knife.icon",
+      "targetId": "knife"
+    }
+  ]
+}

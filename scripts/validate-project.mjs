@@ -7,6 +7,7 @@ const steps = [
   { label: 'Build', args: ['run', 'build'] },
   { label: 'Content audit', args: ['run', 'validate:content'] },
   { label: 'Asset audit', args: ['run', 'validate:assets'] },
+  { label: 'External art audit', args: ['run', 'validate:external-art'] },
   { label: 'Architecture boundaries', args: ['run', 'check:architecture'] },
   { label: 'Documentation links', args: ['run', 'validate:docs'] },
 ];
