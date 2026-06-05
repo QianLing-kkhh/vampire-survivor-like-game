@@ -90,6 +90,16 @@ SettingsMenu is the unified settings entry opened from Title, Pause, and Result 
 
 Title, Pause, and Result should not each show their own duplicated Auto/Fast/Endless/Sound/Language toggle lists.
 
+SettingsMenu is organized into tabs:
+
+- Gameplay
+- Audio
+- Display
+- Input
+- Developer
+
+Boolean settings use graphical toggle switches. Multi-value settings such as graphics quality, asset style, language, volume, joystick size, and debug opacity use cycle rows. The Close / Back button stays fixed at the bottom of the panel.
+
 ### HelpOverlay
 
 HelpOverlay uses tab buttons and data-driven help sections. It includes controls, weapons, UI, evolution, passives, upgrades, treasures, and endless help.
@@ -169,7 +179,7 @@ Settings should apply immediately to the current run.
 - Language changes refresh current Settings UI and uses i18n lookup elsewhere.
 - Shadow toggles apply to most newly updated runtime objects immediately; objects that are not updated every frame may apply on the next run.
 - Asset style and quality affect newly resolved gameplay art immediately for new objects. Existing sprites may keep their current texture until they are recreated.
-- SettingsMenu shows a restart/next-run notice after changing display quality or asset style. PauseMenu does not force a restart; the same SettingsMenu notice is the source of truth.
+- SettingsMenu shows a restart/next-run notice in the Display tab after changing display quality or asset style. PauseMenu does not force a restart; the same SettingsMenu notice is the source of truth.
 - Minimal graphics mode is safest when starting a fresh run because existing PNG-backed objects may keep their already-created sprites until the scene recreates them.
 
 Do not restart the scene just to apply settings.
