@@ -5,13 +5,35 @@ import { SaveManager } from '../save/SaveManager';
 import { UnlockManager } from '../unlock/UnlockManager';
 
 import { CharacterDefinition } from './CharacterDefinition';
+import {
+  CharacterGrowthPerLevel,
+  CharacterInitialStats,
+} from './CharacterStats';
 
-type CharacterData = Record<string, CharacterDefinition['baseStats'] & {
+type CharacterDataEntry = Partial<CharacterDefinition['baseStats']> & {
   name?: string;
+  nameKey?: string;
+  descriptionKey?: string;
   startingWeaponId?: string;
-}>;
+  skinId?: string;
+  baseStats?: Partial<CharacterDefinition['baseStats']>;
+  initialStats?: CharacterInitialStats;
+  growthPerLevel?: CharacterGrowthPerLevel;
+  levelUpEffect?: CharacterDefinition['levelUpEffect'];
+  damageReactionSkill?: CharacterDefinition['damageReactionSkill'];
+  exclusiveUpgradeIds?: string[];
+  exclusivePassiveIds?: string[];
+  exclusiveEvolutionRouteIds?: string[];
+};
+type CharacterData = Record<string, CharacterDataEntry>;
 
 const DEFAULT_STARTING_WEAPON_ID = 'knife';
+const DEFAULT_CHARACTER_INITIAL_STATS: CharacterInitialStats = {
+  maxHp: 100,
+  moveSpeed: 120,
+  pickupRange: 2.2,
+  expMultiplier: 1,
+};
 
 export class CharacterManager {
   constructor(
@@ -62,13 +84,21 @@ export class CharacterManager {
 
     return {
       id: resolvedCharacterId,
-      name: character.name ?? resolvedCharacterId,
+      name: character.name ?? character.nameKey ?? resolvedCharacterId,
+      nameKey: character.nameKey ?? `character.${resolvedCharacterId}.name`,
+      descriptionKey: character.descriptionKey ?? `character.${resolvedCharacterId}.description`,
       startingWeaponId: character.startingWeaponId ?? DEFAULT_STARTING_WEAPON_ID,
+      skinId: character.skinId,
+      initialStats: this.getInitialStats(character),
+      growthPerLevel: character.growthPerLevel ?? {},
+      levelUpEffect: character.levelUpEffect,
+      damageReactionSkill: character.damageReactionSkill,
+      exclusiveUpgradeIds: character.exclusiveUpgradeIds ?? [],
+      exclusivePassiveIds: character.exclusivePassiveIds ?? [],
+      exclusiveEvolutionRouteIds: character.exclusiveEvolutionRouteIds ?? [],
       baseStats: {
-        maxHp: character.maxHp,
-        moveSpeed: character.moveSpeed,
-        pickupRange: character.pickupRange,
-        expMultiplier: character.expMultiplier,
+        ...this.getInitialStats(character),
+        expMultiplier: this.getInitialStats(character).expMultiplier ?? 1,
       },
     };
   }
@@ -85,17 +115,34 @@ export class CharacterManager {
   }
 
   isCharacterUnlocked(characterId: string): boolean {
-    return UnlockManager.isUnlocked('character', characterId);
+    return this.characterData[characterId] !== undefined
+      && (UnlockManager.isUnlocked('character', characterId) || characterId !== '');
   }
 
   private getCharacterDataFromRegistry(): CharacterData {
     return ContentRegistry.listCharacters().reduce<CharacterData>((record, character) => {
       record[character.id] = {
-        ...character.baseStats,
+        ...character,
         name: character.name,
-        startingWeaponId: character.startingWeaponId,
       };
       return record;
     }, {});
+  }
+
+  private getInitialStats(character: CharacterDataEntry): CharacterInitialStats {
+    const legacyStats = character.baseStats ?? character;
+    const initialStats = character.initialStats ?? {
+      maxHp: legacyStats.maxHp,
+      moveSpeed: legacyStats.moveSpeed,
+      pickupRange: legacyStats.pickupRange,
+      expMultiplier: legacyStats.expMultiplier,
+    };
+
+    return {
+      maxHp: initialStats.maxHp ?? DEFAULT_CHARACTER_INITIAL_STATS.maxHp,
+      moveSpeed: initialStats.moveSpeed ?? DEFAULT_CHARACTER_INITIAL_STATS.moveSpeed,
+      pickupRange: initialStats.pickupRange ?? DEFAULT_CHARACTER_INITIAL_STATS.pickupRange,
+      expMultiplier: initialStats.expMultiplier ?? DEFAULT_CHARACTER_INITIAL_STATS.expMultiplier,
+    };
   }
 }

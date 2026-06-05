@@ -42,6 +42,24 @@
   "characterSelect": {
     "title": "キャラクター選択"
   },
+  "character": {
+    "assassin": {
+      "name": "アサシン",
+      "description": "速度と刃で勝負する高機動キャラクター。"
+    },
+    "witch": {
+      "name": "魔女",
+      "description": "追尾魔法と後半の爆発力に優れる脆いキャラクター。"
+    },
+    "priest": {
+      "name": "司祭",
+      "description": "聖書、防御、回復で安定して生き残るキャラクター。"
+    },
+    "warrior": {
+      "name": "戦士",
+      "description": "高い体力と低い機動力を持つ近接型キャラクター。"
+    }
+  },
   "stageSelect": {
     "title": "ステージ選択"
   },

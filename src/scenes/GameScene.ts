@@ -61,14 +61,10 @@ import { WorldRenderer } from '../world/WorldRenderer';
 export class GameScene extends Phaser.Scene {
   private static readonly PLAYER_HIT_RADIUS = 28;
   private static readonly CONTACT_DAMAGE_COOLDOWN_MS = 1000;
-  private static readonly DAMAGE_REACTION_RADIUS = 120;
-  private static readonly DAMAGE_REACTION_DAMAGE = 20;
-  private static readonly DAMAGE_REACTION_KNOCKBACK_DISTANCE = 80;
   private static readonly BOSS_DASH_HIT_RADIUS = 110;
   private static readonly BOSS_DASH_IMPACT_RADIUS = 140;
   private static readonly BOSS_DASH_IMPACT_DAMAGE = 30;
   private static readonly BOSS_DASH_KNOCKBACK_DISTANCE = 120;
-  private static readonly LEVEL_UP_HEAL_LOST_HP_RATIO = 0.2;
 
   private eventBus = new EventBus<GameEventMap>();
   private readonly autoPlayer = new AutoPlayer();
@@ -236,9 +232,6 @@ export class GameScene extends Phaser.Scene {
       finalBossTimeSeconds: this.currentStage.finalBossSpawnTimeSeconds,
       playerHitRadius: GameScene.PLAYER_HIT_RADIUS,
       contactDamageCooldownMs: GameScene.CONTACT_DAMAGE_COOLDOWN_MS,
-      damageReactionRadius: GameScene.DAMAGE_REACTION_RADIUS,
-      damageReactionDamage: GameScene.DAMAGE_REACTION_DAMAGE,
-      damageReactionKnockbackDistance: GameScene.DAMAGE_REACTION_KNOCKBACK_DISTANCE,
       bossDashHitRadius: GameScene.BOSS_DASH_HIT_RADIUS,
       bossDashImpactRadius: GameScene.BOSS_DASH_IMPACT_RADIUS,
       bossDashImpactDamage: GameScene.BOSS_DASH_IMPACT_DAMAGE,
@@ -328,9 +321,12 @@ export class GameScene extends Phaser.Scene {
 
     this.unsubscribeLevelUp = this.eventBus.subscribe('LevelUp', (event) => {
       AudioManager.playSfx(this, 'level_up');
-      const healAmount = this.playerHealth?.healLostHpRatio(
-        GameScene.LEVEL_UP_HEAL_LOST_HP_RATIO,
-      ) ?? 0;
+      this.applyCharacterLevelStats(event.currentLevel);
+      const healAmount = this.playerHealth && this.gameplayContext
+        ? this.gameplayContext.characterRuntime.applyLevelUpEffect({
+          playerHealth: this.playerHealth,
+        }).healAmount
+        : 0;
 
       if (healAmount > 0 && this.player) {
         this.floatingTextManager?.showPlayerHeal(
@@ -806,63 +802,6 @@ export class GameScene extends Phaser.Scene {
     this.recordPlayerDamage(actualDamage);
   }
 
-  private updateContactDamage(deltaMs: number): void {
-    if (!this.player || !this.playerHealth) {
-      return;
-    }
-
-    for (const [enemy, cooldownMs] of this.contactDamageCooldowns) {
-      const nextCooldownMs = cooldownMs - deltaMs;
-
-      if (nextCooldownMs > 0 && !enemy.isDead) {
-        this.contactDamageCooldowns.set(enemy, nextCooldownMs);
-        continue;
-      }
-
-      this.contactDamageCooldowns.delete(enemy);
-    }
-
-    for (const enemy of this.enemies) {
-      if (enemy.isDead) {
-        continue;
-      }
-
-      const isDashHit = enemy.isDashing();
-
-      if (!isDashHit && this.contactDamageCooldowns.has(enemy)) {
-        continue;
-      }
-
-      if (!this.isPlayerHitByEnemy(enemy, isDashHit)) {
-        continue;
-      }
-
-      if (isDashHit && !enemy.consumeDashHit()) {
-        continue;
-      }
-
-      const hpBeforeDamage = this.playerHealth.currentHp;
-      const damage = isDashHit
-        ? enemy.damage * enemy.dashDamageMultiplier
-        : enemy.damage;
-      const actualDamage = this.playerHealth.takeDamage(damage);
-      this.contactDamageCooldowns.set(enemy, GameScene.CONTACT_DAMAGE_COOLDOWN_MS);
-
-      if (actualDamage > 0) {
-        if (isDashHit) {
-          this.runState.recordBossDashHit();
-          this.knockPlayerBack(enemy.getDashDirection());
-        }
-
-        this.recordPlayerDamage(actualDamage);
-      }
-
-      if (this.playerHealth.currentHp < hpBeforeDamage) {
-        this.triggerDamageReaction();
-      }
-    }
-  }
-
   private updateBossDashImpacts(): void {
     if (!this.player || !this.playerHealth) {
       return;
@@ -906,63 +845,6 @@ export class GameScene extends Phaser.Scene {
       this.knockPlayerBackFromPoint(impactPosition);
       this.contactDamageCooldowns.set(enemy, GameScene.CONTACT_DAMAGE_COOLDOWN_MS);
     }
-  }
-
-  private isPlayerHitByEnemy(enemy: Enemy, isDashHit: boolean): boolean {
-    if (!this.player) {
-      return false;
-    }
-
-    if (isDashHit) {
-      const dashSegment = enemy.getDashSegment();
-
-      if (!dashSegment) {
-        return false;
-      }
-
-      return this.getPointToSegmentDistance(
-        this.player.body.x,
-        this.player.body.y,
-        dashSegment.start.x,
-        dashSegment.start.y,
-        dashSegment.end.x,
-        dashSegment.end.y,
-      ) <= GameScene.BOSS_DASH_HIT_RADIUS;
-    }
-
-    return Phaser.Math.Distance.Between(
-      this.player.body.x,
-      this.player.body.y,
-      enemy.body.x,
-      enemy.body.y,
-    ) <= GameScene.PLAYER_HIT_RADIUS;
-  }
-
-  private getPointToSegmentDistance(
-    pointX: number,
-    pointY: number,
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-  ): number {
-    const segmentX = endX - startX;
-    const segmentY = endY - startY;
-    const segmentLengthSq = segmentX * segmentX + segmentY * segmentY;
-
-    if (segmentLengthSq === 0) {
-      return Phaser.Math.Distance.Between(pointX, pointY, startX, startY);
-    }
-
-    const rawT = (
-      ((pointX - startX) * segmentX + (pointY - startY) * segmentY)
-      / segmentLengthSq
-    );
-    const t = Phaser.Math.Clamp(rawT, 0, 1);
-    const closestX = startX + segmentX * t;
-    const closestY = startY + segmentY * t;
-
-    return Phaser.Math.Distance.Between(pointX, pointY, closestX, closestY);
   }
 
   private recordPlayerDamage(actualDamage: number): void {
@@ -1068,105 +950,6 @@ export class GameScene extends Phaser.Scene {
 
   private getTreasurePositions(): Array<{ x: number; y: number }> {
     return this.treasureManager?.getChests() ?? [];
-  }
-
-  private triggerDamageReaction(): void {
-    if (!this.player) {
-      return;
-    }
-
-    this.showDamageReactionFeedback(this.player.body.x, this.player.body.y);
-
-    const hitResult = this.damageCalculator.calculateDamage(
-      GameScene.DAMAGE_REACTION_DAMAGE,
-    );
-
-    for (const enemy of this.enemies) {
-      if (enemy.isDead || !this.isEnemyInDamageReactionRange(enemy)) {
-        continue;
-      }
-
-      enemy.takeDamage(hitResult);
-
-      if (enemy.isDead) {
-        enemy.destroy();
-        continue;
-      }
-
-      this.knockEnemyBack(enemy);
-    }
-  }
-
-  private isEnemyInDamageReactionRange(enemy: Enemy): boolean {
-    if (!this.player) {
-      return false;
-    }
-
-    return Phaser.Math.Distance.Between(
-      this.player.body.x,
-      this.player.body.y,
-      enemy.body.x,
-      enemy.body.y,
-    ) <= GameScene.DAMAGE_REACTION_RADIUS;
-  }
-
-  private knockEnemyBack(enemy: Enemy): void {
-    if (!this.player) {
-      return;
-    }
-
-    const direction = new Phaser.Math.Vector2(
-      enemy.body.x - this.player.body.x,
-      enemy.body.y - this.player.body.y,
-    );
-
-    if (direction.lengthSq() === 0) {
-      direction.set(1, 0);
-    }
-
-    direction.normalize().scale(GameScene.DAMAGE_REACTION_KNOCKBACK_DISTANCE);
-
-    const enemyRadius = this.getEnemyRadius(enemy);
-    enemy.body.x = Phaser.Math.Clamp(
-      enemy.body.x + direction.x,
-      enemyRadius,
-      this.worldWidth - enemyRadius,
-    );
-    enemy.body.y = Phaser.Math.Clamp(
-      enemy.body.y + direction.y,
-      enemyRadius,
-      this.worldHeight - enemyRadius,
-    );
-  }
-
-  private getEnemyRadius(enemy: Enemy): number {
-    const body = enemy.body as Phaser.GameObjects.GameObject & { radius?: number };
-
-    return body.radius ?? 12;
-  }
-
-  private showDamageReactionFeedback(x: number, y: number): void {
-    const feedback = this.add.circle(
-      x,
-      y,
-      GameScene.DAMAGE_REACTION_RADIUS,
-      0x60a5fa,
-      0.18,
-    );
-
-    feedback.setStrokeStyle(2, 0xbfdbfe, 0.8);
-    feedback.setDepth(25);
-
-    this.tweens.add({
-      targets: feedback,
-      alpha: 0,
-      scaleX: 1.18,
-      scaleY: 1.18,
-      duration: 180,
-      onComplete: () => {
-        feedback.destroy();
-      },
-    });
   }
 
   private showCenterMessage(message: string): void {
@@ -1287,6 +1070,26 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleUpgradeApplied(): void {
+    this.syncPassiveEffects();
+    this.updatePlayerPickupRangeFromStats();
+  }
+
+  private applyCharacterLevelStats(level: number): void {
+    if (!this.gameplayContext || !this.playerStats || !this.playerHealth) {
+      return;
+    }
+
+    const previousMaxHp = this.playerStats.maxHp;
+    const baseStats = this.gameplayContext.characterRuntime.setLevel(level);
+
+    this.playerStats.setCharacterBaseStats(baseStats);
+
+    const maxHpIncrease = this.playerStats.maxHp - previousMaxHp;
+
+    if (maxHpIncrease > 0) {
+      this.playerHealth.increaseMaxHp(maxHpIncrease, false, this.playerStats.maxHpLimit);
+    }
+
     this.syncPassiveEffects();
     this.updatePlayerPickupRangeFromStats();
   }
@@ -1554,8 +1357,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.weaponManager?.setPassiveModifiers({
-      damageMultiplier: effects.damageMultiplier,
-      cooldownMultiplier: effects.cooldownMultiplier,
+      damageMultiplier: effects.damageMultiplier * (this.playerStats?.weaponDamageMultiplier ?? 1),
+      cooldownMultiplier: effects.cooldownMultiplier * (this.playerStats?.cooldownMultiplier ?? 1),
       projectileSpeedMultiplier: effects.projectileSpeedMultiplier,
     });
     this.treasureManager?.setBonusDropChance(effects.treasureDropBonus);

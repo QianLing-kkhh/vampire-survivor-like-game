@@ -1,8 +1,125 @@
 {
   "default": {
-    "maxHp": 100,
-    "moveSpeed": 120,
-    "pickupRange": 2.2,
-    "expMultiplier": 1
+    "nameKey": "character.assassin.name",
+    "descriptionKey": "character.assassin.description",
+    "startingWeaponId": "knife",
+    "skinId": "assassin_default",
+    "initialStats": {
+      "maxHp": 90,
+      "moveSpeed": 230,
+      "pickupRange": 2.0,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {
+      "maxHp": 0.8,
+      "moveSpeed": 0.6,
+      "pickupRange": 0.01
+    },
+    "levelUpEffect": {
+      "type": "healLostHpPercent",
+      "lostHpRatio": 0.2
+    },
+    "damageReactionSkill": {
+      "type": "shockwave",
+      "radius": 120,
+      "damage": 20,
+      "knockbackDistance": 80,
+      "cooldownMs": 0
+    },
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "witch": {
+    "nameKey": "character.witch.name",
+    "descriptionKey": "character.witch.description",
+    "startingWeaponId": "magic_wand",
+    "skinId": "witch_default",
+    "initialStats": {
+      "maxHp": 75,
+      "moveSpeed": 195,
+      "pickupRange": 2.1,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {
+      "maxHp": 0.5,
+      "moveSpeed": 0.35,
+      "pickupRange": 0.015,
+      "weaponDamageMultiplier": 0.006
+    },
+    "levelUpEffect": {
+      "type": "none"
+    },
+    "damageReactionSkill": {
+      "type": "shockwave",
+      "radius": 100,
+      "damage": 12,
+      "knockbackDistance": 60,
+      "cooldownMs": 0
+    },
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "priest": {
+    "nameKey": "character.priest.name",
+    "descriptionKey": "character.priest.description",
+    "startingWeaponId": "bible",
+    "skinId": "priest_default",
+    "initialStats": {
+      "maxHp": 115,
+      "moveSpeed": 185,
+      "pickupRange": 2.2,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {
+      "maxHp": 1.2,
+      "moveSpeed": 0.25,
+      "pickupRange": 0.012
+    },
+    "levelUpEffect": {
+      "type": "healLostHpPercent",
+      "lostHpRatio": 0.25
+    },
+    "damageReactionSkill": {
+      "type": "shockwave",
+      "radius": 115,
+      "damage": 14,
+      "knockbackDistance": 95,
+      "cooldownMs": 0
+    },
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "warrior": {
+    "nameKey": "character.warrior.name",
+    "descriptionKey": "character.warrior.description",
+    "startingWeaponId": "axe",
+    "skinId": "warrior_default",
+    "initialStats": {
+      "maxHp": 130,
+      "moveSpeed": 175,
+      "pickupRange": 1.9,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {
+      "maxHp": 1.5,
+      "moveSpeed": 0.2,
+      "pickupRange": 0.008
+    },
+    "levelUpEffect": {
+      "type": "none"
+    },
+    "damageReactionSkill": {
+      "type": "shockwave",
+      "radius": 130,
+      "damage": 18,
+      "knockbackDistance": 110,
+      "cooldownMs": 0
+    },
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
   }
 }

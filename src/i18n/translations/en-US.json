@@ -57,6 +57,24 @@
   "characterSelect": {
     "title": "Character Select"
   },
+  "character": {
+    "assassin": {
+      "name": "Assassin",
+      "description": "A highly mobile character who wins with speed and blades."
+    },
+    "witch": {
+      "name": "Witch",
+      "description": "A fragile character who excels at homing magic and late-game burst."
+    },
+    "priest": {
+      "name": "Priest",
+      "description": "A steady survivor who relies on holy books, defense, and recovery."
+    },
+    "warrior": {
+      "name": "Warrior",
+      "description": "A melee-oriented character with high health and low mobility."
+    }
+  },
   "stageSelect": {
     "title": "Stage Select"
   },

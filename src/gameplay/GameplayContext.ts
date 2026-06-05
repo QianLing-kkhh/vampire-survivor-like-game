@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AutoPlayer } from '../auto/AutoPlayer';
 import { BossAttackController } from '../boss/BossAttackController';
+import { CharacterRuntime } from '../character/CharacterRuntime';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
@@ -68,6 +69,7 @@ export interface GameplayContext {
   replayRecorder?: ReplayRecorder;
   runRuleSet: RunRuleSet;
   relicManager: RelicManager;
+  characterRuntime: CharacterRuntime;
   runState: RunState;
   runStats: RunStats;
   player: PlayerController;

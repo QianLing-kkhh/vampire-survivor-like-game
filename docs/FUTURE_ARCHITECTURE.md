@@ -13,6 +13,7 @@ Do not add another broad manager, registry, provider, or shell unless it is requ
 Future architecture should assume support for:
 
 - Multiple characters
+- Character archetypes with initial stats, level growth, starting weapons, level-up effects, damage reactions, skins, and future exclusive upgrade/evolution routes
 - Multiple stages
 - Multiple maps
 - Random stages
@@ -70,19 +71,20 @@ Future architecture should assume support for:
 12. Difficulty, challenge, and custom rule changes should prefer `RunRuleSet` mutators over direct runtime if/else branches.
 13. Future skins/themes should use `AppearanceManager`, `AppearanceRegistry`, and `AssetKeyResolver` rather than direct texture strings.
 14. Future CharacterSelect, StageSelect, CustomStageSelect, daily challenge, and seeded-run flows should write through `SelectionManager`.
-15. Gameplay randomness should use injected `RandomSource` streams from `RandomManager`, not direct `Math.random()`.
-16. New cross-system observers should subscribe to `GameEventBus` instead of wiring directly into `GameScene`, manager callbacks, or UI events.
-17. Achievements, milestones, quests, and unlock triggers should evaluate data-driven definitions and persist through `SaveManager.progression`.
-18. Unlock state should be owned by `UnlockManager`; content managers can query it but should not duplicate unlock rules.
-19. Relic-style rule changes should use `RelicManager` / `RelicEffect`, not passive upgrades or scene conditionals.
-20. Tutorial and guide prompts should use `TutorialManager` and `GameEventBus`, not `GameScene` conditionals.
-21. Daily, seeded, and custom challenges should use `ChallengeManager` and write through `SelectionManager`, not mutate gameplay systems directly.
-22. Future mod, local, and remote content sources should expose `ContentPackManifest` metadata and load through provider interfaces before validation and registration.
-23. Remote providers should remain adapters; they should not bypass `SaveManager`, `ContentRegistry`, validation, leaderboard keys, or compatibility checks.
-24. Developer/debug tooling should be opt-in and should not mutate gameplay state while collecting diagnostics.
-25. Foundation systems that are not fully active should be documented as foundation/planned rather than removed as dead code.
-26. Object pooling should start with low-risk visuals and move into gameplay-critical entities only after profiling and cleanup verification.
-27. Architecture boundary warnings should be handled by routing new code through existing managers/resolvers or by documenting intentional compatibility exceptions.
+15. Character-specific growth and reaction behavior should live in `CharacterRuntime` and character configs, not `GameScene`.
+16. Gameplay randomness should use injected `RandomSource` streams from `RandomManager`, not direct `Math.random()`.
+17. New cross-system observers should subscribe to `GameEventBus` instead of wiring directly into `GameScene`, manager callbacks, or UI events.
+18. Achievements, milestones, quests, and unlock triggers should evaluate data-driven definitions and persist through `SaveManager.progression`.
+19. Unlock state should be owned by `UnlockManager`; content managers can query it but should not duplicate unlock rules.
+20. Relic-style rule changes should use `RelicManager` / `RelicEffect`, not passive upgrades or scene conditionals.
+21. Tutorial and guide prompts should use `TutorialManager` and `GameEventBus`, not `GameScene` conditionals.
+22. Daily, seeded, and custom challenges should use `ChallengeManager` and write through `SelectionManager`, not mutate gameplay systems directly.
+23. Future mod, local, and remote content sources should expose `ContentPackManifest` metadata and load through provider interfaces before validation and registration.
+24. Remote providers should remain adapters; they should not bypass `SaveManager`, `ContentRegistry`, validation, leaderboard keys, or compatibility checks.
+25. Developer/debug tooling should be opt-in and should not mutate gameplay state while collecting diagnostics.
+26. Foundation systems that are not fully active should be documented as foundation/planned rather than removed as dead code.
+27. Object pooling should start with low-risk visuals and move into gameplay-critical entities only after profiling and cleanup verification.
+28. Architecture boundary warnings should be handled by routing new code through existing managers/resolvers or by documenting intentional compatibility exceptions.
 
 ## Current Audit Snapshot
 

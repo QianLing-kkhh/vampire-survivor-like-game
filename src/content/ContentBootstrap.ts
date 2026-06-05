@@ -16,9 +16,19 @@ import { ContentRegistry } from './ContentRegistry';
 import { ContentValidator } from './ContentValidator';
 import { DEFAULT_CONTENT_IDS } from './ContentId';
 
-type CharacterJson = Record<string, CharacterDefinition['baseStats'] & {
+type CharacterJson = Record<string, Partial<CharacterDefinition['baseStats']> & {
   name?: string;
+  nameKey?: string;
+  descriptionKey?: string;
   startingWeaponId?: string;
+  skinId?: string;
+  initialStats?: CharacterDefinition['initialStats'];
+  growthPerLevel?: CharacterDefinition['growthPerLevel'];
+  levelUpEffect?: CharacterDefinition['levelUpEffect'];
+  damageReactionSkill?: CharacterDefinition['damageReactionSkill'];
+  exclusiveUpgradeIds?: string[];
+  exclusivePassiveIds?: string[];
+  exclusiveEvolutionRouteIds?: string[];
 }>;
 
 export class ContentBootstrap {
@@ -48,7 +58,7 @@ export class ContentBootstrap {
       waves: {
         [DEFAULT_CONTENT_IDS.waveSet]: waves,
       },
-      characters: this.charactersToRecord(characters),
+      characters: this.charactersToRecord(characters as CharacterJson),
       stages,
       maps,
     };
@@ -67,15 +77,32 @@ export class ContentBootstrap {
     const record: Record<string, CharacterDefinition> = {};
 
     for (const [id, character] of Object.entries(characterData)) {
+      const initialStats = character.initialStats ?? {
+        maxHp: character.maxHp ?? 100,
+        moveSpeed: character.moveSpeed ?? 120,
+        pickupRange: character.pickupRange ?? 2.2,
+        expMultiplier: character.expMultiplier ?? 1,
+      };
+
       record[id] = {
         id,
-        name: character.name ?? id,
+        name: character.name ?? character.nameKey ?? id,
+        nameKey: character.nameKey ?? `character.${id}.name`,
+        descriptionKey: character.descriptionKey ?? `character.${id}.description`,
         startingWeaponId: character.startingWeaponId ?? 'knife',
+        skinId: character.skinId,
+        initialStats,
+        growthPerLevel: character.growthPerLevel ?? {},
+        levelUpEffect: character.levelUpEffect,
+        damageReactionSkill: character.damageReactionSkill,
+        exclusiveUpgradeIds: character.exclusiveUpgradeIds ?? [],
+        exclusivePassiveIds: character.exclusivePassiveIds ?? [],
+        exclusiveEvolutionRouteIds: character.exclusiveEvolutionRouteIds ?? [],
         baseStats: {
-          maxHp: character.maxHp,
-          moveSpeed: character.moveSpeed,
-          pickupRange: character.pickupRange,
-          expMultiplier: character.expMultiplier,
+          maxHp: initialStats.maxHp,
+          moveSpeed: initialStats.moveSpeed,
+          pickupRange: initialStats.pickupRange,
+          expMultiplier: initialStats.expMultiplier ?? 1,
         },
       };
     }

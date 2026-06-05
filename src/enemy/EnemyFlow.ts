@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
+import { CharacterRuntime } from '../character/CharacterRuntime';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
@@ -34,9 +35,7 @@ export interface EnemyFlowConfig {
   worldHeight: number;
   playerHitRadius: number;
   contactDamageCooldownMs: number;
-  damageReactionRadius: number;
-  damageReactionDamage: number;
-  damageReactionKnockbackDistance: number;
+  characterRuntime?: CharacterRuntime;
   isBossPhaseActive(): boolean;
   onEnemyKilled?(event: GameEventMap['EnemyKilled']): void;
 }
@@ -147,6 +146,16 @@ export class EnemyFlow {
     },
   ): PlayerDamageResult {
     const incomingDamage = Math.max(0, damage);
+    const nowMs = this.config.scene.time.now;
+
+    if (incomingDamage > 0 && this.config.characterRuntime?.isDamageInvulnerable(nowMs)) {
+      return {
+        hit: false,
+        actualDamage: 0,
+        shieldAbsorbed: false,
+      };
+    }
+
     const shieldAbsorbed = incomingDamage > 0
       && EndlessRewardManager.consumeGlobalShieldStack(incomingDamage);
     const actualDamage = shieldAbsorbed
@@ -189,7 +198,7 @@ export class EnemyFlow {
       this.knockPlayerBack(options.knockbackDirection, options.knockbackDistance ?? 0);
     }
 
-    if ((actualDamage > 0 || shieldAbsorbed) && options?.triggerReaction !== false) {
+    if (actualDamage > 0 && options?.triggerReaction !== false) {
       this.triggerDamageReaction();
     }
 
@@ -321,63 +330,15 @@ export class EnemyFlow {
   }
 
   private triggerDamageReaction(): void {
-    this.showDamageReactionFeedback(
-      this.config.player.body.x,
-      this.config.player.body.y,
-    );
-
-    const hitResult = this.config.damageCalculator.calculateDamage(
-      this.config.damageReactionDamage,
-    );
-
-    for (const enemy of this.config.enemies) {
-      if (enemy.isDead || !this.isEnemyInDamageReactionRange(enemy)) {
-        continue;
-      }
-
-      enemy.takeDamage(hitResult);
-
-      if (enemy.isDead) {
-        enemy.destroy();
-        continue;
-      }
-
-      this.knockEnemyBack(enemy);
-    }
-  }
-
-  private isEnemyInDamageReactionRange(enemy: Enemy): boolean {
-    return Phaser.Math.Distance.Between(
-      this.config.player.body.x,
-      this.config.player.body.y,
-      enemy.body.x,
-      enemy.body.y,
-    ) <= this.config.damageReactionRadius;
-  }
-
-  private knockEnemyBack(enemy: Enemy): void {
-    const direction = new Phaser.Math.Vector2(
-      enemy.body.x - this.config.player.body.x,
-      enemy.body.y - this.config.player.body.y,
-    );
-
-    if (direction.lengthSq() === 0) {
-      direction.set(1, 0);
-    }
-
-    direction.normalize().scale(this.config.damageReactionKnockbackDistance);
-
-    const enemyRadius = this.getEnemyRadius(enemy);
-    enemy.body.x = Phaser.Math.Clamp(
-      enemy.body.x + direction.x,
-      enemyRadius,
-      this.config.worldWidth - enemyRadius,
-    );
-    enemy.body.y = Phaser.Math.Clamp(
-      enemy.body.y + direction.y,
-      enemyRadius,
-      this.config.worldHeight - enemyRadius,
-    );
+    this.config.characterRuntime?.tryTriggerDamageReaction({
+      scene: this.config.scene,
+      player: this.config.player,
+      enemies: this.config.enemies,
+      damageCalculator: this.config.damageCalculator,
+      worldWidth: this.config.worldWidth,
+      worldHeight: this.config.worldHeight,
+      nowMs: this.config.scene.time.now,
+    });
   }
 
   private getEnemyRadius(enemy: Enemy): number {
@@ -386,27 +347,4 @@ export class EnemyFlow {
     return body.radius ?? 12;
   }
 
-  private showDamageReactionFeedback(x: number, y: number): void {
-    const feedback = this.config.scene.add.circle(
-      x,
-      y,
-      this.config.damageReactionRadius,
-      0x60a5fa,
-      0.18,
-    );
-
-    feedback.setStrokeStyle(2, 0xbfdbfe, 0.8);
-    feedback.setDepth(25);
-
-    this.config.scene.tweens.add({
-      targets: feedback,
-      alpha: 0,
-      scaleX: 1.18,
-      scaleY: 1.18,
-      duration: 180,
-      onComplete: () => {
-        feedback.destroy();
-      },
-    });
-  }
 }

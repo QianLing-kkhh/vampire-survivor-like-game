@@ -9,6 +9,7 @@ import {
 import { BossFactory } from '../boss/BossFactory';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { CharacterManager } from '../character/CharacterManager';
+import { CharacterRuntime } from '../character/CharacterRuntime';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
@@ -99,9 +100,6 @@ export interface GameplayInitializerConfig {
   finalBossTimeSeconds: number;
   playerHitRadius: number;
   contactDamageCooldownMs: number;
-  damageReactionRadius: number;
-  damageReactionDamage: number;
-  damageReactionKnockbackDistance: number;
   bossDashHitRadius: number;
   bossDashImpactRadius: number;
   bossDashImpactDamage: number;
@@ -185,7 +183,8 @@ export class GameplayInitializer {
     const waveSet = selectedStageRuntime.customStagePackage
       ? this.toSpawnWaves(selectedStageRuntime.customStagePackage.waves)
       : ContentRegistry.getWaveSet(DEFAULT_CONTENT_IDS.waveSet) ?? [];
-    const playerStats = PlayerStats.fromConfig(selectedCharacter.baseStats);
+    const characterRuntime = new CharacterRuntime(selectedCharacter);
+    const playerStats = PlayerStats.fromConfig(characterRuntime.getBaseStats());
     const runStats = new RunStats(playerStats.maxHp);
     const weaponFactory = new WeaponFactory(config.scene, weaponConfigs);
     const weaponManager = new WeaponManager(runStats, weaponFactory);
@@ -369,9 +368,7 @@ export class GameplayInitializer {
       worldHeight: config.worldHeight,
       playerHitRadius: config.playerHitRadius,
       contactDamageCooldownMs: config.contactDamageCooldownMs,
-      damageReactionRadius: config.damageReactionRadius,
-      damageReactionDamage: config.damageReactionDamage,
-      damageReactionKnockbackDistance: config.damageReactionKnockbackDistance,
+      characterRuntime,
       isBossPhaseActive: () => bossController?.hasBossSpawned() === true,
       onEnemyKilled: (event) => bossController?.handleEnemyKilled(
         event,
@@ -420,8 +417,8 @@ export class GameplayInitializer {
       random: randomManager.getBossRandom(),
     });
 
-    weaponManager.addWeapon(weaponFactory.create(selectedCharacter.startingWeaponId));
-    this.syncPassiveEffects(passiveManager, weaponManager, treasureManager);
+    weaponManager.addWeapon(weaponFactory.create(characterRuntime.getStartingWeaponId()));
+    this.syncPassiveEffects(passiveManager, weaponManager, treasureManager, playerStats);
 
     return {
       scene: config.scene,
@@ -453,6 +450,7 @@ export class GameplayInitializer {
       replayRecorder,
       runRuleSet,
       relicManager,
+      characterRuntime,
       runState: config.runState,
       runStats,
       player,
@@ -487,12 +485,13 @@ export class GameplayInitializer {
     passiveManager: PassiveManager,
     weaponManager: WeaponManager,
     treasureManager: TreasureManager,
+    playerStats: PlayerStats,
   ): void {
     const effects = passiveManager.getEffects();
 
     weaponManager.setPassiveModifiers({
-      damageMultiplier: effects.damageMultiplier,
-      cooldownMultiplier: effects.cooldownMultiplier,
+      damageMultiplier: effects.damageMultiplier * playerStats.weaponDamageMultiplier,
+      cooldownMultiplier: effects.cooldownMultiplier * playerStats.cooldownMultiplier,
       projectileSpeedMultiplier: effects.projectileSpeedMultiplier,
     });
     treasureManager.setBonusDropChance(effects.treasureDropBonus);

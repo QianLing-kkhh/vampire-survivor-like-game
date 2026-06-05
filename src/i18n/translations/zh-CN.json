@@ -42,6 +42,24 @@
   "characterSelect": {
     "title": "角色选择"
   },
+  "character": {
+    "assassin": {
+      "name": "刺客",
+      "description": "以速度和刀刃取胜的高机动角色。"
+    },
+    "witch": {
+      "name": "魔女",
+      "description": "擅长追踪魔法和后期爆发的脆弱角色。"
+    },
+    "priest": {
+      "name": "牧师",
+      "description": "依靠圣书、防御和恢复稳定生存的角色。"
+    },
+    "warrior": {
+      "name": "战士",
+      "description": "高生命值、低机动但能承受压力的近战型角色。"
+    }
+  },
   "stageSelect": {
     "title": "关卡选择"
   },
