@@ -73,16 +73,17 @@ export class WorldRenderer {
 
   private renderLandmarks(): void {
     let landmarkIndex = 0;
+    const landmarkSpacing = this.getLandmarkSpacing();
 
     for (
-      let x = this.config.landmarkSpacing;
+      let x = landmarkSpacing;
       x < this.config.width;
-      x += this.config.landmarkSpacing
+      x += landmarkSpacing
     ) {
       for (
-        let y = this.config.landmarkSpacing;
+        let y = landmarkSpacing;
         y < this.config.height;
-        y += this.config.landmarkSpacing
+        y += landmarkSpacing
       ) {
         const type = this.getLandmarkType(landmarkIndex);
 
@@ -90,6 +91,12 @@ export class WorldRenderer {
         landmarkIndex += 1;
       }
     }
+  }
+
+  private getLandmarkSpacing(): number {
+    const density = Phaser.Math.Clamp(this.config.landmarkDensity ?? 1, 0.25, 3);
+
+    return Math.max(160, this.config.landmarkSpacing / density);
   }
 
   private getLandmarkType(index: number): LandmarkType {

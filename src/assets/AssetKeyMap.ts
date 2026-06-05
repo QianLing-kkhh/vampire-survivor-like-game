@@ -239,6 +239,14 @@ export const DEFAULT_ASSET_KEY_MAP = {
       primary: 'art_world_graveyard_ground_tile',
       fallbacks: ['art_world_ground_tile'],
     },
+    swamp_ground_tile: {
+      primary: 'art_world_swamp_ground_tile',
+      fallbacks: ['art_world_graveyard_ground_tile', 'art_world_ground_tile'],
+    },
+    ruins_ground_tile: {
+      primary: 'art_world_ruins_ground_tile',
+      fallbacks: ['art_world_ground_tile'],
+    },
   },
   effects: {
     hit_flash: {

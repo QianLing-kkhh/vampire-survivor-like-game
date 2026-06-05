@@ -47,6 +47,20 @@ export const BUILT_IN_UNLOCKS: UnlockDefinition[] = [
     defaultUnlocked: true,
   },
   {
+    id: 'unlock_stage_swamp_marsh_stage',
+    type: 'stage',
+    targetId: 'swamp_marsh_stage',
+    nameKey: 'unlock.stage.swamp_marsh_stage.name',
+    defaultUnlocked: true,
+  },
+  {
+    id: 'unlock_stage_ruined_gate_stage',
+    type: 'stage',
+    targetId: 'ruined_gate_stage',
+    nameKey: 'unlock.stage.ruined_gate_stage.name',
+    defaultUnlocked: true,
+  },
+  {
     id: 'unlock_map_prototype_field',
     type: 'map',
     targetId: DEFAULT_CONTENT_IDS.map,
@@ -58,6 +72,20 @@ export const BUILT_IN_UNLOCKS: UnlockDefinition[] = [
     type: 'map',
     targetId: 'graveyard_map',
     nameKey: 'unlock.map.graveyard_map.name',
+    defaultUnlocked: true,
+  },
+  {
+    id: 'unlock_map_swamp_marsh_map',
+    type: 'map',
+    targetId: 'swamp_marsh_map',
+    nameKey: 'unlock.map.swamp_marsh_map.name',
+    defaultUnlocked: true,
+  },
+  {
+    id: 'unlock_map_ruined_gate_map',
+    type: 'map',
+    targetId: 'ruined_gate_map',
+    nameKey: 'unlock.map.ruined_gate_map.name',
     defaultUnlocked: true,
   },
   {

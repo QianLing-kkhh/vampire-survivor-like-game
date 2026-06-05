@@ -12,6 +12,8 @@ export interface MapDefinition {
     gridColor?: number;
     gridAlpha?: number;
     groundTileKey?: string;
+    landmarkDensity?: number;
+    themeId?: string;
     landmarkWeights?: {
       tree?: number;
       rock?: number;

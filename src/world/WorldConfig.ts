@@ -14,5 +14,7 @@ export interface WorldRenderConfig {
   gridColor?: number;
   gridAlpha?: number;
   groundTileKey?: string;
+  landmarkDensity?: number;
+  themeId?: string;
   landmarkWeights?: Partial<Record<'tree' | 'rock' | 'grave', number>>;
 }
