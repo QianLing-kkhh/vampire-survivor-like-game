@@ -251,6 +251,8 @@ export class EnemyFlow {
   private updateEnemyMovement(deltaMs: number): void {
     const enemySpeedMultiplier = EndlessRewardManager.getGlobalEnemySpeedMultiplier();
 
+    this.config.enemyMovement.prepareFrame(this.config.enemies);
+
     for (const enemy of this.config.enemies) {
       enemy.updateModifiers(deltaMs);
 

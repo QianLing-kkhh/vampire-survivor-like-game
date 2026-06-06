@@ -147,6 +147,11 @@ export class PerformanceMonitor {
       bossCount: this.stats.activeBossCount ?? 0,
       activeSlowZones: this.stats.slowZoneCount ?? 0,
       renderObjectEstimate: this.stats.totalRenderableWorldObjects ?? 0,
+      shadowCountEstimate: this.stats.shadowCountEstimate ?? 0,
+      separationCandidateChecks: this.stats.separationCandidateChecks ?? 0,
+      separationTrackedEnemyCount: this.stats.separationTrackedEnemyCount ?? 0,
+      separationBucketCount: this.stats.separationBucketCount ?? 0,
+      weaponEnemyScanEstimate: this.stats.weaponEnemyScanEstimate ?? 0,
       spawnAccumulatorSummary: this.stats.spawnAccumulatorSummary ?? '',
     });
   }

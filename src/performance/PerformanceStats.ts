@@ -25,6 +25,11 @@ export interface PerformanceStats {
   mapMechanicVisualCount?: number;
   slowZoneCount?: number;
   totalRenderableWorldObjects?: number;
+  shadowCountEstimate?: number;
+  separationCandidateChecks?: number;
+  separationTrackedEnemyCount?: number;
+  separationBucketCount?: number;
+  weaponEnemyScanEstimate?: number;
   spawnAccumulatorSummary?: string;
   spawnClampCount?: number;
   pooledObjectCount?: number;

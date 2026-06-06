@@ -128,10 +128,17 @@ export class GameplayUpdater {
     const spawnStats = context.spawnDirector.getDebugStats();
     const endlessStats = context.endlessManager.getDebugStats();
     const mapMechanicStats = context.mapMechanicRuntime.getDebugStats();
+    const enemyMovementStats = context.enemyMovement.getDebugStats();
     const spawnClampCount = spawnStats.spawnClampCount + endlessStats.spawnClampCount;
     const pickupCount = pickupStats.activeCount;
     const treasureCount = context.treasureManager.getActiveCount();
     const floatingTextCount = floatingTextPoolStats.activeCount;
+    const shadowCountEstimate = activeEnemies.length
+      + pickupCount
+      + treasureCount
+      + projectileCount
+      + 1;
+    const weaponEnemyScanEstimate = activeEnemies.length * Math.max(1, projectileCount + 3);
     const totalRenderableWorldObjects = activeEnemies.length
       + projectileCount
       + pickupCount
@@ -165,6 +172,11 @@ export class GameplayUpdater {
       mapMechanicVisualCount: mapMechanicStats.visualCount,
       slowZoneCount: mapMechanicStats.slowZoneCount,
       totalRenderableWorldObjects,
+      shadowCountEstimate,
+      separationCandidateChecks: enemyMovementStats.separationCandidateChecks,
+      separationTrackedEnemyCount: enemyMovementStats.separationTrackedEnemyCount,
+      separationBucketCount: enemyMovementStats.separationBucketCount,
+      weaponEnemyScanEstimate,
       spawnAccumulatorSummary: [
         `wave=${Math.round(spawnStats.maxAccumulatorMs)}ms`,
         `endless=${Math.round(endlessStats.maxAccumulatorMs)}ms`,

@@ -45,7 +45,7 @@ export interface EndlessManagerConfig {
 export class EndlessManager {
   private static readonly SAFE_SPAWN_RADIUS = 500;
   private static readonly SPAWN_MARGIN = 120;
-  private static readonly MAX_ENEMIES = 250;
+  private static readonly MAX_ENEMIES = 200;
   private static readonly MAX_SPAWN_BATCHES_PER_FRAME = 10;
   private static readonly TIERS: EndlessTier[] = [
     {
