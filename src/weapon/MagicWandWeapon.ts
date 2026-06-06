@@ -115,7 +115,15 @@ export class MagicWandWeapon extends Weapon {
         continue;
       }
 
+      const previousX = projectile.body.x;
+      const previousY = projectile.body.y;
+
       this.moveProjectile(projectile, context.deltaMs);
+
+      if (this.isProjectileBlocked(projectile, context, previousX, previousY)) {
+        this.destroyProjectile(index);
+        continue;
+      }
 
       if (!this.isProjectileTouchingTarget(projectile)) {
         continue;
@@ -124,6 +132,7 @@ export class MagicWandWeapon extends Weapon {
       const actualDamage = projectile.target.takeDamage(this.createHitResult(projectile.target));
 
       this.recordEnemyHit(projectile.target, actualDamage);
+      this.applyWitchSlowBonusHit(projectile, context, actualDamage);
       this.applyWeaponKnockback(
         projectile.target,
         new Phaser.Math.Vector2(
@@ -165,6 +174,21 @@ export class MagicWandWeapon extends Weapon {
       projectile.target.body.x,
       projectile.target.body.y,
     ) <= MagicWandWeapon.HIT_DISTANCE;
+  }
+
+  private isProjectileBlocked(
+    projectile: MagicProjectile,
+    context: WeaponUpdateContext,
+    previousX: number,
+    previousY: number,
+  ): boolean {
+    return context.isProjectilePathBlocked?.(
+      previousX,
+      previousY,
+      projectile.body.x,
+      projectile.body.y,
+      VisualScale.getProjectileDisplaySize(this.id) / 2,
+    ) ?? false;
   }
 
   getProjectileCount(): number {
@@ -257,6 +281,51 @@ export class MagicWandWeapon extends Weapon {
         enemy.destroy();
       }
     }
+  }
+
+  private applyWitchSlowBonusHit(
+    projectile: MagicProjectile,
+    context: WeaponUpdateContext,
+    primaryDamage: number,
+  ): void {
+    if (
+      this.id !== 'magic_wand'
+      || primaryDamage <= 0
+      || context.characterRuntime?.getCharacterId() !== 'witch'
+      || this.isBossLike(projectile.target)
+      || context.characterRuntime.getEnemySpeedMultiplierAt(
+        projectile.target.body.x,
+        projectile.target.body.y,
+      ) >= 1
+    ) {
+      return;
+    }
+
+    const actualDamage = projectile.target.takeDamage(
+      this.createHitResultFromDamage(primaryDamage * 0.22, projectile.target),
+    );
+
+    this.recordEnemyHit(projectile.target, actualDamage);
+    this.showWitchBonusFeedback(projectile.target.body.x, projectile.target.body.y);
+  }
+
+  private showWitchBonusFeedback(x: number, y: number): void {
+    const feedback = this.scene.add.circle(x, y, 22, 0xa78bfa, 0.14);
+
+    feedback.setStrokeStyle(2, 0xddd6fe, 0.6);
+    feedback.setDepth(27);
+    this.scene.tweens.add({
+      targets: feedback,
+      alpha: 0,
+      scaleX: 1.45,
+      scaleY: 1.45,
+      duration: 150,
+      onComplete: () => feedback.destroy(),
+    });
+  }
+
+  private isBossLike(enemy: Enemy): boolean {
+    return enemy.bossLike || enemy.id === 'boss' || enemy.id.startsWith('endless_');
   }
 
   private showExplosionFeedback(x: number, y: number, radius: number): void {

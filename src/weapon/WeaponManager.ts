@@ -1,10 +1,12 @@
 import { Enemy } from '../enemy/Enemy';
+import { CharacterRuntime } from '../character/CharacterRuntime';
+import type { AutoWeaponSnapshot, WeaponAutoContext } from '../auto/AutoPlayer';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerCombatModifierSnapshot } from '../player/PlayerStats';
 import { RunStats } from '../stats/RunStats';
 
 import { DamageCalculator } from '../combat/DamageCalculator';
-import { Weapon, WeaponConfig } from './Weapon';
+import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
 import { WeaponFactory } from './WeaponFactory';
 import { WeaponTag } from './tags/WeaponTag';
 
@@ -68,12 +70,6 @@ export interface WeaponDetailInfo {
     hits: number;
     kills: number;
   };
-}
-
-export interface WeaponAutoContext {
-  weaponIds: string[];
-  garlicRadiusPx?: number;
-  bibleRadiusPx?: number;
 }
 
 export interface WeaponCharacterStatModifiers {
@@ -399,11 +395,27 @@ export class WeaponManager {
   getAutoWeaponContext(): WeaponAutoContext {
     const garlicRadius = this.getWeaponStat('garlic', 'radius');
     const bibleRadius = this.getWeaponStat('bible', 'radius');
+    const weapons: AutoWeaponSnapshot[] = this.weapons.map((weapon) => {
+      const baseWeaponId = this.getBaseWeaponId(weapon.id);
+      const radius = this.getWeaponStat(baseWeaponId, 'radius');
+      const projectileSpeed = this.getWeaponStat(baseWeaponId, 'projectileSpeed');
+
+      return {
+        weaponId: weapon.id,
+        baseWeaponId,
+        level: this.getWeaponUpgradeTotal(baseWeaponId),
+        maxLevel: this.getWeaponUpgradeLimit(baseWeaponId),
+        tags: this.getWeaponTags(weapon.id),
+        radiusPx: radius === undefined ? undefined : radius * 48,
+        rangePx: projectileSpeed === undefined ? undefined : projectileSpeed * 48,
+      };
+    });
 
     return {
       weaponIds: this.getWeaponIds(),
       garlicRadiusPx: garlicRadius === undefined ? undefined : garlicRadius * 48,
       bibleRadiusPx: bibleRadius === undefined ? undefined : bibleRadius * 48,
+      weapons,
     };
   }
 
@@ -549,7 +561,13 @@ export class WeaponManager {
     return true;
   }
 
-  update(player: PlayerController, enemies: readonly Enemy[], deltaMs: number): void {
+  update(
+    player: PlayerController,
+    enemies: readonly Enemy[],
+    deltaMs: number,
+    characterRuntime?: CharacterRuntime,
+    isProjectilePathBlocked?: WeaponUpdateContext['isProjectilePathBlocked'],
+  ): void {
     this.refreshEndlessDamageMultiplier();
     const activeEnemies = enemies.filter((enemy) => !enemy.isDead);
 
@@ -558,6 +576,8 @@ export class WeaponManager {
         player: player.body,
         enemies: activeEnemies,
         deltaMs,
+        characterRuntime,
+        isProjectilePathBlocked,
       });
     }
   }

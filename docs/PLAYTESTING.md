@@ -68,14 +68,26 @@ Stage selection can be set to `random_unlocked_stage`. In that mode each new run
 
 ## Auto Player Behavior
 
+Auto Movement uses a candidate-direction scoring strategy. Each update compares several possible movement directions and chooses the one that best balances survival, collection value, weapon positioning, map navigation, and the current character state.
+
 The auto player attempts to:
 
-- Avoid nearby enemies.
-- Move toward EXP gem clusters when safe.
-- Prefer nearby pickups using effective pickup distance.
-- Move toward treasure chests when safe.
-- Stay within map boundaries.
-- Adjust movement strategy based on danger level and weapon behavior.
+- Avoid enemy pressure, with Boss-like enemies treated as more dangerous than ordinary enemies.
+- Weigh enemy pressure by distance, direction, enemy strength, and the player's current HP state.
+- Prefer treasure chests over ordinary pickups when the route is safe enough.
+- Prefer nearby pickups using effective pickup distance, where pickup range reduces the distance that still needs to be traveled.
+- Prefer dense pickup clusters over isolated pickups when safety is comparable.
+- Avoid chasing dangerous pickups while low on HP.
+- Use weapon characteristics to choose positioning: projectile weapons favor spacing and lateral movement, aura weapons can tolerate closer spacing when safe, orbit weapons favor circling enemy edges, and homing or magic weapons allow more survival-focused movement.
+- Increase the influence of a weapon's movement preference as that weapon route becomes more developed.
+- Use character context, including damage reaction identity, current HP, movement speed, pickup range, and level-scaled base stats.
+- Treat low HP as a reason to prioritize survival, safe routes, and boundary safety over risky collection.
+- Use map mechanics when choosing routes, including obstacles, slow zones, and portals.
+- Route around blocking obstacles when a valuable pickup or treasure chest is on the other side instead of repeatedly moving into the obstacle.
+- Approach border-adjacent high-value pickups from a safer interior point when possible, instead of oscillating between chasing the pickup and being pushed away from the boundary.
+- Consider portals only when the destination is safer or strategically useful.
+- Use slow zones cautiously when they slow the player, and more favorably when they help kite enemies.
+- Stay within map boundaries without letting boundary correction override every valuable pickup decision.
 
 The auto player is intended for balance testing, not perfect play.
 

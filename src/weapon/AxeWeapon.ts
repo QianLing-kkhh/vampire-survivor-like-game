@@ -29,7 +29,6 @@ interface AxeProjectile {
   startX: number;
   startY: number;
   direction: Phaser.Math.Vector2;
-  perpendicularDirection: Phaser.Math.Vector2;
   previousX: number;
   previousY: number;
   ageMs: number;
@@ -46,6 +45,7 @@ export class AxeWeapon extends Weapon {
   private static readonly DEATH_SPIRAL_TURNS = 3.0;
   private static readonly DEATH_SPIRAL_MAX_SPIRAL_RADIUS = 110;
   private static readonly DEATH_SPIRAL_ACCELERATION = 280;
+  private static readonly PROJECTILE_ROTATION_STEP = 0.18;
 
   private readonly projectiles: AxeProjectile[] = [];
   private readonly hitRadius: number;
@@ -90,7 +90,7 @@ export class AxeWeapon extends Weapon {
 
     switch (upgradeId) {
       case 'axe_damage_up':
-        this.increaseDamage(0.1);
+        this.increaseDamage(0.092);
         return true;
       case 'axe_cooldown_up':
         this.reduceCooldown(0.1, 0.6);
@@ -129,7 +129,9 @@ export class AxeWeapon extends Weapon {
 
     baseDirection.normalize();
 
-    for (const direction of this.getProjectileDirections(baseDirection)) {
+    const projectileDirections = this.getProjectileDirections(baseDirection);
+
+    for (const direction of projectileDirections) {
       const body = this.createProjectileBody(context.player.x, context.player.y);
       const shadow = ShadowFactory.createShadow(
         this.scene,
@@ -143,7 +145,6 @@ export class AxeWeapon extends Weapon {
         startX: context.player.x,
         startY: context.player.y,
         direction,
-        perpendicularDirection: new Phaser.Math.Vector2(-direction.y, direction.x),
         previousX: body.x,
         previousY: body.y,
         ageMs: 0,
@@ -162,6 +163,12 @@ export class AxeWeapon extends Weapon {
 
       projectile.ageMs += context.deltaMs;
       this.moveProjectile(projectile);
+
+      if (this.isProjectileBlocked(projectile, context)) {
+        this.destroyProjectile(index);
+        continue;
+      }
+
       this.checkProjectileHits(projectile, context.enemies, context.deltaMs);
 
       if (projectile.ageMs < this.lifetimeMs) {
@@ -172,6 +179,24 @@ export class AxeWeapon extends Weapon {
       projectile.body.destroy();
       this.projectiles.splice(index, 1);
     }
+  }
+
+  private destroyProjectile(index: number): void {
+    const projectile = this.projectiles[index];
+
+    ShadowFactory.destroyShadow(projectile.shadow);
+    projectile.body.destroy();
+    this.projectiles.splice(index, 1);
+  }
+
+  private isProjectileBlocked(projectile: AxeProjectile, context: WeaponUpdateContext): boolean {
+    return context.isProjectilePathBlocked?.(
+      projectile.previousX,
+      projectile.previousY,
+      projectile.body.x,
+      projectile.body.y,
+      VisualScale.getProjectileDisplaySize(this.id) / 2,
+    ) ?? false;
   }
 
   private moveProjectile(projectile: AxeProjectile): void {
@@ -187,19 +212,28 @@ export class AxeWeapon extends Weapon {
     const maxSpiralRadius = behavior?.maxSpiralRadius ?? (this.id === 'death_spiral'
       ? AxeWeapon.DEATH_SPIRAL_MAX_SPIRAL_RADIUS
       : AxeWeapon.AXE_MAX_SPIRAL_RADIUS);
-    const travelDistance = this.modifiedProjectileSpeed * elapsedSeconds
-      + 0.5 * acceleration * elapsedSeconds * elapsedSeconds;
-    const spiralRadius = maxSpiralRadius * progress;
-    const spiralOffset = Math.sin(progress * spiralTurns * Math.PI * 2) * spiralRadius;
+    const launchProgress = 0.18;
+    const launchSeconds = this.lifetimeMs / 1000 * launchProgress;
+    const launchDistance = this.modifiedProjectileSpeed * launchSeconds
+      + 0.5 * acceleration * launchSeconds * launchSeconds;
+    const baseAngle = Math.atan2(projectile.direction.y, projectile.direction.x);
+    const spiralProgress = Math.max(0, (progress - launchProgress) / (1 - launchProgress));
+    const spiralSeconds = Math.max(0, elapsedSeconds - launchSeconds);
+    const spiralDistanceGrowth = this.modifiedProjectileSpeed * spiralSeconds
+      + 0.5 * acceleration * spiralSeconds * spiralSeconds;
+    const travelDistance = progress <= launchProgress
+      ? this.modifiedProjectileSpeed * elapsedSeconds
+        + 0.5 * acceleration * elapsedSeconds * elapsedSeconds
+      : launchDistance + spiralDistanceGrowth + maxSpiralRadius * spiralProgress;
+    const travelAngle = progress <= launchProgress
+      ? baseAngle
+      : baseAngle + spiralProgress * spiralTurns * Math.PI * 2;
 
     projectile.previousX = projectile.body.x;
     projectile.previousY = projectile.body.y;
-    projectile.body.x = projectile.startX + projectile.direction.x * travelDistance;
-    projectile.body.y = projectile.startY
-      + projectile.direction.y * travelDistance;
-    projectile.body.x += projectile.perpendicularDirection.x * spiralOffset;
-    projectile.body.y += projectile.perpendicularDirection.y * spiralOffset;
-    projectile.body.rotation += 0.28;
+    projectile.body.x = projectile.startX + Math.cos(travelAngle) * travelDistance;
+    projectile.body.y = projectile.startY + Math.sin(travelAngle) * travelDistance;
+    projectile.body.rotation += AxeWeapon.PROJECTILE_ROTATION_STEP;
     projectile.shadow = projectile.shadow
       ? ShadowFactory.updateShadow(
         projectile.shadow,

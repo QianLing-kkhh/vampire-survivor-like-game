@@ -16,10 +16,10 @@ type PickupBody = Phaser.GameObjects.GameObject & {
 };
 
 export class Pickup {
-  private static readonly INITIAL_MAGNET_SPEED = 260;
-  private static readonly MAX_MAGNET_SPEED = 900;
+  private static readonly INITIAL_MAGNET_SPEED = 78;
+  private static readonly MAX_MAGNET_SPEED = 270;
   private static readonly COLLECT_DISTANCE = 18;
-  private static readonly MAGNET_ACCELERATION_FACTOR = 60000;
+  private static readonly MAGNET_ACCELERATION_FACTOR = 18000;
 
   readonly body: PickupBody;
   isMagnetizing = false;

@@ -71,7 +71,27 @@ export class GameplayUpdater {
       return;
     }
 
-    context.weaponManager.update(context.player, context.enemies, effectiveDelta);
+    context.weaponManager.update(
+      context.player,
+      context.enemies,
+      effectiveDelta,
+      context.characterRuntime,
+      (
+        startX: number,
+        startY: number,
+        endX: number,
+        endY: number,
+        projectileRadius: number | undefined,
+      ) => (
+        context.mapMechanicRuntime.isProjectilePathBlocked(
+          startX,
+          startY,
+          endX,
+          endY,
+          projectileRadius,
+        )
+      ),
+    );
 
     this.updateEndlessState(context, effectiveDelta, false);
 
@@ -80,8 +100,11 @@ export class GameplayUpdater {
       return;
     }
 
-    context.pickupManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
-    context.treasureManager.update(context.player.body, context.playerPickupRange, effectiveDelta);
+    const effectivePickupRange = context.playerPickupRange
+      * context.characterRuntime.getPickupRangeMultiplier();
+
+    context.pickupManager.update(context.player.body, effectivePickupRange, effectiveDelta);
+    context.treasureManager.update(context.player.body, effectivePickupRange, effectiveDelta);
     context.floatingTextManager.update(effectiveDelta);
     this.updatePerformanceCounts(context, options.deltaMs, configuredTimeScale);
     callbacks.emitHUDState();

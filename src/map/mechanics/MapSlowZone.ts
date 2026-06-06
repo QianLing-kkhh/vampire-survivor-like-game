@@ -6,6 +6,7 @@ import { MapMechanicVisualRenderer } from '../../world/MapMechanicVisualRenderer
 import { MapMechanicContext } from './MapMechanicContext';
 import { MapInteractable } from './MapInteractable';
 import { MapSlowZoneDefinition } from './MapMechanicDefinition';
+import type { AutoSlowZoneSnapshot } from '../../auto/AutoPlayer';
 
 export class MapSlowZone implements MapInteractable {
   readonly id: string;
@@ -57,6 +58,20 @@ export class MapSlowZone implements MapInteractable {
     return this.contains(x, y)
       ? Math.max(0, this.definition.enemySpeedMultiplier)
       : 1;
+  }
+
+  getAutoSlowZoneSnapshot(): AutoSlowZoneSnapshot {
+    return {
+      id: this.id,
+      x: this.definition.x,
+      y: this.definition.y,
+      width: this.width,
+      height: this.height,
+      radius: this.radius,
+      shape: this.shape,
+      playerSpeedMultiplier: Math.max(0, this.definition.playerSpeedMultiplier),
+      enemySpeedMultiplier: Math.max(0, this.definition.enemySpeedMultiplier),
+    };
   }
 
   private contains(x: number, y: number): boolean {

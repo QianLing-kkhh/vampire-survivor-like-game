@@ -57,6 +57,91 @@
       "file": "ui_click.wav",
       "event_key": "ui_click",
       "github_path": "public/assets/audio/ui_click.wav"
+    },
+    {
+      "file": "ui/ui_hover.wav",
+      "event_key": "ui_hover",
+      "github_path": "public/assets/audio/ui/ui_hover.wav"
+    },
+    {
+      "file": "ui/ui_back.wav",
+      "event_key": "ui_back",
+      "github_path": "public/assets/audio/ui/ui_back.wav"
+    },
+    {
+      "file": "ui/ui_confirm.wav",
+      "event_key": "ui_confirm",
+      "github_path": "public/assets/audio/ui/ui_confirm.wav"
+    },
+    {
+      "file": "bgm/title_bgm.wav",
+      "event_key": "title_bgm",
+      "github_path": "public/assets/audio/bgm/title_bgm.wav"
+    },
+    {
+      "file": "bgm/gameplay_bgm.wav",
+      "event_key": "gameplay_bgm",
+      "github_path": "public/assets/audio/bgm/gameplay_bgm.wav"
+    },
+    {
+      "file": "bgm/boss_bgm.wav",
+      "event_key": "boss_bgm",
+      "github_path": "public/assets/audio/bgm/boss_bgm.wav"
+    },
+    {
+      "file": "bgm/result_bgm.wav",
+      "event_key": "result_bgm",
+      "github_path": "public/assets/audio/bgm/result_bgm.wav"
+    },
+    {
+      "file": "weapon/knife_attack.wav",
+      "event_key": "knife_attack",
+      "github_path": "public/assets/audio/weapon/knife_attack.wav"
+    },
+    {
+      "file": "weapon/axe_throw.wav",
+      "event_key": "axe_throw",
+      "github_path": "public/assets/audio/weapon/axe_throw.wav"
+    },
+    {
+      "file": "weapon/magic_wand_shot.wav",
+      "event_key": "magic_wand_shot",
+      "github_path": "public/assets/audio/weapon/magic_wand_shot.wav"
+    },
+    {
+      "file": "weapon/bible_orbit_hit.wav",
+      "event_key": "bible_orbit_hit",
+      "github_path": "public/assets/audio/weapon/bible_orbit_hit.wav"
+    },
+    {
+      "file": "weapon/garlic_aura_tick.wav",
+      "event_key": "garlic_aura_tick",
+      "github_path": "public/assets/audio/weapon/garlic_aura_tick.wav"
+    },
+    {
+      "file": "weapon/thousand_edge_attack.wav",
+      "event_key": "thousand_edge_attack",
+      "github_path": "public/assets/audio/weapon/thousand_edge_attack.wav"
+    },
+    {
+      "file": "weapon/holy_wand_shot.wav",
+      "event_key": "holy_wand_shot",
+      "github_path": "public/assets/audio/weapon/holy_wand_shot.wav"
+    },
+    {
+      "file": "weapon/death_spiral_throw.wav",
+      "event_key": "death_spiral_throw",
+      "github_path": "public/assets/audio/weapon/death_spiral_throw.wav"
+    },
+    {
+      "file": "weapon/unholy_vespers_hit.wav",
+      "event_key": "unholy_vespers_hit",
+      "github_path": "public/assets/audio/weapon/unholy_vespers_hit.wav"
+    },
+    {
+      "file": "weapon/soul_eater_tick.wav",
+      "event_key": "soul_eater_tick",
+      "github_path": "public/assets/audio/weapon/soul_eater_tick.wav"
     }
   ]
 }

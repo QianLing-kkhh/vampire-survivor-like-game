@@ -178,6 +178,12 @@ export class ProjectileWeapon extends Weapon {
     for (let index = this.projectiles.length - 1; index >= 0; index -= 1) {
       const projectile = this.projectiles[index];
 
+      if (this.isProjectileBlocked(projectile, context)) {
+        projectile.body.destroy();
+        this.projectiles.splice(index, 1);
+        continue;
+      }
+
       const hitEnemy = this.findHitEnemy(projectile, context.enemies);
 
       if (hitEnemy) {
@@ -218,6 +224,16 @@ export class ProjectileWeapon extends Weapon {
       projectile.body.destroy();
       this.projectiles.splice(index, 1);
     }
+  }
+
+  private isProjectileBlocked(projectile: Projectile, context: WeaponUpdateContext): boolean {
+    return context.isProjectilePathBlocked?.(
+      projectile.previousX,
+      projectile.previousY,
+      projectile.body.x,
+      projectile.body.y,
+      VisualScale.getProjectileDisplaySize(this.id) / 2,
+    ) ?? false;
   }
 
   private findHitEnemy(

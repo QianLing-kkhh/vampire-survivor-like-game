@@ -45,7 +45,7 @@ export class AuraWeapon extends Weapon {
         return true;
       case 'garlic_radius_up':
         this.increaseRadius(0.1);
-        this.radius = Math.min(this.radius, 4.0);
+        this.radius = Math.min(this.radius, 6.0);
         this.auraBody?.setRadius(this.radiusPixels);
         return true;
       default:
@@ -64,6 +64,7 @@ export class AuraWeapon extends Weapon {
       const actualDamage = enemy.takeDamage(this.createAuraHitResult(enemy));
 
       this.recordEnemyHit(enemy, actualDamage);
+      this.applyAuraKnockback(context, enemy);
 
       if (enemy.isDead) {
         enemy.body.destroy();
@@ -175,5 +176,22 @@ export class AuraWeapon extends Weapon {
     return this.config.behavior?.type === 'aura'
       ? this.config.behavior
       : undefined;
+  }
+
+  private applyAuraKnockback(context: WeaponUpdateContext, enemy: Enemy): void {
+    if (!this.getAuraBehavior()?.knockback) {
+      return;
+    }
+
+    const direction = new Phaser.Math.Vector2(
+      enemy.body.x - context.player.x,
+      enemy.body.y - context.player.y,
+    );
+
+    if (direction.lengthSq() === 0) {
+      direction.set(1, 0);
+    }
+
+    this.applyWeaponKnockback(enemy, direction, 0, 0.45);
   }
 }

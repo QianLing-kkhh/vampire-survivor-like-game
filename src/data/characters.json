@@ -40,6 +40,8 @@
       "invulnerableMs": 1200,
       "moveSpeedMultiplier": 1.5,
       "speedBuffMs": 1200,
+      "recoveryMs": 900,
+      "recoveryPickupRangeMultiplier": 0.75,
       "cooldownMs": 10000
     },
     "exclusiveUpgradeIds": [],
@@ -82,11 +84,13 @@
     "damageReactionSkill": {
       "type": "slowTrail",
       "cooldownMs": 12000,
-      "trailDurationMs": 3000,
+      "trailDurationMs": 9000,
       "tickIntervalMs": 200,
       "zoneRadius": 90,
-      "zoneDurationMs": 3000,
-      "enemySpeedMultiplier": 0.5
+      "zoneDurationMs": 9000,
+      "enemySpeedMultiplier": 0.25,
+      "pickupRangeMultiplier": 20,
+      "pickupRangeDurationMs": 1000
     },
     "exclusiveUpgradeIds": [],
     "exclusivePassiveIds": [],
@@ -131,7 +135,7 @@
       "knockbackDistance": 120,
       "healAmount": 10,
       "shieldStacks": 1,
-      "zoneDurationMs": 1200
+      "zoneDurationMs": 1800
     },
     "exclusiveUpgradeIds": [],
     "exclusivePassiveIds": [],
@@ -173,9 +177,9 @@
     "damageReactionSkill": {
       "type": "ironCounter",
       "cooldownMs": 10000,
-      "radius": 150,
-      "damage": 15,
-      "knockbackDistance": 150,
+      "radius": 165,
+      "damage": 16,
+      "knockbackDistance": 180,
       "damageReductionMultiplier": 0.65,
       "damageReductionDurationMs": 2500,
       "zoneDurationMs": 500

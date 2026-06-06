@@ -5,6 +5,7 @@ import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
+import { OrbitBehaviorConfig } from './behavior/WeaponBehaviorConfig';
 
 type OrbitProjectileBody = Phaser.GameObjects.GameObject & {
   x: number;
@@ -24,11 +25,14 @@ interface OrbitProjectile {
 }
 
 export class OrbitWeapon extends Weapon {
+  private static readonly PROJECTILE_ROTATION_RADIANS_PER_SECOND = 3;
+
   private readonly projectiles: OrbitProjectile[] = [];
   private readonly hitCooldowns = new Map<Enemy, number>();
   private orbitSpeedDegreesPerSecond: number;
   private orbitProjectileCount: number;
   private readonly hitRadius: number;
+  private orbitRadiusElapsedMs = 0;
 
   constructor(scene: Phaser.Scene, id: string, config: WeaponConfig) {
     super(scene, id, config);
@@ -93,14 +97,16 @@ export class OrbitWeapon extends Weapon {
       return;
     }
 
+    const currentRadiusPixels = this.currentRadiusPixels;
+
     for (let index = 0; index < this.orbitCount; index += 1) {
       const angleDeg = (360 / this.orbitCount) * index;
       const angleRad = Phaser.Math.DegToRad(angleDeg);
 
       this.projectiles.push({
         body: this.createProjectileBody(
-          context.player.x + Math.cos(angleRad) * this.radiusPixels,
-          context.player.y + Math.sin(angleRad) * this.radiusPixels,
+          context.player.x + Math.cos(angleRad) * currentRadiusPixels,
+          context.player.y + Math.sin(angleRad) * currentRadiusPixels,
         ),
         angleDeg,
       });
@@ -123,13 +129,17 @@ export class OrbitWeapon extends Weapon {
   private updateProjectiles(context: WeaponUpdateContext): void {
     const deltaSeconds = context.deltaMs / 1000;
 
+    this.orbitRadiusElapsedMs += Math.max(0, context.deltaMs);
+    const currentRadiusPixels = this.currentRadiusPixels;
+
     for (const projectile of this.projectiles) {
       projectile.angleDeg += this.orbitSpeedDegreesPerSecond * deltaSeconds;
 
       const angleRad = Phaser.Math.DegToRad(projectile.angleDeg);
-      projectile.body.x = context.player.x + Math.cos(angleRad) * this.radiusPixels;
-      projectile.body.y = context.player.y + Math.sin(angleRad) * this.radiusPixels;
-      projectile.body.rotation = (projectile.body.rotation ?? 0) + deltaSeconds * 4;
+      projectile.body.x = context.player.x + Math.cos(angleRad) * currentRadiusPixels;
+      projectile.body.y = context.player.y + Math.sin(angleRad) * currentRadiusPixels;
+      projectile.body.rotation = (projectile.body.rotation ?? 0)
+        + deltaSeconds * OrbitWeapon.PROJECTILE_ROTATION_RADIANS_PER_SECOND;
     }
   }
 
@@ -152,7 +162,7 @@ export class OrbitWeapon extends Weapon {
           enemy.body.x - context.player.x,
           enemy.body.y - context.player.y,
         ),
-        Phaser.Math.DegToRad(this.orbitSpeedDegreesPerSecond) * this.radiusPixels,
+        Phaser.Math.DegToRad(this.orbitSpeedDegreesPerSecond) * this.currentRadiusPixels,
       );
       this.hitCooldowns.set(enemy, this.cooldownMs);
 
@@ -175,6 +185,10 @@ export class OrbitWeapon extends Weapon {
 
   private get radiusPixels(): number {
     return (this.radius || 3) * 48;
+  }
+
+  private get currentRadiusPixels(): number {
+    return this.radiusPixels * this.getCurrentRadiusScale();
   }
 
   private get orbitCount(): number {
@@ -202,6 +216,30 @@ export class OrbitWeapon extends Weapon {
 
     this.projectiles.length = 0;
     this.hitCooldowns.clear();
+  }
+
+  private getCurrentRadiusScale(): number {
+    const behavior = this.getOrbitBehavior();
+    const minScale = Math.max(0, behavior?.radiusScaleMin ?? 1);
+    const maxScale = Math.max(minScale, behavior?.radiusScaleMax ?? minScale);
+    const cycleMs = Math.max(0, behavior?.radiusCycleMs ?? 0);
+
+    if (cycleMs <= 0 || maxScale === minScale) {
+      return minScale;
+    }
+
+    const cycleProgress = (this.orbitRadiusElapsedMs % cycleMs) / cycleMs;
+    const triangleProgress = cycleProgress < 0.5
+      ? cycleProgress * 2
+      : (1 - cycleProgress) * 2;
+
+    return minScale + (maxScale - minScale) * triangleProgress;
+  }
+
+  private getOrbitBehavior(): OrbitBehaviorConfig | undefined {
+    return this.config.behavior?.type === 'orbit'
+      ? this.config.behavior
+      : undefined;
   }
 
   private createProjectileBody(x: number, y: number): OrbitProjectileBody {

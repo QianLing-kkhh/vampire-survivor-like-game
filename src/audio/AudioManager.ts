@@ -40,6 +40,13 @@ interface PlayOptions {
   loop?: boolean;
 }
 
+interface PendingBgm {
+  scene: Phaser.Scene;
+  key: AudioEventKey;
+  loop: boolean;
+  volume: number;
+}
+
 export class AudioManager {
   private static readonly SUPPORTED_KEYS: readonly AudioEventKey[] = [
     'title_bgm',
@@ -120,9 +127,21 @@ export class AudioManager {
     'ui_confirm',
   ]);
   private static readonly lastPlayedAt = new Map<AudioEventKey, number>();
+  private static readonly soundScenes = new Set<Phaser.Scene>();
   private static currentBgm?: Phaser.Sound.BaseSound;
   private static currentBgmKey?: string;
+  private static currentBgmScene?: Phaser.Scene;
+  private static pendingBgm?: PendingBgm;
   private static unsubscribeSettings?: () => void;
+  private static lifecycleListenersInstalled = false;
+  private static hasAudioGesture = false;
+  private static isPageHidden = false;
+  private static bgmWasPlayingBeforeHidden = false;
+  private static suppressSfxUntilMs = 0;
+
+  static initializeLifecycle(): void {
+    AudioManager.ensureLifecycleListeners();
+  }
 
   static getSupportedKeys(): readonly AudioEventKey[] {
     AudioManager.ensureSettingsSubscription();
@@ -172,8 +191,16 @@ export class AudioManager {
 
   static playBgm(scene: Phaser.Scene, key: AudioEventKey, options: PlayOptions = {}): void {
     AudioManager.ensureSettingsSubscription();
+    AudioManager.registerSoundScene(scene);
 
     if (!AudioManager.isAudioEnabled() || AudioManager.getChannelVolume('bgm') <= 0) {
+      AudioManager.pendingBgm = undefined;
+      AudioManager.stopBgm();
+      return;
+    }
+
+    if (!AudioManager.canStartAudioNow()) {
+      AudioManager.rememberPendingBgm(scene, key, options);
       AudioManager.stopBgm();
       return;
     }
@@ -187,7 +214,9 @@ export class AudioManager {
     }
 
     AudioManager.stopBgm();
+    AudioManager.pendingBgm = undefined;
     AudioManager.currentBgmKey = key;
+    AudioManager.currentBgmScene = scene;
     AudioManager.currentBgm = scene.sound.add(key, {
       loop: options.loop ?? true,
       volume: AudioManager.getChannelVolume('bgm') * (options.volume ?? 1),
@@ -203,6 +232,7 @@ export class AudioManager {
 
     AudioManager.currentBgm = undefined;
     AudioManager.currentBgmKey = undefined;
+    AudioManager.currentBgmScene = undefined;
   }
 
   static pauseBgm(): void {
@@ -211,6 +241,10 @@ export class AudioManager {
 
   static resumeBgm(): void {
     if (!AudioManager.isAudioEnabled() || AudioManager.getChannelVolume('bgm') <= 0) {
+      return;
+    }
+
+    if (!AudioManager.canStartAudioNow()) {
       return;
     }
 
@@ -257,7 +291,7 @@ export class AudioManager {
   }
 
   static getCurrentBgmKey(): string | undefined {
-    return AudioManager.currentBgmKey;
+    return AudioManager.currentBgmKey ?? AudioManager.pendingBgm?.key;
   }
 
   private static playOnChannel(
@@ -266,9 +300,15 @@ export class AudioManager {
     channel: AudioChannel,
     options: PlayOptions,
   ): void {
+    AudioManager.registerSoundScene(scene);
+
     const volume = AudioManager.getChannelVolume(channel);
 
     if (!AudioManager.isAudioEnabled() || volume <= 0) {
+      return;
+    }
+
+    if (!AudioManager.canStartAudioNow() || AudioManager.isSfxSuppressed()) {
       return;
     }
 
@@ -303,6 +343,8 @@ export class AudioManager {
   }
 
   private static ensureSettingsSubscription(): void {
+    AudioManager.ensureLifecycleListeners();
+
     if (AudioManager.unsubscribeSettings) {
       return;
     }
@@ -340,5 +382,195 @@ export class AudioManager {
     } else {
       bgm.volume = bgmVolume;
     }
+  }
+
+  private static ensureLifecycleListeners(): void {
+    if (AudioManager.lifecycleListenersInstalled) {
+      return;
+    }
+
+    AudioManager.lifecycleListenersInstalled = true;
+    AudioManager.isPageHidden = !AudioManager.hasForegroundFocus();
+
+    const documentRef = globalThis.document;
+    const windowRef = globalThis.window;
+
+    documentRef?.addEventListener?.('visibilitychange', () => {
+      if (AudioManager.isDocumentHidden()) {
+        AudioManager.handleAudioHidden();
+      } else {
+        AudioManager.handleAudioVisible();
+      }
+    });
+    windowRef?.addEventListener?.('blur', () => AudioManager.handleAudioHidden());
+    windowRef?.addEventListener?.('focus', () => AudioManager.handleAudioVisible());
+    windowRef?.addEventListener?.('pointerdown', () => AudioManager.handleAudioGesture(), {
+      capture: true,
+    });
+    windowRef?.addEventListener?.('keydown', () => AudioManager.handleAudioGesture(), {
+      capture: true,
+    });
+    windowRef?.addEventListener?.('touchstart', () => AudioManager.handleAudioGesture(), {
+      capture: true,
+      passive: true,
+    });
+  }
+
+  private static handleAudioHidden(): void {
+    if (AudioManager.isPageHidden) {
+      AudioManager.suppressSfxBriefly();
+      return;
+    }
+
+    AudioManager.isPageHidden = true;
+    AudioManager.bgmWasPlayingBeforeHidden = AudioManager.currentBgm?.isPlaying === true;
+    AudioManager.suppressSfxBriefly();
+
+    if (AudioManager.currentBgmKey && AudioManager.currentBgmScene) {
+      AudioManager.pendingBgm = {
+        scene: AudioManager.currentBgmScene,
+        key: AudioManager.currentBgmKey as AudioEventKey,
+        loop: true,
+        volume: 1,
+      };
+    }
+
+    AudioManager.stopAllSceneSounds();
+    AudioManager.stopBgm();
+    AudioManager.lastPlayedAt.clear();
+  }
+
+  private static handleAudioVisible(): void {
+    if (!AudioManager.isPageHidden) {
+      AudioManager.suppressSfxBriefly();
+      return;
+    }
+
+    AudioManager.isPageHidden = false;
+    AudioManager.suppressSfxBriefly();
+
+    if (!AudioManager.bgmWasPlayingBeforeHidden && !AudioManager.pendingBgm) {
+      return;
+    }
+
+    AudioManager.bgmWasPlayingBeforeHidden = false;
+    if (!AudioManager.hasAudioGesture) {
+      return;
+    }
+
+    globalThis.setTimeout?.(() => {
+      AudioManager.resumePendingBgm();
+    }, 150);
+  }
+
+  private static handleAudioGesture(): void {
+    AudioManager.hasAudioGesture = true;
+
+    if (AudioManager.isPageHidden || !AudioManager.isForegroundAudioAllowed()) {
+      return;
+    }
+
+    AudioManager.suppressSfxBriefly();
+    globalThis.setTimeout?.(() => {
+      AudioManager.resumePendingBgm();
+    }, 150);
+  }
+
+  private static canStartAudioNow(): boolean {
+    return AudioManager.hasAudioGesture && AudioManager.isForegroundAudioAllowed();
+  }
+
+  private static isForegroundAudioAllowed(): boolean {
+    return !AudioManager.isPageHidden && AudioManager.hasForegroundFocus();
+  }
+
+  private static isDocumentHidden(): boolean {
+    return globalThis.document?.hidden === true;
+  }
+
+  private static hasForegroundFocus(): boolean {
+    const documentRef = globalThis.document;
+
+    if (documentRef?.hidden === true) {
+      return false;
+    }
+
+    if (documentRef?.hasFocus && !documentRef.hasFocus()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static suppressSfxBriefly(): void {
+    AudioManager.suppressSfxUntilMs = AudioManager.getNowMs() + 700;
+  }
+
+  private static isSfxSuppressed(): boolean {
+    return AudioManager.getNowMs() < AudioManager.suppressSfxUntilMs;
+  }
+
+  private static getNowMs(): number {
+    return globalThis.performance?.now?.() ?? Date.now();
+  }
+
+  private static rememberPendingBgm(
+    scene: Phaser.Scene,
+    key: AudioEventKey,
+    options: PlayOptions,
+  ): void {
+    if (!key.endsWith('_bgm') || !scene.cache.audio.exists(key)) {
+      return;
+    }
+
+    AudioManager.pendingBgm = {
+      scene,
+      key,
+      loop: options.loop ?? true,
+      volume: options.volume ?? 1,
+    };
+  }
+
+  private static resumePendingBgm(): void {
+    if (!AudioManager.isAudioEnabled() || AudioManager.getChannelVolume('bgm') <= 0) {
+      AudioManager.pendingBgm = undefined;
+      return;
+    }
+
+    if (!AudioManager.canStartAudioNow()) {
+      return;
+    }
+
+    const pending = AudioManager.pendingBgm;
+
+    if (!pending || !AudioManager.isSceneUsable(pending.scene)) {
+      AudioManager.pendingBgm = undefined;
+      return;
+    }
+
+    AudioManager.pendingBgm = undefined;
+    AudioManager.playBgm(pending.scene, pending.key, {
+      loop: pending.loop,
+      volume: pending.volume,
+    });
+  }
+
+  private static registerSoundScene(scene: Phaser.Scene): void {
+    AudioManager.soundScenes.add(scene);
+  }
+
+  private static stopAllSceneSounds(): void {
+    for (const scene of AudioManager.soundScenes) {
+      if (!AudioManager.isSceneUsable(scene)) {
+        AudioManager.soundScenes.delete(scene);
+        continue;
+      }
+
+      scene.sound.stopAll();
+    }
+  }
+
+  private static isSceneUsable(scene: Phaser.Scene): boolean {
+    return scene.sys?.settings?.status !== Phaser.Scenes.DESTROYED;
   }
 }

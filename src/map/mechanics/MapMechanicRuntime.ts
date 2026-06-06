@@ -1,5 +1,6 @@
 import { Enemy } from '../../enemy/Enemy';
 import { PlayerController } from '../../player/PlayerController';
+import type { AutoMapSnapshot } from '../../auto/AutoPlayer';
 
 import { MapInteractable } from './MapInteractable';
 import { MapMechanicContext, MapMechanicEntity } from './MapMechanicContext';
@@ -62,6 +63,14 @@ export class MapMechanicRuntime {
     };
   }
 
+  getAutoMapSnapshot(): AutoMapSnapshot {
+    return {
+      obstacles: this.obstacles.map((obstacle) => obstacle.getAutoObstacleSnapshot()),
+      slowZones: this.slowZones.map((slowZone) => slowZone.getAutoSlowZoneSnapshot()),
+      portals: this.portals.map((portal) => portal.getAutoPortalSnapshot()),
+    };
+  }
+
   getPlayerSpeedMultiplierAt(x: number, y: number): number {
     return Math.max(
       MIN_SLOW_MULTIPLIER,
@@ -100,6 +109,22 @@ export class MapMechanicRuntime {
 
   resolveEnemyObstacleCollision(enemy: Enemy): boolean {
     return this.obstacles.some((obstacle) => obstacle.resolveEnemyCollision(enemy));
+  }
+
+  isProjectilePathBlocked(
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    projectileRadius = 8,
+  ): boolean {
+    return this.obstacles.some((obstacle) => obstacle.isProjectilePathBlocked(
+      startX,
+      startY,
+      endX,
+      endY,
+      projectileRadius,
+    ));
   }
 
   tryTeleportPlayer(player: PlayerController): boolean {

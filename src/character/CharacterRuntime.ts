@@ -1,6 +1,7 @@
 import {
   CharacterDamageReactionContext,
   CharacterDamageReactionSkill,
+  CharacterDamageReactionType,
 } from './CharacterDamageReactionSkill';
 import { CharacterDamageReactionFactory } from './CharacterDamageReactionFactory';
 import { CharacterDefinition } from './CharacterDefinition';
@@ -56,6 +57,10 @@ export class CharacterRuntime {
     return this.damageReactionSkill.tryTrigger(context);
   }
 
+  tryTriggerLevelUpPulse(context: CharacterDamageReactionContext): boolean {
+    return this.damageReactionSkill.tryTriggerLevelUpPulse(context);
+  }
+
   updateDamageReaction(
     deltaMs: number,
     context: { player: CharacterDamageReactionContext['player'] },
@@ -69,6 +74,22 @@ export class CharacterRuntime {
 
   getEnemySpeedMultiplierAt(x: number, y: number): number {
     return this.damageReactionSkill.getEnemySpeedMultiplierAt(x, y);
+  }
+
+  getPickupRangeMultiplier(): number {
+    return this.damageReactionSkill.getPickupRangeMultiplier();
+  }
+
+  getAutoPlayerSnapshot(): {
+    characterId: string;
+    damageReactionType: CharacterDamageReactionType;
+    baseStats: CharacterBaseStats;
+  } {
+    return {
+      characterId: this.definition.id,
+      damageReactionType: this.damageReactionSkill.type,
+      baseStats: this.getBaseStats(),
+    };
   }
 
   clear(): void {

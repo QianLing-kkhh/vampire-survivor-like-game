@@ -5,10 +5,10 @@ import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 
 export class TreasureChest {
-  private static readonly INITIAL_MAGNET_SPEED = 220;
-  private static readonly MAX_MAGNET_SPEED = 700;
+  private static readonly INITIAL_MAGNET_SPEED = 66;
+  private static readonly MAX_MAGNET_SPEED = 210;
   private static readonly COLLECT_DISTANCE = 26;
-  private static readonly MAGNET_ACCELERATION_FACTOR = 42000;
+  private static readonly MAGNET_ACCELERATION_FACTOR = 12600;
 
   readonly body: Phaser.GameObjects.GameObject & {
     x: number;

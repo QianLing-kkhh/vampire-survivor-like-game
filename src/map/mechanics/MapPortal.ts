@@ -6,6 +6,7 @@ import { MapMechanicVisualRenderer } from '../../world/MapMechanicVisualRenderer
 import { MapMechanicContext } from './MapMechanicContext';
 import { MapInteractable } from './MapInteractable';
 import { MapPortalDefinition } from './MapMechanicDefinition';
+import type { AutoPortalSnapshot } from '../../auto/AutoPlayer';
 
 export class MapPortal implements MapInteractable {
   readonly id: string;
@@ -84,6 +85,18 @@ export class MapPortal implements MapInteractable {
     player.setPosition(this.target.x, this.target.y);
     player.stopMovement();
     return true;
+  }
+
+  getAutoPortalSnapshot(): AutoPortalSnapshot {
+    return {
+      id: this.id,
+      x: this.definition.x,
+      y: this.definition.y,
+      radius: this.definition.radius,
+      target: this.target
+        ? { x: this.target.x, y: this.target.y }
+        : undefined,
+    };
   }
 
   private render(): void {

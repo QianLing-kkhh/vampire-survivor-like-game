@@ -10,7 +10,7 @@
     },
     "damage": 10,
     "cooldown": 1.0,
-    "projectileSpeed": 8,
+    "projectileSpeed": 6.8,
     "pierce": 2,
     "projectileCount": 3,
     "spreadAngle": 20,
@@ -23,24 +23,27 @@
     "tags": ["base", "aura", "area", "defensive"],
     "behavior": {
       "type": "aura",
-      "knockback": false,
+      "knockback": true,
       "percentMaxHpDamage": 0.004
     },
-    "damage": 2.4,
+    "damage": 2.8,
     "cooldown": 0.35,
-    "radius": 2.85,
-    "knockbackPower": 0
+    "radius": 4.4,
+    "knockbackPower": 18
   },
   "bible": {
     "type": "orbit",
     "tags": ["base", "orbit", "magic", "area", "knockback", "control"],
     "behavior": {
-      "type": "orbit"
+      "type": "orbit",
+      "radiusScaleMin": 1,
+      "radiusScaleMax": 2,
+      "radiusCycleMs": 10000
     },
     "damage": 10,
     "cooldown": 0.475,
     "radius": 3.2,
-    "orbitSpeed": 240,
+    "orbitSpeed": 204,
     "orbitCount": 3,
     "knockbackPower": 65,
     "knockbackSpeedFactor": 0.01,
@@ -51,12 +54,12 @@
     "tags": ["base", "projectile", "magic", "homing", "explosive", "knockback"],
     "behavior": {
       "type": "homing",
-      "explosionRadius": 45,
+      "explosionRadius": 90,
       "explosionDamageMultiplier": 0.4
     },
-    "damage": 14,
-    "cooldown": 1.1,
-    "projectileSpeed": 280,
+    "damage": 15.3,
+    "cooldown": 1.02,
+    "projectileSpeed": 238,
     "projectileCount": 1,
     "knockbackPower": 70,
     "knockbackSpeedFactor": 0.015,
@@ -68,13 +71,13 @@
     "behavior": {
       "type": "arcing",
       "trajectory": "spiralAccelerating",
-      "spiralTurns": 2,
+      "spiralTurns": 3,
       "maxSpiralRadius": 70,
-      "acceleration": 220
+      "acceleration": 187
     },
     "damage": 24,
     "cooldown": 2.2,
-    "projectileSpeed": 260,
+    "projectileSpeed": 221,
     "projectileCount": 1,
     "hitRadius": 32,
     "lifetime": 2.0,
@@ -94,7 +97,7 @@
     },
     "damage": 14,
     "cooldown": 0.25,
-    "projectileSpeed": 900,
+    "projectileSpeed": 765,
     "pierce": 3,
     "projectileCount": 5,
     "spreadAngle": 25,
@@ -106,14 +109,17 @@
     "type": "orbit",
     "tags": ["evolved", "orbit", "magic", "area", "knockback", "control"],
     "behavior": {
-      "type": "orbit"
+      "type": "orbit",
+      "radiusScaleMin": 1,
+      "radiusScaleMax": 2,
+      "radiusCycleMs": 10000
     },
     "damage": 14,
-    "cooldown": 0.35,
-    "radius": 3.2,
-    "orbitSpeed": 320,
+    "cooldown": 0.32,
+    "radius": 4.16,
+    "orbitSpeed": 272,
     "orbitCount": 6,
-    "hitRadius": 42,
+    "hitRadius": 55,
     "knockbackPower": 80,
     "knockbackSpeedFactor": 0.01,
     "knockbackDurationMs": 120
@@ -128,7 +134,7 @@
     },
     "damage": 18,
     "cooldown": 0.3,
-    "projectileSpeed": 1000,
+    "projectileSpeed": 850,
     "pierce": 1,
     "projectileCount": 2,
     "spreadAngle": 8,
@@ -142,13 +148,13 @@
     "behavior": {
       "type": "arcing",
       "trajectory": "spiralAccelerating",
-      "spiralTurns": 3,
+      "spiralTurns": 4.5,
       "maxSpiralRadius": 110,
-      "acceleration": 280
+      "acceleration": 238
     },
-    "damage": 24,
+    "damage": 21.2,
     "cooldown": 1.2,
-    "projectileSpeed": 620,
+    "projectileSpeed": 527,
     "projectileCount": 5,
     "spreadAngle": 360,
     "pierce": 3,
@@ -167,7 +173,7 @@
     },
     "damage": 5.6,
     "cooldown": 0.3,
-    "radius": 4.0,
+    "radius": 4.5,
     "knockbackPower": 0
   }
 }

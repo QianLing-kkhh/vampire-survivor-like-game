@@ -24,6 +24,9 @@ export interface AuraBehaviorConfig extends BaseWeaponBehaviorConfig {
 
 export interface OrbitBehaviorConfig extends BaseWeaponBehaviorConfig {
   type: 'orbit';
+  radiusScaleMin?: number;
+  radiusScaleMax?: number;
+  radiusCycleMs?: number;
 }
 
 export interface ArcingBehaviorConfig extends BaseWeaponBehaviorConfig {

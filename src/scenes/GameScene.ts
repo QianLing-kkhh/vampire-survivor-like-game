@@ -347,6 +347,28 @@ export class GameScene extends Phaser.Scene {
         );
       }
 
+      if (this.gameplayContext && this.player && this.playerHealth) {
+        this.gameplayContext.characterRuntime.tryTriggerLevelUpPulse({
+          scene: this,
+          player: this.player,
+          playerHealth: this.playerHealth,
+          enemies: this.gameplayContext.enemies,
+          damageCalculator: this.gameplayContext.damageCalculator,
+          worldWidth: this.worldWidth,
+          worldHeight: this.worldHeight,
+          nowMs: this.time.now,
+          characterId: this.gameplayContext.characterRuntime.getCharacterId(),
+          skinId: this.gameplayContext.characterRuntime.getSkinId(),
+          showPlayerHeal: (amount) => {
+            this.floatingTextManager?.showPlayerHeal(
+              this.player!.body.x,
+              this.player!.body.y,
+              amount,
+            );
+          },
+        });
+      }
+
       this.emitHUDState();
       const selectedOptions = (this.upgradeFlow?.getLevelUpOptions() ?? [])
         .map((option) => ({
@@ -961,15 +983,40 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    const pickupRangePx = this.playerPickupRange
+      * (this.gameplayContext?.characterRuntime.getPickupRangeMultiplier() ?? 1);
+    const characterSnapshot = this.gameplayContext?.characterRuntime.getAutoPlayerSnapshot();
     const direction = this.autoPlayer.getMoveDirection({
       playerPosition: this.player.body,
       enemyPositions: this.enemies
         .filter((enemy) => !enemy.isDead)
-        .map((enemy) => enemy.body),
+        .map((enemy) => {
+          const targetContext = enemy.getDamageTargetContext();
+
+          return {
+            x: enemy.body.x,
+            y: enemy.body.y,
+            damage: enemy.damage,
+            hpRatio: enemy.maxHp > 0 ? enemy.currentHp / enemy.maxHp : 0,
+            isBoss: targetContext.isBoss,
+            isElite: targetContext.isElite,
+            isMiniBoss: enemy.id.endsWith('_boss'),
+          };
+        }),
       pickupPositions: this.getPickupPositions(),
       treasurePositions: this.getTreasurePositions(),
-      pickupRangePx: this.playerPickupRange,
+      pickupRangePx,
+      player: {
+        currentHp: this.playerHealth?.currentHp ?? this.playerStats.maxHp,
+        maxHp: this.playerHealth?.maxHp ?? this.playerStats.maxHp,
+        moveSpeed: this.playerStats.moveSpeed,
+        pickupRangePx,
+        characterId: characterSnapshot?.characterId,
+        damageReactionType: characterSnapshot?.damageReactionType,
+        baseStats: characterSnapshot?.baseStats,
+      },
       weaponContext: this.weaponManager?.getAutoWeaponContext(),
+      map: this.gameplayContext?.mapMechanicRuntime.getAutoMapSnapshot(),
       worldBounds: {
         width: this.worldWidth,
         height: this.worldHeight,

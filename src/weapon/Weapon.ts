@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { DamageType } from '../combat/DamageType';
 import { HitResult } from '../combat/HitResult';
+import { CharacterRuntime } from '../character/CharacterRuntime';
 import { Enemy } from '../enemy/Enemy';
 import { RunStats } from '../stats/RunStats';
 import { WeaponBehaviorConfig } from './behavior/WeaponBehaviorConfig';
@@ -35,6 +36,14 @@ export interface WeaponUpdateContext {
   player: Phaser.GameObjects.GameObject & { x: number; y: number };
   enemies: readonly Enemy[];
   deltaMs: number;
+  characterRuntime?: CharacterRuntime;
+  isProjectilePathBlocked?: (
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    projectileRadius?: number,
+  ) => boolean;
 }
 
 export abstract class Weapon {

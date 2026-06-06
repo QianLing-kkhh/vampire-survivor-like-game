@@ -34,6 +34,10 @@ export interface CharacterDamageReactionConfig {
   enemySpeedMultiplier?: number;
   damageReductionMultiplier?: number;
   damageReductionDurationMs?: number;
+  recoveryMs?: number;
+  recoveryPickupRangeMultiplier?: number;
+  pickupRangeMultiplier?: number;
+  pickupRangeDurationMs?: number;
 }
 
 export interface CharacterDamageReactionContext {
@@ -53,9 +57,11 @@ export interface CharacterDamageReactionContext {
 export interface CharacterDamageReactionSkill {
   readonly type: CharacterDamageReactionType;
   tryTrigger(context: CharacterDamageReactionContext): boolean;
+  tryTriggerLevelUpPulse(context: CharacterDamageReactionContext): boolean;
   update(deltaMs: number, player: PlayerController): void;
   isInvulnerable(nowMs: number): boolean;
   getEnemySpeedMultiplierAt(x: number, y: number): number;
+  getPickupRangeMultiplier(): number;
   clear(): void;
 }
 
@@ -66,6 +72,10 @@ export class NoneCharacterDamageReactionSkill implements CharacterDamageReaction
     return false;
   }
 
+  tryTriggerLevelUpPulse(): boolean {
+    return false;
+  }
+
   update(_deltaMs: number, _player: PlayerController): void {}
 
   isInvulnerable(): boolean {
@@ -73,6 +83,10 @@ export class NoneCharacterDamageReactionSkill implements CharacterDamageReaction
   }
 
   getEnemySpeedMultiplierAt(_x: number, _y: number): number {
+    return 1;
+  }
+
+  getPickupRangeMultiplier(): number {
     return 1;
   }
 
@@ -105,9 +119,17 @@ abstract class BaseCharacterDamageReactionSkill implements CharacterDamageReacti
     return nowMs < this.invulnerableUntilMs;
   }
 
+  tryTriggerLevelUpPulse(_context: CharacterDamageReactionContext): boolean {
+    return false;
+  }
+
   update(_deltaMs: number, _player: PlayerController): void {}
 
   getEnemySpeedMultiplierAt(_x: number, _y: number): number {
+    return 1;
+  }
+
+  getPickupRangeMultiplier(): number {
     return 1;
   }
 
@@ -236,6 +258,27 @@ export class ShockwaveDamageReactionSkill extends BaseCharacterDamageReactionSki
 export class BlinkForwardDamageReactionSkill extends BaseCharacterDamageReactionSkill {
   readonly type = 'blinkForward';
 
+  private recoveryRemainingMs = 0;
+
+  update(deltaMs: number, _player: PlayerController): void {
+    if (this.recoveryRemainingMs <= 0) {
+      return;
+    }
+
+    this.recoveryRemainingMs = Math.max(0, this.recoveryRemainingMs - Math.max(0, deltaMs));
+  }
+
+  getPickupRangeMultiplier(): number {
+    return this.recoveryRemainingMs > 0
+      ? Phaser.Math.Clamp(this.config.recoveryPickupRangeMultiplier ?? 0.75, 0.1, 1)
+      : 1;
+  }
+
+  clear(): void {
+    super.clear();
+    this.recoveryRemainingMs = 0;
+  }
+
   protected activate(context: CharacterDamageReactionContext): boolean {
     const direction = context.player.getLastFacingDirection();
     const blinkDistance = Math.max(0, this.config.blinkDistance ?? 0);
@@ -248,6 +291,7 @@ export class BlinkForwardDamageReactionSkill extends BaseCharacterDamageReaction
     context.player.applyExternalDisplacement(direction.scale(blinkDistance));
     context.playerHealth.setInvulnerable(invulnerableMs);
     context.player.setTemporaryMoveSpeedMultiplier(speedMultiplier, speedBuffMs);
+    this.recoveryRemainingMs = Math.max(0, this.config.recoveryMs ?? 900);
     this.invulnerableUntilMs = context.nowMs + invulnerableMs;
     this.showBlinkFeedback(context, startX, startY);
     return true;
@@ -339,6 +383,8 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
   private static readonly DEFAULT_ZONE_RADIUS = 90;
   private static readonly DEFAULT_ZONE_DURATION_MS = 3000;
   private static readonly DEFAULT_ENEMY_SPEED_MULTIPLIER = 0.5;
+  private static readonly LEVEL_UP_PULSE_RADIUS_MULTIPLIER = 1.6;
+  private static readonly LEVEL_UP_PULSE_DURATION_MULTIPLIER = 0.8;
   private static readonly MAX_ACTIVE_ZONES = 40;
 
   readonly type = 'slowTrail';
@@ -346,12 +392,14 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
   private scene?: Phaser.Scene;
   private activeRemainingMs = 0;
   private tickRemainingMs = 0;
+  private pickupRangeBuffRemainingMs = 0;
   private readonly activeZones: SlowTrailZone[] = [];
 
   update(deltaMs: number, player: PlayerController): void {
     const effectiveDeltaMs = Math.max(0, deltaMs);
 
     this.updateZones(effectiveDeltaMs);
+    this.updatePickupRangeBuff(effectiveDeltaMs);
 
     if (this.activeRemainingMs <= 0 || !this.scene) {
       return;
@@ -384,25 +432,47 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
     super.clear();
     this.activeRemainingMs = 0;
     this.tickRemainingMs = 0;
+    this.pickupRangeBuffRemainingMs = 0;
     this.clearZones();
     this.scene = undefined;
+  }
+
+  getPickupRangeMultiplier(): number {
+    return this.pickupRangeBuffRemainingMs > 0
+      ? Math.max(1, this.config.pickupRangeMultiplier ?? 1)
+      : 1;
+  }
+
+  tryTriggerLevelUpPulse(context: CharacterDamageReactionContext): boolean {
+    this.scene = context.scene;
+    this.createZone(
+      context.player,
+      this.getZoneRadius() * SlowTrailDamageReactionSkill.LEVEL_UP_PULSE_RADIUS_MULTIPLIER,
+      this.getZoneDurationMs() * SlowTrailDamageReactionSkill.LEVEL_UP_PULSE_DURATION_MULTIPLIER,
+    );
+    this.showPulseFeedback(context);
+    return true;
   }
 
   protected activate(context: CharacterDamageReactionContext): boolean {
     this.scene = context.scene;
     this.activeRemainingMs = this.getTrailDurationMs();
     this.tickRemainingMs = 0;
+    this.pickupRangeBuffRemainingMs = this.getPickupRangeDurationMs();
     this.createZone(context.player);
     this.tickRemainingMs = this.getTickIntervalMs();
     return true;
   }
 
-  private createZone(player: PlayerController): void {
+  private createZone(
+    player: PlayerController,
+    radius = this.getZoneRadius(),
+    durationMs = this.getZoneDurationMs(),
+  ): void {
     if (!this.scene) {
       return;
     }
 
-    const radius = this.getZoneRadius();
     const textureKey = AssetKeyResolver.getPlayerEffectTextureKey(
       this.scene,
       'slow_zone',
@@ -426,7 +496,7 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
       x: player.body.x,
       y: player.body.y,
       radius,
-      remainingMs: this.getZoneDurationMs(),
+      remainingMs: durationMs,
       enemySpeedMultiplier: this.getEnemySpeedMultiplier(),
       visual,
     });
@@ -448,6 +518,17 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
       this.destroyZone(zone);
       this.activeZones.splice(index, 1);
     }
+  }
+
+  private updatePickupRangeBuff(deltaMs: number): void {
+    if (this.pickupRangeBuffRemainingMs <= 0) {
+      return;
+    }
+
+    this.pickupRangeBuffRemainingMs = Math.max(
+      0,
+      this.pickupRangeBuffRemainingMs - deltaMs,
+    );
   }
 
   private clearZones(): void {
@@ -497,6 +578,32 @@ export class SlowTrailDamageReactionSkill extends BaseCharacterDamageReactionSki
       1,
     );
   }
+
+  private getPickupRangeDurationMs(): number {
+    return Math.max(0, this.config.pickupRangeDurationMs ?? 0);
+  }
+
+  private showPulseFeedback(context: CharacterDamageReactionContext): void {
+    const radius = this.getZoneRadius() * SlowTrailDamageReactionSkill.LEVEL_UP_PULSE_RADIUS_MULTIPLIER;
+    const feedback = context.scene.add.circle(
+      context.player.body.x,
+      context.player.body.y,
+      radius,
+      0x8b5cf6,
+      0.08,
+    );
+
+    feedback.setStrokeStyle(3, 0xc4b5fd, 0.5);
+    feedback.setDepth(10);
+    context.scene.tweens.add({
+      targets: feedback,
+      alpha: 0,
+      scaleX: 1.12,
+      scaleY: 1.12,
+      duration: 320,
+      onComplete: () => feedback.destroy(),
+    });
+  }
 }
 
 export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactionSkill {
@@ -505,10 +612,13 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
   private static readonly DEFAULT_HEAL_AMOUNT = 10;
   private static readonly DEFAULT_SHIELD_STACKS = 1;
   private static readonly DEFAULT_ZONE_DURATION_MS = 1200;
+  private static readonly SANCTUARY_DAMAGE_REDUCTION_MULTIPLIER = 0.88;
+  private static readonly SANCTUARY_ENEMY_SPEED_MULTIPLIER = 0.78;
 
   readonly type = 'holySanctuary';
 
   private readonly activeVisuals: Array<Phaser.GameObjects.GameObject & { active: boolean; destroy(): void }> = [];
+  private readonly activeZones: Array<{ x: number; y: number; radius: number; remainingMs: number }> = [];
 
   clear(): void {
     super.clear();
@@ -518,10 +628,34 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
       }
     });
     this.activeVisuals.length = 0;
+    this.activeZones.length = 0;
+  }
+
+  update(deltaMs: number, _player: PlayerController): void {
+    const effectiveDeltaMs = Math.max(0, deltaMs);
+
+    for (let index = this.activeZones.length - 1; index >= 0; index -= 1) {
+      this.activeZones[index].remainingMs -= effectiveDeltaMs;
+
+      if (this.activeZones[index].remainingMs <= 0) {
+        this.activeZones.splice(index, 1);
+      }
+    }
+  }
+
+  getEnemySpeedMultiplierAt(x: number, y: number): number {
+    for (const zone of this.activeZones) {
+      if (Phaser.Math.Distance.Between(x, y, zone.x, zone.y) <= zone.radius) {
+        return HolySanctuaryDamageReactionSkill.SANCTUARY_ENEMY_SPEED_MULTIPLIER;
+      }
+    }
+
+    return 1;
   }
 
   protected activate(context: CharacterDamageReactionContext): boolean {
     this.showSanctuaryVisual(context);
+    this.createSanctuaryZone(context);
     this.knockEnemiesBack(context);
     const healAmount = context.playerHealth.heal(this.getHealAmount());
 
@@ -530,6 +664,10 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
     }
 
     context.playerHealth.addShieldStacks(this.getShieldStacks());
+    context.playerHealth.addTemporaryDamageTakenMultiplier(
+      HolySanctuaryDamageReactionSkill.SANCTUARY_DAMAGE_REDUCTION_MULTIPLIER,
+      this.getZoneDurationMs(),
+    );
     return true;
   }
 
@@ -590,6 +728,15 @@ export class HolySanctuaryDamageReactionSkill extends BaseCharacterDamageReactio
 
       this.knockEnemyBack(enemy, context);
     }
+  }
+
+  private createSanctuaryZone(context: CharacterDamageReactionContext): void {
+    this.activeZones.push({
+      x: context.player.body.x,
+      y: context.player.body.y,
+      radius: this.getRadius(),
+      remainingMs: this.getZoneDurationMs(),
+    });
   }
 
   private knockEnemyBack(enemy: Enemy, context: CharacterDamageReactionContext): void {
@@ -672,6 +819,9 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
   private static readonly DEFAULT_DAMAGE_REDUCTION_MULTIPLIER = 0.65;
   private static readonly DEFAULT_DAMAGE_REDUCTION_DURATION_MS = 2500;
   private static readonly DEFAULT_ZONE_DURATION_MS = 500;
+  private static readonly PRESSURE_THRESHOLD = 5;
+  private static readonly MAX_PRESSURE_BONUS = 0.28;
+  private static readonly HIGH_PRESSURE_DAMAGE_REDUCTION_MULTIPLIER = 0.55;
 
   readonly type = 'ironCounter';
 
@@ -688,29 +838,35 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
   }
 
   protected activate(context: CharacterDamageReactionContext): boolean {
-    this.showCounterVisual(context);
-    this.hitAndKnockEnemies(context);
+    const pressureCount = this.countNearbyPressureEnemies(context);
+    const pressureBonus = this.getPressureBonus(pressureCount);
+
+    this.showCounterVisual(context, pressureBonus);
+    this.hitAndKnockEnemies(context, pressureBonus);
     context.playerHealth.addTemporaryDamageTakenMultiplier(
-      this.getDamageReductionMultiplier(),
+      pressureCount >= IronCounterDamageReactionSkill.PRESSURE_THRESHOLD
+        ? IronCounterDamageReactionSkill.HIGH_PRESSURE_DAMAGE_REDUCTION_MULTIPLIER
+        : this.getDamageReductionMultiplier(),
       this.getDamageReductionDurationMs(),
     );
     return true;
   }
 
-  private showCounterVisual(context: CharacterDamageReactionContext): void {
+  private showCounterVisual(context: CharacterDamageReactionContext, pressureBonus: number): void {
+    const radius = this.getRadius() * (1 + pressureBonus);
     const visual = this.createEffectImage(
       context,
       'counter_wave',
       context.player.body.x,
       context.player.body.y,
-      this.getRadius() * 2,
-      this.getRadius() * 2,
+      radius * 2,
+      radius * 2,
       25,
       0.72,
     ) ?? context.scene.add.circle(
         context.player.body.x,
         context.player.body.y,
-        this.getRadius(),
+        radius,
         0xf97316,
         0.08,
       );
@@ -734,8 +890,11 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
     });
   }
 
-  private hitAndKnockEnemies(context: CharacterDamageReactionContext): void {
-    const radius = this.getRadius();
+  private hitAndKnockEnemies(
+    context: CharacterDamageReactionContext,
+    pressureBonus: number,
+  ): void {
+    const radius = this.getRadius() * (1 + pressureBonus);
     const hitResult = context.damageCalculator.calculateDamage(this.getDamage());
 
     for (const enemy of context.enemies) {
@@ -757,12 +916,16 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
       enemy.takeDamage(hitResult);
 
       if (!enemy.isDead && !this.isKnockbackImmune(enemy)) {
-        this.knockEnemyBack(enemy, context);
+        this.knockEnemyBack(enemy, context, pressureBonus);
       }
     }
   }
 
-  private knockEnemyBack(enemy: Enemy, context: CharacterDamageReactionContext): void {
+  private knockEnemyBack(
+    enemy: Enemy,
+    context: CharacterDamageReactionContext,
+    pressureBonus: number,
+  ): void {
     const direction = new Phaser.Math.Vector2(
       enemy.body.x - context.player.body.x,
       enemy.body.y - context.player.body.y,
@@ -772,7 +935,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
       direction.set(1, 0);
     }
 
-    direction.normalize().scale(this.getKnockbackDistance());
+    direction.normalize().scale(this.getKnockbackDistance() * (1 + pressureBonus));
 
     const enemyRadius = this.getEnemyRadius(enemy);
     enemy.body.x = Phaser.Math.Clamp(
@@ -797,6 +960,30 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
     if (visual.active) {
       visual.destroy();
     }
+  }
+
+  private countNearbyPressureEnemies(context: CharacterDamageReactionContext): number {
+    const radius = this.getRadius();
+
+    return context.enemies.filter((enemy) => (
+      !enemy.isDead
+      && !this.isFinalOrEndlessBoss(enemy)
+      && Phaser.Math.Distance.Between(
+        context.player.body.x,
+        context.player.body.y,
+        enemy.body.x,
+        enemy.body.y,
+      ) <= radius
+    )).length;
+  }
+
+  private getPressureBonus(pressureCount: number): number {
+    const extraEnemies = Math.max(0, pressureCount - IronCounterDamageReactionSkill.PRESSURE_THRESHOLD);
+
+    return Math.min(
+      IronCounterDamageReactionSkill.MAX_PRESSURE_BONUS,
+      extraEnemies * 0.04,
+    );
   }
 
   private isFinalOrEndlessBoss(enemy: Enemy): boolean {
