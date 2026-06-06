@@ -22,6 +22,13 @@ type ArtManifest = {
   assets?: unknown;
 };
 
+type LoaderFileInfo = {
+  key?: string;
+  type?: string;
+  url?: unknown;
+  src?: unknown;
+};
+
 const ART_MANIFEST_CACHE_KEY = 'art_animation_manifest';
 const ART_MANIFEST_PATH = 'assets/art/animation_manifest.json';
 
@@ -175,16 +182,31 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'world/tree_landmark.png', key: 'art_world_tree_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
 ];
 
+const CRITICAL_ART_ASSET_KEYS = [
+  'art_world_graveyard_ground_tile',
+  'art_world_swamp_ground_tile',
+  ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_idle_down`),
+  ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_walk_sheet`),
+];
+
+const CRITICAL_ART_ASSETS = ART_MANIFEST_ASSETS.filter((asset) => (
+  CRITICAL_ART_ASSET_KEYS.includes(asset.key)
+));
+
 export class PreloadScene extends Phaser.Scene {
   private artManifestAssets: ArtManifestAsset[] = ART_MANIFEST_ASSETS;
   private artManifestVersion = 'fallback';
   private readonly queuedArtAssetKeys = new Set<string>();
+  private readonly loadedCriticalArtAssetKeys = new Set<string>();
 
   constructor() {
     super('PreloadScene');
   }
 
   preload(): void {
+    this.artManifestAssets = ART_MANIFEST_ASSETS;
+    this.registerCriticalArtAssetDiagnostics(CRITICAL_ART_ASSETS);
+    this.loadArtManifestAssetFiles(CRITICAL_ART_ASSETS);
     this.load.image('player', 'assets/player/player_placeholder.png');
     this.load.image('slime', 'assets/enemy/slime_placeholder.png');
     this.load.image('bat', 'assets/enemy/bat_placeholder.png');
@@ -241,7 +263,6 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('art_ui_hud_panel_bg', 'assets/art/ui/panel_bg.png');
     this.load.image('art_ui_help_panel_bg', 'assets/art/ui/panel_bg.png');
     this.load.image('art_ui_levelup_panel_bg', 'assets/art/ui/panel_bg.png');
-    this.artManifestAssets = ART_MANIFEST_ASSETS;
     this.loadArtManifestAssetFiles(ART_MANIFEST_ASSETS);
     this.loadArtManifestAssets();
     this.loadExternalArtManifest();
@@ -323,6 +344,43 @@ export class PreloadScene extends Phaser.Scene {
 
       this.load.image(asset.key, path);
     }
+  }
+
+  private registerCriticalArtAssetDiagnostics(assets: readonly ArtManifestAsset[]): void {
+    const criticalKeys = new Set(assets.map((asset) => asset.key));
+
+    for (const asset of assets) {
+      this.load.once(`filecomplete-${asset.type}-${asset.key}`, () => {
+        this.loadedCriticalArtAssetKeys.add(asset.key);
+      });
+    }
+
+    this.load.on('loaderror', (file: LoaderFileInfo) => {
+      const key = file.key;
+      if (!key || !criticalKeys.has(key)) {
+        return;
+      }
+
+      const asset = assets.find((candidate) => candidate.key === key);
+      const requestedUrl = PreloadScene.getLoaderFileUrl(file)
+        ?? (asset ? this.getArtAssetPath(asset.path) : 'unknown');
+
+      console.warn(
+        `[art] Critical art asset failed to load: key=${key} type=${file.type ?? asset?.type ?? 'unknown'} url=${requestedUrl}`,
+      );
+    });
+  }
+
+  private static getLoaderFileUrl(file: LoaderFileInfo): string | null {
+    if (typeof file.url === 'string') {
+      return file.url;
+    }
+
+    if (typeof file.src === 'string') {
+      return file.src;
+    }
+
+    return null;
   }
 
   private getLoadedArtManifestAssets(): ArtManifestAsset[] {
@@ -587,6 +645,8 @@ export class PreloadScene extends Phaser.Scene {
 
   private logCriticalPlayerSkinTextureStatus(): void {
     const textureKeys = [
+      'art_world_graveyard_ground_tile',
+      'art_world_swamp_ground_tile',
       ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_idle_down`),
       ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_walk_sheet`),
     ];
@@ -596,7 +656,10 @@ export class PreloadScene extends Phaser.Scene {
         continue;
       }
 
-      console.warn(`[art] Critical player skin texture not loaded: ${textureKey}`);
+      const loaderState = this.loadedCriticalArtAssetKeys.has(textureKey)
+        ? 'loader-complete'
+        : 'loader-not-complete';
+      console.warn(`[art] Critical texture not loaded: ${textureKey} (${loaderState})`);
     }
   }
 
