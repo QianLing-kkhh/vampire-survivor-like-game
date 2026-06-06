@@ -36,16 +36,45 @@ const PLAYER_ART_DIRECTIONS = [
   'up_left',
 ] as const;
 
+const PLAYER_WALK_FRAME_SIZE = 80;
+const PLAYER_IDLE_FRAME_SIZE = 64;
+const PLAYER_ANIMATION_FRAME_COUNT = 4;
+
 const PLAYER_CHARACTER_ANIMATION_ASSETS: ArtManifestAsset[] = PLAYER_ART_SKIN_IDS.flatMap(
-  (skinId) => ['walk', 'idle'].flatMap((state) => PLAYER_ART_DIRECTIONS.map((direction) => ({
-    path: `player/${skinId}/${state}_${direction}.png`,
-    key: `art_player_${skinId}_${state}_${direction}`,
-    type: 'spritesheet' as const,
-    frameWidth: 64,
-    frameHeight: 64,
-    frames: 4,
-  }))),
+  (skinId) => [
+    ...PLAYER_ART_DIRECTIONS.map((direction) => ({
+      path: `player/${skinId}/walk_${direction}.png`,
+      key: `art_player_${skinId}_walk_${direction}`,
+      type: 'spritesheet' as const,
+      frameWidth: PLAYER_WALK_FRAME_SIZE,
+      frameHeight: PLAYER_WALK_FRAME_SIZE,
+      frames: PLAYER_ANIMATION_FRAME_COUNT,
+    })),
+    ...PLAYER_ART_DIRECTIONS.map((direction) => ({
+      path: `player/${skinId}/idle_${direction}.png`,
+      key: `art_player_${skinId}_idle_${direction}`,
+      type: 'spritesheet' as const,
+      frameWidth: PLAYER_IDLE_FRAME_SIZE,
+      frameHeight: PLAYER_IDLE_FRAME_SIZE,
+      frames: PLAYER_ANIMATION_FRAME_COUNT,
+    })),
+  ],
 );
+
+const PLAYER_LEGACY_WALK_SHEET_ASSETS: ArtManifestAsset[] = [
+  'assassin_default',
+  'player',
+  'priest_default',
+  'warrior_default',
+  'witch_default',
+].map((skinId) => ({
+  path: `player/${skinId}_walk_sheet.png`,
+  key: `art_player_${skinId}_walk_sheet`,
+  type: 'spritesheet' as const,
+  frameWidth: PLAYER_IDLE_FRAME_SIZE,
+  frameHeight: PLAYER_IDLE_FRAME_SIZE,
+  frames: PLAYER_ANIMATION_FRAME_COUNT,
+}));
 
 const PLAYER_CHARACTER_IMAGE_ASSETS: ArtManifestAsset[] = [
   ...PLAYER_ART_SKIN_IDS.flatMap((skinId) => [
@@ -92,11 +121,7 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'passives/spinach_icon.png', key: 'art_passives_spinach_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'pickups/exp_gem.png', key: 'art_pickups_exp_gem', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
   { path: 'pickups/treasure_chest.png', key: 'art_pickups_treasure_chest', type: 'image', frameWidth: 64, frameHeight: 56, frames: 1 },
-  { path: 'player/assassin_default_walk_sheet.png', key: 'art_player_assassin_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/player_walk_sheet.png', key: 'art_player_player_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/priest_default_walk_sheet.png', key: 'art_player_priest_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/warrior_default_walk_sheet.png', key: 'art_player_warrior_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/witch_default_walk_sheet.png', key: 'art_player_witch_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
+  ...PLAYER_LEGACY_WALK_SHEET_ASSETS,
   ...PLAYER_CHARACTER_ANIMATION_ASSETS,
   ...PLAYER_CHARACTER_IMAGE_ASSETS,
   { path: 'ui/exp_icon.png', key: 'art_ui_exp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
