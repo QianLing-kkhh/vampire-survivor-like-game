@@ -97,7 +97,7 @@ export class AssetFallbacks {
     AssetFallbacks.loggedFallbacks.add(logKey);
 
     if (resolvedKey) {
-      console.warn(
+      console.debug(
         `[asset-fallback] Missing ${context.kind} primary for ${subject}: ${primaryKey ?? 'none'} -> ${resolvedKey}`,
       );
       return;

@@ -350,6 +350,8 @@ export class GameplayInitializer {
       },
       runRuleSet,
       randomManager.getSpawnRandom(),
+      () => enemiesList.filter((enemy) => !enemy.isDead).length,
+      () => (config.runState.endlessStarted ? 250 : Number.POSITIVE_INFINITY),
     );
     const bossSpawnDirector = new BossSpawnDirector(
       bossFactory,

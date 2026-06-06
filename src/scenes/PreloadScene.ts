@@ -167,9 +167,11 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'weapons/unholy_vespers_icon.png', key: 'art_weapons_unholy_vespers_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'weapons/unholy_vespers_orbit_book_sheet.png', key: 'art_weapons_unholy_vespers_orbit_book_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
   { path: 'world/grass_tile.png', key: 'art_world_grass_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/graveyard_ground_tile.png', key: 'art_world_graveyard_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/grave_landmark.png', key: 'art_world_grave_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
   { path: 'world/ground_tile.png', key: 'art_world_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/rock_landmark.png', key: 'art_world_rock_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
+  { path: 'world/swamp_ground_tile.png', key: 'art_world_swamp_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/tree_landmark.png', key: 'art_world_tree_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
 ];
 
@@ -338,7 +340,21 @@ export class PreloadScene extends Phaser.Scene {
       && typeof (asset as ArtManifestAsset).frames === 'number'
     ));
 
-    return assets.length > 0 ? assets : ART_MANIFEST_ASSETS;
+    return this.mergeArtManifestAssets(assets.length > 0 ? assets : ART_MANIFEST_ASSETS);
+  }
+
+  private mergeArtManifestAssets(assets: readonly ArtManifestAsset[]): ArtManifestAsset[] {
+    const merged = new Map<string, ArtManifestAsset>();
+
+    for (const asset of ART_MANIFEST_ASSETS) {
+      merged.set(asset.key, asset);
+    }
+
+    for (const asset of assets) {
+      merged.set(asset.key, asset);
+    }
+
+    return Array.from(merged.values());
   }
 
   private getArtAssetPath(path: string): string {

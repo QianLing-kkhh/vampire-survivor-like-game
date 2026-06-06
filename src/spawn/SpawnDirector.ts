@@ -42,6 +42,8 @@ export class SpawnDirector {
     private readonly onEnemySpawned: (enemy: Enemy) => void,
     private readonly runRuleSet?: RunRuleSet,
     private readonly random: RandomSource = new SeededRandom('spawn-fallback'),
+    private readonly getAliveEnemyCount?: () => number,
+    private readonly getMaxAliveEnemies?: () => number,
   ) {
     ContentBootstrap.ensureInitialized();
     this.pendingWaves = [...waves].sort((a, b) => a.time - b.time);
@@ -112,10 +114,22 @@ export class SpawnDirector {
     this.lastFrameSpawnClamped = false;
 
     for (const activeWave of this.activeWaves) {
+      if (this.isAliveEnemyCapReached()) {
+        activeWave.elapsedSinceSpawn = Math.min(
+          activeWave.elapsedSinceSpawn,
+          this.getEffectiveIntervalMs(activeWave.wave.interval),
+        );
+        this.lastFrameSpawnClamped = true;
+        this.spawnClampCount += 1;
+        break;
+      }
+
       activeWave.elapsedSinceSpawn += deltaMs;
 
       while (
         remainingSpawnBudget > 0
+        &&
+        !this.isAliveEnemyCapReached()
         &&
         activeWave.spawnedCount < activeWave.wave.count
         && activeWave.elapsedSinceSpawn >= this.getEffectiveIntervalMs(activeWave.wave.interval)
@@ -130,7 +144,7 @@ export class SpawnDirector {
       }
 
       if (
-        remainingSpawnBudget <= 0
+        (remainingSpawnBudget <= 0 || this.isAliveEnemyCapReached())
         && activeWave.spawnedCount < activeWave.wave.count
         && activeWave.elapsedSinceSpawn >= this.getEffectiveIntervalMs(activeWave.wave.interval)
       ) {
@@ -157,10 +171,24 @@ export class SpawnDirector {
   }
 
   private spawnEnemy(enemyId: string, modifiers?: EnemyModifierConfig[]): void {
+    if (this.isAliveEnemyCapReached()) {
+      return;
+    }
+
     const position = this.getSpawnPosition();
     const enemy = this.enemyFactory.create(enemyId, position.x, position.y, { modifiers });
 
     this.onEnemySpawned(enemy);
+  }
+
+  private isAliveEnemyCapReached(): boolean {
+    const maxAliveEnemies = this.getMaxAliveEnemies?.();
+
+    if (maxAliveEnemies === undefined || maxAliveEnemies <= 0) {
+      return false;
+    }
+
+    return (this.getAliveEnemyCount?.() ?? 0) >= maxAliveEnemies;
   }
 
   private getSpawnPosition(): Position {

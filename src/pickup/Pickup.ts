@@ -13,6 +13,8 @@ type PickupBody = Phaser.GameObjects.GameObject & {
   setRotation?: (value: number) => PickupBody;
   setScale?: (value: number) => PickupBody;
   rotation?: number;
+  scaleX?: number;
+  scaleY?: number;
 };
 
 export class Pickup {
@@ -29,6 +31,8 @@ export class Pickup {
   isCollected = false;
   private shadow?: Phaser.GameObjects.Ellipse;
   private readonly expVisualScale: number;
+  private readonly baseScaleX: number;
+  private readonly baseScaleY: number;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -38,6 +42,8 @@ export class Pickup {
   ) {
     this.expVisualScale = Pickup.getExpVisualScale(exp);
     this.body = this.createBody(scene, x, y);
+    this.baseScaleX = this.body.scaleX ?? 1;
+    this.baseScaleY = this.body.scaleY ?? 1;
     this.shadow = ShadowFactory.createShadow(scene, this.body, 'pickup');
   }
 
@@ -73,7 +79,7 @@ export class Pickup {
     this.updateShadow();
 
     const magnetScale = Phaser.Math.Clamp(distance / 140, 0.6, 1);
-    this.body.setScale?.(magnetScale);
+    this.body.setScale?.(Math.max(this.baseScaleX, this.baseScaleY) * magnetScale);
     this.body.setAlpha?.(Phaser.Math.Clamp(1.15 - distance / 500, 0.85, 1));
 
     if (this.body.rotation !== undefined) {

@@ -44,6 +44,10 @@ export class FloatingTextManager {
   }
 
   showEnemyDamage(x: number, y: number, damage: number, isBoss = false): void {
+    if (!isBoss && this.texts.length >= FloatingTextManager.MAX_ACTIVE_TEXTS) {
+      return;
+    }
+
     this.spawn(
       x,
       y - (isBoss ? 38 : 18),

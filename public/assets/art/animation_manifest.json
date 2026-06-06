@@ -1591,6 +1591,22 @@
       "frameWidth": 24,
       "frameHeight": 24,
       "frames": 1
+    },
+    {
+      "path": "world/graveyard_ground_tile.png",
+      "key": "art_world_graveyard_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "world/swamp_ground_tile.png",
+      "key": "art_world_swamp_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
     }
   ]
 }

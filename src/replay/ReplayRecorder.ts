@@ -12,7 +12,6 @@ import { REPLAY_VERSION } from './ReplayVersion';
 
 const REPLAY_RECORDED_EVENT_TYPES = new Set([
   'run.started',
-  'enemy.killed',
   'player.levelUp',
   'weapon.evolved',
   'pickup.treasureOpened',
