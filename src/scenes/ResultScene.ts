@@ -529,7 +529,7 @@ export class ResultScene extends Phaser.Scene {
     this.autoRestartTimer?.remove(false);
     this.autoRestartTimer = undefined;
     this.scene.stop('UIScene');
-    this.scene.start('GameScene');
+    this.scene.start('RunPreloadScene');
   }
 
   private layoutButtons(buttons: Phaser.GameObjects.Text[]): void {

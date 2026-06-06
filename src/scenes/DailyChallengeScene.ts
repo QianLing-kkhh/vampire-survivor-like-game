@@ -176,7 +176,7 @@ export class DailyChallengeScene extends Phaser.Scene {
     SettingsManager.updateGameplay({
       endlessMode: challenge.endlessMode === true,
     });
-    this.scene.start('GameScene');
+    this.scene.start('RunPreloadScene');
   }
 
   private async copySeed(): Promise<void> {

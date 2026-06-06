@@ -92,7 +92,7 @@ export class TitleScene extends Phaser.Scene {
       PlaytestSettings.setAutoMode(false);
       PlaytestSettings.setFastMode(false);
       this.refreshStatus();
-      this.scene.start('GameScene');
+      this.scene.start('RunPreloadScene');
     });
 
     this.autoTestButton = this.createButton(centerX, centerY + 58, I18n.t('title.startAutoTest'), () => {
@@ -100,7 +100,7 @@ export class TitleScene extends Phaser.Scene {
       PlaytestSettings.setAutoMode(true);
       PlaytestSettings.setFastMode(true);
       this.refreshStatus();
-      this.scene.start('GameScene');
+      this.scene.start('RunPreloadScene');
     });
 
     this.selectCharacterButton = this.createButton(centerX, centerY + 106, I18n.t('title.selectCharacter'), () => {
@@ -343,7 +343,7 @@ export class TitleScene extends Phaser.Scene {
     PlaytestSettings.setAutoMode(true);
     PlaytestSettings.setFastMode(true);
     this.refreshStatus();
-    this.scene.start('GameScene');
+    this.scene.start('RunPreloadScene');
   }
 
   private showHelpOverlay(): void {

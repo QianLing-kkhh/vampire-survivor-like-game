@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { BootScene } from '../scenes/BootScene';
-import { PreloadScene } from '../scenes/PreloadScene';
+import { TitlePreloadScene } from '../scenes/TitlePreloadScene';
 import { TitleScene } from '../scenes/TitleScene';
 import { CharacterSelectScene } from '../scenes/CharacterSelectScene';
 import { StageSelectScene } from '../scenes/StageSelectScene';
@@ -9,6 +9,7 @@ import { CustomStageEditorLiteScene } from '../scenes/CustomStageEditorLiteScene
 import { RecordsScene } from '../scenes/RecordsScene';
 import { ReplayToolScene } from '../scenes/ReplayToolScene';
 import { DailyChallengeScene } from '../scenes/DailyChallengeScene';
+import { RunPreloadScene } from '../scenes/RunPreloadScene';
 import { GameScene } from '../scenes/GameScene';
 import { UIScene } from '../scenes/UIScene';
 import { ResultScene } from '../scenes/ResultScene';
@@ -31,5 +32,5 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
       debug: false
     }
   },
-  scene: [BootScene, PreloadScene, TitleScene, CharacterSelectScene, StageSelectScene, CustomStageToolScene, CustomStageEditorLiteScene, RecordsScene, ReplayToolScene, DailyChallengeScene, GameScene, UIScene, ResultScene]
+  scene: [BootScene, TitlePreloadScene, TitleScene, CharacterSelectScene, StageSelectScene, CustomStageToolScene, CustomStageEditorLiteScene, RecordsScene, ReplayToolScene, DailyChallengeScene, RunPreloadScene, GameScene, UIScene, ResultScene]
 };
