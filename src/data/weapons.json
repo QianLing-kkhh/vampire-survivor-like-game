@@ -114,10 +114,10 @@
       "radiusScaleMax": 2,
       "radiusCycleMs": 10000
     },
-    "damage": 14,
+    "damage": 13,
     "cooldown": 0.32,
     "radius": 4.16,
-    "orbitSpeed": 272,
+    "orbitSpeed": 190,
     "orbitCount": 6,
     "hitRadius": 55,
     "knockbackPower": 80,

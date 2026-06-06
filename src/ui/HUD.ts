@@ -86,11 +86,14 @@ type IconEntry = {
 
 type BuildEntry = {
   container: Phaser.GameObjects.Container;
+  weaponBackground: Phaser.GameObjects.Rectangle;
+  passiveBackground: Phaser.GameObjects.Rectangle;
   weaponIcon?: Phaser.GameObjects.Image;
   weaponFallback?: Phaser.GameObjects.Text;
   passiveIcon?: Phaser.GameObjects.Image;
   passiveFallback?: Phaser.GameObjects.Text;
-  label: Phaser.GameObjects.Text;
+  weaponLevelLabel: Phaser.GameObjects.Text;
+  passiveLevelLabel: Phaser.GameObjects.Text;
   visualKey?: string;
 };
 
@@ -102,6 +105,11 @@ export class HUD {
   private static readonly BAR_WIDTH = 230;
   private static readonly BAR_HEIGHT = 14;
   private static readonly ICON_SIZE = 28;
+  private static readonly BUILD_ICON_SIZE = 56;
+  private static readonly BUILD_ROW_HEIGHT = 64;
+  private static readonly BUILD_WEAPON_LEVEL_X = 38;
+  private static readonly BUILD_PASSIVE_ICON_X = 150;
+  private static readonly BUILD_PASSIVE_LEVEL_X = 188;
   private static readonly MINIMAP_STYLE = {
     terrain: {
       riverColor: 0x155e63,
@@ -173,6 +181,7 @@ export class HUD {
   private minimapHeight = HUD.MINIMAP_HEIGHT;
   private barWidth = HUD.BAR_WIDTH;
   private maxIconRows = 6;
+  private maxPassiveRows = 3;
 
   constructor(scene: Phaser.Scene, private readonly onPause?: () => void) {
     this.scene = scene;
@@ -700,7 +709,7 @@ export class HUD {
     x: number,
     y: number,
   ): void {
-    const visibleItems = this.getVisibleIconItems(items);
+    const visibleItems = this.getVisibleIconItems(items, this.maxPassiveRows);
 
     while (entries.length < visibleItems.length) {
       entries.push(this.createIconEntry());
@@ -714,7 +723,7 @@ export class HUD {
         return;
       }
 
-      entry.container.setPosition(x, y + index * 34);
+      entry.container.setPosition(x, y + index * HUD.BUILD_ROW_HEIGHT);
       entry.container.setVisible(true);
       entry.label.setText(item.label);
       const visualKey = item.textureKey && this.scene.textures.exists(item.textureKey)
@@ -733,7 +742,7 @@ export class HUD {
 
       if (item.textureKey && this.scene.textures.exists(item.textureKey)) {
         entry.icon = this.scene.add.image(0, 0, item.textureKey);
-        entry.icon.setDisplaySize(HUD.ICON_SIZE - 6, HUD.ICON_SIZE - 6);
+        entry.icon.setDisplaySize(HUD.BUILD_ICON_SIZE - 8, HUD.BUILD_ICON_SIZE - 8);
         entry.container.addAt(entry.icon, 1);
         return;
       }
@@ -741,7 +750,7 @@ export class HUD {
       entry.fallback = this.scene.add.text(0, 0, item.fallback, {
         color: UITheme.textColor,
         fontFamily: UITheme.fontFamily,
-        fontSize: '13px',
+        fontSize: '18px',
         fontStyle: 'bold',
       });
       entry.fallback.setOrigin(0.5);
@@ -756,16 +765,17 @@ export class HUD {
     const background = this.scene.add.rectangle(
       0,
       0,
-      HUD.ICON_SIZE,
-      HUD.ICON_SIZE,
+      HUD.BUILD_ICON_SIZE,
+      HUD.BUILD_ICON_SIZE,
       UITheme.iconBgColor,
       0,
     );
     background.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
-    const label = this.scene.add.text(22, -8, '', {
+    const label = this.scene.add.text(HUD.BUILD_ICON_SIZE / 2 + 10, -12, '', {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '12px',
+      fontSize: '18px',
+      fontStyle: 'bold',
     });
 
     container.add([background, label]);
@@ -779,7 +789,8 @@ export class HUD {
       weaponFallback: string;
       passiveIconKey?: string;
       passiveFallback?: string;
-      label: string;
+      weaponLevelLabel: string;
+      passiveLevelLabel?: string;
     }>,
     x: number,
     y: number,
@@ -798,9 +809,12 @@ export class HUD {
         return;
       }
 
-      entry.container.setPosition(x, y + index * 34);
+      entry.container.setPosition(x, y + index * HUD.BUILD_ROW_HEIGHT);
       entry.container.setVisible(true);
-      entry.label.setText(item.label);
+      entry.weaponLevelLabel.setText(item.weaponLevelLabel);
+      entry.passiveLevelLabel.setText(item.passiveLevelLabel ?? '');
+      entry.passiveBackground.setVisible(item.passiveIconKey !== undefined || item.passiveFallback !== undefined);
+      entry.passiveLevelLabel.setVisible(item.passiveLevelLabel !== undefined);
 
       const visualKey = [
         item.weaponIconKey && this.scene.textures.exists(item.weaponIconKey)
@@ -827,7 +841,13 @@ export class HUD {
       this.addBuildIcon(entry, item.weaponIconKey, item.weaponFallback, 0);
 
       if (item.passiveIconKey || item.passiveFallback) {
-        this.addBuildIcon(entry, item.passiveIconKey, item.passiveFallback ?? '', 34, true);
+        this.addBuildIcon(
+          entry,
+          item.passiveIconKey,
+          item.passiveFallback ?? '',
+          HUD.BUILD_PASSIVE_ICON_X,
+          true,
+        );
       }
     });
   }
@@ -836,18 +856,35 @@ export class HUD {
     const container = this.scene.add.container(0, 0);
     container.setDepth(900);
     container.setScrollFactor(0);
-    const weaponBackground = this.scene.add.rectangle(0, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0);
+    const weaponBackground = this.scene.add.rectangle(0, 0, HUD.BUILD_ICON_SIZE, HUD.BUILD_ICON_SIZE, UITheme.iconBgColor, 0);
     weaponBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
-    const passiveBackground = this.scene.add.rectangle(34, 0, HUD.ICON_SIZE, HUD.ICON_SIZE, UITheme.iconBgColor, 0);
+    const passiveBackground = this.scene.add.rectangle(HUD.BUILD_PASSIVE_ICON_X, 0, HUD.BUILD_ICON_SIZE, HUD.BUILD_ICON_SIZE, UITheme.iconBgColor, 0);
     passiveBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
-    const label = this.scene.add.text(72, -8, '', {
+    const weaponLevelLabel = this.scene.add.text(HUD.BUILD_WEAPON_LEVEL_X, -14, '', {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '12px',
+      fontSize: '17px',
+      fontStyle: 'bold',
+      stroke: '#111827',
+      strokeThickness: 3,
+    });
+    const passiveLevelLabel = this.scene.add.text(HUD.BUILD_PASSIVE_LEVEL_X, -14, '', {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: '17px',
+      fontStyle: 'bold',
+      stroke: '#111827',
+      strokeThickness: 3,
     });
 
-    container.add([weaponBackground, passiveBackground, label]);
-    return { container, label };
+    container.add([weaponBackground, passiveBackground, weaponLevelLabel, passiveLevelLabel]);
+    return {
+      container,
+      weaponBackground,
+      passiveBackground,
+      weaponLevelLabel,
+      passiveLevelLabel,
+    };
   }
 
   private addBuildIcon(
@@ -859,8 +896,8 @@ export class HUD {
   ): void {
     if (textureKey && this.scene.textures.exists(textureKey)) {
       const icon = this.scene.add.image(x, 0, textureKey);
-      icon.setDisplaySize(HUD.ICON_SIZE - 6, HUD.ICON_SIZE - 6);
-      entry.container.addAt(icon, isPassive ? 3 : 2);
+      icon.setDisplaySize(HUD.BUILD_ICON_SIZE - 8, HUD.BUILD_ICON_SIZE - 8);
+      entry.container.addAt(icon, isPassive ? 4 : 2);
 
       if (isPassive) {
         entry.passiveIcon = icon;
@@ -873,11 +910,11 @@ export class HUD {
     const fallbackText = this.scene.add.text(x, 0, fallback, {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: '11px',
+      fontSize: '18px',
       fontStyle: 'bold',
     });
     fallbackText.setOrigin(0.5);
-    entry.container.addAt(fallbackText, isPassive ? 3 : 2);
+    entry.container.addAt(fallbackText, isPassive ? 4 : 2);
 
     if (isPassive) {
       entry.passiveFallback = fallbackText;
@@ -910,14 +947,15 @@ export class HUD {
     weaponFallback: string;
     passiveIconKey?: string;
     passiveFallback?: string;
-    label: string;
+    weaponLevelLabel: string;
+    passiveLevelLabel?: string;
   }> {
     if (!state.weaponBuildHudInfo || state.weaponBuildHudInfo.length === 0) {
       return this.getWeaponIconItems(state).map((weapon) => ({
         id: weapon.id,
         weaponIconKey: weapon.textureKey,
         weaponFallback: weapon.fallback,
-        label: weapon.label,
+        weaponLevelLabel: weapon.label,
       }));
     }
 
@@ -930,25 +968,18 @@ export class HUD {
         ? AssetKeyResolver.getPassiveIconKey(this.scene, info.passiveId) ?? info.passiveIconKey
         : info.passiveIconKey,
       passiveFallback: info.passiveId ? this.getInitials(info.passiveId) : undefined,
-      label: this.getBuildLabel(info),
+      weaponLevelLabel: this.getLevelLabel(info.weaponLevel, info.weaponLevelMax),
+      passiveLevelLabel: info.passiveId
+        ? this.getLevelLabel(info.passiveLevel ?? 0, info.passiveLevelMax ?? 5)
+        : undefined,
     }));
   }
 
-  private getBuildLabel(info: NonNullable<HUDState['weaponBuildHudInfo']>[number]): string {
-    const baseLabel = `${info.weaponName} Lv.${info.weaponLevel} / ${info.weaponLevelMax}`
-      + (info.passiveName
-        ? ` + ${info.passiveName} Lv.${info.passiveLevel ?? 0} / ${info.passiveLevelMax ?? 5}`
-        : '');
+  private getLevelLabel(level: number, maxLevel: number): string {
+    const safeLevel = Math.max(0, Math.floor(level));
+    const safeMax = Math.max(0, Math.floor(maxLevel));
 
-    if (info.evolved) {
-      return `${baseLabel}  ${I18n.t('hud.evolved')}`;
-    }
-
-    if (info.evolutionReady) {
-      return `${baseLabel}  Ready for evolution`;
-    }
-
-    return baseLabel;
+    return `Lv.${safeLevel}${safeMax > 0 && safeLevel >= safeMax ? 'Max' : ''}`;
   }
 
   private getOtherPassiveIconItems(state: HUDState): Array<{
@@ -1101,6 +1132,7 @@ export class HUD {
 
     this.barWidth = layout.barWidth;
     this.maxIconRows = layout.maxIconRows;
+    this.maxPassiveRows = layout.maxPassiveRows;
     this.minimapWidth = layout.minimapSize.width;
     this.minimapHeight = layout.minimapSize.height;
     this.minimapX = layout.minimapPosition.x;
@@ -1174,7 +1206,11 @@ export class HUD {
 
     if (this.isBossHudMessage(message)) {
       this.messageText.setColor('#facc15');
-      this.messageText.setFontSize(this.screenManager.isPortrait() ? '28px' : '34px');
+      this.messageText.setFontSize(
+        this.screenManager.width <= 430
+          ? '22px'
+          : this.screenManager.isPortrait() ? '26px' : '34px',
+      );
       this.messageText.setStyle({ fontStyle: 'bold' });
       this.messageText.setStroke('#7f1d1d', 5);
       return;
@@ -1226,16 +1262,21 @@ export class HUD {
 
   private getVisibleIconItems(
     items: Array<{ id: string; textureKey?: string; label: string; fallback: string }>,
+    maxRows = this.maxIconRows,
   ): Array<{ id: string; textureKey?: string; label: string; fallback: string }> {
-    if (items.length <= this.maxIconRows) {
+    if (maxRows <= 0) {
+      return [];
+    }
+
+    if (items.length <= maxRows) {
       return items;
     }
 
     return [
-      ...items.slice(0, Math.max(0, this.maxIconRows - 1)),
+      ...items.slice(0, Math.max(0, maxRows - 1)),
       {
         id: 'more',
-        label: `+${items.length - this.maxIconRows + 1}`,
+        label: `+${items.length - maxRows + 1}`,
         fallback: '+',
       },
     ];
@@ -1248,7 +1289,8 @@ export class HUD {
       weaponFallback: string;
       passiveIconKey?: string;
       passiveFallback?: string;
-      label: string;
+      weaponLevelLabel: string;
+      passiveLevelLabel?: string;
     }>,
   ): Array<{
     id: string;
@@ -1256,7 +1298,8 @@ export class HUD {
     weaponFallback: string;
     passiveIconKey?: string;
     passiveFallback?: string;
-    label: string;
+    weaponLevelLabel: string;
+    passiveLevelLabel?: string;
   }> {
     if (items.length <= this.maxIconRows) {
       return items;
@@ -1267,7 +1310,7 @@ export class HUD {
       {
         id: 'more',
         weaponFallback: '+',
-        label: `+${items.length - this.maxIconRows + 1} more`,
+        weaponLevelLabel: `+${items.length - this.maxIconRows + 1}`,
       },
     ];
   }

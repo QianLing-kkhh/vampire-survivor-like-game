@@ -38,6 +38,8 @@ export interface CharacterDamageReactionConfig {
   recoveryPickupRangeMultiplier?: number;
   pickupRangeMultiplier?: number;
   pickupRangeDurationMs?: number;
+  minimumMapMoveSpeedMultiplier?: number;
+  minimumMapMoveSpeedDurationMs?: number;
 }
 
 export interface CharacterDamageReactionContext {
@@ -62,6 +64,7 @@ export interface CharacterDamageReactionSkill {
   isInvulnerable(nowMs: number): boolean;
   getEnemySpeedMultiplierAt(x: number, y: number): number;
   getPickupRangeMultiplier(): number;
+  getMapMoveSpeedFloorMultiplier(): number;
   clear(): void;
 }
 
@@ -88,6 +91,10 @@ export class NoneCharacterDamageReactionSkill implements CharacterDamageReaction
 
   getPickupRangeMultiplier(): number {
     return 1;
+  }
+
+  getMapMoveSpeedFloorMultiplier(): number {
+    return 0;
   }
 
   clear(): void {}
@@ -131,6 +138,10 @@ abstract class BaseCharacterDamageReactionSkill implements CharacterDamageReacti
 
   getPickupRangeMultiplier(): number {
     return 1;
+  }
+
+  getMapMoveSpeedFloorMultiplier(): number {
+    return 0;
   }
 
   clear(): void {
@@ -819,13 +830,14 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
   private static readonly DEFAULT_DAMAGE_REDUCTION_MULTIPLIER = 0.65;
   private static readonly DEFAULT_DAMAGE_REDUCTION_DURATION_MS = 2500;
   private static readonly DEFAULT_ZONE_DURATION_MS = 500;
-  private static readonly PRESSURE_THRESHOLD = 5;
-  private static readonly MAX_PRESSURE_BONUS = 0.28;
+  private static readonly PRESSURE_THRESHOLD = 4;
+  private static readonly MAX_PRESSURE_BONUS = 0.35;
   private static readonly HIGH_PRESSURE_DAMAGE_REDUCTION_MULTIPLIER = 0.55;
 
   readonly type = 'ironCounter';
 
   private readonly activeVisuals: Array<Phaser.GameObjects.GameObject & { active: boolean; destroy(): void }> = [];
+  private mapMoveSpeedFloorRemainingMs = 0;
 
   clear(): void {
     super.clear();
@@ -835,6 +847,24 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
       }
     });
     this.activeVisuals.length = 0;
+    this.mapMoveSpeedFloorRemainingMs = 0;
+  }
+
+  update(deltaMs: number, _player: PlayerController): void {
+    if (this.mapMoveSpeedFloorRemainingMs <= 0) {
+      return;
+    }
+
+    this.mapMoveSpeedFloorRemainingMs = Math.max(
+      0,
+      this.mapMoveSpeedFloorRemainingMs - Math.max(0, deltaMs),
+    );
+  }
+
+  getMapMoveSpeedFloorMultiplier(): number {
+    return this.mapMoveSpeedFloorRemainingMs > 0
+      ? Phaser.Math.Clamp(this.config.minimumMapMoveSpeedMultiplier ?? 0, 0, 1)
+      : 0;
   }
 
   protected activate(context: CharacterDamageReactionContext): boolean {
@@ -849,6 +879,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
         : this.getDamageReductionMultiplier(),
       this.getDamageReductionDurationMs(),
     );
+    this.mapMoveSpeedFloorRemainingMs = this.getMinimumMapMoveSpeedDurationMs();
     return true;
   }
 
@@ -982,7 +1013,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
 
     return Math.min(
       IronCounterDamageReactionSkill.MAX_PRESSURE_BONUS,
-      extraEnemies * 0.04,
+      extraEnemies * 0.05,
     );
   }
 
@@ -1031,5 +1062,9 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
       0,
       this.config.zoneDurationMs ?? IronCounterDamageReactionSkill.DEFAULT_ZONE_DURATION_MS,
     );
+  }
+
+  private getMinimumMapMoveSpeedDurationMs(): number {
+    return Math.max(0, this.config.minimumMapMoveSpeedDurationMs ?? 0);
   }
 }

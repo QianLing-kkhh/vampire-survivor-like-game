@@ -37,10 +37,14 @@ export class GameplayUpdater {
     context.timeManager.update(effectiveDelta);
     context.passiveManager.update(effectiveDelta, context.playerHealth);
     context.mapMechanicRuntime.update(effectiveDelta);
+    const mapMoveSpeedMultiplier = context.mapMechanicRuntime.getPlayerSpeedMultiplierAt(
+      context.player.body.x,
+      context.player.body.y,
+    );
     context.player.setMapMoveSpeedMultiplier(
-      context.mapMechanicRuntime.getPlayerSpeedMultiplierAt(
-        context.player.body.x,
-        context.player.body.y,
+      Math.max(
+        mapMoveSpeedMultiplier,
+        context.characterRuntime.getMapMoveSpeedFloorMultiplier(),
       ),
     );
 

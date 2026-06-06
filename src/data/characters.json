@@ -177,11 +177,13 @@
     "damageReactionSkill": {
       "type": "ironCounter",
       "cooldownMs": 10000,
-      "radius": 165,
-      "damage": 16,
-      "knockbackDistance": 180,
+      "radius": 175,
+      "damage": 18,
+      "knockbackDistance": 210,
       "damageReductionMultiplier": 0.65,
       "damageReductionDurationMs": 2500,
+      "minimumMapMoveSpeedMultiplier": 0.85,
+      "minimumMapMoveSpeedDurationMs": 2200,
       "zoneDurationMs": 500
     },
     "exclusiveUpgradeIds": [],

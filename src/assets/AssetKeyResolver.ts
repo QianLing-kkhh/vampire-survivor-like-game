@@ -369,6 +369,8 @@ export class AssetKeyResolver {
     logicalKey?: string,
     overrideDomain: 'textures' | 'icons' | 'world' | 'ui' = 'textures',
   ): string | null {
+    const fallbackLogicalKey = logicalKey ?? entry.logicalKey;
+
     if (
       VisualSettings.shouldUseGraphicsFallback()
       && (overrideDomain === 'textures' || overrideDomain === 'world')
@@ -377,7 +379,7 @@ export class AssetKeyResolver {
     }
 
     const externalOverrideKey = AssetKeyResolver.getExternalOverride(
-      logicalKey ?? entry.logicalKey,
+      fallbackLogicalKey,
       overrideDomain,
     );
 
@@ -385,24 +387,40 @@ export class AssetKeyResolver {
       return externalOverrideKey;
     }
 
-    const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, overrideDomain);
+    const overrideKey = AssetKeyResolver.getOverride(fallbackLogicalKey, overrideDomain);
 
     if (AssetFallbacks.hasTexture(scene, overrideKey)) {
       return overrideKey;
     }
 
     if (VisualSettings.shouldUseLegacyArt()) {
-      const legacyKey = AssetFallbacks.resolveTexture(scene, entry.fallbacks?.[0], [
-        ...(entry.fallbacks?.slice(1) ?? []),
-        entry.primary,
-      ]);
+      const legacyKey = AssetFallbacks.resolveTexture(
+        scene,
+        entry.fallbacks?.[0],
+        [
+          ...(entry.fallbacks?.slice(1) ?? []),
+          entry.primary,
+        ],
+        {
+          kind: 'texture',
+          logicalKey: fallbackLogicalKey,
+        },
+      );
 
       if (legacyKey) {
         return legacyKey;
       }
     }
 
-    return AssetFallbacks.resolveTexture(scene, entry.primary, entry.fallbacks ?? []);
+    return AssetFallbacks.resolveTexture(
+      scene,
+      entry.primary,
+      entry.fallbacks ?? [],
+      {
+        kind: 'texture',
+        logicalKey: fallbackLogicalKey,
+      },
+    );
   }
 
   private static resolveAnimation(
@@ -410,12 +428,14 @@ export class AssetKeyResolver {
     entry: AssetKeyEntry,
     logicalKey?: string,
   ): string | null {
+    const fallbackLogicalKey = logicalKey ?? entry.logicalKey;
+
     if (VisualSettings.shouldUseGraphicsFallback()) {
       return null;
     }
 
     const externalOverrideKey = AssetKeyResolver.getExternalOverride(
-      logicalKey ?? entry.logicalKey,
+      fallbackLogicalKey,
       'animations',
     );
 
@@ -423,13 +443,21 @@ export class AssetKeyResolver {
       return externalOverrideKey;
     }
 
-    const overrideKey = AssetKeyResolver.getOverride(logicalKey ?? entry.logicalKey, 'animations');
+    const overrideKey = AssetKeyResolver.getOverride(fallbackLogicalKey, 'animations');
 
     if (AssetFallbacks.hasAnimation(scene, overrideKey)) {
       return overrideKey;
     }
 
-    return AssetFallbacks.resolveAnimation(scene, entry.primary, entry.fallbacks ?? []);
+    return AssetFallbacks.resolveAnimation(
+      scene,
+      entry.primary,
+      entry.fallbacks ?? [],
+      {
+        kind: 'animation',
+        logicalKey: fallbackLogicalKey,
+      },
+    );
   }
 
   private static getOverride(

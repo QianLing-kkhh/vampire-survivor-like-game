@@ -19,6 +19,7 @@ export type HudLayout = {
   bossTextPosition: Phaser.Math.Vector2;
   barWidth: number;
   maxIconRows: number;
+  maxPassiveRows: number;
   fontSize: string;
 };
 
@@ -332,6 +333,8 @@ export class LayoutConfig {
     const minimapWidth = portrait ? 96 : 150;
     const minimapHeight = portrait ? 76 : 104;
     const barWidth = Math.min(portrait ? screen.width * 0.54 : 230, 250);
+    const statsHeight = portrait ? 184 : 178;
+    const buildRowHeight = 64;
     const pauseWidth = portrait ? 48 : 92;
     const pauseHeight = portrait ? 48 : 40;
     const pauseRect = portrait
@@ -352,13 +355,13 @@ export class LayoutConfig {
         x: safe.left + margin,
         y: pauseRect.y + pauseRect.height + 8,
         width: barWidth,
-        height: 144,
+        height: statsHeight,
       }
       : {
         x: safe.left + margin,
         y: safe.top + margin,
         width: barWidth,
-        height: 144,
+        height: statsHeight,
       };
     const minimapTopRight = {
       x: screen.width - safe.right - minimapWidth,
@@ -404,22 +407,87 @@ export class LayoutConfig {
       virtualJoystickRect.y - buildStartY - 10,
     );
     const maxIconRows = portrait
-      ? Math.max(1, Math.min(3, Math.floor(maxBuildHeight / 34)))
+      ? Math.max(1, Math.min(3, Math.floor(maxBuildHeight / buildRowHeight)))
       : 6;
+    const buildListWidth = portrait
+      ? Math.min(screen.width - safe.left - safe.right - margin * 2, 330)
+      : 330;
+    const defaultBuildX = safe.left + margin;
+    const shiftedBuildX = virtualJoystickRect.x + virtualJoystickRect.width + 16;
+    const buildX = !portrait && buildStartY + maxIconRows * buildRowHeight > virtualJoystickRect.y
+      ? Math.min(
+        shiftedBuildX,
+        screen.width - safe.right - buildListWidth,
+      )
+      : defaultBuildX;
     const buildListRect = {
-      x: safe.left + margin,
+      x: buildX,
       y: buildStartY,
-      width: portrait ? Math.min(screen.width - safe.left - safe.right - margin * 2, 330) : 430,
-      height: maxIconRows * 34,
+      width: buildListWidth,
+      height: maxIconRows * buildRowHeight,
     };
     const passivesY = buildListRect.y + buildListRect.height + 8;
+    const maxPassiveRows = portrait
+      ? Math.max(0, Math.min(2, Math.floor((virtualJoystickRect.y - passivesY - 10) / buildRowHeight)))
+      : Math.max(0, Math.min(4, Math.floor((screen.height - safe.bottom - passivesY) / buildRowHeight)));
+    const portraitBossTopGapWidth = Math.max(
+      140,
+      minimapRect.x - (pauseRect.x + pauseRect.width) - 24,
+    );
+    const bossTextSize = {
+      width: Math.min(screen.width - safe.left - safe.right - 24, portrait ? portraitBossTopGapWidth : 460),
+      height: portrait ? 42 : 52,
+    };
+    const bossTextCandidates = [
+      ...(portrait ? [{
+        x: pauseRect.x + pauseRect.width + 12,
+        y: safe.top + 8,
+        width: bossTextSize.width,
+        height: bossTextSize.height,
+      }] : []),
+      {
+        x: screen.centerX - bossTextSize.width / 2,
+        y: safe.top + (portrait ? 86 : 78),
+        width: bossTextSize.width,
+        height: bossTextSize.height,
+      },
+      {
+        x: Math.max(safe.left + margin, statsRect.x + statsRect.width + 18),
+        y: safe.top + (portrait ? 112 : 86),
+        width: bossTextSize.width,
+        height: bossTextSize.height,
+      },
+      {
+        x: screen.width - safe.right - bossTextSize.width,
+        y: minimapRect.y + minimapRect.height + 12,
+        width: bossTextSize.width,
+        height: bossTextSize.height,
+      },
+      {
+        x: screen.centerX - bossTextSize.width / 2,
+        y: statsRect.y + statsRect.height + 8,
+        width: bossTextSize.width,
+        height: bossTextSize.height,
+      },
+      {
+        x: screen.centerX - bossTextSize.width / 2,
+        y: screen.centerY - bossTextSize.height / 2,
+        width: bossTextSize.width,
+        height: bossTextSize.height,
+      },
+    ].map((rect) => LayoutConfig.clampRectToSafeArea(rect, safe, screen));
+    const bossTextRect = LayoutConfig.moveToAvoidOverlap(
+      bossTextCandidates[0],
+      [statsRect, minimapRect, pauseRect, buildListRect],
+      bossTextCandidates.slice(1),
+    );
 
     return {
       statsPosition: new Phaser.Math.Vector2(statsRect.x, statsRect.y),
       weaponsPosition: new Phaser.Math.Vector2(buildListRect.x, buildListRect.y),
       passivesPosition: new Phaser.Math.Vector2(
         buildListRect.x,
-        portrait ? passivesY : safe.top + 250,
+        passivesY,
       ),
       minimapPosition: new Phaser.Math.Vector2(minimapRect.x, minimapRect.y),
       minimapSize: { width: minimapWidth, height: minimapHeight },
@@ -432,9 +500,13 @@ export class LayoutConfig {
       minimapRect,
       buildListRect,
       virtualJoystickRect,
-      bossTextPosition: new Phaser.Math.Vector2(screen.centerX, safe.top + 92),
+      bossTextPosition: new Phaser.Math.Vector2(
+        bossTextRect.x + bossTextRect.width / 2,
+        bossTextRect.y + bossTextRect.height / 2,
+      ),
       barWidth,
       maxIconRows,
+      maxPassiveRows,
       fontSize: portrait ? '12px' : '14px',
     };
   }

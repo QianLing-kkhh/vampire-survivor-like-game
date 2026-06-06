@@ -80,6 +80,10 @@ export class CharacterRuntime {
     return this.damageReactionSkill.getPickupRangeMultiplier();
   }
 
+  getMapMoveSpeedFloorMultiplier(): number {
+    return this.damageReactionSkill.getMapMoveSpeedFloorMultiplier();
+  }
+
   getAutoPlayerSnapshot(): {
     characterId: string;
     damageReactionType: CharacterDamageReactionType;
