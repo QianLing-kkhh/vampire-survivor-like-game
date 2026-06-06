@@ -18,6 +18,13 @@ type ArtManifestAsset = {
   frames: number;
 };
 
+type ArtManifest = {
+  assets?: unknown;
+};
+
+const ART_MANIFEST_CACHE_KEY = 'art_animation_manifest';
+const ART_MANIFEST_PATH = 'assets/art/animation_manifest.json';
+
 const PLAYER_ART_SKIN_IDS = [
   'assassin_default',
   'witch_default',
@@ -41,8 +48,8 @@ const PLAYER_CHARACTER_ANIMATION_ASSETS: ArtManifestAsset[] = PLAYER_ART_SKIN_ID
     path: `player/${skinId}/${state}_${direction}.png`,
     key: `art_player_${skinId}_${state}_${direction}`,
     type: 'spritesheet' as const,
-    frameWidth: 64,
-    frameHeight: 64,
+    frameWidth: 80,
+    frameHeight: 80,
     frames: 4,
   }))),
 );
@@ -92,11 +99,11 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'passives/spinach_icon.png', key: 'art_passives_spinach_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'pickups/exp_gem.png', key: 'art_pickups_exp_gem', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
   { path: 'pickups/treasure_chest.png', key: 'art_pickups_treasure_chest', type: 'image', frameWidth: 64, frameHeight: 56, frames: 1 },
-  { path: 'player/assassin_default_walk_sheet.png', key: 'art_player_assassin_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/player_walk_sheet.png', key: 'art_player_player_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/priest_default_walk_sheet.png', key: 'art_player_priest_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/warrior_default_walk_sheet.png', key: 'art_player_warrior_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'player/witch_default_walk_sheet.png', key: 'art_player_witch_default_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
+  { path: 'player/assassin_default_walk_sheet.png', key: 'art_player_assassin_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
+  { path: 'player/player_walk_sheet.png', key: 'art_player_player_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
+  { path: 'player/priest_default_walk_sheet.png', key: 'art_player_priest_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
+  { path: 'player/warrior_default_walk_sheet.png', key: 'art_player_warrior_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
+  { path: 'player/witch_default_walk_sheet.png', key: 'art_player_witch_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
   ...PLAYER_CHARACTER_ANIMATION_ASSETS,
   ...PLAYER_CHARACTER_IMAGE_ASSETS,
   { path: 'ui/exp_icon.png', key: 'art_ui_exp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
@@ -130,6 +137,9 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
 ];
 
 export class PreloadScene extends Phaser.Scene {
+  private artManifestAssets: ArtManifestAsset[] = ART_MANIFEST_ASSETS;
+  private artManifestVersion = 'fallback';
+
   constructor() {
     super('PreloadScene');
   }
@@ -234,8 +244,25 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private loadArtManifestAssets(): void {
-    for (const asset of ART_MANIFEST_ASSETS) {
-      const path = `assets/art/${asset.path}`;
+    this.load.once(`filecomplete-json-${ART_MANIFEST_CACHE_KEY}`, () => {
+      this.artManifestAssets = this.getLoadedArtManifestAssets();
+      this.loadArtManifestAssetFiles(this.artManifestAssets);
+    });
+    this.load.once('loaderror', (file: { key?: string }) => {
+      if (file.key !== ART_MANIFEST_CACHE_KEY) {
+        return;
+      }
+
+      console.warn('[art] No animation manifest found; using built-in art manifest fallback.');
+      this.artManifestAssets = ART_MANIFEST_ASSETS;
+      this.loadArtManifestAssetFiles(this.artManifestAssets);
+    });
+    this.load.json(ART_MANIFEST_CACHE_KEY, ART_MANIFEST_PATH);
+  }
+
+  private loadArtManifestAssetFiles(assets: readonly ArtManifestAsset[]): void {
+    for (const asset of assets) {
+      const path = this.getArtAssetPath(asset.path);
 
       if (asset.type === 'spritesheet') {
         this.load.spritesheet(asset.key, path, {
@@ -248,6 +275,39 @@ export class PreloadScene extends Phaser.Scene {
 
       this.load.image(asset.key, path);
     }
+  }
+
+  private getLoadedArtManifestAssets(): ArtManifestAsset[] {
+    const manifest = this.cache.json.get(ART_MANIFEST_CACHE_KEY) as ArtManifest | undefined;
+
+    if (!manifest || !Array.isArray(manifest.assets)) {
+      console.warn('[art] Invalid animation manifest; using built-in art manifest fallback.');
+      this.artManifestVersion = 'fallback';
+      return ART_MANIFEST_ASSETS;
+    }
+
+    this.artManifestVersion = typeof (manifest as { version?: unknown }).version === 'string'
+      ? (manifest as { version: string }).version
+      : 'manifest';
+
+    const assets = manifest.assets.filter((asset): asset is ArtManifestAsset => (
+      typeof asset === 'object'
+      && asset !== null
+      && typeof (asset as ArtManifestAsset).path === 'string'
+      && typeof (asset as ArtManifestAsset).key === 'string'
+      && ((asset as ArtManifestAsset).type === 'image' || (asset as ArtManifestAsset).type === 'spritesheet')
+      && typeof (asset as ArtManifestAsset).frameWidth === 'number'
+      && typeof (asset as ArtManifestAsset).frameHeight === 'number'
+      && typeof (asset as ArtManifestAsset).frames === 'number'
+    ));
+
+    return assets.length > 0 ? assets : ART_MANIFEST_ASSETS;
+  }
+
+  private getArtAssetPath(path: string): string {
+    const cacheKey = encodeURIComponent(this.artManifestVersion);
+
+    return `assets/art/${path}?v=${cacheKey}`;
   }
 
   private loadExternalArtManifest(): void {
@@ -318,7 +378,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   private createArtManifestAnimations(): void {
-    for (const asset of ART_MANIFEST_ASSETS) {
+    for (const asset of this.artManifestAssets) {
       if (asset.type !== 'spritesheet' || !this.textures.exists(asset.key)) {
         continue;
       }
@@ -417,8 +477,12 @@ export class PreloadScene extends Phaser.Scene {
     end: number,
     repeat: number,
   ): void {
-    if (this.anims.exists(animationKey) || !this.textures.exists(textureKey)) {
+    if (!this.textures.exists(textureKey)) {
       return;
+    }
+
+    if (this.anims.exists(animationKey)) {
+      this.anims.remove(animationKey);
     }
 
     this.anims.create({
@@ -441,7 +505,7 @@ export class PreloadScene extends Phaser.Scene {
       'art_ui_hud_panel_bg',
       'art_ui_help_panel_bg',
       'art_ui_levelup_panel_bg',
-      ...ART_MANIFEST_ASSETS.map((asset) => asset.key),
+      ...this.artManifestAssets.map((asset) => asset.key),
       ...ExternalArtRegistry.getAssets().map((asset) => asset.textureKey),
     ];
 

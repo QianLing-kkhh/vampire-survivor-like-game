@@ -24,20 +24,6 @@ export class AssetKeyResolver {
     characterId?: string,
   ): string | null {
     for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
-      const externalTextureAsset = ExternalArtRegistry.getPlayerSkinAsset(
-        candidateSkinId,
-        'idle',
-        'down',
-      ) ?? ExternalArtRegistry.getPlayerSkinAsset(candidateSkinId, 'walk', 'down');
-
-      if (
-        externalTextureAsset
-        && !VisualSettings.shouldUseGraphicsFallback()
-        && AssetFallbacks.hasTexture(scene, externalTextureAsset.textureKey)
-      ) {
-        return externalTextureAsset.textureKey;
-      }
-
       const skinTextureKey = AssetKeyResolver.resolveTexture(
         scene,
         {
@@ -53,6 +39,20 @@ export class AssetKeyResolver {
 
       if (skinTextureKey) {
         return skinTextureKey;
+      }
+
+      const externalTextureAsset = ExternalArtRegistry.getPlayerSkinAsset(
+        candidateSkinId,
+        'idle',
+        'down',
+      ) ?? ExternalArtRegistry.getPlayerSkinAsset(candidateSkinId, 'walk', 'down');
+
+      if (
+        externalTextureAsset
+        && !VisualSettings.shouldUseGraphicsFallback()
+        && AssetFallbacks.hasTexture(scene, externalTextureAsset.textureKey)
+      ) {
+        return externalTextureAsset.textureKey;
       }
     }
 
@@ -71,6 +71,15 @@ export class AssetKeyResolver {
     characterId?: string,
   ): string | null {
     for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
+      const builtInDirectionAnimationKey = `art_player_${candidateSkinId}_${state}_${direction}`;
+
+      if (
+        !VisualSettings.shouldUseGraphicsFallback()
+        && AssetFallbacks.hasAnimation(scene, builtInDirectionAnimationKey)
+      ) {
+        return builtInDirectionAnimationKey;
+      }
+
       const externalAnimationAsset = ExternalArtRegistry.getPlayerSkinAsset(
         candidateSkinId,
         state,

@@ -36,6 +36,21 @@ type FacingDirection8 =
   | 'up'
   | 'up_right';
 
+type PlayerAssetDebug = {
+  characterId?: string;
+  skinId?: string;
+  textureKey: string | null;
+  animationKey: string | null;
+  frameTextureKey?: string;
+  frameName?: string | number;
+  direction: FacingDirection8;
+  isMoving: boolean;
+};
+
+type PlayerAssetDebugGlobal = typeof globalThis & {
+  __vsgPlayerAssetDebug?: PlayerAssetDebug;
+};
+
 export class PlayerController {
   private static readonly MAX_MOVEMENT_STEP = 24;
   private static readonly IDLE_SPEED_THRESHOLD = 6;
@@ -50,6 +65,7 @@ export class PlayerController {
   private externalMoveDirection?: Phaser.Math.Vector2;
   private lastFacingDirection: FacingDirection8 = 'right';
   private currentAnimationKey?: string;
+  private currentTextureKey: string | null = null;
   private shadow?: Phaser.GameObjects.Ellipse;
   private temporaryMoveSpeedMultiplier = 1;
   private mapMoveSpeedMultiplier = 1;
@@ -435,7 +451,9 @@ export class PlayerController {
       const displaySize = VisualScale.getPlayerDisplaySize();
       body.setDisplaySize(displaySize, displaySize);
       body.setDepth(PlayerController.PLAYER_DEPTH);
+      this.currentTextureKey = textureKey;
       this.playPlayerAnimation(body, idleAnimationKey);
+      this.exposeAssetDebug(body, idleAnimationKey, 'down', false);
 
       return Object.assign(body, { radius: 14 });
     }
@@ -445,6 +463,8 @@ export class PlayerController {
       const displaySize = VisualScale.getPlayerDisplaySize();
       body.setDisplaySize(displaySize, displaySize);
       body.setDepth(PlayerController.PLAYER_DEPTH);
+      this.currentTextureKey = textureKey;
+      this.exposeAssetDebug(body, null, 'down', false);
 
       return Object.assign(body, { radius: 14 });
     }
@@ -460,6 +480,7 @@ export class PlayerController {
     const body = this.body as PlayerBody & {
       play?: (key: string) => Phaser.GameObjects.Sprite;
       setFlipX?: (value: boolean) => Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
+      frame?: Phaser.Textures.Frame;
     };
     const isMoving = this.velocity.length() > PlayerController.IDLE_SPEED_THRESHOLD;
     const direction = isMoving
@@ -485,6 +506,7 @@ export class PlayerController {
     }
 
     this.playPlayerAnimation(body, animationKey);
+    this.exposeAssetDebug(body, animationKey, direction, isMoving);
   }
 
   private updateShadow(): void {
@@ -526,6 +548,24 @@ export class PlayerController {
 
     body.play(animationKey);
     this.currentAnimationKey = animationKey;
+  }
+
+  private exposeAssetDebug(
+    body: { frame?: Phaser.Textures.Frame },
+    animationKey: string | null,
+    direction: FacingDirection8,
+    isMoving: boolean,
+  ): void {
+    (globalThis as PlayerAssetDebugGlobal).__vsgPlayerAssetDebug = {
+      characterId: this.characterId,
+      skinId: this.skinId,
+      textureKey: this.currentTextureKey,
+      animationKey,
+      frameTextureKey: body.frame?.texture.key,
+      frameName: body.frame?.name,
+      direction,
+      isMoving,
+    };
   }
 
   private setDirectionalFlip(
