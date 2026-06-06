@@ -9,7 +9,7 @@ export const VisualScale = {
   treasureDisplayHeight: 64,
   auraStrokeWidth: 4,
   auraAlpha: 0.24,
-  finalBossVisualDisplayMultiplier: 0.75,
+  finalBossVisualDisplayMultiplier: 0.375,
 
   applyModelScale(baseSize: number): number {
     return baseSize * VisualSettings.getModelScaleMultiplier();
