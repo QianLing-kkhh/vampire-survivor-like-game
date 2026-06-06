@@ -4,6 +4,7 @@ import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
 import { BeamSkillConfig } from './BossSkillConfig';
 import { getDistanceSegmentToPoint } from './DashSkill';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
 
 export class BeamSkill implements BossSkill {
   readonly type = 'beam' as const;
@@ -44,6 +45,22 @@ export class BeamSkill implements BossSkill {
   clear(): void {
     this.warningLine?.destroy();
     this.warningLine = undefined;
+  }
+
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    if (this.warningRemainingMs <= 0) {
+      return [];
+    }
+
+    return [{
+      shape: 'line',
+      kind: 'beam',
+      danger: 'damage',
+      start: { x: this.beamStart.x, y: this.beamStart.y },
+      end: { x: this.beamEnd.x, y: this.beamEnd.y },
+      width: this.config.width,
+      remainingMs: Math.max(0, this.warningRemainingMs),
+    }];
   }
 
   private startWarning(context: BossSkillContext): void {

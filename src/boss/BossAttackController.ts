@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { Enemy } from '../enemy/Enemy';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
 
 import { BossProjectile } from './BossProjectile';
 
@@ -46,6 +47,22 @@ export class BossAttackController {
 
   isWarningActive(): boolean {
     return this.state === 'warning';
+  }
+
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    if (!this.isWarningActive()) {
+      return [];
+    }
+
+    return [{
+      shape: 'circle',
+      kind: 'ring',
+      danger: 'damage',
+      x: this.boss.body.x,
+      y: this.boss.body.y,
+      radius: BossAttackController.WARNING_RADIUS,
+      remainingMs: Math.max(0, this.timerMs),
+    }];
   }
 
   destroy(): void {

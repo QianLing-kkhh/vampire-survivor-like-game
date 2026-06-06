@@ -1,5 +1,6 @@
 import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
 
 export class BossSkillRuntime {
   constructor(
@@ -24,5 +25,9 @@ export class BossSkillRuntime {
     for (const skill of this.skills) {
       skill.clear();
     }
+  }
+
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    return this.skills.flatMap((skill) => skill.getAutoBossWarnings?.() ?? []);
   }
 }

@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
 import { ShockwaveSkillConfig } from './BossSkillConfig';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
 
 export class ShockwaveSkill implements BossSkill {
   readonly type = 'shockwave' as const;
@@ -42,6 +43,22 @@ export class ShockwaveSkill implements BossSkill {
   clear(): void {
     this.warningCircle?.destroy();
     this.warningCircle = undefined;
+  }
+
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    if (this.warningRemainingMs <= 0) {
+      return [];
+    }
+
+    return [{
+      shape: 'circle',
+      kind: 'shockwave',
+      danger: 'damage',
+      x: this.center.x,
+      y: this.center.y,
+      radius: this.config.radius,
+      remainingMs: Math.max(0, this.warningRemainingMs),
+    }];
   }
 
   private startWarning(context: BossSkillContext): void {

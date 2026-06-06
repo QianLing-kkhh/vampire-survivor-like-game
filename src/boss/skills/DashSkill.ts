@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
 import { DashSkillConfig } from './BossSkillConfig';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
 
 export class DashSkill implements BossSkill {
   readonly type = 'dash' as const;
@@ -48,6 +49,24 @@ export class DashSkill implements BossSkill {
 
   isActive(): boolean {
     return this.warningRemainingMs > 0;
+  }
+
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    if (this.warningRemainingMs <= 0) {
+      return [];
+    }
+
+    const end = this.dashStart.clone().add(this.dashDirection.clone().scale(this.config.speed));
+
+    return [{
+      shape: 'line',
+      kind: 'dash',
+      danger: 'damage',
+      start: { x: this.dashStart.x, y: this.dashStart.y },
+      end: { x: end.x, y: end.y },
+      width: this.config.hitRadius * 2,
+      remainingMs: Math.max(0, this.warningRemainingMs),
+    }];
   }
 
   private startWarning(context: BossSkillContext): void {

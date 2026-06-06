@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
 import { SlowZoneSkillConfig } from './BossSkillConfig';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
 
 export class SlowZoneSkill implements BossSkill {
   readonly type = 'slowZone' as const;
@@ -40,6 +41,22 @@ export class SlowZoneSkill implements BossSkill {
   clear(): void {
     this.warningCircle?.destroy();
     this.warningCircle = undefined;
+  }
+
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    if (this.warningRemainingMs <= 0) {
+      return [];
+    }
+
+    return [{
+      shape: 'circle',
+      kind: 'slowZone',
+      danger: 'slow',
+      x: this.zonePosition.x,
+      y: this.zonePosition.y,
+      radius: this.config.radius,
+      remainingMs: Math.max(0, this.warningRemainingMs),
+    }];
   }
 
   private startWarning(context: BossSkillContext): void {

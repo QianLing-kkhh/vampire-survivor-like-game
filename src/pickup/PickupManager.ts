@@ -16,11 +16,18 @@ export class PickupManager {
   private static readonly HARD_PICKUP_CAP = 900;
   private static readonly MERGE_MIN_DISTANCE_FROM_PLAYER = 900;
   private static readonly MAX_MERGE_BATCH_SIZE = 24;
+  private static readonly PERIODIC_MERGE_INTERVAL_MS = 1500;
+  private static readonly PERIODIC_MERGE_RADIUS = 140;
+  private static readonly PERIODIC_MERGE_MIN_CLUSTER_SIZE = 3;
+  private static readonly PERIODIC_MERGE_MAX_CLUSTER_SIZE = 12;
+  private static readonly PERIODIC_MERGE_MAX_CLUSTERS = 8;
+  private static readonly PERIODIC_MERGE_MIN_DISTANCE_FROM_PLAYER = 260;
 
   private readonly pickups: Pickup[] = [];
   private readonly unsubscribeEnemyKilled: () => void;
   private mergedPickupCount = 0;
   private lastMergedPickupCount = 0;
+  private periodicMergeTimerMs = PickupManager.PERIODIC_MERGE_INTERVAL_MS;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -89,6 +96,7 @@ export class PickupManager {
     }
 
     this.enforceSoftCap(playerPosition);
+    this.updatePeriodicMerge(playerPosition, deltaMs);
   }
 
   destroy(): void {
@@ -102,7 +110,124 @@ export class PickupManager {
   }
 
   private spawnExpGem(x: number, y: number, exp: number): void {
+    if (exp <= 0) {
+      return;
+    }
+
     this.pickups.push(new Pickup(this.scene, x, y, exp));
+  }
+
+  private updatePeriodicMerge(playerPosition: Position, deltaMs: number): void {
+    this.periodicMergeTimerMs -= deltaMs;
+
+    if (this.periodicMergeTimerMs > 0) {
+      return;
+    }
+
+    this.periodicMergeTimerMs = PickupManager.PERIODIC_MERGE_INTERVAL_MS;
+    this.mergeNearbyPickups(playerPosition);
+  }
+
+  private mergeNearbyPickups(playerPosition: Position): void {
+    const minPlayerDistanceSq = PickupManager.PERIODIC_MERGE_MIN_DISTANCE_FROM_PLAYER
+      * PickupManager.PERIODIC_MERGE_MIN_DISTANCE_FROM_PLAYER;
+    const mergeRadiusSq = PickupManager.PERIODIC_MERGE_RADIUS
+      * PickupManager.PERIODIC_MERGE_RADIUS;
+    const candidates = this.pickups.filter((pickup) => (
+      !pickup.isCollected
+      && !pickup.isMagnetizing
+      && Phaser.Math.Distance.Squared(
+        playerPosition.x,
+        playerPosition.y,
+        pickup.body.x,
+        pickup.body.y,
+      ) >= minPlayerDistanceSq
+    ));
+
+    if (candidates.length < PickupManager.PERIODIC_MERGE_MIN_CLUSTER_SIZE) {
+      return;
+    }
+
+    const selectedPickups = new Set<Pickup>();
+    let mergedClusters = 0;
+
+    for (const anchor of candidates) {
+      if (selectedPickups.has(anchor)) {
+        continue;
+      }
+
+      const cluster: Pickup[] = [anchor];
+
+      for (const candidate of candidates) {
+        if (
+          candidate === anchor
+          || selectedPickups.has(candidate)
+          || cluster.length >= PickupManager.PERIODIC_MERGE_MAX_CLUSTER_SIZE
+        ) {
+          continue;
+        }
+
+        const distanceSq = Phaser.Math.Distance.Squared(
+          anchor.body.x,
+          anchor.body.y,
+          candidate.body.x,
+          candidate.body.y,
+        );
+
+        if (distanceSq <= mergeRadiusSq) {
+          cluster.push(candidate);
+        }
+      }
+
+      if (cluster.length < PickupManager.PERIODIC_MERGE_MIN_CLUSTER_SIZE) {
+        continue;
+      }
+
+      this.mergePickupCluster(cluster);
+      cluster.forEach((pickup) => selectedPickups.add(pickup));
+      mergedClusters += 1;
+
+      if (mergedClusters >= PickupManager.PERIODIC_MERGE_MAX_CLUSTERS) {
+        break;
+      }
+    }
+  }
+
+  private mergePickupCluster(cluster: Pickup[]): void {
+    let mergedExp = 0;
+    let weightedX = 0;
+    let weightedY = 0;
+
+    for (const pickup of cluster) {
+      const weight = Math.max(1, pickup.exp);
+
+      mergedExp += pickup.exp;
+      weightedX += pickup.body.x * weight;
+      weightedY += pickup.body.y * weight;
+    }
+
+    if (mergedExp <= 0) {
+      return;
+    }
+
+    const selectedPickups = new Set(cluster);
+    const mergedX = weightedX / Math.max(1, mergedExp);
+    const mergedY = weightedY / Math.max(1, mergedExp);
+
+    for (let index = this.pickups.length - 1; index >= 0; index -= 1) {
+      const pickup = this.pickups[index];
+
+      if (!selectedPickups.has(pickup)) {
+        continue;
+      }
+
+      pickup.destroy();
+      this.pickups.splice(index, 1);
+    }
+
+    this.pickups.push(new Pickup(this.scene, mergedX, mergedY, mergedExp));
+    this.lastMergedPickupCount += cluster.length;
+    this.mergedPickupCount += cluster.length - 1;
   }
 
   private enforceSoftCap(playerPosition: Position): void {

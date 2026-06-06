@@ -30,6 +30,11 @@ interface ResultSceneData {
   survivalTimeSeconds?: number;
   resultType?: 'gameOver' | 'victory';
   finalLevel?: number;
+  score?: number;
+  normalEnemyScore?: number;
+  miniBossScore?: number;
+  finalBossScore?: number;
+  treasureScore?: number;
   killCount?: number;
   treasureDropCount?: number;
   treasureOpenCount?: number;
@@ -322,6 +327,7 @@ export class ResultScene extends Phaser.Scene {
       this.formatMetadataLine(params.data),
       `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
       `${I18n.t('result.killCount')}: ${params.data.killCount ?? 0}`,
+      `${I18n.t('result.score')}: ${params.data.score ?? 0}`,
       `${I18n.t('result.weapons')}: ${params.weaponText}`,
       `${I18n.t('result.passives')}: ${params.passiveText}`,
       `${I18n.t('result.evolutionPath')}: ${params.evolutionPathText}`,

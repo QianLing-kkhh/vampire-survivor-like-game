@@ -20,11 +20,15 @@ export class Pickup {
   private static readonly MAX_MAGNET_SPEED = 270;
   private static readonly COLLECT_DISTANCE = 18;
   private static readonly MAGNET_ACCELERATION_FACTOR = 18000;
+  private static readonly MIN_EXP_VISUAL_SCALE = 0.72;
+  private static readonly MAX_EXP_VISUAL_SCALE = 1.85;
+  private static readonly EXP_VISUAL_SCALE_STEP = 0.24;
 
   readonly body: PickupBody;
   isMagnetizing = false;
   isCollected = false;
   private shadow?: Phaser.GameObjects.Ellipse;
+  private readonly expVisualScale: number;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -32,6 +36,7 @@ export class Pickup {
     y: number,
     readonly exp: number,
   ) {
+    this.expVisualScale = Pickup.getExpVisualScale(exp);
     this.body = this.createBody(scene, x, y);
     this.shadow = ShadowFactory.createShadow(scene, this.body, 'pickup');
   }
@@ -67,8 +72,8 @@ export class Pickup {
     this.body.y += ((playerY - this.body.y) / distance) * step;
     this.updateShadow();
 
-    const scale = Phaser.Math.Clamp(distance / 140, 0.6, 1);
-    this.body.setScale?.(scale);
+    const magnetScale = Phaser.Math.Clamp(distance / 140, 0.6, 1);
+    this.body.setScale?.(magnetScale);
     this.body.setAlpha?.(Phaser.Math.Clamp(1.15 - distance / 500, 0.85, 1));
 
     if (this.body.rotation !== undefined) {
@@ -114,7 +119,13 @@ export class Pickup {
   }
 
   private createCollectFlash(): void {
-    const flash = this.scene.add.circle(this.body.x, this.body.y, 16, 0x7dd3fc, 0.45);
+    const flash = this.scene.add.circle(
+      this.body.x,
+      this.body.y,
+      16 * this.expVisualScale,
+      0x7dd3fc,
+      0.45,
+    );
     flash.setDepth(19);
     this.scene.tweens.add({
       targets: flash,
@@ -127,15 +138,27 @@ export class Pickup {
 
   private createBody(scene: Phaser.Scene, x: number, y: number): PickupBody {
     const textureKey = AssetKeyResolver.getPickupTextureKey(scene, 'exp_gem');
+    const displaySize = VisualScale.getPickupDisplaySize() * this.expVisualScale;
 
     if (textureKey) {
       const body = scene.add.image(x, y, textureKey);
-      const displaySize = VisualScale.getPickupDisplaySize();
       body.setDisplaySize(displaySize, displaySize);
 
       return body;
     }
 
-    return scene.add.circle(x, y, VisualScale.getPickupDisplaySize() / 2, 0x38bdf8);
+    return scene.add.circle(x, y, displaySize / 2, 0x38bdf8);
+  }
+
+  private static getExpVisualScale(exp: number): number {
+    const safeExp = Math.max(1, exp);
+    const scale = Pickup.MIN_EXP_VISUAL_SCALE
+      + Math.log2(safeExp + 1) * Pickup.EXP_VISUAL_SCALE_STEP;
+
+    return Phaser.Math.Clamp(
+      scale,
+      Pickup.MIN_EXP_VISUAL_SCALE,
+      Pickup.MAX_EXP_VISUAL_SCALE,
+    );
   }
 }

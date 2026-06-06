@@ -1,4 +1,5 @@
 import { VersionInfo } from '../version/VersionInfo';
+import { SCORE_RULES, ScoreSource } from '../score/ScoreRules';
 
 import { RunMetadata, createDefaultRunMetadata } from './RunMetadata';
 
@@ -11,6 +12,11 @@ export class RunState {
   mapId = '';
   runSeed = '';
   replayId = '';
+  score = 0;
+  normalEnemyScore = 0;
+  miniBossScore = 0;
+  finalBossScore = 0;
+  treasureScore = 0;
   killCount = 0;
   treasureDropCount = 0;
   treasureOpenCount = 0;
@@ -86,6 +92,11 @@ export class RunState {
     this.mapId = '';
     this.runSeed = '';
     this.replayId = '';
+    this.score = 0;
+    this.normalEnemyScore = 0;
+    this.miniBossScore = 0;
+    this.finalBossScore = 0;
+    this.treasureScore = 0;
     this.killCount = 0;
     this.treasureDropCount = 0;
     this.treasureOpenCount = 0;
@@ -242,6 +253,29 @@ export class RunState {
 
     if (this.endlessStarted) {
       this.endlessEnemyKills += 1;
+    }
+  }
+
+  recordScore(source: ScoreSource): void {
+    switch (source) {
+      case 'normalEnemy':
+        this.score += SCORE_RULES.normalEnemyKill;
+        this.normalEnemyScore += SCORE_RULES.normalEnemyKill;
+        break;
+      case 'miniBoss':
+        this.score += SCORE_RULES.miniBossKill;
+        this.miniBossScore += SCORE_RULES.miniBossKill;
+        break;
+      case 'finalBoss':
+        this.score += SCORE_RULES.finalBossKill;
+        this.finalBossScore += SCORE_RULES.finalBossKill;
+        break;
+      case 'treasure':
+        this.score += SCORE_RULES.treasureOpen;
+        this.treasureScore += SCORE_RULES.treasureOpen;
+        break;
+      default:
+        break;
     }
   }
 

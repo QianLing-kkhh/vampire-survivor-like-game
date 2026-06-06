@@ -256,6 +256,7 @@ export class GameScene extends Phaser.Scene {
         },
         onChestOpened: () => {
           this.runState.recordTreasureOpen();
+          this.runState.recordScore('treasure');
         },
         onEnemySpawned: (enemy) => {
           enemy.setEventBus(this.eventBus);
@@ -303,9 +304,9 @@ export class GameScene extends Phaser.Scene {
           });
           AudioManager.playSfx(this, 'boss_spawn');
           AudioManager.playBgm(this, 'boss_bgm');
-          this.showCenterMessage('Boss Appears!');
+          this.showCenterMessage('Boss Appears!', { kind: 'boss', durationMs: 2200 });
         },
-        onCenterMessage: (message) => this.showCenterMessage(message),
+        onCenterMessage: (message, options) => this.showCenterMessage(message, options),
       },
     });
     this.applyGameplayContext(context);
@@ -697,6 +698,7 @@ export class GameScene extends Phaser.Scene {
       requiredExp: this.levelManager.requiredExp,
       timeSeconds: this.timeManager.gameTimeSeconds,
       targetTimeSeconds: this.currentStage.finalBossSpawnTimeSeconds,
+      score: this.runState.score,
       weaponIds: this.weaponManager?.getWeaponIds() ?? [],
       weaponHudInfo: this.weaponManager?.getWeaponHudInfo() ?? [],
       weaponBuildHudInfo: this.weaponManager?.getWeaponBuildHudInfo({
@@ -784,7 +786,7 @@ export class GameScene extends Phaser.Scene {
       && this.timeManager.gameTimeSeconds >= this.finalBossWarningTimeSeconds
     ) {
       this.finalBossWarningShown = true;
-      this.showCenterMessage('Boss Coming');
+      this.showCenterMessage('Boss Coming', { kind: 'boss', durationMs: 2400 });
     }
 
     if (
@@ -818,7 +820,7 @@ export class GameScene extends Phaser.Scene {
     }
     AudioManager.playSfx(this, 'boss_spawn');
     AudioManager.playBgm(this, 'boss_bgm');
-    this.showCenterMessage('Boss Appears!');
+    this.showCenterMessage('Boss Appears!', { kind: 'boss', durationMs: 2200 });
   }
 
   private getFinalBossSpawnPosition(): { x: number; y: number } {
@@ -1017,6 +1019,11 @@ export class GameScene extends Phaser.Scene {
       },
       weaponContext: this.weaponManager?.getAutoWeaponContext(),
       map: this.gameplayContext?.mapMechanicRuntime.getAutoMapSnapshot(),
+      bossWarnings: [
+        ...(this.gameplayContext?.bossController.getAutoBossWarnings() ?? []),
+        ...(this.bossAttackController?.getAutoBossWarnings() ?? []),
+        ...(this.gameplayContext?.endlessBossManager.getAutoBossWarnings() ?? []),
+      ],
       worldBounds: {
         width: this.worldWidth,
         height: this.worldHeight,
@@ -1036,35 +1043,45 @@ export class GameScene extends Phaser.Scene {
     this.player.moveWithDirection(direction, deltaMs, 'virtualJoystick');
   }
 
-  private getPickupPositions(): Array<{ x: number; y: number }> {
+  private getPickupPositions(): Array<{ x: number; y: number; exp: number }> {
     const pickupManager = this.pickupManager as unknown as {
       pickups?: Array<{
         body: {
           x: number;
           y: number;
         };
+        exp: number;
       }>;
     };
 
-    return pickupManager.pickups?.map((pickup) => pickup.body) ?? [];
+    return pickupManager.pickups?.map((pickup) => ({
+      x: pickup.body.x,
+      y: pickup.body.y,
+      exp: pickup.exp,
+    })) ?? [];
   }
 
   private getTreasurePositions(): Array<{ x: number; y: number }> {
     return this.treasureManager?.getChests() ?? [];
   }
 
-  private showCenterMessage(message: string): void {
+  private showCenterMessage(
+    message: string,
+    options: { kind?: 'normal' | 'boss'; durationMs?: number } = {},
+  ): void {
     const camera = this.cameras.main;
+    const isBoss = options.kind === 'boss';
     const text = this.add.text(
       camera.scrollX + camera.width / 2,
-      camera.scrollY + camera.height / 2,
+      camera.scrollY + camera.height * (isBoss ? 0.34 : 0.5),
       message,
       {
         fontFamily: 'Arial',
-        fontSize: '36px',
-        color: '#ffffff',
-        stroke: '#111827',
-        strokeThickness: 6,
+        fontSize: isBoss ? '42px' : '36px',
+        fontStyle: isBoss ? 'bold' : undefined,
+        color: isBoss ? '#facc15' : '#ffffff',
+        stroke: isBoss ? '#7f1d1d' : '#111827',
+        strokeThickness: isBoss ? 7 : 6,
       },
     );
 
@@ -1076,7 +1093,7 @@ export class GameScene extends Phaser.Scene {
       targets: text,
       alpha: 0,
       y: text.y - 28,
-      duration: 1600,
+      duration: options.durationMs ?? (isBoss ? 2200 : 1600),
       ease: 'Cubic.easeOut',
       onComplete: () => {
         this.centerMessages.delete(text);

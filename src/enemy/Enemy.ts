@@ -8,6 +8,7 @@ import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
 import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
 import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
 
 export interface EnemyStats {
   hp: number;
@@ -32,6 +33,7 @@ export interface EnemyKilledEvent {
   exp: number;
   enemyId?: string;
   isBoss?: boolean;
+  isBossLike?: boolean;
 }
 
 export interface ExpGainedEvent {
@@ -96,6 +98,7 @@ export function isLevelUpEvent(value: unknown): value is LevelUpEvent {
 
 export class Enemy {
   private static readonly DASH_WARNING_DURATION_MULTIPLIER = 0.8;
+  private static readonly BOSS_DASH_DISTANCE_MULTIPLIER = 1.35;
   private static readonly NORMAL_WEAPON_KNOCKBACK_IMMUNITY_MS = 3000;
   private static readonly MINI_BOSS_WEAPON_KNOCKBACK_IMMUNITY_MS = 5000;
 
@@ -127,6 +130,7 @@ export class Enemy {
   private dashStartedPending = false;
   private dashHitConsumed = false;
   private dashImpactPending = false;
+  private dashTravelDistance = 0;
   private dashPreviousPosition = new Phaser.Math.Vector2();
   private dashCurrentPosition = new Phaser.Math.Vector2();
   private dashImpactPosition = new Phaser.Math.Vector2();
@@ -437,6 +441,38 @@ export class Enemy {
     return this.dashDirection.clone();
   }
 
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    if (this.dashState !== 'warning') {
+      return [];
+    }
+
+    const lineEnd = new Phaser.Math.Vector2(
+      this.body.x + this.dashDirection.x * 620,
+      this.body.y + this.dashDirection.y * 620,
+    );
+
+    return [
+      {
+        shape: 'line',
+        kind: 'dash',
+        danger: 'damage',
+        start: { x: this.body.x, y: this.body.y },
+        end: { x: lineEnd.x, y: lineEnd.y },
+        width: 18,
+        remainingMs: Math.max(0, this.dashTimerMs),
+      },
+      {
+        shape: 'circle',
+        kind: 'impact',
+        danger: 'damage',
+        x: this.dashImpactPosition.x,
+        y: this.dashImpactPosition.y,
+        radius: 140,
+        remainingMs: Math.max(0, this.dashTimerMs),
+      },
+    ];
+  }
+
   destroy(): void {
     this.destroyDashWarnings();
     ShadowFactory.destroyShadow(this.shadow);
@@ -453,12 +489,15 @@ export class Enemy {
       * Enemy.DASH_WARNING_DURATION_MULTIPLIER
       * 1000;
     this.dashDirection.set(target.x - this.body.x, target.y - this.body.y);
+    let targetDistance = this.dashDirection.length();
 
     if (this.dashDirection.lengthSq() === 0) {
       this.dashDirection.set(1, 0);
+      targetDistance = this.dashSpeed * this.dashDuration;
     }
 
     this.dashDirection.normalize();
+    this.dashTravelDistance = targetDistance * Enemy.BOSS_DASH_DISTANCE_MULTIPLIER;
     this.updateDashImpactPosition(worldBounds);
     this.createDashWarningLine();
     this.createDashImpactWarningCircle();
@@ -478,7 +517,8 @@ export class Enemy {
     deltaMs: number,
     worldBounds: { width: number; height: number },
   ): void {
-    const distance = this.dashSpeed * (deltaMs / 1000);
+    const dashDurationMs = Math.max(1, this.dashDuration * 1000);
+    const distance = this.dashTravelDistance * (deltaMs / dashDurationMs);
     const radius = this.getBodyRadius();
     this.dashPreviousPosition.set(this.body.x, this.body.y);
     const nextX = Phaser.Math.Clamp(
@@ -518,8 +558,8 @@ export class Enemy {
       this.body.y,
       0,
       0,
-      this.dashDirection.x * 620,
-      this.dashDirection.y * 620,
+      this.dashDirection.x * this.dashTravelDistance,
+      this.dashDirection.y * this.dashTravelDistance,
       0xef4444,
       0.42,
     );
@@ -550,8 +590,8 @@ export class Enemy {
     this.dashWarningLine.setTo(
       0,
       0,
-      this.dashDirection.x * 620,
-      this.dashDirection.y * 620,
+      this.dashDirection.x * this.dashTravelDistance,
+      this.dashDirection.y * this.dashTravelDistance,
     );
     this.dashImpactWarningCircle?.setPosition(
       this.dashImpactPosition.x,
@@ -560,16 +600,15 @@ export class Enemy {
   }
 
   private updateDashImpactPosition(worldBounds: { width: number; height: number }): void {
-    const distance = this.dashSpeed * this.dashDuration;
     const radius = this.getBodyRadius();
     this.dashImpactPosition.set(
       Phaser.Math.Clamp(
-        this.body.x + this.dashDirection.x * distance,
+        this.body.x + this.dashDirection.x * this.dashTravelDistance,
         radius,
         worldBounds.width - radius,
       ),
       Phaser.Math.Clamp(
-        this.body.y + this.dashDirection.y * distance,
+        this.body.y + this.dashDirection.y * this.dashTravelDistance,
         radius,
         worldBounds.height - radius,
       ),
@@ -713,6 +752,7 @@ export class Enemy {
       exp: this.exp,
       enemyId: this.id,
       isBoss: this.id.endsWith('_boss') || this.id === 'boss',
+      isBossLike: this.bossLike,
     });
   }
 }

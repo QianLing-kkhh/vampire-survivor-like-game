@@ -32,6 +32,7 @@ export interface HUDState {
   requiredExp: number;
   timeSeconds: number;
   targetTimeSeconds: number;
+  score: number;
   weaponIds: string[];
   autoMode?: boolean;
   endlessMode?: boolean;
@@ -150,6 +151,7 @@ export class HUD {
   private readonly expBarBg: Phaser.GameObjects.Rectangle;
   private readonly expBarFill: Phaser.GameObjects.Rectangle;
   private readonly timeText: Phaser.GameObjects.Text;
+  private readonly scoreText: Phaser.GameObjects.Text;
   private readonly goalText: Phaser.GameObjects.Text;
   private readonly messageText: Phaser.GameObjects.Text;
   private readonly shieldText: Phaser.GameObjects.Text;
@@ -187,10 +189,15 @@ export class HUD {
     this.expText = this.createText(16, 54, UITheme.smallFontSize);
     this.expBarBg = this.createBarBackground(16, 76, HUD.BAR_WIDTH, HUD.BAR_HEIGHT);
     this.expBarFill = this.createBarFill(16, 76, UITheme.expBarColor);
-    this.timeText = this.createText(16, 98, UITheme.smallFontSize);
-    this.goalText = this.createText(16, 118, UITheme.smallFontSize, UITheme.mutedTextColor);
-    this.messageText = this.createText(16, 140, UITheme.smallFontSize, UITheme.successTextColor);
-    this.shieldText = this.createText(16, 160, UITheme.smallFontSize, UITheme.successTextColor);
+    this.timeText = this.createText(16, 98, '24px');
+    this.timeText.setStyle({ fontStyle: 'bold' });
+    this.timeText.setStroke('#000000', 4);
+    this.scoreText = this.createText(16, 124, '22px', '#facc15');
+    this.scoreText.setStyle({ fontStyle: 'bold' });
+    this.scoreText.setStroke('#111827', 3);
+    this.goalText = this.createText(16, 150, UITheme.smallFontSize, UITheme.mutedTextColor);
+    this.messageText = this.createText(16, 172, UITheme.smallFontSize, UITheme.successTextColor);
+    this.shieldText = this.createText(16, 192, UITheme.smallFontSize, UITheme.successTextColor);
     this.evolutionDebugText = this.createText(16, 520, '12px', UITheme.mutedTextColor);
 
     this.minimapX = scene.scale.width - HUD.MINIMAP_WIDTH - 16;
@@ -254,6 +261,7 @@ export class HUD {
       requiredExp: 5,
       timeSeconds: 0,
       targetTimeSeconds: 300,
+      score: 0,
       weaponIds: [],
       autoMode: false,
       weaponHudInfo: [],
@@ -281,6 +289,7 @@ export class HUD {
     this.expBarBg.destroy();
     this.expBarFill.destroy();
     this.timeText.destroy();
+    this.scoreText.destroy();
     this.goalText.destroy();
     this.messageText.destroy();
     this.shieldText.destroy();
@@ -320,8 +329,9 @@ export class HUD {
     this.expText.setText(`${I18n.t('hud.level')}.${state.level}  ${I18n.t('hud.exp')} ${exp} / ${requiredExp}`);
     this.setBarRatio(this.expBarFill, state.currentExp / requiredExp);
     this.timeText.setText(`${I18n.t('hud.time')} ${this.formatTime(state.timeSeconds)}`);
+    this.scoreText.setText(`${I18n.t('hud.score')} ${this.formatInteger(state.score)}`);
     this.goalText.setText(this.getGoalText(state));
-    this.messageText.setText(state.message ?? '');
+    this.updateHudMessage(state.message);
     this.updateShieldText();
     this.updateIconList(
       this.passiveEntries,
@@ -1107,13 +1117,14 @@ export class HUD {
     this.expBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
     this.expBarFill.setPosition(stats.x, stats.y + 64);
     this.timeText.setPosition(stats.x, stats.y + 86);
-    this.timeText.setFontSize(layout.fontSize);
-    this.goalText.setPosition(stats.x, stats.y + 106);
+    this.timeText.setFontSize(this.screenManager.isPortrait() ? '22px' : '26px');
+    this.scoreText.setPosition(stats.x, stats.y + 116);
+    this.scoreText.setFontSize(this.screenManager.isPortrait() ? '20px' : '22px');
+    this.goalText.setPosition(stats.x, stats.y + 142);
     this.goalText.setFontSize(layout.fontSize);
     this.messageText.setPosition(layout.bossTextPosition.x, layout.bossTextPosition.y);
     this.messageText.setOrigin(0.5);
-    this.messageText.setFontSize(layout.fontSize);
-    this.shieldText.setPosition(stats.x, stats.y + 126);
+    this.shieldText.setPosition(stats.x, stats.y + 162);
     this.shieldText.setFontSize(layout.fontSize);
     this.evolutionDebugText.setPosition(stats.x, this.screenManager.height - 96);
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
@@ -1156,6 +1167,27 @@ export class HUD {
     panel.setDepth(890);
     panel.setScrollFactor(0);
     return panel;
+  }
+
+  private updateHudMessage(message: string | undefined): void {
+    this.messageText.setText(message ?? '');
+
+    if (this.isBossHudMessage(message)) {
+      this.messageText.setColor('#facc15');
+      this.messageText.setFontSize(this.screenManager.isPortrait() ? '28px' : '34px');
+      this.messageText.setStyle({ fontStyle: 'bold' });
+      this.messageText.setStroke('#7f1d1d', 5);
+      return;
+    }
+
+    this.messageText.setColor(UITheme.successTextColor);
+    this.messageText.setFontSize(LayoutConfig.getHudLayout(this.screenManager).fontSize);
+    this.messageText.setStyle({ fontStyle: '' });
+    this.messageText.setStroke('#000000', 0);
+  }
+
+  private isBossHudMessage(message: string | undefined): boolean {
+    return message !== undefined && /boss|incoming|warning/i.test(message);
   }
 
   private createPanelImage(): Phaser.GameObjects.Image | undefined {

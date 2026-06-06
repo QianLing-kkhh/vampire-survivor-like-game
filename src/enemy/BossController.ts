@@ -9,6 +9,7 @@ import { EnemyMovement } from './EnemyMovement';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { RunState } from '../run/RunState';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
 
 import { Enemy, GameEventMap } from './Enemy';
 import { EnemyFlow } from './EnemyFlow';
@@ -34,7 +35,7 @@ export interface BossControllerConfig {
   dashImpactDamage: number;
   dashKnockbackDistance: number;
   contactDamageCooldownMs: number;
-  onCenterMessage(message: string): void;
+  onCenterMessage(message: string, options?: { kind?: 'normal' | 'boss'; durationMs?: number }): void;
 }
 
 export class BossController {
@@ -61,7 +62,7 @@ export class BossController {
       return;
     }
 
-    this.config.onCenterMessage('Boss Defeated!');
+    this.config.onCenterMessage('Boss Defeated!', { kind: 'boss', durationMs: 2200 });
 
     if (event.enemyId !== this.config.finalBossId) {
       return;
@@ -110,6 +111,13 @@ export class BossController {
     return undefined;
   }
 
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    return [
+      ...(this.finalBoss?.getAutoBossWarnings() ?? []),
+      ...(this.bossAttackController?.getAutoBossWarnings() ?? []),
+    ];
+  }
+
   clear(): void {
     this.bossAttackController?.destroy();
     this.bossAttackController = undefined;
@@ -122,7 +130,7 @@ export class BossController {
       && timeSeconds >= this.config.warningTimeSeconds
     ) {
       this.finalBossWarningShown = true;
-      this.config.onCenterMessage('Boss Coming');
+      this.config.onCenterMessage('Boss Coming', { kind: 'boss', durationMs: 2400 });
     }
 
     if (
@@ -150,7 +158,7 @@ export class BossController {
     this.bossAttackController = new BossAttackController(this.config.scene, boss);
     AudioManager.playSfx(this.config.scene, 'boss_spawn');
     AudioManager.playBgm(this.config.scene, 'boss_bgm');
-    this.config.onCenterMessage('Boss Appears!');
+    this.config.onCenterMessage('Boss Appears!', { kind: 'boss', durationMs: 2200 });
   }
 
   private getFinalBossSpawnPosition(): { x: number; y: number } {

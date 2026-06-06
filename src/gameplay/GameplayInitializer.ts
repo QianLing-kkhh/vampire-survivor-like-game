@@ -78,7 +78,7 @@ export interface GameplayInitializerCallbacks {
   onChestOpened(): void;
   onEnemySpawned(enemy: Enemy): void;
   onBossSpawned(boss: Enemy): void;
-  onCenterMessage(message: string): void;
+  onCenterMessage(message: string, options?: { kind?: 'normal' | 'boss'; durationMs?: number }): void;
 }
 
 export interface GameplayInitializerConfig {
@@ -397,6 +397,7 @@ export class GameplayInitializer {
       worldHeight: config.worldHeight,
       playerHitRadius: config.playerHitRadius,
       contactDamageCooldownMs: config.contactDamageCooldownMs,
+      finalBossId: config.finalBossId,
       characterRuntime,
       mapMechanicRuntime,
       isBossPhaseActive: () => bossController?.hasBossSpawned() === true,

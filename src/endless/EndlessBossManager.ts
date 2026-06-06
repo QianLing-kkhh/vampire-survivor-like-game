@@ -10,6 +10,7 @@ import { EnemyFlow } from '../enemy/EnemyFlow';
 import { RandomSource } from '../random/RandomSource';
 import { SeededRandom } from '../random/SeededRandom';
 import { RunState } from '../run/RunState';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
 
 import { EndlessManager } from './EndlessManager';
 import { ENDLESS_BOSS_CONFIGS, EndlessBossConfig, EndlessBossId } from './EndlessBossConfig';
@@ -101,6 +102,10 @@ export class EndlessBossManager {
     this.stop();
     this.nextSpawnTime = 0;
     this.lastBossId = null;
+  }
+
+  getAutoBossWarnings(): AutoBossWarningSnapshot[] {
+    return this.activeBosses.flatMap((bossState) => bossState.skillRuntime.getAutoBossWarnings());
   }
 
   update(gameTimeSeconds: number, deltaMs: number): void {

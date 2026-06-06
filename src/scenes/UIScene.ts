@@ -15,6 +15,12 @@ type LevelUpOptionsPayload = UpgradeOption[] | {
   autoSelectDelayMs?: number;
 };
 
+type TemporaryMessagePayload = string | {
+  text: string;
+  kind?: 'normal' | 'warning' | 'boss';
+  durationMs?: number;
+};
+
 export class UIScene extends Phaser.Scene {
   private hud?: HUD;
   private levelUpPanel?: LevelUpPanel;
@@ -142,19 +148,23 @@ export class UIScene extends Phaser.Scene {
     this.helpPanel = undefined;
   }
 
-  private showTemporaryMessage(message: string): void {
+  private showTemporaryMessage(payload: TemporaryMessagePayload): void {
+    const message = typeof payload === 'string' ? payload : payload.text;
+    const kind = typeof payload === 'string' ? 'normal' : payload.kind ?? 'normal';
+    const isBoss = kind === 'boss';
+
     this.temporaryMessage?.destroy();
     this.temporaryMessage = this.add.text(
       this.scale.width / 2,
-      this.scale.height * 0.28,
+      this.scale.height * (isBoss ? 0.32 : 0.28),
       message,
       {
-        color: '#f8fafc',
+        color: isBoss ? '#facc15' : '#f8fafc',
         fontFamily: 'Arial, sans-serif',
-        fontSize: '22px',
+        fontSize: isBoss ? '40px' : '22px',
         fontStyle: 'bold',
-        stroke: '#111827',
-        strokeThickness: 4,
+        stroke: isBoss ? '#7f1d1d' : '#111827',
+        strokeThickness: isBoss ? 6 : 4,
       },
     );
     this.temporaryMessage.setOrigin(0.5);
@@ -164,7 +174,7 @@ export class UIScene extends Phaser.Scene {
       targets: this.temporaryMessage,
       alpha: 0,
       y: this.temporaryMessage.y - 24,
-      duration: 1400,
+      duration: typeof payload === 'string' ? 1400 : payload.durationMs ?? (isBoss ? 2200 : 1400),
       onComplete: () => {
         this.temporaryMessage?.destroy();
         this.temporaryMessage = undefined;

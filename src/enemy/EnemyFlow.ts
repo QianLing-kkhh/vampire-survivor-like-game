@@ -37,6 +37,7 @@ export interface EnemyFlowConfig {
   worldHeight: number;
   playerHitRadius: number;
   contactDamageCooldownMs: number;
+  finalBossId: string;
   characterRuntime?: CharacterRuntime;
   mapMechanicRuntime?: MapMechanicRuntime;
   isBossPhaseActive(): boolean;
@@ -65,6 +66,7 @@ export class EnemyFlow {
       }
 
       this.config.runState.recordKill();
+      this.config.runState.recordScore(this.getScoreSource(event));
       AudioManager.playSfx(this.config.scene, 'enemy_killed', {
         autoMode: this.config.playtestSettings.autoMode,
       });
@@ -431,6 +433,25 @@ export class EnemyFlow {
     const body = enemy.body as Phaser.GameObjects.GameObject & { radius?: number };
 
     return body.radius ?? 12;
+  }
+
+  private getScoreSource(event: GameEventMap['EnemyKilled']) {
+    const enemyId = event.enemyId ?? '';
+
+    if (enemyId === this.config.finalBossId) {
+      return 'finalBoss';
+    }
+
+    if (
+      enemyId.endsWith('_boss')
+      || enemyId.startsWith('endless_')
+      || event.isBoss === true
+      || event.isBossLike === true
+    ) {
+      return 'miniBoss';
+    }
+
+    return 'normalEnemy';
   }
 
 }
