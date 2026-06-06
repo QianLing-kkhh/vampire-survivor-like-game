@@ -256,7 +256,9 @@ export class RunState {
     }
   }
 
-  recordScore(source: ScoreSource): void {
+  recordScore(source: ScoreSource, multiplier = 1): void {
+    const scoreMultiplier = Math.max(0, multiplier);
+
     switch (source) {
       case 'normalEnemy':
         this.score += SCORE_RULES.normalEnemyKill;
@@ -271,8 +273,8 @@ export class RunState {
         this.finalBossScore += SCORE_RULES.finalBossKill;
         break;
       case 'treasure':
-        this.score += SCORE_RULES.treasureOpen;
-        this.treasureScore += SCORE_RULES.treasureOpen;
+        this.score += SCORE_RULES.treasureOpen * scoreMultiplier;
+        this.treasureScore += SCORE_RULES.treasureOpen * scoreMultiplier;
         break;
       default:
         break;

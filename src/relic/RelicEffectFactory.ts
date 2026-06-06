@@ -22,6 +22,12 @@ export class RelicEffectFactory {
         return new DamageRuleRelicEffect(config as DamageTakenRelicEffectConfig);
       case 'eventTriggered':
         return new DefenseRelicEffect(config as EventTriggeredRelicEffectConfig);
+      case 'lowHealthDamageModifier':
+      case 'pickupRangeModifier':
+      case 'treasureScoreBonus':
+      case 'onDamageTakenCounter':
+      case 'timedSlowPulse':
+        return null;
       default:
         console.warn(`Unknown relic effect type skipped: ${config.type}`);
         return null;

@@ -37,6 +37,8 @@ import { LevelManager } from '../progression/LevelManager';
 import { ReplayStorage } from '../replay/ReplayStorage';
 import { RandomManager } from '../random/RandomManager';
 import { RunSeed } from '../random/RunSeed';
+import { RelicRegistry } from '../relic/RelicRegistry';
+import { RelicRewardSelector } from '../relic/RelicRewardSelector';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeOption } from '../progression/UpgradeOption';
@@ -76,6 +78,7 @@ export class GameScene extends Phaser.Scene {
   private readonly gameplayUpdater = new GameplayUpdater();
   private readonly debugDataCollector = new DebugDataCollector();
   private readonly hudStateBuilder = new HUDStateBuilder();
+  private readonly relicRewardSelector = new RelicRewardSelector();
   private readonly stageManager = new StageManager();
   private readonly mapManager = new MapManager();
   private playtestSettings: PlaytestSettingsState = PlaytestSettings.get();
@@ -247,7 +250,8 @@ export class GameScene extends Phaser.Scene {
         },
         onChestOpened: () => {
           this.runState.recordTreasureOpen();
-          this.runState.recordScore('treasure');
+          this.runState.recordScore('treasure', this.getTreasureScoreMultiplier());
+          this.tryAwardRelicFromChest();
         },
         onEnemySpawned: (enemy) => {
           enemy.setEventBus(this.eventBus);
@@ -688,6 +692,7 @@ export class GameScene extends Phaser.Scene {
       expManager: this.expManager,
       weaponManager: this.weaponManager,
       passiveManager: this.passiveManager,
+      relicManager: this.gameplayContext?.relicManager,
       evolutionManager: this.evolutionManager,
       runState: this.runState,
       playtestSettings: this.playtestSettings,
@@ -727,6 +732,32 @@ export class GameScene extends Phaser.Scene {
   private getHUDMessage(): string | undefined {
     return this.gameplayContext?.endlessBossManager.getHudMessage(this.timeManager.gameTimeSeconds)
       ?? this.gameplayContext?.bossController.getHUDMessage();
+  }
+
+  private getTreasureScoreMultiplier(): number {
+    return this.gameplayContext?.relicManager.getStatModifiers().treasureScoreMultiplier ?? 1;
+  }
+
+  private tryAwardRelicFromChest(): void {
+    const context = this.gameplayContext;
+
+    if (!context || !context.randomManager.getSource('relic').chance(0.2)) {
+      return;
+    }
+
+    const relic = this.relicRewardSelector.selectAvailableRelic({
+      ownedRelicIds: context.relicManager.getRelicIds(),
+      random: context.randomManager.getSource('relic'),
+      definitions: RelicRegistry.list(),
+    });
+
+    if (!relic || !context.relicManager.addRelic(relic.id)) {
+      return;
+    }
+
+    this.updatePlayerPickupRangeFromStats();
+    this.showCenterMessage(`Relic Acquired: ${relic.name ?? relic.nameKey ?? relic.id}`);
+    this.emitHUDState();
   }
 
   private applyBossProjectileDamage(damage: number): void {
@@ -1018,6 +1049,7 @@ export class GameScene extends Phaser.Scene {
       runStats: this.runStats,
       weaponManager: this.weaponManager,
       passiveManager: this.passiveManager,
+      relicManager: this.gameplayContext?.relicManager,
       playerStats: this.playerStats,
       playerHealth: this.playerHealth,
       levelManager: this.levelManager,
@@ -1348,7 +1380,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updatePlayerPickupRangeFromStats(): void {
-    this.playerPickupRange = (this.playerStats?.pickupRange ?? 0) * 48;
+    const relicPickupRangeMultiplier = this.gameplayContext
+      ?.relicManager.getStatModifiers().pickupRangeMultiplier ?? 1;
+
+    this.playerPickupRange = (this.playerStats?.pickupRange ?? 0) * 48 * relicPickupRangeMultiplier;
 
     if (this.gameplayContext) {
       this.gameplayContext.playerPickupRange = this.playerPickupRange;

@@ -14,6 +14,7 @@ type ManagedWeapon = Weapon & {
   destroy?: () => void;
   clearProjectiles?: () => void;
   getActiveProjectileCount?: () => number;
+  setRuntimeDamageMultiplierProvider?: (provider: ((weaponId: string) => number) | undefined) => void;
 };
 
 type WeaponStat = 'damage'
@@ -132,6 +133,7 @@ export class WeaponManager {
   };
   private readonly damageCalculator = new DamageCalculator();
   private endlessDamageMultiplierProvider?: () => number;
+  private relicDamageMultiplierProvider?: (weaponId: string) => number;
   private currentEndlessDamageMultiplier = 1;
 
   constructor(
@@ -144,8 +146,17 @@ export class WeaponManager {
       weapon.setRunStats(this.runStats);
     }
 
+    weapon.setRuntimeDamageMultiplierProvider?.(this.relicDamageMultiplierProvider);
     weapon.setPassiveModifiers(this.getCombinedPassiveModifiers(weapon));
     this.weapons.push(weapon);
+  }
+
+  setRelicDamageMultiplierProvider(provider: ((weaponId: string) => number) | undefined): void {
+    this.relicDamageMultiplierProvider = provider;
+
+    for (const weapon of this.weapons) {
+      weapon.setRuntimeDamageMultiplierProvider?.(provider);
+    }
   }
 
   setPassiveModifiers(modifiers: {

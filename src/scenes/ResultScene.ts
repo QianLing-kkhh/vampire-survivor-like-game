@@ -64,6 +64,8 @@ interface ResultSceneData {
   endlessBossSkillUseCount?: number;
   weaponIds?: string[];
   passiveItems?: PassiveLevel[];
+  relicIds?: string[];
+  relicNames?: string[];
   upgradePath?: string[];
   playtestCsv?: string;
   bufferedRunsCount?: number;
@@ -111,6 +113,11 @@ export class ResultScene extends Phaser.Scene {
         .map((passive) => `${passive.name} Lv${passive.level}`)
         , 4)
       : I18n.t('common.none');
+    const relicText = data.relicNames && data.relicNames.length > 0
+      ? this.truncateList(data.relicNames, 4)
+      : data.relicIds && data.relicIds.length > 0
+        ? this.truncateList(data.relicIds, 4)
+        : I18n.t('common.none');
     const evolutionPathText = data.evolutionPath && data.evolutionPath.length > 0
       ? this.truncateList(data.evolutionPath, 3)
       : I18n.t('common.none');
@@ -134,6 +141,7 @@ export class ResultScene extends Phaser.Scene {
       isEndlessResult,
       weaponText,
       passiveText,
+      relicText,
       evolutionPathText,
       maxRows: layout.summaryMaxRows,
     });
@@ -315,6 +323,7 @@ export class ResultScene extends Phaser.Scene {
     isEndlessResult: boolean;
     weaponText: string;
     passiveText: string;
+    relicText: string;
     evolutionPathText: string;
     maxRows: number;
   }): string[] {
@@ -330,6 +339,7 @@ export class ResultScene extends Phaser.Scene {
       `${I18n.t('result.score')}: ${params.data.score ?? 0}`,
       `${I18n.t('result.weapons')}: ${params.weaponText}`,
       `${I18n.t('result.passives')}: ${params.passiveText}`,
+      `Relics: ${params.relicText}`,
       `${I18n.t('result.evolutionPath')}: ${params.evolutionPathText}`,
       `${I18n.t('result.treasureOpens')}: ${params.data.treasureOpenCount ?? 0}`,
       `${I18n.t('result.chestUpgrades')}: ${params.data.chestUpgradeCount ?? 0}`,

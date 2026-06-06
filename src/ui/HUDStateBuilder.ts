@@ -8,6 +8,7 @@ import { PlayerStats } from '../player/PlayerStats';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { RunState } from '../run/RunState';
+import { RelicManager } from '../relic/RelicManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { StageDefinition } from '../stage/StageDefinition';
 import { WeaponManager } from '../weapon/WeaponManager';
@@ -24,6 +25,7 @@ export interface HUDStateBuildInput {
   expManager?: ExpManager;
   weaponManager?: WeaponManager;
   passiveManager?: PassiveManager;
+  relicManager?: RelicManager;
   evolutionManager?: EvolutionManager;
   runState: RunState;
   playtestSettings: PlaytestSettingsState;
@@ -56,6 +58,7 @@ export class HUDStateBuilder {
       timeSeconds: input.timeSeconds,
       targetTimeSeconds: input.currentStage.finalBossSpawnTimeSeconds,
       score: input.runState.score,
+      relicCount: input.relicManager?.getRelicIds().length ?? 0,
       weaponIds: input.weaponManager?.getWeaponIds() ?? [],
       weaponHudInfo: input.weaponManager?.getWeaponHudInfo() ?? [],
       weaponBuildHudInfo: input.weaponManager?.getWeaponBuildHudInfo({

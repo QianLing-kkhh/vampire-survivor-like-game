@@ -2,6 +2,7 @@ import characters from '../data/characters.json';
 import enemies from '../data/enemies.json';
 import maps from '../data/maps.json';
 import passives from '../data/passives.json';
+import relics from '../data/relics.json';
 import stages from '../data/stages.json';
 import upgrades from '../data/upgrades.json';
 import waves from '../data/waves.json';
@@ -10,6 +11,8 @@ import weapons from '../data/weapons.json';
 import { CharacterDefinition } from '../character/CharacterDefinition';
 import { MapDefinition } from '../map/MapDefinition';
 import { PassiveItem } from '../passive/PassiveItem';
+import { RelicDefinition } from '../relic/RelicDefinition';
+import { RelicRegistry } from '../relic/RelicRegistry';
 import { WeaponConfig } from '../weapon/Weapon';
 
 import { ContentPack } from './ContentPack';
@@ -45,6 +48,7 @@ export class ContentBootstrap {
 
     new ContentValidator().validatePack(builtInContentPack);
     ContentRegistry.registerPack(builtInContentPack);
+    RelicRegistry.registerMany(Object.values(relics) as RelicDefinition[]);
     this.initialized = true;
   }
 

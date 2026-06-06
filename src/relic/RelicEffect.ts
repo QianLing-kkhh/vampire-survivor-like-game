@@ -28,11 +28,47 @@ export interface EventTriggeredRelicEffectConfig extends BaseRelicEffectConfig {
   eventType: string;
 }
 
+export interface LowHealthDamageRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'lowHealthDamageModifier';
+  value: number;
+  thresholdHpRatio: number;
+}
+
+export interface PickupRangeRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'pickupRangeModifier';
+  value: number;
+}
+
+export interface TreasureScoreRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'treasureScoreBonus';
+  value: number;
+}
+
+export interface DamageTakenCounterRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'onDamageTakenCounter';
+  value: number;
+  radius: number;
+  intervalMs: number;
+}
+
+export interface TimedSlowPulseRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'timedSlowPulse';
+  value: number;
+  intervalMs: number;
+  radius: number;
+  durationMs: number;
+}
+
 export type RelicEffectConfig =
   | TreasureRateRelicEffectConfig
   | WeaponTagDamageRelicEffectConfig
   | DamageTakenRelicEffectConfig
   | EventTriggeredRelicEffectConfig
+  | LowHealthDamageRelicEffectConfig
+  | PickupRangeRelicEffectConfig
+  | TreasureScoreRelicEffectConfig
+  | DamageTakenCounterRelicEffectConfig
+  | TimedSlowPulseRelicEffectConfig
   | BaseRelicEffectConfig;
 
 export interface RelicEffect {

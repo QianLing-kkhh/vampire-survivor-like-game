@@ -36,6 +36,7 @@ export class GameplayUpdater {
 
     context.timeManager.update(effectiveDelta);
     context.passiveManager.update(effectiveDelta, context.playerHealth);
+    context.relicManager.update(effectiveDelta);
     context.mapMechanicRuntime.update(effectiveDelta);
     const mapMoveSpeedMultiplier = context.mapMechanicRuntime.getPlayerSpeedMultiplierAt(
       context.player.body.x,

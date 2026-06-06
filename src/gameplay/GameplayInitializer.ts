@@ -224,6 +224,18 @@ export class GameplayInitializer {
       selectedCharacter.skinId,
     );
     const virtualJoystick = new VirtualJoystick(config.scene, config.callbacks.onPauseRequested);
+    relicManager.setContext({
+      scene: config.scene,
+      weaponManager,
+      player,
+      playerHealth,
+      enemies: [],
+      damageCalculator: config.damageCalculator,
+      floatingTextManager,
+    });
+    weaponManager.setRelicDamageMultiplierProvider((weaponId) => (
+      relicManager.modifyWeaponDamage(weaponId, 1)
+    ));
     const expManager = new ExpManager(config.eventBus);
     const levelManager = new LevelManager(expManager, config.eventBus);
     config.autoUpgradeSelector.setRandomSource(randomManager.getUpgradeRandom());
@@ -264,6 +276,9 @@ export class GameplayInitializer {
     const enemyFactory = new EnemyFactory(config.scene, enemyConfigs, runRuleSet);
     const bossFactory = new BossFactory(config.scene, enemyConfigs, runRuleSet);
     const enemiesList: Enemy[] = [];
+    relicManager.setContext({
+      enemies: enemiesList,
+    });
     const mapMechanicRuntime = new MapMechanicRuntime(selectedMap.mechanics, {
       scene: config.scene,
       player,

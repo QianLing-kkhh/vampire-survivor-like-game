@@ -60,6 +60,7 @@ export abstract class Weapon {
   private passiveCooldownMultiplier = 1;
   private passiveProjectileSpeedMultiplier = 1;
   private passiveKnockbackPowerMultiplier = 1;
+  private runtimeDamageMultiplierProvider?: (weaponId: string) => number;
 
   protected constructor(
     protected readonly scene: Phaser.Scene,
@@ -108,6 +109,10 @@ export abstract class Weapon {
     this.passiveKnockbackPowerMultiplier = modifiers.knockbackPowerMultiplier ?? 1;
   }
 
+  setRuntimeDamageMultiplierProvider(provider: ((weaponId: string) => number) | undefined): void {
+    this.runtimeDamageMultiplierProvider = provider;
+  }
+
   get totalDamageDealt(): number {
     return this.totalDamage;
   }
@@ -134,7 +139,9 @@ export abstract class Weapon {
   }
 
   protected get modifiedDamage(): number {
-    return this.damage * this.passiveDamageMultiplier;
+    return this.damage
+      * this.passiveDamageMultiplier
+      * (this.runtimeDamageMultiplierProvider?.(this.id) ?? 1);
   }
 
   protected get cooldownMs(): number {

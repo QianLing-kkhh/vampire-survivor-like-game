@@ -7,6 +7,7 @@ import { UpgradeSelectionModeLog } from '../logging/PlaytestLog';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
+import { RelicManager } from '../relic/RelicManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { RunStats } from '../stats/RunStats';
 import { WeaponManager } from '../weapon/WeaponManager';
@@ -33,6 +34,7 @@ export interface RunResultBuildContext {
   runStats: RunStats;
   weaponManager?: WeaponManager;
   passiveManager?: PassiveManager;
+  relicManager?: RelicManager;
   playerStats?: PlayerStats;
   playerHealth?: PlayerHealth;
   levelManager?: LevelManager;
@@ -45,6 +47,8 @@ export class RunResultBuilder {
     const metadata = context.runState.getRunMetadata();
     const weaponIds = context.weaponManager?.getWeaponIds() ?? [];
     const passiveItems = context.passiveManager?.getPassiveLevels() ?? [];
+    const relicIds = context.relicManager?.getRelicIds() ?? [];
+    const relicNames = context.relicManager?.getRelicDisplayInfo().map((relic) => relic.name) ?? [];
     const weaponDamageStats = context.weaponManager?.getWeaponDamageStats() ?? [];
     const runStatsSummary = context.runStats.getSummary();
     const playtestSettings = PlaytestSettings.get();
@@ -183,7 +187,7 @@ export class RunResultBuilder {
       weaponHitStats: runStatsSummary.weaponHitStats,
       weaponKillStats: runStatsSummary.weaponKillStats,
       upgradeCountStats: runStatsSummary.upgradeCountStats,
-      relicIds: [],
+      relicIds,
       activeSkillIds: [],
       activeSkillUseStats: [],
       enemyModifierSpawnStats: [],
@@ -280,6 +284,8 @@ export class RunResultBuilder {
       endlessLeaderboardEntries: EndlessLeaderboard.getEntries(metadata),
       weaponIds,
       passiveItems,
+      relicIds,
+      relicNames,
       weaponDamageStats,
       damageTaken: runStatsSummary.damageTaken,
       lowestHp: runStatsSummary.lowestHp,

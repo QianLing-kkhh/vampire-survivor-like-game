@@ -19,6 +19,7 @@ export interface HUDState {
   timeSeconds: number;
   targetTimeSeconds: number;
   score: number;
+  relicCount?: number;
   weaponIds: string[];
   autoMode?: boolean;
   endlessMode?: boolean;
@@ -108,6 +109,7 @@ export class HUD {
   private readonly expBarFill: Phaser.GameObjects.Rectangle;
   private readonly timeText: Phaser.GameObjects.Text;
   private readonly scoreText: Phaser.GameObjects.Text;
+  private readonly relicText: Phaser.GameObjects.Text;
   private readonly goalText: Phaser.GameObjects.Text;
   private readonly messageText: Phaser.GameObjects.Text;
   private readonly shieldText: Phaser.GameObjects.Text;
@@ -142,6 +144,7 @@ export class HUD {
     this.scoreText = this.createText(16, 124, '22px', '#facc15');
     this.scoreText.setStyle({ fontStyle: 'bold' });
     this.scoreText.setStroke('#111827', 3);
+    this.relicText = this.createText(16, 146, UITheme.smallFontSize, UITheme.mutedTextColor);
     this.goalText = this.createText(16, 150, UITheme.smallFontSize, UITheme.mutedTextColor);
     this.messageText = this.createText(16, 172, UITheme.smallFontSize, UITheme.successTextColor);
     this.shieldText = this.createText(16, 192, UITheme.smallFontSize, UITheme.successTextColor);
@@ -176,6 +179,7 @@ export class HUD {
       timeSeconds: 0,
       targetTimeSeconds: 300,
       score: 0,
+      relicCount: 0,
       weaponIds: [],
       autoMode: false,
       weaponHudInfo: [],
@@ -204,6 +208,7 @@ export class HUD {
     this.expBarFill.destroy();
     this.timeText.destroy();
     this.scoreText.destroy();
+    this.relicText.destroy();
     this.goalText.destroy();
     this.messageText.destroy();
     this.shieldText.destroy();
@@ -234,6 +239,7 @@ export class HUD {
     this.setBarRatio(this.expBarFill, state.currentExp / requiredExp);
     this.timeText.setText(`${I18n.t('hud.time')} ${this.formatTime(state.timeSeconds)}`);
     this.scoreText.setText(`${I18n.t('hud.score')} ${this.formatInteger(state.score)}`);
+    this.relicText.setText(`Relics x${state.relicCount ?? 0}`);
     this.goalText.setText(this.getGoalText(state));
     this.updateHudMessage(state.message);
     this.updateShieldText();
@@ -686,11 +692,13 @@ export class HUD {
     this.timeText.setFontSize(this.screenManager.isPortrait() ? '22px' : '26px');
     this.scoreText.setPosition(stats.x, stats.y + 116);
     this.scoreText.setFontSize(this.screenManager.isPortrait() ? '20px' : '22px');
-    this.goalText.setPosition(stats.x, stats.y + 142);
+    this.relicText.setPosition(stats.x, stats.y + 142);
+    this.relicText.setFontSize(layout.fontSize);
+    this.goalText.setPosition(stats.x, stats.y + 164);
     this.goalText.setFontSize(layout.fontSize);
     this.messageText.setPosition(layout.bossTextPosition.x, layout.bossTextPosition.y);
     this.messageText.setOrigin(0.5);
-    this.shieldText.setPosition(stats.x, stats.y + 162);
+    this.shieldText.setPosition(stats.x, stats.y + 184);
     this.shieldText.setFontSize(layout.fontSize);
     this.evolutionDebugText.setPosition(stats.x, this.screenManager.height - 96);
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);

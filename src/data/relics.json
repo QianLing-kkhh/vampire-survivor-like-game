@@ -1,0 +1,88 @@
+{
+  "blood_pact": {
+    "id": "blood_pact",
+    "name": "Blood Pact",
+    "description": "Gain +25% damage while HP is below 35%.",
+    "nameKey": "relic.bloodPact.name",
+    "descriptionKey": "relic.bloodPact.description",
+    "rarity": "rare",
+    "enabled": true,
+    "tags": ["damage", "low_health"],
+    "effects": [
+      {
+        "type": "lowHealthDamageModifier",
+        "value": 0.25,
+        "thresholdHpRatio": 0.35
+      }
+    ]
+  },
+  "void_compass": {
+    "id": "void_compass",
+    "name": "Void Compass",
+    "description": "Increase pickup range by 25%.",
+    "nameKey": "relic.voidCompass.name",
+    "descriptionKey": "relic.voidCompass.description",
+    "rarity": "common",
+    "enabled": true,
+    "tags": ["resource", "pickup"],
+    "effects": [
+      {
+        "type": "pickupRangeModifier",
+        "value": 0.25
+      }
+    ]
+  },
+  "golden_scarab": {
+    "id": "golden_scarab",
+    "name": "Golden Scarab",
+    "description": "Treasure score rewards are increased by 50%.",
+    "nameKey": "relic.goldenScarab.name",
+    "descriptionKey": "relic.goldenScarab.description",
+    "rarity": "common",
+    "enabled": true,
+    "tags": ["treasure", "score"],
+    "effects": [
+      {
+        "type": "treasureScoreBonus",
+        "value": 0.5
+      }
+    ]
+  },
+  "thorn_crown": {
+    "id": "thorn_crown",
+    "name": "Thorn Crown",
+    "description": "Taking damage retaliates against nearby enemies. 1.5s cooldown.",
+    "nameKey": "relic.thornCrown.name",
+    "descriptionKey": "relic.thornCrown.description",
+    "rarity": "rare",
+    "enabled": true,
+    "tags": ["defense", "counter"],
+    "effects": [
+      {
+        "type": "onDamageTakenCounter",
+        "value": 15,
+        "radius": 180,
+        "intervalMs": 1500
+      }
+    ]
+  },
+  "frozen_hourglass": {
+    "id": "frozen_hourglass",
+    "name": "Frozen Hourglass",
+    "description": "Every 6 seconds, slows nearby enemies for 2 seconds.",
+    "nameKey": "relic.frozenHourglass.name",
+    "descriptionKey": "relic.frozenHourglass.description",
+    "rarity": "epic",
+    "enabled": false,
+    "tags": ["control", "slow"],
+    "effects": [
+      {
+        "type": "timedSlowPulse",
+        "intervalMs": 6000,
+        "radius": 260,
+        "durationMs": 2000,
+        "value": 0.65
+      }
+    ]
+  }
+}
