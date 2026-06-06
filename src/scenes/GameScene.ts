@@ -7,7 +7,6 @@ import {
   AutoUpgradeSelector,
 } from '../auto/AutoUpgradeSelector';
 import { BossAttackController } from '../boss/BossAttackController';
-import { BossFactory } from '../boss/BossFactory';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
@@ -56,6 +55,7 @@ import { StageDefinition } from '../stage/StageDefinition';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
+import { HUDStateBuilder } from '../ui/HUDStateBuilder';
 import { PauseMenuStatsData } from '../ui/PauseMenu';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { WorldRenderer } from '../world/WorldRenderer';
@@ -75,6 +75,7 @@ export class GameScene extends Phaser.Scene {
   private readonly gameplayInitializer = new GameplayInitializer();
   private readonly gameplayUpdater = new GameplayUpdater();
   private readonly debugDataCollector = new DebugDataCollector();
+  private readonly hudStateBuilder = new HUDStateBuilder();
   private readonly stageManager = new StageManager();
   private readonly mapManager = new MapManager();
   private playtestSettings: PlaytestSettingsState = PlaytestSettings.get();
@@ -122,11 +123,6 @@ export class GameScene extends Phaser.Scene {
   private isPauseMenuOpen = false;
   private isGameOver = false;
   private currentLevelUpOptions: UpgradeOption[] = [];
-  private finalBossWarningShown = false;
-  private finalBossSpawned = false;
-  private finalBossDefeated = false;
-  private finalBossSpawnTime = 0;
-  private finalBossKillTime = 0;
 
   constructor() {
     super('GameScene');
@@ -207,11 +203,6 @@ export class GameScene extends Phaser.Scene {
     this.treasureManager = undefined;
     this.evolutionManager = undefined;
     this.passiveManager = undefined;
-    this.finalBossWarningShown = false;
-    this.finalBossSpawned = false;
-    this.finalBossDefeated = false;
-    this.finalBossSpawnTime = 0;
-    this.finalBossKillTime = 0;
     this.resolveCurrentRunContent();
 
     const centerX = this.scale.width / 2;
@@ -686,79 +677,32 @@ export class GameScene extends Phaser.Scene {
   }
 
   private emitHUDState(): void {
-    if (!this.playerHealth || !this.levelManager || !this.expManager || !this.playerStats) {
+    const state = this.hudStateBuilder.build({
+      currentStage: this.currentStage,
+      currentMap: this.currentMap,
+      enemies: this.enemies,
+      player: this.player,
+      playerHealth: this.playerHealth,
+      playerStats: this.playerStats,
+      levelManager: this.levelManager,
+      expManager: this.expManager,
+      weaponManager: this.weaponManager,
+      passiveManager: this.passiveManager,
+      evolutionManager: this.evolutionManager,
+      runState: this.runState,
+      playtestSettings: this.playtestSettings,
+      timeSeconds: this.timeManager.gameTimeSeconds,
+      hudMessage: this.getHUDMessage(),
+      evolutionCandidateStats: this.getEvolutionCandidateStats(),
+      worldWidth: this.worldWidth,
+      worldHeight: this.worldHeight,
+    });
+
+    if (!state) {
       return;
     }
 
-    this.scene.get('UIScene').events.emit('UpdateHUD', {
-      currentHp: this.playerHealth.currentHp,
-      maxHp: this.playerHealth.maxHp,
-      level: this.levelManager.currentLevel,
-      currentExp: this.expManager.currentExp,
-      requiredExp: this.levelManager.requiredExp,
-      timeSeconds: this.timeManager.gameTimeSeconds,
-      targetTimeSeconds: this.currentStage.finalBossSpawnTimeSeconds,
-      score: this.runState.score,
-      weaponIds: this.weaponManager?.getWeaponIds() ?? [],
-      weaponHudInfo: this.weaponManager?.getWeaponHudInfo() ?? [],
-      weaponBuildHudInfo: this.weaponManager?.getWeaponBuildHudInfo({
-        getPassiveLevel: (passiveId) => this.passiveManager?.getPassiveLevel(passiveId) ?? 0,
-        getPassiveName: (passiveId) => this.passiveManager?.getPassiveName(passiveId) ?? passiveId,
-        getPassiveMaxLevel: (passiveId) => this.passiveManager?.getPassiveMaxLevel(passiveId) ?? 5,
-        getRequiredPassiveForWeapon: (weaponId) => (
-          this.evolutionManager?.getRequiredPassiveForWeapon(weaponId)
-        ),
-      }) ?? [],
-      passiveItems: this.passiveManager?.getPassiveLevels() ?? [],
-      autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,
-      evolutionCandidateStats: this.getEvolutionCandidateStats(),
-      moveSpeed: this.playerStats.moveSpeed,
-      pickupRange: this.playerStats.pickupRange,
-      playerMaxHp: this.playerHealth.maxHp,
-      worldWidth: this.worldWidth,
-      worldHeight: this.worldHeight,
-      mapMechanics: this.currentMap.mechanics ?? [],
-      playerPosition: this.player
-        ? { x: this.player.body.x, y: this.player.body.y }
-        : { x: 0, y: 0 },
-      enemyPositions: this.getMinimapEnemyPositions(),
-      message: this.getHUDMessage(),
-      endlessMode: this.playtestSettings.endlessMode,
-      endlessStarted: this.runState.endlessStarted,
-      endlessTimeSeconds: this.runState.endlessSurvivalTime,
-    });
-  }
-
-  private getMinimapEnemyPositions(): Array<{
-    x: number;
-    y: number;
-    bossLike?: boolean;
-    finalBoss?: boolean;
-  }> {
-    const activeEnemies = this.enemies.filter((enemy) => !enemy.isDead);
-    const bossEnemies = activeEnemies.filter((enemy) => this.isMinimapBossEnemy(enemy));
-    const normalEnemies = activeEnemies
-      .filter((enemy) => !this.isMinimapBossEnemy(enemy))
-      .slice(0, 50);
-
-    return [
-      ...normalEnemies.map((enemy) => ({
-        x: enemy.body.x,
-        y: enemy.body.y,
-      })),
-      ...bossEnemies.map((enemy) => ({
-        x: enemy.body.x,
-        y: enemy.body.y,
-        bossLike: true,
-        finalBoss: enemy.id === this.currentStage.finalBossId,
-      })),
-    ];
-  }
-
-  private isMinimapBossEnemy(enemy: Enemy): boolean {
-    return enemy.id === this.currentStage.finalBossId
-      || enemy.id.endsWith('_boss')
-      || enemy.id.startsWith('endless_');
+    this.scene.get('UIScene').events.emit('UpdateHUD', state);
   }
 
   private emitDebugPanelData(): void {
@@ -778,87 +722,6 @@ export class GameScene extends Phaser.Scene {
     SettingsManager.updateDeveloper({
       showDebugPanel: !developerSettings.showDebugPanel,
     });
-  }
-
-  private updateFinalBossEvent(): void {
-    if (
-      !this.finalBossWarningShown
-      && this.timeManager.gameTimeSeconds >= this.finalBossWarningTimeSeconds
-    ) {
-      this.finalBossWarningShown = true;
-      this.showCenterMessage('Boss Coming', { kind: 'boss', durationMs: 2400 });
-    }
-
-    if (
-      !this.finalBossSpawned
-      && this.timeManager.gameTimeSeconds >= this.currentStage.finalBossSpawnTimeSeconds
-    ) {
-      this.spawnFinalBoss();
-    }
-  }
-
-  private spawnFinalBoss(): void {
-    if (!this.enemyFactory) {
-      return;
-    }
-
-    const position = this.getFinalBossSpawnPosition();
-    const boss = this.enemyFactory.create(
-      this.currentStage.finalBossId,
-      position.x,
-      position.y,
-    );
-
-    boss.setEventBus(this.eventBus);
-    this.enemies.push(boss);
-    this.finalBossSpawned = true;
-    this.finalBossSpawnTime = this.timeManager.gameTimeSeconds;
-    this.runState.setBossPhaseInitialHp(this.playerHealth?.currentHp ?? 0);
-    this.bossAttackController = new BossAttackController(this, boss);
-    if (this.gameplayContext) {
-      this.gameplayContext.bossAttackController = this.bossAttackController;
-    }
-    AudioManager.playSfx(this, 'boss_spawn');
-    AudioManager.playBgm(this, 'boss_bgm');
-    this.showCenterMessage('Boss Appears!', { kind: 'boss', durationMs: 2200 });
-  }
-
-  private getFinalBossSpawnPosition(): { x: number; y: number } {
-    if (!this.player) {
-      return {
-        x: this.worldWidth / 2,
-        y: this.worldHeight / 2,
-      };
-    }
-
-    const padding = 120;
-    const candidates = [
-      { x: this.worldWidth / 2, y: padding },
-      { x: this.worldWidth - padding, y: this.worldHeight / 2 },
-      { x: this.worldWidth / 2, y: this.worldHeight - padding },
-      { x: padding, y: this.worldHeight / 2 },
-    ];
-
-    let farthestPosition = candidates[0];
-    let farthestDistance = -1;
-
-    for (const candidate of candidates) {
-      const distance = Phaser.Math.Distance.Between(
-        this.player.body.x,
-        this.player.body.y,
-        candidate.x,
-        candidate.y,
-      );
-
-      if (distance <= farthestDistance) {
-        continue;
-      }
-
-      farthestPosition = candidate;
-      farthestDistance = distance;
-    }
-
-    return farthestPosition;
   }
 
   private getHUDMessage(): string | undefined {
@@ -942,7 +805,7 @@ export class GameScene extends Phaser.Scene {
 
     this.runStats.recordDamageTaken(actualDamage, this.playerHealth.currentHp);
 
-    if (this.finalBossSpawned) {
+    if (this.gameplayContext?.bossController.hasBossSpawned()) {
       this.runState.recordBossPhaseDamage(actualDamage, this.playerHealth.currentHp);
     }
   }

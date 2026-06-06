@@ -3,26 +3,12 @@ import Phaser from 'phaser';
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { I18n } from '../i18n/I18n';
-import {
-  MapLightSourceDefinition,
-  MapMechanicDefinition,
-  MapObstacleDefinition,
-  MapPortalDefinition,
-  MapSlowZoneDefinition,
-} from '../map/mechanics/MapMechanicDefinition';
+import { MapMechanicDefinition } from '../map/mechanics/MapMechanicDefinition';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { MinimapOverlay } from './minimap/MinimapOverlay';
+import { MinimapEnemyPosition, WorldPosition } from './minimap/MinimapTypes';
 import { UITheme } from './UITheme';
-
-interface WorldPosition {
-  x: number;
-  y: number;
-}
-
-interface MinimapEnemyPosition extends WorldPosition {
-  bossLike?: boolean;
-  finalBoss?: boolean;
-}
 
 export interface HUDState {
   currentHp: number;
@@ -99,9 +85,6 @@ type BuildEntry = {
 
 export class HUD {
   private static readonly SHOW_DEBUG_OVERLAY = false;
-  private static readonly MINIMAP_WIDTH = 130;
-  private static readonly MINIMAP_HEIGHT = 82;
-  private static readonly MAX_MINIMAP_ENEMIES = 50;
   private static readonly BAR_WIDTH = 230;
   private static readonly BAR_HEIGHT = 14;
   private static readonly ICON_SIZE = 28;
@@ -110,41 +93,6 @@ export class HUD {
   private static readonly BUILD_WEAPON_LEVEL_X = 38;
   private static readonly BUILD_PASSIVE_ICON_X = 150;
   private static readonly BUILD_PASSIVE_LEVEL_X = 188;
-  private static readonly MINIMAP_STYLE = {
-    terrain: {
-      riverColor: 0x155e63,
-      riverAlpha: 0.22,
-      riverStrokeAlpha: 0.3,
-      swampColor: 0x365f3f,
-      swampAlpha: 0.2,
-      swampStrokeAlpha: 0.28,
-      mudColor: 0x5a3e1f,
-      mudAlpha: 0.2,
-      mudStrokeAlpha: 0.28,
-      obstacleColor: 0x475569,
-      obstacleAlpha: 0.3,
-      lightRadiusColor: 0xfacc15,
-      lightRadiusAlpha: 0.1,
-    },
-    icons: {
-      slowZoneAlpha: 0.42,
-      portalAlpha: 0.72,
-      lightAlpha: 0.48,
-      obstacleAlpha: 0.5,
-      hazardAlpha: 0.68,
-      defaultAlpha: 0.58,
-    },
-    markers: {
-      playerCenterColor: 0xfacc15,
-      playerCenterRadius: 3,
-      playerOutlineRadius: 4,
-      playerRingRadius: 5,
-      bossCenterRadius: 4,
-      bossRingRadius: 6,
-      finalBossCenterRadius: 4.5,
-      finalBossRingRadius: 7,
-    },
-  } as const;
 
   private readonly scene: Phaser.Scene;
   private readonly screenManager: ScreenManager;
@@ -167,18 +115,8 @@ export class HUD {
   private readonly buildEntries: BuildEntry[] = [];
   private readonly weaponEntries: IconEntry[] = [];
   private readonly passiveEntries: IconEntry[] = [];
-  private readonly minimapBackground: Phaser.GameObjects.Rectangle;
-  private readonly minimapImage?: Phaser.GameObjects.Image;
-  private readonly minimapMechanicsGraphics: Phaser.GameObjects.Graphics;
-  private readonly minimapMechanicIcons: Phaser.GameObjects.Image[] = [];
-  private readonly minimapMarkerGraphics: Phaser.GameObjects.Graphics;
-  private readonly minimapPlayer: Phaser.GameObjects.Arc;
-  private readonly minimapEnemies: Phaser.GameObjects.Arc[] = [];
+  private readonly minimap: MinimapOverlay;
   private readonly pauseButton: Phaser.GameObjects.Text;
-  private minimapX: number;
-  private minimapY = 14;
-  private minimapWidth = HUD.MINIMAP_WIDTH;
-  private minimapHeight = HUD.MINIMAP_HEIGHT;
   private barWidth = HUD.BAR_WIDTH;
   private maxIconRows = 6;
   private maxPassiveRows = 3;
@@ -208,40 +146,7 @@ export class HUD {
     this.messageText = this.createText(16, 172, UITheme.smallFontSize, UITheme.successTextColor);
     this.shieldText = this.createText(16, 192, UITheme.smallFontSize, UITheme.successTextColor);
     this.evolutionDebugText = this.createText(16, 520, '12px', UITheme.mutedTextColor);
-
-    this.minimapX = scene.scale.width - HUD.MINIMAP_WIDTH - 16;
-    this.minimapBackground = scene.add.rectangle(
-      this.minimapX,
-      this.minimapY,
-      HUD.MINIMAP_WIDTH,
-      HUD.MINIMAP_HEIGHT,
-      UITheme.panelBgColor,
-      0.72,
-    );
-    this.minimapBackground.setOrigin(0, 0);
-    this.minimapBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.65);
-    this.minimapBackground.setDepth(900);
-    this.minimapBackground.setScrollFactor(0);
-    this.minimapImage = undefined;
-    this.minimapMechanicsGraphics = scene.add.graphics();
-    this.minimapMechanicsGraphics.setDepth(901);
-    this.minimapMechanicsGraphics.setScrollFactor(0);
-    this.minimapMarkerGraphics = scene.add.graphics();
-    this.minimapMarkerGraphics.setDepth(904);
-    this.minimapMarkerGraphics.setScrollFactor(0);
-
-    for (let index = 0; index < HUD.MAX_MINIMAP_ENEMIES; index += 1) {
-      const enemyDot = scene.add.circle(0, 0, 2, 0xef4444, 0.85);
-      enemyDot.setDepth(902);
-      enemyDot.setScrollFactor(0);
-      enemyDot.setVisible(false);
-      this.minimapEnemies.push(enemyDot);
-    }
-
-    this.minimapPlayer = scene.add.circle(0, 0, 3, 0x38bdf8, 1);
-    this.minimapPlayer.setDepth(904);
-    this.minimapPlayer.setScrollFactor(0);
-    this.minimapPlayer.setVisible(false);
+    this.minimap = new MinimapOverlay(scene);
 
     this.pauseButton = scene.add.text(0, 0, 'Pause', {
       backgroundColor: '#111827',
@@ -303,18 +208,8 @@ export class HUD {
     this.messageText.destroy();
     this.shieldText.destroy();
     this.evolutionDebugText.destroy();
-    this.minimapBackground.destroy();
-    this.minimapImage?.destroy();
-    this.minimapMechanicsGraphics.destroy();
-    this.minimapMechanicIcons.forEach((icon) => {
-      icon.destroy();
-    });
-    this.minimapMarkerGraphics.destroy();
-    this.minimapPlayer.destroy();
+    this.minimap.destroy();
     this.pauseButton.destroy();
-    this.minimapEnemies.forEach((enemyDot) => {
-      enemyDot.destroy();
-    });
     this.buildEntries.forEach((entry) => {
       entry.container.destroy(true);
     });
@@ -354,353 +249,13 @@ export class HUD {
       LayoutConfig.getHudLayout(this.screenManager).weaponsPosition.y,
     );
     this.evolutionDebugText.setText(this.getEvolutionDebugText(state));
-    this.updateMinimap(state);
-  }
-
-  private updateMinimap(state: HUDState): void {
-    this.updateMinimapMechanics(state);
-    this.minimapMarkerGraphics.clear();
-    this.minimapPlayer.setVisible(false);
-
-    for (const enemyDot of this.minimapEnemies) {
-      enemyDot.setVisible(false);
-    }
-
-    const normalEnemies = state.enemyPositions.filter((position) => position.bossLike !== true);
-    const bossEnemies = state.enemyPositions.filter((position) => position.bossLike === true);
-
-    normalEnemies
-      .slice(0, HUD.MAX_MINIMAP_ENEMIES)
-      .forEach((position, index) => {
-        const enemyDot = this.minimapEnemies[index];
-
-        enemyDot.setPosition(
-          this.toMinimapX(position.x, state.worldWidth),
-          this.toMinimapY(position.y, state.worldHeight),
-        );
-        enemyDot.setVisible(true);
-      });
-
-    bossEnemies.forEach((position) => this.drawMinimapBossMarker(position, state));
-    this.drawMinimapPlayerMarker(state.playerPosition, state);
-  }
-
-  private updateMinimapMechanics(state: HUDState): void {
-    this.minimapMechanicsGraphics.clear();
-    this.minimapMechanicIcons.forEach((icon) => icon.setVisible(false));
-
-    const mechanics = (state.mapMechanics ?? [])
-      .filter((mechanic) => mechanic.enabled !== false && mechanic.minimapVisible !== false)
-      .sort((a, b) => (a.minimapPriority ?? this.getDefaultMinimapPriority(a))
-        - (b.minimapPriority ?? this.getDefaultMinimapPriority(b)));
-    let iconIndex = 0;
-
-    for (const mechanic of mechanics) {
-      switch (mechanic.type) {
-        case 'slowZone':
-          this.drawMinimapSlowZone(mechanic as MapSlowZoneDefinition, state, () => {
-            const slowZone = mechanic as MapSlowZoneDefinition;
-            iconIndex = this.placeMinimapIcon(
-              iconIndex,
-              this.getSlowZoneIconKind(slowZone.visualType),
-              mechanic.x,
-              mechanic.y,
-              state,
-              slowZone.visualType === 'river' ? 8 : 9,
-              HUD.MINIMAP_STYLE.icons.slowZoneAlpha,
-            );
-          });
-          break;
-        case 'portal':
-          const portal = mechanic as MapPortalDefinition;
-          iconIndex = this.placeMinimapIcon(
-            iconIndex,
-            portal.visualType === 'green'
-              ? 'portalGreen'
-              : portal.visualType === 'purple'
-                ? 'portalPurple'
-                : 'portalBlue',
-            mechanic.x,
-            mechanic.y,
-            state,
-            14,
-            HUD.MINIMAP_STYLE.icons.portalAlpha,
-          );
-          break;
-        case 'obstacle':
-          const obstacle = mechanic as MapObstacleDefinition;
-
-          if (obstacle.blocksPlayer === false && obstacle.blocksEnemies === false) {
-            break;
-          }
-
-          this.drawMinimapObstacle(obstacle, state);
-          iconIndex = this.placeMinimapIcon(
-            iconIndex,
-            'obstacle',
-            mechanic.x,
-            mechanic.y,
-            state,
-            8,
-            HUD.MINIMAP_STYLE.icons.obstacleAlpha,
-          );
-          break;
-        case 'lightSource':
-          this.drawMinimapLight(mechanic as MapLightSourceDefinition, state);
-          iconIndex = this.placeMinimapIcon(
-            iconIndex,
-            'light',
-            mechanic.x,
-            mechanic.y,
-            state,
-            9,
-            HUD.MINIMAP_STYLE.icons.lightAlpha,
-          );
-          break;
-        case 'hazard':
-          iconIndex = this.placeMinimapIcon(
-            iconIndex,
-            'hazard',
-            mechanic.x,
-            mechanic.y,
-            state,
-            11,
-            HUD.MINIMAP_STYLE.icons.hazardAlpha,
-          );
-          break;
-        case 'altar':
-          iconIndex = this.placeMinimapIcon(
-            iconIndex,
-            'altar',
-            mechanic.x,
-            mechanic.y,
-            state,
-            10,
-            HUD.MINIMAP_STYLE.icons.defaultAlpha,
-          );
-          break;
-        case 'spawner':
-          iconIndex = this.placeMinimapIcon(
-            iconIndex,
-            'spawner',
-            mechanic.x,
-            mechanic.y,
-            state,
-            10,
-            HUD.MINIMAP_STYLE.icons.defaultAlpha,
-          );
-          break;
-        default:
-          break;
-      }
-    }
-  }
-
-  private drawMinimapSlowZone(
-    mechanic: Extract<MapMechanicDefinition, { type: 'slowZone' }>,
-    state: HUDState,
-    placeIcon: () => void,
-  ): void {
-    const visualType = mechanic.visualType ?? 'swamp';
-    const terrainStyle = HUD.MINIMAP_STYLE.terrain;
-    const color = visualType === 'river'
-      ? terrainStyle.riverColor
-      : visualType === 'mud'
-        ? terrainStyle.mudColor
-        : terrainStyle.swampColor;
-    const alpha = visualType === 'river'
-      ? terrainStyle.riverAlpha
-      : visualType === 'mud'
-        ? terrainStyle.mudAlpha
-        : terrainStyle.swampAlpha;
-    const strokeAlpha = visualType === 'river'
-      ? terrainStyle.riverStrokeAlpha
-      : visualType === 'mud'
-        ? terrainStyle.mudStrokeAlpha
-        : terrainStyle.swampStrokeAlpha;
-
-    this.minimapMechanicsGraphics.fillStyle(color, alpha);
-    this.minimapMechanicsGraphics.lineStyle(1, color, strokeAlpha);
-
-    if ((mechanic.shape ?? (mechanic.radius ? 'circle' : 'rect')) === 'circle') {
-      const radius = (mechanic.radius ?? 1) * this.getMinimapScale(state);
-
-      this.minimapMechanicsGraphics.fillCircle(
-        this.toMinimapX(mechanic.x, state.worldWidth),
-        this.toMinimapY(mechanic.y, state.worldHeight),
-        radius,
-      );
-      this.minimapMechanicsGraphics.strokeCircle(
-        this.toMinimapX(mechanic.x, state.worldWidth),
-        this.toMinimapY(mechanic.y, state.worldHeight),
-        radius,
-      );
-      placeIcon();
-      return;
-    }
-
-    const width = (mechanic.width ?? 1) * (this.minimapWidth / Math.max(1, state.worldWidth));
-    const height = (mechanic.height ?? 1) * (this.minimapHeight / Math.max(1, state.worldHeight));
-
-    this.minimapMechanicsGraphics.fillRect(
-      this.toMinimapX(mechanic.x, state.worldWidth) - width / 2,
-      this.toMinimapY(mechanic.y, state.worldHeight) - height / 2,
-      width,
-      height,
-    );
-    this.minimapMechanicsGraphics.strokeRect(
-      this.toMinimapX(mechanic.x, state.worldWidth) - width / 2,
-      this.toMinimapY(mechanic.y, state.worldHeight) - height / 2,
-      width,
-      height,
-    );
-    placeIcon();
-  }
-
-  private drawMinimapObstacle(
-    mechanic: Extract<MapMechanicDefinition, { type: 'obstacle' }>,
-    state: HUDState,
-  ): void {
-    const x = this.toMinimapX(mechanic.x, state.worldWidth);
-    const y = this.toMinimapY(mechanic.y, state.worldHeight);
-    const width = Math.max(3, mechanic.width * (this.minimapWidth / Math.max(1, state.worldWidth)));
-    const height = Math.max(3, mechanic.height * (this.minimapHeight / Math.max(1, state.worldHeight)));
-
-    this.minimapMechanicsGraphics.fillStyle(
-      HUD.MINIMAP_STYLE.terrain.obstacleColor,
-      HUD.MINIMAP_STYLE.terrain.obstacleAlpha,
-    );
-    this.minimapMechanicsGraphics.fillRect(x - width / 2, y - height / 2, width, height);
-  }
-
-  private drawMinimapLight(
-    mechanic: Extract<MapMechanicDefinition, { type: 'lightSource' }>,
-    state: HUDState,
-  ): void {
-    const radius = mechanic.radius * this.getMinimapScale(state);
-
-    this.minimapMechanicsGraphics.fillStyle(
-      HUD.MINIMAP_STYLE.terrain.lightRadiusColor,
-      HUD.MINIMAP_STYLE.terrain.lightRadiusAlpha,
-    );
-    this.minimapMechanicsGraphics.fillCircle(
-      this.toMinimapX(mechanic.x, state.worldWidth),
-      this.toMinimapY(mechanic.y, state.worldHeight),
-      radius,
-    );
-  }
-
-  private placeMinimapIcon(
-    iconIndex: number,
-    kind: Parameters<typeof AssetKeyResolver.getMapMechanicMinimapIconKey>[1],
-    worldX: number,
-    worldY: number,
-    state: HUDState,
-    size: number,
-    alpha: number = HUD.MINIMAP_STYLE.icons.defaultAlpha,
-  ): number {
-    const textureKey = AssetKeyResolver.getMapMechanicMinimapIconKey(this.scene, kind);
-
-    if (!textureKey) {
-      this.drawMinimapFallbackIcon(kind, worldX, worldY, state, size, alpha);
-      return iconIndex;
-    }
-
-    while (this.minimapMechanicIcons.length <= iconIndex) {
-      const icon = this.scene.add.image(0, 0, textureKey);
-      icon.setDepth(903);
-      icon.setScrollFactor(0);
-      icon.setVisible(false);
-      this.minimapMechanicIcons.push(icon);
-    }
-
-    const icon = this.minimapMechanicIcons[iconIndex];
-
-    icon.setTexture(textureKey);
-    icon.setPosition(this.toMinimapX(worldX, state.worldWidth), this.toMinimapY(worldY, state.worldHeight));
-    icon.setDisplaySize(size, size);
-    icon.setAlpha(alpha);
-    icon.setVisible(true);
-    return iconIndex + 1;
-  }
-
-  private drawMinimapFallbackIcon(
-    kind: Parameters<typeof AssetKeyResolver.getMapMechanicMinimapIconKey>[1],
-    worldX: number,
-    worldY: number,
-    state: HUDState,
-    size: number,
-    alpha: number,
-  ): void {
-    const x = this.toMinimapX(worldX, state.worldWidth);
-    const y = this.toMinimapY(worldY, state.worldHeight);
-    const color = kind === 'hazard'
-      ? 0xef4444
-      : kind === 'light'
-        ? 0xfacc15
-        : kind === 'obstacle'
-          ? 0x94a3b8
-          : 0x38bdf8;
-
-    this.minimapMechanicsGraphics.fillStyle(color, alpha);
-    this.minimapMechanicsGraphics.fillCircle(x, y, size / 2);
-  }
-
-  private drawMinimapBossMarker(position: MinimapEnemyPosition, state: HUDState): void {
-    const style = HUD.MINIMAP_STYLE.markers;
-    const x = this.toMinimapX(position.x, state.worldWidth);
-    const y = this.toMinimapY(position.y, state.worldHeight);
-    const ringRadius = position.finalBoss === true
-      ? style.finalBossRingRadius
-      : style.bossRingRadius;
-    const centerRadius = position.finalBoss === true
-      ? style.finalBossCenterRadius
-      : style.bossCenterRadius;
-
-    this.minimapMarkerGraphics.lineStyle(2, 0xef4444, 0.95);
-    this.minimapMarkerGraphics.strokeCircle(x, y, ringRadius);
-    this.minimapMarkerGraphics.fillStyle(0xdc2626, 1);
-    this.minimapMarkerGraphics.fillCircle(x, y, centerRadius);
-    this.minimapMarkerGraphics.lineStyle(1, 0xffffff, 0.72);
-    this.minimapMarkerGraphics.strokeCircle(x, y, ringRadius + 1);
-  }
-
-  private drawMinimapPlayerMarker(position: WorldPosition, state: HUDState): void {
-    const style = HUD.MINIMAP_STYLE.markers;
-    const x = this.toMinimapX(position.x, state.worldWidth);
-    const y = this.toMinimapY(position.y, state.worldHeight);
-
-    this.minimapMarkerGraphics.lineStyle(2, 0xffffff, 0.95);
-    this.minimapMarkerGraphics.strokeCircle(x, y, style.playerRingRadius);
-    this.minimapMarkerGraphics.lineStyle(1, 0x000000, 0.82);
-    this.minimapMarkerGraphics.strokeCircle(x, y, style.playerOutlineRadius);
-    this.minimapMarkerGraphics.fillStyle(style.playerCenterColor, 1);
-    this.minimapMarkerGraphics.fillCircle(x, y, style.playerCenterRadius);
-  }
-
-  private getSlowZoneIconKind(visualType: string | undefined): 'river' | 'swamp' | 'mud' {
-    if (visualType === 'river' || visualType === 'mud') {
-      return visualType;
-    }
-
-    return 'swamp';
-  }
-
-  private getDefaultMinimapPriority(mechanic: MapMechanicDefinition): number {
-    switch (mechanic.type) {
-      case 'portal':
-        return 20;
-      case 'hazard':
-        return 18;
-      case 'lightSource':
-        return 12;
-      case 'slowZone':
-        return 10;
-      case 'obstacle':
-        return 8;
-      default:
-        return 6;
-    }
+    this.minimap.update({
+      worldWidth: state.worldWidth,
+      worldHeight: state.worldHeight,
+      mapMechanics: state.mapMechanics,
+      playerPosition: state.playerPosition,
+      enemyPositions: state.enemyPositions,
+    });
   }
 
   private updateIconList(
@@ -1109,23 +664,6 @@ export class HUD {
     bar.displayWidth = this.barWidth * Phaser.Math.Clamp(ratio, 0, 1);
   }
 
-  private toMinimapX(worldX: number, worldWidth: number): number {
-    return this.minimapX
-      + Phaser.Math.Clamp(worldX / Math.max(worldWidth, 1), 0, 1) * this.minimapWidth;
-  }
-
-  private toMinimapY(worldY: number, worldHeight: number): number {
-    return this.minimapY
-      + Phaser.Math.Clamp(worldY / Math.max(worldHeight, 1), 0, 1) * this.minimapHeight;
-  }
-
-  private getMinimapScale(state: HUDState): number {
-    return Math.min(
-      this.minimapWidth / Math.max(1, state.worldWidth),
-      this.minimapHeight / Math.max(1, state.worldHeight),
-    );
-  }
-
   private applyLayout(): void {
     const layout = LayoutConfig.getHudLayout(this.screenManager);
     const stats = layout.statsPosition;
@@ -1133,10 +671,6 @@ export class HUD {
     this.barWidth = layout.barWidth;
     this.maxIconRows = layout.maxIconRows;
     this.maxPassiveRows = layout.maxPassiveRows;
-    this.minimapWidth = layout.minimapSize.width;
-    this.minimapHeight = layout.minimapSize.height;
-    this.minimapX = layout.minimapPosition.x;
-    this.minimapY = layout.minimapPosition.y;
 
     this.hpText.setPosition(stats.x, stats.y);
     this.hpText.setFontSize(layout.fontSize);
@@ -1160,8 +694,8 @@ export class HUD {
     this.shieldText.setFontSize(layout.fontSize);
     this.evolutionDebugText.setPosition(stats.x, this.screenManager.height - 96);
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
-    this.minimapBackground.setPosition(this.minimapX, this.minimapY);
-    this.minimapBackground.setSize(this.minimapWidth, this.minimapHeight);
+    this.minimap.setPosition(layout.minimapPosition.x, layout.minimapPosition.y);
+    this.minimap.setSize(layout.minimapSize.width, layout.minimapSize.height);
     this.pauseButton.setPosition(
       layout.pauseButtonPosition.x,
       layout.pauseButtonPosition.y,
@@ -1176,14 +710,6 @@ export class HUD {
         layout.pauseButtonRect.height,
       ),
       Phaser.Geom.Rectangle.Contains,
-    );
-    this.layoutPanelBackground(
-      this.minimapBackground,
-      this.minimapImage,
-      this.minimapX,
-      this.minimapY,
-      this.minimapWidth,
-      this.minimapHeight,
     );
   }
 
