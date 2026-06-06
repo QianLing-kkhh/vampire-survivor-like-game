@@ -178,6 +178,7 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
 export class PreloadScene extends Phaser.Scene {
   private artManifestAssets: ArtManifestAsset[] = ART_MANIFEST_ASSETS;
   private artManifestVersion = 'fallback';
+  private readonly queuedArtAssetKeys = new Set<string>();
 
   constructor() {
     super('PreloadScene');
@@ -240,6 +241,8 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('art_ui_hud_panel_bg', 'assets/art/ui/panel_bg.png');
     this.load.image('art_ui_help_panel_bg', 'assets/art/ui/panel_bg.png');
     this.load.image('art_ui_levelup_panel_bg', 'assets/art/ui/panel_bg.png');
+    this.artManifestAssets = ART_MANIFEST_ASSETS;
+    this.loadArtManifestAssetFiles(ART_MANIFEST_ASSETS);
     this.loadArtManifestAssets();
     this.loadExternalArtManifest();
     this.load.audio('enemy_hit', 'assets/audio/enemy_hit.wav');
@@ -278,14 +281,16 @@ export class PreloadScene extends Phaser.Scene {
     this.createPlayerDirectionAnimations();
     this.createExternalArtAnimations();
     this.logTextureStatus();
+    this.logCriticalPlayerSkinTextureStatus();
     this.logAudioStatus();
     this.scene.start('TitleScene');
   }
 
   private loadArtManifestAssets(): void {
     this.load.once(`filecomplete-json-${ART_MANIFEST_CACHE_KEY}`, () => {
-      this.artManifestAssets = this.getLoadedArtManifestAssets();
-      this.loadArtManifestAssetFiles(this.artManifestAssets);
+      const manifestAssets = this.getLoadedArtManifestAssets();
+      this.artManifestAssets = this.mergeArtManifestAssets(manifestAssets);
+      this.loadArtManifestAssetFiles(manifestAssets);
     });
     this.load.once('loaderror', (file: { key?: string }) => {
       if (file.key !== ART_MANIFEST_CACHE_KEY) {
@@ -294,13 +299,17 @@ export class PreloadScene extends Phaser.Scene {
 
       console.warn('[art] No animation manifest found; using built-in art manifest fallback.');
       this.artManifestAssets = ART_MANIFEST_ASSETS;
-      this.loadArtManifestAssetFiles(this.artManifestAssets);
     });
     this.load.json(ART_MANIFEST_CACHE_KEY, ART_MANIFEST_PATH);
   }
 
   private loadArtManifestAssetFiles(assets: readonly ArtManifestAsset[]): void {
     for (const asset of assets) {
+      if (this.queuedArtAssetKeys.has(asset.key)) {
+        continue;
+      }
+
+      this.queuedArtAssetKeys.add(asset.key);
       const path = this.getArtAssetPath(asset.path);
 
       if (asset.type === 'spritesheet') {
@@ -322,7 +331,7 @@ export class PreloadScene extends Phaser.Scene {
     if (!manifest || !Array.isArray(manifest.assets)) {
       console.warn('[art] Invalid animation manifest; using built-in art manifest fallback.');
       this.artManifestVersion = 'fallback';
-      return ART_MANIFEST_ASSETS;
+      return [];
     }
 
     this.artManifestVersion = typeof (manifest as { version?: unknown }).version === 'string'
@@ -340,7 +349,11 @@ export class PreloadScene extends Phaser.Scene {
       && typeof (asset as ArtManifestAsset).frames === 'number'
     ));
 
-    return this.mergeArtManifestAssets(assets.length > 0 ? assets : ART_MANIFEST_ASSETS);
+    if (assets.length === 0) {
+      console.warn('[art] Animation manifest had no valid assets; using built-in art manifest fallback.');
+    }
+
+    return assets;
   }
 
   private mergeArtManifestAssets(assets: readonly ArtManifestAsset[]): ArtManifestAsset[] {
@@ -569,6 +582,21 @@ export class PreloadScene extends Phaser.Scene {
       }
 
       console.warn(`Texture not loaded: ${textureKey}`);
+    }
+  }
+
+  private logCriticalPlayerSkinTextureStatus(): void {
+    const textureKeys = [
+      ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_idle_down`),
+      ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_walk_sheet`),
+    ];
+
+    for (const textureKey of textureKeys) {
+      if (this.textures.exists(textureKey)) {
+        continue;
+      }
+
+      console.warn(`[art] Critical player skin texture not loaded: ${textureKey}`);
     }
   }
 

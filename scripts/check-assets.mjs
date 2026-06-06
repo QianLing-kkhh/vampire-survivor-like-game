@@ -8,6 +8,15 @@ const importsDir = path.join(publicAssetsDir, 'imports');
 const importExampleManifestPath = path.join(importsDir, 'manifest.example.json');
 const manifestPath = path.join(artDir, 'animation_manifest.json');
 const requiredArtDirs = ['player', 'enemies', 'weapons', 'passives', 'pickups', 'ui'];
+const requiredManifestKeys = [
+  'art_player_assassin_default_idle_down',
+  'art_player_priest_default_idle_down',
+  'art_player_witch_default_idle_down',
+  'art_player_warrior_default_idle_down',
+  'art_player_assassin_default_walk_sheet',
+  'art_world_graveyard_ground_tile',
+  'art_world_swamp_ground_tile',
+];
 const errors = [];
 
 function addError(message) {
@@ -69,6 +78,9 @@ if (!fs.existsSync(manifestPath)) {
   try {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const entries = collectManifestEntries(manifest);
+    const manifestKeys = new Set(entries
+      .map((entry) => entry.key)
+      .filter((key) => typeof key === 'string' && key.length > 0));
 
     for (const [index, entry] of entries.entries()) {
       const assetPath = entry.path ?? entry.file ?? entry.url;
@@ -80,6 +92,12 @@ if (!fs.existsSync(manifestPath)) {
       const resolved = resolveAssetPath(assetPath);
       if (!fs.existsSync(resolved)) {
         addError(`Animation manifest references missing file: ${assetPath}`);
+      }
+    }
+
+    for (const key of requiredManifestKeys) {
+      if (!manifestKeys.has(key)) {
+        addError(`Animation manifest is missing required key: ${key}`);
       }
     }
 
