@@ -6,6 +6,8 @@ import { AssetFallbacks } from './AssetFallbacks';
 import {
   AssetKeyEntry,
   DEFAULT_ASSET_KEY_MAP,
+  MapMechanicIconKind,
+  MapMechanicVisualKind,
   PlayerAnimationState,
   PlayerDirection8,
   TEXTURE_STATUS_KEYS,
@@ -267,6 +269,34 @@ export class AssetKeyResolver {
   static getWorldTileTextureKey(scene: Phaser.Scene, tileType: string): string | null {
     return AssetKeyResolver.getWorldTextureKey(scene, tileType)
       ?? (tileType === 'ground_tile' ? null : AssetKeyResolver.getWorldTextureKey(scene, 'ground_tile'));
+  }
+
+  static getMapMechanicTextureKey(
+    scene: Phaser.Scene,
+    kind: MapMechanicVisualKind,
+  ): string | undefined {
+    const entry = DEFAULT_ASSET_KEY_MAP.mapMechanics.visuals[kind];
+
+    return AssetKeyResolver.resolveTexture(
+      scene,
+      entry,
+      `mapMechanic.${kind}.texture`,
+      'world',
+    ) ?? undefined;
+  }
+
+  static getMapMechanicMinimapIconKey(
+    scene: Phaser.Scene,
+    kind: MapMechanicIconKind,
+  ): string | undefined {
+    const entry = DEFAULT_ASSET_KEY_MAP.mapMechanics.minimapIcons[kind];
+
+    return AssetKeyResolver.resolveTexture(
+      scene,
+      entry,
+      `mapMechanic.${kind}.minimap`,
+      'icons',
+    ) ?? undefined;
   }
 
   static getEffectTextureKey(scene: Phaser.Scene, effectType: string): string | null {

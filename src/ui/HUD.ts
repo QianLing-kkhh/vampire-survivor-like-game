@@ -3,6 +3,13 @@ import Phaser from 'phaser';
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { I18n } from '../i18n/I18n';
+import {
+  MapLightSourceDefinition,
+  MapMechanicDefinition,
+  MapObstacleDefinition,
+  MapPortalDefinition,
+  MapSlowZoneDefinition,
+} from '../map/mechanics/MapMechanicDefinition';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { UITheme } from './UITheme';
@@ -56,6 +63,7 @@ export interface HUDState {
   playerMaxHp?: number;
   worldWidth: number;
   worldHeight: number;
+  mapMechanics?: readonly MapMechanicDefinition[];
   playerPosition: WorldPosition;
   enemyPositions: WorldPosition[];
   message?: string;
@@ -111,6 +119,8 @@ export class HUD {
   private readonly passiveEntries: IconEntry[] = [];
   private readonly minimapBackground: Phaser.GameObjects.Rectangle;
   private readonly minimapImage?: Phaser.GameObjects.Image;
+  private readonly minimapMechanicsGraphics: Phaser.GameObjects.Graphics;
+  private readonly minimapMechanicIcons: Phaser.GameObjects.Image[] = [];
   private readonly minimapPlayer: Phaser.GameObjects.Arc;
   private readonly minimapEnemies: Phaser.GameObjects.Arc[] = [];
   private readonly pauseButton: Phaser.GameObjects.Text;
@@ -156,17 +166,20 @@ export class HUD {
     this.minimapBackground.setDepth(900);
     this.minimapBackground.setScrollFactor(0);
     this.minimapImage = undefined;
+    this.minimapMechanicsGraphics = scene.add.graphics();
+    this.minimapMechanicsGraphics.setDepth(901);
+    this.minimapMechanicsGraphics.setScrollFactor(0);
 
     for (let index = 0; index < HUD.MAX_MINIMAP_ENEMIES; index += 1) {
       const enemyDot = scene.add.circle(0, 0, 2, 0xef4444, 0.85);
-      enemyDot.setDepth(901);
+      enemyDot.setDepth(902);
       enemyDot.setScrollFactor(0);
       enemyDot.setVisible(false);
       this.minimapEnemies.push(enemyDot);
     }
 
     this.minimapPlayer = scene.add.circle(0, 0, 3, 0x38bdf8, 1);
-    this.minimapPlayer.setDepth(902);
+    this.minimapPlayer.setDepth(904);
     this.minimapPlayer.setScrollFactor(0);
 
     this.pauseButton = scene.add.text(0, 0, 'Pause', {
@@ -229,6 +242,10 @@ export class HUD {
     this.evolutionDebugText.destroy();
     this.minimapBackground.destroy();
     this.minimapImage?.destroy();
+    this.minimapMechanicsGraphics.destroy();
+    this.minimapMechanicIcons.forEach((icon) => {
+      icon.destroy();
+    });
     this.minimapPlayer.destroy();
     this.pauseButton.destroy();
     this.minimapEnemies.forEach((enemyDot) => {
@@ -276,6 +293,7 @@ export class HUD {
   }
 
   private updateMinimap(state: HUDState): void {
+    this.updateMinimapMechanics(state);
     this.minimapPlayer.setPosition(
       this.toMinimapX(state.playerPosition.x, state.worldWidth),
       this.toMinimapY(state.playerPosition.y, state.worldHeight),
@@ -296,6 +314,229 @@ export class HUD {
         );
         enemyDot.setVisible(true);
       });
+  }
+
+  private updateMinimapMechanics(state: HUDState): void {
+    this.minimapMechanicsGraphics.clear();
+    this.minimapMechanicIcons.forEach((icon) => icon.setVisible(false));
+
+    const mechanics = (state.mapMechanics ?? [])
+      .filter((mechanic) => mechanic.enabled !== false && mechanic.minimapVisible !== false)
+      .sort((a, b) => (a.minimapPriority ?? this.getDefaultMinimapPriority(a))
+        - (b.minimapPriority ?? this.getDefaultMinimapPriority(b)));
+    let iconIndex = 0;
+
+    for (const mechanic of mechanics) {
+      switch (mechanic.type) {
+        case 'slowZone':
+          this.drawMinimapSlowZone(mechanic as MapSlowZoneDefinition, state, () => {
+            const slowZone = mechanic as MapSlowZoneDefinition;
+            iconIndex = this.placeMinimapIcon(
+              iconIndex,
+              this.getSlowZoneIconKind(slowZone.visualType),
+              mechanic.x,
+              mechanic.y,
+              state,
+              slowZone.visualType === 'river' ? 10 : 12,
+            );
+          });
+          break;
+        case 'portal':
+          const portal = mechanic as MapPortalDefinition;
+          iconIndex = this.placeMinimapIcon(
+            iconIndex,
+            portal.visualType === 'green'
+              ? 'portalGreen'
+              : portal.visualType === 'purple'
+                ? 'portalPurple'
+                : 'portalBlue',
+            mechanic.x,
+            mechanic.y,
+            state,
+            14,
+          );
+          break;
+        case 'obstacle':
+          const obstacle = mechanic as MapObstacleDefinition;
+
+          if (obstacle.blocksPlayer === false && obstacle.blocksEnemies === false) {
+            break;
+          }
+
+          this.drawMinimapObstacle(obstacle, state);
+          iconIndex = this.placeMinimapIcon(iconIndex, 'obstacle', mechanic.x, mechanic.y, state, 9);
+          break;
+        case 'lightSource':
+          this.drawMinimapLight(mechanic as MapLightSourceDefinition, state);
+          iconIndex = this.placeMinimapIcon(iconIndex, 'light', mechanic.x, mechanic.y, state, 10);
+          break;
+        case 'hazard':
+          iconIndex = this.placeMinimapIcon(iconIndex, 'hazard', mechanic.x, mechanic.y, state, 11);
+          break;
+        case 'altar':
+          iconIndex = this.placeMinimapIcon(iconIndex, 'altar', mechanic.x, mechanic.y, state, 10);
+          break;
+        case 'spawner':
+          iconIndex = this.placeMinimapIcon(iconIndex, 'spawner', mechanic.x, mechanic.y, state, 10);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  private drawMinimapSlowZone(
+    mechanic: Extract<MapMechanicDefinition, { type: 'slowZone' }>,
+    state: HUDState,
+    placeIcon: () => void,
+  ): void {
+    const visualType = mechanic.visualType ?? 'swamp';
+    const color = visualType === 'river'
+      ? 0x2dd4bf
+      : visualType === 'mud'
+        ? 0xa16207
+        : 0x22c55e;
+    this.minimapMechanicsGraphics.fillStyle(color, visualType === 'river' ? 0.38 : 0.32);
+    this.minimapMechanicsGraphics.lineStyle(1, color, 0.72);
+
+    if ((mechanic.shape ?? (mechanic.radius ? 'circle' : 'rect')) === 'circle') {
+      const radius = (mechanic.radius ?? 1) * this.getMinimapScale(state);
+
+      this.minimapMechanicsGraphics.fillCircle(
+        this.toMinimapX(mechanic.x, state.worldWidth),
+        this.toMinimapY(mechanic.y, state.worldHeight),
+        radius,
+      );
+      this.minimapMechanicsGraphics.strokeCircle(
+        this.toMinimapX(mechanic.x, state.worldWidth),
+        this.toMinimapY(mechanic.y, state.worldHeight),
+        radius,
+      );
+      placeIcon();
+      return;
+    }
+
+    const width = (mechanic.width ?? 1) * (this.minimapWidth / Math.max(1, state.worldWidth));
+    const height = (mechanic.height ?? 1) * (this.minimapHeight / Math.max(1, state.worldHeight));
+
+    this.minimapMechanicsGraphics.fillRect(
+      this.toMinimapX(mechanic.x, state.worldWidth) - width / 2,
+      this.toMinimapY(mechanic.y, state.worldHeight) - height / 2,
+      width,
+      height,
+    );
+    this.minimapMechanicsGraphics.strokeRect(
+      this.toMinimapX(mechanic.x, state.worldWidth) - width / 2,
+      this.toMinimapY(mechanic.y, state.worldHeight) - height / 2,
+      width,
+      height,
+    );
+    placeIcon();
+  }
+
+  private drawMinimapObstacle(
+    mechanic: Extract<MapMechanicDefinition, { type: 'obstacle' }>,
+    state: HUDState,
+  ): void {
+    const x = this.toMinimapX(mechanic.x, state.worldWidth);
+    const y = this.toMinimapY(mechanic.y, state.worldHeight);
+    const width = Math.max(3, mechanic.width * (this.minimapWidth / Math.max(1, state.worldWidth)));
+    const height = Math.max(3, mechanic.height * (this.minimapHeight / Math.max(1, state.worldHeight)));
+
+    this.minimapMechanicsGraphics.fillStyle(0x334155, 0.78);
+    this.minimapMechanicsGraphics.fillRect(x - width / 2, y - height / 2, width, height);
+  }
+
+  private drawMinimapLight(
+    mechanic: Extract<MapMechanicDefinition, { type: 'lightSource' }>,
+    state: HUDState,
+  ): void {
+    const radius = mechanic.radius * this.getMinimapScale(state);
+
+    this.minimapMechanicsGraphics.fillStyle(0xfacc15, 0.08);
+    this.minimapMechanicsGraphics.fillCircle(
+      this.toMinimapX(mechanic.x, state.worldWidth),
+      this.toMinimapY(mechanic.y, state.worldHeight),
+      radius,
+    );
+  }
+
+  private placeMinimapIcon(
+    iconIndex: number,
+    kind: Parameters<typeof AssetKeyResolver.getMapMechanicMinimapIconKey>[1],
+    worldX: number,
+    worldY: number,
+    state: HUDState,
+    size: number,
+  ): number {
+    const textureKey = AssetKeyResolver.getMapMechanicMinimapIconKey(this.scene, kind);
+
+    if (!textureKey) {
+      this.drawMinimapFallbackIcon(kind, worldX, worldY, state, size);
+      return iconIndex;
+    }
+
+    while (this.minimapMechanicIcons.length <= iconIndex) {
+      const icon = this.scene.add.image(0, 0, textureKey);
+      icon.setDepth(903);
+      icon.setScrollFactor(0);
+      icon.setVisible(false);
+      this.minimapMechanicIcons.push(icon);
+    }
+
+    const icon = this.minimapMechanicIcons[iconIndex];
+
+    icon.setTexture(textureKey);
+    icon.setPosition(this.toMinimapX(worldX, state.worldWidth), this.toMinimapY(worldY, state.worldHeight));
+    icon.setDisplaySize(size, size);
+    icon.setVisible(true);
+    return iconIndex + 1;
+  }
+
+  private drawMinimapFallbackIcon(
+    kind: Parameters<typeof AssetKeyResolver.getMapMechanicMinimapIconKey>[1],
+    worldX: number,
+    worldY: number,
+    state: HUDState,
+    size: number,
+  ): void {
+    const x = this.toMinimapX(worldX, state.worldWidth);
+    const y = this.toMinimapY(worldY, state.worldHeight);
+    const color = kind === 'hazard'
+      ? 0xef4444
+      : kind === 'light'
+        ? 0xfacc15
+        : kind === 'obstacle'
+          ? 0x94a3b8
+          : 0x38bdf8;
+
+    this.minimapMechanicsGraphics.fillStyle(color, 0.95);
+    this.minimapMechanicsGraphics.fillCircle(x, y, size / 2);
+  }
+
+  private getSlowZoneIconKind(visualType: string | undefined): 'river' | 'swamp' | 'mud' {
+    if (visualType === 'river' || visualType === 'mud') {
+      return visualType;
+    }
+
+    return 'swamp';
+  }
+
+  private getDefaultMinimapPriority(mechanic: MapMechanicDefinition): number {
+    switch (mechanic.type) {
+      case 'portal':
+        return 20;
+      case 'hazard':
+        return 18;
+      case 'lightSource':
+        return 12;
+      case 'slowZone':
+        return 10;
+      case 'obstacle':
+        return 8;
+      default:
+        return 6;
+    }
   }
 
   private updateIconList(
@@ -690,6 +931,13 @@ export class HUD {
   private toMinimapY(worldY: number, worldHeight: number): number {
     return this.minimapY
       + Phaser.Math.Clamp(worldY / Math.max(worldHeight, 1), 0, 1) * this.minimapHeight;
+  }
+
+  private getMinimapScale(state: HUDState): number {
+    return Math.min(
+      this.minimapWidth / Math.max(1, state.worldWidth),
+      this.minimapHeight / Math.max(1, state.worldHeight),
+    );
   }
 
   private applyLayout(): void {

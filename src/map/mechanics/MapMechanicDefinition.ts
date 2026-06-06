@@ -16,6 +16,9 @@ export interface BaseMapMechanicDefinition {
   x: number;
   y: number;
   enabled?: boolean;
+  minimapVisible?: boolean;
+  minimapIcon?: string;
+  minimapPriority?: number;
 }
 
 export interface MapObstacleDefinition extends BaseMapMechanicDefinition {

@@ -171,6 +171,42 @@ export const PLAYER_CHARACTER_IMAGE_ASSETS: ArtManifestAsset[] = [
   artImage('player/warrior_default/counter_wave.png', 'art_player_warrior_default_counter_wave', 192, 192),
 ];
 
+export const MAP_MECHANIC_ART_ASSETS: ArtManifestAsset[] = [
+  artImage('map-mechanics/river/river_tile.png', 'art_map_mechanics_river_tile', 256, 256),
+  artImage('map-mechanics/river/river_bank.png', 'art_map_mechanics_river_bank', 256, 256),
+  artImage('map-mechanics/river/river_ripple.png', 'art_map_mechanics_river_ripple', 128, 64),
+  artImage('map-mechanics/river/river_minimap.png', 'art_map_mechanics_river_minimap', 32, 32),
+  artImage('map-mechanics/swamp/swamp_pool.png', 'art_map_mechanics_swamp_pool', 256, 256),
+  artImage('map-mechanics/swamp/swamp_bubble.png', 'art_map_mechanics_swamp_bubble', 64, 64),
+  artImage('map-mechanics/swamp/swamp_minimap.png', 'art_map_mechanics_swamp_minimap', 32, 32),
+  artImage('map-mechanics/mud/mud_patch.png', 'art_map_mechanics_mud_patch', 256, 256),
+  artImage('map-mechanics/mud/mud_spot.png', 'art_map_mechanics_mud_spot', 64, 64),
+  artImage('map-mechanics/mud/mud_minimap.png', 'art_map_mechanics_mud_minimap', 32, 32),
+  artImage('map-mechanics/portal/portal_blue.png', 'art_map_mechanics_portal_blue', 128, 128),
+  artImage('map-mechanics/portal/portal_purple.png', 'art_map_mechanics_portal_purple', 128, 128),
+  artImage('map-mechanics/portal/portal_green.png', 'art_map_mechanics_portal_green', 128, 128),
+  artImage('map-mechanics/portal/portal_minimap_blue.png', 'art_map_mechanics_portal_minimap_blue', 32, 32),
+  artImage('map-mechanics/portal/portal_minimap_purple.png', 'art_map_mechanics_portal_minimap_purple', 32, 32),
+  artImage('map-mechanics/portal/portal_minimap_green.png', 'art_map_mechanics_portal_minimap_green', 32, 32),
+  artImage('map-mechanics/light/lamp.png', 'art_map_mechanics_light_lamp', 128, 128),
+  artImage('map-mechanics/light/torch.png', 'art_map_mechanics_light_torch', 128, 128),
+  artImage('map-mechanics/light/crystal.png', 'art_map_mechanics_light_crystal', 128, 128),
+  artImage('map-mechanics/light/light_minimap.png', 'art_map_mechanics_light_minimap', 24, 24),
+  artImage('map-mechanics/obstacle/obstacle_tree.png', 'art_map_mechanics_obstacle_tree', 128, 128),
+  artImage('map-mechanics/obstacle/obstacle_rock.png', 'art_map_mechanics_obstacle_rock', 128, 128),
+  artImage('map-mechanics/obstacle/obstacle_grave.png', 'art_map_mechanics_obstacle_grave', 128, 128),
+  artImage('map-mechanics/obstacle/obstacle_wall.png', 'art_map_mechanics_obstacle_wall', 128, 128),
+  artImage('map-mechanics/obstacle/obstacle_minimap.png', 'art_map_mechanics_obstacle_minimap', 24, 24),
+  artImage('map-mechanics/hazard/hazard_spike.png', 'art_map_mechanics_hazard_spike', 128, 128),
+  artImage('map-mechanics/hazard/hazard_fire.png', 'art_map_mechanics_hazard_fire', 128, 128),
+  artImage('map-mechanics/hazard/hazard_poison.png', 'art_map_mechanics_hazard_poison', 128, 128),
+  artImage('map-mechanics/hazard/hazard_minimap.png', 'art_map_mechanics_hazard_minimap', 24, 24),
+  artImage('map-mechanics/altar/altar_basic.png', 'art_map_mechanics_altar_basic', 128, 128),
+  artImage('map-mechanics/altar/altar_minimap.png', 'art_map_mechanics_altar_minimap', 24, 24),
+  artImage('map-mechanics/spawner/spawner_nest.png', 'art_map_mechanics_spawner_nest', 128, 128),
+  artImage('map-mechanics/spawner/spawner_minimap.png', 'art_map_mechanics_spawner_minimap', 24, 24),
+];
+
 export const GAMEPLAY_ART_ASSETS: ArtManifestAsset[] = [
   artSheet('effects/boss_dash_impact_sheet.png', 'art_effects_boss_dash_impact_sheet', 128, 128, 4),
   artImage('effects/boss_dash_warning.png', 'art_effects_boss_dash_warning', 256, 64),
@@ -201,6 +237,7 @@ export const GAMEPLAY_ART_ASSETS: ArtManifestAsset[] = [
   artImage('world/ground_tile.png', 'art_world_ground_tile', 128, 128),
   artImage('world/rock_landmark.png', 'art_world_rock_landmark', 96, 96),
   artImage('world/tree_landmark.png', 'art_world_tree_landmark', 96, 96),
+  ...MAP_MECHANIC_ART_ASSETS,
 ];
 
 export function buildTitleLoadPlan(_settings: DisplaySettingsData): AssetLoadPlan {

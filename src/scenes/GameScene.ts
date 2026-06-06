@@ -693,6 +693,7 @@ export class GameScene extends Phaser.Scene {
       playerMaxHp: this.playerHealth.maxHp,
       worldWidth: this.worldWidth,
       worldHeight: this.worldHeight,
+      mapMechanics: this.currentMap.mechanics ?? [],
       playerPosition: this.player
         ? { x: this.player.body.x, y: this.player.body.y }
         : { x: 0, y: 0 },

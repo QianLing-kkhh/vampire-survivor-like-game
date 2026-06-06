@@ -21,6 +21,39 @@ export type WeaponAssetEntry = {
   icon?: AssetKeyEntry;
 };
 
+export type MapMechanicVisualKind =
+  | 'river'
+  | 'swamp'
+  | 'mud'
+  | 'portalBlue'
+  | 'portalPurple'
+  | 'portalGreen'
+  | 'lightLamp'
+  | 'lightTorch'
+  | 'lightCrystal'
+  | 'obstacleTree'
+  | 'obstacleRock'
+  | 'obstacleGrave'
+  | 'obstacleWall'
+  | 'hazardSpike'
+  | 'hazardFire'
+  | 'hazardPoison'
+  | 'altar'
+  | 'spawner';
+
+export type MapMechanicIconKind =
+  | 'river'
+  | 'swamp'
+  | 'mud'
+  | 'portalBlue'
+  | 'portalPurple'
+  | 'portalGreen'
+  | 'light'
+  | 'obstacle'
+  | 'hazard'
+  | 'altar'
+  | 'spawner';
+
 export const PLAYER_DIRECTIONS_8: readonly PlayerDirection8[] = [
   'right',
   'down_right',
@@ -265,6 +298,41 @@ export const DEFAULT_ASSET_KEY_MAP = {
       animation: { primary: 'art_level_up_glow' },
     },
   },
+  mapMechanics: {
+    visuals: {
+      river: { primary: 'art_map_mechanics_river_tile' },
+      swamp: { primary: 'art_map_mechanics_swamp_pool' },
+      mud: { primary: 'art_map_mechanics_mud_patch' },
+      portalBlue: { primary: 'art_map_mechanics_portal_blue' },
+      portalPurple: { primary: 'art_map_mechanics_portal_purple' },
+      portalGreen: { primary: 'art_map_mechanics_portal_green' },
+      lightLamp: { primary: 'art_map_mechanics_light_lamp' },
+      lightTorch: { primary: 'art_map_mechanics_light_torch' },
+      lightCrystal: { primary: 'art_map_mechanics_light_crystal' },
+      obstacleTree: { primary: 'art_map_mechanics_obstacle_tree' },
+      obstacleRock: { primary: 'art_map_mechanics_obstacle_rock' },
+      obstacleGrave: { primary: 'art_map_mechanics_obstacle_grave' },
+      obstacleWall: { primary: 'art_map_mechanics_obstacle_wall' },
+      hazardSpike: { primary: 'art_map_mechanics_hazard_spike' },
+      hazardFire: { primary: 'art_map_mechanics_hazard_fire' },
+      hazardPoison: { primary: 'art_map_mechanics_hazard_poison' },
+      altar: { primary: 'art_map_mechanics_altar_basic' },
+      spawner: { primary: 'art_map_mechanics_spawner_nest' },
+    } satisfies Record<MapMechanicVisualKind, AssetKeyEntry>,
+    minimapIcons: {
+      river: { primary: 'art_map_mechanics_river_minimap' },
+      swamp: { primary: 'art_map_mechanics_swamp_minimap' },
+      mud: { primary: 'art_map_mechanics_mud_minimap' },
+      portalBlue: { primary: 'art_map_mechanics_portal_minimap_blue' },
+      portalPurple: { primary: 'art_map_mechanics_portal_minimap_purple' },
+      portalGreen: { primary: 'art_map_mechanics_portal_minimap_green' },
+      light: { primary: 'art_map_mechanics_light_minimap' },
+      obstacle: { primary: 'art_map_mechanics_obstacle_minimap' },
+      hazard: { primary: 'art_map_mechanics_hazard_minimap' },
+      altar: { primary: 'art_map_mechanics_altar_minimap' },
+      spawner: { primary: 'art_map_mechanics_spawner_minimap' },
+    } satisfies Record<MapMechanicIconKind, AssetKeyEntry>,
+  },
 } as const;
 
 export const TEXTURE_STATUS_KEYS: readonly string[] = [
@@ -301,4 +369,6 @@ export const TEXTURE_STATUS_KEYS: readonly string[] = [
 
     return keys;
   }),
+  ...Object.values(DEFAULT_ASSET_KEY_MAP.mapMechanics.visuals).map((entry) => entry.primary),
+  ...Object.values(DEFAULT_ASSET_KEY_MAP.mapMechanics.minimapIcons).map((entry) => entry.primary),
 ];

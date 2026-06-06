@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
 
-import { AssetKeyResolver } from '../../assets/AssetKeyResolver';
 import { ShadowFactory } from '../../visual/ShadowFactory';
-import { VisualScale } from '../../visual/VisualScale';
+import { MapMechanicVisualRenderer } from '../../world/MapMechanicVisualRenderer';
 
 import { MapMechanicContext, MapMechanicEntity } from './MapMechanicContext';
 import { MapInteractable } from './MapInteractable';
@@ -140,45 +139,24 @@ export class MapObstacle implements MapInteractable {
   }
 
   private render(): void {
-    const visualType = this.definition.visualType ?? 'rock';
-    const textureKey = AssetKeyResolver.getWorldLandmarkTextureKey(this.context.scene, visualType);
+    const visuals = MapMechanicVisualRenderer.renderObstacle(
+      this.context,
+      this.definition,
+      this.shape,
+      this.width,
+      this.height,
+    );
 
-    if (textureKey && visualType !== 'wall') {
-      const image = this.context.scene.add.image(this.definition.x, this.definition.y, textureKey);
-      image.setDisplaySize(
-        Math.max(this.width, VisualScale.getLandmarkDisplaySize(visualType)),
-        Math.max(this.height, VisualScale.getLandmarkDisplaySize(visualType)),
-      );
-      image.setDepth(-72);
-      this.gameObjects.push(image);
-      const shadow = ShadowFactory.createShadow(this.context.scene, image, 'landmark');
+    this.gameObjects.push(...visuals);
 
-      if (shadow) {
-        this.gameObjects.push(shadow);
-      }
-      return;
+    const primaryVisual = visuals[0];
+    const shadow = primaryVisual instanceof Phaser.GameObjects.Image
+      ? ShadowFactory.createShadow(this.context.scene, primaryVisual, 'landmark')
+      : undefined;
+
+    if (shadow) {
+      this.gameObjects.push(shadow);
     }
-
-    const object = this.shape === 'circle'
-      ? this.context.scene.add.circle(
-        this.definition.x,
-        this.definition.y,
-        Math.max(this.width, this.height) / 2,
-        0x475569,
-        0.92,
-      )
-      : this.context.scene.add.rectangle(
-        this.definition.x,
-        this.definition.y,
-        this.width,
-        this.height,
-        0x475569,
-        0.92,
-      );
-
-    object.setDepth(-72);
-    object.setStrokeStyle(2, 0x94a3b8, 0.45);
-    this.gameObjects.push(object);
   }
 
   private getEntityRadius(entity: MapMechanicEntity): number {
