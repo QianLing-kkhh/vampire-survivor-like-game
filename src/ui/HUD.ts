@@ -19,6 +19,11 @@ interface WorldPosition {
   y: number;
 }
 
+interface MinimapEnemyPosition extends WorldPosition {
+  bossLike?: boolean;
+  finalBoss?: boolean;
+}
+
 export interface HUDState {
   currentHp: number;
   maxHp: number;
@@ -65,7 +70,7 @@ export interface HUDState {
   worldHeight: number;
   mapMechanics?: readonly MapMechanicDefinition[];
   playerPosition: WorldPosition;
-  enemyPositions: WorldPosition[];
+  enemyPositions: MinimapEnemyPosition[];
   message?: string;
 }
 
@@ -96,6 +101,41 @@ export class HUD {
   private static readonly BAR_WIDTH = 230;
   private static readonly BAR_HEIGHT = 14;
   private static readonly ICON_SIZE = 28;
+  private static readonly MINIMAP_STYLE = {
+    terrain: {
+      riverColor: 0x155e63,
+      riverAlpha: 0.22,
+      riverStrokeAlpha: 0.3,
+      swampColor: 0x365f3f,
+      swampAlpha: 0.2,
+      swampStrokeAlpha: 0.28,
+      mudColor: 0x5a3e1f,
+      mudAlpha: 0.2,
+      mudStrokeAlpha: 0.28,
+      obstacleColor: 0x475569,
+      obstacleAlpha: 0.3,
+      lightRadiusColor: 0xfacc15,
+      lightRadiusAlpha: 0.1,
+    },
+    icons: {
+      slowZoneAlpha: 0.42,
+      portalAlpha: 0.72,
+      lightAlpha: 0.48,
+      obstacleAlpha: 0.5,
+      hazardAlpha: 0.68,
+      defaultAlpha: 0.58,
+    },
+    markers: {
+      playerCenterColor: 0xfacc15,
+      playerCenterRadius: 3,
+      playerOutlineRadius: 4,
+      playerRingRadius: 5,
+      bossCenterRadius: 4,
+      bossRingRadius: 6,
+      finalBossCenterRadius: 4.5,
+      finalBossRingRadius: 7,
+    },
+  } as const;
 
   private readonly scene: Phaser.Scene;
   private readonly screenManager: ScreenManager;
@@ -121,6 +161,7 @@ export class HUD {
   private readonly minimapImage?: Phaser.GameObjects.Image;
   private readonly minimapMechanicsGraphics: Phaser.GameObjects.Graphics;
   private readonly minimapMechanicIcons: Phaser.GameObjects.Image[] = [];
+  private readonly minimapMarkerGraphics: Phaser.GameObjects.Graphics;
   private readonly minimapPlayer: Phaser.GameObjects.Arc;
   private readonly minimapEnemies: Phaser.GameObjects.Arc[] = [];
   private readonly pauseButton: Phaser.GameObjects.Text;
@@ -169,6 +210,9 @@ export class HUD {
     this.minimapMechanicsGraphics = scene.add.graphics();
     this.minimapMechanicsGraphics.setDepth(901);
     this.minimapMechanicsGraphics.setScrollFactor(0);
+    this.minimapMarkerGraphics = scene.add.graphics();
+    this.minimapMarkerGraphics.setDepth(904);
+    this.minimapMarkerGraphics.setScrollFactor(0);
 
     for (let index = 0; index < HUD.MAX_MINIMAP_ENEMIES; index += 1) {
       const enemyDot = scene.add.circle(0, 0, 2, 0xef4444, 0.85);
@@ -181,6 +225,7 @@ export class HUD {
     this.minimapPlayer = scene.add.circle(0, 0, 3, 0x38bdf8, 1);
     this.minimapPlayer.setDepth(904);
     this.minimapPlayer.setScrollFactor(0);
+    this.minimapPlayer.setVisible(false);
 
     this.pauseButton = scene.add.text(0, 0, 'Pause', {
       backgroundColor: '#111827',
@@ -246,6 +291,7 @@ export class HUD {
     this.minimapMechanicIcons.forEach((icon) => {
       icon.destroy();
     });
+    this.minimapMarkerGraphics.destroy();
     this.minimapPlayer.destroy();
     this.pauseButton.destroy();
     this.minimapEnemies.forEach((enemyDot) => {
@@ -294,16 +340,17 @@ export class HUD {
 
   private updateMinimap(state: HUDState): void {
     this.updateMinimapMechanics(state);
-    this.minimapPlayer.setPosition(
-      this.toMinimapX(state.playerPosition.x, state.worldWidth),
-      this.toMinimapY(state.playerPosition.y, state.worldHeight),
-    );
+    this.minimapMarkerGraphics.clear();
+    this.minimapPlayer.setVisible(false);
 
     for (const enemyDot of this.minimapEnemies) {
       enemyDot.setVisible(false);
     }
 
-    state.enemyPositions
+    const normalEnemies = state.enemyPositions.filter((position) => position.bossLike !== true);
+    const bossEnemies = state.enemyPositions.filter((position) => position.bossLike === true);
+
+    normalEnemies
       .slice(0, HUD.MAX_MINIMAP_ENEMIES)
       .forEach((position, index) => {
         const enemyDot = this.minimapEnemies[index];
@@ -314,6 +361,9 @@ export class HUD {
         );
         enemyDot.setVisible(true);
       });
+
+    bossEnemies.forEach((position) => this.drawMinimapBossMarker(position, state));
+    this.drawMinimapPlayerMarker(state.playerPosition, state);
   }
 
   private updateMinimapMechanics(state: HUDState): void {
@@ -337,7 +387,8 @@ export class HUD {
               mechanic.x,
               mechanic.y,
               state,
-              slowZone.visualType === 'river' ? 10 : 12,
+              slowZone.visualType === 'river' ? 8 : 9,
+              HUD.MINIMAP_STYLE.icons.slowZoneAlpha,
             );
           });
           break;
@@ -354,6 +405,7 @@ export class HUD {
             mechanic.y,
             state,
             14,
+            HUD.MINIMAP_STYLE.icons.portalAlpha,
           );
           break;
         case 'obstacle':
@@ -364,20 +416,60 @@ export class HUD {
           }
 
           this.drawMinimapObstacle(obstacle, state);
-          iconIndex = this.placeMinimapIcon(iconIndex, 'obstacle', mechanic.x, mechanic.y, state, 9);
+          iconIndex = this.placeMinimapIcon(
+            iconIndex,
+            'obstacle',
+            mechanic.x,
+            mechanic.y,
+            state,
+            8,
+            HUD.MINIMAP_STYLE.icons.obstacleAlpha,
+          );
           break;
         case 'lightSource':
           this.drawMinimapLight(mechanic as MapLightSourceDefinition, state);
-          iconIndex = this.placeMinimapIcon(iconIndex, 'light', mechanic.x, mechanic.y, state, 10);
+          iconIndex = this.placeMinimapIcon(
+            iconIndex,
+            'light',
+            mechanic.x,
+            mechanic.y,
+            state,
+            9,
+            HUD.MINIMAP_STYLE.icons.lightAlpha,
+          );
           break;
         case 'hazard':
-          iconIndex = this.placeMinimapIcon(iconIndex, 'hazard', mechanic.x, mechanic.y, state, 11);
+          iconIndex = this.placeMinimapIcon(
+            iconIndex,
+            'hazard',
+            mechanic.x,
+            mechanic.y,
+            state,
+            11,
+            HUD.MINIMAP_STYLE.icons.hazardAlpha,
+          );
           break;
         case 'altar':
-          iconIndex = this.placeMinimapIcon(iconIndex, 'altar', mechanic.x, mechanic.y, state, 10);
+          iconIndex = this.placeMinimapIcon(
+            iconIndex,
+            'altar',
+            mechanic.x,
+            mechanic.y,
+            state,
+            10,
+            HUD.MINIMAP_STYLE.icons.defaultAlpha,
+          );
           break;
         case 'spawner':
-          iconIndex = this.placeMinimapIcon(iconIndex, 'spawner', mechanic.x, mechanic.y, state, 10);
+          iconIndex = this.placeMinimapIcon(
+            iconIndex,
+            'spawner',
+            mechanic.x,
+            mechanic.y,
+            state,
+            10,
+            HUD.MINIMAP_STYLE.icons.defaultAlpha,
+          );
           break;
         default:
           break;
@@ -391,13 +483,25 @@ export class HUD {
     placeIcon: () => void,
   ): void {
     const visualType = mechanic.visualType ?? 'swamp';
+    const terrainStyle = HUD.MINIMAP_STYLE.terrain;
     const color = visualType === 'river'
-      ? 0x2dd4bf
+      ? terrainStyle.riverColor
       : visualType === 'mud'
-        ? 0xa16207
-        : 0x22c55e;
-    this.minimapMechanicsGraphics.fillStyle(color, visualType === 'river' ? 0.38 : 0.32);
-    this.minimapMechanicsGraphics.lineStyle(1, color, 0.72);
+        ? terrainStyle.mudColor
+        : terrainStyle.swampColor;
+    const alpha = visualType === 'river'
+      ? terrainStyle.riverAlpha
+      : visualType === 'mud'
+        ? terrainStyle.mudAlpha
+        : terrainStyle.swampAlpha;
+    const strokeAlpha = visualType === 'river'
+      ? terrainStyle.riverStrokeAlpha
+      : visualType === 'mud'
+        ? terrainStyle.mudStrokeAlpha
+        : terrainStyle.swampStrokeAlpha;
+
+    this.minimapMechanicsGraphics.fillStyle(color, alpha);
+    this.minimapMechanicsGraphics.lineStyle(1, color, strokeAlpha);
 
     if ((mechanic.shape ?? (mechanic.radius ? 'circle' : 'rect')) === 'circle') {
       const radius = (mechanic.radius ?? 1) * this.getMinimapScale(state);
@@ -443,7 +547,10 @@ export class HUD {
     const width = Math.max(3, mechanic.width * (this.minimapWidth / Math.max(1, state.worldWidth)));
     const height = Math.max(3, mechanic.height * (this.minimapHeight / Math.max(1, state.worldHeight)));
 
-    this.minimapMechanicsGraphics.fillStyle(0x334155, 0.78);
+    this.minimapMechanicsGraphics.fillStyle(
+      HUD.MINIMAP_STYLE.terrain.obstacleColor,
+      HUD.MINIMAP_STYLE.terrain.obstacleAlpha,
+    );
     this.minimapMechanicsGraphics.fillRect(x - width / 2, y - height / 2, width, height);
   }
 
@@ -453,7 +560,10 @@ export class HUD {
   ): void {
     const radius = mechanic.radius * this.getMinimapScale(state);
 
-    this.minimapMechanicsGraphics.fillStyle(0xfacc15, 0.08);
+    this.minimapMechanicsGraphics.fillStyle(
+      HUD.MINIMAP_STYLE.terrain.lightRadiusColor,
+      HUD.MINIMAP_STYLE.terrain.lightRadiusAlpha,
+    );
     this.minimapMechanicsGraphics.fillCircle(
       this.toMinimapX(mechanic.x, state.worldWidth),
       this.toMinimapY(mechanic.y, state.worldHeight),
@@ -468,11 +578,12 @@ export class HUD {
     worldY: number,
     state: HUDState,
     size: number,
+    alpha: number = HUD.MINIMAP_STYLE.icons.defaultAlpha,
   ): number {
     const textureKey = AssetKeyResolver.getMapMechanicMinimapIconKey(this.scene, kind);
 
     if (!textureKey) {
-      this.drawMinimapFallbackIcon(kind, worldX, worldY, state, size);
+      this.drawMinimapFallbackIcon(kind, worldX, worldY, state, size, alpha);
       return iconIndex;
     }
 
@@ -489,6 +600,7 @@ export class HUD {
     icon.setTexture(textureKey);
     icon.setPosition(this.toMinimapX(worldX, state.worldWidth), this.toMinimapY(worldY, state.worldHeight));
     icon.setDisplaySize(size, size);
+    icon.setAlpha(alpha);
     icon.setVisible(true);
     return iconIndex + 1;
   }
@@ -499,6 +611,7 @@ export class HUD {
     worldY: number,
     state: HUDState,
     size: number,
+    alpha: number,
   ): void {
     const x = this.toMinimapX(worldX, state.worldWidth);
     const y = this.toMinimapY(worldY, state.worldHeight);
@@ -510,8 +623,40 @@ export class HUD {
           ? 0x94a3b8
           : 0x38bdf8;
 
-    this.minimapMechanicsGraphics.fillStyle(color, 0.95);
+    this.minimapMechanicsGraphics.fillStyle(color, alpha);
     this.minimapMechanicsGraphics.fillCircle(x, y, size / 2);
+  }
+
+  private drawMinimapBossMarker(position: MinimapEnemyPosition, state: HUDState): void {
+    const style = HUD.MINIMAP_STYLE.markers;
+    const x = this.toMinimapX(position.x, state.worldWidth);
+    const y = this.toMinimapY(position.y, state.worldHeight);
+    const ringRadius = position.finalBoss === true
+      ? style.finalBossRingRadius
+      : style.bossRingRadius;
+    const centerRadius = position.finalBoss === true
+      ? style.finalBossCenterRadius
+      : style.bossCenterRadius;
+
+    this.minimapMarkerGraphics.lineStyle(2, 0xef4444, 0.95);
+    this.minimapMarkerGraphics.strokeCircle(x, y, ringRadius);
+    this.minimapMarkerGraphics.fillStyle(0xdc2626, 1);
+    this.minimapMarkerGraphics.fillCircle(x, y, centerRadius);
+    this.minimapMarkerGraphics.lineStyle(1, 0xffffff, 0.72);
+    this.minimapMarkerGraphics.strokeCircle(x, y, ringRadius + 1);
+  }
+
+  private drawMinimapPlayerMarker(position: WorldPosition, state: HUDState): void {
+    const style = HUD.MINIMAP_STYLE.markers;
+    const x = this.toMinimapX(position.x, state.worldWidth);
+    const y = this.toMinimapY(position.y, state.worldHeight);
+
+    this.minimapMarkerGraphics.lineStyle(2, 0xffffff, 0.95);
+    this.minimapMarkerGraphics.strokeCircle(x, y, style.playerRingRadius);
+    this.minimapMarkerGraphics.lineStyle(1, 0x000000, 0.82);
+    this.minimapMarkerGraphics.strokeCircle(x, y, style.playerOutlineRadius);
+    this.minimapMarkerGraphics.fillStyle(style.playerCenterColor, 1);
+    this.minimapMarkerGraphics.fillCircle(x, y, style.playerCenterRadius);
   }
 
   private getSlowZoneIconKind(visualType: string | undefined): 'river' | 'swamp' | 'mud' {

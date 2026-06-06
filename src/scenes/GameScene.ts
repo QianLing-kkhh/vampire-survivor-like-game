@@ -697,15 +697,44 @@ export class GameScene extends Phaser.Scene {
       playerPosition: this.player
         ? { x: this.player.body.x, y: this.player.body.y }
         : { x: 0, y: 0 },
-      enemyPositions: this.enemies
-        .filter((enemy) => !enemy.isDead)
-        .slice(0, 50)
-        .map((enemy) => ({ x: enemy.body.x, y: enemy.body.y })),
+      enemyPositions: this.getMinimapEnemyPositions(),
       message: this.getHUDMessage(),
       endlessMode: this.playtestSettings.endlessMode,
       endlessStarted: this.runState.endlessStarted,
       endlessTimeSeconds: this.runState.endlessSurvivalTime,
     });
+  }
+
+  private getMinimapEnemyPositions(): Array<{
+    x: number;
+    y: number;
+    bossLike?: boolean;
+    finalBoss?: boolean;
+  }> {
+    const activeEnemies = this.enemies.filter((enemy) => !enemy.isDead);
+    const bossEnemies = activeEnemies.filter((enemy) => this.isMinimapBossEnemy(enemy));
+    const normalEnemies = activeEnemies
+      .filter((enemy) => !this.isMinimapBossEnemy(enemy))
+      .slice(0, 50);
+
+    return [
+      ...normalEnemies.map((enemy) => ({
+        x: enemy.body.x,
+        y: enemy.body.y,
+      })),
+      ...bossEnemies.map((enemy) => ({
+        x: enemy.body.x,
+        y: enemy.body.y,
+        bossLike: true,
+        finalBoss: enemy.id === this.currentStage.finalBossId,
+      })),
+    ];
+  }
+
+  private isMinimapBossEnemy(enemy: Enemy): boolean {
+    return enemy.id === this.currentStage.finalBossId
+      || enemy.id.endsWith('_boss')
+      || enemy.id.startsWith('endless_');
   }
 
   private emitDebugPanelData(): void {
