@@ -85,6 +85,7 @@ The auto player attempts to:
 - Use map mechanics when choosing routes, including obstacles, slow zones, and portals.
 - Route around blocking obstacles when a valuable pickup or treasure chest is on the other side instead of repeatedly moving into the obstacle.
 - Approach border-adjacent high-value pickups from a safer interior point when possible, instead of oscillating between chasing the pickup and being pushed away from the boundary.
+- When trapped in a map corner under enemy pressure, prefer movement that makes real progress back toward the playable interior instead of continuing to press into the boundary.
 - Consider portals only when the destination is safer or strategically useful.
 - Use slow zones cautiously when they slow the player, and more favorably when they help kite enemies.
 - Stay within map boundaries without letting boundary correction override every valuable pickup decision.

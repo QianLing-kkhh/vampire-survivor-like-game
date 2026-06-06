@@ -121,6 +121,11 @@ interface Candidate {
   reason: string;
 }
 
+interface CornerTrapInfo {
+  active: boolean;
+  inwardDirection: Phaser.Math.Vector2;
+}
+
 export class AutoPlayer {
   private static readonly DANGER_RADIUS = 300;
   private static readonly PANIC_DISTANCE = 125;
@@ -146,6 +151,7 @@ export class AutoPlayer {
 
     const player = this.getPlayerVector(context);
     const danger = this.getDangerInfo(context, player);
+    const cornerTrap = this.getCornerTrapInfo(context, player, danger);
     const targets = this.getTargets(context, player, danger.nearestDistance);
     const bestTarget = this.selectTarget(context, player, targets, danger.nearestDistance);
 
@@ -158,7 +164,7 @@ export class AutoPlayer {
       return new Phaser.Math.Vector2(0, 0);
     }
 
-    const candidates = this.getCandidates(context, player, danger, bestTarget);
+    const candidates = this.getCandidates(context, player, danger, bestTarget, cornerTrap);
 
     let bestScore = Number.NEGATIVE_INFINITY;
     let bestCandidate: Candidate | undefined;
@@ -170,7 +176,15 @@ export class AutoPlayer {
 
       const direction = candidate.direction.clone().normalize();
       const endpoint = this.getCandidateEndpoint(context, player, direction);
-      const score = this.scoreCandidate(context, player, endpoint, direction, danger, bestTarget);
+      const score = this.scoreCandidate(
+        context,
+        player,
+        endpoint,
+        direction,
+        danger,
+        bestTarget,
+        cornerTrap,
+      );
 
       if (score > bestScore) {
         bestScore = score;
@@ -191,6 +205,7 @@ export class AutoPlayer {
     player: Phaser.Math.Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     target: AutoTarget | undefined,
+    cornerTrap: CornerTrapInfo,
   ): Candidate[] {
     const candidates: Candidate[] = [
       { direction: new Phaser.Math.Vector2(1, 0), reason: 'base' },
@@ -207,6 +222,20 @@ export class AutoPlayer {
       candidates.push({ direction: danger.fleeDirection, reason: 'flee' });
       candidates.push({ direction: new Phaser.Math.Vector2(danger.fleeDirection.y, -danger.fleeDirection.x), reason: 'tangent' });
       candidates.push({ direction: new Phaser.Math.Vector2(-danger.fleeDirection.y, danger.fleeDirection.x), reason: 'tangent' });
+    }
+
+    if (cornerTrap.active && cornerTrap.inwardDirection.lengthSq() > 0) {
+      const inward = cornerTrap.inwardDirection.clone().normalize();
+
+      candidates.push({ direction: inward, reason: 'cornerEscape' });
+
+      if (Math.abs(inward.x) > 0) {
+        candidates.push({ direction: new Phaser.Math.Vector2(inward.x, 0), reason: 'cornerSlide' });
+      }
+
+      if (Math.abs(inward.y) > 0) {
+        candidates.push({ direction: new Phaser.Math.Vector2(0, inward.y), reason: 'cornerSlide' });
+      }
     }
 
     if (target) {
@@ -248,6 +277,7 @@ export class AutoPlayer {
     direction: Phaser.Math.Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     target: AutoTarget | undefined,
+    cornerTrap: CornerTrapInfo,
   ): number {
     const hpRatio = this.getHpRatio(context);
     let score = 0;
@@ -258,6 +288,8 @@ export class AutoPlayer {
     score += this.getSlowZoneScore(context, endpoint, hpRatio);
     score += this.getPortalScore(context, endpoint, hpRatio);
     score += this.getWeaponCandidateScore(context, player, endpoint, direction, danger);
+    score += this.getCornerEscapeScore(context, player, endpoint, direction, danger, cornerTrap);
+    score -= this.getNoProgressBorderPenalty(context, player, endpoint, direction, danger);
 
     if (target) {
       const targetDistance = Phaser.Math.Distance.Between(
@@ -885,6 +917,129 @@ export class AutoPlayer {
 
     const canCollect = target && this.canPickupFrom(context, point, target.position);
     return (1 - nearestBorder / warning) * (canCollect ? 2 : 7);
+  }
+
+  private getCornerTrapInfo(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): CornerTrapInfo {
+    const inwardDirection = new Phaser.Math.Vector2(0, 0);
+    const nearLeft = player.x < AutoPlayer.BORDER_WARNING_MARGIN;
+    const nearRight = player.x > context.worldBounds.width - AutoPlayer.BORDER_WARNING_MARGIN;
+    const nearTop = player.y < AutoPlayer.BORDER_WARNING_MARGIN;
+    const nearBottom = player.y > context.worldBounds.height - AutoPlayer.BORDER_WARNING_MARGIN;
+
+    if (nearLeft) {
+      inwardDirection.x = 1;
+    } else if (nearRight) {
+      inwardDirection.x = -1;
+    }
+
+    if (nearTop) {
+      inwardDirection.y = 1;
+    } else if (nearBottom) {
+      inwardDirection.y = -1;
+    }
+
+    const nearCorner = inwardDirection.x !== 0 && inwardDirection.y !== 0;
+    const enemyPressure = danger.nearestDistance < AutoPlayer.DANGER_RADIUS
+      || danger.pressureCount >= 3;
+
+    return {
+      active: nearCorner && enemyPressure,
+      inwardDirection: inwardDirection.lengthSq() > 0
+        ? inwardDirection.normalize()
+        : inwardDirection,
+    };
+  }
+
+  private getCornerEscapeScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    cornerTrap: CornerTrapInfo,
+  ): number {
+    if (!cornerTrap.active || cornerTrap.inwardDirection.lengthSq() === 0) {
+      return 0;
+    }
+
+    const inwardAlignment = direction.dot(cornerTrap.inwardDirection);
+    const displacement = endpoint.clone().subtract(player);
+    const inwardProgress = displacement.dot(cornerTrap.inwardDirection);
+    const currentBorderDistance = this.getNearestBorderDistance(context, player);
+    const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
+    const borderProgress = endpointBorderDistance - currentBorderDistance;
+    const endpointPressure = this.getEnemyPressureAt(context, endpoint, this.getHpRatio(context));
+    let score = 0;
+
+    score += Math.max(0, inwardAlignment) * 18;
+    score += Math.max(0, inwardProgress) * 0.12;
+    score += Math.max(0, borderProgress) * 0.10;
+
+    if (inwardAlignment < 0) {
+      score -= 26;
+    }
+
+    if (borderProgress <= 2) {
+      score -= 16;
+    }
+
+    if (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE) {
+      score += Math.max(0, inwardAlignment) * 10;
+    }
+
+    if (endpointPressure > 8 && inwardAlignment < 0.45) {
+      score -= 10;
+    }
+
+    return score;
+  }
+
+  private getNoProgressBorderPenalty(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): number {
+    if (danger.nearestDistance >= AutoPlayer.DANGER_RADIUS) {
+      return 0;
+    }
+
+    const intendedEndpoint = player.clone().add(
+      direction.clone().normalize().scale(AutoPlayer.STEP_DISTANCE),
+    );
+    const intendedMove = Phaser.Math.Distance.Between(
+      player.x,
+      player.y,
+      intendedEndpoint.x,
+      intendedEndpoint.y,
+    );
+    const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
+
+    if (actualMove >= intendedMove * 0.55) {
+      return 0;
+    }
+
+    const endpointNearBorder = this.getNearestBorderDistance(context, endpoint)
+      < AutoPlayer.HARD_BORDER_MARGIN + 8;
+
+    return endpointNearBorder ? 24 : 0;
+  }
+
+  private getNearestBorderDistance(
+    context: AutoPlayerContext,
+    point: Phaser.Math.Vector2,
+  ): number {
+    return Math.min(
+      point.x,
+      point.y,
+      context.worldBounds.width - point.x,
+      context.worldBounds.height - point.y,
+    );
   }
 
   private getSoftBorderDirection(context: AutoPlayerContext, player: Phaser.Math.Vector2): Phaser.Math.Vector2 {
