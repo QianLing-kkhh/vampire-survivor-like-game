@@ -55,10 +55,9 @@ export class PlayerController {
   private static readonly MAX_MOVEMENT_STEP = 24;
   private static readonly IDLE_SPEED_THRESHOLD = 6;
   private static readonly PLAYER_DEPTH = 20;
-  private static readonly MAP_SLOW_RING_COLOR = 0x38bdf8;
-  private static readonly MAP_SLOW_RING_STROKE_COLOR = 0x7dd3fc;
-  private static readonly MAP_SLOW_RING_ALPHA_MIN = 0.16;
-  private static readonly MAP_SLOW_RING_ALPHA_MAX = 0.35;
+  private static readonly MAP_SLOW_SNOWFLAKE_COLOR = '#bfdbfe';
+  private static readonly MAP_SLOW_SNOWFLAKE_ALPHA_MIN = 0.55;
+  private static readonly MAP_SLOW_SNOWFLAKE_ALPHA_MAX = 0.95;
   private static readonly MAP_SLOW_VISUAL_MIN_MULTIPLIER = 0.25;
 
   readonly body: PlayerBody;
@@ -76,7 +75,7 @@ export class PlayerController {
   private mapMoveSpeedMultiplier = 1;
   private temporaryMoveSpeedRemainingMs = 0;
   private unsubscribeSettings?: () => void;
-  private mapSlowVisual?: Phaser.GameObjects.Arc;
+  private mapSlowVisual?: Phaser.GameObjects.Text;
   private isMapSlowVisualActive = false;
 
   constructor(
@@ -193,19 +192,19 @@ export class PlayerController {
     this.unsubscribeSettings = undefined;
     ShadowFactory.destroyShadow(this.shadow);
     this.shadow = undefined;
-    this.clearSlowVisual();
+    this.destroySlowVisual();
     this.body.destroy();
   }
 
-  setSlowVisual(active: boolean, multiplier = 1): void {
+  setSlowVisual(active: boolean, multiplier = 1): boolean {
     if (!active) {
       this.clearSlowVisual();
-      return;
+      return false;
     }
 
     if (!this.isBodyUsable()) {
       this.clearSlowVisual();
-      return;
+      return false;
     }
 
     const normalizedMultiplier = Math.max(
@@ -215,34 +214,36 @@ export class PlayerController {
     const intensity = (1 - normalizedMultiplier) / (1 - PlayerController.MAP_SLOW_VISUAL_MIN_MULTIPLIER);
     const clampedIntensity = Phaser.Math.Clamp(intensity, 0, 1);
     const slowAlpha = Phaser.Math.Linear(
-      PlayerController.MAP_SLOW_RING_ALPHA_MIN,
-      PlayerController.MAP_SLOW_RING_ALPHA_MAX,
+      PlayerController.MAP_SLOW_SNOWFLAKE_ALPHA_MIN,
+      PlayerController.MAP_SLOW_SNOWFLAKE_ALPHA_MAX,
       clampedIntensity,
     );
-    const ringRadius = this.getBodyRadius() * 1.45 * (1 + clampedIntensity * 0.2);
+    const fontSize = Math.round(this.getBodyRadius() * (1.05 + clampedIntensity * 0.25));
+    const wasActive = this.isMapSlowVisualActive;
 
     if (!this.mapSlowVisual) {
-      this.mapSlowVisual = this.scene.add.circle(
+      this.mapSlowVisual = this.scene.add.text(
         this.body.x,
         this.body.y,
-        ringRadius,
-        PlayerController.MAP_SLOW_RING_COLOR,
-        0.16,
+        '\u2744',
+        {
+          color: PlayerController.MAP_SLOW_SNOWFLAKE_COLOR,
+          fontSize: `${fontSize}px`,
+          fontStyle: 'bold',
+          stroke: '#0f172a',
+          strokeThickness: 3,
+        },
       );
+      this.mapSlowVisual.setOrigin(0.5);
       this.mapSlowVisual.setDepth(PlayerController.PLAYER_DEPTH + 1);
     }
 
-    this.mapSlowVisual.setPosition(this.body.x, this.body.y);
-    this.mapSlowVisual.setRadius(ringRadius);
-    this.mapSlowVisual.setFillStyle(PlayerController.MAP_SLOW_RING_COLOR, slowAlpha * 0.25);
-    this.mapSlowVisual.setStrokeStyle(
-      2,
-      PlayerController.MAP_SLOW_RING_STROKE_COLOR,
-      Math.min(1, slowAlpha + 0.18),
-    );
+    this.mapSlowVisual.setPosition(this.body.x, this.body.y - this.getBodyRadius() * 1.15);
+    this.mapSlowVisual.setFontSize(fontSize);
     this.mapSlowVisual.setVisible(true);
-    this.mapSlowVisual.setAlpha(1);
+    this.mapSlowVisual.setAlpha(slowAlpha);
     this.isMapSlowVisualActive = true;
+    return !wasActive;
   }
 
   clearSlowVisual(): void {
@@ -253,6 +254,15 @@ export class PlayerController {
 
     this.mapSlowVisual.setVisible(false);
     this.mapSlowVisual.setAlpha(0);
+    this.isMapSlowVisualActive = false;
+  }
+
+  private destroySlowVisual(): void {
+    if (this.mapSlowVisual?.scene) {
+      this.mapSlowVisual.destroy();
+    }
+
+    this.mapSlowVisual = undefined;
     this.isMapSlowVisualActive = false;
   }
 

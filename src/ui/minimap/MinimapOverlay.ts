@@ -25,6 +25,7 @@ export class MinimapOverlay {
   private y = 0;
   private width = 130;
   private height = 82;
+  private visible = true;
 
   constructor(private readonly scene: Phaser.Scene) {
     this.background = scene.add.rectangle(0, 0, this.width, this.height, UITheme.panelBgColor, 0.72);
@@ -55,6 +56,10 @@ export class MinimapOverlay {
   }
 
   update(state: MinimapOverlayState): void {
+    if (!this.visible) {
+      return;
+    }
+
     this.updateMechanics(state);
     this.markerGraphics.clear();
     this.playerMarker.setVisible(false);
@@ -92,6 +97,16 @@ export class MinimapOverlay {
     this.width = width;
     this.height = height;
     this.background.setSize(width, height);
+  }
+
+  setVisible(visible: boolean): void {
+    this.visible = visible;
+    this.background.setVisible(visible);
+    this.mechanicsGraphics.setVisible(visible);
+    this.markerGraphics.setVisible(visible);
+    this.playerMarker.setVisible(false);
+    this.mechanicIcons.forEach((icon) => icon.setVisible(false));
+    this.enemyMarkers.forEach((enemyDot) => enemyDot.setVisible(false));
   }
 
   destroy(): void {

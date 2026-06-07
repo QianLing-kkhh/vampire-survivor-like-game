@@ -49,7 +49,17 @@ export class GameplayUpdater {
         context.characterRuntime.getMapMoveSpeedFloorMultiplier(),
       ),
     );
-    context.player.setSlowVisual(playerSlowState.isSlowed, playerSlowState.multiplier);
+    const playerSlowAcquired = context.player.setSlowVisual(
+      playerSlowState.isSlowed,
+      playerSlowState.multiplier,
+    );
+
+    if (playerSlowAcquired) {
+      context.floatingTextManager.showMoveSpeedDown(
+        context.player.body.x,
+        context.player.body.y,
+      );
+    }
 
     if (options.isAutoMovementEnabled) {
       callbacks.updateAutoPlayer(playerDelta);

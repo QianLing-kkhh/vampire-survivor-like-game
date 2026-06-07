@@ -313,6 +313,7 @@ export class GameScene extends Phaser.Scene {
           this.showCenterMessage(I18n.t('game.bossAppears'), { kind: 'boss', durationMs: 2200 });
         },
         onCenterMessage: (message, options) => this.showCenterMessage(message, options),
+        shouldShowDamageNumbers: () => this.shouldShowDamageNumbers(),
       },
     });
     this.applyGameplayContext(context);
@@ -843,7 +844,7 @@ export class GameScene extends Phaser.Scene {
 
     AudioManager.playSfx(this, 'player_hit');
 
-    if (this.player) {
+    if (this.player && this.shouldShowDamageNumbers()) {
       this.floatingTextManager?.showPlayerDamage(
         this.player.body.x,
         this.player.body.y,
@@ -935,6 +936,7 @@ export class GameScene extends Phaser.Scene {
         ...(this.bossAttackController?.getAutoBossWarnings() ?? []),
         ...(this.gameplayContext?.endlessBossManager.getAutoBossWarnings() ?? []),
       ],
+      deltaMs,
       worldBounds: {
         width: this.worldWidth,
         height: this.worldHeight,
@@ -1396,17 +1398,23 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.floatingTextManager?.showEnemyDamage(
-      payload.x,
-      payload.y,
-      payload.damage,
-      payload.isBoss === true,
-    );
+    if (this.shouldShowDamageNumbers()) {
+      this.floatingTextManager?.showEnemyDamage(
+        payload.x,
+        payload.y,
+        payload.damage,
+        payload.isBoss === true,
+      );
+    }
     AudioManager.playSfx(this, 'enemy_hit', {
       autoMode: this.playtestSettings.autoMovement
         || this.playtestSettings.autoUpgrade
         || this.playtestSettings.autoOpenTreasure,
     });
+  }
+
+  private shouldShowDamageNumbers(): boolean {
+    return SettingsManager.getDisplay().showDamageNumbers;
   }
 
   private getUpgradeSelectionContext(): UpgradeSelectionContext {

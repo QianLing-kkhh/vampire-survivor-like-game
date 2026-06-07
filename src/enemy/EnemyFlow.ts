@@ -43,6 +43,7 @@ export interface EnemyFlowConfig {
   finalBossId: string;
   characterRuntime?: CharacterRuntime;
   mapMechanicRuntime?: MapMechanicRuntime;
+  shouldShowDamageNumbers(): boolean;
   isBossPhaseActive(): boolean;
   onEnemyKilled?(event: GameEventMap['EnemyKilled']): void;
 }
@@ -113,11 +114,13 @@ export class EnemyFlow {
 
   recordPlayerDamage(actualDamage: number): void {
     AudioManager.playSfx(this.config.scene, 'player_hit');
-    this.config.floatingTextManager.showPlayerDamage(
-      this.config.player.body.x,
-      this.config.player.body.y,
-      actualDamage,
-    );
+    if (this.config.shouldShowDamageNumbers()) {
+      this.config.floatingTextManager.showPlayerDamage(
+        this.config.player.body.x,
+        this.config.player.body.y,
+        actualDamage,
+      );
+    }
     this.showCharacterHitFx();
     this.config.runStats.recordDamageTaken(
       actualDamage,
@@ -253,16 +256,19 @@ export class EnemyFlow {
 
   removeDeadEnemies(): void {
     for (let index = this.config.enemies.length - 1; index >= 0; index -= 1) {
-      if (!this.config.enemies[index].isDead) {
+      const enemy = this.config.enemies[index];
+
+      if (!enemy.isDead) {
         continue;
       }
 
-      if (!this.config.enemies[index].wasRemovedByMerge()) {
-        this.config.enemies[index].triggerModifierDeathEffects({
+      if (!enemy.wasRemovedByMerge()) {
+        enemy.triggerModifierDeathEffects({
           scene: this.config.scene,
         });
       }
-      this.contactDamageCooldowns.delete(this.config.enemies[index]);
+      this.contactDamageCooldowns.delete(enemy);
+      enemy.destroy();
       this.config.enemies.splice(index, 1);
     }
   }
@@ -298,14 +304,14 @@ export class EnemyFlow {
       enemy.updateModifiers(deltaMs);
 
       if (enemy.isDead || enemy.dashEnabled) {
-        enemy.setMapSlowVisual(false);
+        this.setEnemyMapSlowVisual(enemy, false);
         enemy.updateShadow();
         continue;
       }
 
       if (enemy.isMovementLocked()) {
         const mapSlowState = this.getMapEnemySlowState(enemy);
-        enemy.setMapSlowVisual(mapSlowState.isSlowed, mapSlowState.multiplier);
+        this.setEnemyMapSlowVisual(enemy, mapSlowState.isSlowed, mapSlowState.multiplier);
         enemy.updateShadow();
         continue;
       }
@@ -316,7 +322,7 @@ export class EnemyFlow {
       })) {
         enemy.updateShadow();
         const mapSlowState = this.getMapEnemySlowState(enemy);
-        enemy.setMapSlowVisual(mapSlowState.isSlowed, mapSlowState.multiplier);
+        this.setEnemyMapSlowVisual(enemy, mapSlowState.isSlowed, mapSlowState.multiplier);
         continue;
       }
 
@@ -331,9 +337,23 @@ export class EnemyFlow {
       );
       this.config.mapMechanicRuntime?.resolveEnemyObstacleCollision(enemy);
       const finalMapSlowState = this.getMapEnemySlowState(enemy);
-      enemy.setMapSlowVisual(finalMapSlowState.isSlowed, finalMapSlowState.multiplier);
+      this.setEnemyMapSlowVisual(
+        enemy,
+        finalMapSlowState.isSlowed,
+        finalMapSlowState.multiplier,
+      );
       enemy.updateShadow();
     }
+  }
+
+  private setEnemyMapSlowVisual(enemy: Enemy, active: boolean, multiplier = 1): void {
+    const slowAcquired = enemy.setMapSlowVisual(active, multiplier);
+
+    if (!slowAcquired) {
+      return;
+    }
+
+    this.config.floatingTextManager.showMoveSpeedDown(enemy.body.x, enemy.body.y);
   }
 
   private getMapEnemySlowState(enemy: Enemy): {

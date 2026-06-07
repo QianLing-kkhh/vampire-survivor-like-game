@@ -26,6 +26,7 @@ export class FloatingTextManager {
   private readonly pool: ObjectPool<FloatingText>;
   private chestUpgradeMessageLane = 0;
   private enemyMergeMessageLane = 0;
+  private slowDebuffMessageLane = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -131,6 +132,24 @@ export class FloatingTextManager {
         fontSize: '22px',
         lifetimeMs: 1200,
         stroke: '#172554',
+        strokeThickness: 4,
+      },
+    );
+  }
+
+  showMoveSpeedDown(x: number, y: number): void {
+    const lane = this.slowDebuffMessageLane % 4;
+    this.slowDebuffMessageLane += 1;
+
+    this.spawn(
+      x + (lane % 2 === 0 ? -8 : 8),
+      y - 42 - lane * 12,
+      '\u{1F45F}\u2193',
+      {
+        color: '#bfdbfe',
+        fontSize: '24px',
+        lifetimeMs: 950,
+        stroke: '#0f172a',
         strokeThickness: 4,
       },
     );

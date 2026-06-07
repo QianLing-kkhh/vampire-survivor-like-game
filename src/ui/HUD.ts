@@ -6,6 +6,7 @@ import { I18n } from '../i18n/I18n';
 import { MapMechanicDefinition } from '../map/mechanics/MapMechanicDefinition';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { SettingsManager } from '../settings/SettingsManager';
 import { MinimapOverlay } from './minimap/MinimapOverlay';
 import { MinimapEnemyPosition, WorldPosition } from './minimap/MinimapTypes';
 import { UITheme } from './UITheme';
@@ -255,13 +256,18 @@ export class HUD {
       LayoutConfig.getHudLayout(this.screenManager).weaponsPosition.y,
     );
     this.evolutionDebugText.setText(this.getEvolutionDebugText(state));
-    this.minimap.update({
-      worldWidth: state.worldWidth,
-      worldHeight: state.worldHeight,
-      mapMechanics: state.mapMechanics,
-      playerPosition: state.playerPosition,
-      enemyPositions: state.enemyPositions,
-    });
+    const showMinimap = SettingsManager.getDisplay().showMinimap;
+
+    this.minimap.setVisible(showMinimap);
+    if (showMinimap) {
+      this.minimap.update({
+        worldWidth: state.worldWidth,
+        worldHeight: state.worldHeight,
+        mapMechanics: state.mapMechanics,
+        playerPosition: state.playerPosition,
+        enemyPositions: state.enemyPositions,
+      });
+    }
   }
 
   private updateIconList(

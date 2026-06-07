@@ -103,10 +103,9 @@ export class Enemy {
   private static readonly BOSS_DASH_DISTANCE_MULTIPLIER = 1.35;
   private static readonly NORMAL_WEAPON_KNOCKBACK_IMMUNITY_MS = 3000;
   private static readonly MINI_BOSS_WEAPON_KNOCKBACK_IMMUNITY_MS = 5000;
-  private static readonly MAP_SLOW_RING_COLOR = 0x38bdf8;
-  private static readonly MAP_SLOW_RING_STROKE_COLOR = 0x7dd3fc;
-  private static readonly MAP_SLOW_RING_ALPHA_MIN = 0.16;
-  private static readonly MAP_SLOW_RING_ALPHA_MAX = 0.35;
+  private static readonly MAP_SLOW_SNOWFLAKE_COLOR = '#bfdbfe';
+  private static readonly MAP_SLOW_SNOWFLAKE_ALPHA_MIN = 0.45;
+  private static readonly MAP_SLOW_SNOWFLAKE_ALPHA_MAX = 0.85;
   private static readonly MAP_SLOW_VISUAL_MIN_MULTIPLIER = 0.25;
 
   readonly body: Phaser.GameObjects.Arc;
@@ -156,7 +155,9 @@ export class Enemy {
   private modifierRuntime?: EnemyModifierRuntime;
   private shadow?: Phaser.GameObjects.Ellipse;
   private readonly shadowType: ShadowType;
-  private mapSlowVisual?: Phaser.GameObjects.Arc;
+  private mapSlowVisual?: Phaser.GameObjects.Text;
+  private isMapSlowVisualActive = false;
+  private destroyed = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -553,18 +554,26 @@ export class Enemy {
   }
 
   destroy(): void {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
     this.destroyDashWarnings();
     ShadowFactory.destroyShadow(this.shadow);
     this.shadow = undefined;
-    this.clearMapSlowVisual();
-    this.body.destroy();
+    this.destroyMapSlowVisual();
+
+    if (this.body.scene) {
+      this.body.destroy();
+    }
   }
 
-  setMapSlowVisual(active: boolean, multiplier = 1): void {
+  setMapSlowVisual(active: boolean, multiplier = 1): boolean {
     if (active) {
       if (!this.isBodyUsable()) {
         this.clearMapSlowVisual();
-        return;
+        return false;
       }
 
       const normalizedMultiplier = Math.max(
@@ -573,37 +582,55 @@ export class Enemy {
       );
       const intensity = (1 - normalizedMultiplier) / (1 - Enemy.MAP_SLOW_VISUAL_MIN_MULTIPLIER);
       const alpha = Phaser.Math.Linear(
-        Enemy.MAP_SLOW_RING_ALPHA_MIN,
-        Enemy.MAP_SLOW_RING_ALPHA_MAX,
+        Enemy.MAP_SLOW_SNOWFLAKE_ALPHA_MIN,
+        Enemy.MAP_SLOW_SNOWFLAKE_ALPHA_MAX,
         Phaser.Math.Clamp(intensity, 0, 1),
       );
-      const ringRadius = this.getBodyRadius() * 1.45 * (1 + intensity * 0.2);
+      const fontSize = Math.round(this.getBodyRadius() * (1 + intensity * 0.2));
+      const wasActive = this.isMapSlowVisualActive;
 
       if (!this.mapSlowVisual) {
-        this.mapSlowVisual = this.scene.add.circle(
+        this.mapSlowVisual = this.scene.add.text(
           this.body.x,
           this.body.y,
-          ringRadius,
-          Enemy.MAP_SLOW_RING_COLOR,
-          0.16,
+          '\u2744',
+          {
+            color: Enemy.MAP_SLOW_SNOWFLAKE_COLOR,
+            fontSize: `${fontSize}px`,
+            fontStyle: 'bold',
+            stroke: '#0f172a',
+            strokeThickness: 2,
+          },
         );
+        this.mapSlowVisual.setOrigin(0.5);
         this.mapSlowVisual.setDepth(this.getMapSlowVisualDepth());
       }
 
-      this.mapSlowVisual.setPosition(this.body.x, this.body.y);
-      this.mapSlowVisual.setRadius(ringRadius);
-      this.mapSlowVisual.setFillStyle(Enemy.MAP_SLOW_RING_COLOR, alpha * 0.25);
-      this.mapSlowVisual.setStrokeStyle(2, Enemy.MAP_SLOW_RING_STROKE_COLOR, Math.min(1, alpha + 0.2));
+      this.mapSlowVisual.setPosition(this.body.x, this.body.y - this.getBodyRadius() * 1.2);
+      this.mapSlowVisual.setFontSize(fontSize);
+      this.mapSlowVisual.setAlpha(alpha);
       this.mapSlowVisual.setVisible(true);
-      return;
+      this.isMapSlowVisualActive = true;
+      return !wasActive;
     }
 
     this.clearMapSlowVisual();
+    return false;
   }
 
   clearMapSlowVisual(): void {
     this.mapSlowVisual?.setVisible(false);
     this.mapSlowVisual?.setAlpha(0);
+    this.isMapSlowVisualActive = false;
+  }
+
+  private destroyMapSlowVisual(): void {
+    if (this.mapSlowVisual?.scene) {
+      this.mapSlowVisual.destroy();
+    }
+
+    this.mapSlowVisual = undefined;
+    this.isMapSlowVisualActive = false;
   }
 
   private startDashWarning(
