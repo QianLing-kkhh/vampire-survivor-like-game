@@ -1,0 +1,578 @@
+﻿[
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up_left.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-existing-back-left-to-back-right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-down-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "best-existing-back-left-source"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up_left.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-existing-back-left-to-back-right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-down-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "best-existing-back-left-source"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-right-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down_right.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "current-down-is-back-facing; using-best-front-facing-source-preview"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-left-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-right-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down_right.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "current-down-is-back-facing; using-best-front-facing-source-preview"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-left-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-right-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-down-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-left-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-right-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-down-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_manual_review",
+        "reason":  "no-clear-back-left-source-found; using-up-as-safe-non-opposite-preview"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up_left.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-existing-back-left-to-back-right"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-down-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "best-existing-back-left-source"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-up-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up_left.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-existing-back-left-to-back-right"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-right-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_up_right.png",
+        "mirror":  false,
+        "status":  "candidate_generated",
+        "reason":  "current-up-right-visually-faces-down-right"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-down-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_up_right.png",
+        "mirror":  true,
+        "status":  "candidate_generated",
+        "reason":  "mirror-current-down-right-facing-source-to-down-left"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "cardinal-left-kept"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "best-existing-back-left-source"
+    }
+]

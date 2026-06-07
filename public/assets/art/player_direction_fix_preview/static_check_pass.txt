@@ -1,0 +1,1 @@
+﻿All candidate PNGs are 320x80 with alpha-capable format.

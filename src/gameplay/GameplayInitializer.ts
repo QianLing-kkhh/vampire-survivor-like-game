@@ -251,12 +251,16 @@ export class GameplayInitializer {
       evolutionManager,
       weaponManager,
       passiveManager,
+      rewardRandom: randomManager.getUpgradeRandom(),
       runState: config.runState,
       gameEventBus,
       getRunId: () => config.runId,
       getUpgradeSelectionContext: config.callbacks.getUpgradeSelectionContext,
       getAutoUpgradeSelectionContext: config.callbacks.getAutoUpgradeSelectionContext,
       getGameTimeSeconds: () => config.timeManager.gameTimeSeconds,
+      applyTemporaryPickupRangeMultiplier: (multiplier, durationMs, source) => {
+        characterRuntime.applyTemporaryPickupRangeMultiplier(multiplier, durationMs, source);
+      },
       onUpgradeApplied: config.callbacks.onUpgradeApplied,
     });
     const pickupManager = new PickupManager(config.scene, config.eventBus, expManager);

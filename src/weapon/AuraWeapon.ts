@@ -81,11 +81,7 @@ export class AuraWeapon extends Weapon {
         0x22c55e,
         AuraWeapon.AURA_FILL_ALPHA,
       );
-      this.auraBody.setStrokeStyle(
-        VisualScale.auraStrokeWidth,
-        0x86efac,
-        AuraWeapon.AURA_STROKE_ALPHA,
-      );
+      this.applyAuraBoundaryStyle();
       this.auraBody.setDepth(AuraWeapon.AURA_DEPTH);
     }
 
@@ -97,6 +93,18 @@ export class AuraWeapon extends Weapon {
     this.auraIcon?.setDisplaySize(
       VisualScale.getAuraCoreDisplaySize(this.id),
       VisualScale.getAuraCoreDisplaySize(this.id),
+    );
+  }
+
+  private applyAuraBoundaryStyle(): void {
+    if (!this.auraBody || this.id === 'garlic') {
+      return;
+    }
+
+    this.auraBody.setStrokeStyle(
+      VisualScale.auraStrokeWidth,
+      0x86efac,
+      AuraWeapon.AURA_STROKE_ALPHA,
     );
   }
 

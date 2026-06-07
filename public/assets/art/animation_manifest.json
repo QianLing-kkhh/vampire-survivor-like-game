@@ -1607,6 +1607,14 @@
       "frameWidth": 128,
       "frameHeight": 128,
       "frames": 1
+    },
+    {
+      "path": "world/ruins_ground_tile.png",
+      "key": "art_world_ruins_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
     }
   ]
 }

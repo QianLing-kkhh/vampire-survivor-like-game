@@ -20,6 +20,8 @@ export class CharacterRuntime {
   private level = 1;
   private readonly levelUpEffect: CharacterLevelUpEffect;
   private readonly damageReactionSkill: CharacterDamageReactionSkill;
+  private temporaryPickupRangeMultiplier = 1;
+  private temporaryPickupRangeRemainingMs = 0;
 
   constructor(private readonly definition: CharacterDefinition) {
     this.levelUpEffect = CharacterEffectFactory.createLevelUpEffect(definition.levelUpEffect);
@@ -65,6 +67,7 @@ export class CharacterRuntime {
     deltaMs: number,
     context: { player: CharacterDamageReactionContext['player'] },
   ): void {
+    this.updateTemporaryPickupRangeMultiplier(deltaMs);
     this.damageReactionSkill.update(deltaMs, context.player);
   }
 
@@ -77,7 +80,32 @@ export class CharacterRuntime {
   }
 
   getPickupRangeMultiplier(): number {
-    return this.damageReactionSkill.getPickupRangeMultiplier();
+    return Math.max(
+      this.damageReactionSkill.getPickupRangeMultiplier(),
+      this.temporaryPickupRangeRemainingMs > 0 ? this.temporaryPickupRangeMultiplier : 1,
+    );
+  }
+
+  applyTemporaryPickupRangeMultiplier(
+    multiplier: number,
+    durationMs: number,
+    _source?: string,
+  ): void {
+    const safeMultiplier = Math.max(1, multiplier);
+    const safeDurationMs = Math.max(0, durationMs);
+
+    if (safeDurationMs <= 0) {
+      return;
+    }
+
+    this.temporaryPickupRangeMultiplier = Math.max(
+      this.temporaryPickupRangeMultiplier,
+      safeMultiplier,
+    );
+    this.temporaryPickupRangeRemainingMs = Math.max(
+      this.temporaryPickupRangeRemainingMs,
+      safeDurationMs,
+    );
   }
 
   getMapMoveSpeedFloorMultiplier(): number {
@@ -102,5 +130,22 @@ export class CharacterRuntime {
 
   clear(): void {
     this.damageReactionSkill.clear();
+    this.temporaryPickupRangeMultiplier = 1;
+    this.temporaryPickupRangeRemainingMs = 0;
+  }
+
+  private updateTemporaryPickupRangeMultiplier(deltaMs: number): void {
+    if (this.temporaryPickupRangeRemainingMs <= 0) {
+      return;
+    }
+
+    this.temporaryPickupRangeRemainingMs = Math.max(
+      0,
+      this.temporaryPickupRangeRemainingMs - Math.max(0, deltaMs),
+    );
+
+    if (this.temporaryPickupRangeRemainingMs <= 0) {
+      this.temporaryPickupRangeMultiplier = 1;
+    }
   }
 }

@@ -7,6 +7,7 @@ import { GameEventBus } from '../events/GameEventBus';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { RunState } from '../run/RunState';
 import { PassiveManager } from '../passive/PassiveManager';
+import { RandomSource } from '../random/RandomSource';
 import { WeaponManager } from '../weapon/WeaponManager';
 
 import { UpgradeApplier } from './UpgradeApplier';
@@ -30,12 +31,14 @@ export interface UpgradeFlowParams {
   evolutionManager: EvolutionManager;
   weaponManager: WeaponManager;
   passiveManager: PassiveManager;
+  rewardRandom: RandomSource;
   runState: RunState;
   gameEventBus?: GameEventBus;
   getRunId?: () => string | undefined;
   getUpgradeSelectionContext(): UpgradeSelectionContext;
   getAutoUpgradeSelectionContext(): AutoUpgradeSelectionContext;
   getGameTimeSeconds(): number;
+  applyTemporaryPickupRangeMultiplier?(multiplier: number, durationMs: number, source?: string): void;
   onUpgradeApplied?(): void;
 }
 
@@ -49,6 +52,7 @@ export class UpgradeFlow {
       upgradeApplier: params.upgradeApplier,
       weaponManager: params.weaponManager,
       getGameTimeSeconds: params.getGameTimeSeconds,
+      applyTemporaryPickupRangeMultiplier: params.applyTemporaryPickupRangeMultiplier,
     });
   }
 
@@ -135,7 +139,7 @@ export class UpgradeFlow {
       return { type: 'none' };
     }
 
-    const upgrade = options[Math.floor(Math.random() * options.length)];
+    const upgrade = options[this.params.rewardRandom.nextInt(0, options.length - 1)];
 
     if (!this.applyUpgrade(upgrade, `chest:${upgrade.id}`)) {
       console.warn(`Treasure chest selected invalid upgrade: ${upgrade.id}`);
@@ -222,13 +226,13 @@ export class UpgradeFlow {
   }
 
   private selectRandomEndlessReward(): UpgradeOption | undefined {
-    const rewards = this.endlessRewardManager.getRewardOptions();
+    const rewards = this.endlessRewardManager.getChestFallbackRewardOptions();
 
     if (rewards.length === 0) {
       return undefined;
     }
 
-    return rewards[Math.floor(Math.random() * rewards.length)];
+    return rewards[this.params.rewardRandom.nextInt(0, rewards.length - 1)];
   }
 
   private applyTreasureFallbackReward(): string | null {

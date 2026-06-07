@@ -657,6 +657,14 @@
       "frames": 1
     },
     {
+      "path": "world/ruins_ground_tile.png",
+      "key": "art_world_ruins_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
       "path": "player/assassin_default/walk_up.png",
       "key": "art_player_assassin_default_walk_up",
       "type": "spritesheet",

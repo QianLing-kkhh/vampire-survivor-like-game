@@ -32,7 +32,10 @@ interface MapVisibilityRuntimeConfig {
 
 export class MapVisibilityRenderer {
   private overlay?: Phaser.GameObjects.Rectangle;
-  private revealLayer?: Phaser.GameObjects.Graphics;
+  private visibilityMask?: Phaser.Display.Masks.BitmapMask;
+  private visibilityMaskGraphics?: Phaser.GameObjects.Graphics;
+  private fallbackRevealLayer?: Phaser.GameObjects.Graphics;
+  private readonly useBitmapMask: boolean;
   private readonly visibility: MapVisibilityRuntimeConfig;
   private readonly lightSources: MapVisibilityRendererLightSource[];
   private readonly enabled: boolean;
@@ -58,9 +61,12 @@ export class MapVisibilityRenderer {
         ?? DEFAULT_VISIBILITY.lightContributionClamp,
     };
 
-    if (!this.enabled) {
+    if (!this.enabled || this.visibility.ambientAlpha <= 0) {
+      this.useBitmapMask = false;
       return;
     }
+
+    this.useBitmapMask = this.scene.game.renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer;
 
     this.overlay = this.scene.add.rectangle(
       config.width / 2,
@@ -71,21 +77,41 @@ export class MapVisibilityRenderer {
       this.visibility.ambientAlpha,
     );
 
-    this.overlay.setDepth(-75);
+    // Render dark layer above world sprites so distant actors are also dimmed.
+    this.overlay.setDepth(5000);
     this.overlay.setScrollFactor(1);
-    this.overlay.setVisible(this.visibility.ambientAlpha > 0);
 
-    this.revealLayer = this.scene.add.graphics();
-    this.revealLayer.setDepth(-74);
-    this.revealLayer.setScrollFactor(1);
+    if (this.useBitmapMask) {
+      this.visibilityMaskGraphics = this.scene.add.graphics();
+      this.visibilityMaskGraphics.setVisible(false);
+      this.visibilityMaskGraphics.setScrollFactor(1);
+      this.visibilityMask = new Phaser.Display.Masks.BitmapMask(
+        this.scene,
+        this.visibilityMaskGraphics,
+      );
+      this.visibilityMask.invertAlpha = true;
+      this.overlay.setMask(this.visibilityMask);
+    } else {
+      // Canvas fallback: avoid local bright circles by not performing a second-pass
+      // highlight blend. Keep a conservative overlay and no extra draw pass.
+      this.fallbackRevealLayer = this.scene.add.graphics();
+      this.fallbackRevealLayer.setVisible(false);
+      this.fallbackRevealLayer.setScrollFactor(1);
+    }
   }
 
   update(playerX: number, playerY: number): void {
-    if (!this.enabled || !this.revealLayer) {
+    if (!this.overlay) {
       return;
     }
 
-    this.revealLayer.clear();
+    const revealGraphics = this.visibilityMaskGraphics ?? this.fallbackRevealLayer;
+
+    if (!revealGraphics) {
+      return;
+    }
+
+    revealGraphics.clear();
     this.renderVisibilityLayer(playerX, playerY);
   }
 
@@ -93,13 +119,17 @@ export class MapVisibilityRenderer {
     this.overlay?.destroy();
     this.overlay = undefined;
 
-    this.revealLayer?.destroy();
-    this.revealLayer = undefined;
+    this.visibilityMask?.destroy();
+    this.visibilityMask = undefined;
+    this.visibilityMaskGraphics?.destroy();
+    this.visibilityMaskGraphics = undefined;
+    this.fallbackRevealLayer?.destroy();
+    this.fallbackRevealLayer = undefined;
     this.lightSources.length = 0;
   }
 
   private renderVisibilityLayer(playerX: number, playerY: number): void {
-    if (!this.revealLayer) {
+    if (!this.visibilityMaskGraphics && !this.fallbackRevealLayer) {
       return;
     }
 
@@ -130,13 +160,20 @@ export class MapVisibilityRenderer {
     }
   }
 
-  private renderRevealCircle(x: number, y: number, radius: number, alpha: number): void {
-    if (!this.revealLayer) {
+  private renderRevealCircle(x: number, y: number, radius: number, _alpha?: number): void {
+    if (!this.visibilityMaskGraphics && !this.fallbackRevealLayer) {
       return;
     }
 
-    this.revealLayer.fillStyle(0xffffff, alpha);
-    this.revealLayer.fillCircle(x, y, radius);
+    const revealGraphics = this.visibilityMaskGraphics ?? this.fallbackRevealLayer;
+
+    if (!revealGraphics) {
+      return;
+    }
+
+    const safeAlpha = this.useBitmapMask ? 1 : 0;
+    revealGraphics.fillStyle(0xffffff, safeAlpha);
+    revealGraphics.fillCircle(x, y, radius);
   }
 
   private getLightRevealRadius(source: MapVisibilityRendererLightSource): number {

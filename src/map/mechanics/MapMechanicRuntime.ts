@@ -18,7 +18,9 @@ export class MapMechanicRuntime {
   private readonly portals: MapPortal[];
   private readonly interactables: MapInteractable[];
   private playerPortalCooldownMs = 0;
+  private portalsVisible = true;
   private static readonly SLOW_EFFECT_THRESHOLD = 0.999;
+  private static readonly PORTAL_GLOBAL_COOLDOWN_MS = 10000;
 
   constructor(
     definitions: readonly MapMechanicDefinition[] | undefined,
@@ -33,7 +35,13 @@ export class MapMechanicRuntime {
   }
 
   update(deltaMs: number): void {
+    const wasCooldownActive = this.playerPortalCooldownMs > 0;
     this.playerPortalCooldownMs = Math.max(0, this.playerPortalCooldownMs - deltaMs);
+    const isCooldownActive = this.playerPortalCooldownMs > 0;
+
+    if (wasCooldownActive && !isCooldownActive) {
+      this.setPortalsVisible(true);
+    }
 
     for (const interactable of this.interactables) {
       interactable.update(deltaMs);
@@ -65,10 +73,17 @@ export class MapMechanicRuntime {
   }
 
   getAutoMapSnapshot(): AutoMapSnapshot {
+    const portalCooldownRemainingMs = Math.max(0, this.playerPortalCooldownMs);
+    const arePortalsAvailable = this.portalsVisible && portalCooldownRemainingMs <= 0;
+
     return {
       obstacles: this.obstacles.map((obstacle) => obstacle.getAutoObstacleSnapshot()),
       slowZones: this.slowZones.map((slowZone) => slowZone.getAutoSlowZoneSnapshot()),
-      portals: this.portals.map((portal) => portal.getAutoPortalSnapshot()),
+      portals: this.portals.map((portal) => ({
+        ...portal.getAutoPortalSnapshot(),
+        isAvailable: arePortalsAvailable,
+        cooldownRemainingMs: portalCooldownRemainingMs,
+      })),
     };
   }
 
@@ -179,9 +194,21 @@ export class MapMechanicRuntime {
       return false;
     }
 
-    this.playerPortalCooldownMs = Math.max(0, portal.cooldownMs);
+    this.playerPortalCooldownMs = MapMechanicRuntime.PORTAL_GLOBAL_COOLDOWN_MS;
+    this.setPortalsVisible(false);
     this.clampPlayer(player);
     return true;
+  }
+
+  private setPortalsVisible(visible: boolean): void {
+    if (this.portalsVisible === visible) {
+      return;
+    }
+
+    this.portalsVisible = visible;
+    for (const portal of this.portals) {
+      portal.setVisible(visible);
+    }
   }
 
   tryTeleportEnemy(): boolean {

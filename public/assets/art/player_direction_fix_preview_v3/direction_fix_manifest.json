@@ -1,0 +1,578 @@
+﻿[
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "temporary mirror from up_left for up_right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_down_left.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: current-down-left-is-down-right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_up_right.png",
+        "mirror":  false,
+        "status":  "copied",
+        "reason":  "manual-check: current-up-right-is-down-left"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "temporary mirror from up_left for up_right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_down_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "temporary mirror from down_left for down_right"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_up_right.png",
+        "mirror":  false,
+        "status":  "copied",
+        "reason":  "manual-check: current-up-right-is-down-left"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "assassin_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-right-is-left; mirror-left-to-right"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_down_left.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_down_right.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-right-is-left; mirror-left-to-right"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_down_left.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_down_right.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "priest_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-up-right-is-down-left; temporary mirror from up_left"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_down_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-down-right-is-down-left; mirror-down-left-to-right"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "manual-check: current-down-left-is-left; temporary adjacent left placeholder"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-up-right-is-down-left; temporary mirror from up_left"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_right.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_down_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-down-right-is-down-left; mirror-down-left-to-right"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "manual-check: current-down-left-is-left; temporary adjacent left placeholder"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "warrior_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_up.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_up_right.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_right.png",
+        "source":  "walk_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-right-is-left; mirror-left-to-right"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_down_right.png",
+        "source":  "walk_down_left.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_down.png",
+        "source":  "walk_down_right.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent down-right placeholder"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_down_left.png",
+        "source":  "walk_down_right.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_left.png",
+        "source":  "walk_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "walk",
+        "target":  "walk_up_left.png",
+        "source":  "walk_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_up.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_up_right.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_right.png",
+        "source":  "idle_left.png",
+        "mirror":  true,
+        "status":  "mirrored",
+        "reason":  "manual-check: current-right-is-left; mirror-left-to-right"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_down_right.png",
+        "source":  "idle_down_left.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_down.png",
+        "source":  "idle_down_right.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent down-right placeholder"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_down_left.png",
+        "source":  "idle_down_right.png",
+        "mirror":  false,
+        "status":  "swapped",
+        "reason":  "manual-check: down-left/down-right-swapped"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_left.png",
+        "source":  "idle_left.png",
+        "mirror":  false,
+        "status":  "kept",
+        "reason":  "kept-original"
+    },
+    {
+        "skin":  "witch_default",
+        "state":  "idle",
+        "target":  "idle_up_left.png",
+        "source":  "idle_up.png",
+        "mirror":  false,
+        "status":  "needs_regen_temp_adjacent",
+        "reason":  "needs regeneration; temporary adjacent up placeholder"
+    }
+]

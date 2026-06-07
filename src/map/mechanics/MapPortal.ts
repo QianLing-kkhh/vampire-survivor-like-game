@@ -12,7 +12,8 @@ export class MapPortal implements MapInteractable {
   readonly id: string;
   private target?: MapPortal;
   private disabled = false;
-  private readonly objects: Phaser.GameObjects.GameObject[] = [];
+  private visible = true;
+  private readonly objects: Array<Phaser.GameObjects.GameObject & { setVisible: (visible: boolean) => Phaser.GameObjects.GameObject }> = [];
 
   constructor(
     private readonly context: MapMechanicContext,
@@ -48,6 +49,10 @@ export class MapPortal implements MapInteractable {
   }
 
   update(deltaMs: number): void {
+    if (!this.visible) {
+      return;
+    }
+
     const ring = this.objects[1] as (Phaser.GameObjects.Arc | Phaser.GameObjects.Image) | undefined;
 
     if (!ring?.active) {
@@ -67,6 +72,10 @@ export class MapPortal implements MapInteractable {
   }
 
   tryTeleportPlayer(player: PlayerController): boolean {
+    if (!this.visible) {
+      return false;
+    }
+
     if (this.disabled || !this.target) {
       return false;
     }
@@ -87,6 +96,14 @@ export class MapPortal implements MapInteractable {
     return true;
   }
 
+  setVisible(visible: boolean): void {
+    this.visible = visible;
+
+    for (const object of this.objects) {
+      object.setVisible(visible);
+    }
+  }
+
   getAutoPortalSnapshot(): AutoPortalSnapshot {
     return {
       id: this.id,
@@ -101,7 +118,9 @@ export class MapPortal implements MapInteractable {
 
   private render(): void {
     this.objects.push(
-      ...MapMechanicVisualRenderer.renderPortal(this.context, this.definition),
+      ...(MapMechanicVisualRenderer.renderPortal(this.context, this.definition) as Array<
+        Phaser.GameObjects.GameObject & { setVisible: (visible: boolean) => Phaser.GameObjects.GameObject }
+      >),
     );
   }
 }

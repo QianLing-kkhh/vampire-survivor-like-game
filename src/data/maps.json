@@ -19,14 +19,14 @@
       },
       "visibility": {
         "enabled": true,
-        "ambientAlpha": 0.05,
+        "ambientAlpha": 0,
         "ambientColor": 3355443,
-        "baseRevealRadius": 520,
-        "baseRevealAlpha": 0.15,
-        "baseLightRevealRadius": 280,
+        "baseRevealRadius": 0,
+        "baseRevealAlpha": 0,
+        "baseLightRevealRadius": 0,
         "lightRevealRadiusScale": 1,
-        "lightRevealAlpha": 0.1,
-        "lightContributionClamp": 0.14
+        "lightRevealAlpha": 0,
+        "lightContributionClamp": 0
       },
       "themeId": "field"
     },

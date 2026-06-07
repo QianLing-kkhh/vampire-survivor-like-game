@@ -9,7 +9,8 @@ type EndlessRewardId =
   | 'endless_overdrive'
   | 'endless_growth_damage'
   | 'endless_enemy_slow'
-  | 'endless_shield';
+  | 'endless_shield'
+  | 'vacuum_all_pickups';
 
 export class EndlessRewardManager {
   private static activeManager?: EndlessRewardManager;
@@ -22,6 +23,9 @@ export class EndlessRewardManager {
   private static readonly ENEMY_SLOW_DURATION_SECONDS = 6;
   private static readonly ENEMY_SLOW_COOLDOWN_SECONDS = 20;
   private static readonly MAX_SHIELD_STACKS = 20;
+  private static readonly VACUUM_PICKUP_RANGE_MULTIPLIER = 80;
+  private static readonly VACUUM_DURATION_MS = 2500;
+  private static readonly VACUUM_MIN_GAME_TIME_SECONDS = 300;
 
   private overdriveActiveUntilSeconds = 0;
   private overdriveCooldownUntilSeconds = 0;
@@ -37,6 +41,7 @@ export class EndlessRewardManager {
       upgradeApplier: UpgradeApplier;
       weaponManager: WeaponManager;
       getGameTimeSeconds(): number;
+      applyTemporaryPickupRangeMultiplier?: (multiplier: number, durationMs: number, source?: string) => void;
     },
   ) {
     this.lastSyncTimeSeconds = params.getGameTimeSeconds();
@@ -159,16 +164,42 @@ export class EndlessRewardManager {
     return options.slice(0, 3);
   }
 
+  getChestFallbackRewardOptions(): UpgradeOption[] {
+    const options = [...this.getRewardOptions()];
+
+    if (this.isVacuumAvailable()) {
+      options.push({
+        id: 'vacuum_all_pickups',
+        name: '全图吸取',
+        description: [
+          'Vacuum All Pickups',
+          `Pickup Range x${EndlessRewardManager.VACUUM_PICKUP_RANGE_MULTIPLIER}`,
+          'Duration: 2.5s',
+        ].join('\n'),
+      });
+    }
+
+    return options;
+  }
+
   isRewardId(rewardId: string): rewardId is EndlessRewardId {
     return rewardId === 'endless_heal'
       || rewardId === 'endless_overdrive'
       || rewardId === 'endless_growth_damage'
       || rewardId === 'endless_enemy_slow'
-      || rewardId === 'endless_shield';
+      || rewardId === 'endless_shield'
+      || rewardId === 'vacuum_all_pickups';
   }
 
   applyReward(rewardId: string, source: 'level' | 'chest'): boolean {
-    if (!this.params.runState.endlessStarted || !this.isRewardId(rewardId)) {
+    if (!this.isRewardId(rewardId)) {
+      return false;
+    }
+
+    if (
+      rewardId !== 'vacuum_all_pickups'
+      && !this.params.runState.endlessStarted
+    ) {
       return false;
     }
 
@@ -178,7 +209,8 @@ export class EndlessRewardManager {
   applyChestFallbackReward(preferredRewardId?: string): string | null {
     const rewardIds = [
       ...(preferredRewardId && this.isRewardId(preferredRewardId) ? [preferredRewardId] : []),
-      ...this.getRewardOptions().map((option) => option.id),
+      ...this.getChestFallbackRewardOptions().map((option) => option.id),
+      'vacuum_all_pickups',
       'endless_shield',
       'endless_growth_damage',
     ].filter((rewardId, index, rewardIds) => rewardIds.indexOf(rewardId) === index);
@@ -208,6 +240,8 @@ export class EndlessRewardManager {
         return this.applyEnemySlow(source);
       case 'endless_shield':
         return this.applyShield(source);
+      case 'vacuum_all_pickups':
+        return this.applyVacuumAllPickups(source);
       default:
         return false;
     }
@@ -381,6 +415,24 @@ export class EndlessRewardManager {
 
     this.params.runState.recordEndlessReward('endless_shield', source);
     return true;
+  }
+
+  private applyVacuumAllPickups(source: 'level' | 'chest'): boolean {
+    if (!this.isVacuumAvailable() || !this.params.applyTemporaryPickupRangeMultiplier) {
+      return false;
+    }
+
+    this.params.applyTemporaryPickupRangeMultiplier(
+      EndlessRewardManager.VACUUM_PICKUP_RANGE_MULTIPLIER,
+      EndlessRewardManager.VACUUM_DURATION_MS,
+      'vacuum_all_pickups',
+    );
+    this.params.runState.recordEndlessReward('vacuum_all_pickups', source);
+    return true;
+  }
+
+  private isVacuumAvailable(): boolean {
+    return this.params.getGameTimeSeconds() >= EndlessRewardManager.VACUUM_MIN_GAME_TIME_SECONDS;
   }
 
   private syncOverdriveState(): void {

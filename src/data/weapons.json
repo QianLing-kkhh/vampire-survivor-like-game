@@ -166,6 +166,8 @@
     "behavior": {
       "type": "arcing",
       "trajectory": "spiralAccelerating",
+      "launchProgress": 0,
+      "startDistance": 40,
       "spiralTurns": 4.5,
       "maxSpiralRadius": 160,
       "acceleration": 170,
@@ -186,9 +188,10 @@
       }
     },
     "damage": 21.2,
-    "cooldown": 1.2,
+    "cooldown": 2.6,
     "projectileSpeed": 390,
     "projectileCount": 5,
+    "maxActiveProjectiles": 12,
     "spreadAngle": 360,
     "pierce": 3,
     "hitRadius": 36,

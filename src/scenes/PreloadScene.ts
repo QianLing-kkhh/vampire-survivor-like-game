@@ -180,12 +180,14 @@ const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'world/ground_tile.png', key: 'art_world_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/rock_landmark.png', key: 'art_world_rock_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
   { path: 'world/swamp_ground_tile.png', key: 'art_world_swamp_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/ruins_ground_tile.png', key: 'art_world_ruins_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/tree_landmark.png', key: 'art_world_tree_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
 ];
 
 const CRITICAL_ART_ASSET_KEYS = [
   'art_world_graveyard_ground_tile',
   'art_world_swamp_ground_tile',
+  'art_world_ruins_ground_tile',
   ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_idle_down`),
   ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_walk_sheet`),
 ];
@@ -653,6 +655,7 @@ export class PreloadScene extends Phaser.Scene {
     const textureKeys = [
       'art_world_graveyard_ground_tile',
       'art_world_swamp_ground_tile',
+      'art_world_ruins_ground_tile',
       ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_idle_down`),
       ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_walk_sheet`),
     ];

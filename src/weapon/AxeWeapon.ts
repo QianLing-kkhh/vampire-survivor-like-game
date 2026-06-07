@@ -14,6 +14,7 @@ type AxeWeaponConfig = WeaponConfig & {
   hitRadius?: number;
   lifetime?: number;
   arcHeight?: number;
+  maxActiveProjectiles?: number;
 };
 
 type AxeProjectileBody = Phaser.GameObjects.GameObject & {
@@ -53,6 +54,7 @@ export class AxeWeapon extends Weapon {
   private readonly lifetimeMs: number;
   private readonly arcHeight: number;
   private readonly spreadAngle: number;
+  private readonly maxActiveProjectiles?: number;
   private projectileCount: number;
 
   constructor(scene: Phaser.Scene, id: string, config: WeaponConfig) {
@@ -64,6 +66,7 @@ export class AxeWeapon extends Weapon {
     this.lifetimeMs = (axeConfig.lifetime ?? 2) * 1000;
     this.arcHeight = axeConfig.arcHeight ?? AxeWeapon.DEFAULT_ARC_HEIGHT;
     this.spreadAngle = axeConfig.spreadAngle ?? 18;
+    this.maxActiveProjectiles = axeConfig.maxActiveProjectiles;
   }
 
   override update(context: WeaponUpdateContext): void {
@@ -131,6 +134,13 @@ export class AxeWeapon extends Weapon {
     baseDirection.normalize();
 
     const projectileDirections = this.getProjectileDirections(baseDirection);
+
+    if (
+      this.maxActiveProjectiles !== undefined
+      && this.projectiles.length + projectileDirections.length > this.maxActiveProjectiles
+    ) {
+      return;
+    }
 
     for (const direction of projectileDirections) {
       const body = this.createProjectileBody(context.player.x, context.player.y);
@@ -211,7 +221,12 @@ export class AxeWeapon extends Weapon {
     const maxSpiralRadius = behavior?.maxSpiralRadius ?? (this.id === 'death_spiral'
       ? AxeWeapon.DEATH_SPIRAL_MAX_SPIRAL_RADIUS
       : AxeWeapon.AXE_MAX_SPIRAL_RADIUS);
-    const launchProgress = 0.18;
+    const launchProgress = Phaser.Math.Clamp(
+      behavior?.launchProgress ?? (this.id === 'death_spiral' ? 0 : 0.18),
+      0,
+      0.95,
+    );
+    const startDistance = Math.max(0, behavior?.startDistance ?? 0);
     const lifetimeSeconds = this.lifetimeMs / 1000;
     const launchSeconds = lifetimeSeconds * launchProgress;
     const spiralDuration = Math.max(0.001, lifetimeSeconds - launchSeconds);
@@ -228,10 +243,11 @@ export class AxeWeapon extends Weapon {
       spiralDuration,
       maxSpiralRadius,
     );
-    const travelDistance = progress <= launchProgress
-      ? this.modifiedProjectileSpeed * elapsedSeconds
-      : launchDistance + spiralTravelRange * radialProgress;
-    const travelAngle = progress <= launchProgress
+    const isLaunchPhase = launchProgress > 0 && progress <= launchProgress;
+    const travelDistance = isLaunchPhase
+      ? startDistance + this.modifiedProjectileSpeed * elapsedSeconds
+      : startDistance + launchDistance + spiralTravelRange * radialProgress;
+    const travelAngle = isLaunchPhase
       ? baseAngle
       : baseAngle + angularVelocity * spiralSeconds;
 

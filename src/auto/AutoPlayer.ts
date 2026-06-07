@@ -77,6 +77,8 @@ export interface AutoPortalSnapshot {
   y: number;
   radius: number;
   target?: AutoPosition;
+  isAvailable?: boolean;
+  cooldownRemainingMs?: number;
 }
 
 export interface AutoMapSnapshot {
@@ -915,7 +917,7 @@ export class AutoPlayer {
     let score = 0;
 
     for (const portal of context.map?.portals ?? []) {
-      if (!portal.target) {
+      if (!this.isPortalUsable(portal)) {
         continue;
       }
 
@@ -951,7 +953,7 @@ export class AutoPlayer {
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const portal of context.map?.portals ?? []) {
-      if (!portal.target) {
+      if (!this.isPortalUsable(portal)) {
         continue;
       }
 
@@ -1008,7 +1010,7 @@ export class AutoPlayer {
     const currentRisk = this.getPortalEscapeRiskAt(context, player, hpRatio);
 
     for (const portal of context.map?.portals ?? []) {
-      if (!portal.target) {
+      if (!this.isPortalUsable(portal)) {
         continue;
       }
 
@@ -1072,6 +1074,12 @@ export class AutoPlayer {
   ): number {
     return this.getEnemyPressureAt(context, point, hpRatio)
       + this.getTotalBossWarningRisk(context, point) * 7;
+  }
+
+  private isPortalUsable(portal: AutoPortalSnapshot): portal is AutoPortalSnapshot & { target: AutoPosition } {
+    return !!portal.target
+      && portal.isAvailable !== false
+      && (portal.cooldownRemainingMs ?? 0) <= 0;
   }
 
   private getBossWarningCandidateScore(
