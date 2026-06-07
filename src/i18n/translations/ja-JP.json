@@ -227,6 +227,7 @@
     "survivalTime": "生存時間",
     "finalLevel": "最終レベル",
     "score": "スコア",
+    "unlock": "解放",
     "finalExp": "最終EXP",
     "killCount": "撃破数",
     "weapons": "武器",
@@ -635,6 +636,21 @@
     "rules": "ルール",
     "mode": "モード",
     "noChallenge": "チャレンジがありません"
+  },
+  "developer": {
+    "title": "開発者メニュー",
+    "tab": {
+      "automation": "自動化",
+      "tools": "ツール",
+      "data": "データ",
+      "debug": "デバッグ"
+    }
+  },
+  "unlock": {
+    "message": {
+      "character": "キャラクター解放：{name}",
+      "stage": "ステージ解放：{name}"
+    }
   },
   "game": {
     "bossAppears": "Boss Appears",

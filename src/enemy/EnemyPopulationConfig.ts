@@ -16,14 +16,14 @@ export interface EnemyPopulationConfig {
 export const ENEMY_POPULATION_CONFIG: EnemyPopulationConfig = {
   mergeEnabled: true,
   minAliveEnemies: 5,
-  mergeMaxLevel: 3,
+  mergeMaxLevel: 5,
   spawnMergeLockMs: 1500,
   mergeCooldownMs: 3000,
   mergeCheckCooldownMs: 500,
   mergeMovementLockMs: 3000,
   mergeContactDamageImmunityMs: 500,
   maxMergesPerFrame: 8,
-  mergeScaleGrowthPerLevel: 0.18,
-  mergeDetectionRadiusMultiplier: 1.75,
+  mergeScaleGrowthPerLevel: 0.25,
+  mergeDetectionRadiusMultiplier: 3,
   fallbackEnemyId: 'slime',
 };

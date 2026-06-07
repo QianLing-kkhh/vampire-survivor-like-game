@@ -8,9 +8,9 @@ export interface GameplaySettingsData {
 }
 
 export const DEFAULT_GAMEPLAY_SETTINGS: GameplaySettingsData = {
-  autoMovement: true,
-  autoUpgrade: true,
-  autoOpenTreasure: true,
+  autoMovement: false,
+  autoUpgrade: false,
+  autoOpenTreasure: false,
   fastMode: false,
   endlessMode: false,
   autoTimeScale: 3,

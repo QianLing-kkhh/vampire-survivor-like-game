@@ -552,6 +552,9 @@ export class EnemyFlow {
 
     if (mergeLevel === 3) {
       this.enemyMergeCreatedLv3 += 1;
+    }
+
+    if (mergeLevel === ENEMY_POPULATION_CONFIG.mergeMaxLevel) {
       this.enemyMergeMaxLevelReached += 1;
     }
   }

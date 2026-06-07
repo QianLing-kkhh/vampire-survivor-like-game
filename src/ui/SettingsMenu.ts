@@ -12,7 +12,7 @@ import { ASSET_STYLES, AssetStyle, DISPLAY_QUALITIES, DisplayQuality } from '../
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type SettingsMenuHandler = () => void;
-type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'input' | 'developer';
+type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'input';
 type RowType = 'toggle' | 'select' | 'slider' | 'info';
 
 type SettingValue = string | number;
@@ -61,7 +61,7 @@ interface OpenDropdown {
   overlay: Phaser.GameObjects.Container;
 }
 
-const SETTINGS_TABS: SettingsTabId[] = ['display', 'audio', 'gameplay', 'input', 'developer'];
+const SETTINGS_TABS: SettingsTabId[] = ['display', 'audio', 'gameplay', 'input'];
 
 export class SettingsMenu {
   private readonly screenManager: ScreenManager;
@@ -80,7 +80,6 @@ export class SettingsMenu {
     audio: 0,
     display: 0,
     input: 0,
-    developer: 0,
   };
   private selectedTab: SettingsTabId = 'display';
   private uiStyleReopenNotice = false;
@@ -814,8 +813,6 @@ export class SettingsMenu {
         return this.getDisplayRows();
       case 'input':
         return this.getInputRows();
-      case 'developer':
-        return this.getDeveloperRows();
       case 'gameplay':
       default:
         return this.getGameplayRows();
@@ -826,18 +823,6 @@ export class SettingsMenu {
     const gameplay = SettingsManager.getGameplay();
 
     return [
-      this.toggleRow('autoMovement', this.t('settings.autoMovement', 'Auto Movement'), gameplay.autoMovement, () => {
-        SettingsManager.updateGameplay({ autoMovement: !SettingsManager.getGameplay().autoMovement });
-      }),
-      this.toggleRow('autoUpgrade', this.t('settings.autoUpgrade', 'Auto Upgrade'), gameplay.autoUpgrade, () => {
-        SettingsManager.updateGameplay({ autoUpgrade: !SettingsManager.getGameplay().autoUpgrade });
-      }),
-      this.toggleRow('autoOpenTreasure', this.t('settings.autoOpenTreasure', 'Auto Open Treasure'), gameplay.autoOpenTreasure, () => {
-        SettingsManager.updateGameplay({ autoOpenTreasure: !SettingsManager.getGameplay().autoOpenTreasure });
-      }),
-      this.toggleRow('fastMode', this.t('settings.fastMode', 'Fast Mode'), gameplay.fastMode, () => {
-        SettingsManager.updateGameplay({ fastMode: !SettingsManager.getGameplay().fastMode });
-      }),
       this.toggleRow('endlessMode', this.t('settings.endlessMode', 'Endless Mode'), gameplay.endlessMode, () => {
         SettingsManager.updateGameplay({ endlessMode: !SettingsManager.getGameplay().endlessMode });
       }),
@@ -1017,48 +1002,6 @@ export class SettingsMenu {
     ];
   }
 
-  private getDeveloperRows(): SettingRowDefinition[] {
-    const developer = SettingsManager.getDeveloper();
-
-    return [
-      this.toggleRow('debugPanel', this.t('settings.debugPanel', 'Debug Panel'), developer.showDebugPanel, () => {
-        SettingsManager.updateDeveloper({
-          showDebugPanel: !SettingsManager.getDeveloper().showDebugPanel,
-        });
-      }),
-      this.toggleRow('csvLogging', this.t('settings.csvLogging', 'CSV Logging'), developer.csvLoggingEnabled, () => {
-        SettingsManager.updateDeveloper({
-          csvLoggingEnabled: !SettingsManager.getDeveloper().csvLoggingEnabled,
-        });
-      }),
-      this.toggleRow('autoRestart', this.t('settings.autoRestart', 'Auto Restart'), developer.autoRestartEnabled, () => {
-        SettingsManager.updateDeveloper({
-          autoRestartEnabled: !SettingsManager.getDeveloper().autoRestartEnabled,
-        });
-      }),
-      this.toggleRow('debugLogs', this.t('settings.debugLogs', 'Debug Logs'), developer.showDebugLogs, () => {
-        SettingsManager.updateDeveloper({
-          showDebugLogs: !SettingsManager.getDeveloper().showDebugLogs,
-        });
-      }),
-      this.toggleRow('debugPanelCompact', this.t('settings.debugPanelCompact', 'Compact Debug Panel'), developer.debugPanelCompact, () => {
-        SettingsManager.updateDeveloper({
-          debugPanelCompact: !SettingsManager.getDeveloper().debugPanelCompact,
-        });
-      }),
-      this.sliderRow(
-        'debugPanelOpacity',
-        this.t('settings.debugPanelOpacity', 'Debug Panel Opacity'),
-        () => SettingsManager.getDeveloper().debugPanelOpacity,
-        [0.35, 0.5, 0.75, 1],
-        (value) => {
-          SettingsManager.updateDeveloper({ debugPanelOpacity: value as number });
-        },
-        (value) => `${Math.round((value as number) * 100)}%`,
-      ),
-    ];
-  }
-
   private toggleRow(
     id: string,
     label: string,
@@ -1148,8 +1091,6 @@ export class SettingsMenu {
         return 'Display';
       case 'input':
         return 'Input';
-      case 'developer':
-        return 'Developer';
       case 'gameplay':
       default:
         return 'Gameplay';

@@ -227,6 +227,7 @@
     "survivalTime": "生存时间",
     "finalLevel": "最终等级",
     "score": "分数",
+    "unlock": "解锁",
     "finalExp": "最终经验",
     "killCount": "击杀数",
     "weapons": "武器",
@@ -635,6 +636,21 @@
     "rules": "规则",
     "mode": "模式",
     "noChallenge": "暂无挑战"
+  },
+  "developer": {
+    "title": "开发者菜单",
+    "tab": {
+      "automation": "自动化",
+      "tools": "工具",
+      "data": "数据",
+      "debug": "调试"
+    }
+  },
+  "unlock": {
+    "message": {
+      "character": "解锁角色：{name}",
+      "stage": "解锁关卡：{name}"
+    }
   },
   "game": {
     "bossAppears": "Boss Appears",

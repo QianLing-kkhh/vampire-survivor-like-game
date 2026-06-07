@@ -10,10 +10,10 @@ export interface DeveloperSettingsData {
 
 export const DEFAULT_DEVELOPER_SETTINGS: DeveloperSettingsData = {
   playtestMode: false,
-  csvLoggingEnabled: true,
-  autoRestartEnabled: true,
+  csvLoggingEnabled: false,
+  autoRestartEnabled: false,
   showDebugLogs: false,
   showDebugPanel: false,
   debugPanelOpacity: 0.75,
-  debugPanelCompact: true,
+  debugPanelCompact: false,
 };

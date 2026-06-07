@@ -57,6 +57,7 @@ import { SpawnDirector } from '../spawn/SpawnDirector';
 import { StageDefinition } from '../stage/StageDefinition';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
+import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { HUDStateBuilder } from '../ui/HUDStateBuilder';
 import { PauseMenuStatsData } from '../ui/PauseMenu';
@@ -127,6 +128,7 @@ export class GameScene extends Phaser.Scene {
   private playerPickupRange = 0;
   private readonly runState = new RunState();
   private readonly runResultBuilder = new RunResultBuilder();
+  private readonly victoryUnlockService = new VictoryUnlockService();
   private runId = PlaytestLog.createRunId();
   private runStats = new RunStats();
   private isGameplayPaused = false;
@@ -421,6 +423,7 @@ export class GameScene extends Phaser.Scene {
     uiScene.events.on('PauseResume', this.resumeFromPauseMenu, this);
     uiScene.events.on('PauseRestart', this.restartFromPauseMenu, this);
     uiScene.events.on('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
+    uiScene.events.on('PauseOpenDeveloperScene', this.openDeveloperSceneFromPauseMenu, this);
     this.events.on('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.on('keydown-ESC', this.handleEscapePressed, this);
     this.input.keyboard?.on('keydown-F3', this.toggleDebugPanel, this);
@@ -1055,6 +1058,11 @@ export class GameScene extends Phaser.Scene {
       new ReplayStorage().save(replayData);
     }
 
+    const unlockResult = this.victoryUnlockService.unlockNextForVictory({
+      resultType,
+      characterId: this.runState.characterId,
+      stageId: this.runState.stageId,
+    });
     const resultData = this.runResultBuilder.build({
       runId: this.runId,
       autoMode: this.playtestSettings.autoMovement
@@ -1085,7 +1093,10 @@ export class GameScene extends Phaser.Scene {
 
     this.cleanup();
     this.scene.stop('UIScene');
-    this.scene.start('ResultScene', resultData);
+    this.scene.start('ResultScene', {
+      ...resultData,
+      unlockMessages: unlockResult.messages,
+    });
   }
 
   private handleUpgradeSelected(option: UpgradeOption): void {
@@ -1388,6 +1399,13 @@ export class GameScene extends Phaser.Scene {
     this.scene.start('TitleScene');
   }
 
+  private openDeveloperSceneFromPauseMenu(sceneKey: string): void {
+    this.isPauseMenuOpen = false;
+    this.virtualJoystick?.setGameplayActive(false);
+    this.scene.stop('UIScene');
+    this.scene.start(sceneKey);
+  }
+
   private showEnemyDamageFloatingText(payload: {
     x: number;
     y: number;
@@ -1624,6 +1642,7 @@ export class GameScene extends Phaser.Scene {
     this.uiScene?.events.off('PauseResume', this.resumeFromPauseMenu, this);
     this.uiScene?.events.off('PauseRestart', this.restartFromPauseMenu, this);
     this.uiScene?.events.off('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
+    this.uiScene?.events.off('PauseOpenDeveloperScene', this.openDeveloperSceneFromPauseMenu, this);
     this.events.off('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.off('keydown-ESC', this.handleEscapePressed, this);
     this.input.keyboard?.off('keydown-F3', this.toggleDebugPanel, this);

@@ -1,13 +1,20 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { CharacterManager } from '../character/CharacterManager';
 import { EndlessLeaderboardEntry } from '../endless/EndlessLeaderboard';
 import { I18n } from '../i18n/I18n';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { PassiveLevel } from '../passive/PassiveItem';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { SettingsManager } from '../settings/SettingsManager';
+import { RANDOM_UNLOCKED_STAGE_ID, StageManager } from '../stage/StageManager';
+import { DeveloperMenu } from '../ui/DeveloperMenu';
+import { SelectionListPanel } from '../ui/SelectionListPanel';
 import { SettingsMenu } from '../ui/SettingsMenu';
 import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
@@ -69,6 +76,7 @@ interface ResultSceneData {
   upgradePath?: string[];
   playtestCsv?: string;
   bufferedRunsCount?: number;
+  unlockMessages?: string[];
 }
 
 export class ResultScene extends Phaser.Scene {
@@ -87,6 +95,8 @@ export class ResultScene extends Phaser.Scene {
   private currentData?: ResultSceneData;
   private backgroundImage?: Phaser.GameObjects.Image;
   private settingsMenu?: SettingsMenu;
+  private developerMenu?: DeveloperMenu;
+  private selectionPanel?: SelectionListPanel;
 
   constructor() {
     super('ResultScene');
@@ -143,6 +153,7 @@ export class ResultScene extends Phaser.Scene {
       passiveText,
       relicText,
       evolutionPathText,
+      unlockMessages: data.unlockMessages ?? [],
       maxRows: layout.summaryMaxRows,
     });
     const result = this.add.text(
@@ -185,7 +196,7 @@ export class ResultScene extends Phaser.Scene {
     });
     this.autoRestartText.setOrigin(0.5);
 
-    const currentCsvButton = this.add.text(centerX, 0, I18n.t('result.downloadCurrentCsv'), {
+    const selectCharacterButton = this.add.text(centerX, 0, I18n.t('title.selectCharacter'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -195,16 +206,16 @@ export class ResultScene extends Phaser.Scene {
         y: 8,
       },
     });
-    currentCsvButton.setOrigin(0.5);
-    currentCsvButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(currentCsvButton);
-    currentCsvButton.on('pointerdown', () => {
+    selectCharacterButton.setOrigin(0.5);
+    selectCharacterButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(selectCharacterButton);
+    selectCharacterButton.on('pointerdown', () => {
       AudioManager.playUi(this, 'ui_click');
       this.cancelAutoRestart();
-      this.downloadCsv(this.createCurrentCsvFilename(), playtestCsv);
+      this.showCharacterSelection();
     });
 
-    const downloadAllButton = this.add.text(centerX, 0, I18n.t('result.downloadAllCsv'), {
+    const selectStageButton = this.add.text(centerX, 0, I18n.t('title.selectStage'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -214,32 +225,13 @@ export class ResultScene extends Phaser.Scene {
         y: 8,
       },
     });
-    downloadAllButton.setOrigin(0.5);
-    downloadAllButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(downloadAllButton);
-    downloadAllButton.on('pointerdown', () => {
+    selectStageButton.setOrigin(0.5);
+    selectStageButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(selectStageButton);
+    selectStageButton.on('pointerdown', () => {
       AudioManager.playUi(this, 'ui_click');
       this.cancelAutoRestart();
-      this.downloadAllCsv();
-    });
-
-    const settingsButton = this.add.text(centerX, 0, I18n.t('result.settings'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    settingsButton.setOrigin(0.5);
-    settingsButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(settingsButton);
-    settingsButton.on('pointerdown', () => {
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.showSettingsMenu();
+      this.showStageSelection();
     });
 
     const restartButton = this.add.text(centerX, 0, I18n.t('result.restart'), {
@@ -282,12 +274,51 @@ export class ResultScene extends Phaser.Scene {
       this.scene.start('TitleScene');
     });
 
+    const settingsButton = this.add.text(centerX, 0, I18n.t('result.settings'), {
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: layout.buttonLayout.fontSize,
+      padding: {
+        x: 12,
+        y: 8,
+      },
+    });
+    settingsButton.setOrigin(0.5);
+    settingsButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(settingsButton);
+    settingsButton.on('pointerdown', () => {
+      AudioManager.playUi(this, 'ui_click');
+      this.cancelAutoRestart();
+      this.showSettingsMenu();
+    });
+
+    const developerButton = this.add.text(centerX, 0, I18n.t('developer.title'), {
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: layout.buttonLayout.fontSize,
+      padding: {
+        x: 12,
+        y: 8,
+      },
+    });
+    developerButton.setOrigin(0.5);
+    developerButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(developerButton);
+    developerButton.on('pointerdown', () => {
+      AudioManager.playUi(this, 'ui_click');
+      this.cancelAutoRestart();
+      this.showDeveloperMenu(playtestCsv);
+    });
+
     this.layoutButtons([
-      currentCsvButton,
-      downloadAllButton,
+      selectCharacterButton,
+      selectStageButton,
       restartButton,
       titleButton,
       settingsButton,
+      developerButton,
     ]);
     this.screenManager.onResize(() => {
       this.scheduleResponsiveRestart();
@@ -295,7 +326,7 @@ export class ResultScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
 
-    if (data.autoMode) {
+    if (data.autoMode && SettingsManager.getDeveloper().autoRestartEnabled) {
       this.startAutoRestartCountdown();
     }
   }
@@ -325,6 +356,7 @@ export class ResultScene extends Phaser.Scene {
     passiveText: string;
     relicText: string;
     evolutionPathText: string;
+    unlockMessages: string[];
     maxRows: number;
   }): string[] {
     const lines = [
@@ -337,6 +369,7 @@ export class ResultScene extends Phaser.Scene {
       `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
       `${I18n.t('result.killCount')}: ${params.data.killCount ?? 0}`,
       `${I18n.t('result.score')}: ${params.data.score ?? 0}`,
+      ...params.unlockMessages.map((message) => `${I18n.t('result.unlock')}: ${message}`),
       `${I18n.t('result.weapons')}: ${params.weaponText}`,
       `${I18n.t('result.passives')}: ${params.passiveText}`,
       `${I18n.t('result.relics')}: ${params.relicText}`,
@@ -541,6 +574,102 @@ export class ResultScene extends Phaser.Scene {
     });
   }
 
+  private showDeveloperMenu(playtestCsv: string): void {
+    this.developerMenu?.destroy();
+    this.developerMenu = new DeveloperMenu(this, {
+      currentCsv: playtestCsv,
+      onClose: () => {
+        this.developerMenu = undefined;
+      },
+      onOpenScene: (sceneKey) => {
+        this.closeSelectionPanel();
+        this.scene.start(sceneKey);
+      },
+    });
+  }
+
+  private showCharacterSelection(): void {
+    this.developerMenu?.destroy();
+    this.developerMenu = undefined;
+    this.closeSelectionPanel();
+
+    const characterManager = new CharacterManager();
+    const selection = SelectionManager.getSelection();
+    this.selectionPanel = new SelectionListPanel(this, {
+      title: I18n.t('characterSelect.title'),
+      items: characterManager.listSelectableCharacters().map((character) => ({
+        id: character.id,
+        name: I18n.t(character.nameKey),
+        description: character.id === 'random_unlocked'
+          ? I18n.t('characterSelection.randomUnlocked')
+          : I18n.t(character.descriptionKey),
+        startingWeaponId: character.id === 'random_unlocked' ? undefined : character.startingWeaponId,
+        startingWeaponIconKey: character.id === 'random_unlocked'
+          ? undefined
+          : (AssetKeyResolver.getWeaponIconKey(this, character.startingWeaponId) ?? undefined),
+        damageReactionSkill: character.damageReactionSkill?.type,
+        portraitKey: character.id === 'random_unlocked'
+          ? undefined
+          : AssetKeyResolver.getPlayerPortraitKey(this, character.skinId, character.id),
+      })),
+      selectedId: selection.characterId,
+      onConfirm: (id) => {
+        if (SelectionManager.setCharacterId(id)) {
+          this.closeSelectionPanel();
+        }
+      },
+      onBack: () => this.closeSelectionPanel(),
+    });
+  }
+
+  private showStageSelection(): void {
+    this.developerMenu?.destroy();
+    this.developerMenu = undefined;
+    this.closeSelectionPanel();
+
+    const stageManager = new StageManager();
+    const selection = SelectionManager.getSelection();
+    const selectableStages = stageManager.listSelectableStages()
+      .filter((stage) => stage.source === 'builtin' || stage.valid);
+
+    this.selectionPanel = new SelectionListPanel(this, {
+      title: I18n.t('stageSelect.title'),
+      items: selectableStages.map((stage) => ({
+        id: stage.id,
+        name: stage.id === RANDOM_UNLOCKED_STAGE_ID
+          ? I18n.t('stage.random.name')
+          : stage.name,
+        description: stage.id === RANDOM_UNLOCKED_STAGE_ID
+          ? I18n.t('stage.random.description')
+          : [
+            stage.source === 'custom' ? I18n.t('stage.custom') : I18n.t('stage.builtIn'),
+            `${I18n.t('selection.map')}: ${stage.mapId}`,
+            stage.warnings && stage.warnings.length > 0
+              ? I18n.t('stage.warningsCount', { count: stage.warnings.length })
+              : '',
+          ].filter(Boolean).join(' / '),
+      })),
+      selectedId: selection.customStageId ?? selection.stageId,
+      onConfirm: (id) => {
+        const selectedStage = selectableStages.find((stage) => stage.id === id);
+
+        if (selectedStage?.source === 'custom' && selectedStage.customStageId) {
+          SelectionManager.setCustomStageId(selectedStage.customStageId);
+        } else if (selectedStage?.source === 'builtin') {
+          SelectionManager.setStageId(selectedStage.id);
+        }
+
+        this.closeSelectionPanel();
+      },
+      onBack: () => this.closeSelectionPanel(),
+    });
+  }
+
+  private closeSelectionPanel(): void {
+    this.selectionPanel?.destroy();
+    this.selectionPanel = undefined;
+  }
+
   private restartGame(): void {
     if (this.hasRestarted) {
       return;
@@ -623,6 +752,9 @@ export class ResultScene extends Phaser.Scene {
     this.resizeTimer = undefined;
     this.settingsMenu?.destroy();
     this.settingsMenu = undefined;
+    this.developerMenu?.destroy();
+    this.developerMenu = undefined;
+    this.closeSelectionPanel();
     this.screenManager?.dispose();
     this.screenManager = undefined;
   }

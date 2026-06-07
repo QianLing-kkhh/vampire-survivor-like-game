@@ -319,6 +319,7 @@
     "survivalTime": "Survival Time",
     "finalLevel": "Final Level",
     "score": "Score",
+    "unlock": "Unlock",
     "finalExp": "Final EXP",
     "killCount": "Kill Count",
     "weapons": "Weapons",
@@ -636,6 +637,21 @@
     "endless": "Endless",
     "relics": "Relics",
     "shield": "Shield"
+  },
+  "developer": {
+    "title": "Developer",
+    "tab": {
+      "automation": "Automation",
+      "tools": "Tools",
+      "data": "Data",
+      "debug": "Debug"
+    }
+  },
+  "unlock": {
+    "message": {
+      "character": "Unlocked character: {name}",
+      "stage": "Unlocked stage: {name}"
+    }
   },
   "game": {
     "bossAppears": "Boss Appears",

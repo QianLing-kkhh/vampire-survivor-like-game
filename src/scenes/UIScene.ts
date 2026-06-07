@@ -107,6 +107,9 @@ export class UIScene extends Phaser.Scene {
       () => {
         this.showHelpPanel();
       },
+      (sceneKey) => {
+        this.events.emit('PauseOpenDeveloperScene', sceneKey);
+      },
     );
   }
 
