@@ -17,6 +17,17 @@
         "rock": 1,
         "grave": 0
       },
+      "visibility": {
+        "enabled": true,
+        "ambientAlpha": 0.05,
+        "ambientColor": 3355443,
+        "baseRevealRadius": 520,
+        "baseRevealAlpha": 0.15,
+        "baseLightRevealRadius": 280,
+        "lightRevealRadiusScale": 1,
+        "lightRevealAlpha": 0.1,
+        "lightContributionClamp": 0.14
+      },
       "themeId": "field"
     },
     "mechanics": [
@@ -107,6 +118,17 @@
         "grave": 6,
         "tree": 2,
         "rock": 1
+      },
+      "visibility": {
+        "enabled": true,
+        "ambientAlpha": 0.82,
+        "ambientColor": 2105376,
+        "baseRevealRadius": 240,
+        "baseRevealAlpha": 0.16,
+        "baseLightRevealRadius": 340,
+        "lightRevealRadiusScale": 1,
+        "lightRevealAlpha": 0.24,
+        "lightContributionClamp": 0.18
       },
       "themeId": "graveyard"
     },
@@ -259,6 +281,17 @@
         "tree": 3,
         "rock": 1,
         "grave": 0
+      },
+      "visibility": {
+        "enabled": true,
+        "ambientAlpha": 0.62,
+        "ambientColor": 2105376,
+        "baseRevealRadius": 340,
+        "baseRevealAlpha": 0.14,
+        "baseLightRevealRadius": 320,
+        "lightRevealRadiusScale": 1,
+        "lightRevealAlpha": 0.14,
+        "lightContributionClamp": 0.16
       },
       "themeId": "swamp"
     },

@@ -219,7 +219,8 @@ export class AxeWeapon extends Weapon {
     const baseAngle = Math.atan2(projectile.direction.y, projectile.direction.x);
     const spiralSeconds = Math.max(0, elapsedSeconds - launchSeconds);
     const normalizedSpiralProgress = Phaser.Math.Clamp(spiralSeconds / spiralDuration, 0, 1);
-    const angularVelocity = (spiralTurns * Math.PI * 2) / spiralDuration;
+    const spiralSpeedMultiplier = Math.max(0.01, behavior?.spiralSpeedMultiplier ?? 1);
+    const angularVelocity = (spiralTurns * Math.PI * 2 * spiralSpeedMultiplier) / spiralDuration;
     const radialEasePower = Math.max(0.1, behavior?.radialEasePower ?? 2.2);
     const radialProgress = 1 - Math.pow(1 - normalizedSpiralProgress, radialEasePower);
     const spiralTravelRange = behavior?.spiralTravelRange ?? this.getFallbackSpiralTravelRange(

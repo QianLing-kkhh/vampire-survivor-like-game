@@ -1,3 +1,5 @@
+import { MapVisibilityRenderConfig } from '../map/MapDefinition';
+
 export const WorldConfig = {
   width: 4000,
   height: 4000,
@@ -17,4 +19,5 @@ export interface WorldRenderConfig {
   landmarkDensity?: number;
   themeId?: string;
   landmarkWeights?: Partial<Record<'tree' | 'rock' | 'grave', number>>;
+  visibility?: MapVisibilityRenderConfig;
 }

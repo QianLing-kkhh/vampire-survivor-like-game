@@ -1,5 +1,17 @@
 import { MapMechanicDefinition } from './mechanics/MapMechanicDefinition';
 
+export interface MapVisibilityRenderConfig {
+  enabled: boolean;
+  ambientAlpha: number;
+  ambientColor?: number;
+  baseRevealRadius: number;
+  baseRevealAlpha: number;
+  baseLightRevealRadius?: number;
+  lightRevealRadiusScale?: number;
+  lightRevealAlpha: number;
+  lightContributionClamp?: number;
+}
+
 export interface MapDefinition {
   id: string;
   name: string;
@@ -14,6 +26,7 @@ export interface MapDefinition {
     groundTileKey?: string;
     landmarkDensity?: number;
     themeId?: string;
+    visibility?: MapVisibilityRenderConfig;
     landmarkWeights?: {
       tree?: number;
       rock?: number;

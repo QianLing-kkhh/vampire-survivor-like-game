@@ -26,6 +26,7 @@ import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PlaytestLog } from '../logging/PlaytestLog';
 import { MapDefinition } from '../map/MapDefinition';
 import { MapManager } from '../map/MapManager';
+import { MapLightSourceDefinition } from '../map/mechanics/MapMechanicDefinition';
 import { PickupManager } from '../pickup/PickupManager';
 import { TreasureManager } from '../pickup/TreasureManager';
 import { PassiveManager } from '../passive/PassiveManager';
@@ -61,7 +62,12 @@ import { HUDStateBuilder } from '../ui/HUDStateBuilder';
 import { PauseMenuStatsData } from '../ui/PauseMenu';
 import { I18n } from '../i18n/I18n';
 import { WeaponManager } from '../weapon/WeaponManager';
+import { WorldRenderConfig } from '../world/WorldConfig';
 import { WorldRenderer } from '../world/WorldRenderer';
+import {
+  MapVisibilityRenderer,
+  MapVisibilityRendererLightSource,
+} from '../world/MapVisibilityRenderer';
 
 export class GameScene extends Phaser.Scene {
   private static readonly PLAYER_HIT_RADIUS = 28;
@@ -91,6 +97,7 @@ export class GameScene extends Phaser.Scene {
   private playerHealth?: PlayerHealth;
   private enemies: Enemy[] = [];
   private enemyMovement = new EnemyMovement();
+  private mapVisibilityRenderer?: MapVisibilityRenderer;
   private weaponManager?: WeaponManager;
   private pickupManager?: PickupManager;
   private treasureManager?: TreasureManager;
@@ -144,19 +151,7 @@ export class GameScene extends Phaser.Scene {
     return this.stageManager.getFinalBossWarningTimeSeconds(this.currentStage);
   }
 
-  private getWorldRenderConfig(): {
-    width: number;
-    height: number;
-    gridSize: number;
-    landmarkSpacing: number;
-    backgroundColor?: number;
-    gridColor?: number;
-    gridAlpha?: number;
-    groundTileKey?: string;
-    landmarkDensity?: number;
-    themeId?: string;
-    landmarkWeights?: Partial<Record<'tree' | 'rock' | 'grave', number>>;
-  } {
+  private getWorldRenderConfig(): WorldRenderConfig {
     return {
       width: this.currentMap.worldWidth,
       height: this.currentMap.worldHeight,
@@ -215,7 +210,19 @@ export class GameScene extends Phaser.Scene {
     AudioManager.playBgm(this, 'gameplay_bgm');
     this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight);
     this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
-    new WorldRenderer(this, this.getWorldRenderConfig()).render();
+    const worldRenderConfig = this.getWorldRenderConfig();
+
+    new WorldRenderer(this, worldRenderConfig).render();
+    this.mapVisibilityRenderer = undefined;
+
+    if (worldRenderConfig.visibility?.enabled) {
+      this.mapVisibilityRenderer = new MapVisibilityRenderer(
+        this,
+        worldRenderConfig,
+        this.getMapLightSources(),
+      );
+    }
+
     this.scene.launch('UIScene');
     const context = this.gameplayInitializer.initialize({
       scene: this,
@@ -306,6 +313,7 @@ export class GameScene extends Phaser.Scene {
       },
     });
     this.applyGameplayContext(context);
+    this.updateVisibilityRenderers();
     this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
     this.emitRunStarted();
     this.unsubscribeSettings = PlaytestSettings.subscribe((settingName, state) => {
@@ -435,9 +443,9 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.gameplayUpdater.update(this.gameplayContext, {
-      deltaMs: delta,
-      isLevelUpSelectionActive: this.isLevelUpSelectionActive,
+      this.gameplayUpdater.update(this.gameplayContext, {
+        deltaMs: delta,
+        isLevelUpSelectionActive: this.isLevelUpSelectionActive,
       isAutoMovementEnabled: this.playtestSettings.autoMovement,
       worldWidth: this.worldWidth,
       worldHeight: this.worldHeight,
@@ -454,10 +462,11 @@ export class GameScene extends Phaser.Scene {
         ),
         endGame: (resultType) => this.endGame(resultType),
         emitHUDState: () => this.emitHUDState(),
-      },
-    });
-    this.emitDebugPanelData();
-  }
+        },
+      });
+      this.updateVisibilityRenderers();
+      this.emitDebugPanelData();
+    }
 
   getPlayerHealth(): PlayerHealth | undefined {
     return this.playerHealth;
@@ -1222,6 +1231,26 @@ export class GameScene extends Phaser.Scene {
     this.updateOrientationOverlay();
   }
 
+  private getMapLightSources(): MapVisibilityRendererLightSource[] {
+    return (this.currentMap.mechanics ?? [])
+      .filter((mechanic): mechanic is MapLightSourceDefinition => (
+        mechanic.type === 'lightSource'
+      ))
+      .map((mechanic) => ({
+        x: mechanic.x,
+        y: mechanic.y,
+        radius: mechanic.radius,
+      }));
+  }
+
+  private updateVisibilityRenderers(): void {
+    if (!this.mapVisibilityRenderer || !this.player) {
+      return;
+    }
+
+    this.mapVisibilityRenderer.update(this.player.body.x, this.player.body.y);
+  }
+
   private shouldShowOrientationOverlay(): boolean {
     return false;
   }
@@ -1465,6 +1494,8 @@ export class GameScene extends Phaser.Scene {
     this.orientationOverlay = undefined;
     this.floatingTextManager?.destroy();
     this.floatingTextManager = undefined;
+    this.mapVisibilityRenderer?.destroy();
+    this.mapVisibilityRenderer = undefined;
     this.gameplayContext?.poolManager.clear();
     this.evolutionManager = undefined;
     this.gameplayContext = undefined;

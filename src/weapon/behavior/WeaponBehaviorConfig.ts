@@ -40,6 +40,7 @@ export interface ArcingBehaviorConfig extends BaseWeaponBehaviorConfig {
   acceleration?: number;
   radialEasePower?: number;
   spiralTravelRange?: number;
+  spiralSpeedMultiplier?: number;
   scaleOverLifetime?: {
     enabled?: boolean;
     startScale?: number;
