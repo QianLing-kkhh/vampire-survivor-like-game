@@ -23,6 +23,15 @@ export type UnlockListener = (event: UnlockEvent) => void;
 
 export class UnlockManager {
   private static readonly listeners = new Set<UnlockListener>();
+  private static temporaryPlaytestUnlockAll = false;
+
+  static enableTemporaryPlaytestUnlockAll(): void {
+    this.temporaryPlaytestUnlockAll = true;
+  }
+
+  static clearTemporaryUnlocks(): void {
+    this.temporaryPlaytestUnlockAll = false;
+  }
 
   static initialize(): void {
     ContentBootstrap.ensureInitialized();
@@ -37,6 +46,10 @@ export class UnlockManager {
 
   static isUnlocked(type: UnlockableType, targetId: string): boolean {
     this.initializeRegistryOnly();
+    if (this.isTemporarilyUnlocked(type, targetId)) {
+      return true;
+    }
+
     const save = SaveManager.get();
 
     switch (type) {
@@ -187,6 +200,19 @@ export class UnlockManager {
   }
 
   static getUnlockedIds(type: UnlockableType): string[] {
+    if (this.temporaryPlaytestUnlockAll) {
+      switch (type) {
+        case 'character':
+          return ContentRegistry.listCharacters().map((character) => character.id);
+        case 'stage':
+          return ContentRegistry.listStages().map((stage) => stage.id);
+        case 'map':
+          return ContentRegistry.listMaps().map((map) => map.id);
+        default:
+          break;
+      }
+    }
+
     const save = SaveManager.get();
 
     switch (type) {
@@ -256,6 +282,21 @@ export class UnlockManager {
         return ContentRegistry.getPassive(targetId) !== undefined;
       default:
         return true;
+    }
+  }
+
+  private static isTemporarilyUnlocked(type: UnlockableType, targetId: string): boolean {
+    if (!this.temporaryPlaytestUnlockAll) {
+      return false;
+    }
+
+    switch (type) {
+      case 'character':
+      case 'stage':
+      case 'map':
+        return this.targetExists(type, targetId);
+      default:
+        return false;
     }
   }
 

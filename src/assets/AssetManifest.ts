@@ -17,6 +17,11 @@ export type ArtManifestAsset = {
   frames: number;
 };
 
+export type ArtManifest = {
+  assets?: unknown;
+  version?: unknown;
+};
+
 export type RunPreloadContext = {
   selectedCharacterId: string;
   characterId: string;
@@ -275,14 +280,22 @@ export const GAMEPLAY_ART_ASSETS: ArtManifestAsset[] = [
   ...MAP_MECHANIC_ART_ASSETS,
 ];
 
-export function buildTitleLoadPlan(settings: DisplaySettingsData): AssetLoadPlan {
+export function buildTitleLoadPlan(
+  settings: DisplaySettingsData,
+  manifestAssets?: readonly ArtManifestAsset[],
+  manifestVersion?: string,
+): AssetLoadPlan {
+  const manifestAssetMap = createManifestAssetMap(manifestAssets);
   const styleAwareAssets = (assets: AssetRequest[]): AssetRequest[] => (
     assets.map((asset) => {
       if (!asset.path.startsWith('assets/art/')) {
         return asset;
       }
 
-      const remappedPath = remapAssetStylePath(asset.path, settings.assetStyle);
+      const remappedPath = appendCacheVersion(
+        remapAssetStylePath(asset.path, settings.assetStyle),
+        manifestVersion,
+      );
 
       return {
         ...asset,
@@ -290,15 +303,17 @@ export function buildTitleLoadPlan(settings: DisplaySettingsData): AssetLoadPlan
       };
     })
   );
+  const manifestAwareArtRequest = (asset: ArtManifestAsset): AssetRequest => (
+    artToRequest(manifestAssetMap.get(asset.key) ?? asset, settings.assetStyle, manifestVersion)
+  );
 
   return {
     id: 'title',
     assets: [
       ...styleAwareAssets(TITLE_UI_ASSETS),
       ...styleAwareAssets(TITLE_ICON_ASSETS),
-      ...PLAYER_ART_SKIN_IDS.map((skinId) => artToRequest(
+      ...PLAYER_ART_SKIN_IDS.map((skinId) => manifestAwareArtRequest(
         artImage(`player/${skinId}/portrait.png`, `art_player_${skinId}_portrait`, 128, 128),
-        settings.assetStyle,
       )),
       ...TITLE_AUDIO_ASSETS,
       json(EXTERNAL_ART_MANIFEST_CACHE_KEY, EXTERNAL_ART_MANIFEST_PATH),
@@ -306,12 +321,15 @@ export function buildTitleLoadPlan(settings: DisplaySettingsData): AssetLoadPlan
   };
 }
 
-export function buildRunLoadPlan(context: RunPreloadContext): AssetLoadPlan {
+export function buildRunLoadPlan(
+  context: RunPreloadContext,
+  manifestAssets?: readonly ArtManifestAsset[],
+  manifestVersion?: string,
+): AssetLoadPlan {
   const usesGraphicsFallback = context.assetStyle === 'graphics'
     || (context.displayQuality === 'minimal' && context.assetStyle !== 'art001');
-  const skinId = resolvePlayerSkinId(context.skinId, context.characterId);
   const styleAwareArtToRequest = (asset: ArtManifestAsset): AssetRequest => (
-    artToRequest(asset, context.assetStyle)
+    artToRequest(asset, context.assetStyle, manifestVersion)
   );
   const styleAwareAssets = (assets: readonly AssetRequest[]): AssetRequest[] => (
     assets.map((asset) => {
@@ -321,19 +339,21 @@ export function buildRunLoadPlan(context: RunPreloadContext): AssetLoadPlan {
 
       return {
         ...asset,
-        path: remapAssetStylePath(asset.path, context.assetStyle),
+        path: appendCacheVersion(
+          remapAssetStylePath(asset.path, context.assetStyle),
+          manifestVersion,
+        ),
       };
     })
   );
   const minimapIconAssets = MAP_MECHANIC_MINIMAP_ICON_ASSETS.map(styleAwareArtToRequest);
+  const manifestDrivenArtAssets = getManifestDrivenArtAssets(
+    context,
+    manifestAssets,
+  ).map(styleAwareArtToRequest);
   const artAssets = usesGraphicsFallback
     ? minimapIconAssets
-    : [
-      ...GAMEPLAY_ART_ASSETS,
-      getGenericPlayerWalkSheetAsset(context.assetStyle),
-      ...getPlayerRuntimeArtAssets(skinId, context.assetStyle),
-      ...getPlayerSkillArtAssets(skinId),
-    ].map(styleAwareArtToRequest);
+    : manifestDrivenArtAssets;
 
   return {
     id: `run:${context.characterId}:${context.stageId}:${context.mapId}`,
@@ -346,6 +366,36 @@ export function buildRunLoadPlan(context: RunPreloadContext): AssetLoadPlan {
       ...getExternalRuntimeAssets(),
     ],
   };
+}
+
+export function parseArtManifestAssets(manifest: unknown): ArtManifestAsset[] {
+  const manifestValue = manifest as ArtManifest | undefined;
+
+  if (!manifestValue || !Array.isArray(manifestValue.assets)) {
+    return [];
+  }
+
+  return manifestValue.assets.filter((asset): asset is ArtManifestAsset => (
+    typeof asset === 'object'
+    && asset !== null
+    && typeof (asset as ArtManifestAsset).path === 'string'
+    && typeof (asset as ArtManifestAsset).key === 'string'
+    && ((asset as ArtManifestAsset).type === 'image' || (asset as ArtManifestAsset).type === 'spritesheet')
+    && typeof (asset as ArtManifestAsset).frameWidth === 'number'
+    && typeof (asset as ArtManifestAsset).frameHeight === 'number'
+    && typeof (asset as ArtManifestAsset).frames === 'number'
+    && (asset as ArtManifestAsset).frameWidth > 0
+    && (asset as ArtManifestAsset).frameHeight > 0
+    && (asset as ArtManifestAsset).frames > 0
+  ));
+}
+
+export function getArtManifestVersion(manifest: unknown): string | undefined {
+  const version = (manifest as ArtManifest | undefined)?.version;
+
+  return typeof version === 'string' && version.length > 0
+    ? version
+    : undefined;
 }
 
 export function getGenericPlayerWalkSheetAsset(
@@ -413,15 +463,66 @@ export function normalizeSkinId(skinId: string): PlayerArtSkinId {
 export function artToRequest(
   asset: ArtManifestAsset,
   assetStyle: DisplaySettingsData['assetStyle'] = 'newArt',
+  cacheVersion?: string,
 ): AssetRequest {
   const root = resolveArtStyleRoot(assetStyle);
-  const path = `${root}${asset.path}`;
+  const path = appendCacheVersion(`${root}${asset.path}`, cacheVersion);
 
   if (asset.type === 'spritesheet') {
     return spritesheet(asset.key, path, asset.frameWidth, asset.frameHeight, asset.frames - 1);
   }
 
   return image(asset.key, path);
+}
+
+function getManifestDrivenArtAssets(
+  context: RunPreloadContext,
+  manifestAssets: readonly ArtManifestAsset[] | undefined,
+): ArtManifestAsset[] {
+  if (manifestAssets && manifestAssets.length > 0) {
+    return mergeArtManifestAssets(manifestAssets);
+  }
+
+  const skinId = resolvePlayerSkinId(context.skinId, context.characterId);
+
+  return [
+    ...GAMEPLAY_ART_ASSETS,
+    getGenericPlayerWalkSheetAsset(context.assetStyle),
+    ...getPlayerRuntimeArtAssets(skinId, context.assetStyle),
+    ...getPlayerSkillArtAssets(skinId),
+  ];
+}
+
+function mergeArtManifestAssets(assets: readonly ArtManifestAsset[]): ArtManifestAsset[] {
+  const merged = new Map<string, ArtManifestAsset>();
+
+  for (const asset of assets) {
+    merged.set(asset.key, asset);
+  }
+
+  return Array.from(merged.values());
+}
+
+function createManifestAssetMap(
+  assets: readonly ArtManifestAsset[] | undefined,
+): Map<string, ArtManifestAsset> {
+  const assetMap = new Map<string, ArtManifestAsset>();
+
+  for (const asset of assets ?? []) {
+    assetMap.set(asset.key, asset);
+  }
+
+  return assetMap;
+}
+
+function appendCacheVersion(path: string, cacheVersion: string | undefined): string {
+  if (!cacheVersion) {
+    return path;
+  }
+
+  const separator = path.includes('?') ? '&' : '?';
+
+  return `${path}${separator}v=${encodeURIComponent(cacheVersion)}`;
 }
 
 export function externalArtToRequest(asset: ExternalArtAsset): AssetRequest | undefined {

@@ -1,11 +1,15 @@
 import Phaser from 'phaser';
 
 import {
+  ART_MANIFEST_CACHE_KEY,
   PLAYER_ART_DIRECTIONS,
   PLAYER_ART_SKIN_IDS,
   RunPreloadContext,
   buildRunLoadPlan,
+  getArtManifestVersion,
   getAnimationKeys,
+  parseArtManifestAssets,
+  resolveArtManifestPath,
   resolvePlayerSkinId,
 } from '../assets/AssetManifest';
 import { AssetLoadPlan } from '../assets/AssetLoadPlan';
@@ -38,7 +42,6 @@ export class RunPreloadScene extends Phaser.Scene {
   preload(): void {
     ExternalArtRegistry.loadManifest(this);
     this.context = this.resolveRunPreloadContext();
-    this.plan = buildRunLoadPlan(this.context);
     if (this.shouldForceRefreshPlayerRuntimeAssets()) {
       const resolvedSkinId = resolvePlayerSkinId(
         this.context?.skinId,
@@ -49,14 +52,17 @@ export class RunPreloadScene extends Phaser.Scene {
         resolvedSkinId,
       );
     }
-    queueLoadPlan(this, this.plan);
+    this.loadArtManifestBackedRunPlan();
   }
 
   create(): void {
     this.createBuiltInAnimations();
     this.createPlayerDirectionAnimations();
     this.createExternalArtAnimations();
-    this.scene.start('GameScene', this.gameSceneData);
+    this.scene.start('GameScene', {
+      ...(this.gameSceneData ?? {}),
+      runtimeAssetsReady: true,
+    });
   }
 
   private resolveRunPreloadContext(): RunPreloadContext {
@@ -102,6 +108,59 @@ export class RunPreloadScene extends Phaser.Scene {
 
   private shouldForceRefreshPlayerRuntimeAssets(): boolean {
     return this.context?.assetStyle === 'art001';
+  }
+
+  private loadArtManifestBackedRunPlan(): void {
+    if (!this.context) {
+      return;
+    }
+
+    const manifestPath = resolveArtManifestPath(this.context.assetStyle);
+    let queuedPlan = false;
+    const queueFallbackPlan = (): void => {
+      if (queuedPlan || !this.context) {
+        return;
+      }
+
+      queuedPlan = true;
+      this.plan = buildRunLoadPlan(this.context);
+      queueLoadPlan(this, this.plan);
+    };
+
+    const queueManifestPlan = (): void => {
+      if (queuedPlan || !this.context) {
+        return;
+      }
+
+      const manifest = this.cache.json.get(ART_MANIFEST_CACHE_KEY);
+      const manifestAssets = parseArtManifestAssets(manifest);
+
+      if (manifestAssets.length === 0) {
+        console.warn(`[art] Invalid or empty runtime art manifest: ${manifestPath}; using built-in art list.`);
+        queueFallbackPlan();
+        return;
+      }
+
+      queuedPlan = true;
+      this.plan = buildRunLoadPlan(
+        this.context,
+        manifestAssets,
+        getArtManifestVersion(manifest),
+      );
+      queueLoadPlan(this, this.plan);
+    };
+
+    this.cache.json.remove(ART_MANIFEST_CACHE_KEY);
+    this.load.once(`filecomplete-json-${ART_MANIFEST_CACHE_KEY}`, queueManifestPlan);
+    this.load.once('loaderror', (file: { key?: string }) => {
+      if (file.key !== ART_MANIFEST_CACHE_KEY) {
+        return;
+      }
+
+      console.warn(`[art] Runtime art manifest failed to load: ${manifestPath}; using built-in art list.`);
+      queueFallbackPlan();
+    });
+    this.load.json(ART_MANIFEST_CACHE_KEY, manifestPath);
   }
 
   private clearPlayerRuntimeAssets(skinId: string): void {

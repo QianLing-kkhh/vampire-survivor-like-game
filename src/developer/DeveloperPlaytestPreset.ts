@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 
 import { ContentBootstrap } from '../content/ContentBootstrap';
-import { ContentRegistry } from '../content/ContentRegistry';
 import { SelectionManager } from '../selection/SelectionManager';
 import { RANDOM_UNLOCKED_CHARACTER_ID, RANDOM_UNLOCKED_STAGE_ID } from '../selection/SelectionState';
 import { SettingsManager } from '../settings/SettingsManager';
@@ -19,16 +18,7 @@ export class DeveloperPlaytestPreset {
 
   static unlockAllPlayableContent(): void {
     ContentBootstrap.ensureInitialized();
-
-    ContentRegistry.listCharacters().forEach((character) => {
-      UnlockManager.unlock('character', character.id);
-    });
-    ContentRegistry.listStages().forEach((stage) => {
-      UnlockManager.unlock('stage', stage.id);
-    });
-    ContentRegistry.listMaps().forEach((map) => {
-      UnlockManager.unlock('map', map.id);
-    });
+    UnlockManager.enableTemporaryPlaytestUnlockAll();
   }
 
   static applyFullAutoTestSettings(): void {

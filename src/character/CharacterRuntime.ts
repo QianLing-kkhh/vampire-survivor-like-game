@@ -86,6 +86,18 @@ export class CharacterRuntime {
     );
   }
 
+  getTemporaryPickupRangeStatus(): {
+    active: boolean;
+    multiplier: number;
+    remainingMs: number;
+  } {
+    return {
+      active: this.temporaryPickupRangeRemainingMs > 0,
+      multiplier: this.temporaryPickupRangeMultiplier,
+      remainingMs: this.temporaryPickupRangeRemainingMs,
+    };
+  }
+
   applyTemporaryPickupRangeMultiplier(
     multiplier: number,
     durationMs: number,

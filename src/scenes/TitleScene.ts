@@ -9,6 +9,7 @@ import { ScreenManager } from '../responsive/ScreenManager';
 import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
+import { UnlockManager } from '../unlock/UnlockManager';
 import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { SettingsMenu } from '../ui/SettingsMenu';
@@ -37,12 +38,15 @@ export class TitleScene extends Phaser.Scene {
   private developerMenu?: DeveloperMenu;
   private screenManager?: ScreenManager;
   private unsubscribeResize?: () => void;
+  private cleaningUp = false;
 
   constructor() {
     super('TitleScene');
   }
 
   create(): void {
+    this.cleaningUp = false;
+    UnlockManager.clearTemporaryUnlocks();
     SettingsManager.clearVisualRestartRequired();
     PlaytestLogBuffer.clear();
     console.info('Playtest CSV buffer cleared on TitleScene entry.');
@@ -332,6 +336,9 @@ export class TitleScene extends Phaser.Scene {
     this.developerMenu = new DeveloperMenu(this, {
       onClose: () => {
         this.developerMenu = undefined;
+        if (this.cleaningUp || !this.scene.isActive()) {
+          return;
+        }
         this.refreshTexts();
       },
       onStartAutoTest: () => {
@@ -373,6 +380,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private cleanup(): void {
+    this.cleaningUp = true;
     this.autoStartTimer?.remove(false);
     this.autoStartTimer = undefined;
     this.unsubscribeResize?.();
@@ -383,7 +391,7 @@ export class TitleScene extends Phaser.Scene {
     this.helpOverlay = undefined;
     this.settingsMenu?.destroy();
     this.settingsMenu = undefined;
-    this.developerMenu?.destroy();
+    this.developerMenu?.destroy({ notifyClose: false });
     this.developerMenu = undefined;
   }
 

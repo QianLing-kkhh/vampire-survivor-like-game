@@ -16,6 +16,8 @@ import { RANDOM_UNLOCKED_STAGE_ID, StageManager } from '../stage/StageManager';
 import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { SelectionListPanel } from '../ui/SelectionListPanel';
 import { SettingsMenu } from '../ui/SettingsMenu';
+import { StatsBuildPanel } from '../ui/stats/StatsBuildPanel';
+import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
 import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
 interface ResultSceneData {
@@ -77,6 +79,7 @@ interface ResultSceneData {
   playtestCsv?: string;
   bufferedRunsCount?: number;
   unlockMessages?: string[];
+  statsBuildSnapshot?: StatsBuildSnapshot;
 }
 
 export class ResultScene extends Phaser.Scene {
@@ -97,6 +100,7 @@ export class ResultScene extends Phaser.Scene {
   private settingsMenu?: SettingsMenu;
   private developerMenu?: DeveloperMenu;
   private selectionPanel?: SelectionListPanel;
+  private statsBuildPanel?: StatsBuildPanel;
 
   constructor() {
     super('ResultScene');
@@ -234,6 +238,25 @@ export class ResultScene extends Phaser.Scene {
       this.showStageSelection();
     });
 
+    const statsBuildButton = this.add.text(centerX, 0, I18n.t('pause.statsBuild'), {
+      backgroundColor: toCssColor(UITheme.buttonBgColor),
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: layout.buttonLayout.fontSize,
+      padding: {
+        x: 12,
+        y: 8,
+      },
+    });
+    statsBuildButton.setOrigin(0.5);
+    statsBuildButton.setInteractive({ useHandCursor: true });
+    this.addButtonHover(statsBuildButton);
+    statsBuildButton.on('pointerdown', () => {
+      AudioManager.playUi(this, 'ui_click');
+      this.cancelAutoRestart();
+      this.showStatsBuildPanel();
+    });
+
     const restartButton = this.add.text(centerX, 0, I18n.t('result.restart'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
@@ -315,6 +338,7 @@ export class ResultScene extends Phaser.Scene {
     this.layoutButtons([
       selectCharacterButton,
       selectStageButton,
+      statsBuildButton,
       restartButton,
       titleButton,
       settingsButton,
@@ -588,6 +612,23 @@ export class ResultScene extends Phaser.Scene {
     });
   }
 
+  private showStatsBuildPanel(): void {
+    const snapshot = this.currentData?.statsBuildSnapshot;
+
+    if (!snapshot) {
+      return;
+    }
+
+    this.statsBuildPanel?.destroy();
+    this.statsBuildPanel = new StatsBuildPanel(this, {
+      snapshot,
+      onClose: () => {
+        this.statsBuildPanel?.destroy();
+        this.statsBuildPanel = undefined;
+      },
+    });
+  }
+
   private showCharacterSelection(): void {
     this.developerMenu?.destroy();
     this.developerMenu = undefined;
@@ -754,6 +795,8 @@ export class ResultScene extends Phaser.Scene {
     this.settingsMenu = undefined;
     this.developerMenu?.destroy();
     this.developerMenu = undefined;
+    this.statsBuildPanel?.destroy();
+    this.statsBuildPanel = undefined;
     this.closeSelectionPanel();
     this.screenManager?.dispose();
     this.screenManager = undefined;

@@ -27,18 +27,12 @@ export class AssetKeyResolver {
     characterId?: string,
   ): string | null {
     for (const candidateSkinId of AssetKeyResolver.getPlayerSkinCandidates(skinId, characterId)) {
-      const skinTextureKey = AssetKeyResolver.resolveTexture(
-        scene,
-        {
-          primary: `art_player_${candidateSkinId}_idle_down`,
-          fallbacks: [
-            `art_player_${candidateSkinId}_walk_down`,
-            `art_player_${candidateSkinId}_walk_sheet`,
-            `art_player_${candidateSkinId}_texture`,
-          ],
-        },
-        `player.${candidateSkinId}.texture`,
-      );
+      const skinTextureKey = AssetKeyResolver.getLoadedTextureKey(scene, [
+        `art_player_${candidateSkinId}_idle_down`,
+        `art_player_${candidateSkinId}_walk_down`,
+        `art_player_${candidateSkinId}_walk_sheet`,
+        `art_player_${candidateSkinId}_texture`,
+      ]);
 
       if (skinTextureKey) {
         return skinTextureKey;
@@ -356,6 +350,13 @@ export class AssetKeyResolver {
       ))
       .concat(resolvedSkinId, resolvedCharacterSkinId)
       .filter((candidate, index, candidates) => candidates.indexOf(candidate) === index);
+  }
+
+  private static getLoadedTextureKey(
+    scene: Phaser.Scene,
+    keys: readonly string[],
+  ): string | null {
+    return keys.find((key) => AssetFallbacks.hasTexture(scene, key)) ?? null;
   }
 
   private static getWorldTextureKey(scene: Phaser.Scene, key: string): string | null {

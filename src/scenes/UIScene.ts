@@ -8,7 +8,8 @@ import { HUD, HUDState } from '../ui/HUD';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { LevelUpPanel, LevelUpPanelConfig } from '../ui/LevelUpPanel';
 import { PauseMenu } from '../ui/PauseMenu';
-import { PauseMenuStatsData } from '../ui/PauseMenu';
+import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
+import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
 
 type LevelUpOptionsPayload = UpgradeOption[] | {
   options: UpgradeOption[];
@@ -86,7 +87,7 @@ export class UIScene extends Phaser.Scene {
     }, config);
   }
 
-  private showPauseMenu(statsData?: PauseMenuStatsData): void {
+  private showPauseMenu(statsData?: StatsBuildSnapshot): void {
     if (this.levelUpPanel) {
       return;
     }
@@ -113,28 +114,8 @@ export class UIScene extends Phaser.Scene {
     );
   }
 
-  private getEmptyPauseStatsData(): PauseMenuStatsData {
-    return {
-      character: {
-        currentHp: 0,
-        maxHp: 0,
-        moveSpeed: 0,
-        pickupRange: 0,
-        expMultiplier: 1,
-        level: 1,
-        currentExp: 0,
-        requiredExp: 1,
-        damageTaken: 0,
-        killCount: 0,
-        treasureOpenCount: 0,
-        bossPhaseDamageTaken: 0,
-        endlessMode: false,
-        endlessStarted: false,
-        endlessTimeSeconds: 0,
-      },
-      weapons: [],
-      passives: [],
-    };
+  private getEmptyPauseStatsData(): StatsBuildSnapshot {
+    return StatsBuildSnapshotBuilder.createEmpty();
   }
 
   private hidePauseMenu(): void {

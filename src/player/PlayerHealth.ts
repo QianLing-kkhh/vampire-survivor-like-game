@@ -108,6 +108,21 @@ export class PlayerHealth {
     );
   }
 
+  getStatusSnapshot(): {
+    invulnerableRemainingMs: number;
+    shieldStacks: number;
+    temporaryDamageTakenMultipliers: readonly { multiplier: number; remainingMs: number }[];
+  } {
+    return {
+      invulnerableRemainingMs: this.invulnerableRemainingMs,
+      shieldStacks: this.shieldStacks,
+      temporaryDamageTakenMultipliers: this.temporaryDamageTakenMultipliers.map((effect) => ({
+        multiplier: effect.multiplier,
+        remainingMs: effect.remainingMs,
+      })),
+    };
+  }
+
   setCurrentHp(value: number): void {
     this.hp = Math.min(Math.max(Math.round(value), 0), this.maximumHp);
     this.dead = this.hp <= 0;

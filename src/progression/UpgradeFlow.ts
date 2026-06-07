@@ -102,6 +102,10 @@ export class UpgradeFlow {
         && this.endlessRewardManager.getRewardOptions().length > 0);
   }
 
+  getEndlessRewardManager(): EndlessRewardManager {
+    return this.endlessRewardManager;
+  }
+
   chooseAutoUpgrade(options: readonly UpgradeOption[]): UpgradeOption | null {
     return this.params.autoUpgradeSelector.select(
       options,

@@ -11,29 +11,11 @@ import { WeaponDetailInfo } from '../weapon/WeaponManager';
 import { DeveloperMenu } from './DeveloperMenu';
 import { HelpOverlay } from './HelpOverlay';
 import { SettingsMenu } from './SettingsMenu';
+import { StatsBuildPanel } from './stats/StatsBuildPanel';
+import { StatsBuildSnapshot } from './stats/StatsBuildSnapshot';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
-export interface PauseMenuStatsData {
-  character: {
-    currentHp: number;
-    maxHp: number;
-    moveSpeed: number;
-    pickupRange: number;
-    expMultiplier: number;
-    level: number;
-    currentExp: number;
-    requiredExp: number;
-    damageTaken: number;
-    killCount: number;
-    treasureOpenCount: number;
-    bossPhaseDamageTaken: number;
-    endlessMode: boolean;
-    endlessStarted: boolean;
-    endlessTimeSeconds: number;
-  };
-  weapons: WeaponDetailInfo[];
-  passives: PassiveDetailInfo[];
-}
+export type PauseMenuStatsData = StatsBuildSnapshot;
 
 type MenuPage = 'main' | 'stats';
 
@@ -48,6 +30,7 @@ export class PauseMenu {
   private helpOverlay?: HelpOverlay;
   private settingsMenu?: SettingsMenu;
   private developerMenu?: DeveloperMenu;
+  private statsBuildPanel?: StatsBuildPanel;
   private page: MenuPage = 'main';
 
   constructor(
@@ -108,6 +91,8 @@ export class PauseMenu {
     this.settingsMenu = undefined;
     this.developerMenu?.destroy();
     this.developerMenu = undefined;
+    this.statsBuildPanel?.destroy();
+    this.statsBuildPanel = undefined;
     this.clearPageItems();
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
@@ -125,7 +110,7 @@ export class PauseMenu {
       { label: I18n.t('pause.returnToTitle'), action: this.onBackToTitle },
       {
         label: I18n.t('pause.statsBuild'),
-        action: () => this.renderStatsPage(),
+        action: () => this.showStatsBuildPanel(),
       },
       {
         label: I18n.t('pause.settings'),
@@ -148,59 +133,15 @@ export class PauseMenu {
     this.applyLayout();
   }
 
-  private renderStatsPage(): void {
-    this.page = 'stats';
-    this.clearPageItems();
-    this.title.setText(I18n.t('pause.statsBuild'));
-    this.addSectionTitle(I18n.t('pause.characterStats'));
-    this.addStatRow(I18n.t('pause.hp'), `${this.formatInteger(this.statsData.character.currentHp)} / ${this.formatInteger(this.statsData.character.maxHp)}`, 'hp_icon');
-    this.addStatRow(I18n.t('pause.moveSpeed'), this.statsData.character.moveSpeed.toFixed(1));
-    this.addStatRow(I18n.t('pause.pickupRange'), this.statsData.character.pickupRange.toFixed(1));
-    this.addStatRow(I18n.t('pause.expMultiplier'), this.statsData.character.expMultiplier.toFixed(2), 'exp_icon');
-    this.addStatRow(I18n.t('pause.level'), `${this.statsData.character.level}`, 'exp_icon');
-    this.addStatRow(I18n.t('pause.exp'), `${Math.floor(this.statsData.character.currentExp)} / ${Math.floor(this.statsData.character.requiredExp)}`, 'exp_icon');
-    this.addStatRow(I18n.t('pause.damageTaken'), this.formatInteger(this.statsData.character.damageTaken));
-    this.addStatRow(I18n.t('pause.killCount'), `${this.statsData.character.killCount}`);
-    this.addStatRow(I18n.t('pause.treasureOpens'), `${this.statsData.character.treasureOpenCount}`);
-    this.addStatRow(I18n.t('pause.bossPhaseDamage'), this.formatInteger(this.statsData.character.bossPhaseDamageTaken));
-
-    if (this.statsData.character.endlessMode || this.statsData.character.endlessStarted) {
-      this.addStatRow(I18n.t('pause.endlessTime'), this.formatTime(this.statsData.character.endlessTimeSeconds), 'time_icon');
-      const shield = EndlessRewardManager.getGlobalShieldStatus();
-
-      this.addStatRow(I18n.t('pause.shieldStacks'), `${shield.stacks} / ${shield.maxStacks}`);
-      this.addStatRow(I18n.t('pause.shieldConsumed'), `${shield.consumed}`);
-      this.addStatRow(I18n.t('pause.shieldAbsorbed'), this.formatInteger(shield.absorbedDamage));
-    }
-
-    this.addSectionTitle(I18n.t('pause.weapons'));
-    for (const weapon of this.statsData.weapons.slice(0, 4)) {
-      this.addWeaponBlock(weapon);
-    }
-
-    if (this.statsData.weapons.length > 4) {
-      this.addMutedText(
-        I18n.t('pause.moreItems', {
-          count: this.statsData.weapons.length - 4,
-        }),
-      );
-    }
-
-    this.addSectionTitle(I18n.t('pause.passives'));
-    for (const passive of this.statsData.passives.slice(0, 5)) {
-      this.addPassiveBlock(passive);
-    }
-
-    if (this.statsData.passives.length > 5) {
-      this.addMutedText(
-        I18n.t('pause.moreItems', {
-          count: this.statsData.passives.length - 5,
-        }),
-      );
-    }
-
-    this.pageItems.push(this.createButton(I18n.t('common.back'), () => this.renderMainPage()));
-    this.applyLayout();
+  private showStatsBuildPanel(): void {
+    this.statsBuildPanel?.destroy();
+    this.statsBuildPanel = new StatsBuildPanel(this.scene, {
+      snapshot: this.statsData,
+      onClose: () => {
+        this.statsBuildPanel?.destroy();
+        this.statsBuildPanel = undefined;
+      },
+    });
   }
 
   private addWeaponBlock(weapon: WeaponDetailInfo): void {

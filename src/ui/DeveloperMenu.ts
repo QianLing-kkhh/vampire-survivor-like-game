@@ -4,6 +4,7 @@ import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { SaveManager } from '../save/SaveManager';
 import { SettingsManager } from '../settings/SettingsManager';
 
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
@@ -40,6 +41,7 @@ export class DeveloperMenu {
   private readonly rows: Phaser.GameObjects.Text[] = [];
   private selectedTab: DeveloperTabId = 'automation';
   private unsubscribeResize?: () => void;
+  private destroyed = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -68,11 +70,18 @@ export class DeveloperMenu {
     this.unsubscribeResize = this.screenManager.onResize(() => this.applyLayout());
   }
 
-  destroy(): void {
+  destroy(options: { notifyClose?: boolean } = {}): void {
+    if (this.destroyed) {
+      return;
+    }
+
+    this.destroyed = true;
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
     this.screenManager.dispose();
-    this.config.onClose?.();
+    if (options.notifyClose !== false) {
+      this.config.onClose?.();
+    }
     this.container.destroy(true);
   }
 
@@ -106,6 +115,9 @@ export class DeveloperMenu {
     for (const row of this.getRows()) {
       const text = this.createTextButton(this.formatRowLabel(row), () => {
         row.onClick();
+        if (this.destroyed || !this.scene.scene.isActive()) {
+          return;
+        }
         this.renderRows();
         this.applyLayout();
       });
@@ -192,6 +204,12 @@ export class DeveloperMenu {
       this.toggleRow('debugPanelCompact', I18n.t('settings.debugPanelCompact'), developer.debugPanelCompact, () => {
         SettingsManager.updateDeveloper({ debugPanelCompact: !SettingsManager.getDeveloper().debugPanelCompact });
       }),
+      {
+        id: 'resetProgressionDefaults',
+        label: I18n.t('developer.resetProgressionDefaults'),
+        kind: 'button',
+        onClick: () => SaveManager.resetProgressionUnlocksToDefaults(),
+      },
       {
         id: 'debugPanelOpacity',
         label: `${I18n.t('settings.debugPanelOpacity')} ${Math.round(developer.debugPanelOpacity * 100)}%`,

@@ -60,7 +60,8 @@ import { RunStats } from '../stats/RunStats';
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { HUDStateBuilder } from '../ui/HUDStateBuilder';
-import { PauseMenuStatsData } from '../ui/PauseMenu';
+import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
+import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
 import { I18n } from '../i18n/I18n';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { WorldRenderConfig } from '../world/WorldConfig';
@@ -70,6 +71,10 @@ import {
   MapVisibilityRendererLightSource,
 } from '../world/MapVisibilityRenderer';
 
+type GameSceneData = {
+  runtimeAssetsReady?: boolean;
+};
+
 export class GameScene extends Phaser.Scene {
   private static readonly PLAYER_HIT_RADIUS = 28;
   private static readonly CONTACT_DAMAGE_COOLDOWN_MS = 1000;
@@ -77,6 +82,10 @@ export class GameScene extends Phaser.Scene {
   private static readonly BOSS_DASH_IMPACT_RADIUS = 140;
   private static readonly BOSS_DASH_IMPACT_DAMAGE = 30;
   private static readonly BOSS_DASH_KNOCKBACK_DISTANCE = 120;
+  private static readonly CRITICAL_RUNTIME_TEXTURE_KEYS = [
+    'art_world_ruins_ground_tile',
+    'art_world_ground_tile',
+  ] as const;
 
   private eventBus = new EventBus<GameEventMap>();
   private readonly autoPlayer = new AutoPlayer();
@@ -86,6 +95,7 @@ export class GameScene extends Phaser.Scene {
   private readonly gameplayUpdater = new GameplayUpdater();
   private readonly debugDataCollector = new DebugDataCollector();
   private readonly hudStateBuilder = new HUDStateBuilder();
+  private readonly statsBuildSnapshotBuilder = new StatsBuildSnapshotBuilder();
   private readonly relicRewardSelector = new RelicRewardSelector();
   private readonly stageManager = new StageManager();
   private readonly mapManager = new MapManager();
@@ -164,7 +174,17 @@ export class GameScene extends Phaser.Scene {
     };
   }
 
-  create(): void {
+  create(data: GameSceneData = {}): void {
+    if (this.shouldRedirectToRunPreload(data)) {
+      console.warn('[game-scene] Runtime art assets are not ready; redirecting through RunPreloadScene.');
+      this.scene.start('RunPreloadScene', data);
+      return;
+    }
+
+    if (data.runtimeAssetsReady && !this.hasCriticalRuntimeTextures()) {
+      console.warn('[game-scene] Runtime art assets were marked ready, but critical world textures are missing.');
+    }
+
     SettingsManager.clearVisualRestartRequired();
     this.enemies = [];
     this.contactDamageCooldowns.clear();
@@ -429,6 +449,23 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-F3', this.toggleDebugPanel, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
+  }
+
+  private shouldRedirectToRunPreload(data: GameSceneData): boolean {
+    return data.runtimeAssetsReady !== true
+      && this.shouldExpectRuntimeTextures()
+      && !this.hasCriticalRuntimeTextures();
+  }
+
+  private shouldExpectRuntimeTextures(): boolean {
+    const display = SettingsManager.getDisplay();
+
+    return display.assetStyle !== 'graphics'
+      && display.displayQuality !== 'minimal';
+  }
+
+  private hasCriticalRuntimeTextures(): boolean {
+    return GameScene.CRITICAL_RUNTIME_TEXTURE_KEYS.every((key) => this.textures.exists(key));
   }
 
   update(_time: number, delta: number): void {
@@ -1090,12 +1127,14 @@ export class GameScene extends Phaser.Scene {
         bossKillTime: this.gameplayContext?.bossController.getBossKillTime() ?? 0,
       },
     });
+    const statsBuildSnapshot = this.buildStatsBuildSnapshot();
 
     this.cleanup();
     this.scene.stop('UIScene');
     this.scene.start('ResultScene', {
       ...resultData,
       unlockMessages: unlockResult.messages,
+      statsBuildSnapshot,
     });
   }
 
@@ -1240,45 +1279,35 @@ export class GameScene extends Phaser.Scene {
       gameTimeSeconds: this.timeManager.gameTimeSeconds,
       runId: this.runId,
     });
-    this.scene.get('UIScene').events.emit('ShowPauseMenu', this.buildPauseMenuStatsData());
+    this.scene.get('UIScene').events.emit('ShowPauseMenu', this.buildStatsBuildSnapshot());
   }
 
-  private buildPauseMenuStatsData(): PauseMenuStatsData {
-    const runStatsSummary = this.runStats.getSummary();
+  private buildStatsBuildSnapshot(): StatsBuildSnapshot {
+    const playerBody = this.player?.body;
+    const playerSlowState = playerBody && this.gameplayContext
+      ? this.gameplayContext.mapMechanicRuntime.getPlayerSlowState(playerBody.x, playerBody.y)
+      : undefined;
 
-    return {
-      character: {
-        currentHp: this.playerHealth?.currentHp ?? 0,
-        maxHp: this.playerHealth?.maxHp ?? this.playerStats?.maxHp ?? 0,
-        moveSpeed: this.playerStats?.moveSpeed ?? 0,
-        pickupRange: this.playerStats?.pickupRange ?? 0,
-        expMultiplier: 1,
-        level: this.levelManager?.currentLevel ?? 1,
-        currentExp: this.expManager?.currentExp ?? 0,
-        requiredExp: this.levelManager?.requiredExp ?? 1,
-        damageTaken: runStatsSummary.damageTaken,
-        killCount: this.runState.killCount,
-        treasureOpenCount: this.runState.treasureOpenCount,
-        bossPhaseDamageTaken: this.runState.bossPhaseDamageTaken,
-        endlessMode: this.playtestSettings.endlessMode,
-        endlessStarted: this.runState.endlessStarted,
-        endlessTimeSeconds: this.runState.endlessSurvivalTime,
-      },
-      weapons: this.weaponManager?.getWeaponDetailInfo({
-        getPassiveLevel: (passiveId) => this.passiveManager?.getPassiveLevel(passiveId) ?? 0,
-        getPassiveName: (passiveId) => this.passiveManager?.getPassiveName(passiveId) ?? passiveId,
-        getRequiredPassiveForWeapon: (weaponId) => (
-          this.evolutionManager?.getRequiredPassiveForWeapon(weaponId)
-        ),
-      }) ?? [],
-      passives: this.passiveManager?.getPassiveDetailInfo({
-        getRelatedWeaponIds: (passiveId) => (
-          this.evolutionManager?.getWeaponsForPassive(passiveId)
-            .map((rule) => this.weaponManager?.getUpgradeTargetWeaponId(rule.baseWeaponId)
-              ?? rule.baseWeaponId) ?? []
-        ),
-      }) ?? [],
-    };
+    return this.statsBuildSnapshotBuilder.build({
+      timeSeconds: this.timeManager.gameTimeSeconds,
+      runState: this.runState,
+      runStatsSummary: this.runStats.getSummary(),
+      playtestSettings: this.playtestSettings,
+      playerHealth: this.playerHealth,
+      playerStats: this.playerStats,
+      levelManager: this.levelManager,
+      expManager: this.expManager,
+      weaponManager: this.weaponManager,
+      passiveManager: this.passiveManager,
+      evolutionManager: this.evolutionManager,
+      relicManager: this.gameplayContext?.relicManager,
+      endlessRewardManager: this.upgradeFlow?.getEndlessRewardManager(),
+      characterRuntime: this.gameplayContext?.characterRuntime,
+      playerMapSlow: playerSlowState ? {
+        slowed: playerSlowState.isSlowed,
+        multiplier: playerSlowState.multiplier,
+      } : undefined,
+    });
   }
 
   private createOrientationOverlay(): void {

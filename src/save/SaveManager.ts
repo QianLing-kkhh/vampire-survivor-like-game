@@ -113,6 +113,38 @@ export class SaveManager {
     return this.reset();
   }
 
+  static resetProgressionUnlocksToDefaults(): SaveData {
+    const currentSave = this.saveData ?? this.load();
+    const defaultProgression = createDefaultSaveData().progression;
+    const defaultSelections = createDefaultSaveData().selections;
+    const nextSave: SaveData = {
+      ...currentSave,
+      progression: {
+        ...currentSave.progression,
+        unlockedCharacterIds: [...defaultProgression.unlockedCharacterIds],
+        unlockedStageIds: [...defaultProgression.unlockedStageIds],
+        unlockedMapIds: [...defaultProgression.unlockedMapIds],
+        unlockedThemeIds: [...defaultProgression.unlockedThemeIds],
+        unlockedDifficultyIds: [...defaultProgression.unlockedDifficultyIds],
+        unlocks: { ...defaultProgression.unlocks },
+      },
+      selections: {
+        ...currentSave.selections,
+        selectedCharacterId: defaultSelections.selectedCharacterId,
+        selectedStageId: defaultSelections.selectedStageId,
+        selectedMapId: defaultSelections.selectedMapId,
+        selectedDifficultyId: defaultSelections.selectedDifficultyId,
+        selectedCustomStageId: undefined,
+        selectedChallengeId: undefined,
+      },
+    };
+
+    this.saveData = nextSave;
+    this.save();
+    this.notify();
+    return this.get();
+  }
+
   static exportSave(): string {
     return JSON.stringify(createSaveExportPackage(this.get()), null, 2);
   }

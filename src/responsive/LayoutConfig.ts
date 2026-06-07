@@ -600,8 +600,9 @@ export class LayoutConfig {
     const safe = SafeArea.getInsets(screen);
     const portrait = screen.isPortrait();
     const metrics = getButtonMetrics(screen.width, screen.height);
+    const resultButtonCount = 7;
     const buttonMode: ButtonLayoutMode = portrait ? 'vertical' : 'twoColumn';
-    const buttonRows = portrait ? 5 : 3;
+    const buttonRows = portrait ? resultButtonCount : Math.ceil(resultButtonCount / 2);
     const buttonAreaHeight = buttonRows * metrics.height + (buttonRows - 1) * 8;
     const buttonArea = {
       x: safe.left,
@@ -627,7 +628,7 @@ export class LayoutConfig {
     };
     const buttonLayout = LayoutConfig.getButtonListLayout({
       screen,
-      count: 5,
+      count: resultButtonCount,
       startY: buttonArea.y + metrics.height / 2,
       buttonWidth: metrics.width,
       buttonHeight: metrics.height,
