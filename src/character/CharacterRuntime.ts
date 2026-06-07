@@ -1,5 +1,6 @@
 import {
   CharacterDamageReactionContext,
+  CharacterDamageReactionCooldownStatus,
   CharacterDamageReactionSkill,
   CharacterDamageReactionType,
 } from './CharacterDamageReactionSkill';
@@ -73,6 +74,10 @@ export class CharacterRuntime {
 
   isDamageInvulnerable(nowMs: number): boolean {
     return this.damageReactionSkill.isInvulnerable(nowMs);
+  }
+
+  getDamageReactionCooldownStatus(nowMs: number): CharacterDamageReactionCooldownStatus {
+    return this.damageReactionSkill.getCooldownStatus(nowMs);
   }
 
   getEnemySpeedMultiplierAt(x: number, y: number): number {

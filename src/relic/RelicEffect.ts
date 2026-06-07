@@ -59,6 +59,36 @@ export interface TimedSlowPulseRelicEffectConfig extends BaseRelicEffectConfig {
   durationMs: number;
 }
 
+export interface BossKillDamageBurstRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'bossKillDamageBurst';
+  value: number;
+  durationMs: number;
+}
+
+export interface ChestOpenPickupRangeRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'chestOpenPickupRangeBoost';
+  value: number;
+  durationMs: number;
+}
+
+export interface DamageTakenCooldownGuardRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'damageTakenCooldownGuard';
+  value: number;
+  durationMs: number;
+  cooldownMs: number;
+}
+
+export interface LevelUpHealRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'levelUpHeal';
+  value: number;
+}
+
+export interface TreasureOpenBonusRelicEffectConfig extends BaseRelicEffectConfig {
+  type: 'treasureOpenBonus';
+  triggerCount: number;
+  bonusMultiplier: number;
+}
+
 export type RelicEffectConfig =
   | TreasureRateRelicEffectConfig
   | WeaponTagDamageRelicEffectConfig
@@ -69,6 +99,11 @@ export type RelicEffectConfig =
   | TreasureScoreRelicEffectConfig
   | DamageTakenCounterRelicEffectConfig
   | TimedSlowPulseRelicEffectConfig
+  | BossKillDamageBurstRelicEffectConfig
+  | ChestOpenPickupRangeRelicEffectConfig
+  | DamageTakenCooldownGuardRelicEffectConfig
+  | LevelUpHealRelicEffectConfig
+  | TreasureOpenBonusRelicEffectConfig
   | BaseRelicEffectConfig;
 
 export interface RelicEffect {

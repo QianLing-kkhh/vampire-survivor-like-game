@@ -6,7 +6,7 @@ import { PlayerCombatModifierSnapshot } from '../player/PlayerStats';
 import { RunStats } from '../stats/RunStats';
 
 import { DamageCalculator } from '../combat/DamageCalculator';
-import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
+import { Weapon, WeaponConfig, WeaponCooldownStatus, WeaponUpdateContext } from './Weapon';
 import { WeaponFactory } from './WeaponFactory';
 import { WeaponTag } from './tags/WeaponTag';
 
@@ -50,6 +50,8 @@ export interface WeaponBuildHudInfo {
   passiveIconKey?: string;
   passiveLevel?: number;
   passiveLevelMax?: number;
+  cooldown?: WeaponCooldownStatus;
+  showCooldownInHud?: boolean;
 }
 
 export interface WeaponDetailInfo {
@@ -294,6 +296,8 @@ export class WeaponManager {
         passiveLevelMax: evolutionRule
           ? params.getPassiveMaxLevel(evolutionRule.requiredPassiveId)
           : undefined,
+        cooldown: weapon.getCooldownStatus(),
+        showCooldownInHud: weapon.shouldShowCooldownInHud(),
       };
     });
   }

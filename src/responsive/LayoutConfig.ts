@@ -6,6 +6,9 @@ import { ScreenManager } from './ScreenManager';
 
 export type HudLayout = {
   statsPosition: Phaser.Math.Vector2;
+  characterPortraitPosition: Phaser.Math.Vector2;
+  characterPortraitSize: number;
+  statsContentOffsetY: number;
   weaponsPosition: Phaser.Math.Vector2;
   passivesPosition: Phaser.Math.Vector2;
   minimapPosition: Phaser.Math.Vector2;
@@ -333,7 +336,9 @@ export class LayoutConfig {
     const minimapWidth = portrait ? 96 : 150;
     const minimapHeight = portrait ? 76 : 104;
     const barWidth = Math.min(portrait ? screen.width * 0.54 : 230, 250);
-    const statsHeight = portrait ? 236 : 224;
+    const portraitSize = portrait ? 48 : 56;
+    const statsContentOffsetY = portraitSize + 12;
+    const statsHeight = (portrait ? 236 : 224) + statsContentOffsetY;
     const buildRowHeight = 64;
     const pauseWidth = portrait ? 48 : 92;
     const pauseHeight = portrait ? 48 : 40;
@@ -484,6 +489,12 @@ export class LayoutConfig {
 
     return {
       statsPosition: new Phaser.Math.Vector2(statsRect.x, statsRect.y),
+      characterPortraitPosition: new Phaser.Math.Vector2(
+        statsRect.x + portraitSize / 2,
+        statsRect.y + portraitSize / 2,
+      ),
+      characterPortraitSize: portraitSize,
+      statsContentOffsetY,
       weaponsPosition: new Phaser.Math.Vector2(buildListRect.x, buildListRect.y),
       passivesPosition: new Phaser.Math.Vector2(
         buildListRect.x,

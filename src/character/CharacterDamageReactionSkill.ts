@@ -68,12 +68,19 @@ export interface CharacterDamageReactionContext {
   showPlayerHeal?: (healAmount: number) => void;
 }
 
+export interface CharacterDamageReactionCooldownStatus {
+  remainingMs: number;
+  totalMs: number;
+  ready: boolean;
+}
+
 export interface CharacterDamageReactionSkill {
   readonly type: CharacterDamageReactionType;
   tryTrigger(context: CharacterDamageReactionContext): boolean;
   tryTriggerLevelUpPulse(context: CharacterDamageReactionContext): boolean;
   update(deltaMs: number, player: PlayerController): void;
   isInvulnerable(nowMs: number): boolean;
+  getCooldownStatus(nowMs: number): CharacterDamageReactionCooldownStatus;
   getEnemySpeedMultiplierAt(x: number, y: number): number;
   getPickupRangeMultiplier(): number;
   getMapMoveSpeedFloorMultiplier(): number;
@@ -96,6 +103,14 @@ export class NoneCharacterDamageReactionSkill implements CharacterDamageReaction
 
   isInvulnerable(): boolean {
     return false;
+  }
+
+  getCooldownStatus(): CharacterDamageReactionCooldownStatus {
+    return {
+      remainingMs: 0,
+      totalMs: 0,
+      ready: true,
+    };
   }
 
   getEnemySpeedMultiplierAt(_x: number, _y: number): number {
@@ -141,6 +156,17 @@ abstract class BaseCharacterDamageReactionSkill implements CharacterDamageReacti
 
   isInvulnerable(nowMs: number): boolean {
     return nowMs < this.invulnerableUntilMs;
+  }
+
+  getCooldownStatus(nowMs: number): CharacterDamageReactionCooldownStatus {
+    const totalMs = Math.max(0, this.config.cooldownMs ?? 0);
+    const remainingMs = Math.max(0, this.nextReadyAtMs - nowMs);
+
+    return {
+      remainingMs,
+      totalMs,
+      ready: remainingMs <= 0,
+    };
   }
 
   tryTriggerLevelUpPulse(_context: CharacterDamageReactionContext): boolean {

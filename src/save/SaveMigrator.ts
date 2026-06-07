@@ -511,11 +511,21 @@ export class SaveMigrator {
       || this.isObject(rawSettings.developer)
     ) {
       const display = rawSettings.display as Partial<SaveData['settings']['display']> | undefined;
+      const gameplay = this.isObject(rawSettings.gameplay)
+        ? rawSettings.gameplay as Partial<SaveData['settings']['gameplay']>
+        : undefined;
+      const migratedShowDamageNumbers = gameplay?.showDamageNumbers === undefined
+        ? display?.showDamageNumbers
+        : gameplay.showDamageNumbers;
 
       return {
         gameplay: {
           ...DEFAULT_GAMEPLAY_SETTINGS,
-          ...(this.isObject(rawSettings.gameplay) ? rawSettings.gameplay : {}),
+          ...(gameplay ?? {}),
+          showDetailedCooldownTime: Boolean(gameplay?.showDetailedCooldownTime),
+          showDamageNumbers: migratedShowDamageNumbers === undefined
+            ? DEFAULT_GAMEPLAY_SETTINGS.showDamageNumbers
+            : Boolean(migratedShowDamageNumbers),
         },
         audio: {
           ...DEFAULT_AUDIO_SETTINGS,
@@ -565,6 +575,10 @@ export class SaveMigrator {
         autoOpenTreasure,
         fastMode: Boolean(rawSettings.fastMode),
         endlessMode: Boolean(rawSettings.endlessMode),
+        showDetailedCooldownTime: false,
+        showDamageNumbers: rawSettings.showDamageNumbers === undefined
+          ? DEFAULT_GAMEPLAY_SETTINGS.showDamageNumbers
+          : Boolean(rawSettings.showDamageNumbers),
         autoTimeScale: this.readNumber(rawSettings.autoTimeScale, DEFAULT_GAMEPLAY_SETTINGS.autoTimeScale),
       },
       audio: {

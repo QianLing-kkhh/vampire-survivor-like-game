@@ -507,6 +507,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.updatePlayerPickupRangeFromStats();
+
       this.gameplayUpdater.update(this.gameplayContext, {
         deltaMs: delta,
         isLevelUpSelectionActive: this.isLevelUpSelectionActive,
@@ -760,6 +762,7 @@ export class GameScene extends Phaser.Scene {
       currentMap: this.currentMap,
       enemies: this.enemies,
       player: this.player,
+      characterRuntime: this.gameplayContext?.characterRuntime,
       playerHealth: this.playerHealth,
       playerStats: this.playerStats,
       levelManager: this.levelManager,
@@ -771,6 +774,7 @@ export class GameScene extends Phaser.Scene {
       runState: this.runState,
       playtestSettings: this.playtestSettings,
       timeSeconds: this.timeManager.gameTimeSeconds,
+      nowMs: this.time.now,
       hudMessage: this.getHUDMessage(),
       evolutionCandidateStats: this.getEvolutionCandidateStats(),
       worldWidth: this.worldWidth,
@@ -1474,7 +1478,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private shouldShowDamageNumbers(): boolean {
-    return SettingsManager.getDisplay().showDamageNumbers;
+    return SettingsManager.getGameplay().showDamageNumbers;
   }
 
   private getUpgradeSelectionContext(): UpgradeSelectionContext {

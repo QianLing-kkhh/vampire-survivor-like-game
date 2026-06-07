@@ -923,6 +923,14 @@ export class SettingsMenu {
     const gameplay = SettingsManager.getGameplay();
 
     return [
+      this.toggleRow('showDetailedCooldownTime', this.t('settings.showDetailedCooldownTime', 'Detailed CD Time'), gameplay.showDetailedCooldownTime, () => {
+        SettingsManager.updateGameplay({
+          showDetailedCooldownTime: !SettingsManager.getGameplay().showDetailedCooldownTime,
+        });
+      }),
+      this.toggleRow('damageNumbers', this.t('settings.damageNumbers', 'Damage Numbers'), gameplay.showDamageNumbers, () => {
+        SettingsManager.updateGameplay({ showDamageNumbers: !SettingsManager.getGameplay().showDamageNumbers });
+      }),
       this.toggleRow('endlessMode', this.t('settings.endlessMode', 'Endless Mode'), gameplay.endlessMode, () => {
         SettingsManager.updateGameplay({ endlessMode: !SettingsManager.getGameplay().endlessMode });
       }),
@@ -1029,9 +1037,6 @@ export class SettingsMenu {
       },
       this.toggleRow('minimap', this.t('settings.minimap', 'Minimap'), display.showMinimap, () => {
         SettingsManager.updateDisplay({ showMinimap: !SettingsManager.getDisplay().showMinimap });
-      }),
-      this.toggleRow('damageNumbers', this.t('settings.damageNumbers', 'Damage Numbers'), display.showDamageNumbers, () => {
-        SettingsManager.updateDisplay({ showDamageNumbers: !SettingsManager.getDisplay().showDamageNumbers });
       }),
       this.toggleRow('shadows', this.t('settings.shadows', 'Shadows'), display.shadowsEnabled, () => {
         SettingsManager.updateDisplay({ shadowsEnabled: !SettingsManager.getDisplay().shadowsEnabled });

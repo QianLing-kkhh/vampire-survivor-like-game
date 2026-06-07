@@ -46,6 +46,12 @@ export interface WeaponUpdateContext {
   ) => boolean;
 }
 
+export interface WeaponCooldownStatus {
+  remainingMs: number;
+  totalMs: number;
+  ready: boolean;
+}
+
 export abstract class Weapon {
   private elapsedCooldownMs = 0;
   private totalDamage = 0;
@@ -115,6 +121,26 @@ export abstract class Weapon {
 
   get totalDamageDealt(): number {
     return this.totalDamage;
+  }
+
+  getCooldownStatus(): WeaponCooldownStatus {
+    const totalMs = Math.max(0, this.cooldownMs);
+    const remainingMs = Math.max(0, totalMs - this.elapsedCooldownMs);
+
+    return {
+      remainingMs,
+      totalMs,
+      ready: remainingMs <= 0,
+    };
+  }
+
+  shouldShowCooldownInHud(): boolean {
+    const behaviorType = this.config.behavior?.type;
+
+    return this.config.type !== 'aura'
+      && this.config.type !== 'orbit'
+      && behaviorType !== 'aura'
+      && behaviorType !== 'orbit';
   }
 
   protected createHitResult(enemy?: Enemy): HitResult {

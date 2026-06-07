@@ -84,5 +84,90 @@
         "value": 0.65
       }
     ]
+  },
+  "berserker_charm": {
+    "id": "berserker_charm",
+    "name": "Berserker Charm",
+    "description": "After killing a boss, gain short burst damage for a while.",
+    "nameKey": "relic.berserkerCharm.name",
+    "descriptionKey": "relic.berserkerCharm.description",
+    "rarity": "rare",
+    "enabled": true,
+    "tags": ["damage", "boss"],
+    "effects": [
+      {
+        "type": "bossKillDamageBurst",
+        "value": 0.2,
+        "durationMs": 12000
+      }
+    ]
+  },
+  "magnet_pearl": {
+    "id": "magnet_pearl",
+    "name": "Magnet Pearl",
+    "description": "Opening a treasure boosts pickup range for a short time.",
+    "nameKey": "relic.magnetPearl.name",
+    "descriptionKey": "relic.magnetPearl.description",
+    "rarity": "common",
+    "enabled": true,
+    "tags": ["resource", "pickup", "temporary"],
+    "effects": [
+      {
+        "type": "chestOpenPickupRangeBoost",
+        "value": 0.35,
+        "durationMs": 10000
+      }
+    ]
+  },
+  "iron_shell": {
+    "id": "iron_shell",
+    "name": "Iron Shell",
+    "description": "After taking damage, reduce incoming damage for a short period with cooldown.",
+    "nameKey": "relic.ironShell.name",
+    "descriptionKey": "relic.ironShell.description",
+    "rarity": "epic",
+    "enabled": true,
+    "tags": ["defense", "mitigation", "cooldown"],
+    "effects": [
+      {
+        "type": "damageTakenCooldownGuard",
+        "value": 0.7,
+        "durationMs": 5000,
+        "cooldownMs": 3000
+      }
+    ]
+  },
+  "scholar_candle": {
+    "id": "scholar_candle",
+    "name": "Scholar Candle",
+    "description": "Leveling up restores a small amount of health.",
+    "nameKey": "relic.scholarCandle.name",
+    "descriptionKey": "relic.scholarCandle.description",
+    "rarity": "common",
+    "enabled": true,
+    "tags": ["defense", "heal", "levelUp"],
+    "effects": [
+      {
+        "type": "levelUpHeal",
+        "value": 0.12
+      }
+    ]
+  },
+  "rift_coin": {
+    "id": "rift_coin",
+    "name": "Rift Coin",
+    "description": "Every 3 treasures opened grants extra treasure score.",
+    "nameKey": "relic.riftCoin.name",
+    "descriptionKey": "relic.riftCoin.description",
+    "rarity": "rare",
+    "enabled": true,
+    "tags": ["treasure", "score", "progression"],
+    "effects": [
+      {
+        "type": "treasureOpenBonus",
+        "triggerCount": 3,
+        "bonusMultiplier": 0.5
+      }
+    ]
   }
 }

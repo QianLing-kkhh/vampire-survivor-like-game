@@ -178,6 +178,7 @@ export class GameplayInitializer {
       gameEventBus,
       runRuleSet,
       getGameTimeSeconds: () => config.timeManager.gameTimeSeconds,
+      runState: config.runState,
     });
     const achievementManager = new AchievementManager({
       characterId: selectedCharacter.id,
@@ -231,6 +232,7 @@ export class GameplayInitializer {
       weaponManager,
       player,
       playerHealth,
+      runState: config.runState,
       enemies: [],
       damageCalculator: config.damageCalculator,
       floatingTextManager,

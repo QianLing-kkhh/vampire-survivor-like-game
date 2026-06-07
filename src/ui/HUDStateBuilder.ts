@@ -1,5 +1,6 @@
 import { Enemy } from '../enemy/Enemy';
 import { EvolutionManager } from '../evolution/EvolutionManager';
+import { CharacterRuntime } from '../character/CharacterRuntime';
 import { MapDefinition } from '../map/MapDefinition';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerController } from '../player/PlayerController';
@@ -19,6 +20,7 @@ export interface HUDStateBuildInput {
   currentMap: MapDefinition;
   enemies: Enemy[];
   player?: PlayerController;
+  characterRuntime?: CharacterRuntime;
   playerHealth?: PlayerHealth;
   playerStats?: PlayerStats;
   levelManager?: LevelManager;
@@ -30,6 +32,7 @@ export interface HUDStateBuildInput {
   runState: RunState;
   playtestSettings: PlaytestSettingsState;
   timeSeconds: number;
+  nowMs: number;
   hudMessage?: string;
   evolutionCandidateStats?: string;
   worldWidth: number;
@@ -60,6 +63,11 @@ export class HUDStateBuilder {
       score: input.runState.score,
       relicCount: input.relicManager?.getRelicIds().length ?? 0,
       weaponIds: input.weaponManager?.getWeaponIds() ?? [],
+      characterHudInfo: input.characterRuntime ? {
+        characterId: input.characterRuntime.getCharacterId(),
+        skinId: input.characterRuntime.getSkinId(),
+        damageReactionCooldown: input.characterRuntime.getDamageReactionCooldownStatus(input.nowMs),
+      } : undefined,
       weaponHudInfo: input.weaponManager?.getWeaponHudInfo() ?? [],
       weaponBuildHudInfo: input.weaponManager?.getWeaponBuildHudInfo({
         getPassiveLevel: (passiveId) => input.passiveManager?.getPassiveLevel(passiveId) ?? 0,

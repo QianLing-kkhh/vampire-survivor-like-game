@@ -22,6 +22,12 @@ export interface HUDState {
   targetTimeSeconds: number;
   score: number;
   relicCount?: number;
+  characterHudInfo?: {
+    characterId: string;
+    skinId?: string;
+    portraitKey?: string;
+    damageReactionCooldown?: HudCooldownStatus;
+  };
   weaponIds: string[];
   autoMode?: boolean;
   endlessMode?: boolean;
@@ -47,6 +53,8 @@ export interface HUDState {
     passiveIconKey?: string;
     passiveLevel?: number;
     passiveLevelMax?: number;
+    cooldown?: HudCooldownStatus;
+    showCooldownInHud?: boolean;
   }>;
   passiveItems?: Array<{
     id: string;
@@ -63,6 +71,12 @@ export interface HUDState {
   enemyPositions: MinimapEnemyPosition[];
   message?: string;
 }
+
+type HudCooldownStatus = {
+  remainingMs: number;
+  totalMs: number;
+  ready: boolean;
+};
 
 type IconEntry = {
   container: Phaser.GameObjects.Container;
@@ -83,6 +97,18 @@ type BuildEntry = {
   passiveFallback?: Phaser.GameObjects.Text;
   weaponLevelLabel: Phaser.GameObjects.Text;
   passiveLevelLabel: Phaser.GameObjects.Text;
+  weaponCooldownOverlay: Phaser.GameObjects.Rectangle;
+  weaponCooldownText: Phaser.GameObjects.Text;
+  visualKey?: string;
+};
+
+type CharacterPortraitEntry = {
+  container: Phaser.GameObjects.Container;
+  background: Phaser.GameObjects.Rectangle;
+  cooldownOverlay: Phaser.GameObjects.Rectangle;
+  cooldownText: Phaser.GameObjects.Text;
+  icon?: Phaser.GameObjects.Image;
+  fallback?: Phaser.GameObjects.Text;
   visualKey?: string;
 };
 
@@ -117,6 +143,7 @@ export class HUD {
   private readonly messageText: Phaser.GameObjects.Text;
   private readonly shieldText: Phaser.GameObjects.Text;
   private readonly evolutionDebugText: Phaser.GameObjects.Text;
+  private readonly characterPortraitEntry: CharacterPortraitEntry;
   private readonly buildEntries: BuildEntry[] = [];
   private readonly weaponEntries: IconEntry[] = [];
   private readonly passiveEntries: IconEntry[] = [];
@@ -135,6 +162,7 @@ export class HUD {
     this.buildPanelBg = this.createPanelBackground(12, 248, 330, 214);
     this.buildPanelBg.setVisible(false);
     this.buildPanelImage = undefined;
+    this.characterPortraitEntry = this.createCharacterPortraitEntry();
     this.hpText = this.createText(16, 12, UITheme.smallFontSize);
     this.hpBarBg = this.createBarBackground(16, 34, HUD.BAR_WIDTH, HUD.BAR_HEIGHT);
     this.hpBarFill = this.createBarFill(16, 34, UITheme.hpBarColor);
@@ -221,6 +249,7 @@ export class HUD {
     this.messageText.destroy();
     this.shieldText.destroy();
     this.evolutionDebugText.destroy();
+    this.characterPortraitEntry.container.destroy(true);
     this.minimap.destroy();
     this.pauseButton.destroy();
     this.buildEntries.forEach((entry) => {
@@ -250,6 +279,7 @@ export class HUD {
     this.relicText.setText(`${I18n.t('hud.relics')}: ${state.relicCount ?? 0}`);
     this.goalText.setText(this.getGoalText(state));
     this.updateHudMessage(state.message);
+    this.updateCharacterPortrait(state);
     this.updateShieldText();
     this.updateIconList(
       this.passiveEntries,
@@ -356,6 +386,115 @@ export class HUD {
     return { container, background, label };
   }
 
+  private createCharacterPortraitEntry(): CharacterPortraitEntry {
+    const container = this.scene.add.container(0, 0);
+    container.setDepth(900);
+    container.setScrollFactor(0);
+    const background = this.scene.add.rectangle(0, 0, 56, 56, UITheme.iconBgColor, 0.86);
+    background.setStrokeStyle(1, UITheme.panelBorderColor, 0.72);
+    const cooldownOverlay = this.scene.add.rectangle(0, 0, 56, 56, 0x020617, 0.58);
+    const cooldownText = this.scene.add.text(0, 0, '', {
+      color: '#f8fafc',
+      fontFamily: UITheme.fontFamily,
+      fontSize: '16px',
+      fontStyle: 'bold',
+      stroke: '#111827',
+      strokeThickness: 4,
+    });
+    cooldownText.setOrigin(0.5);
+    cooldownOverlay.setVisible(false);
+    cooldownText.setVisible(false);
+    container.add([background, cooldownOverlay, cooldownText]);
+
+    return {
+      container,
+      background,
+      cooldownOverlay,
+      cooldownText,
+    };
+  }
+
+  private updateCharacterPortrait(state: HUDState): void {
+    const info = state.characterHudInfo;
+    const entry = this.characterPortraitEntry;
+
+    if (!info) {
+      entry.container.setVisible(false);
+      return;
+    }
+
+    entry.container.setVisible(true);
+    const textureKey = info.portraitKey
+      ?? AssetKeyResolver.getPlayerPortraitKey(this.scene, info.skinId, info.characterId)
+      ?? undefined;
+    const fallback = this.getInitials(info.characterId);
+    const visualKey = textureKey && this.scene.textures.exists(textureKey)
+      ? `portrait:${textureKey}`
+      : `fallback:${fallback}`;
+
+    if (entry.visualKey !== visualKey) {
+      entry.icon?.destroy();
+      entry.fallback?.destroy();
+      entry.icon = undefined;
+      entry.fallback = undefined;
+      entry.visualKey = visualKey;
+
+      if (textureKey && this.scene.textures.exists(textureKey)) {
+        entry.icon = this.scene.add.image(0, 0, textureKey);
+        entry.icon.setDisplaySize(
+          entry.background.width - 8,
+          entry.background.height - 8,
+        );
+        entry.container.addAt(entry.icon, 1);
+      } else {
+        entry.fallback = this.scene.add.text(0, 0, fallback, {
+          color: UITheme.textColor,
+          fontFamily: UITheme.fontFamily,
+          fontSize: '18px',
+          fontStyle: 'bold',
+        });
+        entry.fallback.setOrigin(0.5);
+        entry.container.addAt(entry.fallback, 1);
+      }
+    }
+
+    this.updateCooldownOverlay(
+      entry.cooldownOverlay,
+      entry.cooldownText,
+      info.damageReactionCooldown,
+      entry.background.height,
+    );
+  }
+
+  private updateCooldownOverlay(
+    overlay: Phaser.GameObjects.Rectangle,
+    text: Phaser.GameObjects.Text,
+    cooldown: HudCooldownStatus | undefined,
+    iconSize: number,
+  ): void {
+    const visible = cooldown !== undefined
+      && !cooldown.ready
+      && cooldown.remainingMs > 0
+      && cooldown.totalMs > 0;
+
+    overlay.setVisible(visible);
+    text.setVisible(visible);
+
+    if (!visible || !cooldown) {
+      text.setText('');
+      return;
+    }
+
+    const ratio = Phaser.Math.Clamp(cooldown.remainingMs / cooldown.totalMs, 0, 1);
+    const height = Math.max(1, iconSize * ratio);
+    overlay.setSize(iconSize, height);
+    overlay.setPosition(0, -iconSize / 2 + height / 2);
+
+    const showText = SettingsManager.getGameplay().showDetailedCooldownTime;
+    text.setVisible(showText);
+    text.setText(showText ? this.formatCooldown(cooldown.remainingMs) : '');
+  }
+
   private updateBuildList(
     items: Array<{
       id: string;
@@ -365,6 +504,8 @@ export class HUD {
       passiveFallback?: string;
       weaponLevelLabel: string;
       passiveLevelLabel?: string;
+      cooldown?: HudCooldownStatus;
+      showCooldownInHud?: boolean;
     }>,
     x: number,
     y: number,
@@ -389,6 +530,12 @@ export class HUD {
       entry.passiveLevelLabel.setText(item.passiveLevelLabel ?? '');
       entry.passiveBackground.setVisible(item.passiveIconKey !== undefined || item.passiveFallback !== undefined);
       entry.passiveLevelLabel.setVisible(item.passiveLevelLabel !== undefined);
+      this.updateCooldownOverlay(
+        entry.weaponCooldownOverlay,
+        entry.weaponCooldownText,
+        item.showCooldownInHud === false ? undefined : item.cooldown,
+        HUD.BUILD_ICON_SIZE,
+      );
 
       const visualKey = [
         item.weaponIconKey && this.scene.textures.exists(item.weaponIconKey)
@@ -450,14 +597,35 @@ export class HUD {
       stroke: '#111827',
       strokeThickness: 3,
     });
+    const weaponCooldownOverlay = this.scene.add.rectangle(0, 0, HUD.BUILD_ICON_SIZE, HUD.BUILD_ICON_SIZE, 0x020617, 0.58);
+    const weaponCooldownText = this.scene.add.text(0, 0, '', {
+      color: '#f8fafc',
+      fontFamily: UITheme.fontFamily,
+      fontSize: '16px',
+      fontStyle: 'bold',
+      stroke: '#111827',
+      strokeThickness: 4,
+    });
+    weaponCooldownText.setOrigin(0.5);
+    weaponCooldownOverlay.setVisible(false);
+    weaponCooldownText.setVisible(false);
 
-    container.add([weaponBackground, passiveBackground, weaponLevelLabel, passiveLevelLabel]);
+    container.add([
+      weaponBackground,
+      passiveBackground,
+      weaponLevelLabel,
+      passiveLevelLabel,
+      weaponCooldownOverlay,
+      weaponCooldownText,
+    ]);
     return {
       container,
       weaponBackground,
       passiveBackground,
       weaponLevelLabel,
       passiveLevelLabel,
+      weaponCooldownOverlay,
+      weaponCooldownText,
     };
   }
 
@@ -523,6 +691,8 @@ export class HUD {
     passiveFallback?: string;
     weaponLevelLabel: string;
     passiveLevelLabel?: string;
+    cooldown?: HudCooldownStatus;
+    showCooldownInHud?: boolean;
   }> {
     if (!state.weaponBuildHudInfo || state.weaponBuildHudInfo.length === 0) {
       return this.getWeaponIconItems(state).map((weapon) => ({
@@ -546,6 +716,8 @@ export class HUD {
       passiveLevelLabel: info.passiveId
         ? this.getLevelLabel(info.passiveLevel ?? 0, info.passiveLevelMax ?? 5)
         : undefined,
+      cooldown: info.cooldown,
+      showCooldownInHud: info.showCooldownInHud,
     }));
   }
 
@@ -686,32 +858,50 @@ export class HUD {
   private applyLayout(): void {
     const layout = LayoutConfig.getHudLayout(this.screenManager);
     const stats = layout.statsPosition;
+    const contentY = stats.y + layout.statsContentOffsetY;
 
     this.barWidth = layout.barWidth;
     this.maxIconRows = layout.maxIconRows;
     this.maxPassiveRows = layout.maxPassiveRows;
 
-    this.hpText.setPosition(stats.x, stats.y);
+    this.characterPortraitEntry.container.setPosition(
+      layout.characterPortraitPosition.x,
+      layout.characterPortraitPosition.y,
+    );
+    this.characterPortraitEntry.background.setSize(
+      layout.characterPortraitSize,
+      layout.characterPortraitSize,
+    );
+    this.characterPortraitEntry.cooldownOverlay.setSize(
+      layout.characterPortraitSize,
+      layout.characterPortraitSize,
+    );
+    this.characterPortraitEntry.icon?.setDisplaySize(
+      layout.characterPortraitSize - 8,
+      layout.characterPortraitSize - 8,
+    );
+
+    this.hpText.setPosition(stats.x, contentY);
     this.hpText.setFontSize(layout.fontSize);
-    this.hpBarBg.setPosition(stats.x, stats.y + 22);
+    this.hpBarBg.setPosition(stats.x, contentY + 22);
     this.hpBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
-    this.hpBarFill.setPosition(stats.x, stats.y + 22);
-    this.expText.setPosition(stats.x, stats.y + 42);
+    this.hpBarFill.setPosition(stats.x, contentY + 22);
+    this.expText.setPosition(stats.x, contentY + 42);
     this.expText.setFontSize(layout.fontSize);
-    this.expBarBg.setPosition(stats.x, stats.y + 64);
+    this.expBarBg.setPosition(stats.x, contentY + 64);
     this.expBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
-    this.expBarFill.setPosition(stats.x, stats.y + 64);
-    this.timeText.setPosition(stats.x, stats.y + 90);
+    this.expBarFill.setPosition(stats.x, contentY + 64);
+    this.timeText.setPosition(stats.x, contentY + 90);
     this.timeText.setFontSize(this.screenManager.isPortrait() ? '22px' : '26px');
-    this.scoreText.setPosition(stats.x, stats.y + 118);
+    this.scoreText.setPosition(stats.x, contentY + 118);
     this.scoreText.setFontSize(this.screenManager.isPortrait() ? '20px' : '22px');
-    this.relicText.setPosition(stats.x, stats.y + 150);
+    this.relicText.setPosition(stats.x, contentY + 150);
     this.relicText.setFontSize(layout.fontSize);
-    this.goalText.setPosition(stats.x, stats.y + 174);
+    this.goalText.setPosition(stats.x, contentY + 174);
     this.goalText.setFontSize(layout.fontSize);
     this.messageText.setPosition(layout.bossTextPosition.x, layout.bossTextPosition.y);
     this.messageText.setOrigin(0.5);
-    this.shieldText.setPosition(stats.x, stats.y + 198);
+    this.shieldText.setPosition(stats.x, contentY + 198);
     this.shieldText.setFontSize(layout.fontSize);
     this.evolutionDebugText.setPosition(stats.x, this.screenManager.height - 96);
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
@@ -842,6 +1032,8 @@ export class HUD {
       passiveFallback?: string;
       weaponLevelLabel: string;
       passiveLevelLabel?: string;
+      cooldown?: HudCooldownStatus;
+      showCooldownInHud?: boolean;
     }>,
   ): Array<{
     id: string;
@@ -851,6 +1043,8 @@ export class HUD {
     passiveFallback?: string;
     weaponLevelLabel: string;
     passiveLevelLabel?: string;
+    cooldown?: HudCooldownStatus;
+    showCooldownInHud?: boolean;
   }> {
     if (items.length <= this.maxIconRows) {
       return items;
@@ -893,5 +1087,19 @@ export class HUD {
     const seconds = totalSeconds % 60;
 
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  private formatCooldown(remainingMs: number): string {
+    const seconds = Math.max(0, remainingMs / 1000);
+
+    if (seconds >= 10) {
+      return `${Math.ceil(seconds)}s`;
+    }
+
+    if (seconds >= 1) {
+      return `${Math.ceil(seconds * 10) / 10}s`;
+    }
+
+    return `${Math.max(0.1, Math.ceil(seconds * 10) / 10)}s`;
   }
 }

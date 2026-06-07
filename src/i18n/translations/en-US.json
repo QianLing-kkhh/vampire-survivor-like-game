@@ -96,6 +96,7 @@
     "visualRestartRequired": "Some visual settings apply after restart or next run.",
     "nextRunNotice": "Some visual settings apply after restart or next run.",
     "applyAfterRestart": "Applies after restart or next run.",
+    "showDetailedCooldownTime": "Detailed CD Time",
     "damageNumbers": "Damage Numbers",
     "minimap": "Minimap",
     "debugOverlay": "Debug Overlay",

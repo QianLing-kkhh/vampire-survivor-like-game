@@ -6,6 +6,7 @@ import { Enemy } from '../enemy/Enemy';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerController } from '../player/PlayerController';
+import { RunState } from '../run/RunState';
 import { RunRuleSet } from '../rules/RunRuleSet';
 import { WeaponManager } from '../weapon/WeaponManager';
 
@@ -20,4 +21,5 @@ export interface RelicEffectContext {
   damageCalculator?: DamageCalculator;
   floatingTextManager?: FloatingTextManager;
   getGameTimeSeconds?: () => number;
+  runState?: RunState;
 }

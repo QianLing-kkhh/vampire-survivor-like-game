@@ -27,6 +27,11 @@ export class RelicEffectFactory {
       case 'treasureScoreBonus':
       case 'onDamageTakenCounter':
       case 'timedSlowPulse':
+      case 'bossKillDamageBurst':
+      case 'chestOpenPickupRangeBoost':
+      case 'damageTakenCooldownGuard':
+      case 'levelUpHeal':
+      case 'treasureOpenBonus':
         return null;
       default:
         console.warn(`Unknown relic effect type skipped: ${config.type}`);

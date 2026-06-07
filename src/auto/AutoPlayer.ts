@@ -185,6 +185,21 @@ interface KiteInfo {
   nearCorner: boolean;
 }
 
+interface TerrainEscapeInfo {
+  active: boolean;
+  direction: Phaser.Math.Vector2;
+  enemySectors: number;
+  nearBorder: boolean;
+  nearObstacle: boolean;
+  inSlowZone: boolean;
+}
+
+interface SegmentPointInfo {
+  distance: number;
+  t: number;
+  point: Phaser.Math.Vector2;
+}
+
 export class AutoPlayer {
   private static readonly DANGER_RADIUS = 300;
   private static readonly PANIC_DISTANCE = 125;
@@ -208,6 +223,8 @@ export class AutoPlayer {
   private static readonly CONTACT_DANGER_RADIUS = 78;
   private static readonly CONTACT_WARNING_RADIUS = 138;
   private static readonly CONTACT_PATH_RADIUS = 96;
+  private static readonly PRE_ENCIRCLE_RADIUS = 430;
+  private static readonly TERRAIN_ESCAPE_MARGIN = 150;
 
   private stickyTargetId?: string;
   private stickyWaypoint?: Phaser.Math.Vector2;
@@ -230,6 +247,7 @@ export class AutoPlayer {
     const danger = this.getDangerInfo(context, player);
     const cornerTrap = this.getCornerTrapInfo(context, player, danger);
     const surround = this.getSurroundInfo(context, player, danger, movement);
+    const terrainEscape = this.getTerrainEscapeInfo(context, player);
     const kite = this.getKiteInfo(context, player, danger, surround, movement);
     const targets = this.getTargets(context, player, danger.nearestDistance);
     const bestTarget = this.selectTarget(context, player, targets, danger.nearestDistance);
@@ -258,6 +276,7 @@ export class AutoPlayer {
       portalEscapeDirection,
       breakoutDirection,
       kite.direction,
+      terrainEscape.direction,
     );
 
     let bestScore = Number.NEGATIVE_INFINITY;
@@ -281,6 +300,7 @@ export class AutoPlayer {
         surround,
         movement,
         kite,
+        terrainEscape,
       );
 
       if (score > bestScore) {
@@ -309,6 +329,7 @@ export class AutoPlayer {
     portalEscapeDirection: Phaser.Math.Vector2,
     breakoutDirection: Phaser.Math.Vector2,
     kiteDirection: Phaser.Math.Vector2,
+    terrainEscapeDirection: Phaser.Math.Vector2,
   ): Candidate[] {
     const candidates: Candidate[] = this.getBaseDirections()
       .map((direction) => ({ direction, reason: 'base' }));
@@ -347,6 +368,10 @@ export class AutoPlayer {
 
     if (kiteDirection.lengthSq() > 0) {
       candidates.push({ direction: kiteDirection, reason: 'kite' });
+    }
+
+    if (terrainEscapeDirection.lengthSq() > 0) {
+      candidates.push({ direction: terrainEscapeDirection, reason: 'terrainEscape' });
     }
 
     if (target) {
@@ -405,6 +430,7 @@ export class AutoPlayer {
     surround: SurroundInfo,
     movement: MovementMemoryInfo,
     kite: KiteInfo,
+    terrainEscape: TerrainEscapeInfo,
   ): number {
     const hpRatio = this.getHpRatio(context);
     let score = 0;
@@ -416,6 +442,7 @@ export class AutoPlayer {
     score -= this.getEnemyPressureAt(context, endpoint, hpRatio) * (hpRatio < 0.35 ? 1.45 : 1);
     score -= this.getEnemyContactRiskAt(context, endpoint, hpRatio) * contactRiskMultiplier;
     score -= this.getEnemyPathContactRisk(context, player, endpoint, hpRatio) * contactRiskMultiplier;
+    score += this.getEnemyPathClearanceScore(context, player, endpoint, hpRatio) * contactRiskMultiplier;
     score -= this.getEnemyApproachPenalty(context, player, endpoint, hpRatio) * contactRiskMultiplier;
     score += this.getSafeEnemyDistanceScore(context, player, endpoint);
     score -= this.getBorderPenalty(context, endpoint, target);
@@ -428,6 +455,7 @@ export class AutoPlayer {
     score += this.getBossWarningCandidateScore(context, player, endpoint);
     score += this.getBreakoutCandidateScore(context, player, endpoint, direction, danger, surround, movement, kite);
     score += this.getKiteCandidateScore(context, player, endpoint, direction, danger, kite);
+    score += this.getTerrainEscapeCandidateScore(context, player, endpoint, direction, terrainEscape);
     score -= this.getNoProgressBorderPenalty(context, player, endpoint, direction, danger);
     score -= this.getHighPressureBorderPenalty(context, player, endpoint, direction, kite);
 
@@ -874,6 +902,213 @@ export class AutoPlayer {
       safestDirection: bestDirection,
       safestScore: bestScore,
     };
+  }
+
+  private getTerrainEscapeInfo(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+  ): TerrainEscapeInfo {
+    const enemySectors = this.getEnemySectorCount(context, player, AutoPlayer.PRE_ENCIRCLE_RADIUS);
+    const nearBorder = this.getNearestBorderDistance(context, player) < AutoPlayer.BORDER_WARNING_MARGIN;
+    const nearObstacle = this.getNearestObstacleClearance(context, player) < AutoPlayer.TERRAIN_ESCAPE_MARGIN;
+    const inSlowZone = this.isInPlayerSlowZone(context, player);
+    const active = enemySectors >= 4 && (nearBorder || nearObstacle || inSlowZone);
+    const info: TerrainEscapeInfo = {
+      active,
+      direction: new Phaser.Math.Vector2(0, 0),
+      enemySectors,
+      nearBorder,
+      nearObstacle,
+      inSlowZone,
+    };
+
+    if (!active) {
+      return info;
+    }
+
+    return {
+      ...info,
+      direction: this.getTerrainEscapeDirection(context, player, info),
+    };
+  }
+
+  private getEnemySectorCount(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    radius: number,
+  ): number {
+    const sectors = new Set<number>();
+
+    for (const enemy of context.enemyPositions) {
+      const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+
+      if (distance > radius) {
+        continue;
+      }
+
+      const angle = Math.atan2(enemy.y - player.y, enemy.x - player.x);
+      const normalizedAngle = angle < 0 ? angle + Math.PI * 2 : angle;
+      sectors.add(Math.floor(normalizedAngle / (Math.PI / 4)) % 8);
+    }
+
+    return sectors.size;
+  }
+
+  private getTerrainEscapeDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    terrain: TerrainEscapeInfo,
+  ): Phaser.Math.Vector2 {
+    const candidates = [
+      ...this.getBaseDirections(),
+      this.getSoftBorderDirection(context, player),
+      this.getNearestObstacleEscapeDirection(context, player),
+    ];
+    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const candidate of candidates) {
+      if (candidate.lengthSq() === 0) {
+        continue;
+      }
+
+      const direction = candidate.clone().normalize();
+      const endpoint = this.getCandidateEndpoint(context, player, direction);
+      const score = this.scoreTerrainEscapeEndpoint(context, player, endpoint, direction, terrain)
+        - this.getEnemyContactRiskAt(context, endpoint, this.getHpRatio(context)) * 0.12
+        - this.getEnemyPathContactRisk(context, player, endpoint, this.getHpRatio(context)) * 0.10;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestDirection = direction;
+      }
+    }
+
+    return bestDirection;
+  }
+
+  private getTerrainEscapeCandidateScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    terrain: TerrainEscapeInfo,
+  ): number {
+    if (!terrain.active) {
+      return 0;
+    }
+
+    let score = this.scoreTerrainEscapeEndpoint(context, player, endpoint, direction, terrain);
+
+    if (terrain.direction.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(terrain.direction)) * 34;
+    }
+
+    if (this.getEnemyContactRiskAt(context, endpoint, this.getHpRatio(context)) > 0) {
+      score -= 18;
+    }
+
+    return score;
+  }
+
+  private scoreTerrainEscapeEndpoint(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    terrain: TerrainEscapeInfo,
+  ): number {
+    const currentBorderDistance = this.getNearestBorderDistance(context, player);
+    const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
+    const currentObstacleClearance = this.getNearestObstacleClearance(context, player);
+    const endpointObstacleClearance = this.getNearestObstacleClearance(context, endpoint);
+    let score = 0;
+
+    if (terrain.nearBorder) {
+      score += Math.max(0, endpointBorderDistance - currentBorderDistance) * 0.42;
+
+      if (endpointBorderDistance <= currentBorderDistance + 2) {
+        score -= 26;
+      }
+    }
+
+    if (terrain.nearObstacle) {
+      score += Math.max(0, endpointObstacleClearance - currentObstacleClearance) * 0.36;
+
+      if (endpointObstacleClearance <= currentObstacleClearance + 2) {
+        score -= 24;
+      }
+    }
+
+    if (terrain.inSlowZone) {
+      const currentInSlowZone = this.isInPlayerSlowZone(context, player);
+      const endpointInSlowZone = this.isInPlayerSlowZone(context, endpoint);
+
+      if (currentInSlowZone && !endpointInSlowZone) {
+        score += 42;
+      } else if (endpointInSlowZone) {
+        score -= 18;
+      }
+    }
+
+    score += terrain.enemySectors * 2.5;
+
+    if (direction.lengthSq() === 0) {
+      score -= 20;
+    }
+
+    return score;
+  }
+
+  private getNearestObstacleEscapeDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+  ): Phaser.Math.Vector2 {
+    let nearestObstacle: AutoObstacleSnapshot | undefined;
+    let nearestClearance = Number.POSITIVE_INFINITY;
+
+    for (const obstacle of context.map?.obstacles ?? []) {
+      if (!obstacle.blocksPlayer) {
+        continue;
+      }
+
+      const clearance = this.getObstacleClearanceAt(player, obstacle);
+
+      if (clearance < nearestClearance) {
+        nearestClearance = clearance;
+        nearestObstacle = obstacle;
+      }
+    }
+
+    if (!nearestObstacle || nearestClearance >= AutoPlayer.TERRAIN_ESCAPE_MARGIN) {
+      return new Phaser.Math.Vector2(0, 0);
+    }
+
+    const direction = player.clone().subtract(new Phaser.Math.Vector2(nearestObstacle.x, nearestObstacle.y));
+
+    if (direction.lengthSq() === 0) {
+      return new Phaser.Math.Vector2(1, 0);
+    }
+
+    return direction.normalize();
+  }
+
+  private getObstacleClearanceAt(point: Phaser.Math.Vector2, obstacle: AutoObstacleSnapshot): number {
+    if (obstacle.shape === 'circle') {
+      const radius = Math.max(obstacle.width, obstacle.height) / 2 + AutoPlayer.NAVIGATION_MARGIN;
+      return Math.max(0, Phaser.Math.Distance.Between(point.x, point.y, obstacle.x, obstacle.y) - radius);
+    }
+
+    const dx = Math.max(Math.abs(point.x - obstacle.x) - obstacle.width / 2 - AutoPlayer.NAVIGATION_MARGIN, 0);
+    const dy = Math.max(Math.abs(point.y - obstacle.y) - obstacle.height / 2 - AutoPlayer.NAVIGATION_MARGIN, 0);
+
+    return Math.hypot(dx, dy);
+  }
+
+  private isInPlayerSlowZone(context: AutoPlayerContext, point: Phaser.Math.Vector2): boolean {
+    return (context.map?.slowZones ?? []).some((zone) => (
+      zone.playerSpeedMultiplier < 1 && this.isPointInZone(point, zone)
+    ));
   }
 
   private getBreakoutDirection(
@@ -1358,28 +1593,96 @@ export class AutoPlayer {
       const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
       const currentDistance = Phaser.Math.Distance.Between(start.x, start.y, enemy.x, enemy.y);
       const endpointDistance = Phaser.Math.Distance.Between(end.x, end.y, enemy.x, enemy.y);
-      const pathDistance = this.getDistanceSegmentToPoint(start, end, enemyPosition);
+      const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
+      const pathDistance = pathInfo.distance;
 
       if (pathDistance > AutoPlayer.CONTACT_PATH_RADIUS) {
-        continue;
-      }
-
-      if (endpointDistance >= currentDistance + 8) {
         continue;
       }
 
       const threat = this.getEnemyThreatWeight(enemy);
       const proximity = (AutoPlayer.CONTACT_PATH_RADIUS - Math.max(0, pathDistance))
         / AutoPlayer.CONTACT_PATH_RADIUS;
-      const approachMultiplier = endpointDistance < currentDistance - 8 ? 1 : 0.45;
-      risk += proximity * proximity * 72 * threat * approachMultiplier;
+      const movingAway = endpointDistance >= currentDistance + 8;
+      const crossingMidPath = pathInfo.t > 0.12 && pathInfo.t < 0.88;
+      const escapingStartContact = movingAway
+        && pathInfo.t <= 0.12
+        && currentDistance < AutoPlayer.CONTACT_WARNING_RADIUS;
+      const approachMultiplier = endpointDistance < currentDistance - 8
+        ? 1
+        : escapingStartContact
+          ? 0.28
+          : crossingMidPath
+            ? 1.25
+            : 0.55;
+      risk += proximity * proximity * 86 * threat * approachMultiplier;
 
       if (pathDistance < AutoPlayer.CONTACT_DANGER_RADIUS) {
-        risk += 54 * threat * approachMultiplier;
+        risk += (crossingMidPath ? 112 : 62) * threat * approachMultiplier;
       }
     }
 
     return risk * (hpRatio < 0.5 ? 1.3 : 1);
+  }
+
+  private getEnemyPathClearanceScore(
+    context: AutoPlayerContext,
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2,
+    hpRatio: number,
+  ): number {
+    let nearestPathDistance = Number.POSITIVE_INFINITY;
+    let nearbyEnemies = 0;
+    let dangerCrossings = 0;
+
+    for (const enemy of context.enemyPositions) {
+      const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
+      const startDistance = Phaser.Math.Distance.Between(start.x, start.y, enemy.x, enemy.y);
+      const endDistance = Phaser.Math.Distance.Between(end.x, end.y, enemy.x, enemy.y);
+
+      if (Math.min(startDistance, endDistance) > AutoPlayer.DANGER_RADIUS + AutoPlayer.STEP_DISTANCE) {
+        continue;
+      }
+
+      const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
+
+      if (pathInfo.distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
+        continue;
+      }
+
+      nearbyEnemies += 1;
+      nearestPathDistance = Math.min(nearestPathDistance, pathInfo.distance);
+
+      if (pathInfo.t > 0.12 && pathInfo.t < 0.88 && pathInfo.distance < AutoPlayer.CONTACT_PATH_RADIUS) {
+        dangerCrossings += 1;
+      }
+    }
+
+    if (nearbyEnemies === 0 || !Number.isFinite(nearestPathDistance)) {
+      return 0;
+    }
+
+    const pressureMultiplier = nearbyEnemies >= 3 || hpRatio < 0.5 ? 1.35 : 1;
+
+    if (dangerCrossings > 0) {
+      return -36 * dangerCrossings * pressureMultiplier;
+    }
+
+    if (nearestPathDistance < AutoPlayer.CONTACT_PATH_RADIUS) {
+      const narrowness = (AutoPlayer.CONTACT_PATH_RADIUS - nearestPathDistance)
+        / AutoPlayer.CONTACT_PATH_RADIUS;
+
+      return -18 * narrowness * pressureMultiplier;
+    }
+
+    const openRatio = Phaser.Math.Clamp(
+      (nearestPathDistance - AutoPlayer.CONTACT_PATH_RADIUS)
+        / Math.max(1, AutoPlayer.CONTACT_WARNING_RADIUS - AutoPlayer.CONTACT_PATH_RADIUS),
+      0,
+      1,
+    );
+
+    return openRatio * (nearbyEnemies >= 2 ? 18 : 8) * pressureMultiplier;
   }
 
   private getEnemyApproachPenalty(
@@ -2335,9 +2638,7 @@ export class AutoPlayer {
     end: Phaser.Math.Vector2,
     point: Phaser.Math.Vector2,
   ): number {
-    const closest = this.getClosestPointOnSegment(start, end, point);
-
-    return Phaser.Math.Distance.Between(point.x, point.y, closest.x, closest.y);
+    return this.getSegmentPointInfo(start, end, point).distance;
   }
 
   private getClosestPointOnSegment(
@@ -2345,16 +2646,35 @@ export class AutoPlayer {
     end: Phaser.Math.Vector2,
     point: Phaser.Math.Vector2,
   ): Phaser.Math.Vector2 {
+    return this.getSegmentPointInfo(start, end, point).point;
+  }
+
+  private getSegmentPointInfo(
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2,
+    point: Phaser.Math.Vector2,
+  ): SegmentPointInfo {
     const segment = end.clone().subtract(start);
     const lengthSq = segment.lengthSq();
 
     if (lengthSq <= 0) {
-      return start.clone();
+      const closest = start.clone();
+
+      return {
+        distance: Phaser.Math.Distance.Between(point.x, point.y, closest.x, closest.y),
+        t: 0,
+        point: closest,
+      };
     }
 
     const t = Phaser.Math.Clamp(point.clone().subtract(start).dot(segment) / lengthSq, 0, 1);
+    const closest = start.clone().add(segment.scale(t));
 
-    return start.clone().add(segment.scale(t));
+    return {
+      distance: Phaser.Math.Distance.Between(point.x, point.y, closest.x, closest.y),
+      t,
+      point: closest,
+    };
   }
 
   private pointIntersectsObstacle(

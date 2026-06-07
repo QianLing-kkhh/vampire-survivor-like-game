@@ -7,9 +7,14 @@ import { DamageType } from '../combat/DamageType';
 import { RelicDefinition } from './RelicDefinition';
 import { RelicEffect } from './RelicEffect';
 import {
+  BossKillDamageBurstRelicEffectConfig,
+  ChestOpenPickupRangeRelicEffectConfig,
+  DamageTakenCooldownGuardRelicEffectConfig,
+  LevelUpHealRelicEffectConfig,
   DamageTakenCounterRelicEffectConfig,
   LowHealthDamageRelicEffectConfig,
   PickupRangeRelicEffectConfig,
+  TreasureOpenBonusRelicEffectConfig,
   TreasureScoreRelicEffectConfig,
 } from './RelicEffect';
 import { RelicEffectContext } from './RelicEffectContext';
@@ -36,6 +41,12 @@ export class RelicManager {
     pickupRangeMultiplier: 1,
     treasureScoreMultiplier: 1,
   };
+  private activeBossKillBurstMultiplier = 1;
+  private bossKillBurstExpiresAtMs = 0;
+  private temporaryPickupRangeMultiplier = 1;
+  private temporaryPickupRangeExpiresAtMs = 0;
+  private nextIronShellAvailableAtMs = 0;
+  private treasureOpenCountForRift = 0;
   private cachedEffects: RelicEffect[] = [];
   private thornCounterAvailableAtMs = 0;
 
@@ -127,16 +138,28 @@ export class RelicManager {
   }
 
   getStatModifiers(): CachedRelicModifiers {
-    return { ...this.cachedModifiers };
+    const nowMs = this.getNowMs();
+
+    this.updateTimedState(nowMs);
+
+    return {
+      ...this.cachedModifiers,
+      pickupRangeMultiplier: this.cachedModifiers.pickupRangeMultiplier
+        * this.temporaryPickupRangeMultiplier,
+    };
   }
 
   update(deltaMs: number): void {
+    this.updateTimedState(this.getNowMs());
+
     for (const effect of this.getEffects()) {
       effect.update?.(deltaMs, this.context);
     }
   }
 
   modifyWeaponDamage(weaponId: string, baseValue: number): number {
+    this.updateTimedState(this.getNowMs());
+
     const legacyModifiedValue = this.getEffects().reduce(
       (value, effect) => effect.modifyWeaponDamage?.(weaponId, value, this.context) ?? value,
       baseValue,
@@ -144,6 +167,7 @@ export class RelicManager {
 
     return legacyModifiedValue
       * this.cachedModifiers.damageMultiplier
+      * this.activeBossKillBurstMultiplier
       * this.getConditionalDamageMultiplier();
   }
 
@@ -162,6 +186,18 @@ export class RelicManager {
   }
 
   handleGameEvent(event: GameEvent): void {
+    if (event.type === 'boss.killed') {
+      this.handleBossKilledEvent(event);
+    }
+
+    if (event.type === 'player.levelUp') {
+      this.handleLevelUpEvent();
+    }
+
+    if (event.type === 'pickup.treasureOpened') {
+      this.handleTreasureOpenedEvent();
+    }
+
     if (event.type === 'player.damageTaken') {
       this.handleDamageTakenEvent(event);
     }
@@ -262,11 +298,117 @@ export class RelicManager {
 
     for (const relic of this.activeRelics.values()) {
       for (const effect of relic.definition.effects) {
-        if (effect.type !== 'onDamageTakenCounter') {
+        if (effect.type === 'onDamageTakenCounter') {
+          this.tryTriggerThornCounter(effect as DamageTakenCounterRelicEffectConfig);
+        } else if (effect.type === 'damageTakenCooldownGuard') {
+          this.tryTriggerIronShell(effect as DamageTakenCooldownGuardRelicEffectConfig);
+        }
+      }
+    }
+  }
+
+  private handleBossKilledEvent(event: GameEvent): void {
+    const nowMs = this.getNowMsFromPayload(event);
+
+    for (const relic of this.activeRelics.values()) {
+      for (const effect of relic.definition.effects) {
+        if (effect.type !== 'bossKillDamageBurst') {
           continue;
         }
 
-        this.tryTriggerThornCounter(effect as DamageTakenCounterRelicEffectConfig);
+        const burstEffect = effect as BossKillDamageBurstRelicEffectConfig;
+        const durationMs = Math.max(0, burstEffect.durationMs);
+
+        if (durationMs <= 0) {
+          continue;
+        }
+
+        const nextExpiry = nowMs + durationMs;
+        const burstMultiplier = 1 + Math.max(0, burstEffect.value ?? 0);
+
+        this.bossKillBurstExpiresAtMs = Math.max(this.bossKillBurstExpiresAtMs, nextExpiry);
+        this.activeBossKillBurstMultiplier = Math.max(
+          this.activeBossKillBurstMultiplier,
+          burstMultiplier,
+        );
+      }
+    }
+  }
+
+  private handleLevelUpEvent(): void {
+    for (const relic of this.activeRelics.values()) {
+      for (const effect of relic.definition.effects) {
+        if (effect.type !== 'levelUpHeal') {
+          continue;
+        }
+
+        const levelUpEffect = effect as LevelUpHealRelicEffectConfig;
+        const healRatio = Math.max(0, Math.min(1, levelUpEffect.value ?? 0));
+
+        if (healRatio <= 0 || !this.context.playerHealth || !this.context.player) {
+          continue;
+        }
+
+        const healedAmount = this.context.playerHealth.healLostHpRatio(healRatio);
+        const player = this.context.player;
+
+        if (healedAmount > 0 && this.context.floatingTextManager) {
+          this.context.floatingTextManager.showPlayerHeal(
+            player.body.x,
+            player.body.y,
+            healedAmount,
+          );
+        }
+      }
+    }
+  }
+
+  private handleTreasureOpenedEvent(): void {
+    const runState = this.context.runState;
+
+    for (const relic of this.activeRelics.values()) {
+      for (const effect of relic.definition.effects) {
+        if (effect.type !== 'chestOpenPickupRangeBoost') {
+          continue;
+        }
+
+        const pickupEffect = effect as ChestOpenPickupRangeRelicEffectConfig;
+        const durationMs = Math.max(0, pickupEffect.durationMs);
+
+        if (durationMs <= 0) {
+          continue;
+        }
+
+        const boostMultiplier = 1 + Math.max(0, pickupEffect.value ?? 0);
+
+        this.temporaryPickupRangeMultiplier = Math.max(
+          this.temporaryPickupRangeMultiplier,
+          boostMultiplier,
+        );
+        this.temporaryPickupRangeExpiresAtMs = this.getNowMs() + durationMs;
+      }
+
+      for (const effect of relic.definition.effects) {
+        if (effect.type !== 'treasureOpenBonus') {
+          continue;
+        }
+
+        const bonusEffect = effect as TreasureOpenBonusRelicEffectConfig;
+        const triggerCount = Math.max(1, Math.floor(bonusEffect.triggerCount ?? 1));
+        const bonusMultiplier = Math.max(0, bonusEffect.bonusMultiplier ?? 0);
+        const canScoreBonus = runState !== undefined && bonusMultiplier > 0;
+
+        if (!canScoreBonus) {
+          continue;
+        }
+
+        this.treasureOpenCountForRift += 1;
+
+        if (this.treasureOpenCountForRift % triggerCount !== 0) {
+          continue;
+        }
+
+        runState.recordScore('treasure', bonusMultiplier);
       }
     }
   }
@@ -309,6 +451,77 @@ export class RelicManager {
     for (const { enemy } of targets) {
       enemy.takeDamage(this.damageCalculator.calculateDamage(effect.value, DamageType.Normal));
     }
+  }
+
+  private tryTriggerIronShell(effect: DamageTakenCooldownGuardRelicEffectConfig): void {
+    const nowMs = this.getNowMs();
+    const cooldownMs = Math.max(0, effect.cooldownMs ?? 0);
+    const durationMs = Math.max(0, effect.durationMs ?? 0);
+
+    if (cooldownMs <= 0 || durationMs <= 0) {
+      return;
+    }
+
+    if (nowMs < this.nextIronShellAvailableAtMs) {
+      return;
+    }
+
+    if (!this.context.playerHealth) {
+      return;
+    }
+
+    const damageMultiplier = Math.max(0, Math.min(1, effect.value ?? 1));
+
+    if (damageMultiplier >= 1) {
+      return;
+    }
+
+    this.context.playerHealth.addTemporaryDamageTakenMultiplier(damageMultiplier, durationMs);
+    this.nextIronShellAvailableAtMs = nowMs + cooldownMs;
+  }
+
+  private updateTimedState(nowMs: number): void {
+    const safeNowMs = Math.max(0, nowMs);
+
+    if (
+      this.bossKillBurstExpiresAtMs > 0
+      && safeNowMs >= this.bossKillBurstExpiresAtMs
+    ) {
+      this.activeBossKillBurstMultiplier = 1;
+      this.bossKillBurstExpiresAtMs = 0;
+    }
+
+    if (
+      this.temporaryPickupRangeExpiresAtMs > 0
+      && safeNowMs >= this.temporaryPickupRangeExpiresAtMs
+    ) {
+      this.temporaryPickupRangeMultiplier = 1;
+      this.temporaryPickupRangeExpiresAtMs = 0;
+    }
+  }
+
+  private getNowMsFromPayload(event: GameEvent): number {
+    if (event.gameTimeSeconds !== undefined) {
+      return Math.max(0, event.gameTimeSeconds * 1000);
+    }
+
+    return this.getNowMs();
+  }
+
+  private getNowMs(): number {
+    const sceneNow = this.context.scene?.time.now;
+
+    if (typeof sceneNow === 'number') {
+      return sceneNow;
+    }
+
+    const gameTimeSeconds = this.context.getGameTimeSeconds?.();
+
+    if (gameTimeSeconds !== undefined) {
+      return Math.max(0, gameTimeSeconds * 1000);
+    }
+
+    return Date.now();
   }
 
   private getPlayerPosition(): { x: number; y: number } | undefined {
