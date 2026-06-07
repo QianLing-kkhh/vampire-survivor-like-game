@@ -205,9 +205,6 @@ export class AxeWeapon extends Weapon {
     const progress = Math.min(1, projectile.ageMs / this.lifetimeMs);
     const elapsedSeconds = projectile.ageMs / 1000;
     const behavior = this.getArcingBehavior();
-    const acceleration = behavior?.acceleration ?? (this.id === 'death_spiral'
-      ? AxeWeapon.DEATH_SPIRAL_ACCELERATION
-      : AxeWeapon.AXE_ACCELERATION);
     const spiralTurns = behavior?.spiralTurns ?? (this.id === 'death_spiral'
       ? AxeWeapon.DEATH_SPIRAL_TURNS
       : AxeWeapon.AXE_SPIRAL_TURNS);
@@ -215,21 +212,27 @@ export class AxeWeapon extends Weapon {
       ? AxeWeapon.DEATH_SPIRAL_MAX_SPIRAL_RADIUS
       : AxeWeapon.AXE_MAX_SPIRAL_RADIUS);
     const launchProgress = 0.18;
-    const launchSeconds = this.lifetimeMs / 1000 * launchProgress;
-    const launchDistance = this.modifiedProjectileSpeed * launchSeconds
-      + 0.5 * acceleration * launchSeconds * launchSeconds;
+    const lifetimeSeconds = this.lifetimeMs / 1000;
+    const launchSeconds = lifetimeSeconds * launchProgress;
+    const spiralDuration = Math.max(0.001, lifetimeSeconds - launchSeconds);
+    const launchDistance = this.modifiedProjectileSpeed * launchSeconds;
     const baseAngle = Math.atan2(projectile.direction.y, projectile.direction.x);
-    const spiralProgress = Math.max(0, (progress - launchProgress) / (1 - launchProgress));
     const spiralSeconds = Math.max(0, elapsedSeconds - launchSeconds);
-    const spiralDistanceGrowth = this.modifiedProjectileSpeed * spiralSeconds
-      + 0.5 * acceleration * spiralSeconds * spiralSeconds;
+    const normalizedSpiralProgress = Phaser.Math.Clamp(spiralSeconds / spiralDuration, 0, 1);
+    const angularVelocity = (spiralTurns * Math.PI * 2) / spiralDuration;
+    const radialEasePower = Math.max(0.1, behavior?.radialEasePower ?? 2.2);
+    const radialProgress = 1 - Math.pow(1 - normalizedSpiralProgress, radialEasePower);
+    const spiralTravelRange = behavior?.spiralTravelRange ?? this.getFallbackSpiralTravelRange(
+      launchSeconds,
+      spiralDuration,
+      maxSpiralRadius,
+    );
     const travelDistance = progress <= launchProgress
       ? this.modifiedProjectileSpeed * elapsedSeconds
-        + 0.5 * acceleration * elapsedSeconds * elapsedSeconds
-      : launchDistance + spiralDistanceGrowth + maxSpiralRadius * spiralProgress;
+      : launchDistance + spiralTravelRange * radialProgress;
     const travelAngle = progress <= launchProgress
       ? baseAngle
-      : baseAngle + spiralProgress * spiralTurns * Math.PI * 2;
+      : baseAngle + angularVelocity * spiralSeconds;
 
     projectile.previousX = projectile.body.x;
     projectile.previousY = projectile.body.y;
@@ -248,6 +251,27 @@ export class AxeWeapon extends Weapon {
         projectile.body,
         this.id === 'death_spiral' ? 'largeProjectile' : 'axeProjectile',
       );
+  }
+
+  private getFallbackSpiralTravelRange(
+    launchSeconds: number,
+    spiralDuration: number,
+    maxSpiralRadius: number,
+  ): number {
+    const behavior = this.getArcingBehavior();
+    const acceleration = behavior?.acceleration ?? (this.id === 'death_spiral'
+      ? AxeWeapon.DEATH_SPIRAL_ACCELERATION
+      : AxeWeapon.AXE_ACCELERATION);
+    const legacyLaunchDistance = this.modifiedProjectileSpeed * launchSeconds
+      + 0.5 * acceleration * launchSeconds * launchSeconds;
+    const legacySpiralDistanceGrowth = this.modifiedProjectileSpeed * spiralDuration
+      + 0.5 * acceleration * spiralDuration * spiralDuration;
+
+    return Math.max(
+      0,
+      legacyLaunchDistance + legacySpiralDistanceGrowth + maxSpiralRadius
+        - this.modifiedProjectileSpeed * launchSeconds,
+    );
   }
 
   private checkProjectileHits(

@@ -77,6 +77,8 @@
       "spiralTurns": 4.2,
       "maxSpiralRadius": 105,
       "acceleration": 150,
+      "radialEasePower": 2.2,
+      "spiralTravelRange": 360,
       "scaleOverLifetime": {
         "enabled": true,
         "startScale": 1.0,
@@ -166,6 +168,8 @@
       "spiralTurns": 6.0,
       "maxSpiralRadius": 135,
       "acceleration": 170,
+      "radialEasePower": 2.3,
+      "spiralTravelRange": 420,
       "scaleOverLifetime": {
         "enabled": true,
         "startScale": 1.05,
