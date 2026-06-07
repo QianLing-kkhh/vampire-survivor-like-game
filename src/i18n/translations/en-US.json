@@ -781,6 +781,13 @@
       "stage": "Unlocked stage: {name}"
     }
   },
+  "loading": {
+    "title": "Loading",
+    "titleAssets": "Loading title assets",
+    "runAssets": "Preparing run",
+    "complete": "Complete",
+    "failedAsset": "Retrying fallback for {key}"
+  },
   "game": {
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."

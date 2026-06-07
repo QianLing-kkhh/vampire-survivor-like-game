@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../../assets/AssetKeyResolver';
 import { I18n } from '../../i18n/I18n';
 import { SafeArea } from '../../responsive/SafeArea';
 import { ScreenManager } from '../../responsive/ScreenManager';
@@ -190,7 +191,7 @@ export class StatsBuildPanel {
       x: -width / 2 + 36,
       y: y + 36,
       size: 48,
-      textureKey: card.iconKey,
+      textureKey: this.resolveCardIconKey(card),
       fallback: card.fallback,
     });
     const title = this.scene.add.text(-width / 2 + 74, y + 14, card.title, {
@@ -254,7 +255,7 @@ export class StatsBuildPanel {
           x: iconX + 16,
           y: iconY,
           size: 32,
-          textureKey: related.iconKey,
+          textureKey: this.resolveRelatedIconKey(related),
           fallback: related.fallback,
         });
         this.contentContainer.add(relatedIcon);
@@ -272,6 +273,34 @@ export class StatsBuildPanel {
     });
     text.setOrigin(0.5);
     this.contentContainer.add(text);
+  }
+
+  private resolveCardIconKey(card: StatsBuildCard): string | undefined {
+    if (this.selectedTab === 'weapons') {
+      return AssetKeyResolver.getWeaponIconKey(this.scene, card.id)
+        ?? card.iconKey;
+    }
+
+    if (this.selectedTab === 'passives') {
+      return AssetKeyResolver.getPassiveIconKey(this.scene, card.id)
+        ?? card.iconKey;
+    }
+
+    return card.iconKey;
+  }
+
+  private resolveRelatedIconKey(related: { id: string; iconKey?: string }): string | undefined {
+    if (this.selectedTab === 'weapons') {
+      return AssetKeyResolver.getPassiveIconKey(this.scene, related.id)
+        ?? related.iconKey;
+    }
+
+    if (this.selectedTab === 'passives') {
+      return AssetKeyResolver.getWeaponIconKey(this.scene, related.id)
+        ?? related.iconKey;
+    }
+
+    return related.iconKey;
   }
 
   private renderFooter(currentPage: number, totalPages: number): void {

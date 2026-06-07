@@ -176,6 +176,15 @@ interface SurroundInfo {
   safestScore: number;
 }
 
+interface KiteInfo {
+  active: boolean;
+  direction: Phaser.Math.Vector2;
+  inwardDirection: Phaser.Math.Vector2;
+  currentPressure: number;
+  nearBorder: boolean;
+  nearCorner: boolean;
+}
+
 export class AutoPlayer {
   private static readonly DANGER_RADIUS = 300;
   private static readonly PANIC_DISTANCE = 125;
@@ -195,6 +204,10 @@ export class AutoPlayer {
   private static readonly PROLONGED_STALL_MS = 2800;
   private static readonly BREAKOUT_STICKY_FRAMES = 16;
   private static readonly SURROUND_BLOCKED_SCORE = 9;
+  private static readonly KITE_STICKY_FRAMES = 28;
+  private static readonly CONTACT_DANGER_RADIUS = 78;
+  private static readonly CONTACT_WARNING_RADIUS = 138;
+  private static readonly CONTACT_PATH_RADIUS = 96;
 
   private stickyTargetId?: string;
   private stickyWaypoint?: Phaser.Math.Vector2;
@@ -206,6 +219,8 @@ export class AutoPlayer {
   private stallMs = 0;
   private stickyBreakoutDirection?: Phaser.Math.Vector2;
   private stickyBreakoutFrames = 0;
+  private stickyKiteDirection?: Phaser.Math.Vector2;
+  private stickyKiteFrames = 0;
 
   getMoveDirection(context: AutoPlayerContext): Phaser.Math.Vector2 {
     this.tickSuppression();
@@ -215,11 +230,12 @@ export class AutoPlayer {
     const danger = this.getDangerInfo(context, player);
     const cornerTrap = this.getCornerTrapInfo(context, player, danger);
     const surround = this.getSurroundInfo(context, player, danger, movement);
+    const kite = this.getKiteInfo(context, player, danger, surround, movement);
     const targets = this.getTargets(context, player, danger.nearestDistance);
     const bestTarget = this.selectTarget(context, player, targets, danger.nearestDistance);
     const warningEscapeDirection = this.getBossWarningEscapeDirection(context, player);
     const portalEscapeDirection = this.getPortalEscapeDirection(context, player, danger);
-    const breakoutDirection = this.getBreakoutDirection(context, player, danger, surround, movement);
+    const breakoutDirection = this.getBreakoutDirection(context, player, danger, surround, movement, kite);
 
     if (
       bestTarget
@@ -241,6 +257,7 @@ export class AutoPlayer {
       warningEscapeDirection,
       portalEscapeDirection,
       breakoutDirection,
+      kite.direction,
     );
 
     let bestScore = Number.NEGATIVE_INFINITY;
@@ -263,6 +280,7 @@ export class AutoPlayer {
         cornerTrap,
         surround,
         movement,
+        kite,
       );
 
       if (score > bestScore) {
@@ -277,6 +295,7 @@ export class AutoPlayer {
 
     this.updateTargetStability(bestTarget, bestCandidate.reason);
     this.updateBreakoutStability(bestCandidate.reason, bestCandidate.direction);
+    this.updateKiteStability(kite, bestCandidate.reason, bestCandidate.direction);
     return bestCandidate.direction.normalize();
   }
 
@@ -289,6 +308,7 @@ export class AutoPlayer {
     warningEscapeDirection: Phaser.Math.Vector2,
     portalEscapeDirection: Phaser.Math.Vector2,
     breakoutDirection: Phaser.Math.Vector2,
+    kiteDirection: Phaser.Math.Vector2,
   ): Candidate[] {
     const candidates: Candidate[] = this.getBaseDirections()
       .map((direction) => ({ direction, reason: 'base' }));
@@ -323,6 +343,10 @@ export class AutoPlayer {
 
     if (breakoutDirection.lengthSq() > 0) {
       candidates.push({ direction: breakoutDirection, reason: 'breakout' });
+    }
+
+    if (kiteDirection.lengthSq() > 0) {
+      candidates.push({ direction: kiteDirection, reason: 'kite' });
     }
 
     if (target) {
@@ -380,11 +404,20 @@ export class AutoPlayer {
     cornerTrap: CornerTrapInfo,
     surround: SurroundInfo,
     movement: MovementMemoryInfo,
+    kite: KiteInfo,
   ): number {
     const hpRatio = this.getHpRatio(context);
     let score = 0;
+    const usefulPortalEndpoint = this.isUsefulPortalEndpoint(context, player, endpoint, danger, hpRatio);
+    const contactRiskMultiplier = usefulPortalEndpoint
+      ? 0.08
+      : 1;
 
     score -= this.getEnemyPressureAt(context, endpoint, hpRatio) * (hpRatio < 0.35 ? 1.45 : 1);
+    score -= this.getEnemyContactRiskAt(context, endpoint, hpRatio) * contactRiskMultiplier;
+    score -= this.getEnemyPathContactRisk(context, player, endpoint, hpRatio) * contactRiskMultiplier;
+    score -= this.getEnemyApproachPenalty(context, player, endpoint, hpRatio) * contactRiskMultiplier;
+    score += this.getSafeEnemyDistanceScore(context, player, endpoint);
     score -= this.getBorderPenalty(context, endpoint, target);
     score -= this.getObstaclePenalty(context, endpoint);
     score += this.getSlowZoneScore(context, endpoint, hpRatio);
@@ -393,8 +426,14 @@ export class AutoPlayer {
     score += this.getWeaponCandidateScore(context, player, endpoint, direction, danger);
     score += this.getCornerEscapeScore(context, player, endpoint, direction, danger, cornerTrap);
     score += this.getBossWarningCandidateScore(context, player, endpoint);
-    score += this.getBreakoutCandidateScore(context, player, endpoint, direction, danger, surround, movement);
+    score += this.getBreakoutCandidateScore(context, player, endpoint, direction, danger, surround, movement, kite);
+    score += this.getKiteCandidateScore(context, player, endpoint, direction, danger, kite);
     score -= this.getNoProgressBorderPenalty(context, player, endpoint, direction, danger);
+    score -= this.getHighPressureBorderPenalty(context, player, endpoint, direction, kite);
+
+    if (usefulPortalEndpoint) {
+      score += hpRatio < 0.35 ? 420 : 260;
+    }
 
     if (target) {
       const targetDistance = Phaser.Math.Distance.Between(
@@ -435,7 +474,12 @@ export class AutoPlayer {
     }
 
     if (danger.fleeDirection.lengthSq() > 0) {
-      score += direction.dot(danger.fleeDirection) * (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE ? 11 : 4);
+      const fleeWeight = kite.active
+        ? 1.2
+        : danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
+          ? 0.7
+          : (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE ? 11 : 4);
+      score += direction.dot(danger.fleeDirection) * fleeWeight;
     }
 
     return score;
@@ -838,6 +882,7 @@ export class AutoPlayer {
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     surround: SurroundInfo,
     movement: MovementMemoryInfo,
+    kite: KiteInfo,
   ): Phaser.Math.Vector2 {
     const shouldBreakout = surround.surrounded
       || (movement.stalled && danger.nearestDistance < AutoPlayer.DANGER_RADIUS)
@@ -845,6 +890,10 @@ export class AutoPlayer {
 
     if (!shouldBreakout) {
       return new Phaser.Math.Vector2(0, 0);
+    }
+
+    if (kite.active && this.isKiteDirectionViable(context, player, kite.direction, kite)) {
+      return kite.direction.clone();
     }
 
     if (
@@ -858,6 +907,205 @@ export class AutoPlayer {
     return surround.safestDirection.lengthSq() > 0
       ? surround.safestDirection.clone().normalize()
       : this.getSoftBorderDirection(context, player);
+  }
+
+  private getKiteInfo(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+  ): KiteInfo {
+    const hpRatio = this.getHpRatio(context);
+    const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
+    const inwardDirection = this.getSoftBorderDirection(context, player);
+    const nearBorder = this.getNearestBorderDistance(context, player) < AutoPlayer.BORDER_WARNING_MARGIN;
+    const nearCorner = this.isNearCorner(context, player, AutoPlayer.BORDER_WARNING_MARGIN);
+    const enemyCountPressure = context.enemyPositions.length >= 12 && danger.nearestDistance < AutoPlayer.DANGER_RADIUS;
+    const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
+    const highSpeedClusterShaping = moveSpeed >= 170
+      && context.enemyPositions.length >= 4
+      && danger.nearestDistance < AutoPlayer.DANGER_RADIUS + 80
+      && danger.nearestDistance > AutoPlayer.CONTACT_WARNING_RADIUS * 0.85;
+    const highPressure = currentPressure >= (hpRatio < 0.5 ? 3.6 : 4.6)
+      || danger.pressureCount >= 6
+      || enemyCountPressure
+      || highSpeedClusterShaping
+      || surround.surrounded
+      || (movement.stalled && danger.pressureCount >= 3);
+
+    if (!highPressure) {
+      return {
+        active: false,
+        direction: new Phaser.Math.Vector2(0, 0),
+        inwardDirection,
+        currentPressure,
+        nearBorder,
+        nearCorner,
+      };
+    }
+
+    const direction = this.getKiteDirection(context, player, danger, inwardDirection, nearBorder, nearCorner);
+
+    return {
+      active: direction.lengthSq() > 0,
+      direction,
+      inwardDirection,
+      currentPressure,
+      nearBorder,
+      nearCorner,
+    };
+  }
+
+  private getKiteDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    inwardDirection: Phaser.Math.Vector2,
+    nearBorder: boolean,
+    nearCorner: boolean,
+  ): Phaser.Math.Vector2 {
+    const seed = danger.enemyCenter.lengthSq() > 0
+      ? player.clone().subtract(danger.enemyCenter)
+      : danger.fleeDirection.clone();
+
+    if (seed.lengthSq() === 0) {
+      return inwardDirection.lengthSq() > 0
+        ? inwardDirection.clone()
+        : new Phaser.Math.Vector2(0, 0);
+    }
+
+    const radial = seed.normalize();
+    const tangents = [
+      new Phaser.Math.Vector2(-radial.y, radial.x),
+      new Phaser.Math.Vector2(radial.y, -radial.x),
+    ];
+    const options: Phaser.Math.Vector2[] = [];
+
+    if (
+      this.stickyKiteDirection
+      && this.stickyKiteFrames > 0
+    ) {
+      options.push(this.stickyKiteDirection.clone());
+    }
+
+    for (const tangent of tangents) {
+      options.push(tangent.clone());
+
+      if (inwardDirection.lengthSq() > 0 && nearBorder) {
+        options.push(tangent.clone().scale(0.78).add(inwardDirection.clone().scale(nearCorner ? 0.92 : 0.62)));
+      }
+    }
+
+    if (inwardDirection.lengthSq() > 0 && nearCorner) {
+      options.push(inwardDirection.clone());
+    }
+
+    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const option of options) {
+      if (option.lengthSq() === 0) {
+        continue;
+      }
+
+      const direction = option.clone().normalize();
+      const kite = {
+        active: true,
+        direction,
+        inwardDirection,
+        currentPressure: this.getEnemyPressureAt(context, player, this.getHpRatio(context)),
+        nearBorder,
+        nearCorner,
+      };
+      const score = this.scoreKiteDirection(context, player, direction, kite);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestDirection = direction;
+      }
+    }
+
+    return bestDirection;
+  }
+
+  private scoreKiteDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    kite: KiteInfo,
+  ): number {
+    const hpRatio = this.getHpRatio(context);
+    const endpoint = this.getCandidateEndpoint(context, player, direction);
+    const endpointPressure = this.getEnemyPressureAt(context, endpoint, hpRatio);
+    const currentBorderDistance = this.getNearestBorderDistance(context, player);
+    const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
+    const borderProgress = endpointBorderDistance - currentBorderDistance;
+    const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
+    let score = 0;
+
+    score -= endpointPressure * 4.4;
+    score -= this.getObstaclePenalty(context, endpoint) * 3.2;
+    score -= this.getTotalBossWarningRisk(context, endpoint) * 90;
+    score -= this.getBorderPenalty(context, endpoint) * (kite.nearBorder ? 5.2 : 2.6);
+    score += Math.max(0, borderProgress) * (kite.nearBorder ? 0.72 : 0.22);
+    score += Math.max(0, actualMove - AutoPlayer.STEP_DISTANCE * 0.35) * 0.08;
+
+    if (kite.nearBorder && borderProgress <= 2) {
+      score -= 24;
+    }
+
+    if (kite.nearCorner && borderProgress <= 8) {
+      score -= 22;
+    }
+
+    if (this.isNearCorner(context, endpoint, AutoPlayer.BORDER_WARNING_MARGIN)) {
+      score -= 28;
+    }
+
+    if (this.stickyKiteDirection && this.stickyKiteFrames > 0) {
+      score += Math.max(0, direction.dot(this.stickyKiteDirection)) * 10;
+    }
+
+    if (kite.inwardDirection.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(kite.inwardDirection)) * (kite.nearBorder ? 22 : 6);
+    }
+
+    return score;
+  }
+
+  private isKiteDirectionViable(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    kite: KiteInfo,
+  ): boolean {
+    if (direction.lengthSq() === 0) {
+      return false;
+    }
+
+    const endpoint = this.getCandidateEndpoint(context, player, direction);
+    const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
+    const currentBorderDistance = this.getNearestBorderDistance(context, player);
+    const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
+
+    if (actualMove < AutoPlayer.STEP_DISTANCE * 0.35) {
+      return false;
+    }
+
+    if (this.getObstaclePenalty(context, endpoint) >= 20 || this.getTotalBossWarningRisk(context, endpoint) > 0) {
+      return false;
+    }
+
+    if (endpointBorderDistance < AutoPlayer.HARD_BORDER_MARGIN + 12) {
+      return false;
+    }
+
+    if (kite.nearBorder && endpointBorderDistance <= currentBorderDistance + 2) {
+      return false;
+    }
+
+    return true;
   }
 
   private isBreakoutDirectionViable(
@@ -1047,10 +1295,166 @@ export class AutoPlayer {
       }
 
       const proximity = (AutoPlayer.DANGER_RADIUS - Math.max(0, distance)) / AutoPlayer.DANGER_RADIUS;
-      pressure += proximity * proximity * this.getEnemyThreatWeight(enemy) * (hpRatio < 0.5 ? 1.25 : 1);
+      const threat = this.getEnemyThreatWeight(enemy);
+      const farMultiplier = distance > AutoPlayer.SAFE_DISTANCE ? 0.32 : 1;
+      let enemyPressure = proximity * proximity * threat * farMultiplier;
+
+      if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+        const contactProximity = (AutoPlayer.CONTACT_WARNING_RADIUS - Math.max(0, distance))
+          / AutoPlayer.CONTACT_WARNING_RADIUS;
+        enemyPressure += contactProximity * contactProximity * 7.5 * threat;
+      }
+
+      if (distance < AutoPlayer.CONTACT_DANGER_RADIUS) {
+        const dangerProximity = (AutoPlayer.CONTACT_DANGER_RADIUS - Math.max(0, distance))
+          / AutoPlayer.CONTACT_DANGER_RADIUS;
+        enemyPressure += (5 + dangerProximity * dangerProximity * 14) * threat;
+      }
+
+      pressure += enemyPressure * (hpRatio < 0.5 ? 1.25 : 1);
     }
 
     return pressure;
+  }
+
+  private getEnemyContactRiskAt(
+    context: AutoPlayerContext,
+    point: Phaser.Math.Vector2,
+    hpRatio: number,
+  ): number {
+    let risk = 0;
+
+    for (const enemy of context.enemyPositions) {
+      const distance = Phaser.Math.Distance.Between(point.x, point.y, enemy.x, enemy.y);
+
+      if (distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
+        continue;
+      }
+
+      const threat = this.getEnemyThreatWeight(enemy);
+      const warningProximity = (AutoPlayer.CONTACT_WARNING_RADIUS - Math.max(0, distance))
+        / AutoPlayer.CONTACT_WARNING_RADIUS;
+      risk += warningProximity * warningProximity * 52 * threat;
+
+      if (distance < AutoPlayer.CONTACT_DANGER_RADIUS) {
+        const dangerProximity = (AutoPlayer.CONTACT_DANGER_RADIUS - Math.max(0, distance))
+          / AutoPlayer.CONTACT_DANGER_RADIUS;
+        risk += (96 + dangerProximity * 150) * threat;
+      }
+    }
+
+    return risk * (hpRatio < 0.5 ? 1.35 : 1);
+  }
+
+  private getEnemyPathContactRisk(
+    context: AutoPlayerContext,
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2,
+    hpRatio: number,
+  ): number {
+    let risk = 0;
+
+    for (const enemy of context.enemyPositions) {
+      const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
+      const currentDistance = Phaser.Math.Distance.Between(start.x, start.y, enemy.x, enemy.y);
+      const endpointDistance = Phaser.Math.Distance.Between(end.x, end.y, enemy.x, enemy.y);
+      const pathDistance = this.getDistanceSegmentToPoint(start, end, enemyPosition);
+
+      if (pathDistance > AutoPlayer.CONTACT_PATH_RADIUS) {
+        continue;
+      }
+
+      if (endpointDistance >= currentDistance + 8) {
+        continue;
+      }
+
+      const threat = this.getEnemyThreatWeight(enemy);
+      const proximity = (AutoPlayer.CONTACT_PATH_RADIUS - Math.max(0, pathDistance))
+        / AutoPlayer.CONTACT_PATH_RADIUS;
+      const approachMultiplier = endpointDistance < currentDistance - 8 ? 1 : 0.45;
+      risk += proximity * proximity * 72 * threat * approachMultiplier;
+
+      if (pathDistance < AutoPlayer.CONTACT_DANGER_RADIUS) {
+        risk += 54 * threat * approachMultiplier;
+      }
+    }
+
+    return risk * (hpRatio < 0.5 ? 1.3 : 1);
+  }
+
+  private getEnemyApproachPenalty(
+    context: AutoPlayerContext,
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2,
+    hpRatio: number,
+  ): number {
+    const currentDistance = this.getNearestEnemyDistanceAt(context, start);
+    const endpointDistance = this.getNearestEnemyDistanceAt(context, end);
+
+    if (!Number.isFinite(currentDistance) || !Number.isFinite(endpointDistance)) {
+      return 0;
+    }
+
+    const approach = currentDistance - endpointDistance;
+
+    if (approach <= 8) {
+      return 0;
+    }
+
+    let penalty = Math.max(0, approach - 8) * 0.45;
+
+    if (endpointDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+      penalty += (AutoPlayer.CONTACT_WARNING_RADIUS - endpointDistance) * 1.15;
+    }
+
+    if (endpointDistance < AutoPlayer.CONTACT_DANGER_RADIUS) {
+      penalty += (AutoPlayer.CONTACT_DANGER_RADIUS - endpointDistance) * 3.1 + 86;
+    }
+
+    return penalty * (hpRatio < 0.5 ? 1.3 : 1);
+  }
+
+  private getSafeEnemyDistanceScore(
+    context: AutoPlayerContext,
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2,
+  ): number {
+    const currentDistance = this.getNearestEnemyDistanceAt(context, start);
+    const endpointDistance = this.getNearestEnemyDistanceAt(context, end);
+
+    if (!Number.isFinite(currentDistance) || !Number.isFinite(endpointDistance)) {
+      return 0;
+    }
+
+    const safeMin = AutoPlayer.CONTACT_WARNING_RADIUS + 26;
+    const safeMax = AutoPlayer.SAFE_DISTANCE;
+    const idealDistance = (safeMin + safeMax) / 2;
+    let score = 0;
+
+    if (endpointDistance >= safeMin && endpointDistance <= safeMax) {
+      score += 12 - Math.abs(endpointDistance - idealDistance) * 0.06;
+    }
+
+    if (currentDistance > safeMax && endpointDistance > safeMin) {
+      score += Math.max(0, currentDistance - endpointDistance) * 0.18;
+      score -= Math.max(0, endpointDistance - currentDistance) * 0.28;
+    }
+
+    if (currentDistance >= safeMin && currentDistance <= safeMax && endpointDistance > safeMax) {
+      score -= (endpointDistance - safeMax) * 0.24 + 8;
+    }
+
+    return score;
+  }
+
+  private getNearestEnemyDistanceAt(context: AutoPlayerContext, point: Phaser.Math.Vector2): number {
+    let nearest = Number.POSITIVE_INFINITY;
+
+    for (const enemy of context.enemyPositions) {
+      nearest = Math.min(nearest, Phaser.Math.Distance.Between(point.x, point.y, enemy.x, enemy.y));
+    }
+
+    return nearest;
   }
 
   private getEnemyThreatWeight(enemy: AutoPosition | AutoEnemySnapshot): number {
@@ -1221,9 +1625,9 @@ export class AutoPlayer {
       const progress = playerDistance - endpointDistance;
 
       if (endpointDistance <= portal.radius) {
-        score += 26 + Math.max(0, currentRisk - exitRisk) * 4 + (hpRatio < 0.35 ? 12 : 0);
+        score += 84 + Math.max(0, currentRisk - exitRisk) * 7 + (hpRatio < 0.35 ? 28 : 0);
       } else {
-        score += Math.max(0, progress) * 0.11;
+        score += Math.max(0, progress) * 0.16 + (hpRatio < 0.35 && progress > 0 ? 6 : 0);
 
         if (progress < -8) {
           score -= 5;
@@ -1232,6 +1636,45 @@ export class AutoPlayer {
     }
 
     return score;
+  }
+
+  private isUsefulPortalEndpoint(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    hpRatio: number,
+  ): boolean {
+    if (!this.isPortalEscapeState(context, player, danger, hpRatio)) {
+      return false;
+    }
+
+    const currentRisk = this.getPortalEscapeRiskAt(context, player, hpRatio);
+
+    for (const portal of context.map?.portals ?? []) {
+      if (!this.isPortalUsable(portal)) {
+        continue;
+      }
+
+      const playerDistance = Phaser.Math.Distance.Between(player.x, player.y, portal.x, portal.y);
+      const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, portal.x, portal.y);
+
+      if (
+        endpointDistance > portal.radius
+        || playerDistance > portal.radius + AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS
+      ) {
+        continue;
+      }
+
+      const exitPoint = new Phaser.Math.Vector2(portal.target.x, portal.target.y);
+      const exitRisk = this.getPortalEscapeRiskAt(context, exitPoint, hpRatio);
+
+      if (this.isPortalExitUseful(currentRisk, exitRisk, hpRatio)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private isPortalEscapeState(
@@ -1315,6 +1758,7 @@ export class AutoPlayer {
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     surround: SurroundInfo,
     movement: MovementMemoryInfo,
+    kite: KiteInfo,
   ): number {
     if (!movement.stalled && !movement.prolonged && !surround.surrounded) {
       return 0;
@@ -1342,13 +1786,15 @@ export class AutoPlayer {
     let score = 0;
 
     score += Math.max(-4, pressureDrop) * (surround.surrounded ? 8 : 4);
-    score += Math.max(0, borderProgress) * (surround.surrounded ? 0.28 : 0.14);
+    score += Math.max(0, borderProgress) * (surround.surrounded || kite.active ? 0.34 : 0.14);
     score += Math.max(0, obstacleProgress) * 0.10;
     score += Math.max(0, actualMove - AutoPlayer.STEP_DISTANCE * 0.35) * 0.11;
     score += Math.max(0, anchorDistance - AutoPlayer.STALL_RADIUS) * (movement.prolonged ? 0.20 : 0.10);
     score += Math.max(0, direction.dot(surround.safestDirection)) * (surround.surrounded ? 34 : 16);
 
-    if (danger.fleeDirection.lengthSq() > 0) {
+    if (kite.active && kite.direction.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(kite.direction)) * 18;
+    } else if (danger.fleeDirection.lengthSq() > 0) {
       score += Math.max(0, direction.dot(danger.fleeDirection)) * 10;
     }
 
@@ -1376,6 +1822,58 @@ export class AutoPlayer {
 
     if (hpRatio < 0.35) {
       score *= 1.25;
+    }
+
+    return score;
+  }
+
+  private getKiteCandidateScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    kite: KiteInfo,
+  ): number {
+    if (!kite.active || kite.direction.lengthSq() === 0) {
+      return 0;
+    }
+
+    const hpRatio = this.getHpRatio(context);
+    const currentBorderDistance = this.getNearestBorderDistance(context, player);
+    const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
+    const borderProgress = endpointBorderDistance - currentBorderDistance;
+    const endpointPressure = this.getEnemyPressureAt(context, endpoint, hpRatio);
+    let score = 0;
+
+    score += Math.max(0, direction.dot(kite.direction)) * (kite.nearBorder ? 46 : 30);
+    score += Math.max(0, borderProgress) * (kite.nearBorder ? 0.42 : 0.14);
+
+    if (kite.inwardDirection.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(kite.inwardDirection)) * (kite.nearBorder ? 28 : 4);
+    }
+
+    if (kite.nearBorder && borderProgress <= 1) {
+      score -= 26;
+    }
+
+    if (endpointBorderDistance < AutoPlayer.BORDER_WARNING_MARGIN) {
+      score -= (1 - endpointBorderDistance / AutoPlayer.BORDER_WARNING_MARGIN) * (kite.nearBorder ? 30 : 16);
+    }
+
+    if (this.isNearCorner(context, endpoint, AutoPlayer.BORDER_WARNING_MARGIN)) {
+      score -= kite.nearCorner ? 44 : 28;
+    }
+
+    if (endpointPressure > kite.currentPressure + 1.5 && hpRatio < 0.5) {
+      score -= (endpointPressure - kite.currentPressure) * 5;
+    }
+
+    if (danger.fleeDirection.lengthSq() > 0 && kite.nearBorder) {
+      const fleeAlignment = direction.dot(danger.fleeDirection);
+      if (fleeAlignment > 0 && borderProgress <= 2) {
+        score -= fleeAlignment * 18;
+      }
     }
 
     return score;
@@ -1583,6 +2081,51 @@ export class AutoPlayer {
     return (1 - nearestBorder / warning) * (canCollect ? 2 : 7);
   }
 
+  private getHighPressureBorderPenalty(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    kite: KiteInfo,
+  ): number {
+    if (!kite.active) {
+      return 0;
+    }
+
+    const currentBorderDistance = this.getNearestBorderDistance(context, player);
+    const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
+    const borderProgress = endpointBorderDistance - currentBorderDistance;
+    let penalty = 0;
+
+    if (endpointBorderDistance < AutoPlayer.HARD_BORDER_MARGIN + 12) {
+      penalty += 52;
+    } else if (endpointBorderDistance < AutoPlayer.BORDER_WARNING_MARGIN) {
+      penalty += (1 - endpointBorderDistance / AutoPlayer.BORDER_WARNING_MARGIN) * (kite.nearBorder ? 24 : 14);
+    }
+
+    if (endpointBorderDistance < currentBorderDistance - 2) {
+      penalty += (currentBorderDistance - endpointBorderDistance) * 0.38;
+    }
+
+    if (kite.nearBorder && borderProgress <= 2) {
+      penalty += 22;
+    }
+
+    if (this.isNearCorner(context, endpoint, AutoPlayer.BORDER_WARNING_MARGIN)) {
+      penalty += kite.nearCorner ? 42 : 26;
+    }
+
+    if (kite.inwardDirection.lengthSq() > 0 && kite.nearBorder) {
+      const inwardAlignment = direction.dot(kite.inwardDirection);
+
+      if (inwardAlignment < 0.3) {
+        penalty += 16 + (0.3 - inwardAlignment) * 80;
+      }
+    }
+
+    return penalty;
+  }
+
   private getCornerTrapInfo(
     context: AutoPlayerContext,
     player: Phaser.Math.Vector2,
@@ -1704,6 +2247,17 @@ export class AutoPlayer {
       context.worldBounds.width - point.x,
       context.worldBounds.height - point.y,
     );
+  }
+
+  private isNearCorner(
+    context: AutoPlayerContext,
+    point: Phaser.Math.Vector2,
+    margin: number,
+  ): boolean {
+    const nearHorizontalBorder = point.x < margin || point.x > context.worldBounds.width - margin;
+    const nearVerticalBorder = point.y < margin || point.y > context.worldBounds.height - margin;
+
+    return nearHorizontalBorder && nearVerticalBorder;
   }
 
   private getSoftBorderDirection(context: AutoPlayerContext, player: Phaser.Math.Vector2): Phaser.Math.Vector2 {
@@ -1947,7 +2501,28 @@ export class AutoPlayer {
     this.stickyBreakoutFrames = AutoPlayer.BREAKOUT_STICKY_FRAMES;
   }
 
+  private updateKiteStability(kite: KiteInfo, reason: string, direction: Phaser.Math.Vector2): void {
+    if (!kite.active) {
+      return;
+    }
+
+    if (
+      reason === 'kite'
+      || reason === 'breakout'
+      || (kite.direction.lengthSq() > 0 && direction.dot(kite.direction) > 0.72)
+    ) {
+      this.stickyKiteDirection = direction.clone().normalize();
+      this.stickyKiteFrames = AutoPlayer.KITE_STICKY_FRAMES;
+    }
+  }
+
   private tickSuppression(): void {
+    if (this.stickyKiteFrames > 0) {
+      this.stickyKiteFrames -= 1;
+    } else {
+      this.stickyKiteDirection = undefined;
+    }
+
     if (this.stickyBreakoutFrames > 0) {
       this.stickyBreakoutFrames -= 1;
     } else {

@@ -9,21 +9,73 @@ import {
 } from '../assets/AssetManifest';
 import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
 import { queueLoadPlan } from '../assets/AssetLoadRegistry';
+import { I18n } from '../i18n/I18n';
 import { SettingsManager } from '../settings/SettingsManager';
+import { LoadingOverlay } from '../ui/LoadingOverlay';
 
 export class TitlePreloadScene extends Phaser.Scene {
+  private loadingOverlay?: LoadingOverlay;
+
   constructor() {
     super('TitlePreloadScene');
   }
 
   preload(): void {
+    this.createLoadingOverlay(I18n.t('loading.titleAssets'));
     ExternalArtRegistry.clear();
     this.loadArtManifestBackedTitlePlan();
   }
 
   create(): void {
+    this.loadingOverlay?.setProgress(1);
+    this.loadingOverlay?.setMessage(I18n.t('loading.complete'));
     ExternalArtRegistry.loadManifest(this);
+    this.loadingOverlay?.destroy();
+    this.loadingOverlay = undefined;
     this.scene.start('TitleScene');
+  }
+
+  private createLoadingOverlay(message: string): void {
+    this.loadingOverlay?.destroy();
+    this.loadingOverlay = new LoadingOverlay(this, {
+      title: I18n.t('loading.title'),
+      message,
+    });
+    this.load.on('progress', this.handleLoadProgress, this);
+    this.load.on('fileprogress', this.handleFileProgress, this);
+    this.load.on('filecomplete', this.handleFileComplete, this);
+    this.load.on('loaderror', this.handleLoadError, this);
+    this.load.once('complete', this.cleanupLoaderListeners, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.cleanupLoaderListeners();
+      this.loadingOverlay?.destroy();
+      this.loadingOverlay = undefined;
+    });
+  }
+
+  private handleLoadProgress(value: number): void {
+    this.loadingOverlay?.setProgress(value);
+  }
+
+  private handleFileProgress(file: { key?: string }): void {
+    if (file.key) {
+      this.loadingOverlay?.setCurrentFile(file.key);
+    }
+  }
+
+  private handleFileComplete(key: string): void {
+    this.loadingOverlay?.setCurrentFile(key);
+  }
+
+  private handleLoadError(file: { key?: string }): void {
+    this.loadingOverlay?.setMessage(I18n.t('loading.failedAsset', { key: file.key ?? 'unknown' }));
+  }
+
+  private cleanupLoaderListeners(): void {
+    this.load.off('progress', this.handleLoadProgress, this);
+    this.load.off('fileprogress', this.handleFileProgress, this);
+    this.load.off('filecomplete', this.handleFileComplete, this);
+    this.load.off('loaderror', this.handleLoadError, this);
   }
 
   private loadArtManifestBackedTitlePlan(): void {

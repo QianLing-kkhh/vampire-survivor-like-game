@@ -780,6 +780,13 @@
       "stage": "解锁关卡：{name}"
     }
   },
+  "loading": {
+    "title": "加载中",
+    "titleAssets": "正在加载标题资源",
+    "runAssets": "正在准备本局资源",
+    "complete": "加载完成",
+    "failedAsset": "正在尝试备用资源：{key}"
+  },
   "game": {
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."

@@ -780,6 +780,13 @@
       "stage": "ステージ解放：{name}"
     }
   },
+  "loading": {
+    "title": "ロード中",
+    "titleAssets": "タイトル素材を読み込み中",
+    "runAssets": "ランの素材を準備中",
+    "complete": "完了",
+    "failedAsset": "代替素材を試行中：{key}"
+  },
   "game": {
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."

@@ -30,6 +30,10 @@ const textureKeyWhitelist = new Set([
   'src/scenes/PreloadScene.ts',
 ]);
 
+const textureKeyWhitelistPrefixes = [
+  'src/assets/manifests/',
+];
+
 const warnings = [];
 
 function normalize(filePath) {
@@ -112,7 +116,10 @@ function scanFile(filePath) {
     }
   }
 
-  if (!textureKeyWhitelist.has(relativePath)) {
+  const isTextureKeyWhitelisted = textureKeyWhitelist.has(relativePath)
+    || textureKeyWhitelistPrefixes.some((prefix) => relativePath.startsWith(prefix));
+
+  if (!isTextureKeyWhitelisted) {
     const textureKeyPattern = /['"`][^'"`]*(?:_icon|_projectile|boss_lava_beast|slime_boss)[^'"`]*['"`]/g;
     for (const match of content.matchAll(textureKeyPattern)) {
       addWarning(

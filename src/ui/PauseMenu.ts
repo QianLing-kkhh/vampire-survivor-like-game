@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { AudioManager } from '../audio/AudioManager';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { I18n } from '../i18n/I18n';
@@ -156,7 +157,7 @@ export class PauseMenu {
   private addWeaponBlock(weapon: WeaponDetailInfo): void {
     const weaponLevelText = `Lv.${weapon.level} / ${weapon.maxLevel}`;
     this.addIconText(
-      weapon.iconKey,
+      this.resolveWeaponIconKey(weapon.displayWeaponId, weapon.iconKey),
       this.getInitials(weapon.displayWeaponId),
       `${weaponLevelText}${weapon.evolved ? ` ${I18n.t('hud.evolved')}` : ''}`,
     );
@@ -168,7 +169,7 @@ export class PauseMenu {
     if (weapon.requiredPassiveId) {
       const passiveLevelText = `Lv.${weapon.passiveLevel ?? 0} / ${weapon.requiredPassiveLevel ?? 5}`;
       this.addIconText(
-        weapon.requiredPassiveIconKey,
+        this.resolvePassiveIconKey(weapon.requiredPassiveId, weapon.requiredPassiveIconKey),
         this.getInitials(weapon.requiredPassiveName ?? weapon.requiredPassiveId),
         `${I18n.t('pause.requires')}: ${passiveLevelText}`,
       );
@@ -185,7 +186,7 @@ export class PauseMenu {
 
   private addPassiveBlock(passive: PassiveDetailInfo): void {
     this.addIconText(
-      passive.iconKey,
+      this.resolvePassiveIconKey(passive.passiveId, passive.iconKey),
       this.getInitials(passive.passiveId),
       `Lv.${passive.level} / ${passive.maxLevel}`,
     );
@@ -194,7 +195,7 @@ export class PauseMenu {
     if (passive.relatedWeaponIds.length > 0) {
       for (const weaponId of passive.relatedWeaponIds) {
         this.addIconText(
-          this.getWeaponIconKey(weaponId),
+          this.resolveWeaponIconKey(weaponId),
           this.getInitials(weaponId),
           this.getInitials(weaponId),
         );
@@ -238,39 +239,14 @@ export class PauseMenu {
     this.container.add(text);
   }
 
-  private getWeaponIconKey(weaponId: string): string | undefined {
-    switch (weaponId) {
-      case 'knife':
-        return 'knife_icon';
-      case 'garlic':
-        return this.getExistingTextureKey('art_weapons_garlic_core_sheet', 'garlic_icon');
-      case 'bible':
-        return this.getExistingTextureKey('art_weapons_bible_orbit_book_sheet', 'bible_icon');
-      case 'axe':
-        return this.getExistingTextureKey('art_weapons_axe_icon', 'axe_projectile');
-      case 'magic_wand':
-        return this.getExistingTextureKey('art_weapons_magic_wand_icon', 'magic_wand_projectile');
-      case 'thousand_edge':
-        return this.getExistingTextureKey('art_weapons_thousand_edge_icon', 'thousand_edge_projectile');
-      case 'holy_wand':
-        return this.getExistingTextureKey('art_weapons_holy_wand_icon', 'holy_wand_projectile');
-      case 'death_spiral':
-        return this.getExistingTextureKey('art_weapons_death_spiral_icon', 'death_spiral_projectile');
-      case 'unholy_vespers':
-        return this.getExistingTextureKey('art_weapons_unholy_vespers_icon', 'unholy_vespers_orbit_book');
-      case 'soul_eater':
-        return this.getExistingTextureKey('art_weapons_soul_eater_icon', 'soul_eater_core');
-      default:
-        return undefined;
-    }
+  private resolveWeaponIconKey(weaponId: string, fallbackKey?: string): string | undefined {
+    return AssetKeyResolver.getWeaponIconKey(this.scene, weaponId)
+      ?? (fallbackKey && this.scene.textures.exists(fallbackKey) ? fallbackKey : undefined);
   }
 
-  private getExistingTextureKey(primaryKey: string, fallbackKey: string): string | undefined {
-    if (this.scene.textures.exists(primaryKey)) {
-      return primaryKey;
-    }
-
-    return this.scene.textures.exists(fallbackKey) ? fallbackKey : undefined;
+  private resolvePassiveIconKey(passiveId: string, fallbackKey?: string): string | undefined {
+    return AssetKeyResolver.getPassiveIconKey(this.scene, passiveId)
+      ?? (fallbackKey && this.scene.textures.exists(fallbackKey) ? fallbackKey : undefined);
   }
 
   private addIconText(

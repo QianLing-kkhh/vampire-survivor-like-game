@@ -8,17 +8,18 @@ import {
   ExternalArtAsset,
 } from '../assets/ExternalArtManifest';
 import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
+import type { ArtManifestAsset } from '../assets/manifests/AssetManifestTypes';
+import { AUDIO_ASSETS } from '../assets/manifests/audioAssets';
+import {
+  ART_MANIFEST_ASSETS,
+  CRITICAL_ART_ASSETS,
+} from '../assets/manifests/gameplayArtAssets';
+import {
+  PLAYER_ART_DIRECTIONS,
+  PLAYER_ART_SKIN_IDS,
+} from '../assets/manifests/playerArtAssets';
 import { AudioManager } from '../audio/AudioManager';
 import { VisualSettings } from '../visual/VisualSettings';
-
-type ArtManifestAsset = {
-  path: string;
-  key: string;
-  type: 'image' | 'spritesheet';
-  frameWidth: number;
-  frameHeight: number;
-  frames: number;
-};
 
 type ArtManifest = {
   assets?: unknown;
@@ -32,169 +33,6 @@ type LoaderFileInfo = {
 };
 
 const ART_MANIFEST_CACHE_KEY = 'art_animation_manifest';
-
-const PLAYER_ART_SKIN_IDS = [
-  'assassin_default',
-  'witch_default',
-  'priest_default',
-  'warrior_default',
-] as const;
-
-const PLAYER_ART_DIRECTIONS = [
-  'up',
-  'up_right',
-  'right',
-  'down_right',
-  'down',
-  'down_left',
-  'left',
-  'up_left',
-] as const;
-
-const PLAYER_CHARACTER_ANIMATION_ASSETS: ArtManifestAsset[] = PLAYER_ART_SKIN_IDS.flatMap(
-  (skinId) => ['walk', 'idle'].flatMap((state) => PLAYER_ART_DIRECTIONS.map((direction) => ({
-    path: `player/${skinId}/${state}_${direction}.png`,
-    key: `art_player_${skinId}_${state}_${direction}`,
-    type: 'spritesheet' as const,
-    frameWidth: 80,
-    frameHeight: 80,
-    frames: 4,
-  }))),
-);
-
-const PLAYER_CHARACTER_IMAGE_ASSETS: ArtManifestAsset[] = [
-  ...PLAYER_ART_SKIN_IDS.flatMap((skinId) => [
-    {
-      path: `player/${skinId}/portrait.png`,
-      key: `art_player_${skinId}_portrait`,
-      type: 'image' as const,
-      frameWidth: 128,
-      frameHeight: 128,
-      frames: 1,
-    },
-    {
-      path: `player/${skinId}/hit_fx.png`,
-      key: `art_player_${skinId}_hit_fx`,
-      type: 'image' as const,
-      frameWidth: 96,
-      frameHeight: 96,
-      frames: 1,
-    },
-  ]),
-  { path: 'player/assassin_default/blink_trail.png', key: 'art_player_assassin_default_blink_trail', type: 'image' as const, frameWidth: 128, frameHeight: 64, frames: 1 },
-  { path: 'player/assassin_default/blink_flash.png', key: 'art_player_assassin_default_blink_flash', type: 'image' as const, frameWidth: 96, frameHeight: 96, frames: 1 },
-  { path: 'player/witch_default/slow_zone.png', key: 'art_player_witch_default_slow_zone', type: 'image' as const, frameWidth: 192, frameHeight: 192, frames: 1 },
-  { path: 'player/priest_default/sanctuary_circle.png', key: 'art_player_priest_default_sanctuary_circle', type: 'image' as const, frameWidth: 224, frameHeight: 224, frames: 1 },
-  { path: 'player/warrior_default/counter_wave.png', key: 'art_player_warrior_default_counter_wave', type: 'image' as const, frameWidth: 192, frameHeight: 192, frames: 1 },
-];
-
-const MAP_MECHANIC_ASSETS: ArtManifestAsset[] = [
-  { path: 'map-mechanics/river/river_tile.png', key: 'art_map_mechanics_river_tile', type: 'image', frameWidth: 256, frameHeight: 256, frames: 1 },
-  { path: 'map-mechanics/river/river_bank.png', key: 'art_map_mechanics_river_bank', type: 'image', frameWidth: 256, frameHeight: 256, frames: 1 },
-  { path: 'map-mechanics/river/river_ripple.png', key: 'art_map_mechanics_river_ripple', type: 'image', frameWidth: 128, frameHeight: 64, frames: 1 },
-  { path: 'map-mechanics/river/river_minimap.png', key: 'art_map_mechanics_river_minimap', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
-  { path: 'map-mechanics/swamp/swamp_pool.png', key: 'art_map_mechanics_swamp_pool', type: 'image', frameWidth: 256, frameHeight: 256, frames: 1 },
-  { path: 'map-mechanics/swamp/swamp_bubble.png', key: 'art_map_mechanics_swamp_bubble', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'map-mechanics/swamp/swamp_minimap.png', key: 'art_map_mechanics_swamp_minimap', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
-  { path: 'map-mechanics/mud/mud_patch.png', key: 'art_map_mechanics_mud_patch', type: 'image', frameWidth: 256, frameHeight: 256, frames: 1 },
-  { path: 'map-mechanics/mud/mud_spot.png', key: 'art_map_mechanics_mud_spot', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'map-mechanics/mud/mud_minimap.png', key: 'art_map_mechanics_mud_minimap', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
-  { path: 'map-mechanics/portal/portal_blue.png', key: 'art_map_mechanics_portal_blue', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/portal/portal_purple.png', key: 'art_map_mechanics_portal_purple', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/portal/portal_green.png', key: 'art_map_mechanics_portal_green', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/portal/portal_minimap_blue.png', key: 'art_map_mechanics_portal_minimap_blue', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
-  { path: 'map-mechanics/portal/portal_minimap_purple.png', key: 'art_map_mechanics_portal_minimap_purple', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
-  { path: 'map-mechanics/portal/portal_minimap_green.png', key: 'art_map_mechanics_portal_minimap_green', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
-  { path: 'map-mechanics/light/lamp.png', key: 'art_map_mechanics_light_lamp', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/light/torch.png', key: 'art_map_mechanics_light_torch', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/light/crystal.png', key: 'art_map_mechanics_light_crystal', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/light/light_minimap.png', key: 'art_map_mechanics_light_minimap', type: 'image', frameWidth: 24, frameHeight: 24, frames: 1 },
-  { path: 'map-mechanics/obstacle/obstacle_tree.png', key: 'art_map_mechanics_obstacle_tree', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/obstacle/obstacle_rock.png', key: 'art_map_mechanics_obstacle_rock', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/obstacle/obstacle_grave.png', key: 'art_map_mechanics_obstacle_grave', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/obstacle/obstacle_wall.png', key: 'art_map_mechanics_obstacle_wall', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/obstacle/obstacle_minimap.png', key: 'art_map_mechanics_obstacle_minimap', type: 'image', frameWidth: 24, frameHeight: 24, frames: 1 },
-  { path: 'map-mechanics/hazard/hazard_spike.png', key: 'art_map_mechanics_hazard_spike', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/hazard/hazard_fire.png', key: 'art_map_mechanics_hazard_fire', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/hazard/hazard_poison.png', key: 'art_map_mechanics_hazard_poison', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/hazard/hazard_minimap.png', key: 'art_map_mechanics_hazard_minimap', type: 'image', frameWidth: 24, frameHeight: 24, frames: 1 },
-  { path: 'map-mechanics/altar/altar_basic.png', key: 'art_map_mechanics_altar_basic', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/altar/altar_minimap.png', key: 'art_map_mechanics_altar_minimap', type: 'image', frameWidth: 24, frameHeight: 24, frames: 1 },
-  { path: 'map-mechanics/spawner/spawner_nest.png', key: 'art_map_mechanics_spawner_nest', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'map-mechanics/spawner/spawner_minimap.png', key: 'art_map_mechanics_spawner_minimap', type: 'image', frameWidth: 24, frameHeight: 24, frames: 1 },
-];
-
-const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
-  { path: 'effects/boss_dash_impact_sheet.png', key: 'art_effects_boss_dash_impact_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
-  { path: 'effects/boss_dash_warning.png', key: 'art_effects_boss_dash_warning', type: 'image', frameWidth: 256, frameHeight: 64, frames: 1 },
-  { path: 'effects/hit_flash_sheet.png', key: 'art_effects_hit_flash_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'effects/level_up_glow_sheet.png', key: 'art_effects_level_up_glow_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
-  { path: 'enemies/bat_boss_placeholder.png', key: 'art_enemies_bat_boss_placeholder', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
-  { path: 'enemies/bat_fly_sheet.png', key: 'art_enemies_bat_fly_sheet', type: 'spritesheet', frameWidth: 48, frameHeight: 48, frames: 4 },
-  { path: 'enemies/boss_lava_beast_idle_sheet.png', key: 'art_enemies_boss_lava_beast_idle_sheet', type: 'spritesheet', frameWidth: 192, frameHeight: 192, frames: 4 },
-  { path: 'enemies/golem_boss_placeholder.png', key: 'art_enemies_golem_boss_placeholder', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
-  { path: 'enemies/golem_walk_sheet.png', key: 'art_enemies_golem_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'enemies/slime_boss_placeholder.png', key: 'art_enemies_slime_boss_placeholder', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
-  { path: 'enemies/slime_walk_sheet.png', key: 'art_enemies_slime_walk_sheet', type: 'spritesheet', frameWidth: 48, frameHeight: 48, frames: 4 },
-  { path: 'passives/bracer_icon.png', key: 'art_passives_bracer_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'passives/clover_icon.png', key: 'art_passives_clover_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'passives/empty_tome_icon.png', key: 'art_passives_empty_tome_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'passives/pummarola_icon.png', key: 'art_passives_pummarola_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'passives/spinach_icon.png', key: 'art_passives_spinach_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'pickups/exp_gem.png', key: 'art_pickups_exp_gem', type: 'image', frameWidth: 32, frameHeight: 32, frames: 1 },
-  { path: 'pickups/treasure_chest.png', key: 'art_pickups_treasure_chest', type: 'image', frameWidth: 64, frameHeight: 56, frames: 1 },
-  { path: 'player/assassin_default_walk_sheet.png', key: 'art_player_assassin_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
-  { path: 'player/player_walk_sheet.png', key: 'art_player_player_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
-  { path: 'player/priest_default_walk_sheet.png', key: 'art_player_priest_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
-  { path: 'player/warrior_default_walk_sheet.png', key: 'art_player_warrior_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
-  { path: 'player/witch_default_walk_sheet.png', key: 'art_player_witch_default_walk_sheet', type: 'spritesheet', frameWidth: 80, frameHeight: 80, frames: 4 },
-  ...PLAYER_CHARACTER_ANIMATION_ASSETS,
-  ...PLAYER_CHARACTER_IMAGE_ASSETS,
-  ...MAP_MECHANIC_ASSETS,
-  { path: 'ui/exp_icon.png', key: 'art_ui_exp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'ui/hp_icon.png', key: 'art_ui_hp_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'ui/panel_bg.png', key: 'art_ui_panel_bg', type: 'image', frameWidth: 256, frameHeight: 128, frames: 1 },
-  { path: 'ui/passive_frame.png', key: 'art_ui_passive_frame', type: 'image', frameWidth: 80, frameHeight: 80, frames: 1 },
-  { path: 'ui/time_icon.png', key: 'art_ui_time_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'ui/weapon_frame.png', key: 'art_ui_weapon_frame', type: 'image', frameWidth: 80, frameHeight: 80, frames: 1 },
-  { path: 'weapons/axe_icon.png', key: 'art_weapons_axe_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'weapons/axe_projectile_sheet.png', key: 'art_weapons_axe_projectile_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/bible_orbit_book_sheet.png', key: 'art_weapons_bible_orbit_book_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/death_spiral_icon.png', key: 'art_weapons_death_spiral_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'weapons/death_spiral_projectile_sheet.png', key: 'art_weapons_death_spiral_projectile_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/garlic_core_sheet.png', key: 'art_weapons_garlic_core_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/holy_wand_icon.png', key: 'art_weapons_holy_wand_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'weapons/holy_wand_projectile_sheet.png', key: 'art_weapons_holy_wand_projectile_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/knife_projectile_sheet.png', key: 'art_weapons_knife_projectile_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/magic_wand_icon.png', key: 'art_weapons_magic_wand_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'weapons/magic_wand_projectile_sheet.png', key: 'art_weapons_magic_wand_projectile_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/soul_eater_core_sheet.png', key: 'art_weapons_soul_eater_core_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/soul_eater_icon.png', key: 'art_weapons_soul_eater_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'weapons/thousand_edge_icon.png', key: 'art_weapons_thousand_edge_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'weapons/thousand_edge_projectile_sheet.png', key: 'art_weapons_thousand_edge_projectile_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'weapons/unholy_vespers_icon.png', key: 'art_weapons_unholy_vespers_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
-  { path: 'weapons/unholy_vespers_orbit_book_sheet.png', key: 'art_weapons_unholy_vespers_orbit_book_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
-  { path: 'world/grass_tile.png', key: 'art_world_grass_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'world/graveyard_ground_tile.png', key: 'art_world_graveyard_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'world/grave_landmark.png', key: 'art_world_grave_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
-  { path: 'world/ground_tile.png', key: 'art_world_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'world/rock_landmark.png', key: 'art_world_rock_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
-  { path: 'world/swamp_ground_tile.png', key: 'art_world_swamp_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'world/ruins_ground_tile.png', key: 'art_world_ruins_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
-  { path: 'world/tree_landmark.png', key: 'art_world_tree_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
-];
-
-const CRITICAL_ART_ASSET_KEYS = [
-  'art_world_graveyard_ground_tile',
-  'art_world_swamp_ground_tile',
-  'art_world_ruins_ground_tile',
-  ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_idle_down`),
-  ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_walk_sheet`),
-];
-
-const CRITICAL_ART_ASSETS = ART_MANIFEST_ASSETS.filter((asset) => (
-  CRITICAL_ART_ASSET_KEYS.includes(asset.key)
-));
 
 export class PreloadScene extends Phaser.Scene {
   private artManifestAssets: ArtManifestAsset[] = ART_MANIFEST_ASSETS;
@@ -270,34 +108,9 @@ export class PreloadScene extends Phaser.Scene {
     this.loadArtManifestAssetFiles(ART_MANIFEST_ASSETS);
     this.loadArtManifestAssets();
     this.loadExternalArtManifest();
-    this.load.audio('enemy_hit', 'assets/audio/enemy_hit.wav');
-    this.load.audio('enemy_killed', 'assets/audio/enemy_killed.wav');
-    this.load.audio('player_hit', 'assets/audio/player_hit.wav');
-    this.load.audio('level_up', 'assets/audio/level_up.wav');
-    this.load.audio('upgrade_selected', 'assets/audio/upgrade_selected.wav');
-    this.load.audio('treasure_open', 'assets/audio/treasure_open.wav');
-    this.load.audio('boss_spawn', 'assets/audio/boss_spawn.wav');
-    this.load.audio('boss_dash', 'assets/audio/boss_dash.wav');
-    this.load.audio('victory', 'assets/audio/victory.wav');
-    this.load.audio('game_over', 'assets/audio/game_over.wav');
-    this.load.audio('ui_click', 'assets/audio/ui_click.wav');
-    this.load.audio('title_bgm', 'assets/audio/bgm/title_bgm.wav');
-    this.load.audio('gameplay_bgm', 'assets/audio/bgm/gameplay_bgm.wav');
-    this.load.audio('boss_bgm', 'assets/audio/bgm/boss_bgm.wav');
-    this.load.audio('result_bgm', 'assets/audio/bgm/result_bgm.wav');
-    this.load.audio('knife_attack', 'assets/audio/weapon/knife_attack.wav');
-    this.load.audio('axe_throw', 'assets/audio/weapon/axe_throw.wav');
-    this.load.audio('magic_wand_shot', 'assets/audio/weapon/magic_wand_shot.wav');
-    this.load.audio('bible_orbit_hit', 'assets/audio/weapon/bible_orbit_hit.wav');
-    this.load.audio('garlic_aura_tick', 'assets/audio/weapon/garlic_aura_tick.wav');
-    this.load.audio('thousand_edge_attack', 'assets/audio/weapon/thousand_edge_attack.wav');
-    this.load.audio('holy_wand_shot', 'assets/audio/weapon/holy_wand_shot.wav');
-    this.load.audio('death_spiral_throw', 'assets/audio/weapon/death_spiral_throw.wav');
-    this.load.audio('unholy_vespers_hit', 'assets/audio/weapon/unholy_vespers_hit.wav');
-    this.load.audio('soul_eater_tick', 'assets/audio/weapon/soul_eater_tick.wav');
-    this.load.audio('ui_hover', 'assets/audio/ui/ui_hover.wav');
-    this.load.audio('ui_back', 'assets/audio/ui/ui_back.wav');
-    this.load.audio('ui_confirm', 'assets/audio/ui/ui_confirm.wav');
+    for (const asset of AUDIO_ASSETS) {
+      this.load.audio(asset.key, asset.path);
+    }
   }
 
   create(): void {

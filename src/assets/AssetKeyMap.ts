@@ -176,12 +176,12 @@ export const DEFAULT_ASSET_KEY_MAP = {
     knife: {
       projectileTexture: { primary: 'art_weapons_knife_projectile_sheet', fallbacks: ['knife_projectile'] },
       projectileAnimation: { primary: 'art_knife_projectile_spin' },
-      icon: { primary: 'knife_icon', fallbacks: ['art_weapons_knife_projectile_sheet', 'knife_projectile'] },
+      icon: { primary: 'art_weapons_knife_projectile_sheet', fallbacks: ['knife_icon', 'knife_projectile'] },
     },
     garlic: {
       projectileTexture: { primary: 'art_weapons_garlic_core_sheet', fallbacks: ['garlic_icon'] },
       projectileAnimation: { primary: 'art_garlic_core' },
-      icon: { primary: 'garlic_icon', fallbacks: ['art_weapons_garlic_core_sheet'] },
+      icon: { primary: 'art_weapons_garlic_core_sheet', fallbacks: ['garlic_icon'] },
     },
     bible: {
       projectileTexture: {
@@ -189,7 +189,7 @@ export const DEFAULT_ASSET_KEY_MAP = {
         fallbacks: ['bible_orbit_projectile'],
       },
       projectileAnimation: { primary: 'art_bible_orbit_book_spin' },
-      icon: { primary: 'bible_icon', fallbacks: ['art_weapons_bible_orbit_book_sheet'] },
+      icon: { primary: 'art_weapons_bible_orbit_book_sheet', fallbacks: ['bible_icon', 'bible_orbit_projectile'] },
     },
     magic_wand: {
       projectileTexture: {

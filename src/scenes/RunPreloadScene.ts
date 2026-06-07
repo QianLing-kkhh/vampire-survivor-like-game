@@ -16,6 +16,7 @@ import { AssetLoadPlan } from '../assets/AssetLoadPlan';
 import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
 import { queueLoadPlan } from '../assets/AssetLoadRegistry';
 import { CharacterManager } from '../character/CharacterManager';
+import { I18n } from '../i18n/I18n';
 import { MapManager } from '../map/MapManager';
 import { RandomManager } from '../random/RandomManager';
 import { RunSeed } from '../random/RunSeed';
@@ -23,6 +24,7 @@ import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
 import { StageManager } from '../stage/StageManager';
+import { LoadingOverlay } from '../ui/LoadingOverlay';
 
 type RunPreloadSceneData = Record<string, unknown>;
 
@@ -30,6 +32,7 @@ export class RunPreloadScene extends Phaser.Scene {
   private plan?: AssetLoadPlan;
   private gameSceneData?: RunPreloadSceneData;
   private context?: RunPreloadContext;
+  private loadingOverlay?: LoadingOverlay;
 
   constructor() {
     super('RunPreloadScene');
@@ -40,6 +43,7 @@ export class RunPreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
+    this.createLoadingOverlay(I18n.t('loading.runAssets'));
     ExternalArtRegistry.loadManifest(this);
     this.context = this.resolveRunPreloadContext();
     if (this.shouldForceRefreshPlayerRuntimeAssets()) {
@@ -56,13 +60,60 @@ export class RunPreloadScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.loadingOverlay?.setProgress(1);
+    this.loadingOverlay?.setMessage(I18n.t('loading.complete'));
     this.createBuiltInAnimations();
     this.createPlayerDirectionAnimations();
     this.createExternalArtAnimations();
+    this.loadingOverlay?.destroy();
+    this.loadingOverlay = undefined;
     this.scene.start('GameScene', {
       ...(this.gameSceneData ?? {}),
       runtimeAssetsReady: true,
     });
+  }
+
+  private createLoadingOverlay(message: string): void {
+    this.loadingOverlay?.destroy();
+    this.loadingOverlay = new LoadingOverlay(this, {
+      title: I18n.t('loading.title'),
+      message,
+    });
+    this.load.on('progress', this.handleLoadProgress, this);
+    this.load.on('fileprogress', this.handleFileProgress, this);
+    this.load.on('filecomplete', this.handleFileComplete, this);
+    this.load.on('loaderror', this.handleLoadError, this);
+    this.load.once('complete', this.cleanupLoaderListeners, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.cleanupLoaderListeners();
+      this.loadingOverlay?.destroy();
+      this.loadingOverlay = undefined;
+    });
+  }
+
+  private handleLoadProgress(value: number): void {
+    this.loadingOverlay?.setProgress(value);
+  }
+
+  private handleFileProgress(file: { key?: string }): void {
+    if (file.key) {
+      this.loadingOverlay?.setCurrentFile(file.key);
+    }
+  }
+
+  private handleFileComplete(key: string): void {
+    this.loadingOverlay?.setCurrentFile(key);
+  }
+
+  private handleLoadError(file: { key?: string }): void {
+    this.loadingOverlay?.setMessage(I18n.t('loading.failedAsset', { key: file.key ?? 'unknown' }));
+  }
+
+  private cleanupLoaderListeners(): void {
+    this.load.off('progress', this.handleLoadProgress, this);
+    this.load.off('fileprogress', this.handleFileProgress, this);
+    this.load.off('filecomplete', this.handleFileComplete, this);
+    this.load.off('loaderror', this.handleLoadError, this);
   }
 
   private resolveRunPreloadContext(): RunPreloadContext {
