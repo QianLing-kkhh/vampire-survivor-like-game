@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
+import { DEFAULT_ASSET_KEY_MAP } from '../assets/AssetKeyMap';
 import { AutoPlayer } from '../auto/AutoPlayer';
 import {
   AutoUpgradeSelectionContext,
@@ -83,10 +84,6 @@ export class GameScene extends Phaser.Scene {
   private static readonly BOSS_DASH_IMPACT_RADIUS = 140;
   private static readonly BOSS_DASH_IMPACT_DAMAGE = 30;
   private static readonly BOSS_DASH_KNOCKBACK_DISTANCE = 120;
-  private static readonly CRITICAL_RUNTIME_TEXTURE_KEYS = [
-    'art_world_ruins_ground_tile',
-    'art_world_ground_tile',
-  ] as const;
 
   private eventBus = new EventBus<GameEventMap>();
   private readonly autoPlayer = new AutoPlayer();
@@ -177,6 +174,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(data: GameSceneData = {}): void {
+    this.resolveCurrentRunContent();
+
     if (this.shouldRedirectToRunPreload(data)) {
       console.warn('[game-scene] Runtime art assets are not ready; redirecting through RunPreloadScene.');
       this.scene.start('RunPreloadScene', data);
@@ -228,7 +227,6 @@ export class GameScene extends Phaser.Scene {
     this.treasureManager = undefined;
     this.evolutionManager = undefined;
     this.passiveManager = undefined;
-    this.resolveCurrentRunContent();
 
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
@@ -463,7 +461,29 @@ export class GameScene extends Phaser.Scene {
   }
 
   private hasCriticalRuntimeTextures(): boolean {
-    return GameScene.CRITICAL_RUNTIME_TEXTURE_KEYS.every((key) => this.textures.exists(key));
+    return this.getCriticalRuntimeTextureKeys().every((key) => this.textures.exists(key));
+  }
+
+  private getCriticalRuntimeTextureKeys(): string[] {
+    if (!this.shouldExpectRuntimeTextures()) {
+      return [];
+    }
+
+    const groundTileKey = this.currentMap.render?.groundTileKey;
+
+    if (!groundTileKey) {
+      return [];
+    }
+
+    return [this.getWorldTilePrimaryTextureKey(groundTileKey)];
+  }
+
+  private getWorldTilePrimaryTextureKey(groundTileKey: string): string {
+    const entry = DEFAULT_ASSET_KEY_MAP.world[
+      groundTileKey as keyof typeof DEFAULT_ASSET_KEY_MAP.world
+    ];
+
+    return entry?.primary ?? `art_world_${groundTileKey}`;
   }
 
   update(_time: number, delta: number): void {
