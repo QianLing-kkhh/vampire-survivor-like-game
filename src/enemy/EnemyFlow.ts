@@ -10,12 +10,14 @@ import { GameEventBus } from '../events/GameEventBus';
 import { MapMechanicRuntime } from '../map/mechanics/MapMechanicRuntime';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
+import { PlayerStats } from '../player/PlayerStats';
 import { RunState } from '../run/RunState';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 
 import { Enemy, GameEventMap, isEnemyKilledEvent } from './Enemy';
+import { ENEMY_POPULATION_CONFIG } from './EnemyPopulationConfig';
 import { EnemyMovement } from './EnemyMovement';
 
 export interface EnemyFlowConfig {
@@ -26,6 +28,7 @@ export interface EnemyFlowConfig {
   damageCalculator: DamageCalculator;
   player: PlayerController;
   playerHealth: PlayerHealth;
+  playerStats: PlayerStats;
   runState: RunState;
   runStats: RunStats;
   gameEventBus?: GameEventBus;
@@ -54,6 +57,14 @@ export class EnemyFlow {
   private readonly contactDamageCooldowns = new Map<Enemy, number>();
   private readonly unsubscribeEnemyKilled: () => void;
   private readonly previousPlayerPosition: Phaser.Math.Vector2;
+  private enemyMergeCount = 0;
+  private enemyMergeCreatedLv2 = 0;
+  private enemyMergeCreatedLv3 = 0;
+  private enemyMergeMaxLevelReached = 0;
+  private maxMergeLevelSeen = 1;
+  private maxAliveEnemyCount = 0;
+  private aliveEnemySampleCount = 0;
+  private aliveEnemySampleTotal = 0;
 
   constructor(private readonly config: EnemyFlowConfig) {
     this.previousPlayerPosition = new Phaser.Math.Vector2(
@@ -87,7 +98,9 @@ export class EnemyFlow {
     });
     this.removeDeadEnemies();
     this.updateEnemyMovement(deltaMs);
+    this.updateEnemyMerges();
     this.updateContactDamage(deltaMs);
+    this.updateAliveEnemyStats();
     this.previousPlayerPosition.set(
       this.config.player.body.x,
       this.config.player.body.y,
@@ -156,7 +169,10 @@ export class EnemyFlow {
       triggerReaction?: boolean;
     },
   ): PlayerDamageResult {
-    const incomingDamage = Math.max(0, damage);
+    const incomingDamage = Math.max(
+      0,
+      damage - this.getArmorFlatReduction(),
+    );
     const nowMs = this.config.scene.time.now;
 
     if (
@@ -241,11 +257,36 @@ export class EnemyFlow {
         continue;
       }
 
-      this.config.enemies[index].triggerModifierDeathEffects({
-        scene: this.config.scene,
-      });
+      if (!this.config.enemies[index].wasRemovedByMerge()) {
+        this.config.enemies[index].triggerModifierDeathEffects({
+          scene: this.config.scene,
+        });
+      }
+      this.contactDamageCooldowns.delete(this.config.enemies[index]);
       this.config.enemies.splice(index, 1);
     }
+  }
+
+  getPopulationStats(): {
+    enemyMergeCount: number;
+    enemyMergeCreatedLv2: number;
+    enemyMergeCreatedLv3: number;
+    enemyMergeMaxLevelReached: number;
+    maxMergeLevelSeen: number;
+    maxAliveEnemyCount: number;
+    averageAliveEnemyCount: number;
+  } {
+    return {
+      enemyMergeCount: this.enemyMergeCount,
+      enemyMergeCreatedLv2: this.enemyMergeCreatedLv2,
+      enemyMergeCreatedLv3: this.enemyMergeCreatedLv3,
+      enemyMergeMaxLevelReached: this.enemyMergeMaxLevelReached,
+      maxMergeLevelSeen: this.maxMergeLevelSeen,
+      maxAliveEnemyCount: this.maxAliveEnemyCount,
+      averageAliveEnemyCount: this.aliveEnemySampleCount <= 0
+        ? 0
+        : this.aliveEnemySampleTotal / this.aliveEnemySampleCount,
+    };
   }
 
   private updateEnemyMovement(deltaMs: number): void {
@@ -257,6 +298,14 @@ export class EnemyFlow {
       enemy.updateModifiers(deltaMs);
 
       if (enemy.isDead || enemy.dashEnabled) {
+        enemy.setMapSlowVisual(false);
+        enemy.updateShadow();
+        continue;
+      }
+
+      if (enemy.isMovementLocked()) {
+        const mapSlowState = this.getMapEnemySlowState(enemy);
+        enemy.setMapSlowVisual(mapSlowState.isSlowed, mapSlowState.multiplier);
         enemy.updateShadow();
         continue;
       }
@@ -266,28 +315,39 @@ export class EnemyFlow {
         height: this.config.worldHeight,
       })) {
         enemy.updateShadow();
+        const mapSlowState = this.getMapEnemySlowState(enemy);
+        enemy.setMapSlowVisual(mapSlowState.isSlowed, mapSlowState.multiplier);
         continue;
       }
 
+      const mapSlowState = this.getMapEnemySlowState(enemy);
       this.config.enemyMovement.moveToward(
         enemy,
         this.config.player.body,
         deltaMs,
         enemySpeedMultiplier
           * this.getZoneEnemySpeedMultiplier(enemy)
-          * this.getMapEnemySpeedMultiplier(enemy),
+          * mapSlowState.multiplier,
       );
       this.config.mapMechanicRuntime?.resolveEnemyObstacleCollision(enemy);
+      const finalMapSlowState = this.getMapEnemySlowState(enemy);
+      enemy.setMapSlowVisual(finalMapSlowState.isSlowed, finalMapSlowState.multiplier);
       enemy.updateShadow();
     }
   }
 
-  private getMapEnemySpeedMultiplier(enemy: Enemy): number {
-    return this.config.mapMechanicRuntime?.getEnemySpeedMultiplierAt(
+  private getMapEnemySlowState(enemy: Enemy): {
+    isSlowed: boolean;
+    multiplier: number;
+  } {
+    return this.config.mapMechanicRuntime?.getEnemySlowState(
+      enemy,
       enemy.body.x,
       enemy.body.y,
-      enemy,
-    ) ?? 1;
+    ) ?? {
+      isSlowed: false,
+      multiplier: 1,
+    };
   }
 
   private getZoneEnemySpeedMultiplier(enemy: Enemy): number {
@@ -317,6 +377,7 @@ export class EnemyFlow {
       if (
         enemy.isDead
         || enemy.isDashing()
+        || enemy.isContactDamageSuppressed()
         || this.contactDamageCooldowns.has(enemy)
         || !this.isPlayerHitByEnemy(enemy)
       ) {
@@ -398,6 +459,80 @@ export class EnemyFlow {
         );
       },
     });
+  }
+
+  private getArmorFlatReduction(): number {
+    return Math.max(
+      0,
+      this.config.playerStats.armorFlat
+        + (this.config.characterRuntime?.getTemporaryArmorFlatBonus() ?? 0),
+    );
+  }
+
+  private updateEnemyMerges(): void {
+    if (!ENEMY_POPULATION_CONFIG.mergeEnabled) {
+      return;
+    }
+
+    let remainingMerges = ENEMY_POPULATION_CONFIG.maxMergesPerFrame;
+
+    for (let leftIndex = 0; leftIndex < this.config.enemies.length; leftIndex += 1) {
+      if (remainingMerges <= 0) {
+        return;
+      }
+
+      const survivor = this.config.enemies[leftIndex];
+
+      if (survivor.isDead) {
+        continue;
+      }
+
+      for (let rightIndex = leftIndex + 1; rightIndex < this.config.enemies.length; rightIndex += 1) {
+        if (remainingMerges <= 0) {
+          return;
+        }
+
+        const removed = this.config.enemies[rightIndex];
+
+        if (removed.isDead || !survivor.canMergeWith(removed)) {
+          continue;
+        }
+
+        if (!survivor.mergeWith(removed)) {
+          survivor.markMergeChecked();
+          removed.markMergeChecked();
+          continue;
+        }
+
+        remainingMerges -= 1;
+        this.recordMerge(survivor.mergeLevel);
+        this.contactDamageCooldowns.delete(removed);
+        this.config.enemies.splice(rightIndex, 1);
+        rightIndex -= 1;
+      }
+    }
+  }
+
+  private recordMerge(mergeLevel: number): void {
+    this.enemyMergeCount += 1;
+    this.maxMergeLevelSeen = Math.max(this.maxMergeLevelSeen, mergeLevel);
+
+    if (mergeLevel === 2) {
+      this.enemyMergeCreatedLv2 += 1;
+    }
+
+    if (mergeLevel === 3) {
+      this.enemyMergeCreatedLv3 += 1;
+      this.enemyMergeMaxLevelReached += 1;
+    }
+  }
+
+  private updateAliveEnemyStats(): void {
+    const aliveEnemyCount = this.config.enemies.filter((enemy) => !enemy.isDead).length;
+
+    this.maxAliveEnemyCount = Math.max(this.maxAliveEnemyCount, aliveEnemyCount);
+    this.aliveEnemySampleTotal += aliveEnemyCount;
+    this.aliveEnemySampleCount += 1;
   }
 
   private showCharacterHitFx(): void {

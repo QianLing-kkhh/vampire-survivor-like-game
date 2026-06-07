@@ -7,6 +7,7 @@ import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { Position } from '../enemy/EnemyMovement';
 import { EnemyModifierConfig } from '../enemy/modifiers/EnemyModifierConfig';
+import { ENEMY_POPULATION_CONFIG } from '../enemy/EnemyPopulationConfig';
 import { RandomSource } from '../random/RandomSource';
 import { SeededRandom } from '../random/SeededRandom';
 import { RunRuleSet } from '../rules/RunRuleSet';
@@ -32,7 +33,10 @@ export class SpawnDirector {
   private readonly activeWaves: ActiveWave[] = [];
   private spawnCount = 0;
   private spawnClampCount = 0;
+  private minEnemyFloorSpawnCount = 0;
   private lastFrameSpawnClamped = false;
+  private remainingSpawnBudget = SpawnDirector.MAX_SPAWN_BATCHES_PER_FRAME;
+  private lastNormalEnemyId = ENEMY_POPULATION_CONFIG.fallbackEnemyId;
 
   constructor(
     waves: readonly RuntimeSpawnWave[],
@@ -44,6 +48,7 @@ export class SpawnDirector {
     private readonly random: RandomSource = new SeededRandom('spawn-fallback'),
     private readonly getAliveEnemyCount?: () => number,
     private readonly getMaxAliveEnemies?: () => number,
+    private readonly getAliveNormalEnemyCount?: () => number,
   ) {
     ContentBootstrap.ensureInitialized();
     this.pendingWaves = [...waves].sort((a, b) => a.time - b.time);
@@ -71,13 +76,16 @@ export class SpawnDirector {
 
   update(gameTimeSeconds: number, deltaMs: number): void {
     this.activateReadyWaves(gameTimeSeconds);
+    this.remainingSpawnBudget = SpawnDirector.MAX_SPAWN_BATCHES_PER_FRAME;
     this.updateActiveWaves(deltaMs);
+    this.updateMinAliveEnemyFloor();
   }
 
   getDebugStats(): {
     activeWaveCount: number;
     pendingWaveCount: number;
     spawnClampCount: number;
+    minEnemyFloorSpawnCount: number;
     maxAccumulatorMs: number;
     lastFrameSpawnClamped: boolean;
   } {
@@ -85,6 +93,7 @@ export class SpawnDirector {
       activeWaveCount: this.activeWaves.length,
       pendingWaveCount: this.pendingWaves.length,
       spawnClampCount: this.spawnClampCount,
+      minEnemyFloorSpawnCount: this.minEnemyFloorSpawnCount,
       maxAccumulatorMs: this.activeWaves.reduce(
         (max, activeWave) => Math.max(max, activeWave.elapsedSinceSpawn),
         0,
@@ -110,7 +119,6 @@ export class SpawnDirector {
   }
 
   private updateActiveWaves(deltaMs: number): void {
-    let remainingSpawnBudget = SpawnDirector.MAX_SPAWN_BATCHES_PER_FRAME;
     this.lastFrameSpawnClamped = false;
 
     for (const activeWave of this.activeWaves) {
@@ -127,7 +135,7 @@ export class SpawnDirector {
       activeWave.elapsedSinceSpawn += deltaMs;
 
       while (
-        remainingSpawnBudget > 0
+        this.remainingSpawnBudget > 0
         &&
         !this.isAliveEnemyCapReached()
         &&
@@ -136,7 +144,7 @@ export class SpawnDirector {
       ) {
         activeWave.elapsedSinceSpawn -= this.getEffectiveIntervalMs(activeWave.wave.interval);
         activeWave.spawnedCount += 1;
-        remainingSpawnBudget -= 1;
+        this.remainingSpawnBudget -= 1;
         this.spawnEnemy(
           activeWave.wave.enemy,
           activeWave.wave.modifiers,
@@ -144,7 +152,7 @@ export class SpawnDirector {
       }
 
       if (
-        (remainingSpawnBudget <= 0 || this.isAliveEnemyCapReached())
+        (this.remainingSpawnBudget <= 0 || this.isAliveEnemyCapReached())
         && activeWave.spawnedCount < activeWave.wave.count
         && activeWave.elapsedSinceSpawn >= this.getEffectiveIntervalMs(activeWave.wave.interval)
       ) {
@@ -178,7 +186,55 @@ export class SpawnDirector {
     const position = this.getSpawnPosition();
     const enemy = this.enemyFactory.create(enemyId, position.x, position.y, { modifiers });
 
+    if (this.isNormalEnemyId(enemyId)) {
+      this.lastNormalEnemyId = enemyId;
+    }
+
     this.onEnemySpawned(enemy);
+  }
+
+  private updateMinAliveEnemyFloor(): void {
+    if (
+      ENEMY_POPULATION_CONFIG.minAliveEnemies <= 0
+      || this.remainingSpawnBudget <= 0
+      || (!this.getAliveNormalEnemyCount && !this.getAliveEnemyCount)
+    ) {
+      return;
+    }
+
+    let aliveNormalEnemyCount = this.getAliveNormalEnemyCount?.() ?? this.getAliveEnemyCount?.() ?? 0;
+
+    while (
+      aliveNormalEnemyCount < ENEMY_POPULATION_CONFIG.minAliveEnemies
+      && this.remainingSpawnBudget > 0
+      && !this.isAliveEnemyCapReached()
+    ) {
+      this.remainingSpawnBudget -= 1;
+      this.minEnemyFloorSpawnCount += 1;
+      this.spawnEnemy(this.getFloorSpawnEnemyId());
+      aliveNormalEnemyCount += 1;
+    }
+  }
+
+  private getFloorSpawnEnemyId(): string {
+    const activeWaveEnemyId = this.activeWaves.find((activeWave) => (
+      this.isNormalEnemyId(activeWave.wave.enemy)
+    ))?.wave.enemy;
+
+    return activeWaveEnemyId ?? this.lastNormalEnemyId;
+  }
+
+  private isNormalEnemyId(enemyId: string): boolean {
+    const stats = this.enemyFactory.getEnemyStats(enemyId);
+
+    return (
+      stats.mergeable !== false
+      && stats.bossLike !== true
+      && stats.dashEnabled !== true
+      && enemyId !== 'boss'
+      && !enemyId.endsWith('_boss')
+      && !enemyId.startsWith('endless_')
+    );
   }
 
   private isAliveEnemyCapReached(): boolean {

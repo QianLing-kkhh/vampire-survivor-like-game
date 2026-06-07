@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 
+import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { MapMechanicIconKind } from '../assets/AssetKeyMap';
 import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { HelpContentBuilder } from './help/HelpContentBuilder';
-import { HelpLine } from './help/HelpSection';
+import { HelpIconRef, HelpLine } from './help/HelpSection';
 import { HelpTabDefinition } from './help/HelpTabDefinition';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
@@ -22,7 +24,8 @@ type PageRange = {
 
 export class HelpOverlay {
   private static readonly TAB_SIZE = 42;
-  private static readonly CONTENT_ICON_SIZE = 24;
+  private static readonly CONTENT_ICON_SIZE = 30;
+  private static readonly CONTENT_ICON_GAP = 14;
 
   private readonly container: Phaser.GameObjects.Container;
   private readonly screenManager: ScreenManager;
@@ -269,12 +272,14 @@ export class HelpOverlay {
         fontSize: UITheme.smallFontSize,
         fontStyle: 'bold',
       });
+      label.setData('helpRole', 'label');
       const value = scene.add.text(150, 0, line.value ?? '', {
         color: UITheme.mutedTextColor,
         fontFamily: UITheme.fontFamily,
         fontSize: UITheme.smallFontSize,
         wordWrap: { width: 360 },
       });
+      value.setData('helpRole', 'value');
       row.add([label, value]);
       this.contentItems.push(row);
       this.container.add(row);
@@ -295,9 +300,44 @@ export class HelpOverlay {
       return;
     }
 
+    if (line.type === 'iconChain') {
+      const label = scene.add.text(0, 0, line.text ?? '', {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: UITheme.smallFontSize,
+        fontStyle: 'bold',
+      });
+      label.setData('helpRole', 'chainLabel');
+      row.add(label);
+
+      (line.icons ?? []).forEach((icon, index, icons) => {
+        const iconSlot = this.createHelpIconSlot(scene, icon);
+        iconSlot.setData('helpRole', 'chainIcon');
+        iconSlot.setData('chainIndex', index);
+        row.add(iconSlot);
+
+        if (index < icons.length - 1) {
+          const arrow = scene.add.text(0, 0, '→', {
+            color: UITheme.textColor,
+            fontFamily: UITheme.fontFamily,
+            fontSize: UITheme.smallFontSize,
+            fontStyle: 'bold',
+          });
+          arrow.setOrigin(0.5);
+          arrow.setData('helpRole', 'chainArrow');
+          arrow.setData('chainIndex', index);
+          row.add(arrow);
+        }
+      });
+
+      this.contentItems.push(row);
+      this.container.add(row);
+      return;
+    }
+
     const bg = scene.add.rectangle(
-      0,
-      0,
+      HelpOverlay.CONTENT_ICON_SIZE / 2,
+      HelpOverlay.CONTENT_ICON_SIZE / 2,
       HelpOverlay.CONTENT_ICON_SIZE,
       HelpOverlay.CONTENT_ICON_SIZE,
       UITheme.iconBgColor,
@@ -306,28 +346,16 @@ export class HelpOverlay {
     bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
     row.add(bg);
 
-    if (line.iconKey && scene.textures.exists(line.iconKey)) {
-      const icon = scene.add.image(0, 0, line.iconKey);
-      icon.setDisplaySize(20, 20);
-      row.add(icon);
-    } else {
-      const fallback = scene.add.text(0, 0, line.fallback ?? '?', {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '10px',
-        fontStyle: 'bold',
-      });
-      fallback.setOrigin(0.5);
-      row.add(fallback);
-    }
+    this.addIconContent(scene, row, line, HelpOverlay.CONTENT_ICON_SIZE / 2, HelpOverlay.CONTENT_ICON_SIZE / 2);
 
-    const text = scene.add.text(20, -9, line.text ?? '', {
+    const text = scene.add.text(HelpOverlay.CONTENT_ICON_SIZE + HelpOverlay.CONTENT_ICON_GAP, 0, line.text ?? '', {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
       fontSize: UITheme.smallFontSize,
       wordWrap: { width: 520 },
     });
     text.setMaxLines(3);
+    text.setData('helpRole', 'body');
     row.add(text);
     this.contentItems.push(row);
     this.container.add(row);
@@ -399,7 +427,7 @@ export class HelpOverlay {
       }
 
       const type = item.getData('lineType') as HelpLine['type'];
-      item.setPosition(contentLeft + (type === 'iconRow' ? 12 : 0), y);
+      item.setPosition(contentLeft, y);
       y += (item.getData('height') as number) + 7;
     });
 
@@ -415,19 +443,69 @@ export class HelpOverlay {
     fontSize: string,
   ): void {
     const type = item.getData('lineType') as HelpLine['type'];
+    let measuredHeight = this.getLineHeight(type);
+
+    const statLabel = item.list.find((child) => (
+      child instanceof Phaser.GameObjects.Text
+      && child.getData('helpRole') === 'label'
+    )) as Phaser.GameObjects.Text | undefined;
+    const statValue = item.list.find((child) => (
+      child instanceof Phaser.GameObjects.Text
+      && child.getData('helpRole') === 'value'
+    )) as Phaser.GameObjects.Text | undefined;
+
+    if (type === 'statRow' && statLabel && statValue) {
+      const labelColumnWidth = Math.min(150, Math.floor(bodyWidth * 0.34));
+      statLabel.setFontSize(fontSize);
+      statValue.setFontSize(fontSize);
+      const stacked = bodyWidth < 560 || statLabel.width > labelColumnWidth - 10;
+
+      if (stacked) {
+        statLabel.setPosition(0, 0);
+        statValue.setPosition(0, statLabel.height + 4);
+        statValue.setWordWrapWidth(Math.max(160, bodyWidth));
+        measuredHeight = Math.ceil(statLabel.height + 4 + statValue.height);
+      } else {
+        statLabel.setPosition(0, 0);
+        statValue.setPosition(labelColumnWidth, 0);
+        statValue.setWordWrapWidth(Math.max(160, bodyWidth - labelColumnWidth));
+        measuredHeight = Math.ceil(Math.max(statLabel.height, statValue.height));
+      }
+
+      item.setData('height', Math.max(this.getLineHeight(type), measuredHeight));
+      return;
+    }
+
+    if (type === 'iconChain') {
+      measuredHeight = this.updateIconChainMetrics(item, bodyWidth, fontSize);
+      item.setData('height', Math.max(this.getLineHeight(type), measuredHeight));
+      return;
+    }
+
     for (const child of item.list) {
       if (child instanceof Phaser.GameObjects.Text) {
-        child.setFontSize(type === 'subtitle' ? UITheme.bodyFontSize : fontSize);
-        if (type === 'statRow' && child.x > 0) {
-          child.setX(Math.min(150, Math.floor(bodyWidth * 0.34)));
-          child.setWordWrapWidth(Math.max(160, bodyWidth - child.x));
-        } else if (type !== 'subtitle') {
-          child.setWordWrapWidth(Math.max(160, bodyWidth - (type === 'iconRow' ? 44 : 0)));
+        if (child.getData('helpRole') === 'iconFallback') {
+          measuredHeight = Math.max(measuredHeight, HelpOverlay.CONTENT_ICON_SIZE);
+          continue;
         }
+
+        child.setFontSize(type === 'subtitle' ? UITheme.bodyFontSize : fontSize);
+        if (type !== 'subtitle') {
+          const textOffset = type === 'iconRow'
+            ? HelpOverlay.CONTENT_ICON_SIZE + HelpOverlay.CONTENT_ICON_GAP
+            : 0;
+          child.setWordWrapWidth(Math.max(160, bodyWidth - textOffset));
+        }
+
+        measuredHeight = Math.max(measuredHeight, Math.ceil(child.y + child.height));
       } else if (child instanceof Phaser.GameObjects.Rectangle && type === 'divider') {
         child.setSize(bodyWidth, 1);
+      } else if (type === 'iconRow') {
+        measuredHeight = Math.max(measuredHeight, HelpOverlay.CONTENT_ICON_SIZE);
       }
     }
+
+    item.setData('height', Math.max(this.getLineHeight(type), measuredHeight));
   }
 
   private buildPages(availableHeight: number): PageRange[] {
@@ -528,6 +606,7 @@ export class HelpOverlay {
         return 48;
       case 'bullet':
       case 'iconRow':
+      case 'iconChain':
         return 40;
       case 'statRow':
         return 36;
@@ -537,6 +616,137 @@ export class HelpOverlay {
       default:
         return 32;
     }
+  }
+
+  private createHelpIconSlot(scene: Phaser.Scene, icon: HelpIconRef): Phaser.GameObjects.Container {
+    const slot = scene.add.container(0, 0);
+    const bg = scene.add.rectangle(
+      HelpOverlay.CONTENT_ICON_SIZE / 2,
+      HelpOverlay.CONTENT_ICON_SIZE / 2,
+      HelpOverlay.CONTENT_ICON_SIZE,
+      HelpOverlay.CONTENT_ICON_SIZE,
+      UITheme.iconBgColor,
+      0.78,
+    );
+    bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
+    slot.add(bg);
+    this.addIconContent(scene, slot, icon, HelpOverlay.CONTENT_ICON_SIZE / 2, HelpOverlay.CONTENT_ICON_SIZE / 2);
+
+    return slot;
+  }
+
+  private addIconContent(
+    scene: Phaser.Scene,
+    container: Phaser.GameObjects.Container,
+    icon: HelpIconRef,
+    x: number,
+    y: number,
+  ): void {
+    const iconKey = this.resolveHelpIconKey(scene, icon);
+    if (iconKey && scene.textures.exists(iconKey)) {
+      const image = scene.add.image(x, y, iconKey);
+      image.setDisplaySize(HelpOverlay.CONTENT_ICON_SIZE - 6, HelpOverlay.CONTENT_ICON_SIZE - 6);
+      container.add(image);
+      return;
+    }
+
+    const fallback = scene.add.text(x, y, icon.fallback ?? '?', {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: '10px',
+      fontStyle: 'bold',
+    });
+    fallback.setOrigin(0.5);
+    fallback.setData('helpRole', 'iconFallback');
+    container.add(fallback);
+  }
+
+  private resolveHelpIconKey(scene: Phaser.Scene, icon: HelpIconRef): string | undefined {
+    if (icon.iconKey && scene.textures.exists(icon.iconKey)) {
+      return icon.iconKey;
+    }
+
+    if (!icon.iconKind || !icon.iconId) {
+      return undefined;
+    }
+
+    if (icon.iconKind === 'weapon') {
+      return AssetKeyResolver.getWeaponIconKey(scene, icon.iconId) ?? undefined;
+    }
+
+    if (icon.iconKind === 'passive') {
+      return AssetKeyResolver.getPassiveIconKey(scene, icon.iconId) ?? undefined;
+    }
+
+    const mapMechanicKey = HelpOverlay.getMapMechanicIconTextureKey(icon.iconId as MapMechanicIconKind);
+    return mapMechanicKey && scene.textures.exists(mapMechanicKey)
+      ? mapMechanicKey
+      : undefined;
+  }
+
+  private updateIconChainMetrics(
+    item: Phaser.GameObjects.Container,
+    bodyWidth: number,
+    fontSize: string,
+  ): number {
+    const label = item.list.find((child) => (
+      child instanceof Phaser.GameObjects.Text
+      && child.getData('helpRole') === 'chainLabel'
+    )) as Phaser.GameObjects.Text | undefined;
+    const icons = item.list.filter((child) => (
+      child instanceof Phaser.GameObjects.Container
+      && child.getData('helpRole') === 'chainIcon'
+    )) as Phaser.GameObjects.Container[];
+    const arrows = item.list.filter((child) => (
+      child instanceof Phaser.GameObjects.Text
+      && child.getData('helpRole') === 'chainArrow'
+    )) as Phaser.GameObjects.Text[];
+    const labelColumnWidth = Math.min(150, Math.floor(bodyWidth * 0.34));
+
+    label?.setFontSize(fontSize);
+    const stacked = !label || bodyWidth < 520 || label.width > labelColumnWidth - 10;
+    const startX = stacked ? 0 : labelColumnWidth;
+    const startY = stacked && label ? label.height + 8 : 0;
+    let cursorX = startX;
+
+    if (label) {
+      label.setPosition(0, 0);
+    }
+
+    icons.forEach((icon, index) => {
+      icon.setPosition(cursorX, startY);
+      cursorX += HelpOverlay.CONTENT_ICON_SIZE + 14;
+
+      const arrow = arrows.find((candidate) => candidate.getData('chainIndex') === index);
+      if (arrow) {
+        arrow.setFontSize(fontSize);
+        arrow.setPosition(cursorX, startY + HelpOverlay.CONTENT_ICON_SIZE / 2);
+        cursorX += 22;
+      }
+    });
+
+    return Math.ceil(Math.max(
+      label?.height ?? 0,
+      startY + HelpOverlay.CONTENT_ICON_SIZE,
+    ));
+  }
+
+  private static getMapMechanicIconTextureKey(kind: MapMechanicIconKind): string | undefined {
+    const keys: Partial<Record<MapMechanicIconKind, string>> = {
+      river: 'art_map_mechanics_river_minimap',
+      swamp: 'art_map_mechanics_swamp_minimap',
+      mud: 'art_map_mechanics_mud_minimap',
+      portalBlue: 'art_map_mechanics_portal_minimap_blue',
+      portalPurple: 'art_map_mechanics_portal_minimap_purple',
+      portalGreen: 'art_map_mechanics_portal_minimap_green',
+      light: 'art_map_mechanics_light_minimap',
+      obstacle: 'art_map_mechanics_obstacle_minimap',
+      hazard: 'art_map_mechanics_hazard_minimap',
+      altar: 'art_map_mechanics_altar_minimap',
+      spawner: 'art_map_mechanics_spawner_minimap',
+    };
+
+    return keys[kind];
   }
 
   private coverImage(

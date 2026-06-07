@@ -149,16 +149,14 @@ export class AuraWeapon extends Weapon {
   private createAuraHitResult(enemy: Enemy) {
     if (this.id === 'garlic') {
       return this.createHitResultFromDamage(
-        this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(AuraWeapon.GARLIC_PERCENT_DAMAGE),
+        this.modifiedDamage + this.getPercentMaxHpDamage(enemy, AuraWeapon.GARLIC_PERCENT_DAMAGE),
         enemy,
       );
     }
 
     if (this.id === 'soul_eater') {
       return this.createHitResultFromDamage(
-        this.modifiedDamage + enemy.maxHp * this.getPercentMaxHpDamage(
-          AuraWeapon.SOUL_EATER_PERCENT_DAMAGE,
-        ),
+        this.modifiedDamage + this.getPercentMaxHpDamage(enemy, AuraWeapon.SOUL_EATER_PERCENT_DAMAGE),
         enemy,
       );
     }
@@ -166,10 +164,21 @@ export class AuraWeapon extends Weapon {
     return this.createHitResult(enemy);
   }
 
-  private getPercentMaxHpDamage(defaultValue: number): number {
+  private getPercentMaxHpDamage(enemy: Enemy, defaultValue: number): number {
     const behavior = this.getAuraBehavior();
+    const percentDamage = enemy.maxHp * (behavior?.percentMaxHpDamage ?? defaultValue);
+    const cappedDamage = Math.min(percentDamage, behavior?.percentDamageCap ?? percentDamage);
+    const targetContext = enemy.getDamageTargetContext();
 
-    return behavior?.percentMaxHpDamage ?? defaultValue;
+    if (targetContext.isBoss || targetContext.isEndlessBoss) {
+      return cappedDamage * (behavior?.bossPercentDamageMultiplier ?? 0.1);
+    }
+
+    if (targetContext.isElite || targetContext.isMiniBoss) {
+      return cappedDamage * (behavior?.elitePercentDamageMultiplier ?? 0.5);
+    }
+
+    return cappedDamage;
   }
 
   private getAuraBehavior(): AuraBehaviorConfig | undefined {

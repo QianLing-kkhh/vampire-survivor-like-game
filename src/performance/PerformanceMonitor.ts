@@ -153,6 +153,8 @@ export class PerformanceMonitor {
       separationBucketCount: this.stats.separationBucketCount ?? 0,
       weaponEnemyScanEstimate: this.stats.weaponEnemyScanEstimate ?? 0,
       spawnAccumulatorSummary: this.stats.spawnAccumulatorSummary ?? '',
+      enemyMergeCount: this.stats.enemyMergeCount ?? 0,
+      minEnemyFloorSpawnCount: this.stats.minEnemyFloorSpawnCount ?? 0,
     });
   }
 

@@ -12,7 +12,8 @@
     "fastMode": "Fast Mode",
     "language": "Language",
     "timeScale": "Time Scale",
-    "none": "None"
+    "none": "None",
+    "back": "Back"
   },
   "ui": {
     "chooseReward": "Choose one reward",
@@ -31,7 +32,33 @@
     "downloadCsv": "Download CSV",
     "summary": "Summary",
     "build": "Build",
-    "leaderboard": "Leaderboard"
+    "leaderboard": "Leaderboard",
+    "max": "Max",
+    "pause": "Pause",
+    "pauseIcon": "II",
+    "role": {
+      "default": "Specialist",
+      "assassin": {
+        "m1": "Mobility",
+        "m2": "Crit",
+        "m3": "Axe"
+      },
+      "witch": {
+        "m1": "Magic",
+        "m2": "Slow",
+        "m3": "Explosion"
+      },
+      "priest": {
+        "m1": "Shield",
+        "m2": "Heal",
+        "m3": "Orbit"
+      },
+      "warrior": {
+        "m1": "Armor",
+        "m2": "Counter",
+        "m3": "Axe"
+      }
+    }
   },
   "settings": {
     "title": "Settings",
@@ -63,6 +90,7 @@
     "qualityLow": "Low",
     "qualityMinimal": "Minimal",
     "assetStyleNew": "New",
+    "assetStyleArt001": "Art001",
     "assetStyleLegacy": "Legacy",
     "assetStyleGraphics": "Graphics",
     "visualRestartRequired": "Some visual settings apply after restart or next run.",
@@ -83,12 +111,7 @@
     "debugPanelCompact": "Compact Debug Panel",
     "debugPanelOpacity": "Debug Panel Opacity",
     "language": "Language",
-    "uiStyle": {
-      "_label": "UI Style",
-      "classic": "Classic",
-      "arcaneSlate": "Arcane Slate",
-      "minimal": "Minimal"
-    },
+    "uiStyle": "UI Style",
     "uiStyleReopenNotice": "Some UI style changes apply after reopening this menu.",
     "scrollHint": "Scroll",
     "page": "Page",
@@ -111,7 +134,8 @@
     "currentSelection": "{character} / {stage} / {map}",
     "toggleAutoMode": "Toggle Auto Mode",
     "toggleFastMode": "Toggle Fast Mode",
-    "toggleLanguage": "Language"
+    "toggleLanguage": "Language",
+    "settings": "Settings"
   },
   "selection": {
     "character": "Character",
@@ -119,7 +143,16 @@
     "map": "Map",
     "confirm": "Confirm",
     "back": "Back",
-    "current": "Current"
+    "current": "Current",
+    "damageReaction": "Damage Reaction",
+    "damageReactionKeyed": "Damage Reaction: {id}",
+    "damageReactionUnknown": "Damage Reaction: Unknown",
+    "iconShown": "icon",
+    "more": "+{count} more",
+    "role": "Role",
+    "shortLabelAvailable": "Avail",
+    "startingWeapon": "Starting Weapon",
+    "startingWeaponLabel": "Starting Weapon: {item}"
   },
   "characterSelect": {
     "title": "Character Select"
@@ -148,7 +181,8 @@
   },
   "characterSelection": {
     "randomUnlocked": "Random unlocked",
-    "fixed": "Fixed"
+    "fixed": "Fixed",
+    "locked": "Locked"
   },
   "stage": {
     "random": {
@@ -166,7 +200,10 @@
     "ruinedGate": {
       "name": "Ruined Gate",
       "description": "A ruined stage shaped by broken walls and paired portals."
-    }
+    },
+    "builtIn": "Built-In",
+    "custom": "Custom",
+    "warningsCount": "{count} warnings"
   },
   "map": {
     "graveyard": {
@@ -248,7 +285,32 @@
     "title": "Paused",
     "resume": "Resume",
     "restart": "Restart",
-    "returnToTitle": "Return to Title"
+    "returnToTitle": "Return to Title",
+    "bossPhaseDamage": "Boss Phase Damage",
+    "characterStats": "Character Stats",
+    "damageTaken": "Damage Taken",
+    "endlessTime": "Endless Time",
+    "exp": "EXP",
+    "expMultiplier": "EXP Multiplier",
+    "hits": "Hits",
+    "hp": "HP",
+    "killCount": "Kill Count",
+    "kills": "Kills",
+    "level": "Lv",
+    "moveSpeed": "Move Speed",
+    "passives": "Passives",
+    "pickupRange": "Pickup Range",
+    "requires": "Requires",
+    "settings": "Settings",
+    "shieldAbsorbed": "Shield Absorbed",
+    "shieldConsumed": "Shield Consumed",
+    "shieldStacks": "Shield Stacks",
+    "statsBuild": "Stats / Build",
+    "treasureOpens": "Treasure Opens",
+    "weaponEvolvedFrom": "Evolved From",
+    "weaponTotalDamage": "Weapon Total Damage",
+    "weapons": "Weapons",
+    "moreItems": "+{count} more"
   },
   "result": {
     "victory": "Victory",
@@ -279,7 +341,23 @@
     "autoRestart": "Auto Restart in {seconds}s",
     "autoRestartCanceled": "Auto Restart: canceled",
     "bossDashes": "Boss Dashes",
-    "bossDashHits": "Boss Dash Hits"
+    "bossDashHits": "Boss Dash Hits",
+    "character": "Character",
+    "endlessBosses": "Endless Bosses",
+    "endlessLeaderboard": "No endless entries",
+    "endlessLeaderboardTop": "Top {count} Endless Records",
+    "endlessSurvivalTime": "Endless Survival",
+    "endlessVictory": "Endless Victory",
+    "killed": "killed",
+    "leaderboardEntry": "#{rank}. Time {time} | Lv {level} | Kills {kills}",
+    "more": "+{count} more",
+    "none": "None",
+    "relicAcquired": "Relic acquired",
+    "relics": "Relics",
+    "seed": "Seed",
+    "settings": "Settings",
+    "skills": "Skills",
+    "stage": "Stage"
   },
   "help": {
     "tab": {
@@ -294,31 +372,127 @@
       "testing": "Testing / Data"
     },
     "basics": {
-      "title": "Basics"
+      "title": "Basics",
+      "keyboard": "Keyboard: move with WASD or Arrow Keys.",
+      "mouse": "Mouse: hold the button to move toward the cursor.",
+      "joystick": "Mobile: use the virtual joystick when touch controls are enabled.",
+      "pause": "Pause: use ESC or the pause button.",
+      "objective": "Survive, level up, choose rewards, build weapon/passive synergies, and defeat the final boss.",
+      "openTreasure": "Treasure chests grant bonus rewards and can trigger evolution when requirements are met.",
+      "autoTest": "Auto Movement, Auto Upgrade, and Fast Mode are useful for repeated balance checks."
     },
     "characters": {
-      "title": "Characters"
+      "title": "Characters",
+      "description": {
+        "default": "A fast knife user who escapes danger by blinking forward after taking damage.",
+        "assassin": "A fast knife user who escapes danger by blinking forward after taking damage.",
+        "witch": "Leaves slowing zones after taking damage to control enemy movement.",
+        "priest": "Creates a sanctuary, heals, gains shield, and knocks back enemies.",
+        "warrior": "Counters damage with a shockwave and temporary damage reduction."
+      },
+      "levelUp": {
+        "default": "Special growth effect",
+        "unknown": "Unknown growth effect"
+      },
+      "reaction": {
+        "none": "None",
+        "blinkForward": "Blink Forward: dashes out of danger after taking damage.",
+        "slowTrail": "Slow Trail: leaves slowing zones after taking damage.",
+        "holySanctuary": "Holy Sanctuary: creates healing, shield, and knockback space.",
+        "ironCounter": "Iron Counter: counter shockwave and temporary damage reduction."
+      },
+      "random": "Random unlocked character each run.",
+      "startingWeapon": "Starting weapon",
+      "role": {
+        "default": "Fast projectile specialist with mobility and escape tools.",
+        "assassin": "Mobility / Crit / Knife",
+        "witch": "Magic / Slow / Explosion",
+        "priest": "Shield / Heal / Orbit",
+        "warrior": "Armor / Counter / Axe",
+        "_label": "Role"
+      },
+      "damageReaction": "Damage reaction",
+      "levelUpEffect": "Level-up effect",
+      "growth": "Growth",
+      "randomSelectionDetail": "CSV records the selected random option and the actual run character separately.",
+      "descriptionLabel": "Description"
     },
     "weapons": {
-      "title": "Weapons"
+      "title": "Weapons",
+      "description": "Mechanic",
+      "tags": "Tags",
+      "behavior": "Behavior",
+      "coreStats": "Core stats",
+      "baseStats": "Base stats"
     },
     "evolutions": {
-      "title": "Evolutions"
+      "title": "Evolutions",
+      "description": "Evolution routes combine a base weapon, its required passive, and enough weapon upgrades."
     },
     "passives": {
-      "title": "Passives"
+      "title": "Passives",
+      "routes": "Routes: {routes}",
+      "effect": "Effect",
+      "description": "Evolution routes",
+      "maxLevel": "Max level"
     },
     "maps": {
-      "title": "Maps"
+      "title": "Maps",
+      "endlessUnknown": "Depends on map configuration",
+      "randomDetail": "A random unlocked stage is selected each run.",
+      "unknown": "Unknown map",
+      "name": "Map",
+      "size": "Size",
+      "finalBoss": "Final boss",
+      "endless": "Endless",
+      "mechanicSummary": "Mechanics",
+      "randomSelectionDetail": "Random stage stores both the selected random option and the actual stage/map.",
+      "random": {
+        "title": "Random Stage",
+        "description": "Selects one unlocked stage for the run."
+      }
     },
     "endless": {
-      "title": "Endless Mode"
+      "title": "Endless Mode",
+      "spawnRule": "When enabled, defeating the final boss starts Endless instead of ending the run.",
+      "scaling": "Endless enemies scale over time in HP, damage, speed, and EXP.",
+      "bosses": "Endless bosses can appear repeatedly, and multiple bosses can be active.",
+      "renewSpawn": "After normal upgrades are exhausted, post-cap rewards can appear.",
+      "rewards": "Rewards",
+      "rewardList": "Heal, overdrive, time slow, shield, and minor growth.",
+      "shield": "Shield",
+      "shieldDescription": "Each shield stack absorbs one HP loss hit.",
+      "modeScope": "Leaderboard scope",
+      "scope": "Records are grouped by mode, character, stage, map, and ruleset dimensions."
     },
     "settings": {
-      "title": "Settings"
+      "title": "Settings",
+      "display": "Display",
+      "displayList": "Graphics Quality, Asset Style, UI Style, Model Scale, Shadows, Damage Numbers, and Minimap.",
+      "gameplay": "Gameplay",
+      "gameplayList": "Auto Movement, Auto Upgrade, Fast Mode, and Endless Mode.",
+      "audio": "Audio",
+      "audioList": "Master audio plus BGM, SFX, weapon, and UI volume.",
+      "input": "Input",
+      "inputList": "Virtual joystick size, opacity, left-handed mode, and gamepad support.",
+      "developer": "Developer",
+      "developerList": "Debug panel and local diagnostics for testing.",
+      "restartNotice": "Visual changes",
+      "restartNoticeText": "Some visual settings apply after restart or the next run; gameplay settings apply immediately."
     },
     "testing": {
-      "title": "Testing / Data"
+      "title": "Testing / Data",
+      "actualRunCharacter": "actual character",
+      "actualRunStage": "actual stage",
+      "randomSelection": "Random selection",
+      "randomCharacter": "Random character",
+      "randomStage": "Random stage",
+      "csv": "CSV",
+      "csvFields": "runSeed, gameVersion, contentHash, csvSchemaVersion, characterId, stageId, mapId, selectedCharacterId, selectedStageId.",
+      "autoTest": "Auto Test",
+      "autoModeText": "Combines Auto Movement, Auto Upgrade, and Fast Mode for repeated balance samples.",
+      "replay": "Replay",
+      "replayText": "Replay records store metadata and selected key events; playback support can be extended later."
     },
     "title": "Help",
     "moveKeyboard": "WASD / Arrow Keys: Move",
@@ -327,13 +501,123 @@
     "collectExp": "Collect EXP gems to level up",
     "chooseUpgrade": "Choose upgrades to strengthen weapons and passives",
     "openTreasure": "Open treasure chests for bonus upgrades or evolution",
-    "evolution": "Weapon + matching passive can evolve through treasure chests",
+    "evolution": {
+      "requirement": "{weaponUpgrades} upgrades + {passive} Lv.{passiveLevel}",
+      "route": "Evolution route",
+      "requirements": "Requirement"
+    },
     "surviveBoss": "Survive until the Boss appears",
-    "defeatBoss": "Defeat the Boss to win"
+    "defeatBoss": "Defeat the Boss to win",
+    "map": {
+      "mechanic": {
+        "item": "item",
+        "obstacle": {
+          "_label": "Obstacle",
+          "description": "Blocks movement and shapes enemy paths."
+        },
+        "slowZone": {
+          "_label": "Slow zone",
+          "description": "Reduces movement speed inside the area."
+        },
+        "portal": {
+          "_label": "Portal",
+          "description": "Teleports the player between linked points."
+        },
+        "lightSource": {
+          "_label": "Light source",
+          "description": "Acts as a visual landmark on the map."
+        },
+        "hazard": {
+          "_label": "Hazard",
+          "description": "Danger zone or map pressure mechanic."
+        },
+        "altar": {
+          "_label": "Altar",
+          "description": "Special landmark used by stage mechanics when configured."
+        },
+        "spawner": {
+          "_label": "Spawner",
+          "description": "Marks a configured spawn-related landmark."
+        },
+        "destructible": {
+          "_label": "Destructible",
+          "description": "Map object that can be destroyed when configured."
+        },
+        "unknown": "Unknown mechanic"
+      },
+      "noMechanics": "No special map mechanics"
+    },
+    "weapon": {
+      "behavior": {
+        "default": "Unknown behavior",
+        "unknown": "unknown",
+        "aura": "Damages nearby enemies in an aura.",
+        "orbit": "Circles around the player and controls nearby space.",
+        "homing": "Tracks enemies automatically.",
+        "arcing": "Travels in an arc for area pressure.",
+        "axe": "Arcing physical projectile with strong area pressure.",
+        "projectile": "Fires projectiles from the player."
+      },
+      "summary": "Type: {type}",
+      "type": {
+        "default": "Weapon",
+        "projectile": "Projectile weapon",
+        "aura": "Aura weapon",
+        "orbit": "Orbit weapon",
+        "arcing": "Arcing weapon",
+        "homing": "Homing weapon"
+      },
+      "tag": {
+        "base": "Base",
+        "evolved": "Evolved",
+        "projectile": "Projectile",
+        "physical": "Physical",
+        "magic": "Magic",
+        "explosive": "Explosive",
+        "aura": "Aura",
+        "area": "Area",
+        "control": "Control",
+        "spiral": "Spiral",
+        "knockback": "Knockback",
+        "homing": "Homing",
+        "arcing": "Arcing",
+        "defensive": "Defensive"
+      },
+      "stat": {
+        "damage": "Damage",
+        "cooldown": "Cooldown",
+        "projectileSpeed": "Speed",
+        "pierce": "Pierce",
+        "projectileCount": "Projectiles",
+        "radius": "Radius",
+        "orbitCount": "Orbits",
+        "orbitSpeed": "Orbit speed"
+      }
+    },
+    "stat": {
+      "maxHp": "Max HP",
+      "moveSpeed": "Move Speed",
+      "pickupRange": "Pickup Range",
+      "physicalDamageMultiplier": "Physical damage",
+      "projectileDamageMultiplier": "Projectile damage",
+      "critChance": "Crit chance",
+      "magicDamageMultiplier": "Magic damage",
+      "explosionDamageMultiplier": "Explosion damage",
+      "damageMultiplier": "Damage",
+      "healingMultiplier": "Healing",
+      "shieldGainMultiplier": "Shield gain",
+      "orbitDamageMultiplier": "Orbit damage",
+      "areaDamageMultiplier": "Area damage",
+      "armorFlat": "Armor"
+    }
   },
   "levelUp": {
     "title": "Level Up",
-    "chooseUpgrade": "Choose one upgrade"
+    "chooseUpgrade": "Choose one upgrade",
+    "emptyMessage": "No upgrades available",
+    "newWeapon": "New Weapon",
+    "noUpgrades": "No upgrades available",
+    "upgrade": "Upgrade"
   },
   "hud": {
     "weapons": "Weapons",
@@ -348,6 +632,13 @@
     "level": "Lv",
     "bossIn": "Boss in {time}",
     "goalDefeatBoss": "Goal Defeat Boss",
-    "evolved": "Evo"
+    "evolved": "Evo",
+    "endless": "Endless",
+    "relics": "Relics",
+    "shield": "Shield"
+  },
+  "game": {
+    "bossAppears": "Boss Appears",
+    "rotateForBetterPlay": "Please rotate your device for a better view."
   }
 }

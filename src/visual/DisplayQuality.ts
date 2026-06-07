@@ -1,6 +1,6 @@
 export type DisplayQuality = 'high' | 'medium' | 'low' | 'minimal';
 
-export type AssetStyle = 'newArt' | 'legacy' | 'graphics';
+export type AssetStyle = 'newArt' | 'art001' | 'legacy' | 'graphics';
 
 export const DISPLAY_QUALITIES: readonly DisplayQuality[] = [
   'high',
@@ -11,6 +11,7 @@ export const DISPLAY_QUALITIES: readonly DisplayQuality[] = [
 
 export const ASSET_STYLES: readonly AssetStyle[] = [
   'newArt',
+  'art001',
   'legacy',
   'graphics',
 ];

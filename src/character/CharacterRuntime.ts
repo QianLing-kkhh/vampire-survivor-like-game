@@ -84,6 +84,10 @@ export class CharacterRuntime {
     return this.damageReactionSkill.getMapMoveSpeedFloorMultiplier();
   }
 
+  getTemporaryArmorFlatBonus(): number {
+    return this.damageReactionSkill.getTemporaryArmorFlatBonus();
+  }
+
   getAutoPlayerSnapshot(): {
     characterId: string;
     damageReactionType: CharacterDamageReactionType;

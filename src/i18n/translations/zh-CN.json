@@ -12,7 +12,8 @@
     "fastMode": "加速模式",
     "language": "语言",
     "timeScale": "时间倍率",
-    "none": "无"
+    "none": "无",
+    "back": "Back"
   },
   "ui": {
     "chooseReward": "选择一个奖励",
@@ -31,7 +32,33 @@
     "downloadCsv": "下载 CSV",
     "summary": "摘要",
     "build": "构筑",
-    "leaderboard": "排行榜"
+    "leaderboard": "排行榜",
+    "max": "Max",
+    "pause": "Pause",
+    "pauseIcon": "II",
+    "role": {
+      "default": "Specialist",
+      "assassin": {
+        "m1": "Mobility",
+        "m2": "Crit",
+        "m3": "Axe"
+      },
+      "witch": {
+        "m1": "Magic",
+        "m2": "Slow",
+        "m3": "Explosion"
+      },
+      "priest": {
+        "m1": "Shield",
+        "m2": "Heal",
+        "m3": "Orbit"
+      },
+      "warrior": {
+        "m1": "Armor",
+        "m2": "Counter",
+        "m3": "Axe"
+      }
+    }
   },
   "title": {
     "gameTitle": "Vampire Survivor 原型",
@@ -48,7 +75,8 @@
     "toggleLanguage": "语言",
     "records": "记录",
     "replayTool": "回放工具",
-    "dailyChallenge": "每日挑战"
+    "dailyChallenge": "每日挑战",
+    "settings": "Settings"
   },
   "selection": {
     "character": "角色",
@@ -56,7 +84,16 @@
     "map": "地图",
     "confirm": "确认",
     "back": "返回",
-    "current": "当前"
+    "current": "当前",
+    "damageReaction": "Damage Reaction",
+    "damageReactionKeyed": "Damage Reaction: {id}",
+    "damageReactionUnknown": "Damage Reaction: Unknown",
+    "iconShown": "icon",
+    "more": "+{count} more",
+    "role": "Role",
+    "shortLabelAvailable": "Avail",
+    "startingWeapon": "Starting Weapon",
+    "startingWeaponLabel": "Starting Weapon: {item}"
   },
   "characterSelect": {
     "title": "角色选择"
@@ -85,7 +122,8 @@
   },
   "characterSelection": {
     "randomUnlocked": "随机已解锁角色",
-    "fixed": "固定"
+    "fixed": "固定",
+    "locked": "Locked"
   },
   "stage": {
     "random": {
@@ -103,7 +141,10 @@
     "ruinedGate": {
       "name": "遗迹之门",
       "description": "断墙与传送门构成的遗迹关卡。"
-    }
+    },
+    "builtIn": "Built-In",
+    "custom": "Custom",
+    "warningsCount": "{count} warnings"
   },
   "map": {
     "graveyard": {
@@ -152,7 +193,32 @@
     "title": "已暂停",
     "resume": "继续",
     "restart": "重新开始",
-    "returnToTitle": "返回标题"
+    "returnToTitle": "返回标题",
+    "bossPhaseDamage": "Boss Phase Damage",
+    "characterStats": "Character Stats",
+    "damageTaken": "Damage Taken",
+    "endlessTime": "Endless Time",
+    "exp": "EXP",
+    "expMultiplier": "EXP Multiplier",
+    "hits": "Hits",
+    "hp": "HP",
+    "killCount": "Kill Count",
+    "kills": "Kills",
+    "level": "Lv",
+    "moveSpeed": "Move Speed",
+    "passives": "Passives",
+    "pickupRange": "Pickup Range",
+    "requires": "Requires",
+    "settings": "Settings",
+    "shieldAbsorbed": "Shield Absorbed",
+    "shieldConsumed": "Shield Consumed",
+    "shieldStacks": "Shield Stacks",
+    "statsBuild": "Stats / Build",
+    "treasureOpens": "Treasure Opens",
+    "weaponEvolvedFrom": "Evolved From",
+    "weaponTotalDamage": "Weapon Total Damage",
+    "weapons": "Weapons",
+    "moreItems": "+{count} more"
   },
   "result": {
     "victory": "胜利",
@@ -183,7 +249,23 @@
     "autoRestart": "{seconds} 秒后自动重开",
     "autoRestartCanceled": "自动重开：已取消",
     "bossDashes": "Boss 冲刺",
-    "bossDashHits": "Boss 冲刺命中"
+    "bossDashHits": "Boss 冲刺命中",
+    "character": "Character",
+    "endlessBosses": "Endless Bosses",
+    "endlessLeaderboard": "No endless entries",
+    "endlessLeaderboardTop": "Top {count} Endless Records",
+    "endlessSurvivalTime": "Endless Survival",
+    "endlessVictory": "Endless Victory",
+    "killed": "killed",
+    "leaderboardEntry": "#{rank}. Time {time} | Lv {level} | Kills {kills}",
+    "more": "+{count} more",
+    "none": "None",
+    "relicAcquired": "Relic acquired",
+    "relics": "Relics",
+    "seed": "Seed",
+    "settings": "Settings",
+    "skills": "Skills",
+    "stage": "Stage"
   },
   "help": {
     "tab": {
@@ -198,31 +280,127 @@
       "testing": "测试/数据"
     },
     "basics": {
-      "title": "基础"
+      "title": "基础",
+      "keyboard": "键盘：使用 WASD 或方向键移动。",
+      "mouse": "鼠标：按住按键向光标方向移动。",
+      "joystick": "移动端：启用触控时使用虚拟摇杆。",
+      "pause": "暂停：使用 ESC 或暂停按钮。",
+      "objective": "生存、升级、选择奖励，组合武器与被动，并击败最终 Boss。",
+      "openTreasure": "宝箱会提供额外奖励；满足条件时可触发进化。",
+      "autoTest": "自动移动、自动升级和快速模式适合重复平衡测试。"
     },
     "characters": {
-      "title": "角色"
+      "title": "角色",
+      "description": {
+        "default": "高速飞刀使用者，受伤后会向前闪现脱离危险。",
+        "assassin": "高速飞刀使用者，受伤后会向前闪现脱离危险。",
+        "witch": "受伤后留下减速区域，用于控制敌人移动。",
+        "priest": "创造圣域，提供治疗、护盾并击退敌人。",
+        "warrior": "用冲击波反击伤害，并获得短暂减伤。"
+      },
+      "levelUp": {
+        "default": "特殊成长效果",
+        "unknown": "未知成长效果"
+      },
+      "reaction": {
+        "none": "无",
+        "blinkForward": "向前闪现：受伤后快速脱离危险。",
+        "slowTrail": "减速轨迹：受伤后留下减速区域。",
+        "holySanctuary": "圣域：创造治疗、护盾和击退空间。",
+        "ironCounter": "钢铁反击：释放反击冲击波并短暂减伤。"
+      },
+      "random": "每局随机选择一个已解锁角色。",
+      "startingWeapon": "初始武器",
+      "role": {
+        "default": "高速投射物专家，擅长机动与脱离。",
+        "assassin": "机动 / 暴击 / 飞刀",
+        "witch": "魔法 / 减速 / 爆炸",
+        "priest": "护盾 / 治疗 / 环绕",
+        "warrior": "护甲 / 反击 / 斧头",
+        "_label": "定位"
+      },
+      "damageReaction": "受伤反应",
+      "levelUpEffect": "升级效果",
+      "growth": "成长",
+      "randomSelectionDetail": "CSV 会分别记录随机选项和本局实际角色。",
+      "descriptionLabel": "说明"
     },
     "weapons": {
-      "title": "武器"
+      "title": "武器",
+      "description": "机制",
+      "tags": "标签",
+      "behavior": "行为",
+      "coreStats": "核心属性",
+      "baseStats": "基础属性"
     },
     "evolutions": {
-      "title": "进化"
+      "title": "进化",
+      "description": "进化路线由基础武器、所需被动和足够的武器升级组成。"
     },
     "passives": {
-      "title": "被动"
+      "title": "被动",
+      "routes": "路线：{routes}",
+      "effect": "效果",
+      "description": "进化路线",
+      "maxLevel": "最高等级"
     },
     "maps": {
-      "title": "地图"
+      "title": "地图",
+      "endlessUnknown": "取决于地图配置",
+      "randomDetail": "每局会从已解锁关卡中随机选择。",
+      "unknown": "未知地图",
+      "name": "地图",
+      "size": "尺寸",
+      "finalBoss": "最终 Boss",
+      "endless": "无尽",
+      "mechanicSummary": "机制",
+      "randomSelectionDetail": "随机关卡会同时记录随机选项和实际关卡/地图。",
+      "random": {
+        "title": "随机关卡",
+        "description": "从已解锁关卡中随机选择本局关卡。"
+      }
     },
     "endless": {
-      "title": "无尽模式"
+      "title": "无尽模式",
+      "spawnRule": "开启后，击败最终 Boss 会进入无尽而不是结束本局。",
+      "scaling": "无尽敌人的生命、伤害、速度和经验会随时间提高。",
+      "bosses": "无尽 Boss 会重复出现，也可能同时存在多个 Boss。",
+      "renewSpawn": "普通升级耗尽后，会出现满级后的替代奖励。",
+      "rewards": "奖励",
+      "rewardList": "治疗、爆发强化、时间减速、护盾和小幅成长。",
+      "shield": "护盾",
+      "shieldDescription": "每层护盾可抵消一次生命损失。",
+      "modeScope": "排行榜范围",
+      "scope": "记录按模式、角色、关卡、地图和规则维度分组。"
     },
     "settings": {
-      "title": "设置"
+      "title": "设置",
+      "display": "画面",
+      "displayList": "画面质量、素材风格、UI 风格、模型倍率、阴影、伤害数字和小地图。",
+      "gameplay": "游戏",
+      "gameplayList": "自动移动、自动升级、快速模式和无尽模式。",
+      "audio": "音频",
+      "audioList": "总音频以及 BGM、音效、武器和 UI 音量。",
+      "input": "输入",
+      "inputList": "虚拟摇杆大小、透明度、左手模式和手柄支持。",
+      "developer": "开发",
+      "developerList": "调试面板和本地测试诊断。",
+      "restartNotice": "画面变更",
+      "restartNoticeText": "部分画面设置会在重启或下一局生效；游戏设置会立即生效。"
     },
     "testing": {
-      "title": "测试/数据"
+      "title": "测试/数据",
+      "actualRunCharacter": "本局实际角色",
+      "actualRunStage": "本局实际关卡",
+      "randomSelection": "随机选择",
+      "randomCharacter": "随机角色",
+      "randomStage": "随机关卡",
+      "csv": "CSV",
+      "csvFields": "runSeed、gameVersion、contentHash、csvSchemaVersion、characterId、stageId、mapId、selectedCharacterId、selectedStageId。",
+      "autoTest": "自动测试",
+      "autoModeText": "结合自动移动、自动升级和快速模式，用于重复平衡样本。",
+      "replay": "回放",
+      "replayText": "回放记录保存元数据和部分关键事件，后续可继续扩展播放支持。"
     },
     "title": "帮助",
     "moveKeyboard": "WASD / 方向键：移动",
@@ -231,13 +409,123 @@
     "collectExp": "收集 EXP 宝石来升级",
     "chooseUpgrade": "选择升级来强化武器和被动",
     "openTreasure": "靠近宝箱获得额外升级或触发进化",
-    "evolution": "武器 + 对应被动可通过宝箱进化",
+    "evolution": {
+      "requirement": "{weaponUpgrades} 次武器升级 + {passive} Lv.{passiveLevel}",
+      "route": "进化路线",
+      "requirements": "条件"
+    },
     "surviveBoss": "生存到 Boss 出现",
-    "defeatBoss": "击败 Boss 获胜"
+    "defeatBoss": "击败 Boss 获胜",
+    "map": {
+      "mechanic": {
+        "item": "项",
+        "unknown": "未知机制",
+        "obstacle": {
+          "_label": "障碍",
+          "description": "阻挡移动，并改变敌人路径。"
+        },
+        "slowZone": {
+          "_label": "减速区",
+          "description": "区域内会降低移动速度。"
+        },
+        "portal": {
+          "_label": "传送门",
+          "description": "在连接点之间传送玩家。"
+        },
+        "lightSource": {
+          "_label": "光源",
+          "description": "作为地图上的视觉地标。"
+        },
+        "hazard": {
+          "_label": "陷阱",
+          "description": "危险区域或地图压力机制。"
+        },
+        "altar": {
+          "_label": "祭坛",
+          "description": "关卡配置可使用的特殊地标。"
+        },
+        "spawner": {
+          "_label": "生成点",
+          "description": "标记生成相关的配置地标。"
+        },
+        "destructible": {
+          "_label": "可破坏物",
+          "description": "配置后可被破坏的地图对象。"
+        }
+      },
+      "noMechanics": "无特殊地图机制"
+    },
+    "weapon": {
+      "behavior": {
+        "default": "未知行为",
+        "unknown": "未知",
+        "aura": "以光环持续伤害附近敌人。",
+        "orbit": "围绕玩家旋转，控制近身空间。",
+        "homing": "自动追踪敌人。",
+        "arcing": "以弧线飞行形成范围压制。",
+        "axe": "强力抛物线物理投射物。",
+        "projectile": "从玩家处发射投射物。"
+      },
+      "summary": "类型：{type}",
+      "type": {
+        "default": "武器",
+        "projectile": "投射武器",
+        "aura": "光环武器",
+        "orbit": "环绕武器",
+        "arcing": "抛物线武器",
+        "homing": "追踪武器"
+      },
+      "tag": {
+        "base": "基础",
+        "evolved": "进化",
+        "projectile": "投射物",
+        "physical": "物理",
+        "magic": "魔法",
+        "explosive": "爆炸",
+        "aura": "光环",
+        "area": "范围",
+        "control": "控制",
+        "spiral": "螺旋",
+        "knockback": "击退",
+        "homing": "追踪",
+        "arcing": "抛物线",
+        "defensive": "防御"
+      },
+      "stat": {
+        "damage": "伤害",
+        "cooldown": "冷却",
+        "projectileSpeed": "速度",
+        "pierce": "穿透",
+        "projectileCount": "投射数",
+        "radius": "半径",
+        "orbitCount": "环绕数",
+        "orbitSpeed": "环绕速度"
+      }
+    },
+    "stat": {
+      "maxHp": "最大生命",
+      "moveSpeed": "移动速度",
+      "pickupRange": "拾取范围",
+      "physicalDamageMultiplier": "物理伤害",
+      "projectileDamageMultiplier": "投射伤害",
+      "critChance": "暴击率",
+      "magicDamageMultiplier": "魔法伤害",
+      "explosionDamageMultiplier": "爆炸伤害",
+      "damageMultiplier": "伤害",
+      "healingMultiplier": "治疗",
+      "shieldGainMultiplier": "护盾获取",
+      "orbitDamageMultiplier": "环绕伤害",
+      "areaDamageMultiplier": "范围伤害",
+      "armorFlat": "护甲"
+    }
   },
   "levelUp": {
     "title": "升级",
-    "chooseUpgrade": "选择一个升级"
+    "chooseUpgrade": "选择一个升级",
+    "emptyMessage": "No upgrades available",
+    "newWeapon": "New Weapon",
+    "noUpgrades": "No upgrades available",
+    "upgrade": "Upgrade"
   },
   "hud": {
     "weapons": "武器",
@@ -252,7 +540,10 @@
     "level": "Lv",
     "bossIn": "Boss 倒计时 {time}",
     "goalDefeatBoss": "目标 击败 Boss",
-    "evolved": "进化"
+    "evolved": "进化",
+    "endless": "Endless",
+    "relics": "Relics",
+    "shield": "Shield"
   },
   "settings": {
     "title": "设置",
@@ -304,12 +595,7 @@
     "debugPanelCompact": "紧凑调试面板",
     "debugPanelOpacity": "调试面板透明度",
     "language": "语言",
-    "uiStyle": {
-      "_label": "UI风格",
-      "classic": "经典",
-      "arcaneSlate": "奥术石板",
-      "minimal": "简洁"
-    },
+    "uiStyle": "UI Style",
     "uiStyleReopenNotice": "部分UI风格变化将在重新打开菜单后生效。",
     "scrollHint": "滚动",
     "page": "页",
@@ -349,5 +635,9 @@
     "rules": "规则",
     "mode": "模式",
     "noChallenge": "暂无挑战"
+  },
+  "game": {
+    "bossAppears": "Boss Appears",
+    "rotateForBetterPlay": "Please rotate your device for a better view."
   }
 }

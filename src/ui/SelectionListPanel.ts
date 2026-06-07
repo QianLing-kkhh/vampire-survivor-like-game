@@ -18,6 +18,10 @@ export interface SelectionListItem {
   name: string;
   description?: string;
   portraitKey?: string | null;
+  startingWeaponId?: string;
+  startingWeaponIconKey?: string;
+  damageReactionSkill?: string;
+  roleLabels?: string[];
 }
 
 export interface SelectionListPanelConfig {
@@ -225,8 +229,63 @@ export class SelectionListPanel {
       stat.setScale(Math.min(1, rowWidth / 440), 1);
     });
 
+    if (!random && item.startingWeaponIconKey) {
+      const rowIndex = 3;
+      this.renderWeaponStatLine(
+        x + 14,
+        statsTop + rowIndex * 30,
+        item,
+        I18n.t('selection.shortLabelAvailable'),
+        I18n.t('selection.startingWeapon'),
+        I18n.t('selection.startingWeaponLabel'),
+        item.startingWeaponIconKey,
+      );
+    }
+
     this.container.add([card.container, portrait, title, description]);
     this.pageItems.push(card.container, portrait, title, description);
+  }
+
+  private renderWeaponStatLine(
+    textX: number,
+    rowY: number,
+    item: SelectionListItem,
+    fallback: string,
+    label: string,
+    value: string,
+    iconKey?: string,
+  ): void {
+    const group = this.scene.add.container(0, 0);
+    const bg = this.scene.add.rectangle(textX - 8, rowY, 18, 18, UITheme.iconBgColor, 0.82);
+    bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.45);
+    bg.setOrigin(0.5);
+    group.add(bg);
+
+    if (iconKey && this.scene.textures.exists(iconKey)) {
+      const icon = this.scene.add.image(textX - 8, rowY, iconKey);
+      icon.setDisplaySize(14, 14);
+      group.add(icon);
+    } else {
+      const fallbackText = this.scene.add.text(textX - 8, rowY, fallback, {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: '8px',
+        fontStyle: 'bold',
+      });
+      fallbackText.setOrigin(0.5);
+      group.add(fallbackText);
+    }
+
+    const labelText = this.scene.add.text(textX + 14, rowY - 5, `${label}: ${value}`, {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).body,
+    });
+    labelText.setMaxLines(1);
+    group.add(labelText);
+
+    this.pageItems.push(group);
+    this.container.add(group);
   }
 
   private renderButtons(centerX: number, y: number, panelWidth: number): void {
@@ -290,7 +349,7 @@ export class SelectionListPanel {
       ...this.config.items.slice(0, maxItems - 1),
       {
         id: 'more',
-        name: `+${this.config.items.length - maxItems + 1} more`,
+        name: `+${this.config.items.length - maxItems + 1} ${I18n.t('selection.more')}`,
       },
     ];
   }
@@ -306,13 +365,29 @@ export class SelectionListPanel {
   private getRoleBadges(id: string): string[] {
     switch (id) {
       case 'assassin':
-        return ['Mobility', 'Crit', 'Knife'];
+        return [
+          I18n.t('ui.role.assassin.m1'),
+          I18n.t('ui.role.assassin.m2'),
+          I18n.t('ui.role.assassin.m3'),
+        ];
       case 'witch':
-        return ['Magic', 'Slow', 'Explosion'];
+        return [
+          I18n.t('ui.role.witch.m1'),
+          I18n.t('ui.role.witch.m2'),
+          I18n.t('ui.role.witch.m3'),
+        ];
       case 'priest':
-        return ['Shield', 'Heal', 'Orbit'];
+        return [
+          I18n.t('ui.role.priest.m1'),
+          I18n.t('ui.role.priest.m2'),
+          I18n.t('ui.role.priest.m3'),
+        ];
       case 'warrior':
-        return ['Armor', 'Knockback', 'Axe'];
+        return [
+          I18n.t('ui.role.warrior.m1'),
+          I18n.t('ui.role.warrior.m2'),
+          I18n.t('ui.role.warrior.m3'),
+        ];
       case 'random_unlocked':
         return [I18n.t('ui.random')];
       default:
@@ -322,16 +397,21 @@ export class SelectionListPanel {
 
   private getDetailRows(item: SelectionListItem): Array<{ label: string; value: string }> {
     if (item.id === 'random_unlocked') {
-      return [
-        { label: I18n.t('ui.random'), value: I18n.t('ui.unlocked') },
-        { label: I18n.t('ui.build'), value: I18n.t('ui.randomUnlockedEachRun') },
-      ];
+    return [
+      { label: I18n.t('ui.random'), value: I18n.t('ui.unlocked') },
+      { label: I18n.t('ui.build'), value: I18n.t('ui.randomUnlockedEachRun') },
+    ];
     }
 
     return [
-      { label: 'Role', value: this.getRoleBadges(item.id).join(' / ') },
-      { label: 'Starting Weapon', value: this.getRoleBadges(item.id)[this.getRoleBadges(item.id).length - 1] ?? '-' },
-      { label: 'Damage Reaction', value: item.id },
+      { label: I18n.t('selection.role'), value: this.getRoleBadges(item.id).join(' / ') },
+      { label: I18n.t('selection.startingWeapon'), value: I18n.t('selection.iconShown') },
+      {
+        label: I18n.t('selection.damageReaction'),
+        value: item.damageReactionSkill
+          ? I18n.t('selection.damageReactionKeyed', { id: item.damageReactionSkill })
+          : I18n.t('selection.damageReactionUnknown'),
+      },
     ];
   }
 

@@ -5,15 +5,16 @@ import { VisualSettings } from '../visual/VisualSettings';
 import { AssetFallbacks } from './AssetFallbacks';
 import {
   AssetKeyEntry,
+  getPlayerSkinLogicalKey,
   DEFAULT_ASSET_KEY_MAP,
   MapMechanicIconKind,
   MapMechanicVisualKind,
   PlayerAnimationState,
   PlayerDirection8,
   TEXTURE_STATUS_KEYS,
-  getPlayerSkinLogicalKey,
 } from './AssetKeyMap';
 import { ExternalArtRegistry } from './ExternalArtRegistry';
+import { getDefaultSkinId, resolvePlayerSkinId } from './AssetManifest';
 
 export class AssetKeyResolver {
   static getTextureStatusKeys(): readonly string[] {
@@ -346,10 +347,14 @@ export class AssetKeyResolver {
     skinId: string | undefined,
     characterId: string | undefined,
   ): string[] {
+    const resolvedSkinId = resolvePlayerSkinId(skinId, characterId);
+    const resolvedCharacterSkinId = getDefaultSkinId(characterId ?? 'default');
+
     return [skinId, characterId]
       .filter((candidate): candidate is string => (
         candidate !== undefined && candidate.length > 0 && candidate !== 'default'
       ))
+      .concat(resolvedSkinId, resolvedCharacterSkinId)
       .filter((candidate, index, candidates) => candidates.indexOf(candidate) === index);
   }
 

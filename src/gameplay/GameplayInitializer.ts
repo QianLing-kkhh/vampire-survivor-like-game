@@ -367,6 +367,13 @@ export class GameplayInitializer {
       randomManager.getSpawnRandom(),
       () => enemiesList.filter((enemy) => !enemy.isDead).length,
       () => (config.runState.endlessStarted ? 200 : Number.POSITIVE_INFINITY),
+      () => enemiesList.filter((enemy) => (
+        !enemy.isDead
+        && !enemy.bossLike
+        && enemy.id !== 'boss'
+        && !enemy.id.endsWith('_boss')
+        && !enemy.id.startsWith('endless_')
+      )).length,
     );
     const bossSpawnDirector = new BossSpawnDirector(
       bossFactory,
@@ -403,6 +410,7 @@ export class GameplayInitializer {
       damageCalculator: config.damageCalculator,
       player,
       playerHealth,
+      playerStats,
       runState: config.runState,
       runStats,
       gameEventBus,

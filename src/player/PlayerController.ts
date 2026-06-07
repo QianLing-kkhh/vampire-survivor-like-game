@@ -55,6 +55,11 @@ export class PlayerController {
   private static readonly MAX_MOVEMENT_STEP = 24;
   private static readonly IDLE_SPEED_THRESHOLD = 6;
   private static readonly PLAYER_DEPTH = 20;
+  private static readonly MAP_SLOW_RING_COLOR = 0x38bdf8;
+  private static readonly MAP_SLOW_RING_STROKE_COLOR = 0x7dd3fc;
+  private static readonly MAP_SLOW_RING_ALPHA_MIN = 0.16;
+  private static readonly MAP_SLOW_RING_ALPHA_MAX = 0.35;
+  private static readonly MAP_SLOW_VISUAL_MIN_MULTIPLIER = 0.25;
 
   readonly body: PlayerBody;
 
@@ -71,6 +76,8 @@ export class PlayerController {
   private mapMoveSpeedMultiplier = 1;
   private temporaryMoveSpeedRemainingMs = 0;
   private unsubscribeSettings?: () => void;
+  private mapSlowVisual?: Phaser.GameObjects.Arc;
+  private isMapSlowVisualActive = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -186,7 +193,71 @@ export class PlayerController {
     this.unsubscribeSettings = undefined;
     ShadowFactory.destroyShadow(this.shadow);
     this.shadow = undefined;
+    this.clearSlowVisual();
     this.body.destroy();
+  }
+
+  setSlowVisual(active: boolean, multiplier = 1): void {
+    if (!active) {
+      this.clearSlowVisual();
+      return;
+    }
+
+    if (!this.isBodyUsable()) {
+      this.clearSlowVisual();
+      return;
+    }
+
+    const normalizedMultiplier = Math.max(
+      PlayerController.MAP_SLOW_VISUAL_MIN_MULTIPLIER,
+      Math.min(1, multiplier),
+    );
+    const intensity = (1 - normalizedMultiplier) / (1 - PlayerController.MAP_SLOW_VISUAL_MIN_MULTIPLIER);
+    const clampedIntensity = Phaser.Math.Clamp(intensity, 0, 1);
+    const slowAlpha = Phaser.Math.Linear(
+      PlayerController.MAP_SLOW_RING_ALPHA_MIN,
+      PlayerController.MAP_SLOW_RING_ALPHA_MAX,
+      clampedIntensity,
+    );
+    const ringRadius = this.getBodyRadius() * 1.45 * (1 + clampedIntensity * 0.2);
+
+    if (!this.mapSlowVisual) {
+      this.mapSlowVisual = this.scene.add.circle(
+        this.body.x,
+        this.body.y,
+        ringRadius,
+        PlayerController.MAP_SLOW_RING_COLOR,
+        0.16,
+      );
+      this.mapSlowVisual.setDepth(PlayerController.PLAYER_DEPTH + 1);
+    }
+
+    this.mapSlowVisual.setPosition(this.body.x, this.body.y);
+    this.mapSlowVisual.setRadius(ringRadius);
+    this.mapSlowVisual.setFillStyle(PlayerController.MAP_SLOW_RING_COLOR, slowAlpha * 0.25);
+    this.mapSlowVisual.setStrokeStyle(
+      2,
+      PlayerController.MAP_SLOW_RING_STROKE_COLOR,
+      Math.min(1, slowAlpha + 0.18),
+    );
+    this.mapSlowVisual.setVisible(true);
+    this.mapSlowVisual.setAlpha(1);
+    this.isMapSlowVisualActive = true;
+  }
+
+  clearSlowVisual(): void {
+    if (!this.mapSlowVisual) {
+      this.isMapSlowVisualActive = false;
+      return;
+    }
+
+    this.mapSlowVisual.setVisible(false);
+    this.mapSlowVisual.setAlpha(0);
+    this.isMapSlowVisualActive = false;
+  }
+
+  isSlowVisualActive(): boolean {
+    return this.isMapSlowVisualActive;
   }
 
   getPreviousPosition(): Phaser.Math.Vector2 {
@@ -532,6 +603,12 @@ export class PlayerController {
       && this.body.scene
       && this.body.active !== false,
     );
+  }
+
+  private getBodyRadius(): number {
+    const body = this.body as { radius?: number };
+
+    return body.radius ?? 14;
   }
 
   private playPlayerAnimation(

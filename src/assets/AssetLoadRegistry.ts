@@ -32,6 +32,10 @@ export function queueLoadPlan(scene: Phaser.Scene, plan: AssetLoadPlan): void {
       continue;
     }
 
+    if (asset.type === 'spritesheet' && scene.textures.exists(asset.key)) {
+      scene.textures.remove(asset.key);
+    }
+
     queueAssetLoad(scene, asset);
   }
 }

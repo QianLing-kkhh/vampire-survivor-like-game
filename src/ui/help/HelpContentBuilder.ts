@@ -1,10 +1,13 @@
+import { CharacterDefinition } from '../../character/CharacterDefinition';
+import { I18n } from '../../i18n/I18n';
+import { EVOLUTION_RULES } from '../../evolution/EvolutionRule';
+import { MapMechanicType } from '../../map/mechanics/MapMechanicDefinition';
 import charactersData from '../../data/characters.json';
 import mapsData from '../../data/maps.json';
 import passivesData from '../../data/passives.json';
 import stagesData from '../../data/stages.json';
 import upgradesData from '../../data/upgrades.json';
 import weaponsData from '../../data/weapons.json';
-import { EVOLUTION_RULES } from '../../evolution/EvolutionRule';
 import {
   RANDOM_UNLOCKED_CHARACTER_ID,
   RANDOM_UNLOCKED_STAGE_ID,
@@ -26,7 +29,6 @@ type CharacterRecord = {
 
 type WeaponRecord = {
   id?: string;
-  name?: string;
   type?: string;
   tags?: string[];
   behavior?: { type?: string };
@@ -66,40 +68,88 @@ type MapRecord = {
   mechanics?: MapMechanicRecord[];
 };
 
-const WEAPON_ICON_KEYS: Record<string, string> = {
-  axe: 'art_passives_spinach_icon',
-  bible: 'art_weapons_bible_orbit_book',
-  death_spiral: 'art_weapons_death_spiral_projectile',
-  garlic: 'art_weapons_garlic_core',
-  holy_wand: 'art_weapons_holy_wand_projectile',
-  knife: 'art_weapons_knife_projectile',
-  magic_wand: 'art_weapons_magic_wand_projectile',
-  soul_eater: 'art_weapons_soul_eater_core',
-  thousand_edge: 'art_weapons_thousand_edge_projectile',
-  unholy_vespers: 'art_weapons_unholy_vespers_orbit_book',
+type HelpIconRef = {
+  iconKey?: string;
+  iconKind?: HelpLine['iconKind'];
+  iconId?: string;
+  fallback?: string;
 };
 
-const PASSIVE_ICON_KEYS: Record<string, string> = {
-  bracer: 'art_passives_bracer_icon',
-  clover: 'art_passives_clover_icon',
-  empty_tome: 'art_passives_empty_tome_icon',
-  pummarola: 'art_passives_pummarola_icon',
-  spinach: 'art_passives_spinach_icon',
+const MAP_MECHANIC_ICON_KIND: Record<string, string> = {
+  obstacle: 'obstacle',
+  slowZone: 'swamp',
+  portal: 'portalBlue',
+  lightSource: 'light',
+  hazard: 'hazard',
+  altar: 'altar',
+  spawner: 'spawner',
+  destructible: 'obstacle',
 };
 
-const DAMAGE_REACTION_SUMMARY: Record<string, string> = {
-  blinkForward: 'Blink Forward: escapes danger by blinking in the current movement direction.',
-  holySanctuary: 'Holy Sanctuary: creates a sanctuary, heals, gains shield, and knocks enemies back.',
-  ironCounter: 'Iron Counter: counters with a shockwave and temporary damage reduction.',
-  slowTrail: 'Slow Trail: leaves slowing zones after damage to control enemy movement.',
+const MECHANIC_LABEL_KEYS: Record<string, string> = {
+  obstacle: 'help.map.mechanic.obstacle',
+  slowZone: 'help.map.mechanic.slowZone',
+  portal: 'help.map.mechanic.portal',
+  lightSource: 'help.map.mechanic.lightSource',
+  hazard: 'help.map.mechanic.hazard',
+  altar: 'help.map.mechanic.altar',
+  spawner: 'help.map.mechanic.spawner',
+  destructible: 'help.map.mechanic.destructible',
+  unknown: 'help.map.mechanic.unknown',
 };
 
-const ROLE_SUMMARY: Record<string, string> = {
-  default: 'Mobility / projectile / escape',
-  priest: 'Shield / heal / orbit',
-  warrior: 'Armor / knockback / counter',
-  witch: 'Magic / slow / control',
+const WEAPON_BEHAVIOR_TYPE: Record<string, string> = {
+  aura: 'help.weapon.behavior.aura',
+  orbit: 'help.weapon.behavior.orbit',
+  homing: 'help.weapon.behavior.homing',
+  arcing: 'help.weapon.behavior.arcing',
+  axe: 'help.weapon.behavior.axe',
+  projectile: 'help.weapon.behavior.projectile',
 };
+
+const TAG_LABEL_KEYS: Record<string, string> = {
+  base: 'help.weapon.tag.base',
+  evolved: 'help.weapon.tag.evolved',
+  projectile: 'help.weapon.tag.projectile',
+  physical: 'help.weapon.tag.physical',
+  magic: 'help.weapon.tag.magic',
+  explosive: 'help.weapon.tag.explosive',
+  aura: 'help.weapon.tag.aura',
+  area: 'help.weapon.tag.area',
+  control: 'help.weapon.tag.control',
+  spiral: 'help.weapon.tag.spiral',
+  knockback: 'help.weapon.tag.knockback',
+  homing: 'help.weapon.tag.homing',
+  arcing: 'help.weapon.tag.arcing',
+  defensive: 'help.weapon.tag.defensive',
+};
+
+const STAT_LABEL_KEYS: Record<string, string> = {
+  maxHp: 'help.stat.maxHp',
+  moveSpeed: 'help.stat.moveSpeed',
+  pickupRange: 'help.stat.pickupRange',
+  physicalDamageMultiplier: 'help.stat.physicalDamageMultiplier',
+  projectileDamageMultiplier: 'help.stat.projectileDamageMultiplier',
+  critChance: 'help.stat.critChance',
+  magicDamageMultiplier: 'help.stat.magicDamageMultiplier',
+  explosionDamageMultiplier: 'help.stat.explosionDamageMultiplier',
+  damageMultiplier: 'help.stat.damageMultiplier',
+  healingMultiplier: 'help.stat.healingMultiplier',
+  shieldGainMultiplier: 'help.stat.shieldGainMultiplier',
+  orbitDamageMultiplier: 'help.stat.orbitDamageMultiplier',
+  areaDamageMultiplier: 'help.stat.areaDamageMultiplier',
+  armorFlat: 'help.stat.armorFlat',
+  damage: 'help.weapon.stat.damage',
+  cooldown: 'help.weapon.stat.cooldown',
+  projectileSpeed: 'help.weapon.stat.projectileSpeed',
+  pierce: 'help.weapon.stat.pierce',
+  projectileCount: 'help.weapon.stat.projectileCount',
+  radius: 'help.weapon.stat.radius',
+  orbitCount: 'help.weapon.stat.orbitCount',
+  orbitSpeed: 'help.weapon.stat.orbitSpeed',
+};
+
+const MECHANIC_TYPE_ORDER: MapMechanicType[] = ['obstacle', 'slowZone', 'portal', 'lightSource', 'hazard', 'altar', 'spawner', 'destructible'];
 
 export class HelpContentBuilder {
   buildTabs(): HelpTabDefinition[] {
@@ -121,14 +171,13 @@ export class HelpContentBuilder {
       {
         title: HelpFormatter.t('help.basics.title', 'Basics'),
         lines: [
-          this.bullet('WASD / Arrow Keys move the character.'),
-          this.bullet('Hold the left mouse button to move toward the cursor.'),
-          this.bullet('On mobile, use the virtual joystick.'),
-          this.bullet('Pause with ESC or the on-screen Pause button.'),
-          this.divider(),
-          this.paragraph('Survive, collect EXP gems, choose upgrades, build weapons/passives, and defeat the final Boss.'),
-          this.paragraph('Treasure chests can grant bonus upgrades and can trigger eligible weapon evolutions.'),
-          this.paragraph('Auto Movement, Auto Upgrade, and Fast Mode support repeated auto testing without changing gameplay rules.'),
+          this.bullet('help.basics.keyboard'),
+          this.bullet('help.basics.mouse'),
+          this.bullet('help.basics.joystick'),
+          this.bullet('help.basics.pause'),
+          this.paragraph('help.basics.objective'),
+          this.paragraph('help.basics.openTreasure'),
+          this.paragraph('help.basics.autoTest'),
         ],
       },
     ]);
@@ -137,12 +186,14 @@ export class HelpContentBuilder {
   private buildCharactersTab(): HelpTabDefinition {
     const characters = Object.entries(charactersData as unknown as Record<string, CharacterRecord>)
       .map(([id, character]) => ({ ...character, id }));
+
     const sections: HelpSection[] = [
       {
         title: HelpFormatter.t('character.random.name', 'Random'),
         lines: [
-          this.iconRow('Random unlocked character each run.', undefined, '?'),
-          this.stat('CSV selection', `${RANDOM_UNLOCKED_CHARACTER_ID} -> actual characterId`),
+          this.iconRow('help.characters.random', { fallback: 'R' }),
+          this.stat('help.testing.randomSelection', RANDOM_UNLOCKED_CHARACTER_ID),
+          this.paragraph('help.characters.randomSelectionDetail'),
         ],
       },
       ...characters.map((character) => this.characterSection(character)),
@@ -154,30 +205,27 @@ export class HelpContentBuilder {
   private characterSection(character: CharacterRecord): HelpSection {
     const characterId = character.id ?? 'default';
     const name = HelpFormatter.nameFromKey(character.nameKey, characterId);
-    const weapon = this.weaponName(character.startingWeaponId);
-    const stats = character.initialStats ?? {};
-    const growth = Object.entries(character.growthPerLevel ?? {})
-      .map(([key, value]) => `${HelpFormatter.labelFromId(key)} +${value}/level`)
-      .join(', ');
-    const reactionType = character.damageReactionSkill?.type;
-    const reaction = reactionType
-      ? DAMAGE_REACTION_SUMMARY[reactionType] ?? `${HelpFormatter.labelFromId(reactionType)} damage reaction.`
-      : 'No damage reaction listed.';
+    const growthLines = Object.entries(character.growthPerLevel ?? {})
+      .map(([key, value]) => this.formatStatValue(key, value))
+      .filter(Boolean);
+
+    const reaction = this.formatCharacterReaction(character.damageReactionSkill?.type);
 
     return {
       title: name,
       lines: [
-        this.iconRow(HelpFormatter.t(character.descriptionKey ?? '', this.characterDescription(characterId)), undefined, HelpFormatter.initials(name)),
-        this.stat('Starting Weapon', weapon),
-        this.stat('Role', ROLE_SUMMARY[characterId] ?? 'Flexible survivor'),
-        this.stat('Initial Stats', HelpFormatter.joinDefined([
-          HelpFormatter.number(stats.maxHp) ? `HP ${HelpFormatter.number(stats.maxHp)}` : undefined,
-          HelpFormatter.number(stats.moveSpeed) ? `Move ${HelpFormatter.number(stats.moveSpeed)}` : undefined,
-          HelpFormatter.number(stats.pickupRange) ? `Pickup ${HelpFormatter.number(stats.pickupRange)}` : undefined,
-        ])),
-        ...(growth ? [this.stat('Growth', growth)] : []),
-        this.stat('Level Up Effect', HelpFormatter.labelFromId(character.levelUpEffect?.type)),
-        this.paragraph(reaction),
+        this.iconRow('help.characters.descriptionLabel', { fallback: HelpFormatter.initials(name) }),
+        this.iconRow(
+          'help.characters.startingWeapon',
+          this.weaponIcon(character.startingWeaponId, this.weaponName(character.startingWeaponId)),
+        ),
+        this.stat('help.characters.role', this.getCharacterRoleSummary(characterId)),
+        this.stat('help.characters.damageReaction', reaction),
+        this.stat('help.characters.levelUpEffect', this.characterLevelUpText(character.levelUpEffect?.type)),
+        ...(growthLines.length > 0
+          ? [this.stat('help.characters.growth', growthLines.join(' / '))]
+          : []),
+        this.paragraph(this.characterDescription(characterId)),
       ],
     };
   }
@@ -188,18 +236,22 @@ export class HelpContentBuilder {
 
     return this.tab('weapons', 'help.tab.weapons', 'Weapons', 'W', weapons.map((weapon) => {
       const weaponId = weapon.id ?? '';
-      const name = this.weaponName(weaponId);
-      const upgradeCount = this.countWeaponUpgrades(weaponId);
-      const coreStats = this.formatWeaponStats({ ...weapon.stats, ...weapon });
+      const weaponName = this.weaponName(weaponId);
+      const weaponRows = this.formatWeaponSummaryRows(weapon);
+      const stats = this.formatWeaponStats({ ...weapon.stats, ...weapon });
+
       return {
-        title: name,
+        title: weaponName,
         lines: [
-          this.iconRow(this.weaponRole(weapon), WEAPON_ICON_KEYS[weaponId], HelpFormatter.initials(name)),
-          this.stat('Type', HelpFormatter.labelFromId(weapon.type)),
-          this.stat('Tags', (weapon.tags ?? []).join(', ') || 'None'),
-          this.stat('Behavior', HelpFormatter.labelFromId(weapon.behavior?.type)),
-          ...(upgradeCount > 0 ? [this.stat('Upgrade Steps', `${upgradeCount}`)] : []),
-          ...(coreStats ? [this.stat('Core Stats', coreStats)] : []),
+          this.iconRow(
+            `help.weapon.type.${weapon.type ?? 'default'}`,
+            this.weaponIcon(weaponId, weaponName),
+          ),
+          this.stat('help.weapons.description', this.characterizeWeapons(weapon)),
+          this.stat('help.weapons.tags', weaponRows.tags),
+          this.stat('help.weapons.behavior', weaponRows.behavior),
+          ...(weaponRows.coreStats ? [this.stat('help.weapons.coreStats', weaponRows.coreStats)] : []),
+          ...(stats ? [this.stat('help.weapons.baseStats', stats)] : []),
         ],
       };
     }));
@@ -210,14 +262,10 @@ export class HelpContentBuilder {
       {
         title: HelpFormatter.t('help.evolutions.title', 'Evolutions'),
         lines: [
-          this.paragraph('Eligible evolutions are checked from the current evolution rules. Treasure chests can trigger them after requirements are met.'),
+          this.paragraph('help.evolutions.description'),
           ...EVOLUTION_RULES.flatMap((rule) => [
-            this.iconRow(
-              `${this.weaponName(rule.baseWeaponId)} + ${this.passiveName(rule.requiredPassiveId)} -> ${this.weaponName(rule.evolvedWeaponId)}`,
-              WEAPON_ICON_KEYS[rule.evolvedWeaponId],
-              'EV',
-            ),
-            this.stat('Requirement', `Weapon upgrades ${rule.requiredWeaponUpgradeTotal}, ${this.passiveName(rule.requiredPassiveId)} Lv. ${rule.requiredPassiveLevel}`),
+            this.evolutionRouteIconChain(rule),
+            this.stat('help.evolution.requirements', `${this.formatEvolutionRequirement(rule)}`),
           ]),
         ],
       },
@@ -228,16 +276,17 @@ export class HelpContentBuilder {
     const passives = Object.values(passivesData as PassiveRecord[]);
 
     return this.tab('passives', 'help.tab.passives', 'Passives', 'P', passives.map((passive) => {
-      const routes = EVOLUTION_RULES
+      const routeLines = EVOLUTION_RULES
         .filter((rule) => rule.requiredPassiveId === passive.id)
-        .map((rule) => `${this.weaponName(rule.baseWeaponId)} -> ${this.weaponName(rule.evolvedWeaponId)}`);
+        .map((rule) => this.evolutionRouteIconChain(rule));
 
       return {
         title: passive.name ?? HelpFormatter.labelFromId(passive.id),
         lines: [
-          this.iconRow(passive.description ?? 'Passive effect.', PASSIVE_ICON_KEYS[passive.id], HelpFormatter.initials(passive.name ?? passive.id)),
-          this.stat('Max Level', '5'),
-          this.stat('Evolution Routes', routes.join(', ') || 'None'),
+          this.iconRow('help.passives.maxLevel', this.passiveIcon(passive.id, passive.name ?? passive.id)),
+          this.stat('help.passives.effect', passive.description ?? ''),
+          ...routeLines,
+          this.stat('help.passives.maxLevel', this.getPassiveMaxLevel(passive.id).toString()),
         ],
       };
     }));
@@ -249,22 +298,25 @@ export class HelpContentBuilder {
 
     return this.tab('maps', 'help.tab.maps', 'Maps', 'M', [
       {
-        title: HelpFormatter.t('stage.random.name', 'Random Stage'),
+        title: HelpFormatter.t('help.maps.random.title', 'Random Stage'),
         lines: [
-          this.iconRow('Random Stage picks one unlocked stage each run.', undefined, '?'),
-          this.stat('CSV selection', `${RANDOM_UNLOCKED_STAGE_ID} -> actual stageId/mapId`),
+          this.iconRow('help.maps.random.description', { fallback: 'R' }),
+          this.stat('help.testing.randomSelection', RANDOM_UNLOCKED_STAGE_ID),
+          this.stat('help.maps.randomSelectionDetail', I18n.t('help.maps.randomDetail')),
         ],
       },
       ...stages.map((stage) => {
         const map = maps[stage.mapId ?? ''];
+
         return {
           title: stage.name ?? HelpFormatter.labelFromId(stage.id),
           lines: [
-            this.stat('Map', map?.name ?? HelpFormatter.labelFromId(stage.mapId)),
-            this.stat('Size', map ? `${map.worldWidth} x ${map.worldHeight}` : 'Unknown'),
-            this.stat('Endless', 'Allowed'),
-            this.stat('Final Boss', HelpFormatter.labelFromId(stage.finalBossId)),
-            this.paragraph(this.formatMapMechanics(map)),
+            this.stat('help.maps.name', map?.name ?? HelpFormatter.labelFromId(stage.mapId)),
+            this.stat('help.maps.size', map ? `${map.worldWidth} x ${map.worldHeight}` : I18n.t('help.maps.unknown')),
+            this.stat('help.maps.finalBoss', HelpFormatter.labelFromId(stage.finalBossId)),
+            this.stat('help.maps.endless', this.tendlessMapHelp(stage.mapId)),
+            this.stat('help.maps.mechanicSummary', this.formatMapMechanicsSummary(map)),
+            ...this.formatMapMechanicRows(map),
           ],
         };
       }),
@@ -276,13 +328,13 @@ export class HelpContentBuilder {
       {
         title: HelpFormatter.t('help.endless.title', 'Endless Mode'),
         lines: [
-          this.bullet('When enabled, defeating the final Boss starts Endless instead of ending the run.'),
-          this.bullet('Enemies spawned by Endless scale over time in HP, damage, speed, and EXP.'),
-          this.bullet('Endless Bosses can appear repeatedly, and multiple Bosses can be active.'),
-          this.bullet('After normal upgrades are exhausted, post-cap rewards can appear.'),
-          this.stat('Rewards', 'Heal, overdrive, time slow, shield, minor growth'),
-          this.stat('Shield', 'Each stack absorbs one HP loss hit.'),
-          this.paragraph('Local leaderboard keys are scoped by mode, selected character, selected stage, selected map, and reserved ruleset dimensions.'),
+          this.bullet('help.endless.spawnRule'),
+          this.bullet('help.endless.scaling'),
+          this.bullet('help.endless.bosses'),
+          this.bullet('help.endless.renewSpawn'),
+          this.stat('help.endless.rewards', 'help.endless.rewardList'),
+          this.stat('help.endless.shield', 'help.endless.shieldDescription'),
+          this.stat('help.endless.modeScope', 'help.endless.scope'),
         ],
       },
     ]);
@@ -293,12 +345,12 @@ export class HelpContentBuilder {
       {
         title: HelpFormatter.t('help.settings.title', 'Settings'),
         lines: [
-          this.stat('Display', 'Graphics Quality, Asset Style, UI Style, Model Scale, Shadows, Damage Numbers, Minimap'),
-          this.stat('Gameplay', 'Auto Movement, Auto Upgrade, Fast Mode, Endless Mode'),
-          this.stat('Audio', 'Master audio, BGM, SFX, weapon, and UI volume. Defaults are currently off.'),
-          this.stat('Input', 'Virtual joystick size, opacity, left-handed mode, and key binding foundation.'),
-          this.stat('Developer', 'Debug Panel and local diagnostics for testing.'),
-          this.paragraph('Some visual settings apply after restart or the next run; gameplay settings apply immediately.'),
+          this.stat('help.settings.display', 'help.settings.displayList'),
+          this.stat('help.settings.gameplay', 'help.settings.gameplayList'),
+          this.stat('help.settings.audio', 'help.settings.audioList'),
+          this.stat('help.settings.input', 'help.settings.inputList'),
+          this.stat('help.settings.developer', 'help.settings.developerList'),
+          this.stat('help.settings.restartNotice', 'help.settings.restartNoticeText'),
         ],
       },
     ]);
@@ -309,13 +361,11 @@ export class HelpContentBuilder {
       {
         title: HelpFormatter.t('help.testing.title', 'Testing / Data'),
         lines: [
-          this.stat('Random character', `selectedCharacterId=${RANDOM_UNLOCKED_CHARACTER_ID}; characterId=actual run character`),
-          this.stat('Random stage', `selectedStageId=${RANDOM_UNLOCKED_STAGE_ID}; stageId/mapId=actual run stage/map`),
-          this.stat('Core CSV', 'runSeed, gameVersion, contentHash, csvSchemaVersion, characterId, stageId, mapId'),
-          this.stat('Selection CSV', 'selectedCharacterId, selectedStageId, characterSelectionMode, stageSelectionMode'),
-          this.paragraph('Auto Test combines Auto Movement, Auto Upgrade, and Fast Mode for repeated balance samples.'),
-          this.paragraph('Replay records store metadata and selected key events; playback is not implemented yet.'),
-          this.paragraph('Validation scripts check TypeScript/build plus content, assets, and documentation when run manually.'),
+          this.stat('help.testing.randomCharacter', `selectedCharacterId=${RANDOM_UNLOCKED_CHARACTER_ID}, characterId=${I18n.t('help.testing.actualRunCharacter')}`),
+          this.stat('help.testing.randomStage', `selectedStageId=${RANDOM_UNLOCKED_STAGE_ID}, stageId=${I18n.t('help.testing.actualRunStage')}`),
+          this.stat('help.testing.csv', 'help.testing.csvFields'),
+          this.stat('help.testing.autoTest', 'help.testing.autoModeText'),
+          this.stat('help.testing.replay', 'help.testing.replayText'),
         ],
       },
     ]);
@@ -336,12 +386,52 @@ export class HelpContentBuilder {
     };
   }
 
+  private iconRow(key: string, icon: HelpIconRef = {}): HelpLine {
+    return {
+      type: 'iconRow',
+      text: this.translateMaybe(key),
+      iconKey: icon.iconKey,
+      iconKind: icon.iconKind,
+      iconId: icon.iconId,
+      fallback: icon.fallback,
+    };
+  }
+
+  private iconChain(labelKey: string, icons: HelpIconRef[]): HelpLine {
+    return {
+      type: 'iconChain',
+      text: this.translateMaybe(labelKey),
+      icons,
+    };
+  }
+
+  private paragraph(keyOrText: string): HelpLine {
+    return { type: 'paragraph', text: this.translateMaybe(keyOrText) };
+  }
+
+  private bullet(keyOrText: string): HelpLine {
+    return { type: 'bullet', text: this.translateMaybe(keyOrText) };
+  }
+
+  private stat(labelKey: string, valueKeyOrText: string): HelpLine {
+    return {
+      type: 'statRow',
+      label: this.translateMaybe(labelKey),
+      value: this.translateMaybe(valueKeyOrText),
+    };
+  }
+
+  private translateMaybe(value: string): string {
+    const translated = I18n.t(value);
+    return translated === value ? value : translated;
+  }
+
   private weaponName(weaponId: string | undefined): string {
     const weapon = weaponId
       ? (weaponsData as unknown as Record<string, WeaponRecord>)[weaponId]
       : undefined;
 
-    return weapon?.name ?? HelpFormatter.labelFromId(weaponId);
+    return weapon?.id ? this.formatIdName(weapon.id) : HelpFormatter.labelFromId(weaponId);
   }
 
   private passiveName(passiveId: string | undefined): string {
@@ -351,112 +441,283 @@ export class HelpContentBuilder {
     return passive?.name ?? HelpFormatter.labelFromId(passiveId);
   }
 
-  private characterDescription(characterId: string): string {
-    switch (characterId) {
-      case 'witch':
-        return 'Leaves slowing zones after taking damage to control enemy movement.';
-      case 'priest':
-        return 'Creates a sanctuary, heals, gains shield, and knocks back enemies.';
-      case 'warrior':
-        return 'Counters damage with a shockwave and temporary damage reduction.';
-      case 'default':
-      default:
-        return 'A fast knife user who escapes danger by blinking forward after taking damage.';
-    }
+  private weaponIcon(weaponId: string | undefined, fallbackSource: string | undefined): HelpIconRef {
+    return {
+      iconKind: weaponId ? 'weapon' : undefined,
+      iconId: weaponId,
+      fallback: HelpFormatter.initials(fallbackSource ?? weaponId ?? '?'),
+    };
   }
 
-  private weaponRole(weapon: WeaponRecord): string {
-    const tags = new Set(weapon.tags ?? []);
+  private passiveIcon(passiveId: string | undefined, fallbackSource: string | undefined): HelpIconRef {
+    return {
+      iconKind: passiveId ? 'passive' : undefined,
+      iconId: passiveId,
+      fallback: HelpFormatter.initials(fallbackSource ?? passiveId ?? '?'),
+    };
+  }
+
+  private mapMechanicIcon(type: string, fallbackSource: string | undefined): HelpIconRef {
+    const iconId = MAP_MECHANIC_ICON_KIND[type] ?? MAP_MECHANIC_ICON_KIND.obstacle;
+
+    return {
+      iconKind: 'mapMechanic',
+      iconId,
+      fallback: HelpFormatter.initials(fallbackSource ?? type),
+    };
+  }
+
+  private evolutionRouteIconChain(rule: {
+    baseWeaponId: string;
+    requiredPassiveId: string;
+    evolvedWeaponId: string;
+  }): HelpLine {
+    return this.iconChain('help.evolution.route', [
+      this.weaponIcon(rule.baseWeaponId, this.weaponName(rule.baseWeaponId)),
+      this.passiveIcon(rule.requiredPassiveId, this.passiveName(rule.requiredPassiveId)),
+      this.weaponIcon(rule.evolvedWeaponId, this.weaponName(rule.evolvedWeaponId)),
+    ]);
+  }
+
+  private characterizeWeapons(weapon: WeaponRecord): string {
     const behavior = weapon.behavior?.type;
+    const behaviorKey = behavior && WEAPON_BEHAVIOR_TYPE[behavior]
+      ? I18n.t(WEAPON_BEHAVIOR_TYPE[behavior])
+      : I18n.t('help.weapon.behavior.default');
 
-    if (behavior === 'aura') {
-      return 'Defensive area weapon that damages nearby enemies without knockback.';
-    }
-
-    if (behavior === 'orbit') {
-      return 'Orbit weapon that circles the player and controls nearby space.';
-    }
-
-    if (behavior === 'homing') {
-      return tags.has('explosive')
-        ? 'Homing magic projectile with small explosion pressure.'
-        : 'Homing projectile that tracks enemies.';
-    }
-
-    if (behavior === 'arcing') {
-      return tags.has('spiral')
-        ? 'Arcing weapon evolved into a spiral pressure pattern.'
-        : 'Arcing physical projectile for area pressure.';
-    }
-
-    if (tags.has('pierce')) {
-      return 'Projectile weapon that pierces enemies and rewards directional positioning.';
-    }
-
-    return 'Weapon behavior is defined by its runtime class and content tags.';
+    return I18n.t('help.weapon.summary', { type: behaviorKey });
   }
 
-  private countWeaponUpgrades(weaponId: string): number {
-    return (upgradesData as Array<{ weaponId?: string }>)
-      .filter((upgrade) => upgrade.weaponId === weaponId)
-      .length;
+  private formatWeaponSummaryRows(weapon: WeaponRecord): {
+    tags: string;
+    behavior: string;
+    coreStats: string;
+  } {
+    const tags = (weapon.tags ?? [])
+      .map((tag) => I18n.t(TAG_LABEL_KEYS[tag] ?? 'unknown')).join(' / ');
+
+    const behavior = weapon.behavior?.type ? this.formatWeaponBehavior(weapon.behavior.type) : I18n.t('help.weapon.behavior.default');
+    const coreStats = this.formatWeaponStats({ ...weapon.stats, ...weapon });
+
+    return {
+      tags: tags || HelpFormatter.labelFromId('basic'),
+      behavior,
+      coreStats,
+    };
+  }
+
+  private formatWeaponBehavior(type: string | undefined): string {
+    return I18n.t(WEAPON_BEHAVIOR_TYPE[type ?? ''] ?? 'help.weapon.behavior.default', {
+      type: I18n.t('help.weapon.behavior.unknown'),
+    });
+  }
+
+  private characterDescription(characterId: string): string {
+    const key = `help.characters.description.${characterId}`;
+    const translated = I18n.t(key);
+
+    if (translated !== key) {
+      return translated;
+    }
+
+    const fallback = I18n.t('help.characters.description.default');
+
+    return fallback;
+  }
+
+  private formatCharacterReaction(reactionType: string | undefined): string {
+    if (!reactionType) {
+      return I18n.t('help.characters.reaction.none');
+    }
+
+    const key = `help.characters.reaction.${reactionType}`;
+    const translated = I18n.t(key);
+
+    if (translated !== key) {
+      return translated;
+    }
+
+    return HelpFormatter.labelFromId(reactionType);
+  }
+
+  private characterLevelUpText(effectType?: string): string {
+    if (!effectType) {
+      return I18n.t('help.characters.levelUp.unknown');
+    }
+
+    const translated = I18n.t(`help.characters.levelUp.${effectType}`);
+
+    if (translated !== `help.characters.levelUp.${effectType}`) {
+      return translated;
+    }
+
+    return I18n.t('help.characters.levelUp.default');
+  }
+
+  private getCharacterRoleSummary(characterId: string): string {
+    const keys = [
+      `ui.role.${characterId}.summary`,
+      `help.characters.role.${characterId}`,
+    ];
+
+    for (const key of keys) {
+      const translated = I18n.t(key);
+      if (translated !== key) {
+        return translated;
+      }
+    }
+
+    return I18n.t('ui.role.default');
   }
 
   private formatWeaponStats(stats: Record<string, unknown>): string {
-    const keys = ['damage', 'cooldown', 'projectileSpeed', 'pierce', 'projectileCount', 'radius', 'orbitCount', 'orbitSpeed'];
+    const order = ['damage', 'cooldown', 'projectileSpeed', 'pierce', 'projectileCount', 'radius', 'orbitCount', 'orbitSpeed'];
 
-    return keys
+    return order
       .map((key) => {
         const value = HelpFormatter.number(stats[key]);
+        if (!value) {
+          return undefined;
+        }
 
-        return value ? `${HelpFormatter.labelFromId(key)} ${value}` : undefined;
+        return `${I18n.t(STAT_LABEL_KEYS[key] ?? `help.weapon.stat.${key}`)} ${value}`;
       })
       .filter((part): part is string => Boolean(part))
       .join(', ');
   }
 
-  private formatMapMechanics(map: MapRecord | undefined): string {
-    if (!map?.mechanics?.length) {
-      return 'Open field layout with no listed map mechanics.';
+  private formatStatValue(key: string, value: unknown): string | undefined {
+    const statValue = HelpFormatter.number(value);
+    if (!statValue) {
+      return undefined;
     }
 
-    const counts = map.mechanics.reduce<Record<string, number>>((record, mechanic) => {
+    return `${I18n.t(STAT_LABEL_KEYS[key] ?? `help.stat.${key}`)} +${statValue}`;
+  }
+
+  private formatMapMechanicsSummary(map: MapRecord | undefined): string {
+    const mechanics = map?.mechanics ?? [];
+    if (mechanics.length === 0) {
+      return I18n.t('help.map.noMechanics');
+    }
+
+    const counts = this.countMechanicTypes(mechanics);
+    return MECHANIC_TYPE_ORDER
+      .map((type) => {
+        const count = counts[type] ?? 0;
+        if (!count) {
+          return undefined;
+        }
+
+    const key = MECHANIC_LABEL_KEYS[type] ?? MECHANIC_LABEL_KEYS.unknown;
+        return `${count}x ${I18n.t(key)}`;
+      })
+      .filter((part): part is string => Boolean(part))
+      .join(' / ');
+  }
+
+  private formatMapMechanicRows(map: MapRecord | undefined): HelpLine[] {
+    const mechanics = map?.mechanics ?? [];
+    const grouped = this.groupMechanicsByType(mechanics);
+
+    return MECHANIC_TYPE_ORDER
+      .flatMap((type) => {
+        const items = grouped[type] ?? [];
+        if (items.length === 0) {
+          return [];
+        }
+
+        const count = items.length;
+        const mechanicText = this.formatMechanicTypeDescription(type, count, items);
+        return [
+          this.iconRow(mechanicText, this.mapMechanicIcon(type, I18n.t(MECHANIC_LABEL_KEYS[type] ?? MECHANIC_LABEL_KEYS.unknown))),
+        ];
+      });
+  }
+
+  private formatMechanicTypeDescription(type: string, count: number, items: MapMechanicRecord[]): string {
+    const mechanicLabel = MECHANIC_LABEL_KEYS[type] ?? MECHANIC_LABEL_KEYS.unknown;
+    const key = `help.map.mechanic.${type}.description`;
+    const fallback = `${count} ${I18n.t('help.map.mechanic.item')} ${I18n.t(mechanicLabel)}`;
+
+    const translated = I18n.t(key, {
+      count,
+      mechanic: I18n.t(mechanicLabel),
+    });
+
+    if (translated !== key) {
+      return translated;
+    }
+
+    const visualType = this.formatVisualTypes(items);
+
+    return `${count} ${I18n.t(mechanicLabel)} ${visualType}`;
+  }
+
+  private formatVisualTypes(items: MapMechanicRecord[]): string {
+    const types = new Set(items.map((item) => item?.type));
+
+    if (types.size === 0) {
+      return '';
+    }
+
+    return `[${Array.from(types).map((type) => {
+      const key = MECHANIC_LABEL_KEYS[type ?? ''] ?? MECHANIC_LABEL_KEYS.unknown;
+      return I18n.t(key);
+    }).join('/')}]`;
+  }
+
+  private tendlessMapHelp(mapId: string | undefined): string {
+    if (!mapId) {
+      return I18n.t('help.maps.endlessUnknown');
+    }
+
+    const key = `help.maps.endless.${mapId}`;
+    const translated = I18n.t(key);
+    return translated === key ? I18n.t('help.maps.endlessUnknown') : translated;
+  }
+
+  private groupMechanicsByType(mechanics: MapMechanicRecord[]): Record<string, MapMechanicRecord[]> {
+    const grouped: Record<string, MapMechanicRecord[]> = {};
+
+    for (const mechanic of mechanics) {
+      const key = mechanic.type ?? 'unknown';
+      grouped[key] = grouped[key] ?? [];
+      grouped[key].push(mechanic);
+    }
+
+    return grouped;
+  }
+
+  private countMechanicTypes(mechanics: MapMechanicRecord[]): Record<string, number> {
+    return mechanics.reduce<Record<string, number>>((record, mechanic) => {
       const type = mechanic.type ?? 'unknown';
       record[type] = (record[type] ?? 0) + 1;
       return record;
     }, {});
-    const parts = Object.entries(counts).map(([type, count]) => {
-      switch (type) {
-        case 'obstacle':
-          return `${count} obstacle groups block movement`;
-        case 'slowZone':
-          return `${count} slow zone reduces movement speed`;
-        case 'portal':
-          return `${count} portals teleport the player`;
-        case 'lightSource':
-          return `${count} light sources are visual landmarks`;
-        default:
-          return `${count} ${HelpFormatter.labelFromId(type)} mechanics`;
-      }
+  }
+
+  private formatEvolutionRequirement(rule: {
+    requiredWeaponUpgradeTotal: number;
+    requiredPassiveId: string;
+    requiredPassiveLevel: number;
+  }): string {
+    return I18n.t('help.evolution.requirement', {
+      weaponUpgrades: rule.requiredWeaponUpgradeTotal,
+      passive: I18n.t('ui.passive'),
+      passiveLevel: rule.requiredPassiveLevel,
     });
-
-    return parts.join('; ');
   }
 
-  private paragraph(text: string): HelpLine {
-    return { type: 'paragraph', text };
+  private getPassiveMaxLevel(_passiveId: string): number {
+    return 5;
   }
 
-  private bullet(text: string): HelpLine {
-    return { type: 'bullet', text };
-  }
-
-  private iconRow(text: string, iconKey?: string, fallback?: string): HelpLine {
-    return { type: 'iconRow', text, iconKey, fallback };
-  }
-
-  private stat(label: string, value: string): HelpLine {
-    return { type: 'statRow', label, value };
+  private formatIdName(id: string): string {
+    return id
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
   }
 
   private divider(): HelpLine {

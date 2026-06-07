@@ -59,6 +59,7 @@ import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { HUDStateBuilder } from '../ui/HUDStateBuilder';
 import { PauseMenuStatsData } from '../ui/PauseMenu';
+import { I18n } from '../i18n/I18n';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { WorldRenderer } from '../world/WorldRenderer';
 
@@ -299,7 +300,7 @@ export class GameScene extends Phaser.Scene {
           });
           AudioManager.playSfx(this, 'boss_spawn');
           AudioManager.playBgm(this, 'boss_bgm');
-          this.showCenterMessage('Boss Appears!', { kind: 'boss', durationMs: 2200 });
+          this.showCenterMessage(I18n.t('game.bossAppears'), { kind: 'boss', durationMs: 2200 });
         },
         onCenterMessage: (message, options) => this.showCenterMessage(message, options),
       },
@@ -385,7 +386,7 @@ export class GameScene extends Phaser.Scene {
           runId: this.runId,
         });
         this.currentLevelUpOptions = [];
-        uiScene.events.emit('ShowTemporaryMessage', 'No upgrades available');
+        uiScene.events.emit('ShowTemporaryMessage', I18n.t('levelUp.noUpgrades'));
         return;
       }
 
@@ -756,7 +757,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.updatePlayerPickupRangeFromStats();
-    this.showCenterMessage(`Relic Acquired: ${relic.name ?? relic.nameKey ?? relic.id}`);
+    this.showCenterMessage(
+      I18n.t('result.relicAcquired', { name: relic.name ?? relic.nameKey ?? relic.id }),
+    );
     this.emitHUDState();
   }
 
@@ -1184,7 +1187,7 @@ export class GameScene extends Phaser.Scene {
     const text = this.add.text(
       this.scale.width / 2,
       this.scale.height / 2,
-      'Rotate your device for better play',
+      I18n.t('game.rotateForBetterPlay'),
       {
         color: '#f8fafc',
         fontFamily: 'Arial, Helvetica, sans-serif',

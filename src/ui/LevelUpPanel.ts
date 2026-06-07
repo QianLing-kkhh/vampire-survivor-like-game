@@ -97,7 +97,7 @@ export class LevelUpPanel {
     this.container.add(header);
 
     if (this.options.length === 0) {
-      const emptyText = scene.add.text(0, 8, 'No upgrades available', {
+      const emptyText = scene.add.text(0, 8, I18n.t('levelUp.emptyMessage'), {
         color: UITheme.textColor,
         fontFamily: UITheme.fontFamily,
         fontSize: layout.fontSize,
@@ -164,7 +164,8 @@ export class LevelUpPanel {
     const previewY = option.displayInfo
       ? this.addIconSummary(scene, x, iconStartY, layout.cardWidth, visibleRows) + 8
       : y - layout.cardHeight / 2 + 84;
-    const statRowsTop = y + layout.cardHeight / 2 - (this.screenManager.isPortrait() ? 34 : 44);
+    const deltaRowCount = Math.min(visibleRows.length, this.screenManager.isPortrait() ? 1 : 2);
+    const statRowsTop = y + layout.cardHeight / 2 - 20 - Math.max(0, deltaRowCount - 1) * 30;
     const descriptionHeight = statRowsTop - previewY - 6;
     const description = scene.add.text(x - layout.cardWidth / 2 + 18, previewY, option.preview ?? option.description, {
       color: UITheme.mutedTextColor,
@@ -174,7 +175,7 @@ export class LevelUpPanel {
       lineSpacing: this.screenManager.isPortrait() ? 2 : 4,
       wordWrap: { width: layout.cardWidth - 36 },
     });
-    description.setMaxLines(Math.max(1, Math.floor(descriptionHeight / (this.screenManager.isPortrait() ? 14 : 17))));
+    description.setMaxLines(Math.max(1, Math.floor(Math.max(16, descriptionHeight) / (this.screenManager.isPortrait() ? 14 : 17))));
     this.addDeltaRows(scene, x, statRowsTop, layout.cardWidth, visibleRows);
     this.container.add([label, description]);
   }
@@ -252,10 +253,10 @@ export class LevelUpPanel {
       .trim();
 
     if (/^add_/i.test(option.id)) {
-      return 'New Weapon';
+      return I18n.t('levelUp.newWeapon');
     }
 
-    return label || 'Upgrade';
+    return label || I18n.t('levelUp.upgrade');
   }
 
   private getOptionKind(option: UpgradeOptionView): string {
@@ -299,18 +300,80 @@ export class LevelUpPanel {
     const rowWidth = cardWidth - 30;
 
     visible.forEach((row, index) => {
-      const clean = row.text.replace(/\s+/g, ' ').trim();
-      const match = /^(.+?)\s+(Lv\.\d+\s*\/\s*\d+|[+\-→].*)$/.exec(clean);
+      const parsed = this.parseDeltaRow(row.text);
       const statRow = UIStatRow.create(
         scene,
         centerX,
-        y + index * 28,
+        y + index * 30,
         rowWidth,
-        match?.[1] ?? I18n.t('ui.stat'),
-        match?.[2] ?? clean,
+        parsed.label,
+        parsed.value,
       );
       this.container.add(statRow);
     });
+  }
+
+  private parseDeltaRow(text: string): { label: string; value: string } {
+    const clean = text.replace(/\s+/g, ' ').trim();
+    if (/no matching weapon owned/i.test(clean)) {
+      return { label: I18n.t('ui.weapon'), value: '-' };
+    }
+
+    const levelMatch = /(Lv\.\d+\s*\/\s*\d+)/.exec(clean);
+    if (levelMatch) {
+      return {
+        label: this.getDeltaLabel(clean),
+        value: levelMatch[1].replace(/\s+/g, ''),
+      };
+    }
+
+    const arrowMatch = /^(.+?)\s*(?:->|→)\s*(.+)$/.exec(clean);
+    if (arrowMatch) {
+      return {
+        label: this.compactDeltaLabel(arrowMatch[1]),
+        value: arrowMatch[2],
+      };
+    }
+
+    const signMatch = /^(.+?)\s+([+\-].+)$/.exec(clean);
+    if (signMatch) {
+      return {
+        label: this.compactDeltaLabel(signMatch[1]),
+        value: signMatch[2],
+      };
+    }
+
+    return {
+      label: I18n.t('ui.stat'),
+      value: this.compactDeltaValue(clean),
+    };
+  }
+
+  private getDeltaLabel(text: string): string {
+    if (/\b(Knife|Axe|Magic Wand|Garlic|Bible|Thousand Edge|Holy Wand|Death Spiral|Unholy Vespers|Soul Eater)\b/i.test(text)) {
+      return I18n.t('ui.weapon');
+    }
+
+    if (/\b(Spinach|Empty Tome|Bracer|Clover|Pummarola)\b/i.test(text)) {
+      return I18n.t('ui.passive');
+    }
+
+    return I18n.t('ui.stat');
+  }
+
+  private compactDeltaLabel(value: string): string {
+    return value
+      .replace(/\b(Knife|Axe|Magic Wand|Garlic|Bible|Thousand Edge|Holy Wand|Death Spiral|Unholy Vespers|Soul Eater|Spinach|Empty Tome|Bracer|Clover|Pummarola)\b/gi, '')
+      .replace(/[:：]/g, '')
+      .trim()
+      || I18n.t('ui.stat');
+  }
+
+  private compactDeltaValue(value: string): string {
+    return value
+      .replace(/\b(Knife|Axe|Magic Wand|Garlic|Bible|Thousand Edge|Holy Wand|Death Spiral|Unholy Vespers|Soul Eater|Spinach|Empty Tome|Bracer|Clover|Pummarola)\b/gi, '')
+      .trim()
+      || '-';
   }
 
   private escapeRegExp(value: string): string {

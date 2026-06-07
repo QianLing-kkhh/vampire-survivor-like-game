@@ -124,7 +124,7 @@ export class ResultScene extends Phaser.Scene {
     const playtestCsv = data.playtestCsv ?? '';
 
     const resultTitle = isEndlessResult
-      ? 'Endless Victory'
+      ? I18n.t('result.endlessVictory')
       : isVictory ? I18n.t('result.victory') : I18n.t('result.gameOver');
     const title = this.add.text(centerX, layout.headerY, resultTitle, {
       color: isVictory ? UITheme.successTextColor : UITheme.dangerTextColor,
@@ -223,7 +223,7 @@ export class ResultScene extends Phaser.Scene {
       this.downloadAllCsv();
     });
 
-    const settingsButton = this.add.text(centerX, 0, this.t('result.settings', 'Settings'), {
+    const settingsButton = this.add.text(centerX, 0, I18n.t('result.settings'), {
       backgroundColor: toCssColor(UITheme.buttonBgColor),
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -313,7 +313,7 @@ export class ResultScene extends Phaser.Scene {
       return items.join(', ');
     }
 
-    return `${items.slice(0, maxItems).join(', ')} +${items.length - maxItems} more`;
+    return `${items.slice(0, maxItems).join(', ')} ${I18n.t('result.more', { count: items.length - maxItems })}`;
   }
 
   private getSummaryLines(params: {
@@ -331,7 +331,7 @@ export class ResultScene extends Phaser.Scene {
       `${I18n.t('result.result')}: ${params.resultTitle}`,
       `${I18n.t('result.survivalTime')}: ${this.formatTime(params.survivalTimeSeconds)}`,
       ...(params.isEndlessResult ? [
-        `Endless Survival Time: ${this.formatTime(params.data.endlessSurvivalTime ?? 0)}`,
+        `${I18n.t('result.endlessSurvivalTime')}: ${this.formatTime(params.data.endlessSurvivalTime ?? 0)}`,
       ] : []),
       this.formatMetadataLine(params.data),
       `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
@@ -339,14 +339,14 @@ export class ResultScene extends Phaser.Scene {
       `${I18n.t('result.score')}: ${params.data.score ?? 0}`,
       `${I18n.t('result.weapons')}: ${params.weaponText}`,
       `${I18n.t('result.passives')}: ${params.passiveText}`,
-      `Relics: ${params.relicText}`,
+      `${I18n.t('result.relics')}: ${params.relicText}`,
       `${I18n.t('result.evolutionPath')}: ${params.evolutionPathText}`,
       `${I18n.t('result.treasureOpens')}: ${params.data.treasureOpenCount ?? 0}`,
       `${I18n.t('result.chestUpgrades')}: ${params.data.chestUpgradeCount ?? 0}`,
       `${I18n.t('result.chestEvolutions')}: ${params.data.chestEvolutionCount ?? 0}`,
       `${I18n.t('result.bossDashes')}: ${params.data.bossDashCount ?? 0} / ${I18n.t('result.bossDashHits')}: ${params.data.bossDashHitCount ?? 0}`,
       ...(params.isEndlessResult ? [
-        `Endless Bosses: ${params.data.endlessBossKillCount ?? 0}/${params.data.endlessBossSpawnCount ?? 0} killed, skills ${params.data.endlessBossSkillHitCount ?? 0}/${params.data.endlessBossSkillUseCount ?? 0}`,
+        `${I18n.t('result.endlessBosses')}: ${params.data.endlessBossKillCount ?? 0}/${params.data.endlessBossSpawnCount ?? 0} ${I18n.t('result.killed')}, ${I18n.t('result.skills')}: ${params.data.endlessBossSkillHitCount ?? 0}/${params.data.endlessBossSkillUseCount ?? 0}`,
       ] : []),
     ];
 
@@ -356,7 +356,7 @@ export class ResultScene extends Phaser.Scene {
 
     return [
       ...lines.slice(0, Math.max(1, params.maxRows - 1)),
-      `+${lines.length - params.maxRows + 1} more`,
+      I18n.t('result.more', { count: lines.length - params.maxRows + 1 }),
     ];
   }
 
@@ -366,12 +366,12 @@ export class ResultScene extends Phaser.Scene {
     const seed = data.seed ?? data.runSeed ?? '';
     const shortSeed = seed.length > 14 ? `${seed.slice(0, 14)}...` : seed;
 
-    return `Stage: ${stage}  Character: ${character}${shortSeed ? `  Seed: ${shortSeed}` : ''}`;
+    return `${I18n.t('result.stage')}: ${stage}  ${I18n.t('result.character')}: ${character}${shortSeed ? `  ${I18n.t('result.seed')}: ${shortSeed}` : ''}`;
   }
 
   private formatLeaderboardLines(entries: EndlessLeaderboardEntry[], maxRows: number): string[] {
     if (entries.length === 0) {
-      return ['Endless Leaderboard: None'];
+      return [I18n.t('result.endlessLeaderboard', { state: I18n.t('result.none') })];
     }
 
     const visibleCount = Math.max(0, maxRows);
@@ -379,11 +379,16 @@ export class ResultScene extends Phaser.Scene {
     const hiddenCount = Math.max(0, entries.length - visibleEntries.length);
 
     return [
-      'Endless Leaderboard Top 10',
+      I18n.t('result.endlessLeaderboardTop', { count: maxRows }),
       ...visibleEntries.map((entry, index) => (
-        `#${index + 1} ${this.formatTime(entry.endlessSurvivalTime)}  Lv.${entry.finalLevel}  Kills ${entry.killCount}`
+        I18n.t('result.leaderboardEntry', {
+          rank: index + 1,
+          time: this.formatTime(entry.endlessSurvivalTime),
+          level: entry.finalLevel,
+          kills: entry.killCount,
+        })
       )),
-      ...(hiddenCount > 0 ? [`+${hiddenCount} more`] : []),
+      ...(hiddenCount > 0 ? [I18n.t('result.more', { count: hiddenCount })] : []),
     ];
   }
 
@@ -622,9 +627,4 @@ export class ResultScene extends Phaser.Scene {
     this.screenManager = undefined;
   }
 
-  private t(key: string, fallback: string): string {
-    const value = I18n.t(key);
-
-    return value === key ? fallback : value;
-  }
 }

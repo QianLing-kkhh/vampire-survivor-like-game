@@ -6,7 +6,7 @@ import {
   RunPreloadContext,
   buildRunLoadPlan,
   getAnimationKeys,
-  normalizeSkinId,
+  resolvePlayerSkinId,
 } from '../assets/AssetManifest';
 import { AssetLoadPlan } from '../assets/AssetLoadPlan';
 import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
@@ -39,6 +39,16 @@ export class RunPreloadScene extends Phaser.Scene {
     ExternalArtRegistry.loadManifest(this);
     this.context = this.resolveRunPreloadContext();
     this.plan = buildRunLoadPlan(this.context);
+    if (this.shouldForceRefreshPlayerRuntimeAssets()) {
+      const resolvedSkinId = resolvePlayerSkinId(
+        this.context?.skinId,
+        this.context?.characterId,
+      );
+
+      this.clearPlayerRuntimeAssets(
+        resolvedSkinId,
+      );
+    }
     queueLoadPlan(this, this.plan);
   }
 
@@ -82,9 +92,45 @@ export class RunPreloadScene extends Phaser.Scene {
         .filter((id): id is string => id !== undefined),
       assetStyle: display.assetStyle,
       displayQuality: display.displayQuality,
-      skinId: selectedCharacter.skinId,
+      skinId: resolvePlayerSkinId(
+        selectedCharacter.skinId,
+        selectedCharacter.id,
+      ),
       endlessMode: playtest.endlessMode,
     };
+  }
+
+  private shouldForceRefreshPlayerRuntimeAssets(): boolean {
+    return this.context?.assetStyle === 'art001';
+  }
+
+  private clearPlayerRuntimeAssets(skinId: string): void {
+    const keys = [
+      'art_player_player_walk_sheet',
+      'art_player_walk',
+      'art_player_idle',
+      `art_player_${skinId}_walk_sheet`,
+      `art_player_${skinId}_walk`,
+      `art_player_${skinId}_idle`,
+      `art_player_${skinId}_portrait`,
+      `art_player_${skinId}_hit_fx`,
+      ...PLAYER_ART_DIRECTIONS.flatMap((direction) => [
+        `art_player_walk_${direction}`,
+        `art_player_idle_${direction}`,
+        `art_player_${skinId}_walk_${direction}`,
+        `art_player_${skinId}_idle_${direction}`,
+      ]),
+    ];
+
+    for (const key of keys) {
+      if (this.textures.exists(key)) {
+        this.textures.remove(key);
+      }
+
+      if (this.anims.exists(key)) {
+        this.anims.remove(key);
+      }
+    }
   }
 
   private createBuiltInAnimations(): void {
@@ -119,7 +165,10 @@ export class RunPreloadScene extends Phaser.Scene {
       );
     }
 
-    const activeSkinId = normalizeSkinId(this.context?.skinId ?? '');
+    const activeSkinId = resolvePlayerSkinId(
+      this.context?.skinId,
+      this.context?.characterId,
+    );
 
     for (const direction of PLAYER_ART_DIRECTIONS) {
       this.createAnimationAlias(
@@ -187,11 +236,26 @@ export class RunPreloadScene extends Phaser.Scene {
       return;
     }
 
+    if (!this.hasTextureFrames(textureKey, start, end)) {
+      console.warn(`[run-preload] Missing frames for ${textureKey}: ${start}..${end}`);
+      return;
+    }
+
     this.anims.create({
       key: animationKey,
       frames: this.anims.generateFrameNumbers(textureKey, { start, end }),
       frameRate: 8,
       repeat,
     });
+  }
+
+  private hasTextureFrames(textureKey: string, start: number, end: number): boolean {
+    for (let frame = start; frame <= end; frame += 1) {
+      if (!this.textures.getFrame(textureKey, frame)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

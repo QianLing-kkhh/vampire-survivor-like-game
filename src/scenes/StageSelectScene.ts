@@ -29,9 +29,11 @@ export class StageSelectScene extends Phaser.Scene {
         description: stage.id === RANDOM_UNLOCKED_STAGE_ID
           ? I18n.t('stage.random.description')
           : [
-            stage.source === 'custom' ? 'Custom' : 'Built-in',
+            stage.source === 'custom' ? I18n.t('stage.custom') : I18n.t('stage.builtIn'),
             `${I18n.t('selection.map')}: ${stage.mapId}`,
-            stage.warnings && stage.warnings.length > 0 ? `${stage.warnings.length} warnings` : '',
+            stage.warnings && stage.warnings.length > 0
+              ? I18n.t('stage.warningsCount', { count: stage.warnings.length })
+              : '',
           ].filter(Boolean).join(' / '),
       })),
       selectedId: selection.customStageId ?? selection.stageId,

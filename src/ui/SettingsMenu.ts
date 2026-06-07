@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
+import { SupportedLocale, SUPPORTED_LOCALES } from '../i18n/Locale';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SettingsManager } from '../settings/SettingsManager';
@@ -12,17 +13,26 @@ import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type SettingsMenuHandler = () => void;
 type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'input' | 'developer';
-type RowType = 'toggle' | 'cycle' | 'info';
+type RowType = 'toggle' | 'select' | 'slider' | 'info';
+
+type SettingValue = string | number;
+
+interface SettingRowOption<T extends SettingValue = SettingValue> {
+  value: T;
+  label: string;
+}
 
 interface SettingRowDefinition {
   id: string;
   label: string;
   type: RowType;
   getToggleValue?: () => boolean;
-  getDisplayValue?: () => string;
+  getValue?: () => SettingValue;
+  formatValue?: (value: SettingValue) => string;
+  setValue?: (value: SettingValue) => void;
   onToggle?: () => void;
-  onCycleNext?: () => void;
-  onCyclePrev?: () => void;
+  options?: Array<SettingRowOption>;
+  sliderSteps?: number[];
 }
 
 interface TabButton {
@@ -37,14 +47,21 @@ interface RowControl {
   background: Phaser.GameObjects.Rectangle;
   label: Phaser.GameObjects.Text;
   value?: Phaser.GameObjects.Text;
-  track?: Phaser.GameObjects.Rectangle;
-  knob?: Phaser.GameObjects.Arc;
   leftArrow?: Phaser.GameObjects.Text;
   rightArrow?: Phaser.GameObjects.Text;
+  track?: Phaser.GameObjects.Rectangle;
+  knob?: Phaser.GameObjects.Arc;
   definition: SettingRowDefinition;
+  sliderTrackLeft?: number;
+  sliderTrackRight?: number;
 }
 
-const SETTINGS_TABS: SettingsTabId[] = ['gameplay', 'audio', 'display', 'input', 'developer'];
+interface OpenDropdown {
+  rowControl: RowControl;
+  overlay: Phaser.GameObjects.Container;
+}
+
+const SETTINGS_TABS: SettingsTabId[] = ['display', 'audio', 'gameplay', 'input', 'developer'];
 
 export class SettingsMenu {
   private readonly screenManager: ScreenManager;
@@ -65,9 +82,11 @@ export class SettingsMenu {
     input: 0,
     developer: 0,
   };
-  private selectedTab: SettingsTabId = 'gameplay';
+  private selectedTab: SettingsTabId = 'display';
   private uiStyleReopenNotice = false;
   private unsubscribeResize?: () => void;
+  private openDropdown?: OpenDropdown;
+  private activeDraggedSlider?: RowControl;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -124,6 +143,7 @@ export class SettingsMenu {
     this.renderRows();
     this.applyLayout();
     this.unsubscribeResize = this.screenManager.onResize(() => {
+      this.closeDropdown();
       this.applyLayout();
     });
   }
@@ -131,6 +151,7 @@ export class SettingsMenu {
   destroy(): void {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
+    this.closeDropdown();
     this.clearRows();
     this.screenManager.dispose();
     this.container.destroy(true);
@@ -152,6 +173,7 @@ export class SettingsMenu {
       tab.add([background, label]);
       background.on('pointerdown', () => {
         AudioManager.playUi(this.scene, 'ui_click');
+        this.closeDropdown();
         this.selectedTab = tabId;
         this.pageByTab[tabId] = 0;
         this.renderRows();
@@ -163,6 +185,7 @@ export class SettingsMenu {
   }
 
   private renderRows(): void {
+    this.closeDropdown();
     this.clearRows();
     this.title.setText(this.t('settings.title', 'Settings'));
 
@@ -185,7 +208,9 @@ export class SettingsMenu {
     const row = this.scene.add.container(0, 0);
     const background = this.scene.add.rectangle(0, 0, 460, 42, UITheme.iconBgColor, 0.58);
     background.setStrokeStyle(1, UITheme.panelBorderColor, 0.28);
-    background.setInteractive({ useHandCursor: true });
+    if (definition.type !== 'info') {
+      background.setInteractive({ useHandCursor: true });
+    }
     const label = this.scene.add.text(0, 0, definition.label, {
       color: definition.type === 'info' ? UITheme.successTextColor : UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -207,9 +232,14 @@ export class SettingsMenu {
       return control;
     }
 
-    if (definition.type === 'cycle') {
-      this.addCycleControl(row, control);
-      background.on('pointerdown', () => this.activateCycleNext(definition));
+    if (definition.type === 'select') {
+      this.addSelectControl(row, control);
+      background.on('pointerdown', () => this.openSelect(control));
+      return control;
+    }
+
+    if (definition.type === 'slider') {
+      this.addSliderControl(row, control);
       return control;
     }
 
@@ -231,54 +261,173 @@ export class SettingsMenu {
     control.knob = knob;
   }
 
-  private addCycleControl(row: Phaser.GameObjects.Container, control: RowControl): void {
-    const leftArrow = this.scene.add.text(0, 0, '<', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.bodyFontSize,
-      fontStyle: 'bold',
-    });
-    const value = this.scene.add.text(0, 0, control.definition.getDisplayValue?.() ?? '', {
+  private addSelectControl(row: Phaser.GameObjects.Container, control: RowControl): void {
+    const valueText = this.scene.add.text(0, 0, this.getDisplayValue(control.definition), {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
       fontSize: UITheme.smallFontSize,
-      align: 'center',
+      align: 'right',
     });
-    const rightArrow = this.scene.add.text(0, 0, '>', {
+    const arrow = this.scene.add.text(0, 0, 'v', {
       color: UITheme.mutedTextColor,
       fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.bodyFontSize,
+      fontSize: UITheme.smallFontSize,
       fontStyle: 'bold',
     });
 
-    for (const arrow of [leftArrow, rightArrow]) {
-      arrow.setOrigin(0.5);
-      arrow.setInteractive({ useHandCursor: true });
+    valueText.setOrigin(1, 0.5);
+    arrow.setOrigin(0, 0.5);
+    valueText.setInteractive({ useHandCursor: true });
+    arrow.setInteractive({ useHandCursor: true });
+    valueText.on('pointerdown', () => this.openSelect(control));
+    arrow.on('pointerdown', () => this.openSelect(control));
+    row.add([valueText, arrow]);
+    control.value = valueText;
+    control.rightArrow = arrow;
+  }
+
+  private addSliderControl(row: Phaser.GameObjects.Container, control: RowControl): void {
+    const track = this.scene.add.rectangle(0, 0, 160, 12, UITheme.panelBorderColor, 0.42);
+    const knob = this.scene.add.circle(0, 0, 10, UITheme.toggleKnobColor, 1);
+    const valueText = this.scene.add.text(0, 0, this.getDisplayValue(control.definition), {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: UITheme.smallFontSize,
+      align: 'right',
+    });
+
+    track.setStrokeStyle(1, UITheme.panelBorderColor, 0.6);
+    track.setInteractive({ useHandCursor: true });
+    knob.setInteractive({ draggable: true, useHandCursor: true });
+    track.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.setSliderFromWorldX(control, pointer.x, true);
+    });
+    knob.on('dragstart', () => {
+      this.activeDraggedSlider = control;
+    });
+    knob.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number) => {
+      this.setSliderFromWorldX(control, dragX, false);
+    });
+    knob.on('dragend', (_pointer: Phaser.Input.Pointer, dragX: number) => {
+      if (this.activeDraggedSlider === control) {
+        this.setSliderFromWorldX(control, dragX, true);
+      }
+
+      this.activeDraggedSlider = undefined;
+    });
+    row.add([valueText, track, knob]);
+    control.value = valueText;
+    control.track = track;
+    control.knob = knob;
+  }
+
+  private openSelect(control: RowControl): void {
+    if (this.openDropdown?.rowControl === control) {
+      this.closeDropdown();
+      return;
     }
 
-    value.setOrigin(0.5);
-    value.setInteractive({ useHandCursor: true });
-    leftArrow.on('pointerdown', () => this.activateCyclePrev(control.definition));
-    value.on('pointerdown', () => this.activateCycleNext(control.definition));
-    rightArrow.on('pointerdown', () => this.activateCycleNext(control.definition));
-    row.add([leftArrow, value, rightArrow]);
-    control.leftArrow = leftArrow;
-    control.value = value;
-    control.rightArrow = rightArrow;
+    const options = control.definition.options ?? [];
+    if (options.length === 0) {
+      return;
+    }
+
+    this.closeDropdown();
+    const layer = this.scene.add.container(0, 0);
+    layer.setDepth(this.container.depth + 10);
+    layer.setScrollFactor(0);
+
+    const panelWidth = Math.min(220, Math.max(130, control.background.displayWidth * 0.62));
+    const panelHeight = options.length * 34 + 8;
+    const rowWidth = control.background.displayWidth;
+    const rowWorld = this.getRowWorldPosition(control);
+    const rowWorldLeft = rowWorld.x - rowWidth / 2;
+    const rowTop = rowWorld.y - control.background.height / 2;
+    const rowBottom = rowWorld.y + control.background.height / 2;
+    const preferredY = rowBottom + 2;
+    const belowFits = preferredY + panelHeight <= this.screenManager.height - 10;
+    const dropdownY = belowFits ? preferredY : rowTop - panelHeight - 2;
+    const dropdownLeft = Phaser.Math.Clamp(rowWorldLeft, 12, this.screenManager.width - panelWidth - 12);
+
+    const overlayBg = this.scene.add.rectangle(0, 0, this.screenManager.width, this.screenManager.height, 0x000000, 0);
+    overlayBg.setOrigin(0, 0);
+    overlayBg.setScrollFactor(0);
+    overlayBg.setInteractive({ useHandCursor: true });
+    overlayBg.on('pointerdown', () => this.closeDropdown());
+    layer.add(overlayBg);
+
+    const panel = this.scene.add.rectangle(
+      dropdownLeft + panelWidth / 2,
+      dropdownY + panelHeight / 2,
+      panelWidth,
+      panelHeight,
+      UITheme.panelBgColor,
+      0.98,
+    );
+    panel.setStrokeStyle(1, UITheme.panelBorderColor, 0.9);
+    panel.setScrollFactor(0);
+    layer.add(panel);
+
+    const divider = this.scene.add.rectangle(
+      dropdownLeft + panelWidth / 2,
+      dropdownY + 6,
+      panelWidth - 16,
+      1,
+      UITheme.panelBorderColor,
+      0.4,
+    );
+    divider.setOrigin(0.5, 0.5);
+    divider.setScrollFactor(0);
+    layer.add(divider);
+
+    const rowValueHeight = 34;
+    const optionLeft = dropdownLeft + 12;
+
+    options.forEach((option, index) => {
+      const optionY = dropdownY + 12 + index * rowValueHeight + 13;
+      const optionBg = this.scene.add.rectangle(dropdownLeft + panelWidth / 2, optionY, panelWidth - 8, 28, UITheme.iconBgColor, 0.96);
+      optionBg.setStrokeStyle(1, UITheme.panelBorderColor, 0.34);
+      optionBg.setScrollFactor(0);
+      optionBg.setInteractive({ useHandCursor: true });
+      const optionText = this.scene.add.text(optionLeft, optionY, option.label, {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: UITheme.smallFontSize,
+      });
+      optionText.setOrigin(0, 0.5);
+      optionText.setScrollFactor(0);
+      optionText.setInteractive({ useHandCursor: true });
+      if (option.value === control.definition.getValue?.()) {
+        optionText.setColor(UITheme.successTextColor);
+      }
+
+      const selectOption = () => {
+        control.definition.setValue?.(option.value);
+        this.closeDropdown();
+        this.afterSettingChanged();
+      };
+      optionBg.on('pointerdown', selectOption);
+      optionText.on('pointerdown', selectOption);
+      layer.add([optionBg, optionText]);
+    });
+
+    this.openDropdown = {
+      rowControl: control,
+      overlay: layer,
+    };
+  }
+
+  private closeDropdown(): void {
+    if (!this.openDropdown) {
+      return;
+    }
+
+    this.openDropdown.overlay.destroy(true);
+    this.openDropdown = undefined;
   }
 
   private activateToggle(definition: SettingRowDefinition): void {
     definition.onToggle?.();
-    this.afterSettingChanged();
-  }
-
-  private activateCycleNext(definition: SettingRowDefinition): void {
-    definition.onCycleNext?.();
-    this.afterSettingChanged();
-  }
-
-  private activateCyclePrev(definition: SettingRowDefinition): void {
-    definition.onCyclePrev?.();
     this.afterSettingChanged();
   }
 
@@ -345,17 +494,20 @@ export class SettingsMenu {
       row.background.setSize(rowWidth, rowHeight);
       row.label.setPosition(-rowWidth / 2 + 14, rowHeight / 2);
       row.label.setFontSize(row.definition.type === 'info' ? fonts.small : fonts.body);
-      row.label.setWordWrapWidth(rowWidth - (row.definition.type === 'toggle' ? 96 : 178));
-      row.track?.setVisible(row.definition.type === 'toggle');
-      row.knob?.setVisible(row.definition.type === 'toggle');
-      row.value?.setVisible(row.definition.type === 'cycle');
-      row.leftArrow?.setVisible(row.definition.type === 'cycle');
-      row.rightArrow?.setVisible(row.definition.type === 'cycle');
+      row.label.setWordWrapWidth(rowWidth - (row.definition.type === 'toggle' ? 110 : 250));
+
+      row.value?.setVisible(row.definition.type === 'select' || row.definition.type === 'slider');
+      row.leftArrow?.setVisible(false);
+      row.rightArrow?.setVisible(row.definition.type === 'select');
+      row.track?.setVisible(row.definition.type === 'toggle' || row.definition.type === 'slider');
+      row.knob?.setVisible(row.definition.type === 'toggle' || row.definition.type === 'slider');
 
       if (row.definition.type === 'toggle') {
         this.layoutToggleRow(row, rowWidth, rowHeight);
-      } else if (row.definition.type === 'cycle') {
-        this.layoutCycleRow(row, rowWidth, rowHeight);
+      } else if (row.definition.type === 'select') {
+        this.layoutSelectRow(row, rowWidth, rowHeight);
+      } else if (row.definition.type === 'slider') {
+        this.layoutSliderRow(row, rowWidth, rowHeight);
       }
     });
 
@@ -367,6 +519,14 @@ export class SettingsMenu {
     this.closeButton.setFixedSize(metrics.width, metrics.height);
     this.closeButton.setColor(UITheme.textColor);
     this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+  }
+
+  private getRowWorldPosition(row: RowControl): { x: number; y: number } {
+    const matrix = row.container.getWorldTransformMatrix();
+    return {
+      x: matrix.tx,
+      y: matrix.ty,
+    };
   }
 
   private layoutPagingControls(
@@ -454,16 +614,112 @@ export class SettingsMenu {
     row.knob?.setPosition(rowWidth / 2 - 48 + (enabled ? 13 : -13), rowHeight / 2);
   }
 
-  private layoutCycleRow(row: RowControl, rowWidth: number, rowHeight: number): void {
-    row.leftArrow?.setVisible(true);
+  private layoutSelectRow(row: RowControl, rowWidth: number, rowHeight: number): void {
     row.value?.setVisible(true);
     row.rightArrow?.setVisible(true);
-    row.value?.setText(row.definition.getDisplayValue?.() ?? '');
-    row.leftArrow?.setPosition(rowWidth / 2 - 138, rowHeight / 2);
-    row.value?.setPosition(rowWidth / 2 - 78, rowHeight / 2);
+    row.value?.setText(this.getDisplayValue(row.definition));
+    row.value?.setPosition(rowWidth / 2 - 28, rowHeight / 2);
+    row.rightArrow?.setPosition(rowWidth / 2 - 12, rowHeight / 2);
     row.value?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
-    row.value?.setFixedSize(92, rowHeight);
-    row.rightArrow?.setPosition(rowWidth / 2 - 16, rowHeight / 2);
+    row.rightArrow?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
+  }
+
+  private layoutSliderRow(row: RowControl, rowWidth: number, rowHeight: number): void {
+    const valueText = row.value;
+    const steps = row.definition.sliderSteps ?? [];
+    const trackWidth = Math.min(170, Math.max(120, rowWidth - 210));
+    const trackRightLocal = rowWidth / 2 - 16;
+    const trackLeftLocal = trackRightLocal - trackWidth;
+    const trackCenterX = trackLeftLocal + trackWidth / 2;
+
+    row.track?.setSize(trackWidth, 10);
+    row.track?.setPosition(trackCenterX, rowHeight / 2);
+    row.value?.setText(this.getDisplayValue(row.definition));
+    row.value?.setPosition(trackLeftLocal - 8, rowHeight / 2);
+    row.value?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
+    row.value?.setAlign('right');
+    row.value?.setOrigin(1, 0.5);
+
+    const numericValue = this.getNumericRowValue(row.definition);
+    const currentIndex = this.getSliderStepIndex(row.definition, numericValue, steps);
+    const knobX = trackLeftLocal + (currentIndex / Math.max(1, steps.length - 1)) * trackWidth;
+    row.knob?.setPosition(knobX, rowHeight / 2);
+
+    row.sliderTrackLeft = row.container.x + trackLeftLocal;
+    row.sliderTrackRight = row.container.x + trackLeftLocal + trackWidth;
+
+    row.track?.setInteractive({ useHandCursor: true });
+  }
+
+  private setSliderFromWorldX(
+    row: RowControl,
+    worldX: number,
+    commit: boolean,
+  ): void {
+    const steps = row.definition.sliderSteps ?? [];
+    if (steps.length === 0) {
+      return;
+    }
+
+    const minX = row.sliderTrackLeft;
+    const maxX = row.sliderTrackRight;
+    if (minX === undefined || maxX === undefined) {
+      return;
+    }
+
+    const clampedX = Phaser.Math.Clamp(worldX, minX, maxX);
+    const trackWidth = Math.max(1, maxX - minX);
+    const normalized = (clampedX - minX) / trackWidth;
+    const raw = normalized * (steps.length - 1);
+    const nearest = Phaser.Math.Clamp(Math.round(raw), 0, steps.length - 1);
+    const value = steps[nearest]!;
+    const knobX = minX + ((nearest / (steps.length - 1)) * trackWidth);
+    if (row.knob) {
+      row.knob.setX(knobX - row.container.x);
+    }
+
+    if (row.value) {
+      row.value.setText(this.getDisplayValue(row.definition, value));
+    }
+
+    if (!commit) {
+      return;
+    }
+
+    const current = row.definition.getValue?.();
+    if (current !== undefined && current === value) {
+      return;
+    }
+
+    row.definition.setValue?.(value);
+    this.afterSettingChanged();
+  }
+
+  private getDisplayValue(definition: SettingRowDefinition, value: SettingValue | undefined = definition.getValue?.()): string {
+    if (!definition.getValue && value === undefined) {
+      return '';
+    }
+
+    const current = value as SettingValue;
+    if (definition.formatValue) {
+      return definition.formatValue(current);
+    }
+
+    if (typeof current === 'number' && Number.isFinite(current)) {
+      return current.toString();
+    }
+
+    return String(current);
+  }
+
+  private getNumericRowValue(definition: SettingRowDefinition): number {
+    const value = definition.getValue?.();
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    return 0;
   }
 
   private getTabColumns(panelWidth: number, tabWidth: number, gap: number): number {
@@ -592,10 +848,18 @@ export class SettingsMenu {
       this.toggleRow('audioEnabled', this.t('settings.audio', 'Audio'), audio.audioEnabled, () => {
         AudioManager.setAudioEnabled(!AudioManager.isAudioEnabled());
       }),
-      this.volumeRow('bgmVolume', this.t('settings.bgmVolume', 'BGM Volume'), 'bgm'),
-      this.volumeRow('sfxVolume', this.t('settings.sfxVolume', 'SFX Volume'), 'sfx'),
-      this.volumeRow('weaponVolume', this.t('settings.weaponVolume', 'Weapon Volume'), 'weapon'),
-      this.volumeRow('uiVolume', this.t('settings.uiVolume', 'UI Volume'), 'ui'),
+      this.sliderRow('bgmVolume', this.t('settings.bgmVolume', 'BGM Volume'), () => AudioManager.getChannelVolume('bgm'), [0, 0.25, 0.5, 0.75, 1], (value) => {
+        AudioManager.setChannelVolume('bgm', value as number);
+      }),
+      this.sliderRow('sfxVolume', this.t('settings.sfxVolume', 'SFX Volume'), () => AudioManager.getChannelVolume('sfx'), [0, 0.25, 0.5, 0.75, 1], (value) => {
+        AudioManager.setChannelVolume('sfx', value as number);
+      }),
+      this.sliderRow('weaponVolume', this.t('settings.weaponVolume', 'Weapon Volume'), () => AudioManager.getChannelVolume('weapon'), [0, 0.25, 0.5, 0.75, 1], (value) => {
+        AudioManager.setChannelVolume('weapon', value as number);
+      }),
+      this.sliderRow('uiVolume', this.t('settings.uiVolume', 'UI Volume'), () => AudioManager.getChannelVolume('ui'), [0, 0.25, 0.5, 0.75, 1], (value) => {
+        AudioManager.setChannelVolume('ui', value as number);
+      }),
     ];
   }
 
@@ -603,59 +867,90 @@ export class SettingsMenu {
     const display = SettingsManager.getDisplay();
     const rows: SettingRowDefinition[] = [
       {
+        id: 'language',
+        label: this.t('settings.language', I18n.getLocaleDisplayName()),
+        type: 'select',
+        getValue: () => I18n.getLocale(),
+        setValue: (value) => {
+          I18n.setLocale(value as SupportedLocale);
+        },
+        options: SUPPORTED_LOCALES.map((locale) => ({
+          value: locale,
+          label: I18n.getLocaleDisplayName(locale),
+        })),
+        formatValue: (value) => I18n.getLocaleDisplayName(value as SupportedLocale),
+      },
+      {
         id: 'graphicsQuality',
         label: this.t('settings.graphicsQuality', 'Graphics Quality'),
-        type: 'cycle',
-        getDisplayValue: () => this.formatDisplayQuality(SettingsManager.getDisplay().displayQuality),
-        onCycleNext: () => this.cycleDisplayQuality(SettingsManager.getDisplay().displayQuality, 1),
-        onCyclePrev: () => this.cycleDisplayQuality(SettingsManager.getDisplay().displayQuality, -1),
+        type: 'select',
+        getValue: () => SettingsManager.getDisplay().displayQuality,
+        setValue: (value) => {
+          SettingsManager.updateDisplay({
+            displayQuality: value as DisplayQuality,
+          });
+        },
+        options: DISPLAY_QUALITIES.map((value) => ({
+          value,
+          label: this.formatDisplayQuality(value),
+        })),
       },
       {
         id: 'assetStyle',
         label: this.t('settings.assetStyle', 'Asset Style'),
-        type: 'cycle',
-        getDisplayValue: () => this.formatAssetStyle(SettingsManager.getDisplay().assetStyle),
-        onCycleNext: () => this.cycleAssetStyle(SettingsManager.getDisplay().assetStyle, 1),
-        onCyclePrev: () => this.cycleAssetStyle(SettingsManager.getDisplay().assetStyle, -1),
+        type: 'select',
+        getValue: () => SettingsManager.getDisplay().assetStyle,
+        setValue: (value) => {
+          SettingsManager.updateDisplay({
+            assetStyle: value as AssetStyle,
+          });
+        },
+        options: ASSET_STYLES.map((value) => ({
+          value,
+          label: this.formatAssetStyle(value),
+        })),
       },
       {
         id: 'uiStyle',
         label: this.t('settings.uiStyle', 'UI Style'),
-        type: 'cycle',
-        getDisplayValue: () => this.formatUIStyle(SettingsManager.getDisplay().uiStyle),
-        onCycleNext: () => this.cycleUIStyle(SettingsManager.getDisplay().uiStyle, 1),
-        onCyclePrev: () => this.cycleUIStyle(SettingsManager.getDisplay().uiStyle, -1),
+        type: 'select',
+        getValue: () => SettingsManager.getDisplay().uiStyle,
+        setValue: (value) => {
+          this.uiStyleReopenNotice = true;
+          SettingsManager.updateDisplay({
+            uiStyle: value as UIStyle,
+          });
+        },
+        options: UIThemeRegistry.listStyles().map((value) => ({
+          value,
+          label: this.t(`settings.uiStyle.${value}`, value),
+        })),
       },
-      this.numberCycleRow(
-        'modelScale',
-        this.t('settings.modelScale', 'Model Scale'),
-        () => SettingsManager.getDisplay().visualModelScale,
-        [1, 1.5, 2],
-        (value) => SettingsManager.updateDisplay({
-          visualModelScale: value === 1.5 || value === 2 ? value : 1,
-        }),
-        (value) => `${value}x`,
-      ),
-      this.toggleRow('shadows', this.t('settings.shadows', 'Shadows'), display.shadowsEnabled, () => {
-        SettingsManager.updateDisplay({ shadowsEnabled: !SettingsManager.getDisplay().shadowsEnabled });
+      {
+        id: 'modelScale',
+        label: this.t('settings.modelScale', 'Model Scale'),
+        type: 'slider',
+        getValue: () => SettingsManager.getDisplay().visualModelScale,
+        setValue: (value) => {
+          SettingsManager.updateDisplay({
+            visualModelScale: value as 1 | 1.5 | 2,
+          });
+        },
+        sliderSteps: [1, 1.5, 2],
+        formatValue: (value) => `${value}x`,
+      },
+      this.toggleRow('minimap', this.t('settings.minimap', 'Minimap'), display.showMinimap, () => {
+        SettingsManager.updateDisplay({ showMinimap: !SettingsManager.getDisplay().showMinimap });
       }),
       this.toggleRow('damageNumbers', this.t('settings.damageNumbers', 'Damage Numbers'), display.showDamageNumbers, () => {
         SettingsManager.updateDisplay({ showDamageNumbers: !SettingsManager.getDisplay().showDamageNumbers });
       }),
-      this.toggleRow('minimap', this.t('settings.minimap', 'Minimap'), display.showMinimap, () => {
-        SettingsManager.updateDisplay({ showMinimap: !SettingsManager.getDisplay().showMinimap });
+      this.toggleRow('shadows', this.t('settings.shadows', 'Shadows'), display.shadowsEnabled, () => {
+        SettingsManager.updateDisplay({ shadowsEnabled: !SettingsManager.getDisplay().shadowsEnabled });
       }),
       this.toggleRow('debugOverlay', this.t('settings.debugOverlay', 'Debug Overlay'), display.showDebugOverlay, () => {
         SettingsManager.updateDisplay({ showDebugOverlay: !SettingsManager.getDisplay().showDebugOverlay });
       }),
-      {
-        id: 'language',
-        label: this.t('settings.language', I18n.t('common.language')),
-        type: 'cycle',
-        getDisplayValue: () => I18n.getLocaleDisplayName(),
-        onCycleNext: () => I18n.cycleLocale(),
-        onCyclePrev: () => I18n.cycleLocale(),
-      },
     ];
 
     if (SettingsManager.isVisualRestartRequired()) {
@@ -692,23 +987,29 @@ export class SettingsMenu {
           virtualJoystickEnabled: !SettingsManager.getInput().virtualJoystickEnabled,
         });
       }),
-      this.numberCycleRow(
+      this.sliderRow(
         'joystickSize',
         this.t('settings.joystickSize', 'Joystick Size'),
         () => SettingsManager.getInput().virtualJoystickSize,
         [0.75, 1, 1.25, 1.5],
-        (value) => SettingsManager.updateInput({ virtualJoystickSize: value }),
+        (value) => {
+          SettingsManager.updateInput({ virtualJoystickSize: value as number });
+        },
       ),
-      this.numberCycleRow(
+      this.sliderRow(
         'joystickOpacity',
         this.t('settings.joystickOpacity', 'Joystick Opacity'),
         () => SettingsManager.getInput().virtualJoystickOpacity,
         [0.35, 0.5, 0.6, 0.75, 1],
-        (value) => SettingsManager.updateInput({ virtualJoystickOpacity: value }),
-        (value) => `${Math.round(value * 100)}%`,
+        (value) => {
+          SettingsManager.updateInput({ virtualJoystickOpacity: value as number });
+        },
+        (value) => `${Math.round((value as number) * 100)}%`,
       ),
       this.toggleRow('leftHandedMode', this.t('settings.leftHandedMode', 'Left Handed'), input.leftHandedMode, () => {
-        SettingsManager.updateInput({ leftHandedMode: !SettingsManager.getInput().leftHandedMode });
+        SettingsManager.updateInput({
+          leftHandedMode: !SettingsManager.getInput().leftHandedMode,
+        });
       }),
     ];
   }
@@ -742,13 +1043,15 @@ export class SettingsMenu {
           debugPanelCompact: !SettingsManager.getDeveloper().debugPanelCompact,
         });
       }),
-      this.numberCycleRow(
+      this.sliderRow(
         'debugPanelOpacity',
         this.t('settings.debugPanelOpacity', 'Debug Panel Opacity'),
         () => SettingsManager.getDeveloper().debugPanelOpacity,
         [0.35, 0.5, 0.75, 1],
-        (value) => SettingsManager.updateDeveloper({ debugPanelOpacity: value }),
-        (value) => `${Math.round(value * 100)}%`,
+        (value) => {
+          SettingsManager.updateDeveloper({ debugPanelOpacity: value as number });
+        },
+        (value) => `${Math.round((value as number) * 100)}%`,
       ),
     ];
   }
@@ -768,42 +1071,22 @@ export class SettingsMenu {
     };
   }
 
-  private volumeRow(id: string, label: string, channel: 'bgm' | 'sfx' | 'weapon' | 'ui'): SettingRowDefinition {
-    return {
-      id,
-      label,
-      type: 'cycle',
-      getDisplayValue: () => this.formatVolume(AudioManager.getChannelVolume(channel)),
-      onCycleNext: () => this.cycleVolume(channel, 1),
-      onCyclePrev: () => this.cycleVolume(channel, -1),
-    };
-  }
-
-  private numberCycleRow(
+  private sliderRow(
     id: string,
     label: string,
     getValue: () => number,
     steps: number[],
-    setValue: (value: number) => void,
-    formatValue: (value: number) => string = (value) => value.toFixed(2).replace(/\.?0+$/, ''),
+    setValue: (value: SettingValue) => void,
+    formatValue: (value: SettingValue) => string = (value) => `${Math.round((Number(value) * 100))}%`,
   ): SettingRowDefinition {
-    const cycle = (direction: 1 | -1): void => {
-      const current = getValue();
-      const currentIndex = steps.findIndex((step) => Math.abs(step - current) < 0.01);
-      const nextIndex = currentIndex < 0
-        ? 0
-        : (currentIndex + direction + steps.length) % steps.length;
-
-      setValue(steps[nextIndex]);
-    };
-
     return {
       id,
       label,
-      type: 'cycle',
-      getDisplayValue: () => formatValue(getValue()),
-      onCycleNext: () => cycle(1),
-      onCyclePrev: () => cycle(-1),
+      type: 'slider',
+      getValue,
+      setValue,
+      sliderSteps: steps,
+      formatValue: (value) => formatValue(value as number),
     };
   }
 
@@ -811,39 +1094,10 @@ export class SettingsMenu {
     return enabled ? UITheme.toggleOnColor : UITheme.toggleOffColor;
   }
 
-  private cycleDisplayQuality(current: DisplayQuality, direction: 1 | -1): void {
-    SettingsManager.updateDisplay({
-      displayQuality: this.getNextValue(DISPLAY_QUALITIES, current, direction),
-    });
-  }
-
-  private cycleAssetStyle(current: AssetStyle, direction: 1 | -1): void {
-    SettingsManager.updateDisplay({
-      assetStyle: this.getNextValue(ASSET_STYLES, current, direction),
-    });
-  }
-
-  private cycleUIStyle(current: UIStyle, direction: 1 | -1): void {
-    const styles = UIThemeRegistry.listStyles();
-    const currentIndex = styles.indexOf(current);
-    const nextIndex = currentIndex < 0
-      ? 0
-      : (currentIndex + direction + styles.length) % styles.length;
-    this.uiStyleReopenNotice = true;
-    SettingsManager.updateDisplay({
-      uiStyle: styles[nextIndex] ?? 'classic',
-    });
-  }
-
-  private cycleVolume(channel: 'bgm' | 'sfx' | 'weapon' | 'ui', direction: 1 | -1): void {
-    const currentVolume = AudioManager.getChannelVolume(channel);
-    const steps = [0, 0.25, 0.5, 0.75, 1];
-    const currentIndex = steps.findIndex((step) => Math.abs(step - currentVolume) < 0.01);
-    const nextIndex = currentIndex < 0
-      ? 0
-      : (currentIndex + direction + steps.length) % steps.length;
-
-    AudioManager.setChannelVolume(channel, steps[nextIndex]);
+  private cycleDisplayQuality(_current: DisplayQuality, _direction: 1 | -1): void {
+    const current = SettingsManager.getDisplay().displayQuality;
+    const next = this.getNextValue(DISPLAY_QUALITIES, current);
+    SettingsManager.updateDisplay({ displayQuality: next });
   }
 
   private formatDisplayQuality(quality: DisplayQuality): string {
@@ -872,19 +1126,9 @@ export class SettingsMenu {
     }
   }
 
-  private formatUIStyle(uiStyle: UIStyle): string {
-    return this.t(`settings.uiStyle.${uiStyle}`, UIThemeRegistry.getTheme(uiStyle).id);
-  }
-
-  private formatVolume(volume: number): string {
-    return `${Math.round(volume * 100)}%`;
-  }
-
-  private getNextValue<T extends string>(values: readonly T[], current: T, direction: 1 | -1): T {
+  private getNextValue<T extends string>(values: readonly T[], current: T): T {
     const currentIndex = values.indexOf(current);
-    const nextIndex = currentIndex < 0
-      ? 0
-      : (currentIndex + direction + values.length) % values.length;
+    const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % values.length;
 
     return values[nextIndex] ?? values[0];
   }
@@ -924,6 +1168,28 @@ export class SettingsMenu {
       default:
         break;
     }
+  }
+
+  private getSliderStepIndex(definition: SettingRowDefinition, value: number, steps: number[]): number {
+    if (steps.length === 0) {
+      return 0;
+    }
+
+    if (Number.isNaN(value)) {
+      return 0;
+    }
+
+    let best = 0;
+    let bestDelta = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < steps.length; i += 1) {
+      const delta = Math.abs(steps[i]! - value);
+      if (delta < bestDelta) {
+        best = i;
+        bestDelta = delta;
+      }
+    }
+
+    return best;
   }
 
   private coverImage(

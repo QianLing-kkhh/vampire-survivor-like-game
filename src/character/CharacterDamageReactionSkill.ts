@@ -40,6 +40,18 @@ export interface CharacterDamageReactionConfig {
   pickupRangeDurationMs?: number;
   minimumMapMoveSpeedMultiplier?: number;
   minimumMapMoveSpeedDurationMs?: number;
+  pressureScaling?: {
+    enabled?: boolean;
+    nearbyEnemyRadius?: number;
+    mediumThreshold?: number;
+    highThreshold?: number;
+    mediumRadiusMultiplier?: number;
+    highRadiusMultiplier?: number;
+    mediumKnockbackMultiplier?: number;
+    highKnockbackMultiplier?: number;
+    highArmorFlatBonus?: number;
+    highArmorDurationMs?: number;
+  };
 }
 
 export interface CharacterDamageReactionContext {
@@ -65,6 +77,7 @@ export interface CharacterDamageReactionSkill {
   getEnemySpeedMultiplierAt(x: number, y: number): number;
   getPickupRangeMultiplier(): number;
   getMapMoveSpeedFloorMultiplier(): number;
+  getTemporaryArmorFlatBonus(): number;
   clear(): void;
 }
 
@@ -94,6 +107,10 @@ export class NoneCharacterDamageReactionSkill implements CharacterDamageReaction
   }
 
   getMapMoveSpeedFloorMultiplier(): number {
+    return 0;
+  }
+
+  getTemporaryArmorFlatBonus(): number {
     return 0;
   }
 
@@ -141,6 +158,10 @@ abstract class BaseCharacterDamageReactionSkill implements CharacterDamageReacti
   }
 
   getMapMoveSpeedFloorMultiplier(): number {
+    return 0;
+  }
+
+  getTemporaryArmorFlatBonus(): number {
     return 0;
   }
 
@@ -830,14 +851,14 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
   private static readonly DEFAULT_DAMAGE_REDUCTION_MULTIPLIER = 0.65;
   private static readonly DEFAULT_DAMAGE_REDUCTION_DURATION_MS = 2500;
   private static readonly DEFAULT_ZONE_DURATION_MS = 500;
-  private static readonly PRESSURE_THRESHOLD = 4;
-  private static readonly MAX_PRESSURE_BONUS = 0.35;
   private static readonly HIGH_PRESSURE_DAMAGE_REDUCTION_MULTIPLIER = 0.55;
 
   readonly type = 'ironCounter';
 
   private readonly activeVisuals: Array<Phaser.GameObjects.GameObject & { active: boolean; destroy(): void }> = [];
   private mapMoveSpeedFloorRemainingMs = 0;
+  private temporaryArmorFlatBonus = 0;
+  private temporaryArmorFlatRemainingMs = 0;
 
   clear(): void {
     super.clear();
@@ -848,17 +869,32 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
     });
     this.activeVisuals.length = 0;
     this.mapMoveSpeedFloorRemainingMs = 0;
+    this.temporaryArmorFlatBonus = 0;
+    this.temporaryArmorFlatRemainingMs = 0;
   }
 
   update(deltaMs: number, _player: PlayerController): void {
-    if (this.mapMoveSpeedFloorRemainingMs <= 0) {
+    const effectiveDeltaMs = Math.max(0, deltaMs);
+
+    if (this.mapMoveSpeedFloorRemainingMs > 0) {
+      this.mapMoveSpeedFloorRemainingMs = Math.max(
+        0,
+        this.mapMoveSpeedFloorRemainingMs - effectiveDeltaMs,
+      );
+    }
+
+    if (this.temporaryArmorFlatRemainingMs <= 0) {
       return;
     }
 
-    this.mapMoveSpeedFloorRemainingMs = Math.max(
+    this.temporaryArmorFlatRemainingMs = Math.max(
       0,
-      this.mapMoveSpeedFloorRemainingMs - Math.max(0, deltaMs),
+      this.temporaryArmorFlatRemainingMs - effectiveDeltaMs,
     );
+
+    if (this.temporaryArmorFlatRemainingMs <= 0) {
+      this.temporaryArmorFlatBonus = 0;
+    }
   }
 
   getMapMoveSpeedFloorMultiplier(): number {
@@ -867,24 +903,32 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
       : 0;
   }
 
+  getTemporaryArmorFlatBonus(): number {
+    return this.temporaryArmorFlatRemainingMs > 0
+      ? Math.max(0, this.temporaryArmorFlatBonus)
+      : 0;
+  }
+
   protected activate(context: CharacterDamageReactionContext): boolean {
     const pressureCount = this.countNearbyPressureEnemies(context);
-    const pressureBonus = this.getPressureBonus(pressureCount);
+    const radiusMultiplier = this.getRadiusPressureMultiplier(pressureCount);
+    const knockbackMultiplier = this.getKnockbackPressureMultiplier(pressureCount);
 
-    this.showCounterVisual(context, pressureBonus);
-    this.hitAndKnockEnemies(context, pressureBonus);
+    this.showCounterVisual(context, radiusMultiplier);
+    this.hitAndKnockEnemies(context, radiusMultiplier, knockbackMultiplier);
     context.playerHealth.addTemporaryDamageTakenMultiplier(
-      pressureCount >= IronCounterDamageReactionSkill.PRESSURE_THRESHOLD
+      this.isHighPressure(pressureCount)
         ? IronCounterDamageReactionSkill.HIGH_PRESSURE_DAMAGE_REDUCTION_MULTIPLIER
         : this.getDamageReductionMultiplier(),
       this.getDamageReductionDurationMs(),
     );
+    this.tryApplyHighPressureArmorBonus(pressureCount);
     this.mapMoveSpeedFloorRemainingMs = this.getMinimumMapMoveSpeedDurationMs();
     return true;
   }
 
-  private showCounterVisual(context: CharacterDamageReactionContext, pressureBonus: number): void {
-    const radius = this.getRadius() * (1 + pressureBonus);
+  private showCounterVisual(context: CharacterDamageReactionContext, radiusMultiplier: number): void {
+    const radius = this.getRadius() * radiusMultiplier;
     const visual = this.createEffectImage(
       context,
       'counter_wave',
@@ -923,9 +967,10 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
 
   private hitAndKnockEnemies(
     context: CharacterDamageReactionContext,
-    pressureBonus: number,
+    radiusMultiplier: number,
+    knockbackMultiplier: number,
   ): void {
-    const radius = this.getRadius() * (1 + pressureBonus);
+    const radius = this.getRadius() * radiusMultiplier;
     const hitResult = context.damageCalculator.calculateDamage(this.getDamage());
 
     for (const enemy of context.enemies) {
@@ -947,7 +992,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
       enemy.takeDamage(hitResult);
 
       if (!enemy.isDead && !this.isKnockbackImmune(enemy)) {
-        this.knockEnemyBack(enemy, context, pressureBonus);
+        this.knockEnemyBack(enemy, context, knockbackMultiplier);
       }
     }
   }
@@ -955,7 +1000,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
   private knockEnemyBack(
     enemy: Enemy,
     context: CharacterDamageReactionContext,
-    pressureBonus: number,
+    knockbackMultiplier: number,
   ): void {
     const direction = new Phaser.Math.Vector2(
       enemy.body.x - context.player.body.x,
@@ -966,7 +1011,7 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
       direction.set(1, 0);
     }
 
-    direction.normalize().scale(this.getKnockbackDistance() * (1 + pressureBonus));
+    direction.normalize().scale(this.getKnockbackDistance() * knockbackMultiplier);
 
     const enemyRadius = this.getEnemyRadius(enemy);
     enemy.body.x = Phaser.Math.Clamp(
@@ -994,7 +1039,10 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
   }
 
   private countNearbyPressureEnemies(context: CharacterDamageReactionContext): number {
-    const radius = this.getRadius();
+    const radius = Math.max(
+      0,
+      this.config.pressureScaling?.nearbyEnemyRadius ?? this.getRadius(),
+    );
 
     return context.enemies.filter((enemy) => (
       !enemy.isDead
@@ -1008,13 +1056,16 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
     )).length;
   }
 
-  private getPressureBonus(pressureCount: number): number {
-    const extraEnemies = Math.max(0, pressureCount - IronCounterDamageReactionSkill.PRESSURE_THRESHOLD);
+  private getRadiusPressureMultiplier(pressureCount: number): number {
+    if (this.isHighPressure(pressureCount)) {
+      return this.getHighRadiusMultiplier();
+    }
 
-    return Math.min(
-      IronCounterDamageReactionSkill.MAX_PRESSURE_BONUS,
-      extraEnemies * 0.05,
-    );
+    if (this.isMediumPressure(pressureCount)) {
+      return this.getMediumRadiusMultiplier();
+    }
+
+    return 1;
   }
 
   private isFinalOrEndlessBoss(enemy: Enemy): boolean {
@@ -1066,5 +1117,69 @@ export class IronCounterDamageReactionSkill extends BaseCharacterDamageReactionS
 
   private getMinimumMapMoveSpeedDurationMs(): number {
     return Math.max(0, this.config.minimumMapMoveSpeedDurationMs ?? 0);
+  }
+
+  private getMediumThreshold(): number {
+    return Math.max(1, Math.floor(this.config.pressureScaling?.mediumThreshold ?? 5));
+  }
+
+  private getHighThreshold(): number {
+    return Math.max(this.getMediumThreshold(), Math.floor(this.config.pressureScaling?.highThreshold ?? 9));
+  }
+
+  private isMediumPressure(pressureCount: number): boolean {
+    return this.config.pressureScaling?.enabled === true
+      && pressureCount >= this.getMediumThreshold();
+  }
+
+  private isHighPressure(pressureCount: number): boolean {
+    return this.config.pressureScaling?.enabled === true
+      && pressureCount >= this.getHighThreshold();
+  }
+
+  private getMediumRadiusMultiplier(): number {
+    return Math.max(1, this.config.pressureScaling?.mediumRadiusMultiplier ?? 1.15);
+  }
+
+  private getHighRadiusMultiplier(): number {
+    return Math.max(
+      this.getMediumRadiusMultiplier(),
+      this.config.pressureScaling?.highRadiusMultiplier ?? 1.25,
+    );
+  }
+
+  private getKnockbackPressureMultiplier(pressureCount: number): number {
+    if (this.isHighPressure(pressureCount)) {
+      return Math.max(
+        this.getMediumKnockbackMultiplier(),
+        this.config.pressureScaling?.highKnockbackMultiplier ?? 1.25,
+      );
+    }
+
+    if (this.isMediumPressure(pressureCount)) {
+      return this.getMediumKnockbackMultiplier();
+    }
+
+    return 1;
+  }
+
+  private getMediumKnockbackMultiplier(): number {
+    return Math.max(1, this.config.pressureScaling?.mediumKnockbackMultiplier ?? 1.15);
+  }
+
+  private tryApplyHighPressureArmorBonus(pressureCount: number): void {
+    if (!this.isHighPressure(pressureCount)) {
+      return;
+    }
+
+    const armorBonus = Math.max(0, this.config.pressureScaling?.highArmorFlatBonus ?? 0);
+    const armorDurationMs = Math.max(0, this.config.pressureScaling?.highArmorDurationMs ?? 0);
+
+    if (armorBonus <= 0 || armorDurationMs <= 0) {
+      return;
+    }
+
+    this.temporaryArmorFlatBonus = armorBonus;
+    this.temporaryArmorFlatRemainingMs = armorDurationMs;
   }
 }

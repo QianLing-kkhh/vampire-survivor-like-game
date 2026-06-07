@@ -12,7 +12,8 @@
     "fastMode": "高速モード",
     "language": "言語",
     "timeScale": "時間倍率",
-    "none": "なし"
+    "none": "なし",
+    "back": "Back"
   },
   "ui": {
     "chooseReward": "報酬を1つ選択",
@@ -31,7 +32,33 @@
     "downloadCsv": "CSVをダウンロード",
     "summary": "概要",
     "build": "ビルド",
-    "leaderboard": "ランキング"
+    "leaderboard": "ランキング",
+    "max": "Max",
+    "pause": "Pause",
+    "pauseIcon": "II",
+    "role": {
+      "default": "Specialist",
+      "assassin": {
+        "m1": "Mobility",
+        "m2": "Crit",
+        "m3": "Axe"
+      },
+      "witch": {
+        "m1": "Magic",
+        "m2": "Slow",
+        "m3": "Explosion"
+      },
+      "priest": {
+        "m1": "Shield",
+        "m2": "Heal",
+        "m3": "Orbit"
+      },
+      "warrior": {
+        "m1": "Armor",
+        "m2": "Counter",
+        "m3": "Axe"
+      }
+    }
   },
   "title": {
     "gameTitle": "Vampire Survivor プロトタイプ",
@@ -48,7 +75,8 @@
     "toggleLanguage": "言語",
     "records": "記録",
     "replayTool": "リプレイツール",
-    "dailyChallenge": "デイリーチャレンジ"
+    "dailyChallenge": "デイリーチャレンジ",
+    "settings": "Settings"
   },
   "selection": {
     "character": "キャラクター",
@@ -56,7 +84,16 @@
     "map": "マップ",
     "confirm": "決定",
     "back": "戻る",
-    "current": "現在"
+    "current": "現在",
+    "damageReaction": "Damage Reaction",
+    "damageReactionKeyed": "Damage Reaction: {id}",
+    "damageReactionUnknown": "Damage Reaction: Unknown",
+    "iconShown": "icon",
+    "more": "+{count} more",
+    "role": "Role",
+    "shortLabelAvailable": "Avail",
+    "startingWeapon": "Starting Weapon",
+    "startingWeaponLabel": "Starting Weapon: {item}"
   },
   "characterSelect": {
     "title": "キャラクター選択"
@@ -85,7 +122,8 @@
   },
   "characterSelection": {
     "randomUnlocked": "ランダム選択",
-    "fixed": "固定"
+    "fixed": "固定",
+    "locked": "Locked"
   },
   "stage": {
     "random": {
@@ -103,7 +141,10 @@
     "ruinedGate": {
       "name": "遺跡の門",
       "description": "壊れた壁とポータルで構成された遺跡ステージ。"
-    }
+    },
+    "builtIn": "Built-In",
+    "custom": "Custom",
+    "warningsCount": "{count} warnings"
   },
   "map": {
     "graveyard": {
@@ -152,7 +193,32 @@
     "title": "一時停止",
     "resume": "再開",
     "restart": "リスタート",
-    "returnToTitle": "タイトルへ戻る"
+    "returnToTitle": "タイトルへ戻る",
+    "bossPhaseDamage": "Boss Phase Damage",
+    "characterStats": "Character Stats",
+    "damageTaken": "Damage Taken",
+    "endlessTime": "Endless Time",
+    "exp": "EXP",
+    "expMultiplier": "EXP Multiplier",
+    "hits": "Hits",
+    "hp": "HP",
+    "killCount": "Kill Count",
+    "kills": "Kills",
+    "level": "Lv",
+    "moveSpeed": "Move Speed",
+    "passives": "Passives",
+    "pickupRange": "Pickup Range",
+    "requires": "Requires",
+    "settings": "Settings",
+    "shieldAbsorbed": "Shield Absorbed",
+    "shieldConsumed": "Shield Consumed",
+    "shieldStacks": "Shield Stacks",
+    "statsBuild": "Stats / Build",
+    "treasureOpens": "Treasure Opens",
+    "weaponEvolvedFrom": "Evolved From",
+    "weaponTotalDamage": "Weapon Total Damage",
+    "weapons": "Weapons",
+    "moreItems": "+{count} more"
   },
   "result": {
     "victory": "勝利",
@@ -183,7 +249,23 @@
     "autoRestart": "{seconds}秒後に自動リスタート",
     "autoRestartCanceled": "自動リスタート：停止",
     "bossDashes": "Bossダッシュ",
-    "bossDashHits": "Bossダッシュ命中"
+    "bossDashHits": "Bossダッシュ命中",
+    "character": "Character",
+    "endlessBosses": "Endless Bosses",
+    "endlessLeaderboard": "No endless entries",
+    "endlessLeaderboardTop": "Top {count} Endless Records",
+    "endlessSurvivalTime": "Endless Survival",
+    "endlessVictory": "Endless Victory",
+    "killed": "killed",
+    "leaderboardEntry": "#{rank}. Time {time} | Lv {level} | Kills {kills}",
+    "more": "+{count} more",
+    "none": "None",
+    "relicAcquired": "Relic acquired",
+    "relics": "Relics",
+    "seed": "Seed",
+    "settings": "Settings",
+    "skills": "Skills",
+    "stage": "Stage"
   },
   "help": {
     "tab": {
@@ -198,31 +280,127 @@
       "testing": "テスト/データ"
     },
     "basics": {
-      "title": "基本"
+      "title": "基本",
+      "keyboard": "キーボード：WASD または方向キーで移動。",
+      "mouse": "マウス：ボタンを押してカーソル方向へ移動。",
+      "joystick": "モバイル：タッチ操作では仮想ジョイスティックを使用。",
+      "pause": "ポーズ：ESC またはポーズボタン。",
+      "objective": "生き残り、レベルアップし、報酬を選び、武器とパッシブを組み合わせて最終ボスを倒します。",
+      "openTreasure": "宝箱は追加報酬を与え、条件を満たすと進化を発生させます。",
+      "autoTest": "自動移動、自動強化、高速モードはバランス確認に便利です。"
     },
     "characters": {
-      "title": "キャラクター"
+      "title": "キャラクター",
+      "description": {
+        "default": "素早いナイフ使い。被弾後に前方へブリンクして危険を離れます。",
+        "assassin": "素早いナイフ使い。被弾後に前方へブリンクして危険を離れます。",
+        "witch": "被弾後に鈍足エリアを残し、敵の移動を制御します。",
+        "priest": "聖域を作り、回復、シールド、ノックバックを行います。",
+        "warrior": "衝撃波で反撃し、一時的に被ダメージを軽減します。"
+      },
+      "levelUp": {
+        "default": "特殊成長効果",
+        "unknown": "不明な成長効果"
+      },
+      "reaction": {
+        "none": "なし",
+        "blinkForward": "前方ブリンク：被弾後に危険から離脱します。",
+        "slowTrail": "鈍足の軌跡：被弾後に鈍足エリアを残します。",
+        "holySanctuary": "聖域：回復、シールド、ノックバックの空間を作ります。",
+        "ironCounter": "鉄壁の反撃：反撃衝撃波と一時的なダメージ軽減。"
+      },
+      "random": "毎回、解放済みキャラクターからランダム選択。",
+      "startingWeapon": "初期武器",
+      "role": {
+        "default": "高速な投射武器と回避に優れたスペシャリスト。",
+        "assassin": "機動 / クリティカル / ナイフ",
+        "witch": "魔法 / 鈍足 / 爆発",
+        "priest": "シールド / 回復 / 周回",
+        "warrior": "防具 / 反撃 / 斧",
+        "_label": "役割"
+      },
+      "damageReaction": "被ダメージ反応",
+      "levelUpEffect": "レベルアップ効果",
+      "growth": "成長",
+      "randomSelectionDetail": "CSV はランダム選択と実際のキャラクターを別々に記録します。",
+      "descriptionLabel": "説明"
     },
     "weapons": {
-      "title": "武器"
+      "title": "武器",
+      "description": "仕組み",
+      "tags": "タグ",
+      "behavior": "振る舞い",
+      "coreStats": "主要ステータス",
+      "baseStats": "基本ステータス"
     },
     "evolutions": {
-      "title": "進化"
+      "title": "進化",
+      "description": "進化ルートは基本武器、必要パッシブ、十分な武器強化で成立します。"
     },
     "passives": {
-      "title": "パッシブ"
+      "title": "パッシブ",
+      "routes": "ルート：{routes}",
+      "effect": "効果",
+      "description": "進化ルート",
+      "maxLevel": "最大レベル"
     },
     "maps": {
-      "title": "マップ"
+      "title": "マップ",
+      "endlessUnknown": "マップ設定に依存します",
+      "randomDetail": "毎回、解放済みステージからランダムに選ばれます。",
+      "unknown": "不明なマップ",
+      "name": "マップ",
+      "size": "サイズ",
+      "finalBoss": "最終ボス",
+      "endless": "エンドレス",
+      "mechanicSummary": "ギミック",
+      "randomSelectionDetail": "ランダムステージは選択値と実際のステージ/マップを別々に記録します。",
+      "random": {
+        "title": "ランダムステージ",
+        "description": "解放済みステージから今回のステージを選びます。"
+      }
     },
     "endless": {
-      "title": "エンドレス"
+      "title": "エンドレス",
+      "spawnRule": "有効時、最終ボス撃破後にラン終了ではなくエンドレスへ移行します。",
+      "scaling": "エンドレスの敵は時間とともに HP、ダメージ、速度、EXP が強化されます。",
+      "bosses": "エンドレスボスは繰り返し出現し、複数同時に存在する場合があります。",
+      "renewSpawn": "通常強化が尽きると上限後の代替報酬が出現します。",
+      "rewards": "報酬",
+      "rewardList": "回復、強化、時間鈍化、シールド、小成長。",
+      "shield": "シールド",
+      "shieldDescription": "シールド 1 スタックで HP 損失を 1 回防ぎます。",
+      "modeScope": "ランキング範囲",
+      "scope": "記録はモード、キャラクター、ステージ、マップ、ルール条件ごとに分けられます。"
     },
     "settings": {
-      "title": "設定"
+      "title": "設定",
+      "display": "表示",
+      "displayList": "画質、アセットスタイル、UI スタイル、モデル倍率、影、ダメージ表示、ミニマップ。",
+      "gameplay": "ゲームプレイ",
+      "gameplayList": "自動移動、自動強化、高速モード、エンドレスモード。",
+      "audio": "オーディオ",
+      "audioList": "全体音声、BGM、効果音、武器、UI 音量。",
+      "input": "入力",
+      "inputList": "仮想ジョイスティックのサイズ、透明度、左手モード、ゲームパッド対応。",
+      "developer": "開発",
+      "developerList": "デバッグパネルとローカル診断。",
+      "restartNotice": "表示変更",
+      "restartNoticeText": "一部の表示設定は再起動または次回ランで反映され、ゲームプレイ設定は即時反映されます。"
     },
     "testing": {
-      "title": "テスト/データ"
+      "title": "テスト/データ",
+      "actualRunCharacter": "実際のキャラクター",
+      "actualRunStage": "実際のステージ",
+      "randomSelection": "ランダム選択",
+      "randomCharacter": "ランダムキャラクター",
+      "randomStage": "ランダムステージ",
+      "csv": "CSV",
+      "csvFields": "runSeed、gameVersion、contentHash、csvSchemaVersion、characterId、stageId、mapId、selectedCharacterId、selectedStageId。",
+      "autoTest": "自動テスト",
+      "autoModeText": "自動移動、自動強化、高速モードを組み合わせてサンプルを取得します。",
+      "replay": "リプレイ",
+      "replayText": "リプレイ記録はメタデータと一部の重要イベントを保存します。再生機能は後で拡張できます。"
     },
     "title": "ヘルプ",
     "moveKeyboard": "WASD / 矢印キー：移動",
@@ -231,13 +409,123 @@
     "collectExp": "EXPジェムを集めてレベルアップ",
     "chooseUpgrade": "アップグレードで武器とパッシブを強化",
     "openTreasure": "宝箱に近づくと追加強化または進化",
-    "evolution": "武器 + 対応パッシブは宝箱で進化可能",
+    "evolution": {
+      "requirement": "武器強化 {weaponUpgrades} 回 + {passive} Lv.{passiveLevel}",
+      "route": "進化ルート",
+      "requirements": "条件"
+    },
     "surviveBoss": "Boss出現まで生き残る",
-    "defeatBoss": "Bossを倒して勝利"
+    "defeatBoss": "Bossを倒して勝利",
+    "map": {
+      "mechanic": {
+        "item": "項目",
+        "unknown": "不明なギミック",
+        "obstacle": {
+          "_label": "障害物",
+          "description": "移動を遮り、敵の経路を変えます。"
+        },
+        "slowZone": {
+          "_label": "鈍足エリア",
+          "description": "範囲内の移動速度を下げます。"
+        },
+        "portal": {
+          "_label": "ポータル",
+          "description": "接続点の間でプレイヤーを転送します。"
+        },
+        "lightSource": {
+          "_label": "光源",
+          "description": "マップ上の視覚的な目印です。"
+        },
+        "hazard": {
+          "_label": "危険地帯",
+          "description": "危険エリアまたはマップ圧力のギミックです。"
+        },
+        "altar": {
+          "_label": "祭壇",
+          "description": "ステージ設定で使われる特殊なランドマークです。"
+        },
+        "spawner": {
+          "_label": "スポーン地点",
+          "description": "スポーン関連の設定ランドマークです。"
+        },
+        "destructible": {
+          "_label": "破壊可能物",
+          "description": "設定時に破壊できるマップオブジェクトです。"
+        }
+      },
+      "noMechanics": "特殊なマップギミックなし"
+    },
+    "weapon": {
+      "behavior": {
+        "default": "不明な挙動",
+        "unknown": "不明",
+        "aura": "周囲の敵にオーラで継続ダメージ。",
+        "orbit": "プレイヤーの周囲を回り近距離を制圧します。",
+        "homing": "敵を自動追尾します。",
+        "arcing": "弧を描いて飛び、範囲を圧迫します。",
+        "axe": "強力な放物線型の物理投射物。",
+        "projectile": "プレイヤーから投射物を発射します。"
+      },
+      "summary": "種類：{type}",
+      "type": {
+        "default": "武器",
+        "projectile": "投射武器",
+        "aura": "オーラ武器",
+        "orbit": "周回武器",
+        "arcing": "放物線武器",
+        "homing": "追尾武器"
+      },
+      "tag": {
+        "base": "基本",
+        "evolved": "進化",
+        "projectile": "投射",
+        "physical": "物理",
+        "magic": "魔法",
+        "explosive": "爆発",
+        "aura": "オーラ",
+        "area": "範囲",
+        "control": "制御",
+        "spiral": "螺旋",
+        "knockback": "ノックバック",
+        "homing": "追尾",
+        "arcing": "放物線",
+        "defensive": "防御"
+      },
+      "stat": {
+        "damage": "ダメージ",
+        "cooldown": "クールダウン",
+        "projectileSpeed": "速度",
+        "pierce": "貫通",
+        "projectileCount": "投射数",
+        "radius": "半径",
+        "orbitCount": "周回数",
+        "orbitSpeed": "周回速度"
+      }
+    },
+    "stat": {
+      "maxHp": "最大 HP",
+      "moveSpeed": "移動速度",
+      "pickupRange": "取得範囲",
+      "physicalDamageMultiplier": "物理ダメージ",
+      "projectileDamageMultiplier": "投射ダメージ",
+      "critChance": "クリティカル率",
+      "magicDamageMultiplier": "魔法ダメージ",
+      "explosionDamageMultiplier": "爆発ダメージ",
+      "damageMultiplier": "ダメージ",
+      "healingMultiplier": "回復",
+      "shieldGainMultiplier": "シールド獲得",
+      "orbitDamageMultiplier": "周回ダメージ",
+      "areaDamageMultiplier": "範囲ダメージ",
+      "armorFlat": "防御"
+    }
   },
   "levelUp": {
     "title": "レベルアップ",
-    "chooseUpgrade": "アップグレードを1つ選択"
+    "chooseUpgrade": "アップグレードを1つ選択",
+    "emptyMessage": "No upgrades available",
+    "newWeapon": "New Weapon",
+    "noUpgrades": "No upgrades available",
+    "upgrade": "Upgrade"
   },
   "hud": {
     "weapons": "武器",
@@ -252,7 +540,10 @@
     "level": "Lv",
     "bossIn": "Bossまで {time}",
     "goalDefeatBoss": "目標 Bossを倒す",
-    "evolved": "進化"
+    "evolved": "進化",
+    "endless": "Endless",
+    "relics": "Relics",
+    "shield": "Shield"
   },
   "settings": {
     "title": "設定",
@@ -304,12 +595,7 @@
     "debugPanelCompact": "コンパクトデバッグパネル",
     "debugPanelOpacity": "デバッグパネル透明度",
     "language": "言語",
-    "uiStyle": {
-      "_label": "UIスタイル",
-      "classic": "クラシック",
-      "arcaneSlate": "アーケインスレート",
-      "minimal": "ミニマル"
-    },
+    "uiStyle": "UI Style",
     "uiStyleReopenNotice": "一部のUIスタイル変更はメニューを開き直すと反映されます。",
     "scrollHint": "スクロール",
     "page": "ページ",
@@ -349,5 +635,9 @@
     "rules": "ルール",
     "mode": "モード",
     "noChallenge": "チャレンジがありません"
+  },
+  "game": {
+    "bossAppears": "Boss Appears",
+    "rotateForBetterPlay": "Please rotate your device for a better view."
   }
 }

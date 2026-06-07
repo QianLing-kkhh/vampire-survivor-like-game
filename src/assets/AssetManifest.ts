@@ -32,7 +32,32 @@ export type RunPreloadContext = {
 };
 
 export const ART_MANIFEST_CACHE_KEY = 'art_animation_manifest';
-export const ART_MANIFEST_PATH = 'assets/art/animation_manifest.json';
+
+export function resolveArtStyleRoot(
+  assetStyle: DisplaySettingsData['assetStyle'] = 'newArt',
+): 'assets/art/' | 'assets/art001/' {
+  return assetStyle === 'art001'
+    ? 'assets/art001/'
+    : 'assets/art/';
+}
+
+export function resolveArtManifestPath(
+  assetStyle: DisplaySettingsData['assetStyle'] = 'newArt',
+): string {
+  return `${resolveArtStyleRoot(assetStyle)}animation_manifest.json`;
+}
+
+export function remapAssetStylePath(
+  requestPath: string,
+  assetStyle: DisplaySettingsData['assetStyle'] = 'newArt',
+): string {
+  if (!requestPath.startsWith('assets/art/')) {
+    return requestPath;
+  }
+
+  const root = resolveArtStyleRoot(assetStyle);
+  return `${root}${requestPath.slice('assets/art/'.length)}`;
+}
 
 export const PLAYER_ART_SKIN_IDS = [
   'assassin_default',
@@ -229,7 +254,6 @@ export const GAMEPLAY_ART_ASSETS: ArtManifestAsset[] = [
   artSheet('enemies/slime_walk_sheet.png', 'art_enemies_slime_walk_sheet', 48, 48, 4),
   artImage('pickups/exp_gem.png', 'art_pickups_exp_gem', 32, 32),
   artImage('pickups/treasure_chest.png', 'art_pickups_treasure_chest', 64, 56),
-  artSheet('player/player_walk_sheet.png', 'art_player_player_walk_sheet', 80, 80, 4),
   artSheet('weapons/axe_projectile_sheet.png', 'art_weapons_axe_projectile_sheet', 64, 64, 4),
   artSheet('weapons/bible_orbit_book_sheet.png', 'art_weapons_bible_orbit_book_sheet', 64, 64, 4),
   artSheet('weapons/death_spiral_projectile_sheet.png', 'art_weapons_death_spiral_projectile_sheet', 64, 64, 4),
@@ -248,14 +272,30 @@ export const GAMEPLAY_ART_ASSETS: ArtManifestAsset[] = [
   ...MAP_MECHANIC_ART_ASSETS,
 ];
 
-export function buildTitleLoadPlan(_settings: DisplaySettingsData): AssetLoadPlan {
+export function buildTitleLoadPlan(settings: DisplaySettingsData): AssetLoadPlan {
+  const styleAwareAssets = (assets: AssetRequest[]): AssetRequest[] => (
+    assets.map((asset) => {
+      if (!asset.path.startsWith('assets/art/')) {
+        return asset;
+      }
+
+      const remappedPath = remapAssetStylePath(asset.path, settings.assetStyle);
+
+      return {
+        ...asset,
+        path: remappedPath,
+      };
+    })
+  );
+
   return {
     id: 'title',
     assets: [
-      ...TITLE_UI_ASSETS,
-      ...TITLE_ICON_ASSETS,
+      ...styleAwareAssets(TITLE_UI_ASSETS),
+      ...styleAwareAssets(TITLE_ICON_ASSETS),
       ...PLAYER_ART_SKIN_IDS.map((skinId) => artToRequest(
         artImage(`player/${skinId}/portrait.png`, `art_player_${skinId}_portrait`, 128, 128),
+        settings.assetStyle,
       )),
       ...TITLE_AUDIO_ASSETS,
       json(EXTERNAL_ART_MANIFEST_CACHE_KEY, EXTERNAL_ART_MANIFEST_PATH),
@@ -264,23 +304,40 @@ export function buildTitleLoadPlan(_settings: DisplaySettingsData): AssetLoadPla
 }
 
 export function buildRunLoadPlan(context: RunPreloadContext): AssetLoadPlan {
-  const usesGraphicsFallback = context.displayQuality === 'minimal' || context.assetStyle === 'graphics';
-  const skinId = normalizeSkinId(context.skinId ?? getDefaultSkinId(context.characterId));
-  const minimapIconAssets = MAP_MECHANIC_MINIMAP_ICON_ASSETS.map(artToRequest);
+  const usesGraphicsFallback = context.assetStyle === 'graphics'
+    || (context.displayQuality === 'minimal' && context.assetStyle !== 'art001');
+  const skinId = resolvePlayerSkinId(context.skinId, context.characterId);
+  const styleAwareArtToRequest = (asset: ArtManifestAsset): AssetRequest => (
+    artToRequest(asset, context.assetStyle)
+  );
+  const styleAwareAssets = (assets: readonly AssetRequest[]): AssetRequest[] => (
+    assets.map((asset) => {
+      if (!asset.path.startsWith('assets/art/')) {
+        return asset;
+      }
+
+      return {
+        ...asset,
+        path: remapAssetStylePath(asset.path, context.assetStyle),
+      };
+    })
+  );
+  const minimapIconAssets = MAP_MECHANIC_MINIMAP_ICON_ASSETS.map(styleAwareArtToRequest);
   const artAssets = usesGraphicsFallback
     ? minimapIconAssets
     : [
       ...GAMEPLAY_ART_ASSETS,
-      ...getPlayerRuntimeArtAssets(skinId),
+      getGenericPlayerWalkSheetAsset(context.assetStyle),
+      ...getPlayerRuntimeArtAssets(skinId, context.assetStyle),
       ...getPlayerSkillArtAssets(skinId),
-    ].map(artToRequest);
+    ].map(styleAwareArtToRequest);
 
   return {
     id: `run:${context.characterId}:${context.stageId}:${context.mapId}`,
     assets: [
       ...LEGACY_GAMEPLAY_ASSETS,
-      ...TITLE_UI_ASSETS,
-      ...TITLE_ICON_ASSETS,
+      ...styleAwareAssets(TITLE_UI_ASSETS),
+      ...styleAwareAssets(TITLE_ICON_ASSETS),
       ...artAssets,
       ...GAMEPLAY_AUDIO_ASSETS,
       ...getExternalRuntimeAssets(),
@@ -288,9 +345,22 @@ export function buildRunLoadPlan(context: RunPreloadContext): AssetLoadPlan {
   };
 }
 
-export function getPlayerRuntimeArtAssets(skinId: string): ArtManifestAsset[] {
+export function getGenericPlayerWalkSheetAsset(
+  assetStyle: DisplaySettingsData['assetStyle'] = 'newArt',
+): ArtManifestAsset {
+  const frameSize = assetStyle === 'art001' ? 64 : 80;
+
+  return artSheet('player/player_walk_sheet.png', 'art_player_player_walk_sheet', frameSize, frameSize, 4);
+}
+
+export function getPlayerRuntimeArtAssets(
+  skinId: string,
+  assetStyle: DisplaySettingsData['assetStyle'] = 'newArt',
+): ArtManifestAsset[] {
+  const fallbackFrameSize = assetStyle === 'art001' ? 64 : 80;
+
   return [
-    artSheet(`player/${skinId}_walk_sheet.png`, `art_player_${skinId}_walk_sheet`, 80, 80, 4),
+    artSheet(`player/${skinId}_walk_sheet.png`, `art_player_${skinId}_walk_sheet`, fallbackFrameSize, fallbackFrameSize, 4),
     artImage(`player/${skinId}/portrait.png`, `art_player_${skinId}_portrait`, 128, 128),
     artImage(`player/${skinId}/hit_fx.png`, `art_player_${skinId}_hit_fx`, 96, 96),
     ...PLAYER_ART_DIRECTIONS.flatMap((direction) => [
@@ -318,14 +388,31 @@ export function getDefaultSkinId(characterId: string): PlayerArtSkinId {
   }
 }
 
+export function resolvePlayerSkinId(
+  skinId: string | undefined,
+  characterId?: string,
+): PlayerArtSkinId {
+  const normalizedSkinId = normalizeSkinId(skinId ?? '');
+
+  if (normalizedSkinId) {
+    return normalizedSkinId;
+  }
+
+  return getDefaultSkinId(characterId ?? 'default');
+}
+
 export function normalizeSkinId(skinId: string): PlayerArtSkinId {
   return PLAYER_ART_SKIN_IDS.includes(skinId as PlayerArtSkinId)
     ? skinId as PlayerArtSkinId
     : 'assassin_default';
 }
 
-export function artToRequest(asset: ArtManifestAsset): AssetRequest {
-  const path = `assets/art/${asset.path}`;
+export function artToRequest(
+  asset: ArtManifestAsset,
+  assetStyle: DisplaySettingsData['assetStyle'] = 'newArt',
+): AssetRequest {
+  const root = resolveArtStyleRoot(assetStyle);
+  const path = `${root}${asset.path}`;
 
   if (asset.type === 'spritesheet') {
     return spritesheet(asset.key, path, asset.frameWidth, asset.frameHeight, asset.frames - 1);

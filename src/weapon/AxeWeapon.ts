@@ -29,6 +29,7 @@ interface AxeProjectile {
   startX: number;
   startY: number;
   direction: Phaser.Math.Vector2;
+  baseDisplaySize: number;
   previousX: number;
   previousY: number;
   ageMs: number;
@@ -145,6 +146,7 @@ export class AxeWeapon extends Weapon {
         startX: context.player.x,
         startY: context.player.y,
         direction,
+        baseDisplaySize: VisualScale.getProjectileDisplaySize(this.id),
         previousX: body.x,
         previousY: body.y,
         ageMs: 0,
@@ -195,7 +197,7 @@ export class AxeWeapon extends Weapon {
       projectile.previousY,
       projectile.body.x,
       projectile.body.y,
-      VisualScale.getProjectileDisplaySize(this.id) / 2,
+      this.getProjectileHitRadius(projectile),
     ) ?? false;
   }
 
@@ -234,6 +236,7 @@ export class AxeWeapon extends Weapon {
     projectile.body.x = projectile.startX + Math.cos(travelAngle) * travelDistance;
     projectile.body.y = projectile.startY + Math.sin(travelAngle) * travelDistance;
     projectile.body.rotation += AxeWeapon.PROJECTILE_ROTATION_STEP;
+    this.updateProjectileScale(projectile, progress);
     projectile.shadow = projectile.shadow
       ? ShadowFactory.updateShadow(
         projectile.shadow,
@@ -271,7 +274,7 @@ export class AxeWeapon extends Weapon {
           projectile.body.y,
           enemy.body.x,
           enemy.body.y,
-        ) > this.hitRadius
+        ) > this.getProjectileHitRadius(projectile)
       ) {
         continue;
       }
@@ -364,6 +367,69 @@ export class AxeWeapon extends Weapon {
     body.setStrokeStyle(2, 0xffedd5, 0.8);
 
     return body;
+  }
+
+  private updateProjectileScale(projectile: AxeProjectile, progress: number): void {
+    const scale = this.getProjectileScale(progress);
+    const displaySize = projectile.baseDisplaySize * scale;
+    const body = projectile.body as AxeProjectileBody & {
+      setDisplaySize?: (width: number, height: number) => void;
+      setScale?: (x: number, y?: number) => void;
+    };
+
+    if (body.setDisplaySize) {
+      body.setDisplaySize(displaySize, displaySize);
+      return;
+    }
+
+    body.setScale?.(scale);
+  }
+
+  private getProjectileScale(progress: number): number {
+    const config = this.getArcingBehavior()?.scaleOverLifetime;
+
+    if (!config?.enabled) {
+      return 1;
+    }
+
+    const curveProgress = this.getPostLaunchCurveProgress(progress, config.curve);
+    const startScale = Math.max(0.01, config.startScale ?? 1);
+    const endScale = Math.max(startScale, config.endScale ?? startScale);
+
+    return Phaser.Math.Linear(startScale, endScale, curveProgress);
+  }
+
+  private getProjectileHitRadius(projectile: AxeProjectile): number {
+    const config = this.getArcingBehavior()?.hitRadiusOverLifetime;
+
+    if (!config?.enabled) {
+      return this.hitRadius;
+    }
+
+    const progress = Math.min(1, projectile.ageMs / this.lifetimeMs);
+    const curveProgress = this.getPostLaunchCurveProgress(progress, config.curve);
+    const startRadius = Math.max(0, config.startRadius ?? this.hitRadius);
+    const endRadius = Math.max(startRadius, config.endRadius ?? startRadius);
+
+    return Phaser.Math.Linear(startRadius, endRadius, curveProgress);
+  }
+
+  private getPostLaunchCurveProgress(
+    progress: number,
+    curve: 'linear' | 'easeOut' | undefined,
+  ): number {
+    const launchProgress = 0.18;
+    const normalizedProgress = Phaser.Math.Clamp(
+      (progress - launchProgress) / (1 - launchProgress),
+      0,
+      1,
+    );
+
+    if (curve !== 'easeOut') {
+      return normalizedProgress;
+    }
+
+    return 1 - (1 - normalizedProgress) * (1 - normalizedProgress);
   }
 
   private getInitialProjectileCount(config: AxeWeaponConfig): number {

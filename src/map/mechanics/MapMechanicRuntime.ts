@@ -18,6 +18,7 @@ export class MapMechanicRuntime {
   private readonly portals: MapPortal[];
   private readonly interactables: MapInteractable[];
   private playerPortalCooldownMs = 0;
+  private static readonly SLOW_EFFECT_THRESHOLD = 0.999;
 
   constructor(
     definitions: readonly MapMechanicDefinition[] | undefined,
@@ -81,6 +82,26 @@ export class MapMechanicRuntime {
     );
   }
 
+  getPlayerSlowState(x: number, y: number): {
+    isSlowed: boolean;
+    multiplier: number;
+  } {
+    const multiplier = this.getPlayerSpeedMultiplierAt(x, y);
+
+    return {
+      isSlowed: multiplier < MapMechanicRuntime.SLOW_EFFECT_THRESHOLD,
+      multiplier,
+    };
+  }
+
+  isPlayerInSlowZone(x: number, y: number): boolean {
+    return this.getPlayerSlowState(x, y).isSlowed;
+  }
+
+  getPlayerSlowMultiplierAt(x: number, y: number): number {
+    return this.getPlayerSlowState(x, y).multiplier;
+  }
+
   getEnemySpeedMultiplierAt(x: number, y: number, enemy: Enemy): number {
     return Math.max(
       MIN_SLOW_MULTIPLIER,
@@ -89,6 +110,26 @@ export class MapMechanicRuntime {
         1,
       ),
     );
+  }
+
+  getEnemySlowState(enemy: Enemy, x: number, y: number): {
+    isSlowed: boolean;
+    multiplier: number;
+  } {
+    const multiplier = this.getEnemySpeedMultiplierAt(x, y, enemy);
+
+    return {
+      isSlowed: multiplier < MapMechanicRuntime.SLOW_EFFECT_THRESHOLD,
+      multiplier,
+    };
+  }
+
+  isEnemyInSlowZone(enemy: Enemy, x: number, y: number): boolean {
+    return this.getEnemySlowState(enemy, x, y).isSlowed;
+  }
+
+  getEnemySlowMultiplierAt(enemy: Enemy, x: number, y: number): number {
+    return this.getEnemySlowState(enemy, x, y).multiplier;
   }
 
   resolveObstacleCollision(entity: MapMechanicEntity): boolean {

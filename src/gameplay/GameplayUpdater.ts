@@ -38,16 +38,18 @@ export class GameplayUpdater {
     context.passiveManager.update(effectiveDelta, context.playerHealth);
     context.relicManager.update(effectiveDelta);
     context.mapMechanicRuntime.update(effectiveDelta);
-    const mapMoveSpeedMultiplier = context.mapMechanicRuntime.getPlayerSpeedMultiplierAt(
+    const playerSlowState = context.mapMechanicRuntime.getPlayerSlowState(
       context.player.body.x,
       context.player.body.y,
     );
+    const mapMoveSpeedMultiplier = playerSlowState.multiplier;
     context.player.setMapMoveSpeedMultiplier(
       Math.max(
         mapMoveSpeedMultiplier,
         context.characterRuntime.getMapMoveSpeedFloorMultiplier(),
       ),
     );
+    context.player.setSlowVisual(playerSlowState.isSlowed, playerSlowState.multiplier);
 
     if (options.isAutoMovementEnabled) {
       callbacks.updateAutoPlayer(playerDelta);
@@ -127,6 +129,7 @@ export class GameplayUpdater {
     const projectileCount = context.weaponManager.getProjectileCount();
     const pickupStats = context.pickupManager.getDebugStats();
     const spawnStats = context.spawnDirector.getDebugStats();
+    const populationStats = context.enemyFlow.getPopulationStats();
     const endlessStats = context.endlessManager.getDebugStats();
     const mapMechanicStats = context.mapMechanicRuntime.getDebugStats();
     const enemyMovementStats = context.enemyMovement.getDebugStats();
@@ -184,6 +187,14 @@ export class GameplayUpdater {
         `clamp=${spawnClampCount}`,
       ].join(' '),
       spawnClampCount,
+      minEnemyFloorSpawnCount: spawnStats.minEnemyFloorSpawnCount,
+      enemyMergeCount: populationStats.enemyMergeCount,
+      enemyMergeCreatedLv2: populationStats.enemyMergeCreatedLv2,
+      enemyMergeCreatedLv3: populationStats.enemyMergeCreatedLv3,
+      enemyMergeMaxLevelReached: populationStats.enemyMergeMaxLevelReached,
+      maxMergeLevelSeen: populationStats.maxMergeLevelSeen,
+      maxAliveEnemyCount: populationStats.maxAliveEnemyCount,
+      averageAliveEnemyCount: populationStats.averageAliveEnemyCount,
       pooledObjectCount: poolStats.activeCount + poolStats.availableCount,
       createdObjectCount: poolStats.createdCount,
       reusedObjectCount: poolStats.reusedCount,

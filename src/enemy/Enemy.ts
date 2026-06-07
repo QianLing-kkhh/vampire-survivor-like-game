@@ -6,6 +6,7 @@ import { EventBus } from '../core/EventBus';
 import { ShadowConfig, ShadowType } from '../visual/ShadowConfig';
 import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
+import { ENEMY_POPULATION_CONFIG } from './EnemyPopulationConfig';
 import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
 import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
 import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
@@ -17,6 +18,7 @@ export interface EnemyStats {
   exp: number;
   scale?: number;
   bossLike?: boolean;
+  mergeable?: boolean;
   dashEnabled?: boolean;
   dashCooldown?: number;
   dashWarningDuration?: number;
@@ -101,13 +103,18 @@ export class Enemy {
   private static readonly BOSS_DASH_DISTANCE_MULTIPLIER = 1.35;
   private static readonly NORMAL_WEAPON_KNOCKBACK_IMMUNITY_MS = 3000;
   private static readonly MINI_BOSS_WEAPON_KNOCKBACK_IMMUNITY_MS = 5000;
+  private static readonly MAP_SLOW_RING_COLOR = 0x38bdf8;
+  private static readonly MAP_SLOW_RING_STROKE_COLOR = 0x7dd3fc;
+  private static readonly MAP_SLOW_RING_ALPHA_MIN = 0.16;
+  private static readonly MAP_SLOW_RING_ALPHA_MAX = 0.35;
+  private static readonly MAP_SLOW_VISUAL_MIN_MULTIPLIER = 0.25;
 
   readonly body: Phaser.GameObjects.Arc;
-  readonly maxHp: number;
+  maxHp: number;
   readonly moveSpeed: number;
-  readonly damage: number;
-  readonly exp: number;
-  readonly scale: number;
+  damage: number;
+  exp: number;
+  scale: number;
   readonly bossLike: boolean;
   readonly dashEnabled: boolean;
   readonly dashCooldown: number;
@@ -118,7 +125,16 @@ export class Enemy {
 
   currentHp: number;
   isDead = false;
+  mergeLevel = 1;
   private eventBus?: EventBus<GameEventMap>;
+  private readonly baseScale: number;
+  private readonly mergeable: boolean;
+  private spawnMergeLockRemainingMs = ENEMY_POPULATION_CONFIG.spawnMergeLockMs;
+  private mergeCooldownRemainingMs = 0;
+  private mergeCheckCooldownRemainingMs = 0;
+  private movementLockRemainingMs = 0;
+  private contactDamageImmunityRemainingMs = 0;
+  private removedByMerge = false;
   private baseScaleX = 1;
   private baseScaleY = 1;
   private baseScaleBody?: Phaser.GameObjects.GameObject;
@@ -140,6 +156,7 @@ export class Enemy {
   private modifierRuntime?: EnemyModifierRuntime;
   private shadow?: Phaser.GameObjects.Ellipse;
   private readonly shadowType: ShadowType;
+  private mapSlowVisual?: Phaser.GameObjects.Arc;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -154,8 +171,15 @@ export class Enemy {
     this.damage = stats.damage;
     this.exp = stats.exp;
     this.scale = stats.scale ?? 1;
+    this.baseScale = this.scale;
     this.bossLike = stats.bossLike === true;
     this.dashEnabled = this.id === 'boss' && stats.dashEnabled === true;
+    this.mergeable = stats.mergeable !== false
+      && !this.bossLike
+      && !this.dashEnabled
+      && !this.id.endsWith('_boss')
+      && this.id !== 'boss'
+      && !this.id.startsWith('endless_');
     this.dashCooldown = stats.dashCooldown ?? 0;
     this.dashWarningDuration = stats.dashWarningDuration ?? 0;
     this.dashDuration = stats.dashDuration ?? 0;
@@ -223,7 +247,61 @@ export class Enemy {
   }
 
   updateModifiers(deltaMs: number): void {
+    this.updateMergeState(deltaMs);
     this.modifierRuntime?.update(deltaMs);
+  }
+
+  canMergeWith(other: Enemy, maxMergeLevel = ENEMY_POPULATION_CONFIG.mergeMaxLevel): boolean {
+    return (
+      this.canMerge(maxMergeLevel)
+      && other.canMerge(maxMergeLevel)
+      && this.id === other.id
+      && this.mergeLevel === other.mergeLevel
+      && this.isTouching(other)
+    );
+  }
+
+  mergeWith(other: Enemy): boolean {
+    if (this.isDead || other.isDead) {
+      return false;
+    }
+
+    this.mergeLevel = Math.min(
+      ENEMY_POPULATION_CONFIG.mergeMaxLevel,
+      this.mergeLevel + 1,
+    );
+    this.maxHp += other.maxHp;
+    this.currentHp += other.currentHp;
+    this.damage += other.damage;
+    this.exp += other.exp;
+    this.scale = this.baseScale * (
+      1 + ENEMY_POPULATION_CONFIG.mergeScaleGrowthPerLevel * (this.mergeLevel - 1)
+    );
+    this.mergeCooldownRemainingMs = ENEMY_POPULATION_CONFIG.mergeCooldownMs;
+    this.mergeCheckCooldownRemainingMs = ENEMY_POPULATION_CONFIG.mergeCheckCooldownMs;
+    this.movementLockRemainingMs = ENEMY_POPULATION_CONFIG.mergeMovementLockMs;
+    this.contactDamageImmunityRemainingMs = ENEMY_POPULATION_CONFIG.mergeContactDamageImmunityMs;
+    this.refreshVisualScale();
+    other.isDead = true;
+    other.removedByMerge = true;
+    other.destroy();
+    return true;
+  }
+
+  wasRemovedByMerge(): boolean {
+    return this.removedByMerge;
+  }
+
+  markMergeChecked(): void {
+    this.mergeCheckCooldownRemainingMs = ENEMY_POPULATION_CONFIG.mergeCheckCooldownMs;
+  }
+
+  isMovementLocked(): boolean {
+    return this.movementLockRemainingMs > 0;
+  }
+
+  isContactDamageSuppressed(): boolean {
+    return this.contactDamageImmunityRemainingMs > 0;
   }
 
   refreshShadow(): void {
@@ -239,6 +317,7 @@ export class Enemy {
       setDisplaySize?: (width: number, height: number) => void;
       setScale?: (x: number, y?: number) => void;
     };
+    body.radius = 12 * this.scale;
 
     if (body.setDisplaySize) {
       body.setDisplaySize(displaySize, displaySize);
@@ -477,7 +556,54 @@ export class Enemy {
     this.destroyDashWarnings();
     ShadowFactory.destroyShadow(this.shadow);
     this.shadow = undefined;
+    this.clearMapSlowVisual();
     this.body.destroy();
+  }
+
+  setMapSlowVisual(active: boolean, multiplier = 1): void {
+    if (active) {
+      if (!this.isBodyUsable()) {
+        this.clearMapSlowVisual();
+        return;
+      }
+
+      const normalizedMultiplier = Math.max(
+        Enemy.MAP_SLOW_VISUAL_MIN_MULTIPLIER,
+        Math.min(1, multiplier),
+      );
+      const intensity = (1 - normalizedMultiplier) / (1 - Enemy.MAP_SLOW_VISUAL_MIN_MULTIPLIER);
+      const alpha = Phaser.Math.Linear(
+        Enemy.MAP_SLOW_RING_ALPHA_MIN,
+        Enemy.MAP_SLOW_RING_ALPHA_MAX,
+        Phaser.Math.Clamp(intensity, 0, 1),
+      );
+      const ringRadius = this.getBodyRadius() * 1.45 * (1 + intensity * 0.2);
+
+      if (!this.mapSlowVisual) {
+        this.mapSlowVisual = this.scene.add.circle(
+          this.body.x,
+          this.body.y,
+          ringRadius,
+          Enemy.MAP_SLOW_RING_COLOR,
+          0.16,
+        );
+        this.mapSlowVisual.setDepth(this.getMapSlowVisualDepth());
+      }
+
+      this.mapSlowVisual.setPosition(this.body.x, this.body.y);
+      this.mapSlowVisual.setRadius(ringRadius);
+      this.mapSlowVisual.setFillStyle(Enemy.MAP_SLOW_RING_COLOR, alpha * 0.25);
+      this.mapSlowVisual.setStrokeStyle(2, Enemy.MAP_SLOW_RING_STROKE_COLOR, Math.min(1, alpha + 0.2));
+      this.mapSlowVisual.setVisible(true);
+      return;
+    }
+
+    this.clearMapSlowVisual();
+  }
+
+  clearMapSlowVisual(): void {
+    this.mapSlowVisual?.setVisible(false);
+    this.mapSlowVisual?.setAlpha(0);
   }
 
   private startDashWarning(
@@ -662,6 +788,51 @@ export class Enemy {
     const body = this.body as Phaser.GameObjects.GameObject & { radius?: number };
 
     return body.radius ?? 12 * this.scale;
+  }
+
+  private updateMergeState(deltaMs: number): void {
+    const effectiveDeltaMs = Math.max(0, deltaMs);
+
+    this.spawnMergeLockRemainingMs = Math.max(0, this.spawnMergeLockRemainingMs - effectiveDeltaMs);
+    this.mergeCooldownRemainingMs = Math.max(0, this.mergeCooldownRemainingMs - effectiveDeltaMs);
+    this.mergeCheckCooldownRemainingMs = Math.max(0, this.mergeCheckCooldownRemainingMs - effectiveDeltaMs);
+    this.movementLockRemainingMs = Math.max(0, this.movementLockRemainingMs - effectiveDeltaMs);
+    this.contactDamageImmunityRemainingMs = Math.max(
+      0,
+      this.contactDamageImmunityRemainingMs - effectiveDeltaMs,
+    );
+  }
+
+  private canMerge(maxMergeLevel: number): boolean {
+    return (
+      this.mergeable
+      && !this.isDead
+      && this.mergeLevel < maxMergeLevel
+      && this.spawnMergeLockRemainingMs <= 0
+      && this.mergeCooldownRemainingMs <= 0
+      && this.mergeCheckCooldownRemainingMs <= 0
+    );
+  }
+
+  private isTouching(other: Enemy): boolean {
+    return Phaser.Math.Distance.Between(
+      this.body.x,
+      this.body.y,
+      other.body.x,
+      other.body.y,
+    ) <= this.getBodyRadius() + other.getBodyRadius();
+  }
+
+  private getMapSlowVisualDepth(): number {
+    if (this.bossLike || this.id === 'boss' || this.id.startsWith('endless_')) {
+      return 36;
+    }
+
+    return 34;
+  }
+
+  private isBodyUsable(): boolean {
+    return Boolean(this.body && this.body.scene && this.body.active !== false);
   }
 
   private createFallbackBody(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Arc {

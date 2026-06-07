@@ -1,0 +1,6379 @@
+{
+  "generatedAt": "2026-06-07T04:10:05.984Z",
+  "pass": true,
+  "checks": [
+    {
+      "name": "manifest_exists",
+      "passed": true,
+      "details": {
+        "path": "C:\\Users\\sdewq\\Documents\\vampire-survivor-like-game\\public\\assets\\art001\\animation_manifest.json",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_parsed",
+      "passed": true,
+      "details": {
+        "path": "C:\\Users\\sdewq\\Documents\\vampire-survivor-like-game\\public\\assets\\art001\\animation_manifest.json"
+      }
+    },
+    {
+      "name": "manifest_no_duplicate_paths",
+      "passed": true,
+      "details": {
+        "duplicates": []
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/assassin_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/portrait.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/portrait.png",
+        "actual": "128x128",
+        "expected": "128x128"
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/hit_fx.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/hit_fx.png",
+        "actual": "96x96",
+        "expected": "96x96"
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default_walk_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default_walk_sheet.png",
+        "actual": "256x64",
+        "expected": "256x64"
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/blink_trail.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/blink_trail.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/blink_trail.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/blink_trail.png",
+        "actual": "128x64",
+        "expected": "128x64"
+      }
+    },
+    {
+      "name": "required_file_player/assassin_default/blink_flash.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/blink_flash.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/assassin_default/blink_flash.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/blink_flash.png",
+        "actual": "96x96",
+        "expected": "96x96"
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/witch_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/portrait.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/portrait.png",
+        "actual": "128x128",
+        "expected": "128x128"
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/hit_fx.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/hit_fx.png",
+        "actual": "96x96",
+        "expected": "96x96"
+      }
+    },
+    {
+      "name": "required_file_player/witch_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default_walk_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default_walk_sheet.png",
+        "actual": "256x64",
+        "expected": "256x64"
+      }
+    },
+    {
+      "name": "required_file_player/witch_default/slow_zone.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/slow_zone.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/witch_default/slow_zone.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/slow_zone.png",
+        "actual": "192x192",
+        "expected": "192x192"
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/priest_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/portrait.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/portrait.png",
+        "actual": "128x128",
+        "expected": "128x128"
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/hit_fx.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/hit_fx.png",
+        "actual": "96x96",
+        "expected": "96x96"
+      }
+    },
+    {
+      "name": "required_file_player/priest_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default_walk_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default_walk_sheet.png",
+        "actual": "256x64",
+        "expected": "256x64"
+      }
+    },
+    {
+      "name": "required_file_player/priest_default/sanctuary_circle.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/sanctuary_circle.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/priest_default/sanctuary_circle.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/sanctuary_circle.png",
+        "actual": "224x224",
+        "expected": "224x224"
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_right.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_right.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_right.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_left.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_left.png",
+        "actual": "320x80",
+        "expected": "320x80"
+      }
+    },
+    {
+      "name": "direction_frames_player/warrior_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_left.png",
+        "frameWidth": 80,
+        "frameHeight": 80,
+        "frames": 4
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_8dir_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_8dir_sheet.png",
+        "actual": "320x640",
+        "expected": "320x640"
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/portrait.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/portrait.png",
+        "actual": "128x128",
+        "expected": "128x128"
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/hit_fx.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/hit_fx.png",
+        "actual": "96x96",
+        "expected": "96x96"
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default_walk_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default_walk_sheet.png",
+        "actual": "256x64",
+        "expected": "256x64"
+      }
+    },
+    {
+      "name": "required_file_player/warrior_default/counter_wave.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/counter_wave.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/warrior_default/counter_wave.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/counter_wave.png",
+        "actual": "192x192",
+        "expected": "192x192"
+      }
+    },
+    {
+      "name": "required_file_player/player_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/player_walk_sheet.png",
+        "inManifest": true,
+        "exists": true
+      }
+    },
+    {
+      "name": "file_size_player/player_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/player_walk_sheet.png",
+        "actual": "256x64",
+        "expected": "256x64"
+      }
+    },
+    {
+      "name": "player_file_count_direction_complete",
+      "passed": true,
+      "details": {
+        "missing": 0,
+        "required": 90
+      }
+    },
+    {
+      "name": "player_direction_sheet_complete",
+      "passed": true,
+      "details": {
+        "found": 64,
+        "required": 64
+      }
+    },
+    {
+      "name": "player_no_empty_frames",
+      "passed": true,
+      "details": {
+        "emptyFrames": 0
+      }
+    },
+    {
+      "name": "player_transparent_background",
+      "passed": true,
+      "details": {
+        "noTransparent": 0
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/portrait.png",
+        "manifest": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/hit_fx.png",
+        "manifest": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default_walk_sheet.png",
+        "manifest": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/blink_trail.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/blink_trail.png",
+        "manifest": {
+          "frameWidth": 128,
+          "frameHeight": 64,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 128,
+          "frameHeight": 64,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/assassin_default/blink_flash.png",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/blink_flash.png",
+        "manifest": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/portrait.png",
+        "manifest": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/hit_fx.png",
+        "manifest": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default_walk_sheet.png",
+        "manifest": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/witch_default/slow_zone.png",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/slow_zone.png",
+        "manifest": {
+          "frameWidth": 192,
+          "frameHeight": 192,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 192,
+          "frameHeight": 192,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/portrait.png",
+        "manifest": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/hit_fx.png",
+        "manifest": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default_walk_sheet.png",
+        "manifest": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/priest_default/sanctuary_circle.png",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/sanctuary_circle.png",
+        "manifest": {
+          "frameWidth": 224,
+          "frameHeight": 224,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 224,
+          "frameHeight": 224,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/walk_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_up.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_up_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_down_right.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_right.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_down.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_down_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_up_left.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_up_left.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/idle_8dir_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_8dir_sheet.png",
+        "manifest": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        },
+        "expected": {
+          "frameWidth": 80,
+          "frameHeight": 80,
+          "frames": 32
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/portrait.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/portrait.png",
+        "manifest": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 128,
+          "frameHeight": 128,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/hit_fx.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/hit_fx.png",
+        "manifest": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 96,
+          "frameHeight": 96,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default_walk_sheet.png",
+        "manifest": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/warrior_default/counter_wave.png",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/counter_wave.png",
+        "manifest": {
+          "frameWidth": 192,
+          "frameHeight": 192,
+          "frames": 1
+        },
+        "expected": {
+          "frameWidth": 192,
+          "frameHeight": 192,
+          "frames": 1
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_match_player/player_walk_sheet.png",
+      "passed": true,
+      "details": {
+        "path": "player/player_walk_sheet.png",
+        "manifest": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        },
+        "expected": {
+          "frameWidth": 64,
+          "frameHeight": 64,
+          "frames": 4
+        }
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_effects_boss_dash_impact_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_effects_boss_dash_impact_sheet",
+        "path": "effects/boss_dash_impact_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_effects_boss_dash_warning",
+      "passed": true,
+      "details": {
+        "key": "art_effects_boss_dash_warning",
+        "path": "effects/boss_dash_warning.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_effects_hit_flash_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_effects_hit_flash_sheet",
+        "path": "effects/hit_flash_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_effects_level_up_glow_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_effects_level_up_glow_sheet",
+        "path": "effects/level_up_glow_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_enemies_bat_boss_placeholder",
+      "passed": true,
+      "details": {
+        "key": "art_enemies_bat_boss_placeholder",
+        "path": "enemies/bat_boss_placeholder.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_enemies_bat_fly_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_enemies_bat_fly_sheet",
+        "path": "enemies/bat_fly_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_enemies_boss_lava_beast_idle_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_enemies_boss_lava_beast_idle_sheet",
+        "path": "enemies/boss_lava_beast_idle_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_enemies_golem_boss_placeholder",
+      "passed": true,
+      "details": {
+        "key": "art_enemies_golem_boss_placeholder",
+        "path": "enemies/golem_boss_placeholder.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_enemies_golem_walk_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_enemies_golem_walk_sheet",
+        "path": "enemies/golem_walk_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_enemies_slime_boss_placeholder",
+      "passed": true,
+      "details": {
+        "key": "art_enemies_slime_boss_placeholder",
+        "path": "enemies/slime_boss_placeholder.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_enemies_slime_walk_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_enemies_slime_walk_sheet",
+        "path": "enemies/slime_walk_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_passives_bracer_icon",
+      "passed": true,
+      "details": {
+        "key": "art_passives_bracer_icon",
+        "path": "passives/bracer_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_passives_clover_icon",
+      "passed": true,
+      "details": {
+        "key": "art_passives_clover_icon",
+        "path": "passives/clover_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_passives_empty_tome_icon",
+      "passed": true,
+      "details": {
+        "key": "art_passives_empty_tome_icon",
+        "path": "passives/empty_tome_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_passives_pummarola_icon",
+      "passed": true,
+      "details": {
+        "key": "art_passives_pummarola_icon",
+        "path": "passives/pummarola_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_passives_spinach_icon",
+      "passed": true,
+      "details": {
+        "key": "art_passives_spinach_icon",
+        "path": "passives/spinach_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_pickups_exp_gem",
+      "passed": true,
+      "details": {
+        "key": "art_pickups_exp_gem",
+        "path": "pickups/exp_gem.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_pickups_treasure_chest",
+      "passed": true,
+      "details": {
+        "key": "art_pickups_treasure_chest",
+        "path": "pickups/treasure_chest.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_ui_exp_icon",
+      "passed": true,
+      "details": {
+        "key": "art_ui_exp_icon",
+        "path": "ui/exp_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_ui_hp_icon",
+      "passed": true,
+      "details": {
+        "key": "art_ui_hp_icon",
+        "path": "ui/hp_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_ui_panel_bg",
+      "passed": true,
+      "details": {
+        "key": "art_ui_panel_bg",
+        "path": "ui/panel_bg.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_ui_passive_frame",
+      "passed": true,
+      "details": {
+        "key": "art_ui_passive_frame",
+        "path": "ui/passive_frame.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_ui_time_icon",
+      "passed": true,
+      "details": {
+        "key": "art_ui_time_icon",
+        "path": "ui/time_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_ui_weapon_frame",
+      "passed": true,
+      "details": {
+        "key": "art_ui_weapon_frame",
+        "path": "ui/weapon_frame.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_axe_icon",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_axe_icon",
+        "path": "weapons/axe_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_axe_projectile_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_axe_projectile_sheet",
+        "path": "weapons/axe_projectile_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_bible_orbit_book_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_bible_orbit_book_sheet",
+        "path": "weapons/bible_orbit_book_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_death_spiral_icon",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_death_spiral_icon",
+        "path": "weapons/death_spiral_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_death_spiral_projectile_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_death_spiral_projectile_sheet",
+        "path": "weapons/death_spiral_projectile_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_garlic_core_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_garlic_core_sheet",
+        "path": "weapons/garlic_core_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_holy_wand_icon",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_holy_wand_icon",
+        "path": "weapons/holy_wand_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_holy_wand_projectile_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_holy_wand_projectile_sheet",
+        "path": "weapons/holy_wand_projectile_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_knife_projectile_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_knife_projectile_sheet",
+        "path": "weapons/knife_projectile_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_magic_wand_icon",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_magic_wand_icon",
+        "path": "weapons/magic_wand_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_magic_wand_projectile_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_magic_wand_projectile_sheet",
+        "path": "weapons/magic_wand_projectile_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_soul_eater_core_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_soul_eater_core_sheet",
+        "path": "weapons/soul_eater_core_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_soul_eater_icon",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_soul_eater_icon",
+        "path": "weapons/soul_eater_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_thousand_edge_icon",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_thousand_edge_icon",
+        "path": "weapons/thousand_edge_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_thousand_edge_projectile_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_thousand_edge_projectile_sheet",
+        "path": "weapons/thousand_edge_projectile_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_unholy_vespers_icon",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_unholy_vespers_icon",
+        "path": "weapons/unholy_vespers_icon.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_weapons_unholy_vespers_orbit_book_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_weapons_unholy_vespers_orbit_book_sheet",
+        "path": "weapons/unholy_vespers_orbit_book_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_world_grass_tile",
+      "passed": true,
+      "details": {
+        "key": "art_world_grass_tile",
+        "path": "world/grass_tile.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_world_grave_landmark",
+      "passed": true,
+      "details": {
+        "key": "art_world_grave_landmark",
+        "path": "world/grave_landmark.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_world_ground_tile",
+      "passed": true,
+      "details": {
+        "key": "art_world_ground_tile",
+        "path": "world/ground_tile.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_world_rock_landmark",
+      "passed": true,
+      "details": {
+        "key": "art_world_rock_landmark",
+        "path": "world/rock_landmark.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_world_tree_landmark",
+      "passed": true,
+      "details": {
+        "key": "art_world_tree_landmark",
+        "path": "world/tree_landmark.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_river_tile",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_river_tile",
+        "path": "map-mechanics/river/river_tile.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_river_bank",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_river_bank",
+        "path": "map-mechanics/river/river_bank.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_river_ripple",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_river_ripple",
+        "path": "map-mechanics/river/river_ripple.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_river_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_river_minimap",
+        "path": "map-mechanics/river/river_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_swamp_pool",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_swamp_pool",
+        "path": "map-mechanics/swamp/swamp_pool.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_swamp_bubble",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_swamp_bubble",
+        "path": "map-mechanics/swamp/swamp_bubble.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_swamp_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_swamp_minimap",
+        "path": "map-mechanics/swamp/swamp_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_mud_patch",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_mud_patch",
+        "path": "map-mechanics/mud/mud_patch.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_mud_spot",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_mud_spot",
+        "path": "map-mechanics/mud/mud_spot.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_mud_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_mud_minimap",
+        "path": "map-mechanics/mud/mud_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_portal_blue",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_portal_blue",
+        "path": "map-mechanics/portal/portal_blue.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_portal_purple",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_portal_purple",
+        "path": "map-mechanics/portal/portal_purple.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_portal_green",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_portal_green",
+        "path": "map-mechanics/portal/portal_green.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_portal_minimap_blue",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_portal_minimap_blue",
+        "path": "map-mechanics/portal/portal_minimap_blue.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_portal_minimap_purple",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_portal_minimap_purple",
+        "path": "map-mechanics/portal/portal_minimap_purple.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_portal_minimap_green",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_portal_minimap_green",
+        "path": "map-mechanics/portal/portal_minimap_green.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_light_lamp",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_light_lamp",
+        "path": "map-mechanics/light/lamp.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_light_torch",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_light_torch",
+        "path": "map-mechanics/light/torch.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_light_crystal",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_light_crystal",
+        "path": "map-mechanics/light/crystal.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_light_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_light_minimap",
+        "path": "map-mechanics/light/light_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_obstacle_tree",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_obstacle_tree",
+        "path": "map-mechanics/obstacle/obstacle_tree.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_obstacle_rock",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_obstacle_rock",
+        "path": "map-mechanics/obstacle/obstacle_rock.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_obstacle_grave",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_obstacle_grave",
+        "path": "map-mechanics/obstacle/obstacle_grave.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_obstacle_wall",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_obstacle_wall",
+        "path": "map-mechanics/obstacle/obstacle_wall.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_obstacle_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_obstacle_minimap",
+        "path": "map-mechanics/obstacle/obstacle_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_hazard_spike",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_hazard_spike",
+        "path": "map-mechanics/hazard/hazard_spike.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_hazard_fire",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_hazard_fire",
+        "path": "map-mechanics/hazard/hazard_fire.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_hazard_poison",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_hazard_poison",
+        "path": "map-mechanics/hazard/hazard_poison.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_hazard_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_hazard_minimap",
+        "path": "map-mechanics/hazard/hazard_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_altar_basic",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_altar_basic",
+        "path": "map-mechanics/altar/altar_basic.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_altar_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_altar_minimap",
+        "path": "map-mechanics/altar/altar_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_spawner_nest",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_spawner_nest",
+        "path": "map-mechanics/spawner/spawner_nest.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_map_mechanics_spawner_minimap",
+      "passed": true,
+      "details": {
+        "key": "art_map_mechanics_spawner_minimap",
+        "path": "map-mechanics/spawner/spawner_minimap.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_world_graveyard_ground_tile",
+      "passed": true,
+      "details": {
+        "key": "art_world_graveyard_ground_tile",
+        "path": "world/graveyard_ground_tile.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_world_swamp_ground_tile",
+      "passed": true,
+      "details": {
+        "key": "art_world_swamp_ground_tile",
+        "path": "world/swamp_ground_tile.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_up",
+        "path": "player/assassin_default/walk_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_up",
+        "path": "player/assassin_default/idle_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_up_right",
+        "path": "player/assassin_default/walk_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_up_right",
+        "path": "player/assassin_default/idle_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_right",
+        "path": "player/assassin_default/walk_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_right",
+        "path": "player/assassin_default/idle_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_down_right",
+        "path": "player/assassin_default/walk_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_down_right",
+        "path": "player/assassin_default/idle_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_down",
+        "path": "player/assassin_default/walk_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_down",
+        "path": "player/assassin_default/idle_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_down_left",
+        "path": "player/assassin_default/walk_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_down_left",
+        "path": "player/assassin_default/idle_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_left",
+        "path": "player/assassin_default/walk_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_left",
+        "path": "player/assassin_default/idle_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_up_left",
+        "path": "player/assassin_default/walk_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_up_left",
+        "path": "player/assassin_default/idle_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_8dir_sheet",
+        "path": "player/assassin_default/walk_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_idle_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_idle_8dir_sheet",
+        "path": "player/assassin_default/idle_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_walk_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_walk_sheet",
+        "path": "player/assassin_default_walk_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_portrait",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_portrait",
+        "path": "player/assassin_default/portrait.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_hit_fx",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_hit_fx",
+        "path": "player/assassin_default/hit_fx.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_blink_trail",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_blink_trail",
+        "path": "player/assassin_default/blink_trail.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_assassin_default_blink_flash",
+      "passed": true,
+      "details": {
+        "key": "art_player_assassin_default_blink_flash",
+        "path": "player/assassin_default/blink_flash.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_up",
+        "path": "player/witch_default/walk_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_up",
+        "path": "player/witch_default/idle_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_up_right",
+        "path": "player/witch_default/walk_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_up_right",
+        "path": "player/witch_default/idle_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_right",
+        "path": "player/witch_default/walk_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_right",
+        "path": "player/witch_default/idle_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_down_right",
+        "path": "player/witch_default/walk_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_down_right",
+        "path": "player/witch_default/idle_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_down",
+        "path": "player/witch_default/walk_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_down",
+        "path": "player/witch_default/idle_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_down_left",
+        "path": "player/witch_default/walk_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_down_left",
+        "path": "player/witch_default/idle_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_left",
+        "path": "player/witch_default/walk_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_left",
+        "path": "player/witch_default/idle_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_up_left",
+        "path": "player/witch_default/walk_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_up_left",
+        "path": "player/witch_default/idle_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_8dir_sheet",
+        "path": "player/witch_default/walk_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_idle_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_idle_8dir_sheet",
+        "path": "player/witch_default/idle_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_walk_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_walk_sheet",
+        "path": "player/witch_default_walk_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_portrait",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_portrait",
+        "path": "player/witch_default/portrait.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_hit_fx",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_hit_fx",
+        "path": "player/witch_default/hit_fx.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_witch_default_slow_zone",
+      "passed": true,
+      "details": {
+        "key": "art_player_witch_default_slow_zone",
+        "path": "player/witch_default/slow_zone.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_up",
+        "path": "player/priest_default/walk_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_up",
+        "path": "player/priest_default/idle_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_up_right",
+        "path": "player/priest_default/walk_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_up_right",
+        "path": "player/priest_default/idle_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_right",
+        "path": "player/priest_default/walk_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_right",
+        "path": "player/priest_default/idle_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_down_right",
+        "path": "player/priest_default/walk_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_down_right",
+        "path": "player/priest_default/idle_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_down",
+        "path": "player/priest_default/walk_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_down",
+        "path": "player/priest_default/idle_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_down_left",
+        "path": "player/priest_default/walk_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_down_left",
+        "path": "player/priest_default/idle_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_left",
+        "path": "player/priest_default/walk_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_left",
+        "path": "player/priest_default/idle_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_up_left",
+        "path": "player/priest_default/walk_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_up_left",
+        "path": "player/priest_default/idle_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_8dir_sheet",
+        "path": "player/priest_default/walk_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_idle_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_idle_8dir_sheet",
+        "path": "player/priest_default/idle_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_walk_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_walk_sheet",
+        "path": "player/priest_default_walk_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_portrait",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_portrait",
+        "path": "player/priest_default/portrait.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_hit_fx",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_hit_fx",
+        "path": "player/priest_default/hit_fx.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_priest_default_sanctuary_circle",
+      "passed": true,
+      "details": {
+        "key": "art_player_priest_default_sanctuary_circle",
+        "path": "player/priest_default/sanctuary_circle.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_up",
+        "path": "player/warrior_default/walk_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_up",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_up",
+        "path": "player/warrior_default/idle_up.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_up_right",
+        "path": "player/warrior_default/walk_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_up_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_up_right",
+        "path": "player/warrior_default/idle_up_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_right",
+        "path": "player/warrior_default/walk_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_right",
+        "path": "player/warrior_default/idle_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_down_right",
+        "path": "player/warrior_default/walk_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_down_right",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_down_right",
+        "path": "player/warrior_default/idle_down_right.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_down",
+        "path": "player/warrior_default/walk_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_down",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_down",
+        "path": "player/warrior_default/idle_down.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_down_left",
+        "path": "player/warrior_default/walk_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_down_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_down_left",
+        "path": "player/warrior_default/idle_down_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_left",
+        "path": "player/warrior_default/walk_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_left",
+        "path": "player/warrior_default/idle_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_up_left",
+        "path": "player/warrior_default/walk_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_up_left",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_up_left",
+        "path": "player/warrior_default/idle_up_left.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_8dir_sheet",
+        "path": "player/warrior_default/walk_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_idle_8dir_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_idle_8dir_sheet",
+        "path": "player/warrior_default/idle_8dir_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_walk_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_walk_sheet",
+        "path": "player/warrior_default_walk_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_portrait",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_portrait",
+        "path": "player/warrior_default/portrait.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_hit_fx",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_hit_fx",
+        "path": "player/warrior_default/hit_fx.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_warrior_default_counter_wave",
+      "passed": true,
+      "details": {
+        "key": "art_player_warrior_default_counter_wave",
+        "path": "player/warrior_default/counter_wave.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "manifest_entry_exists_art_player_player_walk_sheet",
+      "passed": true,
+      "details": {
+        "key": "art_player_player_walk_sheet",
+        "path": "player/player_walk_sheet.png",
+        "exists": true
+      }
+    },
+    {
+      "name": "all_manifest_entries_exist",
+      "passed": true,
+      "details": {
+        "missing": 0
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_walk_up_down",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "walk",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_walk_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "walk",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_walk_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "walk",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_walk_left_right",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "walk",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_idle_up_down",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "idle",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_idle_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "idle",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_idle_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "idle",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_assassin_default_idle_left_right",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default",
+        "state": "idle",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "walk_up_not_equal_down_assassin_default",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default"
+      }
+    },
+    {
+      "name": "walk_upl_not_equal_downl_assassin_default",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default"
+      }
+    },
+    {
+      "name": "walk_right_not_equal_left_assassin_default",
+      "passed": true,
+      "details": {
+        "skin": "assassin_default"
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_walk_up_down",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "walk",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_walk_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "walk",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_walk_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "walk",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_walk_left_right",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "walk",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_idle_up_down",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "idle",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_idle_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "idle",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_idle_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "idle",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_witch_default_idle_left_right",
+      "passed": true,
+      "details": {
+        "skin": "witch_default",
+        "state": "idle",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "walk_up_not_equal_down_witch_default",
+      "passed": true,
+      "details": {
+        "skin": "witch_default"
+      }
+    },
+    {
+      "name": "walk_upl_not_equal_downl_witch_default",
+      "passed": true,
+      "details": {
+        "skin": "witch_default"
+      }
+    },
+    {
+      "name": "walk_right_not_equal_left_witch_default",
+      "passed": true,
+      "details": {
+        "skin": "witch_default"
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_walk_up_down",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "walk",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_walk_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "walk",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_walk_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "walk",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_walk_left_right",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "walk",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_idle_up_down",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "idle",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_idle_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "idle",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_idle_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "idle",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_priest_default_idle_left_right",
+      "passed": true,
+      "details": {
+        "skin": "priest_default",
+        "state": "idle",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "walk_up_not_equal_down_priest_default",
+      "passed": true,
+      "details": {
+        "skin": "priest_default"
+      }
+    },
+    {
+      "name": "walk_upl_not_equal_downl_priest_default",
+      "passed": true,
+      "details": {
+        "skin": "priest_default"
+      }
+    },
+    {
+      "name": "walk_right_not_equal_left_priest_default",
+      "passed": true,
+      "details": {
+        "skin": "priest_default"
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_walk_up_down",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "walk",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_walk_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "walk",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_walk_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "walk",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_walk_left_right",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "walk",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_idle_up_down",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "idle",
+        "pair": [
+          "up",
+          "down"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_idle_up_right_down_right",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "idle",
+        "pair": [
+          "up_right",
+          "down_right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_idle_up_left_down_left",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "idle",
+        "pair": [
+          "up_left",
+          "down_left"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "direction_unique_warrior_default_idle_left_right",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default",
+        "state": "idle",
+        "pair": [
+          "left",
+          "right"
+        ],
+        "same": false
+      }
+    },
+    {
+      "name": "walk_up_not_equal_down_warrior_default",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default"
+      }
+    },
+    {
+      "name": "walk_upl_not_equal_downl_warrior_default",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default"
+      }
+    },
+    {
+      "name": "walk_right_not_equal_left_warrior_default",
+      "passed": true,
+      "details": {
+        "skin": "warrior_default"
+      }
+    },
+    {
+      "name": "style_alpha_walk_assassin_default",
+      "passed": true,
+      "details": {
+        "refAlpha": 0.3951171875,
+        "generatedAlpha": 0.2382421875,
+        "delta": -0.15687500000000001
+      }
+    },
+    {
+      "name": "style_bbox_height_walk_assassin_default",
+      "passed": true,
+      "details": {
+        "refHeight": 78,
+        "generatedHeight": 72,
+        "delta": -6
+      }
+    },
+    {
+      "name": "style_bbox_top_walk_assassin_default",
+      "passed": true,
+      "details": {
+        "refTop": 0,
+        "generatedTop": 4,
+        "delta": 4
+      }
+    },
+    {
+      "name": "style_luma_walk_assassin_default",
+      "passed": true,
+      "details": {
+        "refLuma": 78.57132970835414,
+        "generatedLuma": 123.28895447341091,
+        "delta": 44.71762476505677
+      }
+    },
+    {
+      "name": "style_saturation_walk_assassin_default",
+      "passed": true,
+      "details": {
+        "refSat": 0.16309298050360976,
+        "generatedSat": 0.19426640990865654,
+        "delta": 0.031173429405046776
+      }
+    },
+    {
+      "name": "style_alpha_walk_witch_default",
+      "passed": true,
+      "details": {
+        "refAlpha": 0.4511328125,
+        "generatedAlpha": 0.291953125,
+        "delta": -0.1591796875
+      }
+    },
+    {
+      "name": "style_bbox_height_walk_witch_default",
+      "passed": true,
+      "details": {
+        "refHeight": 78,
+        "generatedHeight": 72,
+        "delta": -6
+      }
+    },
+    {
+      "name": "style_bbox_top_walk_witch_default",
+      "passed": true,
+      "details": {
+        "refTop": 0,
+        "generatedTop": 4,
+        "delta": 4
+      }
+    },
+    {
+      "name": "style_luma_walk_witch_default",
+      "passed": true,
+      "details": {
+        "refLuma": 91.67116922100031,
+        "generatedLuma": 130.98764606190485,
+        "delta": 39.31647684090454
+      }
+    },
+    {
+      "name": "style_saturation_walk_witch_default",
+      "passed": true,
+      "details": {
+        "refSat": 0.27090089243376975,
+        "generatedSat": 0.1276805571758563,
+        "delta": -0.14322033525791344
+      }
+    },
+    {
+      "name": "style_alpha_walk_priest_default",
+      "passed": true,
+      "details": {
+        "refAlpha": 0.4384765625,
+        "generatedAlpha": 0.3082421875,
+        "delta": -0.130234375
+      }
+    },
+    {
+      "name": "style_bbox_height_walk_priest_default",
+      "passed": true,
+      "details": {
+        "refHeight": 78,
+        "generatedHeight": 72,
+        "delta": -6
+      }
+    },
+    {
+      "name": "style_bbox_top_walk_priest_default",
+      "passed": true,
+      "details": {
+        "refTop": 0,
+        "generatedTop": 4,
+        "delta": 4
+      }
+    },
+    {
+      "name": "style_luma_walk_priest_default",
+      "passed": true,
+      "details": {
+        "refLuma": 121.19483296213731,
+        "generatedLuma": 121.03104802940072,
+        "delta": -0.1637849327365899
+      }
+    },
+    {
+      "name": "style_saturation_walk_priest_default",
+      "passed": true,
+      "details": {
+        "refSat": 0.3307348184023899,
+        "generatedSat": 0.18603130818474245,
+        "delta": -0.14470351021764744
+      }
+    },
+    {
+      "name": "style_alpha_walk_warrior_default",
+      "passed": true,
+      "details": {
+        "refAlpha": 0.3976953125,
+        "generatedAlpha": 0.291015625,
+        "delta": -0.10667968750000001
+      }
+    },
+    {
+      "name": "style_bbox_height_walk_warrior_default",
+      "passed": true,
+      "details": {
+        "refHeight": 78,
+        "generatedHeight": 68,
+        "delta": -10
+      }
+    },
+    {
+      "name": "style_bbox_top_walk_warrior_default",
+      "passed": true,
+      "details": {
+        "refTop": 0,
+        "generatedTop": 6,
+        "delta": 6
+      }
+    },
+    {
+      "name": "style_luma_walk_warrior_default",
+      "passed": true,
+      "details": {
+        "refLuma": 94.05454604983113,
+        "generatedLuma": 117.83261744966433,
+        "delta": 23.778071399833195
+      }
+    },
+    {
+      "name": "style_saturation_walk_warrior_default",
+      "passed": true,
+      "details": {
+        "refSat": 0.2739504834150893,
+        "generatedSat": 0.2083680892741123,
+        "delta": -0.06558239414097702
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_assassin_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "frame": 0,
+        "nonTransparent": 1549
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_assassin_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "frame": 1,
+        "nonTransparent": 1537
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_assassin_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "frame": 2,
+        "nonTransparent": 1492
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_assassin_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/walk_down.png",
+        "frame": 3,
+        "nonTransparent": 1521
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_assassin_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "frame": 0,
+        "nonTransparent": 1517
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_assassin_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "frame": 1,
+        "nonTransparent": 1494
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_assassin_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "frame": 2,
+        "nonTransparent": 1505
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_assassin_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/assassin_default/idle_down.png",
+        "frame": 3,
+        "nonTransparent": 1542
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_witch_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "frame": 0,
+        "nonTransparent": 1865
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_witch_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "frame": 1,
+        "nonTransparent": 1902
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_witch_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "frame": 2,
+        "nonTransparent": 1838
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_witch_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/walk_down.png",
+        "frame": 3,
+        "nonTransparent": 1869
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_witch_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "frame": 0,
+        "nonTransparent": 1846
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_witch_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "frame": 1,
+        "nonTransparent": 1865
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_witch_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "frame": 2,
+        "nonTransparent": 1836
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_witch_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/witch_default/idle_down.png",
+        "frame": 3,
+        "nonTransparent": 1847
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_priest_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "frame": 0,
+        "nonTransparent": 1965
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_priest_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "frame": 1,
+        "nonTransparent": 2008
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_priest_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "frame": 2,
+        "nonTransparent": 1948
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_priest_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/walk_down.png",
+        "frame": 3,
+        "nonTransparent": 1970
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_priest_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "frame": 0,
+        "nonTransparent": 1954
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_priest_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "frame": 1,
+        "nonTransparent": 1970
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_priest_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "frame": 2,
+        "nonTransparent": 1943
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_priest_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/priest_default/idle_down.png",
+        "frame": 3,
+        "nonTransparent": 1956
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_warrior_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "frame": 0,
+        "nonTransparent": 1850
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_warrior_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "frame": 1,
+        "nonTransparent": 1876
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_warrior_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "frame": 2,
+        "nonTransparent": 1871
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_walk_warrior_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/walk_down.png",
+        "frame": 3,
+        "nonTransparent": 1853
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_warrior_default_0",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "frame": 0,
+        "nonTransparent": 1853
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_warrior_default_1",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "frame": 1,
+        "nonTransparent": 1846
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_warrior_default_2",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "frame": 2,
+        "nonTransparent": 1869
+      }
+    },
+    {
+      "name": "style_direction_frame_non_empty_idle_warrior_default_3",
+      "passed": true,
+      "details": {
+        "path": "player/warrior_default/idle_down.png",
+        "frame": 3,
+        "nonTransparent": 1871
+      }
+    }
+  ],
+  "summary": {
+    "manifest": {
+      "exists": true,
+      "parsed": true,
+      "version": "vsg-final-art001-20260606"
+    },
+    "totalManifestEntries": 171,
+    "missingFiles": 0,
+    "duplicatePaths": 0,
+    "directionFiles": {
+      "required": 64,
+      "found": 64
+    },
+    "emptyFrameCount": 0,
+    "noTransparentCount": 0,
+    "identicalDirectionPairs": []
+  }
+}

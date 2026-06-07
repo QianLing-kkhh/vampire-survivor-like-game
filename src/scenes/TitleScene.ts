@@ -138,7 +138,7 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('DailyChallengeScene');
     });
 
-    this.settingsButton = this.createButton(centerX - 140, centerY + 132, this.t('title.settings', 'Settings'), () => {
+    this.settingsButton = this.createButton(centerX - 140, centerY + 132, I18n.t('title.settings'), () => {
       this.cancelAutoStartCountdown();
       this.showSettingsMenu();
     });
@@ -286,7 +286,7 @@ export class TitleScene extends Phaser.Scene {
     this.recordsButton?.setText(I18n.t('title.records'));
     this.replayToolButton?.setText(I18n.t('title.replayTool'));
     this.dailyChallengeButton?.setText(I18n.t('title.dailyChallenge'));
-    this.settingsButton?.setText(this.t('title.settings', 'Settings'));
+    this.settingsButton?.setText(I18n.t('title.settings'));
     this.helpButton?.setText(I18n.t('common.help'));
     this.selectionText?.setText(this.formatSelectionSummary());
     this.refreshStatus();

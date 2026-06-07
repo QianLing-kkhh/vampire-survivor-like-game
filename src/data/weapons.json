@@ -24,9 +24,12 @@
     "behavior": {
       "type": "aura",
       "knockback": true,
-      "percentMaxHpDamage": 0.004
+      "percentMaxHpDamage": 0.006,
+      "percentDamageCap": 8,
+      "elitePercentDamageMultiplier": 0.5,
+      "bossPercentDamageMultiplier": 0.1
     },
-    "damage": 2.8,
+    "damage": 3.0,
     "cooldown": 0.35,
     "radius": 4.4,
     "knockbackPower": 18
@@ -71,16 +74,28 @@
     "behavior": {
       "type": "arcing",
       "trajectory": "spiralAccelerating",
-      "spiralTurns": 3,
-      "maxSpiralRadius": 70,
-      "acceleration": 187
+      "spiralTurns": 4.2,
+      "maxSpiralRadius": 105,
+      "acceleration": 150,
+      "scaleOverLifetime": {
+        "enabled": true,
+        "startScale": 1.0,
+        "endScale": 1.65,
+        "curve": "easeOut"
+      },
+      "hitRadiusOverLifetime": {
+        "enabled": true,
+        "startRadius": 32,
+        "endRadius": 54,
+        "curve": "easeOut"
+      }
     },
     "damage": 24,
     "cooldown": 2.2,
-    "projectileSpeed": 221,
+    "projectileSpeed": 185,
     "projectileCount": 1,
     "hitRadius": 32,
-    "lifetime": 2.0,
+    "lifetime": 2.35,
     "arcHeight": 220,
     "knockbackPower": 110,
     "knockbackSpeedFactor": 0.025,
@@ -148,16 +163,30 @@
     "behavior": {
       "type": "arcing",
       "trajectory": "spiralAccelerating",
-      "spiralTurns": 4.5,
-      "maxSpiralRadius": 110,
-      "acceleration": 238
+      "spiralTurns": 6.0,
+      "maxSpiralRadius": 135,
+      "acceleration": 170,
+      "scaleOverLifetime": {
+        "enabled": true,
+        "startScale": 1.05,
+        "endScale": 1.85,
+        "curve": "easeOut"
+      },
+      "hitRadiusOverLifetime": {
+        "enabled": true,
+        "startRadius": 36,
+        "endRadius": 68,
+        "curve": "easeOut"
+      }
     },
     "damage": 21.2,
     "cooldown": 1.2,
-    "projectileSpeed": 527,
+    "projectileSpeed": 390,
     "projectileCount": 5,
     "spreadAngle": 360,
     "pierce": 3,
+    "hitRadius": 36,
+    "lifetime": 2.45,
     "arcHeight": 260,
     "knockbackPower": 130,
     "knockbackSpeedFactor": 0.025,
@@ -169,11 +198,14 @@
     "behavior": {
       "type": "aura",
       "knockback": false,
-      "percentMaxHpDamage": 0.005
+      "percentMaxHpDamage": 0.008,
+      "percentDamageCap": 18,
+      "elitePercentDamageMultiplier": 0.5,
+      "bossPercentDamageMultiplier": 0.1
     },
-    "damage": 5.6,
+    "damage": 6.0,
     "cooldown": 0.3,
-    "radius": 4.5,
+    "radius": 4.7,
     "knockbackPower": 0
   }
 }

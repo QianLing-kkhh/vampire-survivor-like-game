@@ -119,11 +119,11 @@ export class PauseMenu {
       { label: I18n.t('pause.restart'), action: this.onRestart },
       { label: I18n.t('pause.returnToTitle'), action: this.onBackToTitle },
       {
-        label: 'Stats / Build',
+        label: I18n.t('pause.statsBuild'),
         action: () => this.renderStatsPage(),
       },
       {
-        label: this.t('pause.settings', 'Settings'),
+        label: I18n.t('pause.settings'),
         action: () => this.showSettingsMenu(),
       },
       {
@@ -142,83 +142,93 @@ export class PauseMenu {
   private renderStatsPage(): void {
     this.page = 'stats';
     this.clearPageItems();
-    this.title.setText('Stats / Build');
-    this.addSectionTitle('Character Stats');
-    this.addStatRow('HP', `${this.formatInteger(this.statsData.character.currentHp)} / ${this.formatInteger(this.statsData.character.maxHp)}`, 'hp_icon');
-    this.addStatRow('Move Speed', this.statsData.character.moveSpeed.toFixed(1));
-    this.addStatRow('Pickup Range', this.statsData.character.pickupRange.toFixed(1));
-    this.addStatRow('EXP Multiplier', this.statsData.character.expMultiplier.toFixed(2), 'exp_icon');
-    this.addStatRow('Level', `${this.statsData.character.level}`, 'exp_icon');
-    this.addStatRow('EXP', `${Math.floor(this.statsData.character.currentExp)} / ${Math.floor(this.statsData.character.requiredExp)}`, 'exp_icon');
-    this.addStatRow('Damage Taken', this.formatInteger(this.statsData.character.damageTaken));
-    this.addStatRow('Kill Count', `${this.statsData.character.killCount}`);
-    this.addStatRow('Treasure Opens', `${this.statsData.character.treasureOpenCount}`);
-    this.addStatRow('Boss Phase Damage', this.formatInteger(this.statsData.character.bossPhaseDamageTaken));
+    this.title.setText(I18n.t('pause.statsBuild'));
+    this.addSectionTitle(I18n.t('pause.characterStats'));
+    this.addStatRow(I18n.t('pause.hp'), `${this.formatInteger(this.statsData.character.currentHp)} / ${this.formatInteger(this.statsData.character.maxHp)}`, 'hp_icon');
+    this.addStatRow(I18n.t('pause.moveSpeed'), this.statsData.character.moveSpeed.toFixed(1));
+    this.addStatRow(I18n.t('pause.pickupRange'), this.statsData.character.pickupRange.toFixed(1));
+    this.addStatRow(I18n.t('pause.expMultiplier'), this.statsData.character.expMultiplier.toFixed(2), 'exp_icon');
+    this.addStatRow(I18n.t('pause.level'), `${this.statsData.character.level}`, 'exp_icon');
+    this.addStatRow(I18n.t('pause.exp'), `${Math.floor(this.statsData.character.currentExp)} / ${Math.floor(this.statsData.character.requiredExp)}`, 'exp_icon');
+    this.addStatRow(I18n.t('pause.damageTaken'), this.formatInteger(this.statsData.character.damageTaken));
+    this.addStatRow(I18n.t('pause.killCount'), `${this.statsData.character.killCount}`);
+    this.addStatRow(I18n.t('pause.treasureOpens'), `${this.statsData.character.treasureOpenCount}`);
+    this.addStatRow(I18n.t('pause.bossPhaseDamage'), this.formatInteger(this.statsData.character.bossPhaseDamageTaken));
 
     if (this.statsData.character.endlessMode || this.statsData.character.endlessStarted) {
-      this.addStatRow('Endless Time', this.formatTime(this.statsData.character.endlessTimeSeconds), 'time_icon');
+      this.addStatRow(I18n.t('pause.endlessTime'), this.formatTime(this.statsData.character.endlessTimeSeconds), 'time_icon');
       const shield = EndlessRewardManager.getGlobalShieldStatus();
 
-      this.addStatRow('Shield Stacks', `${shield.stacks} / ${shield.maxStacks}`);
-      this.addStatRow('Shield Consumed', `${shield.consumed}`);
-      this.addStatRow('Shield Absorbed Damage', this.formatInteger(shield.absorbedDamage));
+      this.addStatRow(I18n.t('pause.shieldStacks'), `${shield.stacks} / ${shield.maxStacks}`);
+      this.addStatRow(I18n.t('pause.shieldConsumed'), `${shield.consumed}`);
+      this.addStatRow(I18n.t('pause.shieldAbsorbed'), this.formatInteger(shield.absorbedDamage));
     }
 
-    this.addSectionTitle('Weapons');
+    this.addSectionTitle(I18n.t('pause.weapons'));
     for (const weapon of this.statsData.weapons.slice(0, 4)) {
       this.addWeaponBlock(weapon);
     }
 
     if (this.statsData.weapons.length > 4) {
-      this.addMutedText(`+${this.statsData.weapons.length - 4} more weapons`);
+      this.addMutedText(
+        I18n.t('pause.moreItems', {
+          count: this.statsData.weapons.length - 4,
+        }),
+      );
     }
 
-    this.addSectionTitle('Passives');
+    this.addSectionTitle(I18n.t('pause.passives'));
     for (const passive of this.statsData.passives.slice(0, 5)) {
       this.addPassiveBlock(passive);
     }
 
     if (this.statsData.passives.length > 5) {
-      this.addMutedText(`+${this.statsData.passives.length - 5} more passives`);
+      this.addMutedText(
+        I18n.t('pause.moreItems', {
+          count: this.statsData.passives.length - 5,
+        }),
+      );
     }
 
-    this.pageItems.push(this.createButton('Back', () => this.renderMainPage()));
+    this.pageItems.push(this.createButton(I18n.t('common.back'), () => this.renderMainPage()));
     this.applyLayout();
   }
 
   private addWeaponBlock(weapon: WeaponDetailInfo): void {
+    const weaponLevelText = `Lv.${weapon.level} / ${weapon.maxLevel}`;
     this.addIconText(
       weapon.iconKey,
       this.getInitials(weapon.displayWeaponId),
-      `${weapon.displayName} Lv.${weapon.level} / ${weapon.maxLevel}${weapon.evolved ? '  Evolved' : ''}`,
+      `${weaponLevelText}${weapon.evolved ? ` ${I18n.t('hud.evolved')}` : ''}`,
     );
 
     if (weapon.evolved) {
-      this.addMutedText(`From: ${this.formatName(weapon.baseWeaponId)}`);
+      this.addMutedText(I18n.t('pause.weaponEvolvedFrom'));
     }
 
     if (weapon.requiredPassiveId) {
+      const passiveLevelText = `Lv.${weapon.passiveLevel ?? 0} / ${weapon.requiredPassiveLevel ?? 5}`;
       this.addIconText(
         weapon.requiredPassiveIconKey,
-        this.getInitials(weapon.requiredPassiveId),
-        `Evolves with: ${weapon.requiredPassiveName ?? this.formatName(weapon.requiredPassiveId)} Lv.${weapon.passiveLevel ?? 0} / ${weapon.requiredPassiveLevel ?? 5}`,
+        this.getInitials(weapon.requiredPassiveName ?? weapon.requiredPassiveId),
+        `${I18n.t('pause.requires')}: ${passiveLevelText}`,
       );
     }
 
     for (const [label, value] of Object.entries(weapon.stats)) {
-      this.addStatRow(label, this.formatNumber(value));
+      this.addStatRow(this.getWeaponStatLabel(label), this.formatNumber(value));
     }
 
-    this.addStatRow('Total Damage', this.formatInteger(weapon.runtimeStats.damageDealt));
-    this.addStatRow('Hits', `${weapon.runtimeStats.hits}`);
-    this.addStatRow('Kills', `${weapon.runtimeStats.kills}`);
+    this.addStatRow(I18n.t('pause.weaponTotalDamage'), this.formatInteger(weapon.runtimeStats.damageDealt));
+    this.addStatRow(I18n.t('pause.hits'), `${weapon.runtimeStats.hits}`);
+    this.addStatRow(I18n.t('pause.kills'), `${weapon.runtimeStats.kills}`);
   }
 
   private addPassiveBlock(passive: PassiveDetailInfo): void {
     this.addIconText(
       passive.iconKey,
       this.getInitials(passive.passiveId),
-      `${passive.displayName} Lv.${passive.level} / ${passive.maxLevel}`,
+      `Lv.${passive.level} / ${passive.maxLevel}`,
     );
     this.addStatRow(passive.effectLabel, passive.effectValue);
 
@@ -227,7 +237,7 @@ export class PauseMenu {
         this.addIconText(
           this.getWeaponIconKey(weaponId),
           this.getInitials(weaponId),
-          `Related: ${this.formatName(weaponId)}`,
+          this.getInitials(weaponId),
         );
       }
     }
@@ -515,6 +525,13 @@ export class PauseMenu {
       : value.toFixed(2).replace(/\.?0+$/, '');
   }
 
+  private getWeaponStatLabel(label: string): string {
+    const key = `pause.weaponStat.${label.toLowerCase().replace(/\\s+/g, '')}`;
+    const translated = I18n.t(key);
+
+    return translated === key ? label : translated;
+  }
+
   private formatTime(timeSeconds: number): string {
     const totalSeconds = Math.floor(timeSeconds);
     const minutes = Math.floor(totalSeconds / 60);
@@ -529,18 +546,5 @@ export class PauseMenu {
       .map((part) => part.charAt(0).toUpperCase())
       .join('')
       .slice(0, 2);
-  }
-
-  private formatName(value: string): string {
-    return value
-      .split('_')
-      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-      .join(' ');
-  }
-
-  private t(key: string, fallback: string): string {
-    const value = I18n.t(key);
-
-    return value === key ? fallback : value;
   }
 }

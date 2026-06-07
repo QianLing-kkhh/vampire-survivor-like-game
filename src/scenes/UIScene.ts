@@ -2,9 +2,10 @@ import Phaser from 'phaser';
 
 import { DebugPanelData } from '../debug/DebugPanelData';
 import { DebugPanelManager } from '../debug/DebugPanelManager';
+import { I18n } from '../i18n/I18n';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import { HUD, HUDState } from '../ui/HUD';
-import { HelpPanel } from '../ui/HelpPanel';
+import { HelpOverlay } from '../ui/HelpOverlay';
 import { LevelUpPanel, LevelUpPanelConfig } from '../ui/LevelUpPanel';
 import { PauseMenu } from '../ui/PauseMenu';
 import { PauseMenuStatsData } from '../ui/PauseMenu';
@@ -25,7 +26,7 @@ export class UIScene extends Phaser.Scene {
   private hud?: HUD;
   private levelUpPanel?: LevelUpPanel;
   private pauseMenu?: PauseMenu;
-  private helpPanel?: HelpPanel;
+  private helpOverlay?: HelpOverlay;
   private debugPanelManager?: DebugPanelManager;
   private temporaryMessage?: Phaser.GameObjects.Text;
 
@@ -63,7 +64,10 @@ export class UIScene extends Phaser.Scene {
     if (options.length === 0) {
       this.levelUpPanel?.destroy();
       this.levelUpPanel = undefined;
-      this.showTemporaryMessage('No upgrades available');
+      this.showTemporaryMessage({
+        text: I18n.t('levelUp.noUpgrades'),
+        durationMs: 1400,
+      });
       return;
     }
 
@@ -131,21 +135,21 @@ export class UIScene extends Phaser.Scene {
   }
 
   private hidePauseMenu(): void {
-    this.hideHelpPanel();
+    this.hideHelpOverlay();
     this.pauseMenu?.destroy();
     this.pauseMenu = undefined;
   }
 
   private showHelpPanel(): void {
-    this.helpPanel?.destroy();
-    this.helpPanel = new HelpPanel(this, () => {
-      this.hideHelpPanel();
+    this.helpOverlay?.destroy();
+    this.helpOverlay = new HelpOverlay(this, () => {
+      this.hideHelpOverlay();
     });
   }
 
-  private hideHelpPanel(): void {
-    this.helpPanel?.destroy();
-    this.helpPanel = undefined;
+  private hideHelpOverlay(): void {
+    this.helpOverlay?.destroy();
+    this.helpOverlay = undefined;
   }
 
   private showTemporaryMessage(payload: TemporaryMessagePayload): void {
@@ -193,8 +197,8 @@ export class UIScene extends Phaser.Scene {
     this.levelUpPanel = undefined;
     this.pauseMenu?.destroy();
     this.pauseMenu = undefined;
-    this.helpPanel?.destroy();
-    this.helpPanel = undefined;
+    this.helpOverlay?.destroy();
+    this.helpOverlay = undefined;
     this.temporaryMessage?.destroy();
     this.temporaryMessage = undefined;
     this.debugPanelManager?.destroy();

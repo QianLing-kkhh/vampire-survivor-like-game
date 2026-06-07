@@ -32,6 +32,14 @@ export interface PerformanceStats {
   weaponEnemyScanEstimate?: number;
   spawnAccumulatorSummary?: string;
   spawnClampCount?: number;
+  minEnemyFloorSpawnCount?: number;
+  enemyMergeCount?: number;
+  enemyMergeCreatedLv2?: number;
+  enemyMergeCreatedLv3?: number;
+  enemyMergeMaxLevelReached?: number;
+  maxMergeLevelSeen?: number;
+  maxAliveEnemyCount?: number;
+  averageAliveEnemyCount?: number;
   pooledObjectCount?: number;
   createdObjectCount?: number;
   reusedObjectCount?: number;

@@ -26,12 +26,14 @@ export class CharacterSelectScene extends Phaser.Scene {
         name: I18n.t(character.nameKey),
         description: character.id === 'random_unlocked'
           ? I18n.t('characterSelection.randomUnlocked')
-          : [
-            I18n.t(character.descriptionKey),
-            `${I18n.t('selection.current')}: ${character.startingWeaponId}`,
-          ].join(' / '),
-        portraitKey: character.id === 'random_unlocked'
-          ? null
+          : I18n.t(character.descriptionKey),
+        startingWeaponId: character.id === 'random_unlocked' ? undefined : character.startingWeaponId,
+        startingWeaponIconKey: character.id === 'random_unlocked'
+          ? undefined
+          : (AssetKeyResolver.getWeaponIconKey(this, character.startingWeaponId) ?? undefined),
+        damageReactionSkill: character.damageReactionSkill?.type,
+      portraitKey: character.id === 'random_unlocked'
+          ? undefined
           : AssetKeyResolver.getPlayerPortraitKey(this, character.skinId, character.id),
       })),
       selectedId: selection.characterId,
@@ -62,7 +64,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     this.failureMessage = this.add.text(
       this.scale.width / 2,
       this.scale.height - 40,
-      'Character is locked or unavailable',
+      I18n.t('characterSelection.locked'),
       {
         color: '#fca5a5',
         fontFamily: 'Arial',

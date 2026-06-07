@@ -151,7 +151,7 @@ export class HUD {
     this.evolutionDebugText = this.createText(16, 520, '12px', UITheme.mutedTextColor);
     this.minimap = new MinimapOverlay(scene);
 
-    this.pauseButton = scene.add.text(0, 0, 'Pause', {
+    this.pauseButton = scene.add.text(0, 0, I18n.t('ui.pause'), {
       backgroundColor: '#111827',
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -239,7 +239,7 @@ export class HUD {
     this.setBarRatio(this.expBarFill, state.currentExp / requiredExp);
     this.timeText.setText(`${I18n.t('hud.time')} ${this.formatTime(state.timeSeconds)}`);
     this.scoreText.setText(`${I18n.t('hud.score')} ${this.formatInteger(state.score)}`);
-    this.relicText.setText(`Relics x${state.relicCount ?? 0}`);
+    this.relicText.setText(`${I18n.t('hud.relics')}: ${state.relicCount ?? 0}`);
     this.goalText.setText(this.getGoalText(state));
     this.updateHudMessage(state.message);
     this.updateShieldText();
@@ -540,7 +540,7 @@ export class HUD {
     const safeLevel = Math.max(0, Math.floor(level));
     const safeMax = Math.max(0, Math.floor(maxLevel));
 
-    return `Lv.${safeLevel}${safeMax > 0 && safeLevel >= safeMax ? 'Max' : ''}`;
+    return `Lv.${safeLevel}${safeMax > 0 && safeLevel >= safeMax ? I18n.t('ui.max') : ''}`;
   }
 
   private getOtherPassiveIconItems(state: HUDState): Array<{
@@ -560,7 +560,7 @@ export class HUD {
       .map((passive) => ({
         id: passive.id,
         textureKey: AssetKeyResolver.getPassiveIconKey(this.scene, passive.id) ?? undefined,
-        label: `Other ${passive.name} Lv.${passive.level}`,
+        label: `Lv.${passive.level}`,
         fallback: this.getInitials(passive.id),
       }));
   }
@@ -613,7 +613,7 @@ export class HUD {
   private getGoalText(state: HUDState): string {
     if (state.timeSeconds >= state.targetTimeSeconds) {
       if (state.endlessStarted) {
-        return `Endless ${this.formatTime(state.endlessTimeSeconds ?? 0)}`;
+        return `${I18n.t('hud.endless')} ${this.formatTime(state.endlessTimeSeconds ?? 0)}`;
       }
 
       return I18n.t('hud.goalDefeatBoss');
@@ -708,7 +708,11 @@ export class HUD {
       layout.pauseButtonPosition.x,
       layout.pauseButtonPosition.y,
     );
-    this.pauseButton.setText(this.screenManager.isPortrait() ? 'II' : 'Pause');
+    this.pauseButton.setText(
+      this.screenManager.isPortrait()
+        ? this.getPauseIconText()
+        : I18n.t('ui.pause'),
+    );
     this.pauseButton.setFontSize(layout.fontSize);
     this.pauseButton.setInteractive(
       new Phaser.Geom.Rectangle(
@@ -733,6 +737,14 @@ export class HUD {
     panel.setDepth(890);
     panel.setScrollFactor(0);
     return panel;
+  }
+
+  private getPauseIconText(): string {
+    const iconText = I18n.t('ui.pauseIcon').trim();
+
+    return iconText.length > 0 && !/�/.test(iconText)
+      ? iconText
+      : 'II';
   }
 
   private updateHudMessage(message: string | undefined): void {
@@ -865,7 +877,9 @@ export class HUD {
     const shield = EndlessRewardManager.getGlobalShieldStatus();
 
     this.shieldText.setVisible(shield.stacks > 0);
-    this.shieldText.setText(shield.stacks > 0 ? `Shield x${shield.stacks}` : '');
+    this.shieldText.setText(shield.stacks > 0
+      ? `${I18n.t('hud.shield')}: ${shield.stacks}${shield.maxStacks ? ` / ${shield.maxStacks}` : ''}`
+      : '');
   }
 
   private formatTime(timeSeconds: number): string {

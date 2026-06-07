@@ -171,6 +171,7 @@ export class AutoPlayer {
   private static readonly STEP_DISTANCE = 115;
   private static readonly TARGET_STICKY_BONUS = 2.2;
   private static readonly TARGET_COOLDOWN_FRAMES = 45;
+  private static readonly PORTAL_ESCAPE_SEEK_RADIUS = 420;
 
   private stickyTargetId?: string;
   private stickyWaypoint?: Phaser.Math.Vector2;
@@ -187,6 +188,7 @@ export class AutoPlayer {
     const targets = this.getTargets(context, player, danger.nearestDistance);
     const bestTarget = this.selectTarget(context, player, targets, danger.nearestDistance);
     const warningEscapeDirection = this.getBossWarningEscapeDirection(context, player);
+    const portalEscapeDirection = this.getPortalEscapeDirection(context, player, danger);
 
     if (
       bestTarget
@@ -205,6 +207,7 @@ export class AutoPlayer {
       bestTarget,
       cornerTrap,
       warningEscapeDirection,
+      portalEscapeDirection,
     );
 
     let bestScore = Number.NEGATIVE_INFINITY;
@@ -248,6 +251,7 @@ export class AutoPlayer {
     target: AutoTarget | undefined,
     cornerTrap: CornerTrapInfo,
     warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
   ): Candidate[] {
     const candidates: Candidate[] = [
       { direction: new Phaser.Math.Vector2(1, 0), reason: 'base' },
@@ -282,6 +286,10 @@ export class AutoPlayer {
 
     if (warningEscapeDirection.lengthSq() > 0) {
       candidates.push({ direction: warningEscapeDirection, reason: 'bossWarning' });
+    }
+
+    if (portalEscapeDirection.lengthSq() > 0) {
+      candidates.push({ direction: portalEscapeDirection, reason: 'portalEscape' });
     }
 
     if (target) {
@@ -333,6 +341,7 @@ export class AutoPlayer {
     score -= this.getObstaclePenalty(context, endpoint);
     score += this.getSlowZoneScore(context, endpoint, hpRatio);
     score += this.getPortalScore(context, endpoint, hpRatio);
+    score += this.getPortalEscapeCandidateScore(context, player, endpoint, danger, hpRatio);
     score += this.getWeaponCandidateScore(context, player, endpoint, direction, danger);
     score += this.getCornerEscapeScore(context, player, endpoint, direction, danger, cornerTrap);
     score += this.getBossWarningCandidateScore(context, player, endpoint);
@@ -925,6 +934,144 @@ export class AutoPlayer {
     }
 
     return score;
+  }
+
+  private getPortalEscapeDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): Phaser.Math.Vector2 {
+    const hpRatio = this.getHpRatio(context);
+
+    if (!this.isPortalEscapeState(context, player, danger, hpRatio)) {
+      return new Phaser.Math.Vector2(0, 0);
+    }
+
+    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const portal of context.map?.portals ?? []) {
+      if (!portal.target) {
+        continue;
+      }
+
+      const portalPoint = new Phaser.Math.Vector2(portal.x, portal.y);
+      const distance = Phaser.Math.Distance.Between(player.x, player.y, portal.x, portal.y);
+
+      if (distance <= portal.radius) {
+        continue;
+      }
+
+      if (distance > portal.radius + AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS) {
+        continue;
+      }
+
+      const exitPoint = new Phaser.Math.Vector2(portal.target.x, portal.target.y);
+      const currentRisk = this.getPortalEscapeRiskAt(context, player, hpRatio);
+      const exitRisk = this.getPortalEscapeRiskAt(context, exitPoint, hpRatio);
+
+      if (!this.isPortalExitUseful(currentRisk, exitRisk, hpRatio)) {
+        continue;
+      }
+
+      const direction = portalPoint.subtract(player);
+
+      if (direction.lengthSq() === 0) {
+        continue;
+      }
+
+      const score = (currentRisk - exitRisk) * 5
+        + Math.max(0, AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS - Math.max(0, distance - portal.radius)) * 0.035
+        + (hpRatio < 0.35 ? 8 : 0);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestDirection = direction.normalize();
+      }
+    }
+
+    return bestDirection;
+  }
+
+  private getPortalEscapeCandidateScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    hpRatio: number,
+  ): number {
+    if (!this.isPortalEscapeState(context, player, danger, hpRatio)) {
+      return 0;
+    }
+
+    let score = 0;
+    const currentRisk = this.getPortalEscapeRiskAt(context, player, hpRatio);
+
+    for (const portal of context.map?.portals ?? []) {
+      if (!portal.target) {
+        continue;
+      }
+
+      const playerDistance = Phaser.Math.Distance.Between(player.x, player.y, portal.x, portal.y);
+
+      if (playerDistance > portal.radius + AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS) {
+        continue;
+      }
+
+      const exitPoint = new Phaser.Math.Vector2(portal.target.x, portal.target.y);
+      const exitRisk = this.getPortalEscapeRiskAt(context, exitPoint, hpRatio);
+
+      if (!this.isPortalExitUseful(currentRisk, exitRisk, hpRatio)) {
+        continue;
+      }
+
+      const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, portal.x, portal.y);
+      const progress = playerDistance - endpointDistance;
+
+      if (endpointDistance <= portal.radius) {
+        score += 26 + Math.max(0, currentRisk - exitRisk) * 4 + (hpRatio < 0.35 ? 12 : 0);
+      } else {
+        score += Math.max(0, progress) * 0.11;
+
+        if (progress < -8) {
+          score -= 5;
+        }
+      }
+    }
+
+    return score;
+  }
+
+  private isPortalEscapeState(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    hpRatio: number,
+  ): boolean {
+    const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
+
+    return hpRatio < 0.45
+      || danger.nearestDistance < AutoPlayer.PANIC_DISTANCE
+      || danger.pressureCount >= 4
+      || currentPressure >= 5
+      || this.getTotalBossWarningRisk(context, player) > 0;
+  }
+
+  private isPortalExitUseful(currentRisk: number, exitRisk: number, hpRatio: number): boolean {
+    if (exitRisk <= currentRisk) {
+      return true;
+    }
+
+    return hpRatio < 0.35 && exitRisk <= 2.2;
+  }
+
+  private getPortalEscapeRiskAt(
+    context: AutoPlayerContext,
+    point: Phaser.Math.Vector2,
+    hpRatio: number,
+  ): number {
+    return this.getEnemyPressureAt(context, point, hpRatio)
+      + this.getTotalBossWarningRisk(context, point) * 7;
   }
 
   private getBossWarningCandidateScore(

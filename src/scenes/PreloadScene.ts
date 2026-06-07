@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { resolveArtManifestPath, resolveArtStyleRoot } from '../assets/AssetManifest';
 import {
   EXTERNAL_ART_MANIFEST_CACHE_KEY,
   EXTERNAL_ART_MANIFEST_PATH,
@@ -8,6 +9,7 @@ import {
 } from '../assets/ExternalArtManifest';
 import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
 import { AudioManager } from '../audio/AudioManager';
+import { VisualSettings } from '../visual/VisualSettings';
 
 type ArtManifestAsset = {
   path: string;
@@ -30,7 +32,6 @@ type LoaderFileInfo = {
 };
 
 const ART_MANIFEST_CACHE_KEY = 'art_animation_manifest';
-const ART_MANIFEST_PATH = 'assets/art/animation_manifest.json';
 
 const PLAYER_ART_SKIN_IDS = [
   'assassin_default',
@@ -196,6 +197,7 @@ const CRITICAL_ART_ASSETS = ART_MANIFEST_ASSETS.filter((asset) => (
 export class PreloadScene extends Phaser.Scene {
   private artManifestAssets: ArtManifestAsset[] = ART_MANIFEST_ASSETS;
   private artManifestVersion = 'fallback';
+  private readonly artStyleRoot = resolveArtStyleRoot(VisualSettings.getAssetStyle());
   private readonly queuedArtAssetKeys = new Set<string>();
   private readonly loadedCriticalArtAssetKeys = new Set<string>();
 
@@ -321,7 +323,7 @@ export class PreloadScene extends Phaser.Scene {
       console.warn('[art] No animation manifest found; using built-in art manifest fallback.');
       this.artManifestAssets = ART_MANIFEST_ASSETS;
     });
-    this.load.json(ART_MANIFEST_CACHE_KEY, ART_MANIFEST_PATH);
+    this.load.json(ART_MANIFEST_CACHE_KEY, this.getArtManifestPath());
   }
 
   private loadArtManifestAssetFiles(assets: readonly ArtManifestAsset[]): void {
@@ -428,10 +430,14 @@ export class PreloadScene extends Phaser.Scene {
     return Array.from(merged.values());
   }
 
+  private getArtManifestPath(): string {
+    return resolveArtManifestPath(VisualSettings.getAssetStyle());
+  }
+
   private getArtAssetPath(path: string): string {
     const cacheKey = encodeURIComponent(this.artManifestVersion);
 
-    return `assets/art/${path}?v=${cacheKey}`;
+    return `${this.artStyleRoot}${path}?v=${cacheKey}`;
   }
 
   private loadExternalArtManifest(): void {
