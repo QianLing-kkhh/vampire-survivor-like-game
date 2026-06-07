@@ -18,10 +18,33 @@ export type UpgradeOptionWithPreview = UpgradeOption & {
   preview?: string;
 };
 
+export interface TreasureAppliedUpgradeResult {
+  kind: 'levelUp' | 'acquired' | 'stat' | 'endlessReward';
+  targetType: 'weapon' | 'passive' | 'stat' | 'endlessReward' | 'unknown';
+  targetId?: string;
+  targetName: string;
+  beforeLevel?: number;
+  afterLevel?: number;
+  maxLevel?: number;
+  isMax?: boolean;
+  iconFallback?: string;
+}
+
+export interface TreasureEvolutionDetail {
+  baseWeaponId: string;
+  evolvedWeaponId: string;
+  baseName: string;
+  evolvedName: string;
+  iconFallback?: string;
+}
+
 export interface TreasureRewardResult {
-  type: 'upgrade' | 'evolution' | 'none';
+  type: 'upgrade' | 'evolution' | 'pending' | 'none';
   upgradeId?: string;
   evolution?: string;
+  options?: UpgradeOptionWithPreview[];
+  appliedUpgrade?: TreasureAppliedUpgradeResult;
+  evolutionDetail?: TreasureEvolutionDetail;
 }
 
 export interface UpgradeFlowParams {
@@ -82,7 +105,7 @@ export class UpgradeFlow {
   chooseAutoUpgrade(options: readonly UpgradeOption[]): UpgradeOption | null {
     return this.params.autoUpgradeSelector.select(
       options,
-      this.params.getAutoUpgradeSelectionContext(),
+      this.getAutoSelectionContext('levelUp'),
     ) ?? null;
   }
 
@@ -109,75 +132,107 @@ export class UpgradeFlow {
     return applied;
   }
 
-  applyTreasureReward(): TreasureRewardResult {
+  applyTreasureReward(autoSelect = true): TreasureRewardResult {
     const firstEvolution = this.tryEvolveFromTreasure();
 
     if (firstEvolution) {
       return {
         type: 'evolution',
-        evolution: firstEvolution,
+        evolution: this.formatEvolutionId(firstEvolution),
+        evolutionDetail: firstEvolution,
       };
     }
 
-    const options = this.params.upgradeSelector.selectOptions(
-      3,
-      this.params.getUpgradeSelectionContext(),
-    );
+    const options = this.getTreasureRewardOptions();
 
     if (options.length === 0) {
-      const fallbackRewardId = this.applyTreasureFallbackReward();
-
-      if (fallbackRewardId) {
-        return {
-          type: 'upgrade',
-          upgradeId: fallbackRewardId,
-        };
-      }
-
       console.warn('Treasure chest opened, but no upgrade options were available');
       this.recordInvalidUpgrade('chest:no_available_upgrade');
       return { type: 'none' };
     }
 
-    const upgrade = options[this.params.rewardRandom.nextInt(0, options.length - 1)];
+    if (!autoSelect) {
+      return {
+        type: 'pending',
+        options,
+      };
+    }
+
+    const upgrade = this.chooseTreasureReward(options);
+
+    if (!upgrade) {
+      return { type: 'none' };
+    }
+
+    return this.applyTreasureSelectedReward(upgrade);
+  }
+
+  applyTreasureSelectedReward(upgrade: UpgradeOption): TreasureRewardResult {
+    if (this.endlessRewardManager.isRewardId(upgrade.id)) {
+      const applied = this.endlessRewardManager.applyReward(upgrade.id, 'chest');
+
+      if (!applied) {
+        this.recordInvalidUpgrade(`chest:${upgrade.id}`);
+        return { type: 'none' };
+      }
+
+      this.emitEndlessRewardChosen(upgrade.id, 'chest');
+      this.emitUpgradeApplied(upgrade.id, 'endlessReward');
+      this.params.onUpgradeApplied?.();
+      return {
+        type: 'upgrade',
+        upgradeId: upgrade.id,
+        appliedUpgrade: {
+          kind: 'endlessReward',
+          targetType: 'endlessReward',
+          targetId: upgrade.id,
+          targetName: upgrade.name,
+          iconFallback: this.getInitials(upgrade.id),
+        },
+      };
+    }
+
+    const upgradeSnapshot = this.createTreasureUpgradeSnapshot(upgrade);
 
     if (!this.applyUpgrade(upgrade, `chest:${upgrade.id}`)) {
       console.warn(`Treasure chest selected invalid upgrade: ${upgrade.id}`);
-      const fallbackRewardId = this.applyTreasureFallbackReward();
-
-      if (fallbackRewardId) {
-        return {
-          type: 'upgrade',
-          upgradeId: fallbackRewardId,
-        };
-      }
-
       return { type: 'none' };
     }
 
     this.params.runState.recordChestUpgrade(upgrade.id);
     this.emitUpgradeApplied(upgrade.id, 'treasure');
     const secondEvolution = this.tryEvolveFromTreasure();
+    const appliedUpgrade = this.finalizeTreasureUpgradeResult(upgrade, upgradeSnapshot);
 
     if (secondEvolution) {
       return {
         type: 'evolution',
         upgradeId: upgrade.id,
-        evolution: secondEvolution,
+        evolution: this.formatEvolutionId(secondEvolution),
+        appliedUpgrade,
+        evolutionDetail: secondEvolution,
       };
     }
 
     return {
       type: 'upgrade',
       upgradeId: upgrade.id,
+      appliedUpgrade,
     };
   }
 
-  tryEvolveFromTreasure(): string | null {
-    const evolutionResult = this.params.evolutionManager.tryEvolve({
+  tryEvolveFromTreasure(): TreasureEvolutionDetail | null {
+    const evolutionContext = {
       weaponManager: this.params.weaponManager,
-      getPassiveLevel: (passiveId) => this.params.passiveManager.getLevel(passiveId),
-    });
+      getPassiveLevel: (passiveId: string) => this.params.passiveManager.getLevel(passiveId),
+    };
+    const selectedRule = this.params.autoUpgradeSelector.selectEvolutionRule(
+      this.params.evolutionManager.getEligibleEvolutionRules(evolutionContext),
+      this.getAutoSelectionContext('treasure'),
+    );
+    const evolutionResult = selectedRule
+      ? this.params.evolutionManager.tryEvolveRule(selectedRule, evolutionContext)
+      : undefined;
 
     if (!evolutionResult) {
       return null;
@@ -194,9 +249,13 @@ export class UpgradeFlow {
     );
     this.params.onUpgradeApplied?.();
 
-    const evolution = `${evolutionResult.baseWeaponId}->${evolutionResult.evolvedWeaponId}`;
-
-    return evolution;
+    return {
+      baseWeaponId: evolutionResult.baseWeaponId,
+      evolvedWeaponId: evolutionResult.evolvedWeaponId,
+      baseName: this.formatName(evolutionResult.baseWeaponId),
+      evolvedName: this.formatName(evolutionResult.evolvedWeaponId),
+      iconFallback: this.getInitials(evolutionResult.baseWeaponId),
+    };
   }
 
   private applyUpgrade(upgrade: UpgradeOption, reason: string): boolean {
@@ -225,29 +284,166 @@ export class UpgradeFlow {
     };
   }
 
-  private selectRandomEndlessReward(): UpgradeOption | undefined {
-    const rewards = this.endlessRewardManager.getChestFallbackRewardOptions();
+  private getTreasureRewardOptions(): UpgradeOptionWithPreview[] {
+    const options = this.params.upgradeSelector.selectOptions(
+      3,
+      this.params.getUpgradeSelectionContext(),
+    );
 
-    if (rewards.length === 0) {
-      return undefined;
+    if (options.length > 0) {
+      return options.map((option) => this.withPreview(option));
     }
 
-    return rewards[this.params.rewardRandom.nextInt(0, rewards.length - 1)];
+    return this.endlessRewardManager
+      .getChestFallbackRewardOptions()
+      .map((option) => this.withPreview(option));
   }
 
-  private applyTreasureFallbackReward(): string | null {
-    const reward = this.selectRandomEndlessReward();
-    const rewardId = this.endlessRewardManager.applyChestFallbackReward(reward?.id);
+  private chooseTreasureReward(options: readonly UpgradeOption[]): UpgradeOption | undefined {
+    return this.params.autoUpgradeSelector.select(
+      options,
+      this.getAutoSelectionContext('treasure'),
+    );
+  }
 
-    if (!rewardId) {
-      this.recordInvalidUpgrade('chest:no_available_fallback_reward');
-      return null;
+  private getAutoSelectionContext(
+    source: 'levelUp' | 'treasure',
+  ): AutoUpgradeSelectionContext {
+    return {
+      ...this.params.getAutoUpgradeSelectionContext(),
+      source,
+      endless: this.endlessRewardManager.getAutoRewardContext(),
+    };
+  }
+
+  private createTreasureUpgradeSnapshot(
+    upgrade: UpgradeOption,
+  ): TreasureAppliedUpgradeResult {
+    const newWeaponId = this.getNewWeaponIdForUpgrade(upgrade.id);
+
+    if (newWeaponId) {
+      return {
+        kind: 'acquired',
+        targetType: 'weapon',
+        targetId: newWeaponId,
+        targetName: upgrade.name,
+        beforeLevel: 0,
+        afterLevel: 1,
+        maxLevel: this.params.weaponManager.getWeaponUpgradeLimit(newWeaponId),
+        isMax: false,
+        iconFallback: this.getInitials(newWeaponId),
+      };
     }
 
-    this.emitEndlessRewardChosen(rewardId, 'chest');
-    this.emitUpgradeApplied(rewardId, 'endlessReward');
-    this.params.onUpgradeApplied?.();
-    return rewardId;
+    const weaponId = this.params.weaponManager.getBaseWeaponIdForUpgrade(upgrade.id);
+
+    if (weaponId) {
+      const targetWeaponId = this.params.weaponManager.getActualUpgradeTargetWeaponId(upgrade.id)
+        ?? weaponId;
+
+      return {
+        kind: 'levelUp',
+        targetType: 'weapon',
+        targetId: targetWeaponId,
+        targetName: this.formatName(targetWeaponId),
+        beforeLevel: this.params.weaponManager.getWeaponUpgradeTotal(weaponId),
+        maxLevel: this.params.weaponManager.getWeaponUpgradeLimit(weaponId),
+        iconFallback: this.getInitials(targetWeaponId),
+      };
+    }
+
+    if (this.params.passiveManager.isPassive(upgrade.id)) {
+      return {
+        kind: 'levelUp',
+        targetType: 'passive',
+        targetId: upgrade.id,
+        targetName: this.params.passiveManager.getPassiveName(upgrade.id),
+        beforeLevel: this.params.passiveManager.getPassiveLevel(upgrade.id),
+        maxLevel: this.params.passiveManager.getPassiveMaxLevel(upgrade.id),
+        iconFallback: this.getInitials(upgrade.id),
+      };
+    }
+
+    return {
+      kind: 'stat',
+      targetType: 'stat',
+      targetId: upgrade.id,
+      targetName: upgrade.name,
+      iconFallback: this.getInitials(upgrade.id),
+    };
+  }
+
+  private finalizeTreasureUpgradeResult(
+    upgrade: UpgradeOption,
+    snapshot: TreasureAppliedUpgradeResult,
+  ): TreasureAppliedUpgradeResult {
+    if (snapshot.kind === 'acquired' || snapshot.kind === 'stat') {
+      return snapshot;
+    }
+
+    if (snapshot.targetType === 'weapon' && snapshot.targetId) {
+      const baseWeaponId = this.params.weaponManager.getBaseWeaponId(snapshot.targetId);
+      const afterLevel = this.params.weaponManager.getWeaponUpgradeTotal(baseWeaponId);
+      const maxLevel = this.params.weaponManager.getWeaponUpgradeLimit(baseWeaponId);
+
+      return {
+        ...snapshot,
+        afterLevel,
+        maxLevel,
+        isMax: afterLevel >= maxLevel,
+      };
+    }
+
+    if (snapshot.targetType === 'passive' && snapshot.targetId) {
+      const afterLevel = this.params.passiveManager.getPassiveLevel(snapshot.targetId);
+      const maxLevel = this.params.passiveManager.getPassiveMaxLevel(snapshot.targetId);
+
+      return {
+        ...snapshot,
+        afterLevel,
+        maxLevel,
+        isMax: afterLevel >= maxLevel,
+      };
+    }
+
+    return {
+      ...snapshot,
+      targetName: snapshot.targetName || upgrade.name,
+    };
+  }
+
+  private getNewWeaponIdForUpgrade(upgradeId: string): string | undefined {
+    switch (upgradeId) {
+      case 'add_garlic':
+        return 'garlic';
+      case 'add_bible':
+        return 'bible';
+      case 'add_magic_wand':
+        return 'magic_wand';
+      case 'add_axe':
+        return 'axe';
+      default:
+        return undefined;
+    }
+  }
+
+  private formatEvolutionId(evolution: TreasureEvolutionDetail): string {
+    return `${evolution.baseWeaponId}->${evolution.evolvedWeaponId}`;
+  }
+
+  private getInitials(value: string): string {
+    return value
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase())
+      .join('')
+      .slice(0, 2);
+  }
+
+  private formatName(value: string): string {
+    return value
+      .split('_')
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join(' ');
   }
 
   private emitUpgradeApplied(

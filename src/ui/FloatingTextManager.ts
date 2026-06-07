@@ -7,12 +7,25 @@ import { PooledObjectFactory } from '../performance/PooledObjectFactory';
 
 import { FloatingText, FloatingTextConfig } from './FloatingText';
 
+export interface ChestUpgradeFloatingTextPayload {
+  name: string;
+  iconFallback?: string;
+  beforeLevel?: number;
+  afterLevel?: number;
+  maxLevel?: number;
+  isMax?: boolean;
+  kind?: 'levelUp' | 'acquired' | 'stat' | 'endlessReward' | 'evolution';
+  evolvedName?: string;
+}
+
 export class FloatingTextManager {
   private static readonly MAX_ACTIVE_TEXTS = 60;
   private static readonly MAX_POOL_SIZE = 80;
 
   private readonly texts: FloatingText[] = [];
   private readonly pool: ObjectPool<FloatingText>;
+  private chestUpgradeMessageLane = 0;
+  private enemyMergeMessageLane = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -73,6 +86,56 @@ export class FloatingTextManager {
     });
   }
 
+  showChestUpgrade(
+    x: number,
+    y: number,
+    payload: ChestUpgradeFloatingTextPayload,
+  ): void {
+    const lane = this.chestUpgradeMessageLane % 4;
+    this.chestUpgradeMessageLane += 1;
+    const prefix = payload.iconFallback ? `${payload.iconFallback} ` : '';
+    const label = this.formatChestUpgradeLabel(prefix, payload);
+
+    this.spawn(
+      x + (lane % 2 === 0 ? -12 : 12),
+      y - 56 - lane * 24,
+      label,
+      {
+        color: '#facc15',
+        fontSize: '24px',
+        lifetimeMs: 1500,
+        stroke: '#111827',
+        strokeThickness: 4,
+      },
+    );
+  }
+
+  showEnemyMergeLevelUp(
+    x: number,
+    y: number,
+    beforeLevel: number,
+    afterLevel: number,
+    maxLevel: number,
+  ): void {
+    const lane = this.enemyMergeMessageLane % 4;
+    this.enemyMergeMessageLane += 1;
+    const maxSuffix = afterLevel >= maxLevel ? ' MAX' : '';
+    const label = `Lv.${beforeLevel} -> Lv.${afterLevel}${maxSuffix}`;
+
+    this.spawn(
+      x + (lane % 2 === 0 ? -10 : 10),
+      y - 34 - lane * 16,
+      label,
+      {
+        color: '#facc15',
+        fontSize: '22px',
+        lifetimeMs: 1200,
+        stroke: '#172554',
+        strokeThickness: 4,
+      },
+    );
+  }
+
   update(deltaMs: number): void {
     for (let index = this.texts.length - 1; index >= 0; index -= 1) {
       if (this.texts[index].update(deltaMs)) {
@@ -105,10 +168,7 @@ export class FloatingTextManager {
     x: number,
     y: number,
     value: string,
-    config: {
-      color: string;
-      fontSize: string;
-    },
+    config: FloatingTextConfig,
   ): void {
     if (this.texts.length >= FloatingTextManager.MAX_ACTIVE_TEXTS) {
       const oldest = this.texts.shift();
@@ -126,5 +186,32 @@ export class FloatingTextManager {
     }
 
     this.texts.push(text);
+  }
+
+  private formatChestUpgradeLabel(
+    prefix: string,
+    payload: ChestUpgradeFloatingTextPayload,
+  ): string {
+    if (payload.kind === 'evolution') {
+      const evolvedName = payload.evolvedName ?? payload.name;
+
+      return `${prefix}${payload.name} -> ${evolvedName} EVOLVED`.trim();
+    }
+
+    if (payload.kind === 'stat' || payload.kind === 'endlessReward') {
+      return `${prefix}${payload.name} upgraded`.trim();
+    }
+
+    if (payload.kind === 'acquired' || (payload.beforeLevel ?? 0) <= 0) {
+      const afterLevel = payload.afterLevel ?? 1;
+
+      return `${prefix}${payload.name} acquired Lv.${afterLevel}`.trim();
+    }
+
+    const beforeLevel = payload.beforeLevel ?? 0;
+    const afterLevel = payload.afterLevel ?? beforeLevel;
+    const maxSuffix = payload.isMax ? ' MAX' : '';
+
+    return `${prefix}${payload.name} Lv.${beforeLevel} -> Lv.${afterLevel}${maxSuffix}`.trim();
   }
 }

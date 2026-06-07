@@ -6,6 +6,8 @@ export interface FloatingTextConfig {
   color: string;
   fontSize: string;
   lifetimeMs?: number;
+  stroke?: string;
+  strokeThickness?: number;
 }
 
 export class FloatingText implements Poolable {
@@ -29,8 +31,8 @@ export class FloatingText implements Poolable {
       color: config.color,
       fontSize: config.fontSize,
       fontStyle: 'bold',
-      stroke: '#111827',
-      strokeThickness: 3,
+      stroke: config.stroke ?? '#111827',
+      strokeThickness: config.strokeThickness ?? 3,
     });
     this.text.setOrigin(0.5);
     this.text.setDepth(1300);
@@ -97,8 +99,8 @@ export class FloatingText implements Poolable {
       color: config.color,
       fontSize: config.fontSize,
       fontStyle: 'bold',
-      stroke: '#111827',
-      strokeThickness: 3,
+      stroke: config.stroke ?? '#111827',
+      strokeThickness: config.strokeThickness ?? 3,
     });
     this.text.setAlpha(1);
     this.text.setVisible(true);

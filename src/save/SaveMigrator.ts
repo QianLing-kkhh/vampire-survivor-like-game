@@ -553,12 +553,16 @@ export class SaveMigrator {
     const autoUpgrade = rawSettings.autoUpgrade === undefined
       ? legacyAutoMode
       : Boolean(rawSettings.autoUpgrade);
+    const autoOpenTreasure = rawSettings.autoOpenTreasure === undefined
+      ? legacyAutoMode
+      : Boolean(rawSettings.autoOpenTreasure);
 
     return {
       gameplay: {
         ...DEFAULT_GAMEPLAY_SETTINGS,
         autoMovement,
         autoUpgrade,
+        autoOpenTreasure,
         fastMode: Boolean(rawSettings.fastMode),
         endlessMode: Boolean(rawSettings.endlessMode),
         autoTimeScale: this.readNumber(rawSettings.autoTimeScale, DEFAULT_GAMEPLAY_SETTINGS.autoTimeScale),

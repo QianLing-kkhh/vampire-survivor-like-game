@@ -9,6 +9,7 @@ export interface EnemyPopulationConfig {
   mergeContactDamageImmunityMs: number;
   maxMergesPerFrame: number;
   mergeScaleGrowthPerLevel: number;
+  mergeDetectionRadiusMultiplier: number;
   fallbackEnemyId: string;
 }
 
@@ -23,5 +24,6 @@ export const ENEMY_POPULATION_CONFIG: EnemyPopulationConfig = {
   mergeContactDamageImmunityMs: 500,
   maxMergesPerFrame: 8,
   mergeScaleGrowthPerLevel: 0.18,
+  mergeDetectionRadiusMultiplier: 1.75,
   fallbackEnemyId: 'slime',
 };

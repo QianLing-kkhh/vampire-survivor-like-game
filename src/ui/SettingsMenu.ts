@@ -832,6 +832,9 @@ export class SettingsMenu {
       this.toggleRow('autoUpgrade', this.t('settings.autoUpgrade', 'Auto Upgrade'), gameplay.autoUpgrade, () => {
         SettingsManager.updateGameplay({ autoUpgrade: !SettingsManager.getGameplay().autoUpgrade });
       }),
+      this.toggleRow('autoOpenTreasure', this.t('settings.autoOpenTreasure', 'Auto Open Treasure'), gameplay.autoOpenTreasure, () => {
+        SettingsManager.updateGameplay({ autoOpenTreasure: !SettingsManager.getGameplay().autoOpenTreasure });
+      }),
       this.toggleRow('fastMode', this.t('settings.fastMode', 'Fast Mode'), gameplay.fastMode, () => {
         SettingsManager.updateGameplay({ fastMode: !SettingsManager.getGameplay().fastMode });
       }),

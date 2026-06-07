@@ -1,35 +1,62 @@
+import type { CharacterDamageReactionType } from '../character/CharacterDamageReactionSkill';
+import type { CharacterBaseStats } from '../character/CharacterDefinition';
 import { EVOLUTION_RULES, EvolutionRule } from '../evolution/EvolutionRule';
 import { UpgradeOption } from '../progression/UpgradeOption';
-import { RandomSource } from '../random/RandomSource';
-import { SeededRandom } from '../random/SeededRandom';
+import type { RandomSource } from '../random/RandomSource';
+import type { AutoWeaponSnapshot } from './AutoPlayer';
 
-export type AutoUpgradeSelectionMode = 'weighted_random';
+export type AutoUpgradeSelectionMode = 'score_best';
+export type AutoUpgradeSelectionSource = 'levelUp' | 'treasure';
 
 export interface AutoUpgradeSelectionContext {
+  source?: AutoUpgradeSelectionSource;
   weaponIds: readonly string[];
+  weapons?: readonly AutoWeaponSnapshot[];
+  player?: {
+    currentHp: number;
+    maxHp: number;
+    shieldStacks?: number;
+  };
+  character?: {
+    characterId?: string;
+    damageReactionType?: CharacterDamageReactionType;
+    baseStats?: Partial<CharacterBaseStats>;
+  };
+  battle?: {
+    enemyPressure?: number;
+    nearestEnemyDistance?: number;
+    bossThreat?: boolean;
+  };
+  resources?: {
+    pickupCount?: number;
+    pickupExpTotal?: number;
+    treasureCount?: number;
+  };
+  endless?: {
+    started?: boolean;
+    shieldStacks?: number;
+    maxShieldStacks?: number;
+    overdriveAvailable?: boolean;
+    enemySlowAvailable?: boolean;
+    vacuumAvailable?: boolean;
+    vacuumCooldownRemainingSeconds?: number;
+  };
   getWeaponUpgradeTotal(weaponId: string): number;
   getPassiveLevel(passiveId: string): number;
 }
 
 export class AutoUpgradeSelector {
-  private static readonly NEW_WEAPON_WEIGHT = 1.2;
-  private static readonly WEAPON_UPGRADE_TOTAL_WEIGHT = 0.5;
-  private static readonly PASSIVE_LEVEL_WEIGHT = 0.6;
-  private static readonly EVOLUTION_FIRST_BONUS_THRESHOLD = 4;
-  private static readonly EVOLUTION_SECOND_BONUS_THRESHOLD = 6;
-  private static readonly EVOLUTION_READY_WEAPON_THRESHOLD = 8;
-  private static readonly EVOLUTION_PASSIVE_BONUS = 1.5;
-  private static readonly EVOLUTION_MISSING_PASSIVE_BONUS = 2.0;
-  private static readonly EVOLUTION_MISSING_WEAPON_UPGRADE_BONUS = 2.0;
-  private static readonly FOCUS_MISSING_PASSIVE_MULTIPLIER = 3;
-  private static readonly FOCUS_MISSING_WEAPON_UPGRADE_MULTIPLIER = 3;
-  private static readonly MAX_WEIGHT = 8;
+  private static readonly LOW_HP_RATIO = 0.35;
+  private static readonly HIGH_PRESSURE = 5;
+  private static readonly NEAR_ENEMY_DISTANCE = 150;
+  private static readonly VACUUM_PICKUP_COUNT_THRESHOLD = 70;
+  private static readonly VACUUM_EXP_THRESHOLD = 180;
+  private static readonly VACUUM_TREASURE_THRESHOLD = 2;
 
-  readonly mode: AutoUpgradeSelectionMode = 'weighted_random';
-  private random: RandomSource = new SeededRandom('auto-upgrade-fallback');
+  readonly mode: AutoUpgradeSelectionMode = 'score_best';
 
-  setRandomSource(random: RandomSource): void {
-    this.random = random;
+  setRandomSource(_random: RandomSource): void {
+    // Kept for the existing initializer contract. Selection is deterministic.
   }
 
   select(
@@ -40,287 +67,57 @@ export class AutoUpgradeSelector {
       return undefined;
     }
 
-    const completionOption = this.selectEvolutionCompletionOption(options, context);
-
-    if (completionOption) {
-      return completionOption;
-    }
-
-    const focusRule = this.getFocusEvolutionRule(context);
-
-    if (focusRule && !this.isEvolutionRequirementComplete(focusRule, context)) {
-      const missingRequirementOption = this.selectMissingEvolutionRequirement(
-        options,
-        focusRule,
-        context,
-      );
-
-      if (missingRequirementOption) {
-        return missingRequirementOption;
-      }
-
-      const focusCandidates = options.filter((option) => (
-        this.isFocusCandidate(option.id, focusRule)
-      ));
-
-      if (focusCandidates.length > 0) {
-        return this.selectWeighted(
-          focusCandidates,
-          context,
-          (option, weight) => this.getFocusAdjustedWeight(option.id, weight, focusRule, context),
-        );
-      }
-    }
-
-    return this.selectWeighted(options, context);
+    return [...options]
+      .map((option) => ({
+        option,
+        score: this.getOptionScore(option, context),
+      }))
+      .sort((a, b) => (
+        b.score - a.score
+          || a.option.id.localeCompare(b.option.id)
+      ))[0]?.option;
   }
 
-  private selectEvolutionCompletionOption(
-    options: readonly UpgradeOption[],
-    context?: AutoUpgradeSelectionContext,
-  ): UpgradeOption | undefined {
-    if (!context) {
-      return undefined;
-    }
-
-    const missingPassiveRules = this.getEligibleCompletionRules(context)
-      .filter((rule) => (
-        context.getWeaponUpgradeTotal(rule.baseWeaponId) >= rule.requiredWeaponUpgradeTotal
-        && context.getPassiveLevel(rule.requiredPassiveId) < rule.requiredPassiveLevel
-        && options.some((option) => option.id === rule.requiredPassiveId)
-      ));
-    const missingPassiveRule = this.selectHighestUpgradeTotalRule(
-      missingPassiveRules,
-      context,
-    );
-
-    if (missingPassiveRule) {
-      return options.find((option) => option.id === missingPassiveRule.requiredPassiveId);
-    }
-
-    const missingWeaponRules = this.getEligibleCompletionRules(context)
-      .filter((rule) => (
-        context.getPassiveLevel(rule.requiredPassiveId) >= rule.requiredPassiveLevel
-        && context.getWeaponUpgradeTotal(rule.baseWeaponId) < rule.requiredWeaponUpgradeTotal
-        && options.some((option) => this.getWeaponIdForUpgrade(option.id) === rule.baseWeaponId)
-      ));
-    const missingWeaponRule = this.selectHighestUpgradeTotalRule(
-      missingWeaponRules,
-      context,
-    );
-
-    if (!missingWeaponRule) {
-      return undefined;
-    }
-
-    const weaponUpgradeCandidates = options.filter((option) => (
-      this.getWeaponIdForUpgrade(option.id) === missingWeaponRule.baseWeaponId
-    ));
-
-    return this.selectWeighted(weaponUpgradeCandidates, context);
-  }
-
-  private getEligibleCompletionRules(context: AutoUpgradeSelectionContext): EvolutionRule[] {
-    return EVOLUTION_RULES.filter((rule) => (
-      context.weaponIds.includes(rule.baseWeaponId)
-      && !context.weaponIds.includes(rule.evolvedWeaponId)
-      && !this.isEvolutionRequirementComplete(rule, context)
-    ));
-  }
-
-  private selectHighestUpgradeTotalRule(
+  selectEvolutionRule(
     rules: readonly EvolutionRule[],
-    context: AutoUpgradeSelectionContext,
+    context?: AutoUpgradeSelectionContext,
   ): EvolutionRule | undefined {
     if (rules.length === 0) {
       return undefined;
     }
 
-    const highestUpgradeTotal = Math.max(
-      ...rules.map((rule) => context.getWeaponUpgradeTotal(rule.baseWeaponId)),
-    );
-    const highestRules = rules.filter((rule) => (
-      context.getWeaponUpgradeTotal(rule.baseWeaponId) === highestUpgradeTotal
-    ));
-    return this.random.pick(highestRules);
+    return [...rules]
+      .map((rule) => ({
+        rule,
+        score: this.getEvolutionRuleScore(rule, context),
+      }))
+      .sort((a, b) => (
+        b.score - a.score
+          || a.rule.evolvedWeaponId.localeCompare(b.rule.evolvedWeaponId)
+      ))[0]?.rule;
   }
 
-  private selectMissingEvolutionRequirement(
-    options: readonly UpgradeOption[],
-    rule: EvolutionRule,
-    context?: AutoUpgradeSelectionContext,
-  ): UpgradeOption | undefined {
-    if (!context) {
-      return undefined;
-    }
-
-    const weaponUpgradeTotal = context.getWeaponUpgradeTotal(rule.baseWeaponId);
-    const passiveLevel = context.getPassiveLevel(rule.requiredPassiveId);
-
-    if (
-      weaponUpgradeTotal >= rule.requiredWeaponUpgradeTotal
-      && passiveLevel < rule.requiredPassiveLevel
-    ) {
-      return options.find((option) => option.id === rule.requiredPassiveId);
-    }
-
-    if (
-      passiveLevel >= rule.requiredPassiveLevel
-      && weaponUpgradeTotal < rule.requiredWeaponUpgradeTotal
-    ) {
-      const weaponUpgradeCandidates = options.filter((option) => (
-        this.getWeaponIdForUpgrade(option.id) === rule.baseWeaponId
-      ));
-
-      return this.selectWeighted(weaponUpgradeCandidates, context);
-    }
-
-    return undefined;
-  }
-
-  private selectWeighted(
-    options: readonly UpgradeOption[],
-    context?: AutoUpgradeSelectionContext,
-    adjustWeight?: (option: UpgradeOption, weight: number) => number,
-  ): UpgradeOption | undefined {
-    if (options.length === 0) {
-      return undefined;
-    }
-
-    const weightedOptions = options.map((option) => {
-      const weight = this.getWeight(option, context);
-
-      return {
-        option,
-        weight: Math.max(1, adjustWeight?.(option, weight) ?? weight),
-      };
-    });
-    const totalWeight = weightedOptions.reduce(
-      (total, weightedOption) => total + weightedOption.weight,
-      0,
-    );
-
-    let roll = this.random.nextFloat(0, totalWeight);
-
-    for (const weightedOption of weightedOptions) {
-      roll -= weightedOption.weight;
-
-      if (roll > 0) {
-        continue;
-      }
-
-      return weightedOption.option;
-    }
-
-    return weightedOptions[weightedOptions.length - 1].option;
-  }
-
-  private getFocusEvolutionRule(
-    context?: AutoUpgradeSelectionContext,
-  ): EvolutionRule | undefined {
-    if (!context) {
-      return undefined;
-    }
-
-    const candidateRules = EVOLUTION_RULES.filter((rule) => (
-      context.weaponIds.includes(rule.baseWeaponId)
-      && !context.weaponIds.includes(rule.evolvedWeaponId)
-    ));
-
-    if (candidateRules.length === 0) {
-      return undefined;
-    }
-
-    const highestUpgradeTotal = Math.max(
-      ...candidateRules.map((rule) => context.getWeaponUpgradeTotal(rule.baseWeaponId)),
-    );
-    const highestRules = candidateRules.filter((rule) => (
-      context.getWeaponUpgradeTotal(rule.baseWeaponId) === highestUpgradeTotal
-    ));
-    return this.random.pick(highestRules);
-  }
-
-  private isFocusCandidate(upgradeId: string, rule: EvolutionRule): boolean {
-    return (
-      upgradeId === rule.requiredPassiveId
-      || this.getWeaponIdForUpgrade(upgradeId) === rule.baseWeaponId
-    );
-  }
-
-  private getFocusAdjustedWeight(
-    upgradeId: string,
-    weight: number,
-    rule: EvolutionRule,
-    context?: AutoUpgradeSelectionContext,
-  ): number {
-    if (!context) {
-      return weight;
-    }
-
-    const weaponUpgradeTotal = context.getWeaponUpgradeTotal(rule.baseWeaponId);
-    const passiveLevel = context.getPassiveLevel(rule.requiredPassiveId);
-
-    if (
-      upgradeId === rule.requiredPassiveId
-      && weaponUpgradeTotal >= rule.requiredWeaponUpgradeTotal
-      && passiveLevel < rule.requiredPassiveLevel
-    ) {
-      return weight * AutoUpgradeSelector.FOCUS_MISSING_PASSIVE_MULTIPLIER;
-    }
-
-    if (
-      this.getWeaponIdForUpgrade(upgradeId) === rule.baseWeaponId
-      && passiveLevel >= rule.requiredPassiveLevel
-      && weaponUpgradeTotal < rule.requiredWeaponUpgradeTotal
-    ) {
-      return weight * AutoUpgradeSelector.FOCUS_MISSING_WEAPON_UPGRADE_MULTIPLIER;
-    }
-
-    return weight;
-  }
-
-  private isEvolutionRequirementComplete(
-    rule: EvolutionRule,
-    context?: AutoUpgradeSelectionContext,
-  ): boolean {
-    if (!context) {
-      return false;
-    }
-
-    return (
-      context.getWeaponUpgradeTotal(rule.baseWeaponId) >= rule.requiredWeaponUpgradeTotal
-      && context.getPassiveLevel(rule.requiredPassiveId) >= rule.requiredPassiveLevel
-    );
-  }
-
-  private getWeight(
+  private getOptionScore(
     option: UpgradeOption,
     context?: AutoUpgradeSelectionContext,
   ): number {
-    let weight = 1;
+    const source = context?.source ?? 'levelUp';
+    let score = source === 'treasure' ? 12 : 8;
 
-    if (this.isNewWeaponUpgrade(option.id)) {
-      weight = AutoUpgradeSelector.NEW_WEAPON_WEIGHT;
+    score += this.getEvolutionProgressScore(option.id, context);
+    score += this.getStateScore(option.id, context);
+    score += this.getBuildScore(option.id, context);
+    score += this.getCharacterSynergyScore(option.id, context);
+    score += this.getEndlessRewardScore(option.id, context);
+
+    if (source === 'treasure') {
+      score += this.getTreasureImmediateScore(option.id, context);
     }
 
-    const weaponId = this.getWeaponIdForUpgrade(option.id);
-
-    if (weaponId && context?.weaponIds.includes(weaponId)) {
-      weight = 1 + context.getWeaponUpgradeTotal(weaponId)
-        * AutoUpgradeSelector.WEAPON_UPGRADE_TOTAL_WEIGHT;
-    }
-
-    if (this.isPassiveUpgrade(option.id)) {
-      weight = 1 + (context?.getPassiveLevel(option.id) ?? 0)
-        * AutoUpgradeSelector.PASSIVE_LEVEL_WEIGHT;
-    }
-
-    weight += this.getEvolutionWeightBonus(option.id, context);
-
-    return Math.max(1, Math.min(weight, AutoUpgradeSelector.MAX_WEIGHT));
+    return score;
   }
 
-  private getEvolutionWeightBonus(
+  private getEvolutionProgressScore(
     upgradeId: string,
     context?: AutoUpgradeSelectionContext,
   ): number {
@@ -328,47 +125,270 @@ export class AutoUpgradeSelector {
       return 0;
     }
 
-    let bonus = 0;
+    let score = 0;
     const upgradedWeaponId = this.getWeaponIdForUpgrade(upgradeId);
 
     for (const rule of EVOLUTION_RULES) {
-      const hasBaseWeapon = context.weaponIds.includes(rule.baseWeaponId);
-      const hasEvolvedWeapon = context.weaponIds.includes(rule.evolvedWeaponId);
-
-      if (!hasBaseWeapon || hasEvolvedWeapon) {
+      if (
+        !context.weaponIds.includes(rule.baseWeaponId)
+        || context.weaponIds.includes(rule.evolvedWeaponId)
+      ) {
         continue;
       }
 
-      const weaponUpgradeTotal = context.getWeaponUpgradeTotal(rule.baseWeaponId);
+      const weaponTotal = context.getWeaponUpgradeTotal(rule.baseWeaponId);
       const passiveLevel = context.getPassiveLevel(rule.requiredPassiveId);
+      const weaponProgress = Math.min(1, weaponTotal / Math.max(1, rule.requiredWeaponUpgradeTotal));
+      const passiveProgress = Math.min(1, passiveLevel / Math.max(1, rule.requiredPassiveLevel));
 
       if (upgradeId === rule.requiredPassiveId) {
-        if (weaponUpgradeTotal >= AutoUpgradeSelector.EVOLUTION_FIRST_BONUS_THRESHOLD) {
-          bonus += AutoUpgradeSelector.EVOLUTION_PASSIVE_BONUS;
-        }
+        score += 80 + weaponProgress * 180;
 
-        if (weaponUpgradeTotal >= AutoUpgradeSelector.EVOLUTION_SECOND_BONUS_THRESHOLD) {
-          bonus += AutoUpgradeSelector.EVOLUTION_PASSIVE_BONUS;
-        }
-
-        if (
-          weaponUpgradeTotal >= AutoUpgradeSelector.EVOLUTION_READY_WEAPON_THRESHOLD
-          && passiveLevel < rule.requiredPassiveLevel
-        ) {
-          bonus += AutoUpgradeSelector.EVOLUTION_MISSING_PASSIVE_BONUS;
+        if (weaponTotal >= rule.requiredWeaponUpgradeTotal && passiveLevel < rule.requiredPassiveLevel) {
+          score += 1200;
         }
       }
 
-      if (
-        upgradedWeaponId === rule.baseWeaponId
-        && passiveLevel >= rule.requiredPassiveLevel
-        && weaponUpgradeTotal < rule.requiredWeaponUpgradeTotal
-      ) {
-        bonus += AutoUpgradeSelector.EVOLUTION_MISSING_WEAPON_UPGRADE_BONUS;
+      if (upgradedWeaponId === rule.baseWeaponId) {
+        score += 60 + passiveProgress * 160 + weaponTotal * 12;
+
+        if (passiveLevel >= rule.requiredPassiveLevel && weaponTotal < rule.requiredWeaponUpgradeTotal) {
+          score += 950;
+        }
       }
     }
 
-    return bonus;
+    return score;
+  }
+
+  private getEvolutionRuleScore(
+    rule: EvolutionRule,
+    context?: AutoUpgradeSelectionContext,
+  ): number {
+    const weaponTotal = context?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0;
+    const passiveLevel = context?.getPassiveLevel(rule.requiredPassiveId) ?? 0;
+
+    return 2000
+      + weaponTotal * 24
+      + passiveLevel * 18
+      + this.getWeaponSynergyScore(rule.baseWeaponId, context) * 5
+      + (context?.source === 'treasure' ? 120 : 0);
+  }
+
+  private getStateScore(
+    upgradeId: string,
+    context?: AutoUpgradeSelectionContext,
+  ): number {
+    const hpRatio = this.getHpRatio(context);
+    const pressure = context?.battle?.enemyPressure ?? 0;
+    const nearestEnemyDistance = context?.battle?.nearestEnemyDistance ?? Infinity;
+    const bossThreat = context?.battle?.bossThreat === true;
+    const lowHp = hpRatio < AutoUpgradeSelector.LOW_HP_RATIO;
+    const highPressure = pressure >= AutoUpgradeSelector.HIGH_PRESSURE
+      || nearestEnemyDistance < AutoUpgradeSelector.NEAR_ENEMY_DISTANCE
+      || bossThreat;
+    let score = 0;
+
+    if (lowHp || highPressure) {
+      if (upgradeId === 'max_hp_up' || upgradeId === 'pummarola') {
+        score += lowHp ? 180 : 90;
+      }
+
+      if (upgradeId === 'speed_up' || upgradeId === 'bracer') {
+        score += highPressure ? 52 : 24;
+      }
+
+      if (this.isCooldownUpgrade(upgradeId) || upgradeId === 'empty_tome') {
+        score += 42;
+      }
+    } else {
+      if (this.isDamageUpgrade(upgradeId) || upgradeId === 'spinach') {
+        score += 58;
+      }
+
+      if (this.isProjectileCountUpgrade(upgradeId)) {
+        score += 50;
+      }
+
+      if (upgradeId === 'pickup_range_up' || upgradeId === 'clover') {
+        score += 28;
+      }
+    }
+
+    return score;
+  }
+
+  private getBuildScore(
+    upgradeId: string,
+    context?: AutoUpgradeSelectionContext,
+  ): number {
+    if (this.isNewWeaponUpgrade(upgradeId)) {
+      return 34;
+    }
+
+    const weaponId = this.getWeaponIdForUpgrade(upgradeId);
+
+    if (weaponId) {
+      const total = context?.getWeaponUpgradeTotal(weaponId) ?? 0;
+      return 34 + total * 14 + this.getWeaponSynergyScore(weaponId, context) * 4;
+    }
+
+    if (this.isPassiveUpgrade(upgradeId)) {
+      return 26 + (context?.getPassiveLevel(upgradeId) ?? 0) * 16;
+    }
+
+    return 12;
+  }
+
+  private getTreasureImmediateScore(
+    upgradeId: string,
+    context?: AutoUpgradeSelectionContext,
+  ): number {
+    let score = 0;
+
+    if (this.isDamageUpgrade(upgradeId) || this.isCooldownUpgrade(upgradeId)) {
+      score += 34;
+    }
+
+    if (this.getEvolutionProgressScore(upgradeId, context) > 0) {
+      score += 40;
+    }
+
+    if (upgradeId === 'endless_growth_damage') {
+      score += 20;
+    }
+
+    return score;
+  }
+
+  private getCharacterSynergyScore(
+    upgradeId: string,
+    context?: AutoUpgradeSelectionContext,
+  ): number {
+    const reactionType = context?.character?.damageReactionType;
+    let score = 0;
+
+    if (reactionType === 'holySanctuary' || reactionType === 'ironCounter') {
+      if (upgradeId === 'max_hp_up' || upgradeId === 'pummarola' || upgradeId === 'endless_shield') {
+        score += 36;
+      }
+    }
+
+    if (reactionType === 'slowTrail') {
+      if (upgradeId === 'speed_up' || upgradeId === 'empty_tome' || upgradeId === 'endless_enemy_slow') {
+        score += 34;
+      }
+    }
+
+    if (reactionType === 'blinkForward') {
+      if (upgradeId === 'speed_up' || upgradeId === 'bracer' || this.isCooldownUpgrade(upgradeId)) {
+        score += 28;
+      }
+    }
+
+    return score;
+  }
+
+  private getEndlessRewardScore(
+    upgradeId: string,
+    context?: AutoUpgradeSelectionContext,
+  ): number {
+    const hpRatio = this.getHpRatio(context);
+    const pressure = context?.battle?.enemyPressure ?? 0;
+    const bossThreat = context?.battle?.bossThreat === true;
+    const shieldStacks = context?.endless?.shieldStacks ?? context?.player?.shieldStacks ?? 0;
+    const maxShieldStacks = Math.max(1, context?.endless?.maxShieldStacks ?? 20);
+
+    switch (upgradeId) {
+      case 'endless_heal':
+        return hpRatio < 0.35 ? 360 : hpRatio < 0.7 ? 90 : -80;
+      case 'endless_shield':
+        return shieldStacks >= maxShieldStacks
+          ? -200
+          : 120 + (1 - shieldStacks / maxShieldStacks) * 90 + (hpRatio < 0.5 ? 80 : 0);
+      case 'endless_enemy_slow':
+        return context?.endless?.enemySlowAvailable === false
+          ? -200
+          : 80 + pressure * 16 + (bossThreat ? 90 : 0);
+      case 'endless_overdrive':
+        return context?.endless?.overdriveAvailable === false
+          ? -200
+          : 95 + (bossThreat ? 120 : 0) + (hpRatio > 0.55 ? 40 : 0);
+      case 'endless_growth_damage':
+        return hpRatio > 0.45 && pressure < AutoUpgradeSelector.HIGH_PRESSURE ? 135 : 45;
+      case 'vacuum_all_pickups':
+        return this.getVacuumScore(context);
+      default:
+        return 0;
+    }
+  }
+
+  private getVacuumScore(context?: AutoUpgradeSelectionContext): number {
+    if (context?.source !== 'treasure') {
+      return -300;
+    }
+
+    if (context.endless?.vacuumAvailable === false) {
+      return -300;
+    }
+
+    if ((context.endless?.vacuumCooldownRemainingSeconds ?? 0) > 0) {
+      return -500;
+    }
+
+    const hpRatio = this.getHpRatio(context);
+
+    if (hpRatio < 0.35) {
+      return 70;
+    }
+
+    const pickupCount = context.resources?.pickupCount ?? 0;
+    const pickupExpTotal = context.resources?.pickupExpTotal ?? 0;
+    const treasureCount = context.resources?.treasureCount ?? 0;
+    const resourceReady = pickupCount >= AutoUpgradeSelector.VACUUM_PICKUP_COUNT_THRESHOLD
+      || pickupExpTotal >= AutoUpgradeSelector.VACUUM_EXP_THRESHOLD
+      || treasureCount >= AutoUpgradeSelector.VACUUM_TREASURE_THRESHOLD;
+
+    return resourceReady
+      ? 420 + pickupCount * 0.8 + pickupExpTotal * 0.25 + treasureCount * 35
+      : 55 + pickupCount * 0.25 + pickupExpTotal * 0.08 + treasureCount * 10;
+  }
+
+  private getWeaponSynergyScore(
+    weaponId: string,
+    context?: AutoUpgradeSelectionContext,
+  ): number {
+    const weapon = context?.weapons?.find((candidate) => (
+      candidate.baseWeaponId === weaponId || candidate.weaponId === weaponId
+    ));
+
+    if (!weapon) {
+      return 0;
+    }
+
+    const levelRatio = weapon.level / Math.max(1, weapon.maxLevel);
+    let score = 8 + levelRatio * 16;
+
+    if (weapon.tags.includes('aura') || weapon.tags.includes('orbit')) {
+      score += this.getHpRatio(context) > 0.45 ? 8 : -4;
+    }
+
+    if (weapon.tags.includes('homing') || weapon.tags.includes('magic')) {
+      score += 6;
+    }
+
+    return score;
+  }
+
+  private getHpRatio(context?: AutoUpgradeSelectionContext): number {
+    const currentHp = context?.player?.currentHp;
+    const maxHp = context?.player?.maxHp;
+
+    if (currentHp === undefined || maxHp === undefined || maxHp <= 0) {
+      return 1;
+    }
+
+    return Math.max(0, Math.min(1, currentHp / maxHp));
   }
 
   private isNewWeaponUpgrade(upgradeId: string): boolean {
@@ -388,6 +408,19 @@ export class AutoUpgradeSelector {
       || upgradeId === 'clover'
       || upgradeId === 'pummarola'
     );
+  }
+
+  private isDamageUpgrade(upgradeId: string): boolean {
+    return upgradeId.endsWith('_damage_up') || upgradeId === 'spinach';
+  }
+
+  private isCooldownUpgrade(upgradeId: string): boolean {
+    return upgradeId.endsWith('_cooldown_up') || upgradeId === 'empty_tome';
+  }
+
+  private isProjectileCountUpgrade(upgradeId: string): boolean {
+    return upgradeId.endsWith('_projectile_count_up')
+      || upgradeId === 'bible_orbit_count_up';
   }
 
   private getWeaponIdForUpgrade(upgradeId: string): string | undefined {

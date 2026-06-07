@@ -498,12 +498,21 @@ export class EnemyFlow {
           continue;
         }
 
+        const beforeMergeLevel = survivor.mergeLevel;
+
         if (!survivor.mergeWith(removed)) {
           survivor.markMergeChecked();
           removed.markMergeChecked();
           continue;
         }
 
+        this.config.floatingTextManager.showEnemyMergeLevelUp(
+          survivor.body.x,
+          survivor.body.y,
+          beforeMergeLevel,
+          survivor.mergeLevel,
+          ENEMY_POPULATION_CONFIG.mergeMaxLevel,
+        );
         remainingMerges -= 1;
         this.recordMerge(survivor.mergeLevel);
         this.contactDamageCooldowns.delete(removed);

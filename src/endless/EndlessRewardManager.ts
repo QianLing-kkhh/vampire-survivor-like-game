@@ -26,6 +26,7 @@ export class EndlessRewardManager {
   private static readonly VACUUM_PICKUP_RANGE_MULTIPLIER = 80;
   private static readonly VACUUM_DURATION_MS = 2500;
   private static readonly VACUUM_MIN_GAME_TIME_SECONDS = 300;
+  private static readonly VACUUM_SELECTION_COOLDOWN_SECONDS = 60;
 
   private overdriveActiveUntilSeconds = 0;
   private overdriveCooldownUntilSeconds = 0;
@@ -33,6 +34,7 @@ export class EndlessRewardManager {
   private enemySlowCooldownUntilSeconds = 0;
   private lastSlowSyncTimeSeconds = 0;
   private lastSyncTimeSeconds = 0;
+  private lastVacuumSelectedAtSeconds = Number.NEGATIVE_INFINITY;
   private shieldStacks = 0;
 
   constructor(
@@ -180,6 +182,26 @@ export class EndlessRewardManager {
     }
 
     return options;
+  }
+
+  getAutoRewardContext(): {
+    started: boolean;
+    shieldStacks: number;
+    maxShieldStacks: number;
+    overdriveAvailable: boolean;
+    enemySlowAvailable: boolean;
+    vacuumAvailable: boolean;
+    vacuumCooldownRemainingSeconds: number;
+  } {
+    return {
+      started: this.params.runState.endlessStarted,
+      shieldStacks: this.shieldStacks,
+      maxShieldStacks: EndlessRewardManager.MAX_SHIELD_STACKS,
+      overdriveAvailable: this.isOverdriveAvailable(),
+      enemySlowAvailable: this.isEnemySlowAvailable(),
+      vacuumAvailable: this.isVacuumAvailable(),
+      vacuumCooldownRemainingSeconds: this.getVacuumCooldownRemainingSeconds(),
+    };
   }
 
   isRewardId(rewardId: string): rewardId is EndlessRewardId {
@@ -427,12 +449,20 @@ export class EndlessRewardManager {
       EndlessRewardManager.VACUUM_DURATION_MS,
       'vacuum_all_pickups',
     );
+    this.lastVacuumSelectedAtSeconds = this.params.getGameTimeSeconds();
     this.params.runState.recordEndlessReward('vacuum_all_pickups', source);
     return true;
   }
 
   private isVacuumAvailable(): boolean {
-    return this.params.getGameTimeSeconds() >= EndlessRewardManager.VACUUM_MIN_GAME_TIME_SECONDS;
+    return this.params.getGameTimeSeconds() >= EndlessRewardManager.VACUUM_MIN_GAME_TIME_SECONDS
+      && this.getVacuumCooldownRemainingSeconds() <= 0;
+  }
+
+  private getVacuumCooldownRemainingSeconds(): number {
+    const elapsed = this.params.getGameTimeSeconds() - this.lastVacuumSelectedAtSeconds;
+
+    return Math.max(0, EndlessRewardManager.VACUUM_SELECTION_COOLDOWN_SECONDS - elapsed);
   }
 
   private syncOverdriveState(): void {

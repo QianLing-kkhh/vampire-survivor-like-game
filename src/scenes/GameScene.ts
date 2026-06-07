@@ -41,7 +41,7 @@ import { RunSeed } from '../random/RunSeed';
 import { RelicRegistry } from '../relic/RelicRegistry';
 import { RelicRewardSelector } from '../relic/RelicRewardSelector';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
-import { UpgradeFlow } from '../progression/UpgradeFlow';
+import { TreasureRewardResult, UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunResultBuilder } from '../run/RunResultBuilder';
@@ -134,6 +134,7 @@ export class GameScene extends Phaser.Scene {
   private isPauseMenuOpen = false;
   private isGameOver = false;
   private currentLevelUpOptions: UpgradeOption[] = [];
+  private activeUpgradeSelectionSource?: 'levelUp' | 'treasure';
 
   constructor() {
     super('GameScene');
@@ -188,6 +189,7 @@ export class GameScene extends Phaser.Scene {
     this.isPauseMenuOpen = false;
     this.isGameOver = false;
     this.currentLevelUpOptions = [];
+    this.activeUpgradeSelectionSource = undefined;
     this.spawnDirector = undefined;
     this.bossSpawnDirector = undefined;
     this.bossAttackController = undefined;
@@ -261,6 +263,7 @@ export class GameScene extends Phaser.Scene {
           this.runState.recordScore('treasure', this.getTreasureScoreMultiplier());
           this.tryAwardRelicFromChest();
         },
+        onTreasureRewardRequested: () => this.handleTreasureRewardRequested(),
         onEnemySpawned: (enemy) => {
           enemy.setEventBus(this.eventBus);
           this.enemies.push(enemy);
@@ -394,6 +397,7 @@ export class GameScene extends Phaser.Scene {
           runId: this.runId,
         });
         this.currentLevelUpOptions = [];
+        this.activeUpgradeSelectionSource = undefined;
         uiScene.events.emit('ShowTemporaryMessage', I18n.t('levelUp.noUpgrades'));
         return;
       }
@@ -401,6 +405,7 @@ export class GameScene extends Phaser.Scene {
       this.isGameplayPaused = true;
       this.isLevelUpSelectionActive = true;
       this.currentLevelUpOptions = selectedOptions;
+      this.activeUpgradeSelectionSource = 'levelUp';
       context.gameEventBus.emit('upgrade.optionsShown', {
         optionIds: selectedOptions.map((option) => option.id),
         gameTimeSeconds: this.timeManager.gameTimeSeconds,
@@ -638,7 +643,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (this.playtestSettings.autoUpgrade) {
+    if (this.activeUpgradeSelectionSource === 'levelUp' && this.playtestSettings.autoUpgrade) {
       const autoSelectedOption = this.upgradeFlow?.chooseAutoUpgrade(this.currentLevelUpOptions);
 
       this.uiScene.events.emit('ShowLevelUpOptions', {
@@ -1050,7 +1055,9 @@ export class GameScene extends Phaser.Scene {
 
     const resultData = this.runResultBuilder.build({
       runId: this.runId,
-      autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,
+      autoMode: this.playtestSettings.autoMovement
+        || this.playtestSettings.autoUpgrade
+        || this.playtestSettings.autoOpenTreasure,
       fastMode: this.playtestSettings.fastMode,
       timeScale: this.getGameplayTimeScale(),
       upgradeSelectionMode: this.autoUpgradeSelector.mode,
@@ -1082,16 +1089,98 @@ export class GameScene extends Phaser.Scene {
   private handleUpgradeSelected(option: UpgradeOption): void {
     this.gameplayContext?.gameEventBus.emit('upgrade.selected', {
       upgradeId: option.id,
+      source: this.activeUpgradeSelectionSource ?? 'levelUp',
       gameTimeSeconds: this.timeManager.gameTimeSeconds,
     }, {
       gameTimeSeconds: this.timeManager.gameTimeSeconds,
       runId: this.runId,
     });
-    this.upgradeFlow?.applyLevelUpUpgrade(option);
+
+    if (this.activeUpgradeSelectionSource === 'treasure') {
+      const result = this.upgradeFlow?.applyTreasureSelectedReward(option);
+
+      if (result) {
+        this.showTreasureRewardFloatingText(result);
+      }
+    } else {
+      this.upgradeFlow?.applyLevelUpUpgrade(option);
+    }
+
     this.isLevelUpSelectionActive = false;
     this.isGameplayPaused = false;
     this.currentLevelUpOptions = [];
+    this.activeUpgradeSelectionSource = undefined;
     this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
+  }
+
+  private handleTreasureRewardRequested(): void {
+    if (!this.upgradeFlow) {
+      return;
+    }
+
+    const result = this.upgradeFlow.applyTreasureReward(this.playtestSettings.autoOpenTreasure);
+
+    if (result.type !== 'pending' || !result.options?.length) {
+      this.showTreasureRewardFloatingText(result);
+      return;
+    }
+
+    const selectedOptions = result.options.map((option) => ({
+      ...option,
+      displayInfo: this.upgradeApplier?.getUpgradeDisplayInfo(
+        option,
+        this.evolutionManager,
+      ),
+    }));
+
+    this.isGameplayPaused = true;
+    this.isLevelUpSelectionActive = true;
+    this.activeUpgradeSelectionSource = 'treasure';
+    this.currentLevelUpOptions = selectedOptions;
+    this.gameplayContext?.gameEventBus.emit('upgrade.optionsShown', {
+      optionIds: selectedOptions.map((option) => option.id),
+      source: 'treasure',
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+    }, {
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      runId: this.runId,
+    });
+    this.uiScene?.events.emit('ShowLevelUpOptions', selectedOptions);
+  }
+
+  private showTreasureRewardFloatingText(result: TreasureRewardResult): void {
+    if (!this.player || !this.floatingTextManager || result.type === 'none' || result.type === 'pending') {
+      return;
+    }
+
+    if (result.appliedUpgrade) {
+      this.floatingTextManager.showChestUpgrade(
+        this.player.body.x,
+        this.player.body.y,
+        {
+          name: result.appliedUpgrade.targetName,
+          iconFallback: result.appliedUpgrade.iconFallback,
+          beforeLevel: result.appliedUpgrade.beforeLevel,
+          afterLevel: result.appliedUpgrade.afterLevel,
+          maxLevel: result.appliedUpgrade.maxLevel,
+          isMax: result.appliedUpgrade.isMax,
+          kind: result.appliedUpgrade.kind,
+        },
+      );
+    }
+
+    if (result.evolutionDetail) {
+      this.floatingTextManager.showChestUpgrade(
+        this.player.body.x,
+        this.player.body.y,
+        {
+          name: result.evolutionDetail.baseName,
+          evolvedName: result.evolutionDetail.evolvedName,
+          iconFallback: result.evolutionDetail.iconFallback,
+          kind: 'evolution',
+        },
+      );
+    }
   }
 
   private handleUpgradeApplied(): void {
@@ -1314,7 +1403,9 @@ export class GameScene extends Phaser.Scene {
       payload.isBoss === true,
     );
     AudioManager.playSfx(this, 'enemy_hit', {
-      autoMode: this.playtestSettings.autoMovement || this.playtestSettings.autoUpgrade,
+      autoMode: this.playtestSettings.autoMovement
+        || this.playtestSettings.autoUpgrade
+        || this.playtestSettings.autoOpenTreasure,
     });
   }
 
@@ -1360,8 +1451,68 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getAutoUpgradeSelectionContext(): AutoUpgradeSelectionContext {
+    const characterSnapshot = this.gameplayContext?.characterRuntime.getAutoPlayerSnapshot();
+    const weaponContext = this.weaponManager?.getAutoWeaponContext();
+    const pickupPositions = this.getPickupPositions();
+    const hpRatio = this.playerHealth && this.playerHealth.maxHp > 0
+      ? this.playerHealth.currentHp / this.playerHealth.maxHp
+      : 1;
+    let nearestEnemyDistance = Infinity;
+    let enemyPressure = 0;
+    let bossThreat = false;
+
+    if (this.player) {
+      for (const enemy of this.enemies) {
+        if (enemy.isDead) {
+          continue;
+        }
+
+        const distance = Phaser.Math.Distance.Between(
+          this.player.body.x,
+          this.player.body.y,
+          enemy.body.x,
+          enemy.body.y,
+        );
+        nearestEnemyDistance = Math.min(nearestEnemyDistance, distance);
+
+        if (distance <= 300) {
+          const proximity = (300 - Math.max(0, distance)) / 300;
+          const targetContext = enemy.getDamageTargetContext();
+          const threat = targetContext.isBoss
+            ? 4
+            : targetContext.isElite
+              ? 2
+              : 1;
+
+          enemyPressure += proximity * proximity * threat * (hpRatio < 0.5 ? 1.25 : 1);
+          bossThreat ||= targetContext.isBoss && distance < 520;
+        }
+      }
+    }
+
     return {
       weaponIds: this.weaponManager?.getWeaponIds() ?? [],
+      weapons: weaponContext?.weapons,
+      player: {
+        currentHp: this.playerHealth?.currentHp ?? this.playerStats?.maxHp ?? 0,
+        maxHp: this.playerHealth?.maxHp ?? this.playerStats?.maxHp ?? 0,
+        shieldStacks: this.playerHealth?.getShieldStacks() ?? 0,
+      },
+      character: {
+        characterId: characterSnapshot?.characterId,
+        damageReactionType: characterSnapshot?.damageReactionType,
+        baseStats: characterSnapshot?.baseStats,
+      },
+      battle: {
+        enemyPressure,
+        nearestEnemyDistance,
+        bossThreat,
+      },
+      resources: {
+        pickupCount: pickupPositions.length,
+        pickupExpTotal: pickupPositions.reduce((total, pickup) => total + Math.max(1, pickup.exp), 0),
+        treasureCount: this.treasureManager?.getActiveCount() ?? 0,
+      },
       getWeaponUpgradeTotal: (weaponId: string) => (
         this.weaponManager?.getWeaponUpgradeTotal(weaponId) ?? 0
       ),

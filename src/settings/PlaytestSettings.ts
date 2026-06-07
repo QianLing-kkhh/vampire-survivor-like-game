@@ -8,6 +8,7 @@ export interface PlaytestSettingsState {
   autoMode: boolean;
   autoMovement: boolean;
   autoUpgrade: boolean;
+  autoOpenTreasure: boolean;
   fastMode: boolean;
   autoTimeScale: number;
   soundEnabled: boolean;
@@ -54,6 +55,7 @@ export class PlaytestSettings {
     SettingsManager.updateGameplay({
       autoMovement: autoMode,
       autoUpgrade: autoMode,
+      autoOpenTreasure: autoMode,
     });
 
     return this.get();
@@ -67,6 +69,12 @@ export class PlaytestSettings {
 
   static setAutoUpgrade(autoUpgrade: boolean): PlaytestSettingsState {
     SettingsManager.updateGameplay({ autoUpgrade });
+
+    return this.get();
+  }
+
+  static setAutoOpenTreasure(autoOpenTreasure: boolean): PlaytestSettingsState {
+    SettingsManager.updateGameplay({ autoOpenTreasure });
 
     return this.get();
   }
@@ -140,6 +148,12 @@ export class PlaytestSettings {
     return this.setAutoUpgrade(!state.autoUpgrade);
   }
 
+  static toggleAutoOpenTreasure(): PlaytestSettingsState {
+    const state = this.get();
+
+    return this.setAutoOpenTreasure(!state.autoOpenTreasure);
+  }
+
   static toggleFastMode(): PlaytestSettingsState {
     const state = this.get();
 
@@ -203,6 +217,7 @@ export class PlaytestSettings {
     SettingsManager.updateGameplay({
       autoMovement: legacyState.autoMovement,
       autoUpgrade: legacyState.autoUpgrade,
+      autoOpenTreasure: legacyState.autoOpenTreasure,
       fastMode: legacyState.fastMode,
       endlessMode: legacyState.endlessMode,
       autoTimeScale: legacyState.autoTimeScale,
@@ -223,9 +238,10 @@ export class PlaytestSettings {
     const display = settings.display;
 
     return {
-      autoMode: gameplay.autoMovement || gameplay.autoUpgrade,
+      autoMode: gameplay.autoMovement || gameplay.autoUpgrade || gameplay.autoOpenTreasure,
       autoMovement: gameplay.autoMovement,
       autoUpgrade: gameplay.autoUpgrade,
+      autoOpenTreasure: gameplay.autoOpenTreasure,
       fastMode: gameplay.fastMode,
       autoTimeScale: gameplay.autoTimeScale,
       soundEnabled: audio.audioEnabled,
@@ -274,11 +290,15 @@ export class PlaytestSettings {
       const autoUpgrade = parsedState.autoUpgrade === undefined
         ? legacyAutoMode
         : Boolean(parsedState.autoUpgrade);
+      const autoOpenTreasure = parsedState.autoOpenTreasure === undefined
+        ? legacyAutoMode
+        : Boolean(parsedState.autoOpenTreasure);
 
       return {
-        autoMode: autoMovement || autoUpgrade,
+        autoMode: autoMovement || autoUpgrade || autoOpenTreasure,
         autoMovement,
         autoUpgrade,
+        autoOpenTreasure,
         fastMode: Boolean(parsedState.fastMode),
         autoTimeScale: typeof parsedState.autoTimeScale === 'number'
           ? parsedState.autoTimeScale

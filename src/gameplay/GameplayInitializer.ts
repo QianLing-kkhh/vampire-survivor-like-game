@@ -76,6 +76,7 @@ export interface GameplayInitializerCallbacks {
   onUpgradeApplied(): void;
   onChestDropped(): void;
   onChestOpened(): void;
+  onTreasureRewardRequested(): void;
   onEnemySpawned(enemy: Enemy): void;
   onBossSpawned(boss: Enemy): void;
   onCenterMessage(message: string, options?: { kind?: 'normal' | 'boss'; durationMs?: number }): void;
@@ -276,6 +277,7 @@ export class GameplayInitializer {
       gameEventBus,
       () => config.timeManager.gameTimeSeconds,
       () => config.runId,
+      config.callbacks.onTreasureRewardRequested,
     );
     const enemyFactory = new EnemyFactory(config.scene, enemyConfigs, runRuleSet);
     const bossFactory = new BossFactory(config.scene, enemyConfigs, runRuleSet);

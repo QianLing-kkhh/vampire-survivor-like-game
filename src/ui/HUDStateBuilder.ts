@@ -70,7 +70,9 @@ export class HUDStateBuilder {
         ),
       }) ?? [],
       passiveItems: input.passiveManager?.getPassiveLevels() ?? [],
-      autoMode: input.playtestSettings.autoMovement || input.playtestSettings.autoUpgrade,
+      autoMode: input.playtestSettings.autoMovement
+        || input.playtestSettings.autoUpgrade
+        || input.playtestSettings.autoOpenTreasure,
       evolutionCandidateStats: input.evolutionCandidateStats,
       moveSpeed: playerStats.moveSpeed,
       pickupRange: playerStats.pickupRange,

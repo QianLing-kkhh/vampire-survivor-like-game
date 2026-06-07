@@ -820,7 +820,10 @@ export class Enemy {
       this.body.y,
       other.body.x,
       other.body.y,
-    ) <= this.getBodyRadius() + other.getBodyRadius();
+    ) <= (
+      this.getBodyRadius()
+      + other.getBodyRadius()
+    ) * ENEMY_POPULATION_CONFIG.mergeDetectionRadiusMultiplier;
   }
 
   private getMapSlowVisualDepth(): number {

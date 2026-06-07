@@ -11,16 +11,34 @@ export class EvolutionManager {
   constructor(private readonly rules: readonly EvolutionRule[]) {}
 
   tryEvolve(context: EvolutionContext): EvolutionResult | undefined {
-    const eligibleRules = this.rules.filter((rule) => (
-      this.canEvolve(rule, context)
-    ));
+    const eligibleRules = this.getEligibleEvolutionRules(context);
 
     if (eligibleRules.length === 0) {
       return undefined;
     }
 
-    const rule = eligibleRules[Math.floor(Math.random() * eligibleRules.length)];
+    const rule = [...eligibleRules].sort((a, b) => (
+      a.evolvedWeaponId.localeCompare(b.evolvedWeaponId)
+    ))[0];
 
+    return this.evolveRule(rule, context);
+  }
+
+  tryEvolveRule(rule: EvolutionRule, context: EvolutionContext): EvolutionResult | undefined {
+    if (!this.canEvolve(rule, context)) {
+      return undefined;
+    }
+
+    return this.evolveRule(rule, context);
+  }
+
+  getEligibleEvolutionRules(context: EvolutionContext): EvolutionRule[] {
+    return this.rules.filter((rule) => (
+      this.canEvolve(rule, context)
+    ));
+  }
+
+  private evolveRule(rule: EvolutionRule, context: EvolutionContext): EvolutionResult | undefined {
     if (!context.weaponManager.evolveWeapon(rule.baseWeaponId, rule.evolvedWeaponId)) {
       return undefined;
     }

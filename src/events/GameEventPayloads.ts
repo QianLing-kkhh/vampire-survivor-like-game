@@ -90,10 +90,12 @@ export interface TreasurePayload extends TimedPayload {
 
 export interface UpgradeOptionsShownPayload extends TimedPayload {
   optionIds: string[];
+  source?: 'levelUp' | 'treasure';
 }
 
 export interface UpgradeSelectedPayload extends TimedPayload {
   upgradeId: string;
+  source?: 'levelUp' | 'treasure';
 }
 
 export interface UpgradeAppliedPayload extends TimedPayload {

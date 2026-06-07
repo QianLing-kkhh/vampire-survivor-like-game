@@ -39,6 +39,7 @@ export class TreasureManager {
     private readonly gameEventBus?: GameEventBus,
     private readonly getGameTimeSeconds?: () => number,
     private readonly getRunId?: () => string | undefined,
+    private readonly onTreasureRewardRequested?: () => void,
   ) {
     this.unsubscribeEnemyKilled = eventBus.subscribe('EnemyKilled', (event) => {
       if (!isEnemyKilledEvent(event)) {
@@ -187,6 +188,11 @@ export class TreasureManager {
   private applyRandomUpgrade(): void {
     this.onChestOpened?.();
     AudioManager.playSfx(this.scene, 'treasure_open');
+    if (this.onTreasureRewardRequested) {
+      this.onTreasureRewardRequested();
+      return;
+    }
+
     const result = this.upgradeFlow.applyTreasureReward();
 
     if (result.type === 'none') {

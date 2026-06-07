@@ -3,7 +3,7 @@ import { KeyValueStat } from '../stats/RunStats';
 import { PassiveLevel } from '../passive/PassiveItem';
 import { CSV_SCHEMA_VERSION } from '../version/SchemaVersion';
 
-export type UpgradeSelectionModeLog = 'weighted_random';
+export type UpgradeSelectionModeLog = 'weighted_random' | 'score_best';
 
 export interface PlaytestLogData {
   runId: string;
