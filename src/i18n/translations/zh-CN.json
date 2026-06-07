@@ -640,6 +640,9 @@
   "developer": {
     "title": "开发者菜单",
     "resetProgressionDefaults": "重置解锁为默认",
+    "resetAllLocalData": "重置所有本地数据",
+    "confirmResetAllLocalData": "确认重置所有本地数据",
+    "resetAllLocalDataDone": "本地数据已重置",
     "tab": {
       "automation": "自动化",
       "tools": "工具",

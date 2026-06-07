@@ -640,6 +640,9 @@
   "developer": {
     "title": "開発者メニュー",
     "resetProgressionDefaults": "アンロックを初期化",
+    "resetAllLocalData": "すべてのローカルデータを初期化",
+    "confirmResetAllLocalData": "ローカルデータ初期化を確認",
+    "resetAllLocalDataDone": "ローカルデータを初期化しました",
     "tab": {
       "automation": "自動化",
       "tools": "ツール",

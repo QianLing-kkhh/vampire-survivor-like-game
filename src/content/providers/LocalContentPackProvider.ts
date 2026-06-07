@@ -19,6 +19,16 @@ export class LocalContentPackProvider implements ContentPackProvider {
     private readonly storageKey = 'vampire_survivor_like_local_content_packs_v1',
   ) {}
 
+  static clearDefaultStorage(): void {
+    LocalContentPackProvider.memoryEntries = [];
+
+    try {
+      globalThis.localStorage?.removeItem('vampire_survivor_like_local_content_packs_v1');
+    } catch {
+      // Memory fallback already cleared.
+    }
+  }
+
   async listManifests(): Promise<ContentPackManifest[]> {
     return this.loadEntries().map((entry) => ({ ...entry.manifest }));
   }

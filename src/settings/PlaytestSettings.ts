@@ -185,6 +185,16 @@ export class PlaytestSettings {
     }
   }
 
+  static clearLegacyStorage(): void {
+    PlaytestSettings.legacyMigrated = true;
+
+    try {
+      globalThis.localStorage?.removeItem(PlaytestSettings.STORAGE_KEY);
+    } catch {
+      // Save-backed settings are already the source of truth.
+    }
+  }
+
   private static ensureSettingsManagerSubscription(): void {
     if (this.unsubscribeSettingsManager) {
       return;

@@ -1,12 +1,19 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
+import { DeveloperLocalResetService } from '../developer/DeveloperLocalResetService';
 import { I18n } from '../i18n/I18n';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SaveManager } from '../save/SaveManager';
 import { SettingsManager } from '../settings/SettingsManager';
 
+import {
+  createModalBlocker,
+  setRectangleHitArea,
+  setTextHitArea,
+  stopPointerEvent,
+} from './input/UIInteraction';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type DeveloperTabId = 'automation' | 'tools' | 'data' | 'debug';
@@ -30,6 +37,7 @@ const TABS: DeveloperTabId[] = ['automation', 'tools', 'data', 'debug'];
 export class DeveloperMenu {
   private readonly screenManager: ScreenManager;
   private readonly container: Phaser.GameObjects.Container;
+  private readonly blocker: Phaser.GameObjects.Rectangle;
   private readonly background: Phaser.GameObjects.Rectangle;
   private readonly title: Phaser.GameObjects.Text;
   private readonly closeButton: Phaser.GameObjects.Text;
@@ -42,12 +50,15 @@ export class DeveloperMenu {
   private selectedTab: DeveloperTabId = 'automation';
   private unsubscribeResize?: () => void;
   private destroyed = false;
+  private resetAllLocalDataConfirm = false;
+  private resetAllLocalDataDone = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly config: DeveloperMenuConfig = {},
   ) {
     this.screenManager = new ScreenManager(scene);
+    this.blocker = createModalBlocker(scene, 1599);
     this.background = scene.add.rectangle(0, 0, 720, 460, UITheme.panelBgColor, 0.94);
     this.background.setStrokeStyle(2, UITheme.panelBorderColor, 0.86);
     this.title = scene.add.text(0, 0, I18n.t('developer.title'), {
@@ -79,6 +90,7 @@ export class DeveloperMenu {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
     this.screenManager.dispose();
+    this.blocker.destroy();
     if (options.notifyClose !== false) {
       this.config.onClose?.();
     }
@@ -97,9 +109,17 @@ export class DeveloperMenu {
         align: 'center',
       });
       label.setOrigin(0.5);
-      background.on('pointerdown', () => {
+      background.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        stopPointerEvent(event);
         AudioManager.playUi(this.scene, 'ui_click');
         this.selectedTab = tabId;
+        this.resetAllLocalDataConfirm = false;
+        this.resetAllLocalDataDone = false;
         this.renderRows();
         this.applyLayout();
       });
@@ -114,6 +134,10 @@ export class DeveloperMenu {
 
     for (const row of this.getRows()) {
       const text = this.createTextButton(this.formatRowLabel(row), () => {
+        if (row.id !== 'resetAllLocalData') {
+          this.resetAllLocalDataConfirm = false;
+          this.resetAllLocalDataDone = false;
+        }
         row.onClick();
         if (this.destroyed || !this.scene.scene.isActive()) {
           return;
@@ -211,6 +235,12 @@ export class DeveloperMenu {
         onClick: () => SaveManager.resetProgressionUnlocksToDefaults(),
       },
       {
+        id: 'resetAllLocalData',
+        label: this.getResetAllLocalDataLabel(),
+        kind: 'button',
+        onClick: () => this.handleResetAllLocalData(),
+      },
+      {
         id: 'debugPanelOpacity',
         label: `${I18n.t('settings.debugPanelOpacity')} ${Math.round(developer.debugPanelOpacity * 100)}%`,
         kind: 'button',
@@ -259,7 +289,13 @@ export class DeveloperMenu {
     button.setInteractive({ useHandCursor: true });
     button.on('pointerover', () => button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor)));
     button.on('pointerout', () => button.setBackgroundColor(toCssColor(UITheme.buttonBgColor)));
-    button.on('pointerdown', () => {
+    button.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       AudioManager.playUi(this.scene, 'ui_click');
       onClick();
     });
@@ -274,11 +310,12 @@ export class DeveloperMenu {
     const centerY = this.screenManager.centerY;
     const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
 
+    setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
     this.background.setPosition(centerX, centerY);
     this.background.setSize(width, height);
     this.title.setPosition(centerX, centerY - height / 2 + 34);
     this.closeButton.setPosition(centerX, centerY + height / 2 - 36);
-    this.closeButton.setFixedSize(metrics.width, metrics.height);
+    setTextHitArea(this.closeButton, metrics.width, metrics.height);
 
     const tabWidth = Math.min(132, Math.max(92, (width - 72) / TABS.length));
     const tabY = centerY - height / 2 + 82;
@@ -289,7 +326,7 @@ export class DeveloperMenu {
       const x = tabStartX + index * (tabWidth + 8);
 
       tab.background.setPosition(x, tabY);
-      tab.background.setSize(tabWidth, 34);
+      setRectangleHitArea(tab.background, tabWidth, 34);
       tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
       tab.background.setStrokeStyle(2, selected ? UITheme.successAccentColor : UITheme.panelBorderColor, 0.9);
       tab.label.setText(I18n.t(`developer.tab.${tab.id}`));
@@ -304,7 +341,7 @@ export class DeveloperMenu {
     this.rows.forEach((row, index) => {
       row.setPosition(centerX, rowStartY + index * rowGap);
       row.setFontSize(metrics.fontSize);
-      row.setFixedSize(rowWidth, metrics.height);
+      setTextHitArea(row, rowWidth, metrics.height);
     });
   }
 
@@ -315,6 +352,30 @@ export class DeveloperMenu {
     const next = values[(currentIndex + 1) % values.length];
 
     SettingsManager.updateDeveloper({ debugPanelOpacity: next });
+  }
+
+  private getResetAllLocalDataLabel(): string {
+    if (this.resetAllLocalDataDone) {
+      return I18n.t('developer.resetAllLocalDataDone');
+    }
+
+    if (this.resetAllLocalDataConfirm) {
+      return I18n.t('developer.confirmResetAllLocalData');
+    }
+
+    return I18n.t('developer.resetAllLocalData');
+  }
+
+  private handleResetAllLocalData(): void {
+    if (!this.resetAllLocalDataConfirm) {
+      this.resetAllLocalDataConfirm = true;
+      this.resetAllLocalDataDone = false;
+      return;
+    }
+
+    DeveloperLocalResetService.resetAllLocalData();
+    this.resetAllLocalDataConfirm = false;
+    this.resetAllLocalDataDone = true;
   }
 
   private downloadAllCsv(): void {

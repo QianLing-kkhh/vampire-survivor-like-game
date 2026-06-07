@@ -13,6 +13,7 @@ import { UnlockManager } from '../unlock/UnlockManager';
 import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { SettingsMenu } from '../ui/SettingsMenu';
+import { setTextHitArea, stopPointerEvent } from '../ui/input/UIInteraction';
 import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 
 export class TitleScene extends Phaser.Scene {
@@ -169,7 +170,15 @@ export class TitleScene extends Phaser.Scene {
     button.on('pointerout', () => {
       button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
     });
-    button.on('pointerdown', onClick);
+    button.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
+      onClick();
+    });
 
     return button;
   }
@@ -209,7 +218,7 @@ export class TitleScene extends Phaser.Scene {
     buttons.forEach((button, index) => {
       const position = buttonLayout.positions[index];
       button.setFontSize(buttonLayout.fontSize);
-      button.setFixedSize(buttonLayout.width, buttonLayout.height);
+      setTextHitArea(button, buttonLayout.width, buttonLayout.height);
       button.setPosition(position.x, position.y);
     });
   }

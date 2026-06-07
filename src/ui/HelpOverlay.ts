@@ -9,6 +9,7 @@ import { ScreenManager } from '../responsive/ScreenManager';
 import { HelpContentBuilder } from './help/HelpContentBuilder';
 import { HelpIconRef, HelpLine } from './help/HelpSection';
 import { HelpTabDefinition } from './help/HelpTabDefinition';
+import { setRectangleHitArea, setTextHitArea, stopPointerEvent } from './input/UIInteraction';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type TabButton = {
@@ -59,6 +60,12 @@ export class HelpOverlay {
       0.48,
     );
     this.dimmer.setInteractive();
+    this.dimmer.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => stopPointerEvent(event));
 
     this.panel = scene.add.rectangle(
       this.screenManager.centerX,
@@ -156,7 +163,13 @@ export class HelpOverlay {
     button.on('pointerout', () => {
       button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
     });
-    button.on('pointerdown', () => {
+    button.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       if (button.alpha < 1) {
         return;
       }
@@ -206,7 +219,13 @@ export class HelpOverlay {
       shortLabel.setOrigin(0.5);
       tab.add(shortLabel);
 
-      background.on('pointerdown', () => {
+      background.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        stopPointerEvent(event);
         AudioManager.playUi(scene, 'ui_click');
         this.selectedTabIndex = this.tabs.indexOf(tabDefinition);
         this.pageByTab[tabDefinition.id] = 0;
@@ -388,7 +407,7 @@ export class HelpOverlay {
     const availableHeight = Math.max(80, contentBottom - contentTop);
 
     this.dimmer.setPosition(center.x, center.y);
-    this.dimmer.setSize(this.screenManager.width, this.screenManager.height);
+    setRectangleHitArea(this.dimmer, this.screenManager.width, this.screenManager.height);
     this.panel.setPosition(center.x, center.y);
     this.panel.setSize(layout.panelWidth, layout.panelHeight);
     this.panelImage?.setPosition(center.x, center.y);
@@ -537,13 +556,13 @@ export class HelpOverlay {
 
     for (const button of [this.prevPageButton, this.nextPageButton]) {
       button.setFontSize(Math.max(11, Number.parseInt(`${metrics.fontSize}`, 10) - 1));
-      button.setFixedSize(pageButtonWidth, Math.max(30, metrics.height - 8));
+      setTextHitArea(button, pageButtonWidth, Math.max(30, metrics.height - 8));
       button.setPadding(0, Math.max(0, Math.floor((Math.max(30, metrics.height - 8) - 22) / 2)), 0, 0);
     }
 
     this.closeButton.setPosition(centerX, closeY);
     this.closeButton.setFontSize(metrics.fontSize);
-    this.closeButton.setFixedSize(metrics.width, metrics.height);
+    setTextHitArea(this.closeButton, metrics.width, metrics.height);
   }
 
   private setPagingButtonEnabled(button: Phaser.GameObjects.Text, enabled: boolean): void {
@@ -568,6 +587,7 @@ export class HelpOverlay {
 
     this.tabButtons.forEach((tab, index) => {
       const selected = index === this.selectedTabIndex;
+      setRectangleHitArea(tab.background, HelpOverlay.TAB_SIZE, HelpOverlay.TAB_SIZE);
       tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
       tab.background.setStrokeStyle(2, selected ? UITheme.colors.accentBlue : UITheme.panelBorderColor, selected ? 1 : 0.75);
 

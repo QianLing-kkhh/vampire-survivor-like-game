@@ -57,6 +57,7 @@ import { SpawnDirector } from '../spawn/SpawnDirector';
 import { StageDefinition } from '../stage/StageDefinition';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
+import { TreasureRewardCoordinator } from '../treasure/TreasureRewardCoordinator';
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { HUDStateBuilder } from '../ui/HUDStateBuilder';
@@ -97,6 +98,7 @@ export class GameScene extends Phaser.Scene {
   private readonly hudStateBuilder = new HUDStateBuilder();
   private readonly statsBuildSnapshotBuilder = new StatsBuildSnapshotBuilder();
   private readonly relicRewardSelector = new RelicRewardSelector();
+  private readonly treasureRewardCoordinator = new TreasureRewardCoordinator();
   private readonly stageManager = new StageManager();
   private readonly mapManager = new MapManager();
   private playtestSettings: PlaytestSettingsState = PlaytestSettings.get();
@@ -280,11 +282,7 @@ export class GameScene extends Phaser.Scene {
         onChestDropped: () => {
           this.runState.recordTreasureDrop();
         },
-        onChestOpened: () => {
-          this.runState.recordTreasureOpen();
-          this.runState.recordScore('treasure', this.getTreasureScoreMultiplier());
-          this.tryAwardRelicFromChest();
-        },
+        onChestOpened: () => this.handleChestOpened(),
         onTreasureRewardRequested: () => this.handleTreasureRewardRequested(),
         onEnemySpawned: (enemy) => {
           enemy.setEventBus(this.eventBus);
@@ -790,32 +788,27 @@ export class GameScene extends Phaser.Scene {
       ?? this.gameplayContext?.bossController.getHUDMessage();
   }
 
-  private getTreasureScoreMultiplier(): number {
-    return this.gameplayContext?.relicManager.getStatModifiers().treasureScoreMultiplier ?? 1;
-  }
-
-  private tryAwardRelicFromChest(): void {
-    const context = this.gameplayContext;
-
-    if (!context || !context.randomManager.getSource('relic').chance(0.2)) {
-      return;
-    }
-
-    const relic = this.relicRewardSelector.selectAvailableRelic({
-      ownedRelicIds: context.relicManager.getRelicIds(),
-      random: context.randomManager.getSource('relic'),
-      definitions: RelicRegistry.list(),
+  private handleChestOpened(): void {
+    const result = this.treasureRewardCoordinator.handleChestOpened({
+      runState: this.runState,
+      relicManager: this.gameplayContext?.relicManager,
+      randomManager: this.gameplayContext?.randomManager,
+      relicRewardSelector: this.relicRewardSelector,
+      relicDefinitions: RelicRegistry.list(),
     });
 
-    if (!relic || !context.relicManager.addRelic(relic.id)) {
+    if (!result.relicAwarded) {
       return;
     }
 
     this.updatePlayerPickupRangeFromStats();
     this.showCenterMessage(
-      I18n.t('result.relicAcquired', { name: relic.name ?? relic.nameKey ?? relic.id }),
+      I18n.t('result.relicAcquired', { name: result.relicAwarded.name }),
     );
-    this.emitHUDState();
+
+    if (result.shouldRefreshHud) {
+      this.emitHUDState();
+    }
   }
 
   private applyBossProjectileDamage(damage: number): void {

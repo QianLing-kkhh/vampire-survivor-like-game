@@ -10,6 +10,7 @@ import { PanelFrame } from '../components/PanelFrame';
 import { PanelHeader } from '../components/PanelHeader';
 import { UITabBar } from '../components/UITabBar';
 import { UIBadge } from '../components/UIBadge';
+import { createModalBlocker, setRectangleHitArea } from '../input/UIInteraction';
 import { UITheme } from '../UITheme';
 
 import {
@@ -39,6 +40,7 @@ const TAB_IDS: StatsBuildTabId[] = [
 ];
 
 export class StatsBuildPanel {
+  private readonly blocker: Phaser.GameObjects.Rectangle;
   private readonly container: Phaser.GameObjects.Container;
   private readonly screen: ScreenManager;
   private readonly contentContainer: Phaser.GameObjects.Container;
@@ -56,6 +58,7 @@ export class StatsBuildPanel {
 
   constructor(private readonly scene: Phaser.Scene, private readonly config: StatsBuildPanelConfig) {
     this.screen = new ScreenManager(scene);
+    this.blocker = createModalBlocker(scene, 2399);
     this.container = scene.add.container(scene.scale.width / 2, scene.scale.height / 2);
     this.container.setDepth(2400);
     this.contentContainer = scene.add.container(0, 0);
@@ -65,6 +68,7 @@ export class StatsBuildPanel {
 
   destroy(): void {
     this.tabBar?.destroy();
+    this.blocker.destroy();
     this.container.destroy(true);
     this.screen.dispose();
   }
@@ -74,6 +78,7 @@ export class StatsBuildPanel {
     this.container.setPosition(this.scene.scale.width / 2, this.scene.scale.height / 2);
     this.contentContainer.removeAll(true);
     this.footerContainer.removeAll(true);
+    setRectangleHitArea(this.blocker, this.screen.width, this.screen.height);
 
     this.layout = this.calculateLayout();
     const frame = PanelFrame.create(this.scene, {

@@ -333,7 +333,7 @@ export class LayoutConfig {
     const minimapWidth = portrait ? 96 : 150;
     const minimapHeight = portrait ? 76 : 104;
     const barWidth = Math.min(portrait ? screen.width * 0.54 : 230, 250);
-    const statsHeight = portrait ? 184 : 178;
+    const statsHeight = portrait ? 236 : 224;
     const buildRowHeight = 64;
     const pauseWidth = portrait ? 48 : 92;
     const pauseHeight = portrait ? 48 : 40;

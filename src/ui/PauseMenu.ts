@@ -11,6 +11,12 @@ import { WeaponDetailInfo } from '../weapon/WeaponManager';
 import { DeveloperMenu } from './DeveloperMenu';
 import { HelpOverlay } from './HelpOverlay';
 import { SettingsMenu } from './SettingsMenu';
+import {
+  createModalBlocker,
+  setRectangleHitArea,
+  setTextHitArea,
+  stopPointerEvent,
+} from './input/UIInteraction';
 import { StatsBuildPanel } from './stats/StatsBuildPanel';
 import { StatsBuildSnapshot } from './stats/StatsBuildSnapshot';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
@@ -22,6 +28,7 @@ type MenuPage = 'main' | 'stats';
 export class PauseMenu {
   private readonly container: Phaser.GameObjects.Container;
   private readonly screenManager: ScreenManager;
+  private readonly blocker: Phaser.GameObjects.Rectangle;
   private readonly background: Phaser.GameObjects.Rectangle;
   private readonly panelImage?: Phaser.GameObjects.Image;
   private readonly title: Phaser.GameObjects.Text;
@@ -43,6 +50,7 @@ export class PauseMenu {
     private readonly onOpenDeveloperScene?: (sceneKey: string) => void,
   ) {
     this.screenManager = new ScreenManager(scene);
+    this.blocker = createModalBlocker(scene, 1199);
     this.background = scene.add.rectangle(
       this.screenManager.centerX,
       this.screenManager.centerY,
@@ -97,6 +105,7 @@ export class PauseMenu {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
     this.screenManager.dispose();
+    this.blocker.destroy();
     this.container.destroy(true);
   }
 
@@ -325,7 +334,13 @@ export class PauseMenu {
     button.on('pointerout', () => {
       button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
     });
-    button.on('pointerdown', () => {
+    button.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       AudioManager.playUi(this.scene, 'ui_click');
       onClick();
     });
@@ -337,6 +352,7 @@ export class PauseMenu {
   private applyLayout(): void {
     const layout = LayoutConfig.getPauseMenuLayout(this.screenManager);
 
+    setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
     this.background.setPosition(layout.panelCenter.x, layout.panelCenter.y);
     this.background.setSize(layout.panelWidth, layout.panelHeight);
     this.panelImage?.setPosition(layout.panelCenter.x, layout.panelCenter.y);
@@ -369,7 +385,7 @@ export class PauseMenu {
       const position = buttonLayout.positions[index];
       button.setPosition(position.x, position.y);
       button.setFontSize(buttonLayout.fontSize);
-      button.setFixedSize(buttonLayout.width, buttonLayout.height);
+      setTextHitArea(button, buttonLayout.width, buttonLayout.height);
     });
   }
 
@@ -414,7 +430,7 @@ export class PauseMenu {
       backButton.setVisible(true);
       backButton.setPosition(layout.panelCenter.x, layout.panelCenter.y + layout.panelHeight / 2 - 38);
       backButton.setFontSize(metrics.fontSize);
-      backButton.setFixedSize(metrics.width, metrics.height);
+      setTextHitArea(backButton, metrics.width, metrics.height);
     }
   }
 

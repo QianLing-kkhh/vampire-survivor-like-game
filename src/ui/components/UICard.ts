@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { setContainerHitArea, stopPointerEvent } from '../input/UIInteraction';
 import { UITheme } from '../UITheme';
 
 export interface UICardConfig {
@@ -21,11 +22,7 @@ export class UICard {
     this.container = scene.add.container(config.x, config.y);
     this.background = scene.add.graphics();
     this.container.add(this.background);
-    this.container.setSize(config.width, config.height);
-    this.container.setInteractive(
-      new Phaser.Geom.Rectangle(-config.width / 2, -config.height / 2, config.width, config.height),
-      Phaser.Geom.Rectangle.Contains,
-    );
+    setContainerHitArea(this.container, config.width, config.height);
     this.container.on('pointerover', () => {
       this.hover = true;
       this.render();
@@ -34,7 +31,13 @@ export class UICard {
       this.hover = false;
       this.render();
     });
-    this.container.on('pointerdown', () => {
+    this.container.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       if (config.disabled) {
         return;
       }

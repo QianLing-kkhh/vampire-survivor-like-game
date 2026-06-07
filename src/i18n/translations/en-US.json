@@ -641,6 +641,9 @@
   "developer": {
     "title": "Developer",
     "resetProgressionDefaults": "Reset unlocks to defaults",
+    "resetAllLocalData": "Reset all local data",
+    "confirmResetAllLocalData": "Confirm reset all local data",
+    "resetAllLocalDataDone": "Local data reset",
     "tab": {
       "automation": "Automation",
       "tools": "Tools",

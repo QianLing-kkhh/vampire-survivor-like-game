@@ -6,6 +6,7 @@ import { PoolManager } from '../performance/PoolManager';
 import { PooledObjectFactory } from '../performance/PooledObjectFactory';
 
 import { FloatingText, FloatingTextConfig } from './FloatingText';
+import { FLOATING_TEXT_STYLE } from './floating/FloatingTextStyle';
 
 export interface ChestUpgradeFloatingTextPayload {
   name: string;
@@ -66,25 +67,16 @@ export class FloatingTextManager {
       x,
       y - (isBoss ? 38 : 18),
       Math.ceil(damage).toString(),
-      {
-        color: '#f8fafc',
-        fontSize: isBoss ? '22px' : '16px',
-      },
+      isBoss ? FLOATING_TEXT_STYLE.bossDamage : FLOATING_TEXT_STYLE.enemyDamage,
     );
   }
 
   showPlayerDamage(x: number, y: number, damage: number): void {
-    this.spawn(x, y - 28, `-${Math.ceil(damage)}`, {
-      color: '#ef4444',
-      fontSize: '22px',
-    });
+    this.spawn(x, y - 28, `-${Math.ceil(damage)}`, FLOATING_TEXT_STYLE.playerDamage);
   }
 
   showPlayerHeal(x: number, y: number, amount: number): void {
-    this.spawn(x, y - 34, `+${Math.ceil(amount)}`, {
-      color: '#22c55e',
-      fontSize: '20px',
-    });
+    this.spawn(x, y - 34, `+${Math.ceil(amount)}`, FLOATING_TEXT_STYLE.playerHeal);
   }
 
   showChestUpgrade(
@@ -101,13 +93,7 @@ export class FloatingTextManager {
       x + (lane % 2 === 0 ? -12 : 12),
       y - 56 - lane * 24,
       label,
-      {
-        color: '#facc15',
-        fontSize: '24px',
-        lifetimeMs: 1500,
-        stroke: '#111827',
-        strokeThickness: 4,
-      },
+      FLOATING_TEXT_STYLE.chestUpgrade,
     );
   }
 
@@ -127,13 +113,7 @@ export class FloatingTextManager {
       x + (lane % 2 === 0 ? -10 : 10),
       y - 34 - lane * 16,
       label,
-      {
-        color: '#facc15',
-        fontSize: '22px',
-        lifetimeMs: 1200,
-        stroke: '#172554',
-        strokeThickness: 4,
-      },
+      FLOATING_TEXT_STYLE.enemyMergeLevelUp,
     );
   }
 
@@ -145,13 +125,7 @@ export class FloatingTextManager {
       x + (lane % 2 === 0 ? -8 : 8),
       y - 42 - lane * 12,
       '\u{1F45F}\u2193',
-      {
-        color: '#bfdbfe',
-        fontSize: '24px',
-        lifetimeMs: 950,
-        stroke: '#0f172a',
-        strokeThickness: 4,
-      },
+      FLOATING_TEXT_STYLE.moveSpeedDown,
     );
   }
 

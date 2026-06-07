@@ -36,6 +36,7 @@ export class RelicManager {
     pickupRangeMultiplier: 1,
     treasureScoreMultiplier: 1,
   };
+  private cachedEffects: RelicEffect[] = [];
   private thornCounterAvailableAtMs = 0;
 
   constructor(private context: RelicEffectContext = {}) {
@@ -69,6 +70,7 @@ export class RelicManager {
     };
 
     this.activeRelics.set(id, activeRelic);
+    this.rebuildCachedEffects();
     this.rebuildCachedModifiers();
 
     for (const effect of activeRelic.effects) {
@@ -90,6 +92,7 @@ export class RelicManager {
     }
 
     this.activeRelics.delete(id);
+    this.rebuildCachedEffects();
     this.rebuildCachedModifiers();
     return true;
   }
@@ -176,8 +179,18 @@ export class RelicManager {
     this.unsubscribeGameEvents?.();
   }
 
-  private getEffects(): RelicEffect[] {
-    return [...this.activeRelics.values()].flatMap((activeRelic) => activeRelic.effects);
+  private getEffects(): readonly RelicEffect[] {
+    return this.cachedEffects;
+  }
+
+  private rebuildCachedEffects(): void {
+    const nextEffects: RelicEffect[] = [];
+
+    for (const activeRelic of this.activeRelics.values()) {
+      nextEffects.push(...activeRelic.effects);
+    }
+
+    this.cachedEffects = nextEffects;
   }
 
   private rebuildCachedModifiers(): void {
@@ -295,9 +308,6 @@ export class RelicManager {
 
     for (const { enemy } of targets) {
       enemy.takeDamage(this.damageCalculator.calculateDamage(effect.value, DamageType.Normal));
-      if (enemy.isDead) {
-        enemy.destroy();
-      }
     }
   }
 

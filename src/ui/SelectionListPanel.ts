@@ -11,6 +11,7 @@ import { UIButton } from './components/UIButton';
 import { UICard } from './components/UICard';
 import { UIIconFrame } from './components/UIIconFrame';
 import { UIStatRow } from './components/UIStatRow';
+import { createModalBlocker, setRectangleHitArea } from './input/UIInteraction';
 import { UITheme } from './UITheme';
 
 export interface SelectionListItem {
@@ -34,6 +35,7 @@ export interface SelectionListPanelConfig {
 
 export class SelectionListPanel {
   private readonly container: Phaser.GameObjects.Container;
+  private readonly blocker: Phaser.GameObjects.Rectangle;
   private readonly screenManager: ScreenManager;
   private readonly pageItems: Phaser.GameObjects.GameObject[] = [];
   private unsubscribeResize?: () => void;
@@ -48,6 +50,7 @@ export class SelectionListPanel {
       0,
       config.items.findIndex((item) => item.id === config.selectedId),
     );
+    this.blocker = createModalBlocker(scene, UITheme.depth.modal - 1);
     this.container = scene.add.container(0, 0);
     this.container.setDepth(UITheme.depth.modal);
     this.render();
@@ -66,12 +69,14 @@ export class SelectionListPanel {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
     this.screenManager.dispose();
+    this.blocker.destroy();
     this.container.destroy(true);
   }
 
   private render(): void {
     this.container.removeAll(true);
     this.pageItems.length = 0;
+    setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
 
     const safe = SafeArea.getInsets(this.screenManager);
     const portrait = this.screenManager.isPortrait();

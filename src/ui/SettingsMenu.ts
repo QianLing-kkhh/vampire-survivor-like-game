@@ -9,6 +9,12 @@ import { SettingsManager } from '../settings/SettingsManager';
 import { UIStyle } from './theme/UIStyle';
 import { UIThemeRegistry } from './theme/UIThemeRegistry';
 import { ASSET_STYLES, AssetStyle, DISPLAY_QUALITIES, DisplayQuality } from '../visual/DisplayQuality';
+import {
+  createModalBlocker,
+  setRectangleHitArea,
+  setTextHitArea,
+  stopPointerEvent,
+} from './input/UIInteraction';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type SettingsMenuHandler = () => void;
@@ -66,6 +72,7 @@ const SETTINGS_TABS: SettingsTabId[] = ['display', 'audio', 'gameplay', 'input']
 export class SettingsMenu {
   private readonly screenManager: ScreenManager;
   private readonly container: Phaser.GameObjects.Container;
+  private readonly blocker: Phaser.GameObjects.Rectangle;
   private readonly background: Phaser.GameObjects.Rectangle;
   private readonly panelImage?: Phaser.GameObjects.Image;
   private readonly title: Phaser.GameObjects.Text;
@@ -93,6 +100,7 @@ export class SettingsMenu {
     private readonly onSettingsChanged: SettingsMenuHandler = () => {},
   ) {
     this.screenManager = new ScreenManager(scene);
+    this.blocker = createModalBlocker(scene, 2199, () => this.closeDropdown());
     this.container = scene.add.container(0, 0);
     this.container.setDepth(2200);
     this.background = scene.add.rectangle(
@@ -153,6 +161,7 @@ export class SettingsMenu {
     this.closeDropdown();
     this.clearRows();
     this.screenManager.dispose();
+    this.blocker.destroy();
     this.container.destroy(true);
   }
 
@@ -170,7 +179,13 @@ export class SettingsMenu {
       });
       label.setOrigin(0.5);
       tab.add([background, label]);
-      background.on('pointerdown', () => {
+      background.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        stopPointerEvent(event);
         AudioManager.playUi(this.scene, 'ui_click');
         this.closeDropdown();
         this.selectedTab = tabId;
@@ -227,13 +242,29 @@ export class SettingsMenu {
 
     if (definition.type === 'toggle') {
       this.addToggleControl(row, control);
-      background.on('pointerdown', () => this.activateToggle(definition));
+      background.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        stopPointerEvent(event);
+        this.activateToggle(definition);
+      });
       return control;
     }
 
     if (definition.type === 'select') {
       this.addSelectControl(row, control);
-      background.on('pointerdown', () => this.openSelect(control));
+      background.on('pointerdown', (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        stopPointerEvent(event);
+        this.openSelect(control);
+      });
       return control;
     }
 
@@ -253,8 +284,24 @@ export class SettingsMenu {
     track.setStrokeStyle(1, UITheme.panelBorderColor, 0.5);
     track.setInteractive({ useHandCursor: true });
     knob.setInteractive({ useHandCursor: true });
-    track.on('pointerdown', () => this.activateToggle(control.definition));
-    knob.on('pointerdown', () => this.activateToggle(control.definition));
+    track.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
+      this.activateToggle(control.definition);
+    });
+    knob.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
+      this.activateToggle(control.definition);
+    });
     row.add([track, knob]);
     control.track = track;
     control.knob = knob;
@@ -278,8 +325,24 @@ export class SettingsMenu {
     arrow.setOrigin(0, 0.5);
     valueText.setInteractive({ useHandCursor: true });
     arrow.setInteractive({ useHandCursor: true });
-    valueText.on('pointerdown', () => this.openSelect(control));
-    arrow.on('pointerdown', () => this.openSelect(control));
+    valueText.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
+      this.openSelect(control);
+    });
+    arrow.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
+      this.openSelect(control);
+    });
     row.add([valueText, arrow]);
     control.value = valueText;
     control.rightArrow = arrow;
@@ -298,7 +361,13 @@ export class SettingsMenu {
     track.setStrokeStyle(1, UITheme.panelBorderColor, 0.6);
     track.setInteractive({ useHandCursor: true });
     knob.setInteractive({ draggable: true, useHandCursor: true });
-    track.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+    track.on('pointerdown', (
+      pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       this.setSliderFromWorldX(control, pointer.x, true);
     });
     knob.on('dragstart', () => {
@@ -352,7 +421,15 @@ export class SettingsMenu {
     overlayBg.setOrigin(0, 0);
     overlayBg.setScrollFactor(0);
     overlayBg.setInteractive({ useHandCursor: true });
-    overlayBg.on('pointerdown', () => this.closeDropdown());
+    overlayBg.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
+      this.closeDropdown();
+    });
     layer.add(overlayBg);
 
     const panel = this.scene.add.rectangle(
@@ -400,7 +477,13 @@ export class SettingsMenu {
         optionText.setColor(UITheme.successTextColor);
       }
 
-      const selectOption = () => {
+      const selectOption = (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        stopPointerEvent(event);
         control.definition.setValue?.(option.value);
         this.closeDropdown();
         this.afterSettingChanged();
@@ -468,6 +551,7 @@ export class SettingsMenu {
     this.pageByTab[this.selectedTab] = currentPage;
     const rowWidth = panel.content.width;
 
+    setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
     this.background.setPosition(centerX, centerY);
     this.background.setSize(panel.width, panel.height);
     this.background.setFillStyle(UITheme.panelBgColor, UITheme.panelBgAlpha);
@@ -490,7 +574,7 @@ export class SettingsMenu {
       row.container.setVisible(true);
       row.label.setText(row.definition.label);
       row.container.setPosition(panel.content.x + rowWidth / 2, contentTop + visibleIndex * (rowHeight + rowGap));
-      row.background.setSize(rowWidth, rowHeight);
+      setRectangleHitArea(row.background, rowWidth, rowHeight);
       row.label.setPosition(-rowWidth / 2 + 14, rowHeight / 2);
       row.label.setFontSize(row.definition.type === 'info' ? fonts.small : fonts.body);
       row.label.setWordWrapWidth(rowWidth - (row.definition.type === 'toggle' ? 110 : 250));
@@ -515,7 +599,7 @@ export class SettingsMenu {
     const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
     this.closeButton.setPosition(centerX, closeY);
     this.closeButton.setFontSize(metrics.fontSize);
-    this.closeButton.setFixedSize(metrics.width, metrics.height);
+    setTextHitArea(this.closeButton, metrics.width, metrics.height);
     this.closeButton.setColor(UITheme.textColor);
     this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
   }
@@ -571,7 +655,7 @@ export class SettingsMenu {
   ): void {
     button.setPosition(x, y);
     button.setFontSize(fontSize);
-    button.setFixedSize(width, height);
+    setTextHitArea(button, width, height);
     button.setColor(enabled ? UITheme.textColor : UITheme.mutedTextColor);
     button.setAlpha(enabled ? 1 : 0.45);
     button.setBackgroundColor(toCssColor(enabled ? UITheme.buttonBgColor : UITheme.iconBgColor));
@@ -589,7 +673,7 @@ export class SettingsMenu {
       const row = Math.floor(index / columns);
       const column = index % columns;
       const selected = tab.id === this.selectedTab;
-      tab.background.setSize(tabWidth, tabHeight);
+      setRectangleHitArea(tab.background, tabWidth, tabHeight);
       tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
       tab.background.setStrokeStyle(2, selected ? UITheme.successAccentColor : UITheme.panelBorderColor, selected ? 1 : 0.75);
       tab.container.setPosition(
@@ -608,7 +692,9 @@ export class SettingsMenu {
     row.track?.setVisible(true);
     row.knob?.setVisible(true);
     row.track?.setPosition(rowWidth / 2 - 48, rowHeight / 2);
-    row.track?.setSize(54, 28);
+    if (row.track) {
+      setRectangleHitArea(row.track, 54, 28);
+    }
     row.track?.setFillStyle(this.getToggleTrackColor(enabled), 1);
     row.knob?.setPosition(rowWidth / 2 - 48 + (enabled ? 13 : -13), rowHeight / 2);
   }
@@ -631,7 +717,9 @@ export class SettingsMenu {
     const trackLeftLocal = trackRightLocal - trackWidth;
     const trackCenterX = trackLeftLocal + trackWidth / 2;
 
-    row.track?.setSize(trackWidth, 10);
+    if (row.track) {
+      setRectangleHitArea(row.track, trackWidth, 10);
+    }
     row.track?.setPosition(trackCenterX, rowHeight / 2);
     row.value?.setText(this.getDisplayValue(row.definition));
     row.value?.setPosition(trackLeftLocal - 8, rowHeight / 2);
@@ -753,7 +841,13 @@ export class SettingsMenu {
     button.on('pointerout', () => {
       button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
     });
-    button.on('pointerdown', () => {
+    button.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       AudioManager.playUi(this.scene, 'ui_click');
       this.onClose();
     });
@@ -784,7 +878,13 @@ export class SettingsMenu {
         button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
       }
     });
-    button.on('pointerdown', () => {
+    button.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       if (button.alpha < 1) {
         return;
       }

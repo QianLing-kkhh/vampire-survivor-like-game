@@ -69,6 +69,16 @@ export class EndlessLeaderboard {
     });
   }
 
+  static clearLegacyStorage(): void {
+    EndlessLeaderboard.legacyMigrationAttempted = true;
+
+    try {
+      globalThis.localStorage?.removeItem(EndlessLeaderboard.LEGACY_STORAGE_KEY);
+    } catch {
+      // SaveManager provides the active leaderboard storage fallback.
+    }
+  }
+
   private static toRecord(
     entry: EndlessLeaderboardEntry,
     key: LeaderboardKey,

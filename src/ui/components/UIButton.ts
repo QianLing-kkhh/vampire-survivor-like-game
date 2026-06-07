@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../../audio/AudioManager';
+import { setContainerHitArea, stopPointerEvent } from '../input/UIInteraction';
 import { UITheme } from '../UITheme';
 
 export type UIButtonState = 'normal' | 'hover' | 'pressed' | 'disabled' | 'selected';
@@ -25,6 +26,7 @@ export class UIButton {
   private width: number;
   private height: number;
   private state: UIButtonState;
+  private pressedInside = false;
 
   constructor(private readonly scene: Phaser.Scene, config: UIButtonConfig) {
     const metrics = UITheme.sizes.button[config.size ?? 'medium'];
@@ -45,22 +47,45 @@ export class UIButton {
     this.label.setOrigin(0.5);
     this.label.setPadding(0, Math.max(0, Math.floor((this.height - 22) / 2)), 0, 0);
     this.container.add([this.background, this.label]);
-    this.container.setSize(this.width, this.height);
-    this.container.setInteractive(
-      new Phaser.Geom.Rectangle(-this.width / 2, -this.height / 2, this.width, this.height),
-      Phaser.Geom.Rectangle.Contains,
-    );
+    setContainerHitArea(this.container, this.width, this.height);
     this.container.on('pointerover', () => this.setState(this.state === 'disabled' ? 'disabled' : 'hover'));
-    this.container.on('pointerout', () => this.setState(config.selected ? 'selected' : 'normal'));
-    this.container.on('pointerdown', () => this.setState(this.state === 'disabled' ? 'disabled' : 'pressed'));
-    this.container.on('pointerup', () => {
+    this.container.on('pointerout', () => {
+      this.pressedInside = false;
+      this.setState(config.selected ? 'selected' : 'normal');
+    });
+    this.container.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       if (this.state === 'disabled') {
+        this.pressedInside = false;
+        this.setState('disabled');
+        return;
+      }
+
+      this.pressedInside = true;
+      this.setState('pressed');
+    });
+    this.container.on('pointerup', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
+      const shouldClick = this.state !== 'disabled' && this.pressedInside;
+      this.pressedInside = false;
+
+      if (!shouldClick) {
         return;
       }
 
       AudioManager.playUi(scene, 'ui_click');
-      config.onClick?.();
       this.setState(config.selected ? 'selected' : 'hover');
+      config.onClick?.();
     });
     this.render();
   }
@@ -75,8 +100,7 @@ export class UIButton {
     this.height = height;
     this.label.setFixedSize(width, height);
     this.label.setPadding(0, Math.max(0, Math.floor((height - 22) / 2)), 0, 0);
-    this.container.setSize(width, height);
-    this.container.input?.hitArea.setTo(-width / 2, -height / 2, width, height);
+    setContainerHitArea(this.container, width, height);
     this.render();
     return this;
   }

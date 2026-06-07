@@ -7,6 +7,7 @@ import { MapMechanicDefinition } from '../map/mechanics/MapMechanicDefinition';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SettingsManager } from '../settings/SettingsManager';
+import { setTextHitArea, stopPointerEvent } from './input/UIInteraction';
 import { MinimapOverlay } from './minimap/MinimapOverlay';
 import { MinimapEnemyPosition, WorldPosition } from './minimap/MinimapTypes';
 import { UITheme } from './UITheme';
@@ -89,6 +90,7 @@ export class HUD {
   private static readonly SHOW_DEBUG_OVERLAY = false;
   private static readonly BAR_WIDTH = 230;
   private static readonly BAR_HEIGHT = 14;
+  private static readonly STATS_PANEL_HEIGHT = 230;
   private static readonly ICON_SIZE = 28;
   private static readonly BUILD_ICON_SIZE = 56;
   private static readonly BUILD_ROW_HEIGHT = 64;
@@ -127,10 +129,10 @@ export class HUD {
   constructor(scene: Phaser.Scene, private readonly onPause?: () => void) {
     this.scene = scene;
     this.screenManager = new ScreenManager(scene);
-    this.statsPanelBg = this.createPanelBackground(12, 8, 250, 126);
+    this.statsPanelBg = this.createPanelBackground(12, 8, 250, HUD.STATS_PANEL_HEIGHT);
     this.statsPanelBg.setVisible(false);
     this.statsPanelImage = undefined;
-    this.buildPanelBg = this.createPanelBackground(12, 148, 330, 214);
+    this.buildPanelBg = this.createPanelBackground(12, 248, 330, 214);
     this.buildPanelBg.setVisible(false);
     this.buildPanelImage = undefined;
     this.hpText = this.createText(16, 12, UITheme.smallFontSize);
@@ -139,16 +141,16 @@ export class HUD {
     this.expText = this.createText(16, 54, UITheme.smallFontSize);
     this.expBarBg = this.createBarBackground(16, 76, HUD.BAR_WIDTH, HUD.BAR_HEIGHT);
     this.expBarFill = this.createBarFill(16, 76, UITheme.expBarColor);
-    this.timeText = this.createText(16, 98, '24px');
+    this.timeText = this.createText(16, 100, '24px');
     this.timeText.setStyle({ fontStyle: 'bold' });
     this.timeText.setStroke('#000000', 4);
-    this.scoreText = this.createText(16, 124, '22px', '#facc15');
+    this.scoreText = this.createText(16, 128, '22px', '#facc15');
     this.scoreText.setStyle({ fontStyle: 'bold' });
     this.scoreText.setStroke('#111827', 3);
-    this.relicText = this.createText(16, 146, UITheme.smallFontSize, UITheme.mutedTextColor);
-    this.goalText = this.createText(16, 150, UITheme.smallFontSize, UITheme.mutedTextColor);
+    this.relicText = this.createText(16, 154, UITheme.smallFontSize, UITheme.mutedTextColor);
+    this.goalText = this.createText(16, 178, UITheme.smallFontSize, UITheme.mutedTextColor);
     this.messageText = this.createText(16, 172, UITheme.smallFontSize, UITheme.successTextColor);
-    this.shieldText = this.createText(16, 192, UITheme.smallFontSize, UITheme.successTextColor);
+    this.shieldText = this.createText(16, 226, UITheme.smallFontSize, UITheme.successTextColor);
     this.evolutionDebugText = this.createText(16, 520, '12px', UITheme.mutedTextColor);
     this.minimap = new MinimapOverlay(scene);
 
@@ -166,8 +168,13 @@ export class HUD {
     this.pauseButton.setDepth(1200);
     this.pauseButton.setScrollFactor(0);
     this.pauseButton.setInteractive({ useHandCursor: true });
-    this.pauseButton.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      pointer.event?.stopPropagation();
+    this.pauseButton.on('pointerdown', (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      stopPointerEvent(event);
       this.onPause?.();
     });
 
@@ -694,17 +701,17 @@ export class HUD {
     this.expBarBg.setPosition(stats.x, stats.y + 64);
     this.expBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
     this.expBarFill.setPosition(stats.x, stats.y + 64);
-    this.timeText.setPosition(stats.x, stats.y + 86);
+    this.timeText.setPosition(stats.x, stats.y + 90);
     this.timeText.setFontSize(this.screenManager.isPortrait() ? '22px' : '26px');
-    this.scoreText.setPosition(stats.x, stats.y + 116);
+    this.scoreText.setPosition(stats.x, stats.y + 118);
     this.scoreText.setFontSize(this.screenManager.isPortrait() ? '20px' : '22px');
-    this.relicText.setPosition(stats.x, stats.y + 142);
+    this.relicText.setPosition(stats.x, stats.y + 150);
     this.relicText.setFontSize(layout.fontSize);
-    this.goalText.setPosition(stats.x, stats.y + 164);
+    this.goalText.setPosition(stats.x, stats.y + 174);
     this.goalText.setFontSize(layout.fontSize);
     this.messageText.setPosition(layout.bossTextPosition.x, layout.bossTextPosition.y);
     this.messageText.setOrigin(0.5);
-    this.shieldText.setPosition(stats.x, stats.y + 184);
+    this.shieldText.setPosition(stats.x, stats.y + 198);
     this.shieldText.setFontSize(layout.fontSize);
     this.evolutionDebugText.setPosition(stats.x, this.screenManager.height - 96);
     this.evolutionDebugText.setVisible(HUD.SHOW_DEBUG_OVERLAY);
@@ -720,15 +727,7 @@ export class HUD {
         : I18n.t('ui.pause'),
     );
     this.pauseButton.setFontSize(layout.fontSize);
-    this.pauseButton.setInteractive(
-      new Phaser.Geom.Rectangle(
-        -layout.pauseButtonRect.width / 2,
-        -layout.pauseButtonRect.height / 2,
-        layout.pauseButtonRect.width,
-        layout.pauseButtonRect.height,
-      ),
-      Phaser.Geom.Rectangle.Contains,
-    );
+    setTextHitArea(this.pauseButton, layout.pauseButtonRect.width, layout.pauseButtonRect.height);
   }
 
   private createPanelBackground(
