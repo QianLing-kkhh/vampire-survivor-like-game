@@ -968,6 +968,7 @@ export class GameScene extends Phaser.Scene {
             id: `${enemy.id}:${index}`,
             x: enemy.body.x,
             y: enemy.body.y,
+            radiusPx: enemy.body.radius,
             damage: enemy.damage,
             hpRatio: enemy.maxHp > 0 ? enemy.currentHp / enemy.maxHp : 0,
             isBoss: targetContext.isBoss,
@@ -981,6 +982,7 @@ export class GameScene extends Phaser.Scene {
       player: {
         currentHp: this.playerHealth?.currentHp ?? this.playerStats.maxHp,
         maxHp: this.playerHealth?.maxHp ?? this.playerStats.maxHp,
+        hitRadiusPx: GameScene.PLAYER_HIT_RADIUS,
         moveSpeed: this.playerStats.moveSpeed,
         pickupRangePx,
         characterId: characterSnapshot?.characterId,

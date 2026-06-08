@@ -12,6 +12,8 @@ export interface AutoPosition {
 export interface AutoPlayerSnapshot {
   currentHp: number;
   maxHp: number;
+  hitRadiusPx?: number;
+  radiusPx?: number;
   moveSpeed?: number;
   pickupRangePx?: number;
   characterId?: string;
@@ -33,6 +35,7 @@ export interface AutoEnemySnapshot extends AutoPosition {
   id?: string;
   vx?: number;
   vy?: number;
+  radiusPx?: number;
   damage?: number;
   hpRatio?: number;
   isBoss?: boolean;
@@ -250,6 +253,8 @@ export class AutoPlayer {
   private static readonly CONTACT_DANGER_RADIUS = 78;
   private static readonly CONTACT_WARNING_RADIUS = 138;
   private static readonly CONTACT_PATH_RADIUS = 96;
+  private static readonly DEFAULT_PLAYER_COLLISION_RADIUS = 28;
+  private static readonly DEFAULT_ENEMY_COLLISION_RADIUS = 18;
   private static readonly PRE_ENCIRCLE_RADIUS = 430;
   private static readonly TERRAIN_ESCAPE_MARGIN = 150;
   private static readonly STRATEGIC_DISTANCE = 420;
@@ -1498,7 +1503,8 @@ export class AutoPlayer {
 
     for (const enemy of context.enemyPositions) {
       const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
-      const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+      const centerDistance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+      const distance = this.getEnemyEffectiveDistance(context, player, enemy);
       const threat = this.getEnemyThreatWeight(enemy);
 
       nearestDistance = Math.min(nearestDistance, distance);
@@ -1506,8 +1512,8 @@ export class AutoPlayer {
       if (distance <= AutoPlayer.DANGER_RADIUS) {
         pressureCount += 1;
         const weight = ((AutoPlayer.DANGER_RADIUS - Math.max(1, distance)) / AutoPlayer.DANGER_RADIUS) * threat;
-        fleeDirection.x += ((player.x - enemy.x) / Math.max(1, distance)) * weight;
-        fleeDirection.y += ((player.y - enemy.y) / Math.max(1, distance)) * weight;
+        fleeDirection.x += ((player.x - enemy.x) / Math.max(1, centerDistance)) * weight;
+        fleeDirection.y += ((player.y - enemy.y) / Math.max(1, centerDistance)) * weight;
         enemyCenter.add(enemyPosition.scale(weight));
         centerWeight += weight;
       }
@@ -2272,7 +2278,7 @@ export class AutoPlayer {
     let pressure = 0;
 
     for (const enemy of context.enemyPositions) {
-      const distance = Phaser.Math.Distance.Between(point.x, point.y, enemy.x, enemy.y);
+      const distance = this.getEnemyEffectiveDistance(context, point, enemy);
 
       if (distance > AutoPlayer.DANGER_RADIUS) {
         continue;
@@ -2309,7 +2315,7 @@ export class AutoPlayer {
     let risk = 0;
 
     for (const enemy of context.enemyPositions) {
-      const distance = Phaser.Math.Distance.Between(point.x, point.y, enemy.x, enemy.y);
+      const distance = this.getEnemyEffectiveDistance(context, point, enemy);
 
       if (distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
         continue;
@@ -2351,7 +2357,7 @@ export class AutoPlayer {
 
       const futureX = enemy.x + predictedVx * predictSeconds;
       const futureY = enemy.y + predictedVy * predictSeconds;
-      const distance = Phaser.Math.Distance.Between(point.x, point.y, futureX, futureY);
+      const distance = this.getEnemyEffectiveDistance(context, point, enemy, futureX, futureY);
 
       if (distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
         continue;
@@ -2380,10 +2386,10 @@ export class AutoPlayer {
 
     for (const enemy of context.enemyPositions) {
       const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
-      const currentDistance = Phaser.Math.Distance.Between(start.x, start.y, enemy.x, enemy.y);
-      const endpointDistance = Phaser.Math.Distance.Between(end.x, end.y, enemy.x, enemy.y);
+      const currentDistance = this.getEnemyEffectiveDistance(context, start, enemy);
+      const endpointDistance = this.getEnemyEffectiveDistance(context, end, enemy);
       const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
-      const pathDistance = pathInfo.distance;
+      const pathDistance = this.getEnemyEffectivePathDistance(context, pathInfo.distance, enemy);
 
       if (pathDistance > AutoPlayer.CONTACT_PATH_RADIUS) {
         continue;
@@ -2426,23 +2432,24 @@ export class AutoPlayer {
 
     for (const enemy of context.enemyPositions) {
       const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
-      const startDistance = Phaser.Math.Distance.Between(start.x, start.y, enemy.x, enemy.y);
-      const endDistance = Phaser.Math.Distance.Between(end.x, end.y, enemy.x, enemy.y);
+      const startDistance = this.getEnemyEffectiveDistance(context, start, enemy);
+      const endDistance = this.getEnemyEffectiveDistance(context, end, enemy);
 
       if (Math.min(startDistance, endDistance) > AutoPlayer.DANGER_RADIUS + AutoPlayer.STEP_DISTANCE) {
         continue;
       }
 
       const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
+      const pathDistance = this.getEnemyEffectivePathDistance(context, pathInfo.distance, enemy);
 
-      if (pathInfo.distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
+      if (pathDistance > AutoPlayer.CONTACT_WARNING_RADIUS) {
         continue;
       }
 
       nearbyEnemies += 1;
-      nearestPathDistance = Math.min(nearestPathDistance, pathInfo.distance);
+      nearestPathDistance = Math.min(nearestPathDistance, pathDistance);
 
-      if (pathInfo.t > 0.12 && pathInfo.t < 0.88 && pathInfo.distance < AutoPlayer.CONTACT_PATH_RADIUS) {
+      if (pathInfo.t > 0.12 && pathInfo.t < 0.88 && pathDistance < AutoPlayer.CONTACT_PATH_RADIUS) {
         dangerCrossings += 1;
       }
     }
@@ -2543,10 +2550,59 @@ export class AutoPlayer {
     let nearest = Number.POSITIVE_INFINITY;
 
     for (const enemy of context.enemyPositions) {
-      nearest = Math.min(nearest, Phaser.Math.Distance.Between(point.x, point.y, enemy.x, enemy.y));
+      nearest = Math.min(nearest, this.getEnemyEffectiveDistance(context, point, enemy));
     }
 
     return nearest;
+  }
+
+  private getPlayerCollisionRadius(context: AutoPlayerContext): number {
+    const snapshotRadius = context.player?.hitRadiusPx ?? context.player?.radiusPx;
+
+    if (snapshotRadius !== undefined && Number.isFinite(snapshotRadius) && snapshotRadius > 0) {
+      return snapshotRadius;
+    }
+
+    const positionRadius = (context.playerPosition as AutoPosition & { radius?: number }).radius;
+
+    return positionRadius !== undefined && Number.isFinite(positionRadius) && positionRadius > 0
+      ? Math.max(positionRadius, AutoPlayer.DEFAULT_PLAYER_COLLISION_RADIUS)
+      : AutoPlayer.DEFAULT_PLAYER_COLLISION_RADIUS;
+  }
+
+  private getEnemyCollisionRadius(enemy: AutoPosition | AutoEnemySnapshot): number {
+    const radius = 'radiusPx' in enemy ? enemy.radiusPx : undefined;
+
+    return radius !== undefined && Number.isFinite(radius) && radius > 0
+      ? radius
+      : AutoPlayer.DEFAULT_ENEMY_COLLISION_RADIUS;
+  }
+
+  private getEnemyCombinedCollisionRadius(
+    context: AutoPlayerContext,
+    enemy: AutoPosition | AutoEnemySnapshot,
+  ): number {
+    return this.getPlayerCollisionRadius(context) + this.getEnemyCollisionRadius(enemy);
+  }
+
+  private getEnemyEffectiveDistance(
+    context: AutoPlayerContext,
+    point: Phaser.Math.Vector2,
+    enemy: AutoPosition | AutoEnemySnapshot,
+    enemyX = enemy.x,
+    enemyY = enemy.y,
+  ): number {
+    const centerDistance = Phaser.Math.Distance.Between(point.x, point.y, enemyX, enemyY);
+
+    return Math.max(0, centerDistance - this.getEnemyCombinedCollisionRadius(context, enemy));
+  }
+
+  private getEnemyEffectivePathDistance(
+    context: AutoPlayerContext,
+    centerPathDistance: number,
+    enemy: AutoPosition | AutoEnemySnapshot,
+  ): number {
+    return Math.max(0, centerPathDistance - this.getEnemyCombinedCollisionRadius(context, enemy));
   }
 
   private getEnemyThreatWeight(enemy: AutoPosition | AutoEnemySnapshot): number {
