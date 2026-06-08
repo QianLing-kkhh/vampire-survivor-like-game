@@ -255,6 +255,9 @@ export class AutoPlayer {
   private static readonly CONTACT_PATH_RADIUS = 96;
   private static readonly DEFAULT_PLAYER_COLLISION_RADIUS = 28;
   private static readonly DEFAULT_ENEMY_COLLISION_RADIUS = 18;
+  private static readonly FINAL_BOSS_DASH_MIN_DISTANCE = 170;
+  private static readonly FINAL_BOSS_DASH_IDEAL_DISTANCE = 270;
+  private static readonly FINAL_BOSS_DASH_MAX_DISTANCE = 390;
   private static readonly PRE_ENCIRCLE_RADIUS = 430;
   private static readonly TERRAIN_ESCAPE_MARGIN = 150;
   private static readonly STRATEGIC_DISTANCE = 420;
@@ -858,6 +861,7 @@ export class AutoPlayer {
     score -= this.getObstaclePenalty(context, endpoint) * 2.2;
     score -= this.getTotalBossWarningRisk(context, endpoint) * 80;
     score += Math.max(-3, currentPressure - endpointPressure) * (mode === 'SURVIVE' ? 18 : 8);
+    score += this.getFinalBossDashPositioningScore(context, player, endpoint, mode, true);
     score += Math.max(0, borderProgress) * (mode === 'REPOSITION' || kite.nearBorder ? 0.7 : 0.22);
     score += Math.max(0, obstacleProgress) * 0.25;
 
@@ -1036,6 +1040,67 @@ export class AutoPlayer {
     return density;
   }
 
+  private getFinalBossDashPositioningScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    mode: MoveMode,
+    strategic: boolean,
+  ): number {
+    const boss = this.getFinalBossEnemy(context);
+
+    if (!boss) {
+      return 0;
+    }
+
+    const dashContext = this.hasDashBossWarning(context) || mode === 'BOSS_POSITIONING' || mode === 'KITE';
+
+    if (!dashContext) {
+      return 0;
+    }
+
+    const currentDistance = this.getEnemyEffectiveDistance(context, player, boss);
+    const endpointDistance = this.getEnemyEffectiveDistance(context, endpoint, boss);
+    const scale = strategic ? 1.35 : 1;
+    let score = 0;
+
+    if (endpointDistance < AutoPlayer.FINAL_BOSS_DASH_MIN_DISTANCE) {
+      score -= (AutoPlayer.FINAL_BOSS_DASH_MIN_DISTANCE - endpointDistance) * 0.55 * scale + 18 * scale;
+    } else if (endpointDistance <= AutoPlayer.FINAL_BOSS_DASH_MAX_DISTANCE) {
+      score += (18 - Math.abs(endpointDistance - AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE) * 0.045) * scale;
+    } else {
+      score -= (endpointDistance - AutoPlayer.FINAL_BOSS_DASH_MAX_DISTANCE) * 0.22 * scale + 16 * scale;
+    }
+
+    if (currentDistance > AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE && endpointDistance < currentDistance) {
+      score += Math.min(90, currentDistance - endpointDistance) * 0.18 * scale;
+    }
+
+    if (
+      currentDistance <= AutoPlayer.FINAL_BOSS_DASH_MAX_DISTANCE
+      && endpointDistance > currentDistance
+      && endpointDistance > AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE
+    ) {
+      score -= Math.min(90, endpointDistance - currentDistance) * 0.24 * scale;
+    }
+
+    return score;
+  }
+
+  private getFinalBossEnemy(context: AutoPlayerContext): (AutoPosition | AutoEnemySnapshot) | undefined {
+    return context.enemyPositions.find((enemy) => (
+      'id' in enemy
+      && typeof enemy.id === 'string'
+      && enemy.id.startsWith('boss:')
+      && 'isBoss' in enemy
+      && enemy.isBoss === true
+    ));
+  }
+
+  private hasDashBossWarning(context: AutoPlayerContext): boolean {
+    return (context.bossWarnings ?? []).some((warning) => warning.kind === 'dash');
+  }
+
   private evaluateTacticalDirection(
     context: AutoPlayerContext,
     player: Phaser.Math.Vector2,
@@ -1076,6 +1141,7 @@ export class AutoPlayer {
     score -= this.getObstaclePenalty(context, endpoint) * safetyWeight;
     score += this.getSlowZoneScore(context, endpoint, hpRatio);
     score += this.getBossWarningCandidateScore(context, player, endpoint) * 1.25;
+    score += this.getFinalBossDashPositioningScore(context, player, endpoint, intent.mode, false);
     score -= this.getNoProgressBorderPenalty(context, player, endpoint, direction, danger);
     score -= this.getHighPressureBorderPenalty(context, player, endpoint, direction, kite);
 
