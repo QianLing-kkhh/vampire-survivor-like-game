@@ -176,14 +176,14 @@
     },
     "damageReactionSkill": {
       "type": "ironCounter",
-      "cooldownMs": 8500,
+      "cooldownMs": 8000,
       "radius": 190,
       "damage": 20,
       "knockbackDistance": 240,
       "damageReductionMultiplier": 0.6,
       "damageReductionDurationMs": 2800,
-      "minimumMapMoveSpeedMultiplier": 0.9,
-      "minimumMapMoveSpeedDurationMs": 2400,
+      "minimumMapMoveSpeedMultiplier": 0.92,
+      "minimumMapMoveSpeedDurationMs": 2600,
       "zoneDurationMs": 650,
       "pressureScaling": {
         "enabled": true,
@@ -193,7 +193,7 @@
         "mediumRadiusMultiplier": 1.15,
         "highRadiusMultiplier": 1.25,
         "mediumKnockbackMultiplier": 1.15,
-        "highKnockbackMultiplier": 1.25,
+        "highKnockbackMultiplier": 1.3,
         "highArmorFlatBonus": 1,
         "highArmorDurationMs": 1000
       }

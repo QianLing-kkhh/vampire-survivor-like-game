@@ -3,6 +3,7 @@ import { RelicDefinition } from '../relic/RelicDefinition';
 import { RelicManager } from '../relic/RelicManager';
 import { RelicRewardSelector } from '../relic/RelicRewardSelector';
 import { RunState } from '../run/RunState';
+import { SCORE_RULES } from '../score/ScoreRules';
 
 export interface TreasureRewardCoordinatorContext {
   runState: RunState;
@@ -24,8 +25,11 @@ export class TreasureRewardCoordinator {
   private static readonly RELIC_AWARD_CHANCE = 0.2;
 
   handleChestOpened(context: TreasureRewardCoordinatorContext): TreasureOpenedResult {
+    const treasureScoreMultiplier = this.getTreasureScoreMultiplier(context);
+
     context.runState.recordTreasureOpen();
-    context.runState.recordScore('treasure', this.getTreasureScoreMultiplier(context));
+    context.runState.recordScore('treasure', treasureScoreMultiplier);
+    this.recordTreasureScoreRelicStats(context, treasureScoreMultiplier);
 
     const relicAwarded = this.tryAwardRelicFromChest(context);
 
@@ -40,6 +44,26 @@ export class TreasureRewardCoordinator {
 
   getTreasureScoreMultiplier(context: TreasureRewardCoordinatorContext): number {
     return context.relicManager?.getStatModifiers().treasureScoreMultiplier ?? 1;
+  }
+
+  private recordTreasureScoreRelicStats(
+    context: TreasureRewardCoordinatorContext,
+    treasureScoreMultiplier: number,
+  ): void {
+    const { relicManager } = context;
+
+    if (!relicManager?.hasRelic('golden_scarab')) {
+      return;
+    }
+
+    const extraScore = SCORE_RULES.treasureOpen * Math.max(0, treasureScoreMultiplier - 1);
+
+    if (extraScore <= 0) {
+      return;
+    }
+
+    relicManager.recordRelicTrigger('golden_scarab');
+    relicManager.recordRelicScore('golden_scarab', extraScore);
   }
 
   private tryAwardRelicFromChest(

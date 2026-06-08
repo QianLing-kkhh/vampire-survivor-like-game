@@ -48,6 +48,13 @@ export class RunResultBuilder {
     const weaponIds = context.weaponManager?.getWeaponIds() ?? [];
     const passiveItems = context.passiveManager?.getPassiveLevels() ?? [];
     const relicIds = context.relicManager?.getRelicIds() ?? [];
+    const relicCsvStats = context.relicManager?.getRelicCsvStats() ?? {
+      relicTriggerStats: [],
+      relicScoreStats: [],
+      relicHealStats: [],
+      relicDamageMitigatedStats: [],
+      relicUptimeStats: [],
+    };
     const relicNames = context.relicManager?.getRelicDisplayInfo().map((relic) => relic.name) ?? [];
     const weaponDamageStats = context.weaponManager?.getWeaponDamageStats() ?? [];
     const runStatsSummary = context.runStats.getSummary();
@@ -188,6 +195,11 @@ export class RunResultBuilder {
       weaponKillStats: runStatsSummary.weaponKillStats,
       upgradeCountStats: runStatsSummary.upgradeCountStats,
       relicIds,
+      relicTriggerStats: relicCsvStats.relicTriggerStats,
+      relicScoreStats: relicCsvStats.relicScoreStats,
+      relicHealStats: relicCsvStats.relicHealStats,
+      relicDamageMitigatedStats: relicCsvStats.relicDamageMitigatedStats,
+      relicUptimeStats: relicCsvStats.relicUptimeStats,
       activeSkillIds: [],
       activeSkillUseStats: [],
       enemyModifierSpawnStats: [],

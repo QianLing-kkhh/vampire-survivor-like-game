@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { GameEvent } from '../events/GameEvent';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { DamageType } from '../combat/DamageType';
+import { SCORE_RULES } from '../score/ScoreRules';
+import { KeyValueStat } from '../stats/RunStats';
 
 import { RelicDefinition } from './RelicDefinition';
 import { RelicEffect } from './RelicEffect';
@@ -32,10 +34,23 @@ interface CachedRelicModifiers {
   treasureScoreMultiplier: number;
 }
 
+export interface RelicCsvStats {
+  relicTriggerStats: KeyValueStat[];
+  relicScoreStats: KeyValueStat[];
+  relicHealStats: KeyValueStat[];
+  relicDamageMitigatedStats: KeyValueStat[];
+  relicUptimeStats: KeyValueStat[];
+}
+
 export class RelicManager {
   private readonly activeRelics = new Map<string, ActiveRelic>();
   private readonly unsubscribeGameEvents?: () => void;
   private readonly damageCalculator = new DamageCalculator();
+  private readonly relicTriggerStats = new Map<string, number>();
+  private readonly relicScoreStats = new Map<string, number>();
+  private readonly relicHealStats = new Map<string, number>();
+  private readonly relicDamageMitigatedStats = new Map<string, number>();
+  private readonly relicUptimeStats = new Map<string, number>();
   private cachedModifiers: CachedRelicModifiers = {
     damageMultiplier: 1,
     pickupRangeMultiplier: 1,
@@ -119,6 +134,24 @@ export class RelicManager {
 
   getRelicIds(): string[] {
     return [...this.activeRelics.keys()];
+  }
+
+  getRelicCsvStats(): RelicCsvStats {
+    return {
+      relicTriggerStats: this.toKeyValueStats(this.relicTriggerStats),
+      relicScoreStats: this.toKeyValueStats(this.relicScoreStats),
+      relicHealStats: this.toKeyValueStats(this.relicHealStats),
+      relicDamageMitigatedStats: this.toKeyValueStats(this.relicDamageMitigatedStats),
+      relicUptimeStats: this.toKeyValueStats(this.relicUptimeStats),
+    };
+  }
+
+  recordRelicTrigger(relicId: string, count = 1): void {
+    this.incrementRelicStat(this.relicTriggerStats, relicId, count);
+  }
+
+  recordRelicScore(relicId: string, score: number): void {
+    this.incrementRelicStat(this.relicScoreStats, relicId, score);
   }
 
   getRelicDisplayInfo(): Array<{
@@ -213,6 +246,7 @@ export class RelicManager {
     }
 
     this.unsubscribeGameEvents?.();
+    this.clearRelicCsvStats();
   }
 
   private getEffects(): readonly RelicEffect[] {
@@ -301,7 +335,10 @@ export class RelicManager {
         if (effect.type === 'onDamageTakenCounter') {
           this.tryTriggerThornCounter(effect as DamageTakenCounterRelicEffectConfig);
         } else if (effect.type === 'damageTakenCooldownGuard') {
-          this.tryTriggerIronShell(effect as DamageTakenCooldownGuardRelicEffectConfig);
+          this.tryTriggerIronShell(
+            relic.definition.id,
+            effect as DamageTakenCooldownGuardRelicEffectConfig,
+          );
         }
       }
     }
@@ -326,6 +363,8 @@ export class RelicManager {
         const nextExpiry = nowMs + durationMs;
         const burstMultiplier = 1 + Math.max(0, burstEffect.value ?? 0);
 
+        this.recordRelicTrigger(relic.definition.id);
+        this.incrementRelicStat(this.relicUptimeStats, relic.definition.id, durationMs / 1000);
         this.bossKillBurstExpiresAtMs = Math.max(this.bossKillBurstExpiresAtMs, nextExpiry);
         this.activeBossKillBurstMultiplier = Math.max(
           this.activeBossKillBurstMultiplier,
@@ -351,6 +390,11 @@ export class RelicManager {
 
         const healedAmount = this.context.playerHealth.healLostHpRatio(healRatio);
         const player = this.context.player;
+
+        if (healedAmount > 0) {
+          this.recordRelicTrigger(relic.definition.id);
+          this.incrementRelicStat(this.relicHealStats, relic.definition.id, healedAmount);
+        }
 
         if (healedAmount > 0 && this.context.floatingTextManager) {
           this.context.floatingTextManager.showPlayerHeal(
@@ -381,6 +425,8 @@ export class RelicManager {
 
         const boostMultiplier = 1 + Math.max(0, pickupEffect.value ?? 0);
 
+        this.recordRelicTrigger(relic.definition.id);
+        this.incrementRelicStat(this.relicUptimeStats, relic.definition.id, durationMs / 1000);
         this.temporaryPickupRangeMultiplier = Math.max(
           this.temporaryPickupRangeMultiplier,
           boostMultiplier,
@@ -408,6 +454,8 @@ export class RelicManager {
           continue;
         }
 
+        this.recordRelicTrigger(relic.definition.id);
+        this.recordRelicScore(relic.definition.id, SCORE_RULES.treasureOpen * bonusMultiplier);
         runState.recordScore('treasure', bonusMultiplier);
       }
     }
@@ -453,7 +501,10 @@ export class RelicManager {
     }
   }
 
-  private tryTriggerIronShell(effect: DamageTakenCooldownGuardRelicEffectConfig): void {
+  private tryTriggerIronShell(
+    relicId: string,
+    effect: DamageTakenCooldownGuardRelicEffectConfig,
+  ): void {
     const nowMs = this.getNowMs();
     const cooldownMs = Math.max(0, effect.cooldownMs ?? 0);
     const durationMs = Math.max(0, effect.durationMs ?? 0);
@@ -477,6 +528,7 @@ export class RelicManager {
     }
 
     this.context.playerHealth.addTemporaryDamageTakenMultiplier(damageMultiplier, durationMs);
+    this.recordRelicTrigger(relicId);
     this.nextIronShellAvailableAtMs = nowMs + cooldownMs;
   }
 
@@ -526,5 +578,27 @@ export class RelicManager {
 
   private getPlayerPosition(): { x: number; y: number } | undefined {
     return this.context.player?.body;
+  }
+
+  private incrementRelicStat(stats: Map<string, number>, relicId: string, amount: number): void {
+    const safeAmount = Math.max(0, amount);
+
+    if (!relicId || safeAmount <= 0) {
+      return;
+    }
+
+    stats.set(relicId, (stats.get(relicId) ?? 0) + safeAmount);
+  }
+
+  private toKeyValueStats(stats: Map<string, number>): KeyValueStat[] {
+    return [...stats.entries()].map(([key, value]) => ({ key, value }));
+  }
+
+  private clearRelicCsvStats(): void {
+    this.relicTriggerStats.clear();
+    this.relicScoreStats.clear();
+    this.relicHealStats.clear();
+    this.relicDamageMitigatedStats.clear();
+    this.relicUptimeStats.clear();
   }
 }

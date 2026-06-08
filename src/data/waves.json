@@ -291,44 +291,44 @@
     {
       "time": 0,
       "enemy": "slime",
-      "count": 80,
+      "count": 72,
+      "interval": 1.1
+    },
+    {
+      "time": 55,
+      "enemy": "bat",
+      "count": 26,
+      "interval": 1.45
+    },
+    {
+      "time": 80,
+      "enemy": "bat",
+      "count": 42,
+      "interval": 1.25
+    },
+    {
+      "time": 110,
+      "enemy": "slime",
+      "count": 73,
       "interval": 1.05
     },
     {
-      "time": 35,
-      "enemy": "bat",
-      "count": 29,
-      "interval": 1.35
-    },
-    {
-      "time": 60,
-      "enemy": "bat",
-      "count": 47,
-      "interval": 1.15
-    },
-    {
-      "time": 90,
-      "enemy": "slime",
-      "count": 81,
-      "interval": 0.95
-    },
-    {
-      "time": 125,
-      "enemy": "golem",
-      "count": 11,
-      "interval": 2.5
-    },
-    {
       "time": 150,
-      "enemy": "bat",
-      "count": 70,
-      "interval": 0.95
+      "enemy": "golem",
+      "count": 10,
+      "interval": 2.7
     },
     {
-      "time": 185,
+      "time": 175,
+      "enemy": "bat",
+      "count": 63,
+      "interval": 1.05
+    },
+    {
+      "time": 200,
       "enemy": "slime",
-      "count": 110,
-      "interval": 0.85
+      "count": 105,
+      "interval": 0.9
     },
     {
       "time": 215,

@@ -119,6 +119,11 @@ export interface PlaytestLogData {
   weaponKillStats: readonly KeyValueStat[];
   upgradeCountStats: readonly KeyValueStat[];
   relicIds: readonly string[];
+  relicTriggerStats: readonly KeyValueStat[];
+  relicScoreStats: readonly KeyValueStat[];
+  relicHealStats: readonly KeyValueStat[];
+  relicDamageMitigatedStats: readonly KeyValueStat[];
+  relicUptimeStats: readonly KeyValueStat[];
   activeSkillIds: readonly string[];
   activeSkillUseStats: readonly KeyValueStat[];
   enemyModifierSpawnStats: readonly KeyValueStat[];
@@ -244,6 +249,11 @@ export class PlaytestLog {
     'weaponKillStats',
     'upgradeCountStats',
     'relicIds',
+    'relicTriggerStats',
+    'relicScoreStats',
+    'relicHealStats',
+    'relicDamageMitigatedStats',
+    'relicUptimeStats',
     'activeSkillIds',
     'activeSkillUseStats',
     'enemyModifierSpawnStats',
@@ -383,6 +393,11 @@ export class PlaytestLog {
       PlaytestLog.formatKeyValueStats(data.weaponKillStats),
       PlaytestLog.formatKeyValueStats(data.upgradeCountStats),
       data.relicIds.join('|'),
+      PlaytestLog.formatKeyValueStats(data.relicTriggerStats),
+      PlaytestLog.formatKeyValueStats(data.relicScoreStats),
+      PlaytestLog.formatKeyValueStats(data.relicHealStats),
+      PlaytestLog.formatKeyValueStats(data.relicDamageMitigatedStats),
+      PlaytestLog.formatKeyValueStats(data.relicUptimeStats),
       data.activeSkillIds.join('|'),
       PlaytestLog.formatKeyValueStats(data.activeSkillUseStats),
       PlaytestLog.formatKeyValueStats(data.enemyModifierSpawnStats),

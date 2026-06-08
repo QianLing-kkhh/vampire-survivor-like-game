@@ -30,6 +30,9 @@ export interface AutoWeaponSnapshot {
 }
 
 export interface AutoEnemySnapshot extends AutoPosition {
+  id?: string;
+  vx?: number;
+  vy?: number;
   damage?: number;
   hpRatio?: number;
   isBoss?: boolean;
@@ -156,6 +159,23 @@ interface Candidate {
   reason: string;
 }
 
+type MoveMode =
+  | 'SURVIVE'
+  | 'REPOSITION'
+  | 'BOSS_POSITIONING'
+  | 'KITE'
+  | 'CHEST_APPROACH'
+  | 'COLLECT';
+
+interface StrategicMoveIntent {
+  mode: MoveMode;
+  targetDirection: Phaser.Math.Vector2;
+  targetPosition?: Phaser.Math.Vector2;
+  urgency: number;
+  validMs: number;
+  target?: AutoTarget;
+}
+
 interface CornerTrapInfo {
   active: boolean;
   inwardDirection: Phaser.Math.Vector2;
@@ -200,6 +220,13 @@ interface SegmentPointInfo {
   point: Phaser.Math.Vector2;
 }
 
+interface EnemyMotionSnapshot {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+}
+
 export class AutoPlayer {
   private static readonly DANGER_RADIUS = 300;
   private static readonly PANIC_DISTANCE = 125;
@@ -225,6 +252,13 @@ export class AutoPlayer {
   private static readonly CONTACT_PATH_RADIUS = 96;
   private static readonly PRE_ENCIRCLE_RADIUS = 430;
   private static readonly TERRAIN_ESCAPE_MARGIN = 150;
+  private static readonly STRATEGIC_DISTANCE = 420;
+  private static readonly STRATEGIC_REFRESH_MS = 450;
+  private static readonly STRATEGIC_URGENT_REFRESH_MS = 250;
+  private static readonly STRATEGIC_SAFE_REFRESH_MS = 650;
+  private static readonly STRATEGIC_SWITCH_RATIO = 0.14;
+  private static readonly TACTICAL_BACKTRACK_GRACE_MS = 260;
+  private static readonly TACTICAL_BACKTRACK_LIMIT_MS = 780;
 
   private stickyTargetId?: string;
   private stickyWaypoint?: Phaser.Math.Vector2;
@@ -238,9 +272,16 @@ export class AutoPlayer {
   private stickyBreakoutFrames = 0;
   private stickyKiteDirection?: Phaser.Math.Vector2;
   private stickyKiteFrames = 0;
+  private strategicIntent?: StrategicMoveIntent;
+  private strategicIntentRemainingMs = 0;
+  private lastMoveDirection?: Phaser.Math.Vector2;
+  private strategicDetourDirection?: Phaser.Math.Vector2;
+  private tacticalBacktrackMs = 0;
+  private enemyMotionSnapshots = new Map<string, EnemyMotionSnapshot>();
 
   getMoveDirection(context: AutoPlayerContext): Phaser.Math.Vector2 {
     this.tickSuppression();
+    this.updateEnemyMotionSnapshots(context);
 
     const player = this.getPlayerVector(context);
     const movement = this.updateMovementMemory(context, player);
@@ -254,23 +295,39 @@ export class AutoPlayer {
     const warningEscapeDirection = this.getBossWarningEscapeDirection(context, player);
     const portalEscapeDirection = this.getPortalEscapeDirection(context, player, danger);
     const breakoutDirection = this.getBreakoutDirection(context, player, danger, surround, movement, kite);
-
-    if (
-      bestTarget
-      && danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
-      && !movement.stalled
-      && this.canPickupFrom(context, player, bestTarget.position)
-      && this.getTotalBossWarningRisk(context, player) <= 0
-    ) {
-      this.updateTargetStability(bestTarget, 'collected');
-      return new Phaser.Math.Vector2(0, 0);
-    }
-
-    const candidates = this.getCandidates(
+    const intent = this.getStrategicMoveIntent(
       context,
       player,
       danger,
+      cornerTrap,
+      surround,
+      movement,
+      terrainEscape,
+      kite,
       bestTarget,
+      warningEscapeDirection,
+      portalEscapeDirection,
+      breakoutDirection,
+    );
+
+    if (
+      intent.target
+      && (intent.mode === 'COLLECT' || intent.mode === 'CHEST_APPROACH')
+      && danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
+      && !movement.stalled
+      && this.canPickupFrom(context, player, intent.target.position)
+      && this.getTotalBossWarningRisk(context, player) <= 0
+    ) {
+      this.updateTargetStability(intent.target, 'collected');
+      this.lastMoveDirection = new Phaser.Math.Vector2(0, 0);
+      return new Phaser.Math.Vector2(0, 0);
+    }
+
+    const candidates = this.getTacticalCandidates(
+      context,
+      player,
+      danger,
+      intent,
       cornerTrap,
       warningEscapeDirection,
       portalEscapeDirection,
@@ -289,13 +346,14 @@ export class AutoPlayer {
 
       const direction = candidate.direction.clone().normalize();
       const endpoint = this.getCandidateEndpoint(context, player, direction);
-      const score = this.scoreCandidate(
+      const score = this.evaluateTacticalDirection(
         context,
         player,
         endpoint,
         direction,
+        intent,
         danger,
-        bestTarget,
+        intent.target,
         cornerTrap,
         surround,
         movement,
@@ -313,17 +371,21 @@ export class AutoPlayer {
       return new Phaser.Math.Vector2(0, 0);
     }
 
-    this.updateTargetStability(bestTarget, bestCandidate.reason);
+    this.updateTargetStability(intent.target, bestCandidate.reason);
     this.updateBreakoutStability(bestCandidate.reason, bestCandidate.direction);
     this.updateKiteStability(kite, bestCandidate.reason, bestCandidate.direction);
-    return bestCandidate.direction.normalize();
+    const finalDirection = bestCandidate.direction.normalize();
+
+    this.updateStrategicDetourState(context, intent, finalDirection);
+    this.lastMoveDirection = finalDirection.clone();
+    return finalDirection;
   }
 
-  private getCandidates(
+  private getTacticalCandidates(
     context: AutoPlayerContext,
     player: Phaser.Math.Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
-    target: AutoTarget | undefined,
+    intent: StrategicMoveIntent,
     cornerTrap: CornerTrapInfo,
     warningEscapeDirection: Phaser.Math.Vector2,
     portalEscapeDirection: Phaser.Math.Vector2,
@@ -331,13 +393,22 @@ export class AutoPlayer {
     kiteDirection: Phaser.Math.Vector2,
     terrainEscapeDirection: Phaser.Math.Vector2,
   ): Candidate[] {
-    const candidates: Candidate[] = this.getBaseDirections()
+    const candidates: Candidate[] = [
+      ...this.getBaseDirections(),
+      ...this.getDiagonalMidDirections(),
+    ]
       .map((direction) => ({ direction, reason: 'base' }));
 
-    if (danger.fleeDirection.lengthSq() > 0) {
-      candidates.push({ direction: danger.fleeDirection, reason: 'flee' });
-      candidates.push({ direction: new Phaser.Math.Vector2(danger.fleeDirection.y, -danger.fleeDirection.x), reason: 'tangent' });
-      candidates.push({ direction: new Phaser.Math.Vector2(-danger.fleeDirection.y, danger.fleeDirection.x), reason: 'tangent' });
+    if (intent.targetDirection.lengthSq() > 0) {
+      const strategic = intent.targetDirection.clone().normalize();
+
+      candidates.push({ direction: strategic, reason: 'strategic' });
+      candidates.push({ direction: new Phaser.Math.Vector2(strategic.y, -strategic.x), reason: 'strategicSlide' });
+      candidates.push({ direction: new Phaser.Math.Vector2(-strategic.y, strategic.x), reason: 'strategicSlide' });
+
+      if (this.strategicDetourDirection && this.strategicDetourDirection.lengthSq() > 0) {
+        candidates.push({ direction: this.strategicDetourDirection, reason: 'strategicDetour' });
+      }
     }
 
     if (cornerTrap.active && cornerTrap.inwardDirection.lengthSq() > 0) {
@@ -374,7 +445,9 @@ export class AutoPlayer {
       candidates.push({ direction: terrainEscapeDirection, reason: 'terrainEscape' });
     }
 
-    if (target) {
+    const target = intent.target;
+
+    if (target && this.isTacticalTargetAllowed(player, target, intent)) {
       const targetDirection = target.approachPosition.clone().subtract(player);
 
       if (targetDirection.lengthSq() > 0) {
@@ -385,7 +458,7 @@ export class AutoPlayer {
     const weaponDirection = this.getWeaponDirection(context, player, danger);
 
     if (weaponDirection.lengthSq() > 0) {
-      candidates.push({ direction: weaponDirection, reason: 'weapon' });
+      candidates.push({ direction: weaponDirection, reason: 'weaponMicro' });
     }
 
     const centerDirection = new Phaser.Math.Vector2(
@@ -394,16 +467,60 @@ export class AutoPlayer {
     );
 
     if (centerDirection.lengthSq() > 0) {
-      candidates.push({ direction: centerDirection, reason: 'center' });
+      candidates.push({ direction: centerDirection, reason: 'centerMicro' });
     }
 
     const borderDirection = this.getSoftBorderDirection(context, player);
 
     if (borderDirection.lengthSq() > 0) {
-      candidates.push({ direction: borderDirection, reason: 'border' });
+      candidates.push({ direction: borderDirection, reason: 'borderMicro' });
+    }
+
+    if (this.lastMoveDirection && this.lastMoveDirection.lengthSq() > 0) {
+      candidates.push({ direction: this.lastMoveDirection, reason: 'smooth' });
     }
 
     return candidates;
+  }
+
+  private updateStrategicDetourState(
+    context: AutoPlayerContext,
+    intent: StrategicMoveIntent,
+    finalDirection: Phaser.Math.Vector2,
+  ): void {
+    const deltaMs = Phaser.Math.Clamp(context.deltaMs ?? 16, 0, 120);
+
+    if (intent.targetDirection.lengthSq() === 0 || finalDirection.lengthSq() === 0) {
+      this.tacticalBacktrackMs = Math.max(0, this.tacticalBacktrackMs - deltaMs * 2);
+      this.strategicDetourDirection = undefined;
+      return;
+    }
+
+    const strategic = intent.targetDirection.clone().normalize();
+    const alignment = finalDirection.dot(strategic);
+
+    if (alignment < -0.15) {
+      this.tacticalBacktrackMs = Math.min(
+        AutoPlayer.TACTICAL_BACKTRACK_LIMIT_MS,
+        this.tacticalBacktrackMs + deltaMs,
+      );
+    } else if (alignment >= 0.15) {
+      this.tacticalBacktrackMs = Math.max(0, this.tacticalBacktrackMs - deltaMs * 3);
+    } else {
+      this.tacticalBacktrackMs = Math.max(0, this.tacticalBacktrackMs - deltaMs);
+    }
+
+    const lateral = finalDirection.clone().subtract(strategic.clone().scale(alignment));
+
+    if (lateral.lengthSq() > 0.01) {
+      this.strategicDetourDirection = strategic
+        .clone()
+        .scale(0.45)
+        .add(lateral.normalize().scale(0.95))
+        .normalize();
+    } else if (alignment > 0.4) {
+      this.strategicDetourDirection = undefined;
+    }
   }
 
   private getBaseDirections(): Phaser.Math.Vector2[] {
@@ -419,11 +536,507 @@ export class AutoPlayer {
     ];
   }
 
-  private scoreCandidate(
+  private getStrategicMoveIntent(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    terrainEscape: TerrainEscapeInfo,
+    kite: KiteInfo,
+    target: AutoTarget | undefined,
+    warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): StrategicMoveIntent {
+    const deltaMs = Phaser.Math.Clamp(context.deltaMs ?? 16, 0, 120);
+    this.strategicIntentRemainingMs -= deltaMs;
+
+    if (
+      this.strategicIntent
+      && this.strategicIntentRemainingMs > 0
+      && !this.needsForcedStrategicRefresh(context, player, this.strategicIntent, danger, movement)
+    ) {
+      return this.strategicIntent;
+    }
+
+    const nextIntent = this.evaluateStrategicIntent(
+      context,
+      player,
+      danger,
+      cornerTrap,
+      surround,
+      movement,
+      terrainEscape,
+      kite,
+      target,
+      warningEscapeDirection,
+      portalEscapeDirection,
+      breakoutDirection,
+    );
+
+    if (this.strategicIntent && this.strategicIntent.targetDirection.lengthSq() > 0) {
+      const currentScore = this.scoreStrategicDirection(
+        context,
+        player,
+        this.strategicIntent.targetDirection.clone().normalize(),
+        nextIntent.mode,
+        danger,
+        cornerTrap,
+        surround,
+        movement,
+        terrainEscape,
+        kite,
+        target,
+        warningEscapeDirection,
+        portalEscapeDirection,
+        breakoutDirection,
+      );
+      const nextScore = this.scoreStrategicDirection(
+        context,
+        player,
+        nextIntent.targetDirection,
+        nextIntent.mode,
+        danger,
+        cornerTrap,
+        surround,
+        movement,
+        terrainEscape,
+        kite,
+        target,
+        warningEscapeDirection,
+        portalEscapeDirection,
+        breakoutDirection,
+      );
+      const canKeepCurrent = this.strategicIntent.mode === nextIntent.mode
+        && currentScore >= nextScore * (1 - AutoPlayer.STRATEGIC_SWITCH_RATIO)
+        && this.getTotalBossWarningRisk(context, player) <= 0;
+
+      if (canKeepCurrent) {
+        this.strategicIntent = {
+          ...nextIntent,
+          targetDirection: this.strategicIntent.targetDirection.clone(),
+          targetPosition: player.clone().add(
+            this.strategicIntent.targetDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE),
+          ),
+        };
+        this.strategicIntentRemainingMs = this.strategicIntent.validMs;
+        return this.strategicIntent;
+      }
+    }
+
+    this.strategicIntent = nextIntent;
+    this.strategicIntentRemainingMs = nextIntent.validMs;
+    return nextIntent;
+  }
+
+  private evaluateStrategicIntent(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    terrainEscape: TerrainEscapeInfo,
+    kite: KiteInfo,
+    target: AutoTarget | undefined,
+    warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): StrategicMoveIntent {
+    const mode = this.decideStrategicMode(
+      context,
+      player,
+      danger,
+      cornerTrap,
+      surround,
+      movement,
+      terrainEscape,
+      kite,
+      target,
+      warningEscapeDirection,
+      portalEscapeDirection,
+    );
+    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const candidate of this.getStrategicDirections(player, danger, kite, terrainEscape, target, portalEscapeDirection, breakoutDirection)) {
+      if (candidate.lengthSq() === 0) {
+        continue;
+      }
+
+      const direction = candidate.clone().normalize();
+      const score = this.scoreStrategicDirection(
+        context,
+        player,
+        direction,
+        mode,
+        danger,
+        cornerTrap,
+        surround,
+        movement,
+        terrainEscape,
+        kite,
+        target,
+        warningEscapeDirection,
+        portalEscapeDirection,
+        breakoutDirection,
+      );
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestDirection = direction;
+      }
+    }
+
+    if (bestDirection.lengthSq() === 0) {
+      bestDirection = danger.fleeDirection.lengthSq() > 0
+        ? danger.fleeDirection.clone()
+        : new Phaser.Math.Vector2(1, 0);
+    }
+
+    return {
+      mode,
+      targetDirection: bestDirection.normalize(),
+      targetPosition: player.clone().add(bestDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE)),
+      urgency: this.getStrategicUrgency(context, player, danger, mode),
+      validMs: this.getStrategicValidMs(mode),
+      target: this.isStrategicTargetAllowed(context, player, target, mode) ? target : undefined,
+    };
+  }
+
+  private decideStrategicMode(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    terrainEscape: TerrainEscapeInfo,
+    kite: KiteInfo,
+    target: AutoTarget | undefined,
+    warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
+  ): MoveMode {
+    const hpRatio = this.getHpRatio(context);
+    const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
+    const currentWarningRisk = this.getTotalBossWarningRisk(context, player);
+
+    if (
+      hpRatio < 0.35
+      || currentWarningRisk > 0
+      || (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE && currentPressure > 3)
+    ) {
+      return 'SURVIVE';
+    }
+
+    if (
+      terrainEscape.active
+      || cornerTrap.active
+      || surround.surrounded
+      || movement.prolonged
+      || (movement.stalled && danger.pressureCount >= 2)
+      || portalEscapeDirection.lengthSq() > 0
+    ) {
+      return 'REPOSITION';
+    }
+
+    if (this.hasBossPressure(context) || warningEscapeDirection.lengthSq() > 0) {
+      return 'BOSS_POSITIONING';
+    }
+
+    if (kite.active || danger.pressureCount >= 3 || currentPressure > 2.2) {
+      return 'KITE';
+    }
+
+    if (this.isStrategicTargetAllowed(context, player, target, 'CHEST_APPROACH') && target?.type === 'treasure') {
+      return 'CHEST_APPROACH';
+    }
+
+    if (this.isStrategicTargetAllowed(context, player, target, 'COLLECT')) {
+      return 'COLLECT';
+    }
+
+    return 'KITE';
+  }
+
+  private getStrategicDirections(
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    kite: KiteInfo,
+    terrainEscape: TerrainEscapeInfo,
+    target: AutoTarget | undefined,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): Phaser.Math.Vector2[] {
+    const directions = [
+      ...this.getBaseDirections(),
+      ...this.getDiagonalMidDirections(),
+    ];
+
+    if (danger.fleeDirection.lengthSq() > 0) {
+      directions.push(danger.fleeDirection);
+      directions.push(new Phaser.Math.Vector2(danger.fleeDirection.y, -danger.fleeDirection.x));
+      directions.push(new Phaser.Math.Vector2(-danger.fleeDirection.y, danger.fleeDirection.x));
+    }
+
+    if (kite.direction.lengthSq() > 0) {
+      directions.push(kite.direction);
+    }
+
+    if (terrainEscape.direction.lengthSq() > 0) {
+      directions.push(terrainEscape.direction);
+    }
+
+    if (breakoutDirection.lengthSq() > 0) {
+      directions.push(breakoutDirection);
+    }
+
+    if (portalEscapeDirection.lengthSq() > 0) {
+      directions.push(portalEscapeDirection);
+    }
+
+    if (target) {
+      directions.push(target.approachPosition.clone().subtract(player));
+    }
+
+    return directions;
+  }
+
+  private getDiagonalMidDirections(): Phaser.Math.Vector2[] {
+    return [
+      new Phaser.Math.Vector2(2, 1),
+      new Phaser.Math.Vector2(1, 2),
+      new Phaser.Math.Vector2(-1, 2),
+      new Phaser.Math.Vector2(-2, 1),
+      new Phaser.Math.Vector2(-2, -1),
+      new Phaser.Math.Vector2(-1, -2),
+      new Phaser.Math.Vector2(1, -2),
+      new Phaser.Math.Vector2(2, -1),
+    ];
+  }
+
+  private scoreStrategicDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    mode: MoveMode,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    terrainEscape: TerrainEscapeInfo,
+    kite: KiteInfo,
+    target: AutoTarget | undefined,
+    warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): number {
+    const hpRatio = this.getHpRatio(context);
+    const endpoint = this.clampToWorld(
+      context,
+      player.clone().add(direction.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE)),
+    );
+    const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
+    const endpointPressure = this.getEnemyPressureAt(context, endpoint, hpRatio);
+    const borderProgress = this.getNearestBorderDistance(context, endpoint)
+      - this.getNearestBorderDistance(context, player);
+    const obstacleProgress = this.getNearestObstacleClearance(context, endpoint)
+      - this.getNearestObstacleClearance(context, player);
+    const density = this.getEnemyDensityInDirection(context, player, direction, AutoPlayer.PRE_ENCIRCLE_RADIUS);
+    let score = 0;
+
+    score -= endpointPressure * (mode === 'SURVIVE' ? 16 : 8);
+    score -= density * (mode === 'SURVIVE' || mode === 'REPOSITION' ? 5 : 2.5);
+    score -= this.getBorderPenalty(context, endpoint) * (mode === 'SURVIVE' || mode === 'REPOSITION' ? 6 : 2.4);
+    score -= this.getObstaclePenalty(context, endpoint) * 2.2;
+    score -= this.getTotalBossWarningRisk(context, endpoint) * 80;
+    score += Math.max(-3, currentPressure - endpointPressure) * (mode === 'SURVIVE' ? 18 : 8);
+    score += Math.max(0, borderProgress) * (mode === 'REPOSITION' || kite.nearBorder ? 0.7 : 0.22);
+    score += Math.max(0, obstacleProgress) * 0.25;
+
+    if (danger.fleeDirection.lengthSq() > 0) {
+      score += direction.dot(danger.fleeDirection) * (mode === 'SURVIVE' ? 32 : 10);
+    }
+
+    if (kite.direction.lengthSq() > 0 && (mode === 'KITE' || mode === 'BOSS_POSITIONING')) {
+      score += Math.max(0, direction.dot(kite.direction)) * (kite.nearBorder ? 36 : 24);
+    }
+
+    if (cornerTrap.active && cornerTrap.inwardDirection.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(cornerTrap.inwardDirection)) * 34;
+    }
+
+    if (terrainEscape.active && terrainEscape.direction.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(terrainEscape.direction)) * 36;
+    }
+
+    if ((surround.surrounded || movement.prolonged) && breakoutDirection.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(breakoutDirection)) * 42;
+    }
+
+    if (warningEscapeDirection.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(warningEscapeDirection)) * 58;
+    }
+
+    if ((mode === 'SURVIVE' || mode === 'REPOSITION') && portalEscapeDirection.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(portalEscapeDirection)) * 46;
+    }
+
+    if (this.isStrategicTargetAllowed(context, player, target, mode)) {
+      const targetDirection = target.approachPosition.clone().subtract(player);
+
+      if (targetDirection.lengthSq() > 0) {
+        score += Math.max(0, direction.dot(targetDirection.normalize()))
+          * (target.type === 'treasure' ? 18 : 10);
+      }
+    }
+
+    if (this.lastMoveDirection && this.lastMoveDirection.lengthSq() > 0) {
+      score += Math.max(0, direction.dot(this.lastMoveDirection)) * 6;
+    }
+
+    return score;
+  }
+
+  private needsForcedStrategicRefresh(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    intent: StrategicMoveIntent,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    movement: MovementMemoryInfo,
+  ): boolean {
+    const hpRatio = this.getHpRatio(context);
+
+    return this.getTotalBossWarningRisk(context, player) > 0
+      || (hpRatio < 0.35 && intent.mode !== 'SURVIVE')
+      || (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE && intent.mode !== 'SURVIVE')
+      || (movement.prolonged && intent.mode !== 'REPOSITION');
+  }
+
+  private getStrategicUrgency(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    mode: MoveMode,
+  ): number {
+    const hpRatio = this.getHpRatio(context);
+    const warningRisk = this.getTotalBossWarningRisk(context, player);
+
+    if (mode === 'SURVIVE') {
+      return Phaser.Math.Clamp(0.75 + warningRisk * 0.1 + (0.35 - hpRatio), 0.75, 1);
+    }
+
+    if (mode === 'REPOSITION') {
+      return danger.nearestDistance < AutoPlayer.SAFE_DISTANCE ? 0.78 : 0.62;
+    }
+
+    if (mode === 'BOSS_POSITIONING' || mode === 'KITE') {
+      return 0.55;
+    }
+
+    return 0.35;
+  }
+
+  private getStrategicValidMs(mode: MoveMode): number {
+    if (mode === 'SURVIVE' || mode === 'REPOSITION') {
+      return AutoPlayer.STRATEGIC_URGENT_REFRESH_MS;
+    }
+
+    if (mode === 'COLLECT' || mode === 'CHEST_APPROACH') {
+      return AutoPlayer.STRATEGIC_SAFE_REFRESH_MS;
+    }
+
+    return AutoPlayer.STRATEGIC_REFRESH_MS;
+  }
+
+  private isStrategicTargetAllowed(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    target: AutoTarget | undefined,
+    mode: MoveMode,
+  ): target is AutoTarget {
+    if (!target || (mode !== 'COLLECT' && mode !== 'CHEST_APPROACH')) {
+      return false;
+    }
+
+    const hpRatio = this.getHpRatio(context);
+    const playerPressure = this.getEnemyPressureAt(context, player, hpRatio);
+    const targetPressure = this.getEnemyPressureAt(context, target.approachPosition, hpRatio);
+
+    return hpRatio >= 0.5
+      && playerPressure < 2.6
+      && targetPressure < 5
+      && this.getTotalBossWarningRisk(context, player) <= 0
+      && this.getTotalBossWarningRisk(context, target.approachPosition) <= 0;
+  }
+
+  private isTacticalTargetAllowed(
+    player: Phaser.Math.Vector2,
+    target: AutoTarget,
+    intent: StrategicMoveIntent,
+  ): boolean {
+    if (!this.isResourceMode(intent.mode) || intent.targetDirection.lengthSq() === 0) {
+      return false;
+    }
+
+    const targetDirection = target.approachPosition.clone().subtract(player);
+
+    return targetDirection.lengthSq() > 0
+      && targetDirection.normalize().dot(intent.targetDirection) > 0.5;
+  }
+
+  private isResourceMode(mode: MoveMode): boolean {
+    return mode === 'COLLECT' || mode === 'CHEST_APPROACH';
+  }
+
+  private hasBossPressure(context: AutoPlayerContext): boolean {
+    return context.enemyPositions.some((enemy) => (
+      'isBoss' in enemy && enemy.isBoss === true
+    ));
+  }
+
+  private getEnemyDensityInDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    radius: number,
+  ): number {
+    if (direction.lengthSq() === 0) {
+      return 0;
+    }
+
+    const normalized = direction.clone().normalize();
+    let density = 0;
+
+    for (const enemy of context.enemyPositions) {
+      const offset = new Phaser.Math.Vector2(enemy.x - player.x, enemy.y - player.y);
+      const distance = offset.length();
+
+      if (distance <= 0 || distance > radius) {
+        continue;
+      }
+
+      const alignment = offset.normalize().dot(normalized);
+
+      if (alignment <= 0.25) {
+        continue;
+      }
+
+      density += alignment * alignment * this.getEnemyThreatWeight(enemy)
+        * (1 - distance / radius);
+    }
+
+    return density;
+  }
+
+  private evaluateTacticalDirection(
     context: AutoPlayerContext,
     player: Phaser.Math.Vector2,
     endpoint: Phaser.Math.Vector2,
     direction: Phaser.Math.Vector2,
+    intent: StrategicMoveIntent,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     target: AutoTarget | undefined,
     cornerTrap: CornerTrapInfo,
@@ -438,32 +1051,85 @@ export class AutoPlayer {
     const contactRiskMultiplier = usefulPortalEndpoint
       ? 0.08
       : 1;
+    const localDanger = this.getEnemyContactRiskAt(context, endpoint, hpRatio)
+      + this.getEnemyPathContactRisk(context, player, endpoint, hpRatio)
+      + this.getTotalBossWarningRisk(context, endpoint) * 45
+      + this.getObstaclePenalty(context, endpoint) * 8;
+    const dangerHigh = localDanger > 70 || intent.mode === 'SURVIVE';
+    const alignmentWeight = dangerHigh ? 18 : 42;
+    const safetyWeight = dangerHigh ? 1.5 : 1;
 
     score -= this.getEnemyPressureAt(context, endpoint, hpRatio) * (hpRatio < 0.35 ? 1.45 : 1);
-    score -= this.getEnemyContactRiskAt(context, endpoint, hpRatio) * contactRiskMultiplier;
-    score -= this.getEnemyPathContactRisk(context, player, endpoint, hpRatio) * contactRiskMultiplier;
+    score -= this.getEnemyContactRiskAt(context, endpoint, hpRatio) * contactRiskMultiplier * safetyWeight;
+    score -= this.getEnemyFutureContactRiskAt(context, endpoint, hpRatio) * contactRiskMultiplier * safetyWeight;
+    score -= this.getEnemyPathContactRisk(context, player, endpoint, hpRatio) * contactRiskMultiplier * safetyWeight;
     score += this.getEnemyPathClearanceScore(context, player, endpoint, hpRatio) * contactRiskMultiplier;
     score -= this.getEnemyApproachPenalty(context, player, endpoint, hpRatio) * contactRiskMultiplier;
     score += this.getSafeEnemyDistanceScore(context, player, endpoint);
-    score -= this.getBorderPenalty(context, endpoint, target);
-    score -= this.getObstaclePenalty(context, endpoint);
+    score -= this.getBorderPenalty(context, endpoint, this.isResourceMode(intent.mode) ? target : undefined)
+      * (intent.mode === 'SURVIVE' || intent.mode === 'REPOSITION' ? 1.35 : 1);
+    score -= this.getObstaclePenalty(context, endpoint) * safetyWeight;
     score += this.getSlowZoneScore(context, endpoint, hpRatio);
-    score += this.getPortalScore(context, endpoint, hpRatio);
-    score += this.getPortalEscapeCandidateScore(context, player, endpoint, danger, hpRatio);
-    score += this.getWeaponCandidateScore(context, player, endpoint, direction, danger);
-    score += this.getCornerEscapeScore(context, player, endpoint, direction, danger, cornerTrap);
-    score += this.getBossWarningCandidateScore(context, player, endpoint);
-    score += this.getBreakoutCandidateScore(context, player, endpoint, direction, danger, surround, movement, kite);
-    score += this.getKiteCandidateScore(context, player, endpoint, direction, danger, kite);
-    score += this.getTerrainEscapeCandidateScore(context, player, endpoint, direction, terrainEscape);
+    score += this.getBossWarningCandidateScore(context, player, endpoint) * 1.25;
     score -= this.getNoProgressBorderPenalty(context, player, endpoint, direction, danger);
     score -= this.getHighPressureBorderPenalty(context, player, endpoint, direction, kite);
+
+    if (intent.targetDirection.lengthSq() > 0) {
+      score += direction.dot(intent.targetDirection) * alignmentWeight * intent.urgency;
+      score -= this.getStrategicBacktrackPenalty(
+        context,
+        player,
+        endpoint,
+        direction,
+        intent,
+        localDanger,
+        hpRatio,
+      );
+    }
+
+    if (intent.targetPosition) {
+      const currentIntentDistance = Phaser.Math.Distance.Between(
+        player.x,
+        player.y,
+        intent.targetPosition.x,
+        intent.targetPosition.y,
+      );
+      const endpointIntentDistance = Phaser.Math.Distance.Between(
+        endpoint.x,
+        endpoint.y,
+        intent.targetPosition.x,
+        intent.targetPosition.y,
+      );
+
+      score += (currentIntentDistance - endpointIntentDistance) * (dangerHigh ? 0.05 : 0.11);
+    }
+
+    if (this.lastMoveDirection && this.lastMoveDirection.lengthSq() > 0) {
+      score += Math.max(-0.5, direction.dot(this.lastMoveDirection)) * (dangerHigh ? 4 : 9);
+    }
 
     if (usefulPortalEndpoint) {
       score += hpRatio < 0.35 ? 420 : 260;
     }
 
-    if (target) {
+    if (intent.mode === 'SURVIVE' || intent.mode === 'REPOSITION') {
+      score += this.getPortalEscapeCandidateScore(context, player, endpoint, danger, hpRatio);
+      score += this.getCornerEscapeScore(context, player, endpoint, direction, danger, cornerTrap);
+      score += this.getBreakoutCandidateScore(context, player, endpoint, direction, danger, surround, movement, kite);
+      score += this.getTerrainEscapeCandidateScore(context, player, endpoint, direction, terrainEscape);
+    } else {
+      score += this.getPortalScore(context, endpoint, hpRatio) * 0.35;
+      score += this.getCornerEscapeScore(context, player, endpoint, direction, danger, cornerTrap) * 0.65;
+    }
+
+    if (intent.mode === 'KITE' || intent.mode === 'BOSS_POSITIONING') {
+      score += this.getKiteCandidateScore(context, player, endpoint, direction, danger, kite);
+      score += this.getWeaponCandidateScore(context, player, endpoint, direction, danger) * 0.55;
+    } else if (!dangerHigh) {
+      score += this.getWeaponCandidateScore(context, player, endpoint, direction, danger) * 0.18;
+    }
+
+    if (target && this.isTacticalTargetAllowed(player, target, intent)) {
       const targetDistance = Phaser.Math.Distance.Between(
         endpoint.x,
         endpoint.y,
@@ -486,22 +1152,22 @@ export class AutoPlayer {
         score -= target.value * 0.95;
         score -= targetWarningRisk * 18;
       } else if (targetPressure < (hpRatio < 0.35 ? 3.5 : 7)) {
-        score += target.value * 0.75;
-        score += Math.max(-80, progress) * 0.055;
+        score += target.value * (target.type === 'treasure' ? 0.28 : 0.18);
+        score += Math.max(-80, progress) * 0.032;
       } else {
         score -= target.value * 0.45;
       }
 
       if (target.id === this.stickyTargetId) {
-        score += movement.stalled ? 0 : AutoPlayer.TARGET_STICKY_BONUS;
+        score += movement.stalled ? 0 : AutoPlayer.TARGET_STICKY_BONUS * 0.5;
       }
 
       if (this.canPickupFrom(context, endpoint, target.position)) {
-        score += target.type === 'treasure' ? 22 : 12;
+        score += target.type === 'treasure' ? 10 : 5;
       }
     }
 
-    if (danger.fleeDirection.lengthSq() > 0) {
+    if (danger.fleeDirection.lengthSq() > 0 && intent.mode === 'SURVIVE') {
       const fleeWeight = kite.active
         ? 1.2
         : danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
@@ -511,6 +1177,60 @@ export class AutoPlayer {
     }
 
     return score;
+  }
+
+  private getStrategicBacktrackPenalty(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    intent: StrategicMoveIntent,
+    localDanger: number,
+    hpRatio: number,
+  ): number {
+    if (intent.targetDirection.lengthSq() === 0) {
+      return 0;
+    }
+
+    const strategic = intent.targetDirection.clone().normalize();
+    const alignment = direction.dot(strategic);
+
+    if (alignment >= -0.08) {
+      return 0;
+    }
+
+    const currentWarningRisk = this.getTotalBossWarningRisk(context, player);
+    const endpointWarningRisk = this.getTotalBossWarningRisk(context, endpoint);
+    const warningEscape = currentWarningRisk > 0 && endpointWarningRisk < currentWarningRisk;
+    const graceRatio = Phaser.Math.Clamp(
+      this.tacticalBacktrackMs / AutoPlayer.TACTICAL_BACKTRACK_GRACE_MS,
+      0,
+      1,
+    );
+    const overrunRatio = Phaser.Math.Clamp(
+      (this.tacticalBacktrackMs - AutoPlayer.TACTICAL_BACKTRACK_GRACE_MS)
+        / Math.max(1, AutoPlayer.TACTICAL_BACKTRACK_LIMIT_MS - AutoPlayer.TACTICAL_BACKTRACK_GRACE_MS),
+      0,
+      1,
+    );
+    const opposite = -alignment;
+    const currentContactRisk = this.getEnemyContactRiskAt(context, player, hpRatio)
+      + this.getEnemyPathContactRisk(
+        context,
+        player,
+        player.clone().add(strategic.clone().scale(AutoPlayer.STEP_DISTANCE)),
+        hpRatio,
+      );
+    const shortDetourAllowance = localDanger > 80 || currentContactRisk > 60 || hpRatio < 0.35;
+    const detourDiscount = shortDetourAllowance
+      ? 0.45 + (1 - graceRatio) * 0.35
+      : 1;
+    const warningDiscount = warningEscape ? 0.25 : 1;
+    const strategicUrgency = 0.75 + intent.urgency;
+    const basePenalty = opposite * opposite * 120 * strategicUrgency;
+    const persistencePenalty = overrunRatio * opposite * 220 * strategicUrgency;
+
+    return (basePenalty * detourDiscount + persistencePenalty) * warningDiscount;
   }
 
   private selectTarget(
@@ -845,6 +1565,35 @@ export class AutoPlayer {
       anchor: this.stallAnchor.clone(),
       recentDisplacement,
     };
+  }
+
+  private updateEnemyMotionSnapshots(context: AutoPlayerContext): void {
+    const deltaSeconds = Math.max(0.001, Phaser.Math.Clamp(context.deltaMs ?? 16, 1, 120) / 1000);
+    const nextSnapshots = new Map<string, EnemyMotionSnapshot>();
+
+    context.enemyPositions.forEach((enemy, index) => {
+      const key = this.getEnemyMotionKey(enemy, index);
+      const previous = this.enemyMotionSnapshots.get(key);
+      const explicitVx = 'vx' in enemy ? enemy.vx : undefined;
+      const explicitVy = 'vy' in enemy ? enemy.vy : undefined;
+      const vx = explicitVx ?? (previous ? (enemy.x - previous.x) / deltaSeconds : 0);
+      const vy = explicitVy ?? (previous ? (enemy.y - previous.y) / deltaSeconds : 0);
+
+      nextSnapshots.set(key, {
+        x: enemy.x,
+        y: enemy.y,
+        vx,
+        vy,
+      });
+    });
+
+    this.enemyMotionSnapshots = nextSnapshots;
+  }
+
+  private getEnemyMotionKey(enemy: AutoPosition | AutoEnemySnapshot, index: number): string {
+    return 'id' in enemy && enemy.id
+      ? enemy.id
+      : `${index}:${Math.round(enemy.x)}:${Math.round(enemy.y)}`;
   }
 
   private getSurroundInfo(
@@ -1579,6 +2328,46 @@ export class AutoPlayer {
     }
 
     return risk * (hpRatio < 0.5 ? 1.35 : 1);
+  }
+
+  private getEnemyFutureContactRiskAt(
+    context: AutoPlayerContext,
+    point: Phaser.Math.Vector2,
+    hpRatio: number,
+  ): number {
+    let risk = 0;
+    const predictSeconds = hpRatio < 0.5 ? 0.65 : 0.45;
+
+    for (const [index, enemy] of context.enemyPositions.entries()) {
+      const velocityX = 'vx' in enemy ? enemy.vx ?? 0 : 0;
+      const velocityY = 'vy' in enemy ? enemy.vy ?? 0 : 0;
+      const inferredMotion = this.enemyMotionSnapshots.get(this.getEnemyMotionKey(enemy, index));
+      const predictedVx = velocityX || inferredMotion?.vx || 0;
+      const predictedVy = velocityY || inferredMotion?.vy || 0;
+
+      if (predictedVx === 0 && predictedVy === 0) {
+        continue;
+      }
+
+      const futureX = enemy.x + predictedVx * predictSeconds;
+      const futureY = enemy.y + predictedVy * predictSeconds;
+      const distance = Phaser.Math.Distance.Between(point.x, point.y, futureX, futureY);
+
+      if (distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
+        continue;
+      }
+
+      const threat = this.getEnemyThreatWeight(enemy);
+      const proximity = (AutoPlayer.CONTACT_WARNING_RADIUS - Math.max(0, distance))
+        / AutoPlayer.CONTACT_WARNING_RADIUS;
+      risk += proximity * proximity * 36 * threat;
+
+      if (distance < AutoPlayer.CONTACT_DANGER_RADIUS) {
+        risk += 48 * threat;
+      }
+    }
+
+    return risk * (hpRatio < 0.5 ? 1.25 : 1);
   }
 
   private getEnemyPathContactRisk(
