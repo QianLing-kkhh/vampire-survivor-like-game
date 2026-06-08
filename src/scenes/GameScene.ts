@@ -961,11 +961,11 @@ export class GameScene extends Phaser.Scene {
       playerPosition: this.player.body,
       enemyPositions: this.enemies
         .filter((enemy) => !enemy.isDead)
-        .map((enemy, index) => {
+        .map((enemy) => {
           const targetContext = enemy.getDamageTargetContext();
 
           return {
-            id: `${enemy.id}:${index}`,
+            id: enemy.getAutoMoveId(),
             x: enemy.body.x,
             y: enemy.body.y,
             radiusPx: enemy.body.radius,

@@ -179,6 +179,42 @@ interface StrategicMoveIntent {
   target?: AutoTarget;
 }
 
+interface TacticalRoute {
+  id: string;
+  waypoints: Phaser.Math.Vector2[];
+  currentWaypointIndex: number;
+  threatRank: number;
+  rawThreat: number;
+  rewardScore: number;
+  combatFitScore: number;
+  routeScore: number;
+  createdAt: number;
+  validUntil: number;
+  commitment: number;
+}
+
+interface CandidateRoute {
+  id: string;
+  waypoints: Phaser.Math.Vector2[];
+  rawThreat: number;
+  threatRank: number;
+  rewardScore: number;
+  combatFitScore: number;
+  routeScore: number;
+  hardInvalid: boolean;
+}
+
+interface MicroMoveResult {
+  direction: Phaser.Math.Vector2;
+  reason:
+    | 'FOLLOW_ROUTE'
+    | 'AVOID_CLOSE_ENEMY'
+    | 'AVOID_BOSS_WARNING'
+    | 'AVOID_OBSTACLE'
+    | 'EMERGENCY_ESCAPE';
+  score: number;
+}
+
 interface CornerTrapInfo {
   active: boolean;
   inwardDirection: Phaser.Math.Vector2;
@@ -265,6 +301,13 @@ export class AutoPlayer {
   private static readonly STRATEGIC_URGENT_REFRESH_MS = 250;
   private static readonly STRATEGIC_SAFE_REFRESH_MS = 650;
   private static readonly STRATEGIC_SWITCH_RATIO = 0.14;
+  private static readonly TACTICAL_ROUTE_REFRESH_MS = 420;
+  private static readonly TACTICAL_ROUTE_URGENT_REFRESH_MS = 220;
+  private static readonly TACTICAL_ROUTE_VALID_MS = 650;
+  private static readonly TACTICAL_ROUTE_SWITCH_RATIO = 0.16;
+  private static readonly ROUTE_WAYPOINT_REACHED_DISTANCE = 82;
+  private static readonly MICRO_ROUTE_DEVIATION_LIMIT = 150;
+  private static readonly MICRO_THREAT_RADIUS = 230;
   private static readonly TACTICAL_BACKTRACK_GRACE_MS = 260;
   private static readonly TACTICAL_BACKTRACK_LIMIT_MS = 780;
 
@@ -285,11 +328,16 @@ export class AutoPlayer {
   private lastMoveDirection?: Phaser.Math.Vector2;
   private strategicDetourDirection?: Phaser.Math.Vector2;
   private tacticalBacktrackMs = 0;
+  private tacticalRoute?: TacticalRoute;
+  private tacticalRouteRemainingMs = 0;
+  private routeSequence = 0;
+  private autoMoveElapsedMs = 0;
   private enemyMotionSnapshots = new Map<string, EnemyMotionSnapshot>();
 
   getMoveDirection(context: AutoPlayerContext): Phaser.Math.Vector2 {
     this.tickSuppression();
     this.updateEnemyMotionSnapshots(context);
+    this.autoMoveElapsedMs += Phaser.Math.Clamp(context.deltaMs ?? 16, 0, 120);
 
     const player = this.getPlayerVector(context);
     const movement = this.updateMovementMemory(context, player);
@@ -331,21 +379,251 @@ export class AutoPlayer {
       return new Phaser.Math.Vector2(0, 0);
     }
 
-    const candidates = this.getTacticalCandidates(
+    const route = this.getCommittedTacticalRoute(
       context,
       player,
       danger,
       intent,
       cornerTrap,
+      surround,
+      movement,
+      kite,
+      terrainEscape,
       warningEscapeDirection,
       portalEscapeDirection,
       breakoutDirection,
-      kite.direction,
-      terrainEscape.direction,
+    );
+    const microMove = this.evaluateMicroControl(
+      context,
+      player,
+      route,
+      intent,
+      danger,
+      cornerTrap,
+      surround,
+      movement,
+      kite,
+      terrainEscape,
     );
 
-    let bestScore = Number.NEGATIVE_INFINITY;
-    let bestCandidate: Candidate | undefined;
+    if (microMove.direction.lengthSq() === 0) {
+      return new Phaser.Math.Vector2(0, 0);
+    }
+
+    this.updateTargetStability(intent.target, microMove.reason);
+    this.updateBreakoutStability(microMove.reason, microMove.direction);
+    this.updateKiteStability(kite, microMove.reason, microMove.direction);
+    const finalDirection = microMove.direction.normalize();
+
+    this.updateStrategicDetourState(context, intent, finalDirection);
+    this.lastMoveDirection = finalDirection.clone();
+    return finalDirection;
+  }
+
+  private getCommittedTacticalRoute(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    intent: StrategicMoveIntent,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    kite: KiteInfo,
+    terrainEscape: TerrainEscapeInfo,
+    warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): TacticalRoute {
+    const deltaMs = Phaser.Math.Clamp(context.deltaMs ?? 16, 0, 120);
+    this.tacticalRouteRemainingMs -= deltaMs;
+
+    if (
+      this.tacticalRoute
+      && this.tacticalRouteRemainingMs > 0
+      && this.tacticalRoute.validUntil > this.autoMoveElapsedMs
+      && !this.shouldForceTacticalRouteRefresh(context, player, intent)
+    ) {
+      return this.tacticalRoute;
+    }
+
+    const nextRoute = this.evaluateTacticalRoute(
+      context,
+      player,
+      danger,
+      intent,
+      cornerTrap,
+      surround,
+      movement,
+      kite,
+      terrainEscape,
+      warningEscapeDirection,
+      portalEscapeDirection,
+      breakoutDirection,
+    );
+    const committed = this.chooseRouteWithCommitment(this.tacticalRoute, nextRoute, intent);
+
+    this.tacticalRoute = committed;
+    this.tacticalRouteRemainingMs = this.getTacticalRouteUpdateInterval(intent.mode);
+    return committed;
+  }
+
+  private evaluateTacticalRoute(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    intent: StrategicMoveIntent,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    kite: KiteInfo,
+    terrainEscape: TerrainEscapeInfo,
+    warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): TacticalRoute {
+    const routeCandidates = this.generateCandidateRoutes(context, player, intent, kite, portalEscapeDirection, breakoutDirection);
+    const scoredRoutes = routeCandidates.map((route) => {
+      const rawThreat = this.evaluateRouteThreat(context, player, route.waypoints, intent);
+
+      return {
+        ...route,
+        rawThreat,
+        threatRank: 0,
+        rewardScore: 0,
+        combatFitScore: this.evaluateRouteCombatFit(context, player, route.waypoints, danger),
+        routeScore: 0,
+        hardInvalid: this.isRouteHardInvalid(context, player, route.waypoints, intent, rawThreat),
+      };
+    });
+    const validRoutes = scoredRoutes.filter((route) => !route.hardInvalid);
+    const rankedRoutes = (validRoutes.length > 0 ? validRoutes : scoredRoutes)
+      .sort((a, b) => a.rawThreat - b.rawThreat)
+      .map((route, index) => ({ ...route, threatRank: Math.min(4, index) }));
+
+    let bestRoute: CandidateRoute | undefined;
+
+    for (const route of rankedRoutes) {
+      const rewardScore = this.evaluateRouteRewardScore(context, player, route.waypoints, intent, route.threatRank);
+      const stabilityScore = this.tacticalRoute && this.areRoutesSimilar(this.tacticalRoute.waypoints, route.waypoints)
+        ? this.tacticalRoute.commitment
+        : 0;
+      const routeScore = -route.threatRank * 48
+        - route.rawThreat * 0.16
+        + rewardScore
+        + route.combatFitScore
+        + stabilityScore
+        - (route.hardInvalid ? 180 : 0);
+      const scoredRoute = { ...route, rewardScore, routeScore };
+
+      if (!bestRoute || scoredRoute.routeScore > bestRoute.routeScore) {
+        bestRoute = scoredRoute;
+      }
+    }
+
+    const selected = bestRoute ?? {
+      id: 'fallback',
+      waypoints: [player.clone(), this.getStrategicTargetPoint(context, player, intent)],
+      rawThreat: Number.POSITIVE_INFINITY,
+      threatRank: 4,
+      rewardScore: 0,
+      combatFitScore: 0,
+      routeScore: Number.NEGATIVE_INFINITY,
+      hardInvalid: true,
+    };
+
+    return {
+      id: `${selected.id}:${this.routeSequence++}`,
+      waypoints: selected.waypoints.map((waypoint) => this.clampToWorld(context, waypoint)),
+      currentWaypointIndex: Math.min(1, Math.max(0, selected.waypoints.length - 1)),
+      threatRank: selected.threatRank,
+      rawThreat: selected.rawThreat,
+      rewardScore: selected.rewardScore,
+      combatFitScore: selected.combatFitScore,
+      routeScore: selected.routeScore,
+      createdAt: this.autoMoveElapsedMs,
+      validUntil: this.autoMoveElapsedMs + AutoPlayer.TACTICAL_ROUTE_VALID_MS,
+      commitment: Phaser.Math.Clamp(22 - selected.threatRank * 3 + intent.urgency * 8, 8, 30),
+    };
+  }
+
+  private chooseRouteWithCommitment(
+    currentRoute: TacticalRoute | undefined,
+    nextRoute: TacticalRoute,
+    intent: StrategicMoveIntent,
+  ): TacticalRoute {
+    if (!currentRoute || currentRoute.validUntil <= this.autoMoveElapsedMs) {
+      return nextRoute;
+    }
+
+    const switchRatio = intent.mode === 'SURVIVE'
+      ? AutoPlayer.TACTICAL_ROUTE_SWITCH_RATIO * 0.5
+      : AutoPlayer.TACTICAL_ROUTE_SWITCH_RATIO;
+    const requiredGain = Math.max(6, Math.abs(currentRoute.routeScore) * switchRatio);
+
+    if (nextRoute.routeScore < currentRoute.routeScore + requiredGain) {
+      return {
+        ...currentRoute,
+        validUntil: Math.max(currentRoute.validUntil, this.autoMoveElapsedMs + AutoPlayer.TACTICAL_ROUTE_VALID_MS * 0.45),
+      };
+    }
+
+    return nextRoute;
+  }
+
+  private evaluateMicroControl(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    route: TacticalRoute,
+    intent: StrategicMoveIntent,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    kite: KiteInfo,
+    terrainEscape: TerrainEscapeInfo,
+  ): MicroMoveResult {
+    this.advanceRouteWaypoint(route, player);
+    const routeDirection = this.getRouteDirection(context, player, route, intent);
+    const warningEscapeDirection = this.getBossWarningEscapeDirection(context, player);
+    const routeReturnDirection = this.getRouteReturnDirection(player, route);
+    const candidates: Candidate[] = [];
+
+    if (routeDirection.lengthSq() > 0) {
+      const normalized = routeDirection.clone().normalize();
+
+      candidates.push({ direction: normalized, reason: 'FOLLOW_ROUTE' });
+      candidates.push({ direction: new Phaser.Math.Vector2(normalized.y, -normalized.x), reason: 'FOLLOW_ROUTE' });
+      candidates.push({ direction: new Phaser.Math.Vector2(-normalized.y, normalized.x), reason: 'FOLLOW_ROUTE' });
+    }
+
+    if (routeReturnDirection.lengthSq() > 0) {
+      candidates.push({ direction: routeReturnDirection, reason: 'FOLLOW_ROUTE' });
+    }
+
+    if (warningEscapeDirection.lengthSq() > 0) {
+      candidates.push({ direction: warningEscapeDirection, reason: 'AVOID_BOSS_WARNING' });
+    }
+
+    if (danger.nearestDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+      candidates.push(...this.getNearestEnemyEscapeCandidates(context, player).map((candidate) => ({
+        ...candidate,
+        reason: 'AVOID_CLOSE_ENEMY',
+      })));
+    }
+
+    if (cornerTrap.active && cornerTrap.inwardDirection.lengthSq() > 0) {
+      candidates.push({ direction: cornerTrap.inwardDirection, reason: 'EMERGENCY_ESCAPE' });
+    }
+
+    if (terrainEscape.active && terrainEscape.direction.lengthSq() > 0) {
+      candidates.push({ direction: terrainEscape.direction, reason: 'AVOID_OBSTACLE' });
+    }
+
+    if (this.lastMoveDirection && this.lastMoveDirection.lengthSq() > 0) {
+      candidates.push({ direction: this.lastMoveDirection, reason: 'FOLLOW_ROUTE' });
+    }
+
+    let bestMove: MicroMoveResult | undefined;
 
     for (const candidate of candidates) {
       if (candidate.direction.lengthSq() === 0) {
@@ -354,40 +632,360 @@ export class AutoPlayer {
 
       const direction = candidate.direction.clone().normalize();
       const endpoint = this.getCandidateEndpoint(context, player, direction);
-      const score = this.evaluateTacticalDirection(
+      const score = this.scoreMicroDirection(
         context,
         player,
         endpoint,
         direction,
+        routeDirection,
+        route,
         intent,
         danger,
-        intent.target,
-        cornerTrap,
         surround,
         movement,
         kite,
         terrainEscape,
       );
+      const result: MicroMoveResult = {
+        direction,
+        reason: candidate.reason as MicroMoveResult['reason'],
+        score,
+      };
 
-      if (score > bestScore) {
-        bestScore = score;
-        bestCandidate = { direction, reason: candidate.reason };
+      if (!bestMove || result.score > bestMove.score) {
+        bestMove = result;
       }
     }
 
-    if (!bestCandidate) {
+    return bestMove ?? {
+      direction: routeDirection.lengthSq() > 0 ? routeDirection.normalize() : new Phaser.Math.Vector2(0, 0),
+      reason: 'FOLLOW_ROUTE',
+      score: 0,
+    };
+  }
+
+  private shouldForceTacticalRouteRefresh(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    intent: StrategicMoveIntent,
+  ): boolean {
+    const hpRatio = this.getHpRatio(context);
+    const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio)
+      + this.getEnemyFutureContactRiskAt(context, player, hpRatio);
+
+    return this.getTotalBossWarningRisk(context, player) > 0
+      || contactRisk > 140
+      || (hpRatio < 0.35 && this.tacticalRoute?.threatRank !== undefined && this.tacticalRoute.threatRank > 1);
+  }
+
+  private getTacticalRouteUpdateInterval(mode: MoveMode): number {
+    return mode === 'SURVIVE' || mode === 'REPOSITION'
+      ? AutoPlayer.TACTICAL_ROUTE_URGENT_REFRESH_MS
+      : AutoPlayer.TACTICAL_ROUTE_REFRESH_MS;
+  }
+
+  private generateCandidateRoutes(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    intent: StrategicMoveIntent,
+    kite: KiteInfo,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
+    const target = this.getStrategicTargetPoint(context, player, intent);
+    const forward = target.clone().subtract(player);
+
+    if (forward.lengthSq() === 0) {
+      return [{ id: 'hold', waypoints: [player.clone(), target] }];
+    }
+
+    const normalized = forward.clone().normalize();
+    const left = new Phaser.Math.Vector2(-normalized.y, normalized.x);
+    const right = new Phaser.Math.Vector2(normalized.y, -normalized.x);
+    const distance = Math.min(forward.length(), AutoPlayer.STRATEGIC_DISTANCE);
+    const midDistance = Math.max(120, distance * 0.52);
+    const narrowOffset = Math.max(90, distance * 0.28);
+    const wideOffset = Math.max(150, distance * 0.45);
+    const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [
+      { id: 'direct', waypoints: [player.clone(), target] },
+      { id: 'leftArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance)).add(left.clone().scale(narrowOffset)), target] },
+      { id: 'rightArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance)).add(right.clone().scale(narrowOffset)), target] },
+      { id: 'wideLeftArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance * 0.82)).add(left.clone().scale(wideOffset)), target] },
+      { id: 'wideRightArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance * 0.82)).add(right.clone().scale(wideOffset)), target] },
+    ];
+
+    if (kite.direction.lengthSq() > 0) {
+      routes.push({
+        id: 'kiteTangent',
+        waypoints: [player.clone(), player.clone().add(kite.direction.clone().normalize().scale(midDistance)), target],
+      });
+    }
+
+    if (portalEscapeDirection.lengthSq() > 0 && intent.mode === 'SURVIVE') {
+      routes.push({
+        id: 'portalEscape',
+        waypoints: [player.clone(), player.clone().add(portalEscapeDirection.clone().normalize().scale(midDistance)), target],
+      });
+    }
+
+    if (breakoutDirection.lengthSq() > 0) {
+      routes.push({
+        id: 'breakout',
+        waypoints: [player.clone(), player.clone().add(breakoutDirection.clone().normalize().scale(midDistance)), target],
+      });
+    }
+
+    return routes.map((route) => ({
+      id: route.id,
+      waypoints: route.waypoints.map((waypoint) => this.clampToWorld(context, waypoint)),
+    }));
+  }
+
+  private getStrategicTargetPoint(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    intent: StrategicMoveIntent,
+  ): Phaser.Math.Vector2 {
+    if (intent.targetPosition) {
+      return this.clampToWorld(context, intent.targetPosition);
+    }
+
+    if (intent.targetDirection.lengthSq() > 0) {
+      return this.clampToWorld(
+        context,
+        player.clone().add(intent.targetDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE)),
+      );
+    }
+
+    return player.clone();
+  }
+
+  private evaluateRouteThreat(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+    intent: StrategicMoveIntent,
+  ): number {
+    const hpRatio = this.getHpRatio(context);
+    let threat = 0;
+
+    for (const sample of this.getRouteSamplePoints(player, waypoints)) {
+      threat += this.getEnemyPressureAt(context, sample, hpRatio) * 2.6;
+      threat += this.getEnemyContactRiskAt(context, sample, hpRatio) * 1.8;
+      threat += this.getEnemyFutureContactRiskAt(context, sample, hpRatio) * 1.35;
+      threat += this.getTotalBossWarningRisk(context, sample) * 85;
+      threat += this.getObstaclePenalty(context, sample) * 5.5;
+      threat += this.getBorderPenalty(context, sample, this.isResourceMode(intent.mode) ? intent.target : undefined) * 2.2;
+    }
+
+    for (let index = 0; index < waypoints.length - 1; index += 1) {
+      threat += this.getEnemyPathContactRisk(context, waypoints[index], waypoints[index + 1], hpRatio) * 1.25;
+      threat += this.routeSegmentIntersectsObstacle(context, waypoints[index], waypoints[index + 1]) ? 180 : 0;
+    }
+
+    return threat / Math.max(1, waypoints.length);
+  }
+
+  private isRouteHardInvalid(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+    intent: StrategicMoveIntent,
+    rawThreat: number,
+  ): boolean {
+    const hpRatio = this.getHpRatio(context);
+
+    for (const sample of this.getRouteSamplePoints(player, waypoints)) {
+      if (this.getTotalBossWarningRisk(context, sample) > 0.35) {
+        return true;
+      }
+
+      if (this.getObstaclePenalty(context, sample) >= 35) {
+        return true;
+      }
+
+      if (hpRatio < 0.35 && this.getEnemyContactRiskAt(context, sample, hpRatio) > 110) {
+        return true;
+      }
+
+      if (this.getBorderPenalty(context, sample, undefined) > 70 && intent.mode !== 'COLLECT' && intent.mode !== 'CHEST_APPROACH') {
+        return true;
+      }
+    }
+
+    return hpRatio < 0.35 && rawThreat > 420;
+  }
+
+  private evaluateRouteRewardScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+    intent: StrategicMoveIntent,
+    threatRank: number,
+  ): number {
+    if (!intent.target || !this.isResourceMode(intent.mode) || threatRank > 1 || intent.targetDirection.lengthSq() === 0) {
+      return 0;
+    }
+
+    const toTarget = intent.target.approachPosition.clone().subtract(player);
+
+    if (toTarget.lengthSq() === 0 || toTarget.normalize().dot(intent.targetDirection) < 0.5) {
+      return 0;
+    }
+
+    const distanceToRoute = this.getDistanceToRoute(intent.target.approachPosition, waypoints);
+
+    if (distanceToRoute > 150) {
+      return 0;
+    }
+
+    return intent.target.value * (intent.target.type === 'treasure' ? 0.42 : 0.24)
+      + Math.max(0, 150 - distanceToRoute) * 0.08;
+  }
+
+  private evaluateRouteCombatFit(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): number {
+    if (waypoints.length < 2) {
+      return 0;
+    }
+
+    const firstWaypoint = waypoints[Math.min(1, waypoints.length - 1)];
+    const direction = firstWaypoint.clone().subtract(player);
+
+    if (direction.lengthSq() === 0) {
+      return 0;
+    }
+
+    return this.getWeaponCandidateScore(context, player, firstWaypoint, direction.normalize(), danger) * 4;
+  }
+
+  private areRoutesSimilar(
+    currentWaypoints: readonly Phaser.Math.Vector2[],
+    nextWaypoints: readonly Phaser.Math.Vector2[],
+  ): boolean {
+    if (currentWaypoints.length < 2 || nextWaypoints.length < 2) {
+      return false;
+    }
+
+    const current = currentWaypoints[Math.min(1, currentWaypoints.length - 1)];
+    const next = nextWaypoints[Math.min(1, nextWaypoints.length - 1)];
+
+    return Phaser.Math.Distance.Between(current.x, current.y, next.x, next.y) < 130;
+  }
+
+  private advanceRouteWaypoint(route: TacticalRoute, player: Phaser.Math.Vector2): void {
+    const index = Phaser.Math.Clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1));
+    const waypoint = route.waypoints[index];
+
+    if (
+      waypoint
+      && index < route.waypoints.length - 1
+      && Phaser.Math.Distance.Between(player.x, player.y, waypoint.x, waypoint.y) < AutoPlayer.ROUTE_WAYPOINT_REACHED_DISTANCE
+    ) {
+      route.currentWaypointIndex = index + 1;
+    }
+  }
+
+  private getRouteDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    route: TacticalRoute,
+    intent: StrategicMoveIntent,
+  ): Phaser.Math.Vector2 {
+    const waypoint = route.waypoints[Phaser.Math.Clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1))]
+      ?? this.getStrategicTargetPoint(context, player, intent);
+    const direction = waypoint.clone().subtract(player);
+
+    return direction.lengthSq() > 0 ? direction.normalize() : intent.targetDirection.clone();
+  }
+
+  private getRouteReturnDirection(
+    player: Phaser.Math.Vector2,
+    route: TacticalRoute,
+  ): Phaser.Math.Vector2 {
+    const closest = this.getClosestPointOnRoute(player, route.waypoints);
+    const distance = Phaser.Math.Distance.Between(player.x, player.y, closest.x, closest.y);
+
+    if (distance < AutoPlayer.MICRO_ROUTE_DEVIATION_LIMIT) {
       return new Phaser.Math.Vector2(0, 0);
     }
 
-    this.updateTargetStability(intent.target, bestCandidate.reason);
-    this.updateBreakoutStability(bestCandidate.reason, bestCandidate.direction);
-    this.updateKiteStability(kite, bestCandidate.reason, bestCandidate.direction);
-    const finalDirection = bestCandidate.direction.normalize();
-
-    this.updateStrategicDetourState(context, intent, finalDirection);
-    this.lastMoveDirection = finalDirection.clone();
-    return finalDirection;
+    return closest.subtract(player).normalize();
   }
+
+  private scoreMicroDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    routeDirection: Phaser.Math.Vector2,
+    route: TacticalRoute,
+    intent: StrategicMoveIntent,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    kite: KiteInfo,
+    terrainEscape: TerrainEscapeInfo,
+  ): number {
+    const hpRatio = this.getHpRatio(context);
+    const endpointContactRisk = this.getEnemyContactRiskAt(context, endpoint, hpRatio);
+    const endpointFutureRisk = this.getEnemyFutureContactRiskAt(context, endpoint, hpRatio);
+    const pathContactRisk = this.getEnemyPathContactRisk(context, player, endpoint, hpRatio);
+    const bossWarningRisk = this.getTotalBossWarningRisk(context, endpoint);
+    const obstaclePenalty = this.getObstaclePenalty(context, endpoint);
+    const hardContactRisk = endpointContactRisk + endpointFutureRisk + pathContactRisk;
+
+    if (hardContactRisk > 220 || bossWarningRisk > 1.2) {
+      return -100000 - hardContactRisk - bossWarningRisk * 1000;
+    }
+
+    let score = 0;
+
+    if (routeDirection.lengthSq() > 0) {
+      const alignment = direction.dot(routeDirection);
+      const immediateThreat = danger.nearestDistance < AutoPlayer.CONTACT_DANGER_RADIUS
+        || this.getTotalBossWarningRisk(context, player) > 0
+        || hardContactRisk > 120;
+
+      score += alignment * 62;
+
+      if (!immediateThreat && alignment < 0.3) {
+        score -= 180;
+      }
+    }
+
+    score += this.getRouteProgressScore(player, endpoint, route) * 0.16;
+    score -= hardContactRisk * (hpRatio < 0.5 ? 1.55 : 1.15);
+    score -= bossWarningRisk * 280;
+    score -= obstaclePenalty * 12;
+    score -= this.getBorderPenalty(context, endpoint, undefined) * (intent.mode === 'SURVIVE' || intent.mode === 'REPOSITION' ? 1.5 : 0.8);
+    score += this.getEnemyPathClearanceScore(context, player, endpoint, hpRatio) * 0.8;
+    score += this.getFinalBossDashPositioningScore(context, player, endpoint, intent.mode, false) * 0.6;
+
+    if (danger.fleeDirection.lengthSq() > 0 && danger.nearestDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+      score += direction.dot(danger.fleeDirection) * (intent.mode === 'SURVIVE' ? 18 : 9);
+    }
+
+    if (surround.surrounded || movement.prolonged) {
+      score += this.getBreakoutCandidateScore(context, player, endpoint, direction, danger, surround, movement, kite) * 0.35;
+    }
+
+    if (terrainEscape.active) {
+      score += this.getTerrainEscapeCandidateScore(context, player, endpoint, direction, terrainEscape) * 0.45;
+    }
+
+    if (this.lastMoveDirection && this.lastMoveDirection.lengthSq() > 0) {
+      score += Math.max(-0.4, direction.dot(this.lastMoveDirection)) * 6;
+    }
+
+    return score;
+  }
+
+
 
   private getTacticalCandidates(
     context: AutoPlayerContext,
@@ -406,6 +1004,17 @@ export class AutoPlayer {
       ...this.getDiagonalMidDirections(),
     ]
       .map((direction) => ({ direction, reason: 'base' }));
+
+    const contactRisk = this.getEnemyContactRiskAt(context, player, this.getHpRatio(context));
+    const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, this.getHpRatio(context));
+
+    if (
+      danger.nearestDistance < AutoPlayer.CONTACT_DANGER_RADIUS
+      || contactRisk > 60
+      || futureContactRisk > 70
+    ) {
+      candidates.push(...this.getNearestEnemyEscapeCandidates(context, player));
+    }
 
     if (intent.targetDirection.lengthSq() > 0) {
       const strategic = intent.targetDirection.clone().normalize();
@@ -489,6 +1098,41 @@ export class AutoPlayer {
     }
 
     return candidates;
+  }
+
+  private getNearestEnemyEscapeCandidates(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+  ): Candidate[] {
+    let nearestEnemy: AutoPosition | AutoEnemySnapshot | undefined;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const enemy of context.enemyPositions) {
+      const distance = this.getEnemyEffectiveDistance(context, player, enemy);
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestEnemy = enemy;
+      }
+    }
+
+    if (!nearestEnemy) {
+      return [];
+    }
+
+    const away = player.clone().subtract(new Phaser.Math.Vector2(nearestEnemy.x, nearestEnemy.y));
+
+    if (away.lengthSq() === 0) {
+      return [];
+    }
+
+    const escape = away.normalize();
+
+    return [
+      { direction: escape, reason: 'contactDodge' },
+      { direction: new Phaser.Math.Vector2(escape.y, -escape.x), reason: 'contactSlide' },
+      { direction: new Phaser.Math.Vector2(-escape.y, escape.x), reason: 'contactSlide' },
+    ];
   }
 
   private updateStrategicDetourState(
@@ -730,11 +1374,16 @@ export class AutoPlayer {
     const hpRatio = this.getHpRatio(context);
     const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
     const currentWarningRisk = this.getTotalBossWarningRisk(context, player);
+    const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
+    const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
 
     if (
       hpRatio < 0.35
       || currentWarningRisk > 0
-      || (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE && currentPressure > 3)
+      || danger.nearestDistance < AutoPlayer.CONTACT_DANGER_RADIUS
+      || contactRisk > 80
+      || futureContactRisk > 70
+      || (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE && currentPressure > 2)
     ) {
       return 'SURVIVE';
     }
@@ -1121,18 +1770,31 @@ export class AutoPlayer {
     const contactRiskMultiplier = usefulPortalEndpoint
       ? 0.08
       : 1;
-    const localDanger = this.getEnemyContactRiskAt(context, endpoint, hpRatio)
-      + this.getEnemyPathContactRisk(context, player, endpoint, hpRatio)
+    const endpointContactRisk = this.getEnemyContactRiskAt(context, endpoint, hpRatio);
+    const endpointFutureRisk = this.getEnemyFutureContactRiskAt(context, endpoint, hpRatio);
+    const pathContactRisk = this.getEnemyPathContactRisk(context, player, endpoint, hpRatio);
+    const hardContactRisk = endpointContactRisk + endpointFutureRisk + pathContactRisk;
+
+    if (!usefulPortalEndpoint && hardContactRisk > 220) {
+      return -100000 - hardContactRisk;
+    }
+
+    const localDanger = endpointContactRisk
+      + pathContactRisk
       + this.getTotalBossWarningRisk(context, endpoint) * 45
       + this.getObstaclePenalty(context, endpoint) * 8;
     const dangerHigh = localDanger > 70 || intent.mode === 'SURVIVE';
     const alignmentWeight = dangerHigh ? 18 : 42;
     const safetyWeight = dangerHigh ? 1.5 : 1;
 
+    if (!usefulPortalEndpoint && hardContactRisk > 150) {
+      score -= 650 + hardContactRisk * 1.6;
+    }
+
     score -= this.getEnemyPressureAt(context, endpoint, hpRatio) * (hpRatio < 0.35 ? 1.45 : 1);
-    score -= this.getEnemyContactRiskAt(context, endpoint, hpRatio) * contactRiskMultiplier * safetyWeight;
-    score -= this.getEnemyFutureContactRiskAt(context, endpoint, hpRatio) * contactRiskMultiplier * safetyWeight;
-    score -= this.getEnemyPathContactRisk(context, player, endpoint, hpRatio) * contactRiskMultiplier * safetyWeight;
+    score -= endpointContactRisk * contactRiskMultiplier * safetyWeight;
+    score -= endpointFutureRisk * contactRiskMultiplier * safetyWeight;
+    score -= pathContactRisk * contactRiskMultiplier * safetyWeight;
     score += this.getEnemyPathClearanceScore(context, player, endpoint, hpRatio) * contactRiskMultiplier;
     score -= this.getEnemyApproachPenalty(context, player, endpoint, hpRatio) * contactRiskMultiplier;
     score += this.getSafeEnemyDistanceScore(context, player, endpoint);
@@ -1238,13 +1900,17 @@ export class AutoPlayer {
       }
     }
 
-    if (danger.fleeDirection.lengthSq() > 0 && intent.mode === 'SURVIVE') {
-      const fleeWeight = kite.active
-        ? 1.2
-        : danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
-          ? 0.7
-          : (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE ? 11 : 4);
-      score += direction.dot(danger.fleeDirection) * fleeWeight;
+    if (danger.fleeDirection.lengthSq() > 0) {
+      if (intent.mode === 'SURVIVE') {
+        const fleeWeight = kite.active
+          ? 1.2
+          : danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
+            ? 0.7
+            : (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE ? 16 : 7);
+        score += direction.dot(danger.fleeDirection) * fleeWeight;
+      } else if (danger.nearestDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+        score += direction.dot(danger.fleeDirection) * 12;
+      }
     }
 
     return score;
@@ -1292,6 +1958,12 @@ export class AutoPlayer {
         player.clone().add(strategic.clone().scale(AutoPlayer.STEP_DISTANCE)),
         hpRatio,
       );
+    const emergencyContact = localDanger > 100 || currentContactRisk > 80 || hpRatio < 0.35;
+
+    if (emergencyContact) {
+      return 0;
+    }
+
     const shortDetourAllowance = localDanger > 80 || currentContactRisk > 60 || hpRatio < 0.35;
     const detourDiscount = shortDetourAllowance
       ? 0.45 + (1 - graceRatio) * 0.35
@@ -3550,6 +4222,83 @@ export class AutoPlayer {
     point: Phaser.Math.Vector2,
   ): number {
     return this.getSegmentPointInfo(start, end, point).distance;
+  }
+
+  private routeSegmentIntersectsObstacle(
+    context: AutoPlayerContext,
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2,
+  ): boolean {
+    return (context.map?.obstacles ?? [])
+      .some((obstacle) => obstacle.blocksPlayer && this.segmentIntersectsObstacle(start, end, obstacle));
+  }
+
+  private getRouteSamplePoints(
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+  ): Phaser.Math.Vector2[] {
+    const points: Phaser.Math.Vector2[] = [player.clone()];
+
+    for (let index = 0; index < waypoints.length - 1; index += 1) {
+      const start = waypoints[index];
+      const end = waypoints[index + 1];
+
+      points.push(start.clone().lerp(end, 0.33));
+      points.push(start.clone().lerp(end, 0.66));
+      points.push(end.clone());
+    }
+
+    return points;
+  }
+
+  private getDistanceToRoute(
+    point: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+  ): number {
+    let nearest = Number.POSITIVE_INFINITY;
+
+    for (let index = 0; index < waypoints.length - 1; index += 1) {
+      nearest = Math.min(nearest, this.getDistanceSegmentToPoint(waypoints[index], waypoints[index + 1], point));
+    }
+
+    return Number.isFinite(nearest) ? nearest : Number.POSITIVE_INFINITY;
+  }
+
+  private getClosestPointOnRoute(
+    point: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+  ): Phaser.Math.Vector2 {
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    let nearestPoint = waypoints[0]?.clone() ?? point.clone();
+
+    for (let index = 0; index < waypoints.length - 1; index += 1) {
+      const closest = this.getClosestPointOnSegment(waypoints[index], waypoints[index + 1], point);
+      const distance = Phaser.Math.Distance.Between(point.x, point.y, closest.x, closest.y);
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestPoint = closest;
+      }
+    }
+
+    return nearestPoint;
+  }
+
+  private getRouteProgressScore(
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    route: TacticalRoute,
+  ): number {
+    const waypoint = route.waypoints[Phaser.Math.Clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1))];
+
+    if (!waypoint) {
+      return 0;
+    }
+
+    const currentDistance = Phaser.Math.Distance.Between(player.x, player.y, waypoint.x, waypoint.y);
+    const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, waypoint.x, waypoint.y);
+
+    return currentDistance - endpointDistance;
   }
 
   private getClosestPointOnSegment(

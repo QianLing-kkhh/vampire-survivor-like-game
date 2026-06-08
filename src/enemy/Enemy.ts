@@ -99,6 +99,7 @@ export function isLevelUpEvent(value: unknown): value is LevelUpEvent {
 }
 
 export class Enemy {
+  private static nextAutoMoveId = 1;
   private static readonly DASH_WARNING_DURATION_MULTIPLIER = 0.8;
   private static readonly BOSS_DASH_DISTANCE_MULTIPLIER = 1.35;
   private static readonly NORMAL_WEAPON_KNOCKBACK_IMMUNITY_MS = 3000;
@@ -121,6 +122,7 @@ export class Enemy {
   readonly dashDuration: number;
   readonly dashSpeed: number;
   readonly dashDamageMultiplier: number;
+  private readonly autoMoveId: string;
 
   currentHp: number;
   isDead = false;
@@ -166,6 +168,8 @@ export class Enemy {
     x: number,
     y: number,
   ) {
+    this.autoMoveId = `enemy-${Enemy.nextAutoMoveId}`;
+    Enemy.nextAutoMoveId += 1;
     this.maxHp = stats.hp;
     this.currentHp = stats.hp;
     this.moveSpeed = stats.moveSpeed;
@@ -191,6 +195,10 @@ export class Enemy {
     this.shadowType = this.resolveShadowType();
     this.shadow = ShadowFactory.createShadow(scene, this.body, this.shadowType, this.getShadowOptions());
     this.captureBaseScale(this.body);
+  }
+
+  getAutoMoveId(): string {
+    return this.autoMoveId;
   }
 
   setEventBus(eventBus: EventBus<GameEventMap>): void {
