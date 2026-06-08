@@ -36,6 +36,7 @@ export interface AutoEnemySnapshot extends AutoPosition {
   vx?: number;
   vy?: number;
   radiusPx?: number;
+  moveSpeed?: number;
   damage?: number;
   hpRatio?: number;
   isBoss?: boolean;
@@ -170,13 +171,53 @@ type MoveMode =
   | 'CHEST_APPROACH'
   | 'COLLECT';
 
+type StrategicPathStyle =
+  | 'DIRECT'
+  | 'ARC_LEFT'
+  | 'ARC_RIGHT'
+  | 'LOOP_CLOCKWISE'
+  | 'LOOP_COUNTERCLOCKWISE';
+
 interface StrategicMoveIntent {
   mode: MoveMode;
   targetDirection: Phaser.Math.Vector2;
   targetPosition?: Phaser.Math.Vector2;
+  preferredPathStyle: StrategicPathStyle;
+  strategicLookaheadSeconds: number;
+  desiredOrbitRadius: number;
+  avoidLinearEscape: boolean;
   urgency: number;
   validMs: number;
   target?: AutoTarget;
+}
+
+interface StrategicLookaheadDebugSnapshot {
+  preferredPathStyle: StrategicPathStyle;
+  strategicLookaheadSeconds: number;
+  futurePlayerDensityRisk: number;
+  futureTargetZoneDensityRisk: number;
+  futurePathInterceptionRisk: number;
+  lureQuality: number;
+  escapeCorridorScore: number;
+  loopSustainability: number;
+  futureBoundaryRisk: number;
+  linearEscapePenalty: number;
+  continuationScore: number;
+  deadEndAfterArrivalRisk: number;
+}
+
+interface StrategicDirectionAnalysis extends StrategicLookaheadDebugSnapshot {
+  direction: Phaser.Math.Vector2;
+  targetZoneCenter: Phaser.Math.Vector2;
+  desiredOrbitRadius: number;
+  avoidLinearEscape: boolean;
+  score: number;
+}
+
+interface StrategicLookaheadResult extends StrategicLookaheadDebugSnapshot {
+  futureZoneSafety: number;
+  desiredOrbitRadius: number;
+  avoidLinearEscape: boolean;
 }
 
 interface TacticalRoute {
@@ -297,6 +338,13 @@ export class AutoPlayer {
   private static readonly PRE_ENCIRCLE_RADIUS = 430;
   private static readonly TERRAIN_ESCAPE_MARGIN = 150;
   private static readonly STRATEGIC_DISTANCE = 420;
+  private static readonly STRATEGIC_NEAR_SECONDS = 2.0;
+  private static readonly STRATEGIC_MID_SECONDS = 4.0;
+  private static readonly STRATEGIC_FAR_SECONDS = 6.0;
+  private static readonly HIGH_PRESSURE_THRESHOLD = 7.5;
+  private static readonly LATE_GAME_MS = 240000;
+  private static readonly STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS = 260;
+  private static readonly STRATEGIC_CONTINUATION_DISTANCE = 360;
   private static readonly STRATEGIC_REFRESH_MS = 450;
   private static readonly STRATEGIC_URGENT_REFRESH_MS = 250;
   private static readonly STRATEGIC_SAFE_REFRESH_MS = 650;
@@ -332,7 +380,14 @@ export class AutoPlayer {
   private tacticalRouteRemainingMs = 0;
   private routeSequence = 0;
   private autoMoveElapsedMs = 0;
+  private autoMoveDebugSnapshot?: StrategicLookaheadDebugSnapshot;
   private enemyMotionSnapshots = new Map<string, EnemyMotionSnapshot>();
+
+  getAutoMoveDebugSnapshot(): StrategicLookaheadDebugSnapshot | undefined {
+    return this.autoMoveDebugSnapshot
+      ? { ...this.autoMoveDebugSnapshot }
+      : undefined;
+  }
 
   getMoveDirection(context: AutoPlayerContext): Phaser.Math.Vector2 {
     this.tickSuppression();
@@ -512,6 +567,7 @@ export class AutoPlayer {
         + rewardScore
         + route.combatFitScore
         + stabilityScore
+        - (intent.avoidLinearEscape && route.id === 'direct' ? 34 : 0)
         - (route.hardInvalid ? 180 : 0);
       const scoredRoute = { ...route, rewardScore, routeScore };
 
@@ -706,13 +762,44 @@ export class AutoPlayer {
     const midDistance = Math.max(120, distance * 0.52);
     const narrowOffset = Math.max(90, distance * 0.28);
     const wideOffset = Math.max(150, distance * 0.45);
-    const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [
-      { id: 'direct', waypoints: [player.clone(), target] },
-      { id: 'leftArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance)).add(left.clone().scale(narrowOffset)), target] },
-      { id: 'rightArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance)).add(right.clone().scale(narrowOffset)), target] },
-      { id: 'wideLeftArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance * 0.82)).add(left.clone().scale(wideOffset)), target] },
-      { id: 'wideRightArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance * 0.82)).add(right.clone().scale(wideOffset)), target] },
-    ];
+    const directRoute = { id: 'direct', waypoints: [player.clone(), target] };
+    const leftArcRoute = { id: 'leftArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance)).add(left.clone().scale(narrowOffset)), target] };
+    const rightArcRoute = { id: 'rightArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance)).add(right.clone().scale(narrowOffset)), target] };
+    const wideLeftArcRoute = { id: 'wideLeftArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance * 0.82)).add(left.clone().scale(wideOffset)), target] };
+    const wideRightArcRoute = { id: 'wideRightArc', waypoints: [player.clone(), player.clone().add(normalized.clone().scale(midDistance * 0.82)).add(right.clone().scale(wideOffset)), target] };
+    const loopClockwiseRoute = {
+      id: 'loopClockwise',
+      waypoints: [
+        player.clone(),
+        player.clone().add(right.clone().scale(wideOffset)).add(normalized.clone().scale(midDistance * 0.35)),
+        player.clone().add(right.clone().scale(wideOffset * 1.2)).add(normalized.clone().scale(midDistance)),
+        target,
+      ],
+    };
+    const loopCounterClockwiseRoute = {
+      id: 'loopCounterClockwise',
+      waypoints: [
+        player.clone(),
+        player.clone().add(left.clone().scale(wideOffset)).add(normalized.clone().scale(midDistance * 0.35)),
+        player.clone().add(left.clone().scale(wideOffset * 1.2)).add(normalized.clone().scale(midDistance)),
+        target,
+      ],
+    };
+    const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [];
+
+    if (intent.preferredPathStyle === 'LOOP_CLOCKWISE') {
+      routes.push(loopClockwiseRoute, wideRightArcRoute, rightArcRoute, wideLeftArcRoute, leftArcRoute);
+    } else if (intent.preferredPathStyle === 'LOOP_COUNTERCLOCKWISE') {
+      routes.push(loopCounterClockwiseRoute, wideLeftArcRoute, leftArcRoute, wideRightArcRoute, rightArcRoute);
+    } else if (intent.preferredPathStyle === 'ARC_LEFT') {
+      routes.push(leftArcRoute, wideLeftArcRoute, rightArcRoute, wideRightArcRoute);
+    } else if (intent.preferredPathStyle === 'ARC_RIGHT') {
+      routes.push(rightArcRoute, wideRightArcRoute, leftArcRoute, wideLeftArcRoute);
+    } else {
+      routes.push(directRoute, leftArcRoute, rightArcRoute, wideLeftArcRoute, wideRightArcRoute);
+    }
+
+    routes.push(directRoute);
 
     if (kite.direction.lengthSq() > 0) {
       routes.push({
@@ -1272,6 +1359,10 @@ export class AutoPlayer {
           targetPosition: player.clone().add(
             this.strategicIntent.targetDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE),
           ),
+          preferredPathStyle: this.strategicIntent.preferredPathStyle,
+          strategicLookaheadSeconds: this.strategicIntent.strategicLookaheadSeconds,
+          desiredOrbitRadius: this.strategicIntent.desiredOrbitRadius,
+          avoidLinearEscape: this.strategicIntent.avoidLinearEscape,
         };
         this.strategicIntentRemainingMs = this.strategicIntent.validMs;
         return this.strategicIntent;
@@ -1312,6 +1403,7 @@ export class AutoPlayer {
     );
     let bestDirection = new Phaser.Math.Vector2(0, 0);
     let bestScore = Number.NEGATIVE_INFINITY;
+    let bestAnalysis: StrategicDirectionAnalysis | undefined;
 
     for (const candidate of this.getStrategicDirections(player, danger, kite, terrainEscape, target, portalEscapeDirection, breakoutDirection)) {
       if (candidate.lengthSq() === 0) {
@@ -1319,7 +1411,7 @@ export class AutoPlayer {
       }
 
       const direction = candidate.clone().normalize();
-      const score = this.scoreStrategicDirection(
+      const analysis = this.analyzeStrategicDirection(
         context,
         player,
         direction,
@@ -1335,10 +1427,12 @@ export class AutoPlayer {
         portalEscapeDirection,
         breakoutDirection,
       );
+      const score = analysis.score;
 
       if (score > bestScore) {
         bestScore = score;
         bestDirection = direction;
+        bestAnalysis = analysis;
       }
     }
 
@@ -1346,12 +1440,63 @@ export class AutoPlayer {
       bestDirection = danger.fleeDirection.lengthSq() > 0
         ? danger.fleeDirection.clone()
         : new Phaser.Math.Vector2(1, 0);
+      bestAnalysis = this.analyzeStrategicDirection(
+        context,
+        player,
+        bestDirection.clone().normalize(),
+        mode,
+        danger,
+        cornerTrap,
+        surround,
+        movement,
+        terrainEscape,
+        kite,
+        target,
+        warningEscapeDirection,
+        portalEscapeDirection,
+        breakoutDirection,
+      );
     }
+
+    const selectedAnalysis = bestAnalysis ?? this.analyzeStrategicDirection(
+      context,
+      player,
+      bestDirection.clone().normalize(),
+      mode,
+      danger,
+      cornerTrap,
+      surround,
+      movement,
+      terrainEscape,
+      kite,
+      target,
+      warningEscapeDirection,
+      portalEscapeDirection,
+      breakoutDirection,
+    );
+    this.autoMoveDebugSnapshot = {
+      preferredPathStyle: selectedAnalysis.preferredPathStyle,
+      strategicLookaheadSeconds: selectedAnalysis.strategicLookaheadSeconds,
+      futurePlayerDensityRisk: selectedAnalysis.futurePlayerDensityRisk,
+      futureTargetZoneDensityRisk: selectedAnalysis.futureTargetZoneDensityRisk,
+      futurePathInterceptionRisk: selectedAnalysis.futurePathInterceptionRisk,
+      lureQuality: selectedAnalysis.lureQuality,
+      escapeCorridorScore: selectedAnalysis.escapeCorridorScore,
+      loopSustainability: selectedAnalysis.loopSustainability,
+      futureBoundaryRisk: selectedAnalysis.futureBoundaryRisk,
+      linearEscapePenalty: selectedAnalysis.linearEscapePenalty,
+      continuationScore: selectedAnalysis.continuationScore,
+      deadEndAfterArrivalRisk: selectedAnalysis.deadEndAfterArrivalRisk,
+    };
 
     return {
       mode,
-      targetDirection: bestDirection.normalize(),
-      targetPosition: player.clone().add(bestDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE)),
+      targetDirection: selectedAnalysis.direction.clone().normalize(),
+      targetPosition: selectedAnalysis.targetZoneCenter.clone(),
+      preferredPathStyle: selectedAnalysis.preferredPathStyle,
+      strategicLookaheadSeconds: selectedAnalysis.strategicLookaheadSeconds,
+      desiredOrbitRadius: selectedAnalysis.desiredOrbitRadius,
+      avoidLinearEscape: selectedAnalysis.avoidLinearEscape,
       urgency: this.getStrategicUrgency(context, player, danger, mode),
       validMs: this.getStrategicValidMs(mode),
       target: this.isStrategicTargetAllowed(context, player, target, mode) ? target : undefined,
@@ -1490,6 +1635,40 @@ export class AutoPlayer {
     portalEscapeDirection: Phaser.Math.Vector2,
     breakoutDirection: Phaser.Math.Vector2,
   ): number {
+    return this.analyzeStrategicDirection(
+      context,
+      player,
+      direction,
+      mode,
+      danger,
+      cornerTrap,
+      surround,
+      movement,
+      terrainEscape,
+      kite,
+      target,
+      warningEscapeDirection,
+      portalEscapeDirection,
+      breakoutDirection,
+    ).score;
+  }
+
+  private analyzeStrategicDirection(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    mode: MoveMode,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    cornerTrap: CornerTrapInfo,
+    surround: SurroundInfo,
+    movement: MovementMemoryInfo,
+    terrainEscape: TerrainEscapeInfo,
+    kite: KiteInfo,
+    target: AutoTarget | undefined,
+    warningEscapeDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Phaser.Math.Vector2,
+    breakoutDirection: Phaser.Math.Vector2,
+  ): StrategicDirectionAnalysis {
     const hpRatio = this.getHpRatio(context);
     const endpoint = this.clampToWorld(
       context,
@@ -1555,8 +1734,585 @@ export class AutoPlayer {
       score += Math.max(0, direction.dot(this.lastMoveDirection)) * 6;
     }
 
+    const lookahead = this.evaluateStrategicLookahead(
+      context,
+      player,
+      endpoint,
+      direction,
+      mode,
+      target,
+      currentPressure,
+      density,
+    );
+    const highPressureOrLate = this.isStrategicHighPressureOrLate(currentPressure, density);
+    const firstStepWeight = highPressureOrLate ? 0.5 : 0.7;
+    const continuationWeight = highPressureOrLate ? 1.8 : 1.3;
+    const deadEndWeight = highPressureOrLate ? 1.8 : 1.3;
+
+    score = score * firstStepWeight
+      + lookahead.continuationScore * continuationWeight
+      - lookahead.deadEndAfterArrivalRisk * deadEndWeight
+      + lookahead.futureZoneSafety * (highPressureOrLate ? 1.82 : 1.4)
+      + lookahead.escapeCorridorScore * (highPressureOrLate ? 1.95 : 1.5)
+      + lookahead.lureQuality * 1.2
+      + lookahead.loopSustainability * (highPressureOrLate ? 2.4 : 1.6)
+      - lookahead.futurePlayerDensityRisk * 1.2
+      - lookahead.futureTargetZoneDensityRisk * 1.4
+      - lookahead.futurePathInterceptionRisk * 1.5
+      - lookahead.futureBoundaryRisk * (hpRatio < 0.35 ? 2.4 : 1.6)
+      - lookahead.linearEscapePenalty * (highPressureOrLate ? 1.5 : 1);
+
+    return {
+      direction: direction.clone().normalize(),
+      targetZoneCenter: endpoint,
+      preferredPathStyle: lookahead.preferredPathStyle,
+      strategicLookaheadSeconds: lookahead.strategicLookaheadSeconds,
+      desiredOrbitRadius: lookahead.desiredOrbitRadius,
+      avoidLinearEscape: lookahead.avoidLinearEscape,
+      futurePlayerDensityRisk: lookahead.futurePlayerDensityRisk,
+      futureTargetZoneDensityRisk: lookahead.futureTargetZoneDensityRisk,
+      futurePathInterceptionRisk: lookahead.futurePathInterceptionRisk,
+      lureQuality: lookahead.lureQuality,
+      escapeCorridorScore: lookahead.escapeCorridorScore,
+      loopSustainability: lookahead.loopSustainability,
+      futureBoundaryRisk: lookahead.futureBoundaryRisk,
+      linearEscapePenalty: lookahead.linearEscapePenalty,
+      continuationScore: lookahead.continuationScore,
+      deadEndAfterArrivalRisk: lookahead.deadEndAfterArrivalRisk,
+      score,
+    };
+  }
+
+  private evaluateStrategicLookahead(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    targetZoneCenter: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    mode: MoveMode,
+    target: AutoTarget | undefined,
+    currentPressure: number,
+    currentDensity: number,
+  ): StrategicLookaheadResult {
+    const normalized = direction.clone().normalize();
+    const predictedPlayerPositions = [
+      this.predictPlayerPosition(context, player, normalized, AutoPlayer.STRATEGIC_NEAR_SECONDS),
+      this.predictPlayerPosition(context, player, normalized, AutoPlayer.STRATEGIC_MID_SECONDS),
+      this.predictPlayerPosition(context, player, normalized, AutoPlayer.STRATEGIC_FAR_SECONDS),
+    ];
+    const futureEnemiesByTime = predictedPlayerPositions.map((predictedPosition, index) => (
+      context.enemyPositions.map((enemy) => this.predictEnemyPositionTowardPlayerPath(
+        enemy,
+        predictedPosition,
+        [
+          AutoPlayer.STRATEGIC_NEAR_SECONDS,
+          AutoPlayer.STRATEGIC_MID_SECONDS,
+          AutoPlayer.STRATEGIC_FAR_SECONDS,
+        ][index],
+      ))
+    ));
+    const pathSamples = this.getLineSamplePoints(player, targetZoneCenter, 5);
+    const futurePlayerDensityRisk = this.evaluateFuturePlayerDensityRisk(player, futureEnemiesByTime[1]);
+    const futureTargetZoneDensityRisk = this.evaluateFutureTargetZoneDensityRisk(targetZoneCenter, futureEnemiesByTime[2]);
+    const futurePathInterceptionRisk = this.evaluateFuturePathInterceptionRisk(pathSamples, futureEnemiesByTime);
+    const lureQuality = this.evaluateLureQuality(normalized, predictedPlayerPositions[1], futureEnemiesByTime[1]);
+    const escapeCorridorScore = this.evaluateEscapeCorridorScore(context, normalized, pathSamples, futureEnemiesByTime);
+    const loopSustainability = this.evaluateLoopSustainability(context, targetZoneCenter, futureEnemiesByTime);
+    const futureBoundaryRisk = this.evaluateFutureBoundaryRisk(context, predictedPlayerPositions);
+    const linearEscapePenalty = this.evaluateLinearEscapePenalty(
+      normalized,
+      this.lastMoveDirection ?? normalized,
+      this.getStrategicPressureLevel(context, currentPressure, currentDensity),
+      futureBoundaryRisk,
+      loopSustainability,
+    );
+    const continuation = this.evaluateSecondStepLookahead(
+      context,
+      targetZoneCenter,
+      normalized,
+      futureEnemiesByTime[1],
+      mode,
+    );
+    const highPressureOrLate = this.isStrategicHighPressureOrLate(currentPressure, currentDensity);
+    const resourceSuppressed = highPressureOrLate || this.getHpRatio(context) < 0.35 || mode === 'SURVIVE' || mode === 'REPOSITION';
+    const targetDirection = target?.approachPosition.clone().subtract(player);
+    const resourceBias = resourceSuppressed
+      || !target
+      || !this.isResourceMode(mode)
+      || !targetDirection
+      || targetDirection.lengthSq() === 0
+      ? 0
+      : Math.max(0, normalized.dot(targetDirection.normalize())) * 2.5;
+    const futureZoneSafety = Math.max(0, 36 - futureTargetZoneDensityRisk * 0.45 - futureBoundaryRisk * 0.25)
+      + resourceBias;
+    const avoidLinearEscape = highPressureOrLate
+      || futureBoundaryRisk > 45
+      || futurePathInterceptionRisk > 55
+      || loopSustainability > 24;
+    const preferredPathStyle = this.chooseStrategicPathStyle(
+      context,
+      normalized,
+      targetZoneCenter,
+      futurePathInterceptionRisk,
+      loopSustainability,
+      futureBoundaryRisk,
+      linearEscapePenalty,
+      continuation.continuationScore,
+      mode,
+    );
+
+    return {
+      preferredPathStyle,
+      strategicLookaheadSeconds: AutoPlayer.STRATEGIC_FAR_SECONDS,
+      desiredOrbitRadius: this.getDesiredStrategicOrbitRadius(context, mode),
+      avoidLinearEscape,
+      futurePlayerDensityRisk,
+      futureTargetZoneDensityRisk,
+      futurePathInterceptionRisk,
+      lureQuality,
+      escapeCorridorScore,
+      loopSustainability,
+      futureBoundaryRisk,
+      linearEscapePenalty,
+      continuationScore: continuation.continuationScore,
+      deadEndAfterArrivalRisk: continuation.deadEndAfterArrivalRisk,
+      futureZoneSafety,
+    };
+  }
+
+  private predictPlayerPosition(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    seconds: number,
+  ): Phaser.Math.Vector2 {
+    const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
+    const distance = Math.min(AutoPlayer.STRATEGIC_DISTANCE * 1.45, moveSpeed * seconds * 0.78);
+
+    return this.clampToWorld(context, player.clone().add(direction.clone().normalize().scale(distance)));
+  }
+
+  private predictEnemyPositionTowardPlayerPath(
+    enemy: AutoPosition | AutoEnemySnapshot,
+    predictedPlayerPos: Phaser.Math.Vector2,
+    seconds: number,
+  ): Phaser.Math.Vector2 {
+    const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
+    const towardPlayer = predictedPlayerPos.clone().subtract(enemyPosition);
+    const speed = this.getEnemyStrategicSpeed(enemy);
+    const chaseVelocity = towardPlayer.lengthSq() > 0
+      ? towardPlayer.normalize().scale(speed)
+      : new Phaser.Math.Vector2(0, 0);
+    const currentVelocity = this.getEnemyStrategicVelocity(enemy);
+    const predictedVelocity = currentVelocity.scale(0.4).add(chaseVelocity.scale(0.6));
+
+    return enemyPosition.add(predictedVelocity.scale(seconds));
+  }
+
+  private evaluateFuturePlayerDensityRisk(
+    playerPos: Phaser.Math.Vector2,
+    futureEnemies: readonly Phaser.Math.Vector2[],
+  ): number {
+    return this.evaluateFutureDensityAt(playerPos, futureEnemies, AutoPlayer.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS);
+  }
+
+  private evaluateFutureTargetZoneDensityRisk(
+    targetZoneCenter: Phaser.Math.Vector2,
+    futureEnemies: readonly Phaser.Math.Vector2[],
+  ): number {
+    return this.evaluateFutureDensityAt(targetZoneCenter, futureEnemies, AutoPlayer.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS * 1.08);
+  }
+
+  private evaluateFuturePathInterceptionRisk(
+    routeOrLineSamples: readonly Phaser.Math.Vector2[],
+    futureEnemiesByTime: readonly (readonly Phaser.Math.Vector2[])[],
+  ): number {
+    let risk = 0;
+
+    for (const futureEnemies of futureEnemiesByTime) {
+      for (const sample of routeOrLineSamples) {
+        risk += this.evaluateFutureDensityAt(sample, futureEnemies, AutoPlayer.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS * 0.72) * 0.22;
+      }
+    }
+
+    return risk;
+  }
+
+  private evaluateLureQuality(
+    candidateDirection: Phaser.Math.Vector2,
+    predictedPlayerPos: Phaser.Math.Vector2,
+    futureEnemies: readonly Phaser.Math.Vector2[],
+  ): number {
+    if (candidateDirection.lengthSq() === 0 || futureEnemies.length === 0) {
+      return 0;
+    }
+
+    const forward = candidateDirection.clone().normalize();
+    let score = 0;
+
+    for (const enemy of futureEnemies) {
+      const toEnemy = enemy.clone().subtract(predictedPlayerPos);
+
+      if (toEnemy.lengthSq() === 0) {
+        continue;
+      }
+
+      const normalized = toEnemy.normalize();
+      const frontDot = normalized.dot(forward);
+      const sideDot = Math.abs(normalized.x * forward.y - normalized.y * forward.x);
+
+      if (frontDot < -0.25) {
+        score += 2.4;
+      } else if (frontDot > 0.35) {
+        score -= 3.2;
+      } else if (sideDot > 0.72) {
+        score -= 1.1;
+      }
+    }
+
     return score;
   }
+
+  private evaluateEscapeCorridorScore(
+    context: AutoPlayerContext,
+    candidateDirection: Phaser.Math.Vector2,
+    pathSamples: readonly Phaser.Math.Vector2[],
+    futureEnemiesByTime: readonly (readonly Phaser.Math.Vector2[])[],
+  ): number {
+    let score = 18;
+    const left = new Phaser.Math.Vector2(-candidateDirection.y, candidateDirection.x);
+    const right = new Phaser.Math.Vector2(candidateDirection.y, -candidateDirection.x);
+
+    for (const sample of pathSamples) {
+      score -= this.getBorderPenalty(context, sample, undefined) * 0.08;
+      score -= this.getObstaclePenalty(context, sample) * 0.22;
+      score += this.getNearestBorderDistance(context, sample) > AutoPlayer.BORDER_WARNING_MARGIN ? 1.4 : -2.4;
+
+      const leftPoint = this.clampToWorld(context, sample.clone().add(left.clone().scale(130)));
+      const rightPoint = this.clampToWorld(context, sample.clone().add(right.clone().scale(130)));
+      score += this.getObstaclePenalty(context, leftPoint) < 15 ? 1.2 : -2.2;
+      score += this.getObstaclePenalty(context, rightPoint) < 15 ? 1.2 : -2.2;
+    }
+
+    score -= this.evaluateFuturePathInterceptionRisk(pathSamples, futureEnemiesByTime) * 0.22;
+
+    return score;
+  }
+
+  private evaluateLoopSustainability(
+    context: AutoPlayerContext,
+    targetZoneCenter: Phaser.Math.Vector2,
+    futureEnemiesByTime: readonly (readonly Phaser.Math.Vector2[])[],
+  ): number {
+    const ringDirections = this.getBaseDirections();
+    let openDirections = 0;
+    let score = this.getNearestBorderDistance(context, targetZoneCenter) > AutoPlayer.BORDER_WARNING_MARGIN
+      ? 16
+      : -18;
+
+    for (const direction of ringDirections) {
+      const probe = this.clampToWorld(context, targetZoneCenter.clone().add(direction.clone().normalize().scale(170)));
+      const blocked = this.getObstaclePenalty(context, probe) > 20 || this.getBorderPenalty(context, probe, undefined) > 55;
+      const futureRisk = this.evaluateFutureDensityAt(probe, futureEnemiesByTime[futureEnemiesByTime.length - 1] ?? [], 210);
+
+      if (!blocked && futureRisk < 18) {
+        openDirections += 1;
+        score += 3.5;
+      } else {
+        score -= 2.2;
+      }
+    }
+
+    if (openDirections < 3) {
+      score -= 28;
+    } else if (openDirections >= 5) {
+      score += 18;
+    }
+
+    return score;
+  }
+
+  private evaluateFutureBoundaryRisk(
+    context: AutoPlayerContext,
+    predictedPlayerPositions: readonly Phaser.Math.Vector2[],
+  ): number {
+    let risk = 0;
+
+    for (const position of predictedPlayerPositions) {
+      const nearestBorder = this.getNearestBorderDistance(context, position);
+      const cornerDistance = this.getNearestCornerDistance(context, position);
+
+      if (nearestBorder < AutoPlayer.BORDER_WARNING_MARGIN) {
+        risk += (AutoPlayer.BORDER_WARNING_MARGIN - nearestBorder) * 0.45;
+      }
+
+      if (cornerDistance < AutoPlayer.BORDER_WARNING_MARGIN * 1.35) {
+        risk += (AutoPlayer.BORDER_WARNING_MARGIN * 1.35 - cornerDistance) * 0.32;
+      }
+    }
+
+    return risk;
+  }
+
+  private evaluateLinearEscapePenalty(
+    candidateDirection: Phaser.Math.Vector2,
+    currentMoveDirection: Phaser.Math.Vector2,
+    pressureLevel: number,
+    futureBoundaryRisk: number,
+    loopSustainability: number,
+  ): number {
+    if (candidateDirection.lengthSq() === 0 || currentMoveDirection.lengthSq() === 0) {
+      return 0;
+    }
+
+    const alignment = candidateDirection.clone().normalize().dot(currentMoveDirection.clone().normalize());
+    const pressureFactor = Math.max(0, pressureLevel - AutoPlayer.HIGH_PRESSURE_THRESHOLD);
+    const linearFactor = Math.max(0, alignment - 0.72);
+    const loopPenalty = Math.max(0, 22 - loopSustainability) * 0.35;
+
+    return linearFactor * (pressureFactor * 8 + futureBoundaryRisk * 0.42 + loopPenalty);
+  }
+
+  private evaluateSecondStepLookahead(
+    context: AutoPlayerContext,
+    firstZone: Phaser.Math.Vector2,
+    firstDirection: Phaser.Math.Vector2,
+    futureEnemiesAtArrival: readonly Phaser.Math.Vector2[],
+    mode: MoveMode,
+  ): { continuationScore: number; deadEndAfterArrivalRisk: number } {
+    let safeExitCount = 0;
+    let bestNextScore = Number.NEGATIVE_INFINITY;
+
+    for (const nextDirection of this.getStrategicDirectionsFrom(firstDirection)) {
+      const secondZone = this.clampToWorld(
+        context,
+        firstZone.clone().add(nextDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_CONTINUATION_DISTANCE)),
+      );
+      const futureEnemiesAfterSecond = context.enemyPositions.map((enemy) => (
+        this.predictEnemyPositionTowardPlayerPath(
+          enemy,
+          secondZone,
+          AutoPlayer.STRATEGIC_NEAR_SECONDS + AutoPlayer.STRATEGIC_MID_SECONDS,
+        )
+      ));
+      const secondPathSamples = this.getLineSamplePoints(firstZone, secondZone, 4);
+      const targetRisk = this.evaluateFutureTargetZoneDensityRisk(secondZone, futureEnemiesAfterSecond);
+      const pathRisk = this.evaluateFuturePathInterceptionRisk(secondPathSamples, [futureEnemiesAtArrival, futureEnemiesAfterSecond]);
+      const boundaryRisk = this.evaluateFutureBoundaryRisk(context, [firstZone, secondZone]);
+      const loopScore = this.evaluateLoopSustainability(context, secondZone, [futureEnemiesAtArrival, futureEnemiesAfterSecond]);
+      const corridorScore = this.evaluateEscapeCorridorScore(context, nextDirection, secondPathSamples, [futureEnemiesAtArrival, futureEnemiesAfterSecond]);
+      const nextScore = loopScore + corridorScore - targetRisk * 0.9 - pathRisk * 1.1 - boundaryRisk * 0.8;
+
+      if (nextScore > bestNextScore) {
+        bestNextScore = nextScore;
+      }
+
+      if (nextScore > (mode === 'SURVIVE' ? -6 : 4)) {
+        safeExitCount += 1;
+      }
+    }
+
+    const deadEndAfterArrivalRisk = safeExitCount === 0
+      ? 120
+      : safeExitCount === 1
+        ? 34
+        : 0;
+    const continuationScore = (Number.isFinite(bestNextScore) ? bestNextScore : -80)
+      + safeExitCount * 16
+      - deadEndAfterArrivalRisk * 0.55;
+
+    return { continuationScore, deadEndAfterArrivalRisk };
+  }
+
+  private chooseStrategicPathStyle(
+    context: AutoPlayerContext,
+    direction: Phaser.Math.Vector2,
+    targetZoneCenter: Phaser.Math.Vector2,
+    futurePathInterceptionRisk: number,
+    loopSustainability: number,
+    futureBoundaryRisk: number,
+    linearEscapePenalty: number,
+    continuationScore: number,
+    mode: MoveMode,
+  ): StrategicPathStyle {
+    const highPressureOrLate = this.autoMoveElapsedMs > AutoPlayer.LATE_GAME_MS
+      || context.enemyPositions.length >= 18
+      || mode === 'SURVIVE'
+      || mode === 'REPOSITION'
+      || mode === 'BOSS_POSITIONING';
+    const left = new Phaser.Math.Vector2(-direction.y, direction.x);
+    const right = new Phaser.Math.Vector2(direction.y, -direction.x);
+    const leftScore = this.scoreStrategicSideStyle(context, targetZoneCenter, left);
+    const rightScore = this.scoreStrategicSideStyle(context, targetZoneCenter, right);
+    const clockwise = rightScore >= leftScore;
+
+    if (
+      highPressureOrLate
+      && loopSustainability > 18
+      && (continuationScore > 6 || futureBoundaryRisk > 28 || linearEscapePenalty > 8)
+    ) {
+      return clockwise ? 'LOOP_CLOCKWISE' : 'LOOP_COUNTERCLOCKWISE';
+    }
+
+    if (
+      futurePathInterceptionRisk > 32
+      || futureBoundaryRisk > 42
+      || mode === 'BOSS_POSITIONING'
+    ) {
+      return leftScore >= rightScore ? 'ARC_LEFT' : 'ARC_RIGHT';
+    }
+
+    return 'DIRECT';
+  }
+
+  private scoreStrategicSideStyle(
+    context: AutoPlayerContext,
+    targetZoneCenter: Phaser.Math.Vector2,
+    sideDirection: Phaser.Math.Vector2,
+  ): number {
+    const sidePoint = this.clampToWorld(
+      context,
+      targetZoneCenter.clone().add(sideDirection.clone().normalize().scale(180)),
+    );
+
+    return this.getNearestBorderDistance(context, sidePoint) * 0.06
+      - this.getObstaclePenalty(context, sidePoint) * 0.8
+      - this.getEnemyPressureAt(context, sidePoint, this.getHpRatio(context)) * 2.2;
+  }
+
+  private getDesiredStrategicOrbitRadius(context: AutoPlayerContext, mode: MoveMode): number {
+    if (mode === 'BOSS_POSITIONING') {
+      return AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE;
+    }
+
+    const weapons = this.getWeaponSnapshots(context);
+    const orbitWeapon = weapons.find((weapon) => weapon.tags.includes('orbit'));
+    const auraWeapon = weapons.find((weapon) => weapon.tags.includes('aura'));
+
+    if (orbitWeapon?.radiusPx) {
+      return orbitWeapon.radiusPx;
+    }
+
+    if (auraWeapon?.radiusPx) {
+      return auraWeapon.radiusPx * 1.15;
+    }
+
+    return 240;
+  }
+
+  private getStrategicPressureLevel(
+    context: AutoPlayerContext,
+    currentPressure: number,
+    currentDensity: number,
+  ): number {
+    return currentPressure
+      + currentDensity * 0.35
+      + Math.min(8, context.enemyPositions.length * 0.08);
+  }
+
+  private isStrategicHighPressureOrLate(currentPressure: number, currentDensity: number): boolean {
+    return this.getStrategicPressureLevelFromValues(currentPressure, currentDensity) > AutoPlayer.HIGH_PRESSURE_THRESHOLD
+      || this.autoMoveElapsedMs > AutoPlayer.LATE_GAME_MS;
+  }
+
+  private getStrategicPressureLevelFromValues(currentPressure: number, currentDensity: number): number {
+    return currentPressure + currentDensity * 0.35;
+  }
+
+  private getEnemyStrategicSpeed(enemy: AutoPosition | AutoEnemySnapshot): number {
+    const snapshotSpeed = 'moveSpeed' in enemy ? enemy.moveSpeed : undefined;
+
+    if (snapshotSpeed !== undefined && Number.isFinite(snapshotSpeed) && snapshotSpeed > 0) {
+      return snapshotSpeed;
+    }
+
+    const velocity = this.getEnemyStrategicVelocity(enemy);
+    const velocitySpeed = velocity.length();
+
+    return velocitySpeed > 0 ? Phaser.Math.Clamp(velocitySpeed, 45, 180) : 85;
+  }
+
+  private getEnemyStrategicVelocity(enemy: AutoPosition | AutoEnemySnapshot): Phaser.Math.Vector2 {
+    const explicitVx = 'vx' in enemy ? enemy.vx : undefined;
+    const explicitVy = 'vy' in enemy ? enemy.vy : undefined;
+
+    if (
+      explicitVx !== undefined
+      && explicitVy !== undefined
+      && (explicitVx !== 0 || explicitVy !== 0)
+    ) {
+      return new Phaser.Math.Vector2(explicitVx, explicitVy);
+    }
+
+    const id = 'id' in enemy ? enemy.id : undefined;
+    const snapshot = id ? this.enemyMotionSnapshots.get(id) : undefined;
+
+    return snapshot
+      ? new Phaser.Math.Vector2(snapshot.vx, snapshot.vy)
+      : new Phaser.Math.Vector2(0, 0);
+  }
+
+  private evaluateFutureDensityAt(
+    point: Phaser.Math.Vector2,
+    futureEnemies: readonly Phaser.Math.Vector2[],
+    radius: number,
+  ): number {
+    let density = 0;
+
+    for (const enemy of futureEnemies) {
+      const distance = Phaser.Math.Distance.Between(point.x, point.y, enemy.x, enemy.y);
+
+      if (distance > radius) {
+        continue;
+      }
+
+      const proximity = (radius - Math.max(0, distance)) / radius;
+      density += proximity * proximity * 10;
+    }
+
+    return density;
+  }
+
+  private getLineSamplePoints(
+    start: Phaser.Math.Vector2,
+    end: Phaser.Math.Vector2,
+    count: number,
+  ): Phaser.Math.Vector2[] {
+    const samples: Phaser.Math.Vector2[] = [];
+    const steps = Math.max(2, count);
+
+    for (let index = 1; index <= steps; index += 1) {
+      samples.push(start.clone().lerp(end, index / steps));
+    }
+
+    return samples;
+  }
+
+  private getNearestCornerDistance(context: AutoPlayerContext, point: Phaser.Math.Vector2): number {
+    return Math.min(
+      Phaser.Math.Distance.Between(point.x, point.y, 0, 0),
+      Phaser.Math.Distance.Between(point.x, point.y, context.worldBounds.width, 0),
+      Phaser.Math.Distance.Between(point.x, point.y, 0, context.worldBounds.height),
+      Phaser.Math.Distance.Between(point.x, point.y, context.worldBounds.width, context.worldBounds.height),
+    );
+  }
+
+  private getStrategicDirectionsFrom(seedDirection: Phaser.Math.Vector2): Phaser.Math.Vector2[] {
+    const directions = [
+      ...this.getBaseDirections(),
+      ...this.getDiagonalMidDirections(),
+    ];
+
+    if (seedDirection.lengthSq() > 0) {
+      const seed = seedDirection.clone().normalize();
+
+      directions.push(seed);
+      directions.push(new Phaser.Math.Vector2(-seed.y, seed.x));
+      directions.push(new Phaser.Math.Vector2(seed.y, -seed.x));
+    }
+
+    return directions;
+  }
+
 
   private needsForcedStrategicRefresh(
     context: AutoPlayerContext,

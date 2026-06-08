@@ -969,6 +969,7 @@ export class GameScene extends Phaser.Scene {
             x: enemy.body.x,
             y: enemy.body.y,
             radiusPx: enemy.body.radius,
+            moveSpeed: enemy.moveSpeed,
             damage: enemy.damage,
             hpRatio: enemy.maxHp > 0 ? enemy.currentHp / enemy.maxHp : 0,
             isBoss: targetContext.isBoss,
