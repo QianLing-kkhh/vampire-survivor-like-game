@@ -1,4 +1,5 @@
 import type { RunMetadata } from '../run/RunMetadata';
+import type { RunModeConfig } from '../runtime/RunModeConfig';
 
 import {
   createLeaderboardKey,
@@ -12,7 +13,48 @@ export interface LeaderboardKeyFactoryOptions {
   includeChallengeCustomModes?: boolean;
 }
 
+export interface LeaderboardKeyFactoryRunInput extends LeaderboardKeyFactoryOptions {
+  runModeConfig: RunModeConfig;
+  characterId: string;
+  stageId: string;
+  mapId: string;
+  difficultyId?: string;
+  seed?: string;
+  challengeId?: string;
+  customStageId?: string;
+  rulesetId?: string;
+}
+
 export class LeaderboardKeyFactory {
+  static createFromRun(input: LeaderboardKeyFactoryRunInput): LeaderboardKey {
+    const isAutoStrategy = input.runModeConfig.controlMode === 'autoStrategy';
+
+    return createLeaderboardKey({
+      mode: input.mode ?? this.getModeFromRun(input),
+      controlMode: isAutoStrategy ? 'autoStrategy' : 'manual',
+      autoChallengeType: input.runModeConfig.autoChallengeType,
+      characterId: input.characterId,
+      stageId: input.stageId,
+      mapId: input.mapId,
+      difficultyId: input.difficultyId,
+      seed: input.seed,
+      challengeId: input.challengeId,
+      customStageId: input.customStageId,
+      rulesetId: input.rulesetId,
+      strategyProfileHash: isAutoStrategy
+        ? input.runModeConfig.strategyProfileHash
+        : undefined,
+      strategyControlType: isAutoStrategy
+        ? input.runModeConfig.strategyControlType
+        : undefined,
+      speedBucket: input.runModeConfig.speedBucket,
+    });
+  }
+
+  static serializeFromRun(input: LeaderboardKeyFactoryRunInput): string {
+    return serializeLeaderboardKey(this.createFromRun(input));
+  }
+
   static createFromMetadata(
     metadata: RunMetadata,
     options: LeaderboardKeyFactoryOptions = {},
@@ -63,5 +105,21 @@ export class LeaderboardKeyFactory {
     return metadata.autoChallengeType === 'scoreAttack'
       ? 'scoreAttack'
       : metadata.autoChallengeType === 'endless' ? 'endless' : 'normal';
+  }
+
+  private static getModeFromRun(input: LeaderboardKeyFactoryRunInput): LeaderboardMode {
+    if (input.includeChallengeCustomModes !== false) {
+      if (input.challengeId) {
+        return 'challenge';
+      }
+
+      if (input.customStageId) {
+        return 'custom';
+      }
+    }
+
+    return input.runModeConfig.autoChallengeType === 'scoreAttack'
+      ? 'scoreAttack'
+      : input.runModeConfig.autoChallengeType === 'endless' ? 'endless' : 'normal';
   }
 }

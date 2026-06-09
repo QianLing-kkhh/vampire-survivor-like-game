@@ -1,11 +1,6 @@
-import type {
-  AutoChallengeType,
-  RunControlMode,
-  StrategyControlType,
-  StrategySpeedBucket,
-} from '../runtime/RunModeConfig';
+import type { RunModeMetadata } from './RunModeMetadata';
 
-export interface RunMetadata {
+export interface RunMetadata extends RunModeMetadata {
   runId: string;
   runSeed: string;
   replayId?: string;
@@ -31,14 +26,6 @@ export interface RunMetadata {
   rulesetId?: string;
   seed?: string;
   leaderboardKey?: string;
-  controlMode?: RunControlMode;
-  autoChallengeType?: AutoChallengeType;
-  strategyProfileId?: string;
-  strategyProfileHash?: string;
-  strategyControlType?: StrategyControlType;
-  allowRuntimeStrategyEdit?: boolean;
-  simulationSpeedMultiplier?: number;
-  speedBucket?: StrategySpeedBucket;
 }
 
 export function createDefaultRunMetadata(): RunMetadata {

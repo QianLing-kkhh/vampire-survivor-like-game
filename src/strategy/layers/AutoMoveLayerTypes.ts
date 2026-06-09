@@ -104,6 +104,11 @@ export interface MicroControlLayerOps {
     player: Phaser.Math.Vector2,
     direction: Phaser.Math.Vector2,
   ): Phaser.Math.Vector2;
+  getFinalBossDistanceConstraint(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+  ): FinalBossDistanceConstraintResult;
   scoreMicroDirection(
     input: MicroControlLayerInput,
     endpoint: Phaser.Math.Vector2,
@@ -112,6 +117,22 @@ export interface MicroControlLayerOps {
   ): number;
   getMicroResultReason(reason: string): MicroMoveResult['reason'];
   updateFinalBossWarningChoiceDebug(reason: string): void;
+  updateFinalBossDistanceConstraintDebug(update: FinalBossDistanceConstraintDebugUpdate): void;
+}
+
+export interface FinalBossDistanceConstraintResult {
+  active: boolean;
+  forbidden: boolean;
+  emergencyAllowed: boolean;
+  distance: number;
+  reason: string;
+}
+
+export interface FinalBossDistanceConstraintDebugUpdate {
+  forbiddenCandidateCount: number;
+  hardLimitTriggered: boolean;
+  emergencyEscapeUsed: boolean;
+  selectedReason: string;
 }
 
 export interface MicroControlLayerInput {

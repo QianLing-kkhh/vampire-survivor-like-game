@@ -2,6 +2,10 @@ import Phaser from 'phaser';
 
 import type { PlayerIntent } from '../input/PlayerIntent';
 import { AutoStrategyEngine } from '../strategy/engine/AutoStrategyEngine';
+import type {
+  FinalBossDistanceConstraintDebugUpdate,
+  FinalBossDistanceConstraintResult,
+} from '../strategy/layers/AutoMoveLayerTypes';
 import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
 import type { WeaponTag } from '../weapon/tags/WeaponTag';
 
@@ -123,9 +127,15 @@ export class AutoPlayer {
       finalBossDashRisk: 0,
       finalBossRingGapScore: 0,
       finalBossDistancePenalty: 0,
+      finalBossDistance: 0,
+      finalBossDistanceForbiddenCandidateCount: 0,
+      finalBossDistanceHardLimitTriggered: false,
+      finalBossEmergencyDistanceEscapeUsed: false,
       finalBossOrbitCandidateChosen: false,
       finalBossRingGapDodgeChosen: false,
       finalBossDashSideStepChosen: false,
+      finalBossCloseCutInCandidateChosen: false,
+      selectedFinalBossCandidateReason: '',
       bossWarningAvoidReason: '',
     };
   }
@@ -268,6 +278,9 @@ export class AutoPlayer {
           getFinalBossWarningCandidates: (warningContext, warningPlayer) => this.getFinalBossWarningCandidates(warningContext, warningPlayer),
           getNearestEnemyEscapeCandidates: (enemyContext, enemyPlayer) => this.getNearestEnemyEscapeCandidates(enemyContext, enemyPlayer),
           getCandidateEndpoint: (endpointContext, endpointPlayer, direction) => this.getCandidateEndpoint(endpointContext, endpointPlayer, direction),
+          getFinalBossDistanceConstraint: (constraintContext, constraintPlayer, endpoint) => (
+            this.getFinalBossDistanceConstraint(constraintContext, constraintPlayer, endpoint)
+          ),
           scoreMicroDirection: (input, endpoint, direction, routeDirection) => this.scoreMicroDirection(
             input.context,
             input.player,
@@ -284,6 +297,7 @@ export class AutoPlayer {
           ),
           getMicroResultReason: (reason) => this.getMicroResultReason(reason),
           updateFinalBossWarningChoiceDebug: (reason) => this.updateFinalBossWarningChoiceDebug(reason),
+          updateFinalBossDistanceConstraintDebug: (update) => this.updateFinalBossDistanceConstraintDebug(update),
         },
       },
     });
@@ -918,6 +932,12 @@ export class AutoPlayer {
     terrainEscape: TerrainEscapeInfo,
   ): number {
     const hpRatio = this.getHpRatio(context);
+    const finalBossDistanceConstraint = this.getFinalBossDistanceConstraint(context, player, endpoint);
+
+    if (finalBossDistanceConstraint.forbidden) {
+      return -1000000 - finalBossDistanceConstraint.distance;
+    }
+
     const endpointContactRisk = this.getEnemyContactRiskAt(context, endpoint, hpRatio);
     const endpointFutureRisk = this.getEnemyFutureContactRiskAt(context, endpoint, hpRatio);
     const pathContactRisk = this.getEnemyPathContactRisk(context, player, endpoint, hpRatio);
@@ -1303,9 +1323,15 @@ export class AutoPlayer {
       finalBossDashRisk: this.autoMoveDebugSnapshot?.finalBossDashRisk ?? 0,
       finalBossRingGapScore: this.autoMoveDebugSnapshot?.finalBossRingGapScore ?? 0,
       finalBossDistancePenalty: this.autoMoveDebugSnapshot?.finalBossDistancePenalty ?? 0,
+      finalBossDistance: this.autoMoveDebugSnapshot?.finalBossDistance ?? 0,
+      finalBossDistanceForbiddenCandidateCount: this.autoMoveDebugSnapshot?.finalBossDistanceForbiddenCandidateCount ?? 0,
+      finalBossDistanceHardLimitTriggered: this.autoMoveDebugSnapshot?.finalBossDistanceHardLimitTriggered ?? false,
+      finalBossEmergencyDistanceEscapeUsed: this.autoMoveDebugSnapshot?.finalBossEmergencyDistanceEscapeUsed ?? false,
       finalBossOrbitCandidateChosen: this.autoMoveDebugSnapshot?.finalBossOrbitCandidateChosen ?? false,
       finalBossRingGapDodgeChosen: this.autoMoveDebugSnapshot?.finalBossRingGapDodgeChosen ?? false,
       finalBossDashSideStepChosen: this.autoMoveDebugSnapshot?.finalBossDashSideStepChosen ?? false,
+      finalBossCloseCutInCandidateChosen: this.autoMoveDebugSnapshot?.finalBossCloseCutInCandidateChosen ?? false,
+      selectedFinalBossCandidateReason: this.autoMoveDebugSnapshot?.selectedFinalBossCandidateReason ?? '',
       bossWarningAvoidReason: this.autoMoveDebugSnapshot?.bossWarningAvoidReason ?? '',
     };
 
@@ -1822,9 +1848,15 @@ export class AutoPlayer {
       finalBossDashRisk: this.autoMoveDebugSnapshot?.finalBossDashRisk ?? 0,
       finalBossRingGapScore: this.autoMoveDebugSnapshot?.finalBossRingGapScore ?? 0,
       finalBossDistancePenalty: this.autoMoveDebugSnapshot?.finalBossDistancePenalty ?? 0,
+      finalBossDistance: this.autoMoveDebugSnapshot?.finalBossDistance ?? 0,
+      finalBossDistanceForbiddenCandidateCount: this.autoMoveDebugSnapshot?.finalBossDistanceForbiddenCandidateCount ?? 0,
+      finalBossDistanceHardLimitTriggered: this.autoMoveDebugSnapshot?.finalBossDistanceHardLimitTriggered ?? false,
+      finalBossEmergencyDistanceEscapeUsed: this.autoMoveDebugSnapshot?.finalBossEmergencyDistanceEscapeUsed ?? false,
       finalBossOrbitCandidateChosen: this.autoMoveDebugSnapshot?.finalBossOrbitCandidateChosen ?? false,
       finalBossRingGapDodgeChosen: this.autoMoveDebugSnapshot?.finalBossRingGapDodgeChosen ?? false,
       finalBossDashSideStepChosen: this.autoMoveDebugSnapshot?.finalBossDashSideStepChosen ?? false,
+      finalBossCloseCutInCandidateChosen: this.autoMoveDebugSnapshot?.finalBossCloseCutInCandidateChosen ?? false,
+      selectedFinalBossCandidateReason: this.autoMoveDebugSnapshot?.selectedFinalBossCandidateReason ?? '',
       bossWarningAvoidReason: this.autoMoveDebugSnapshot?.bossWarningAvoidReason ?? '',
       score,
     };
@@ -1935,9 +1967,15 @@ export class AutoPlayer {
       finalBossDashRisk: this.autoMoveDebugSnapshot?.finalBossDashRisk ?? 0,
       finalBossRingGapScore: this.autoMoveDebugSnapshot?.finalBossRingGapScore ?? 0,
       finalBossDistancePenalty: this.autoMoveDebugSnapshot?.finalBossDistancePenalty ?? 0,
+      finalBossDistance: this.autoMoveDebugSnapshot?.finalBossDistance ?? 0,
+      finalBossDistanceForbiddenCandidateCount: this.autoMoveDebugSnapshot?.finalBossDistanceForbiddenCandidateCount ?? 0,
+      finalBossDistanceHardLimitTriggered: this.autoMoveDebugSnapshot?.finalBossDistanceHardLimitTriggered ?? false,
+      finalBossEmergencyDistanceEscapeUsed: this.autoMoveDebugSnapshot?.finalBossEmergencyDistanceEscapeUsed ?? false,
       finalBossOrbitCandidateChosen: this.autoMoveDebugSnapshot?.finalBossOrbitCandidateChosen ?? false,
       finalBossRingGapDodgeChosen: this.autoMoveDebugSnapshot?.finalBossRingGapDodgeChosen ?? false,
       finalBossDashSideStepChosen: this.autoMoveDebugSnapshot?.finalBossDashSideStepChosen ?? false,
+      finalBossCloseCutInCandidateChosen: this.autoMoveDebugSnapshot?.finalBossCloseCutInCandidateChosen ?? false,
+      selectedFinalBossCandidateReason: this.autoMoveDebugSnapshot?.selectedFinalBossCandidateReason ?? '',
       bossWarningAvoidReason: this.autoMoveDebugSnapshot?.bossWarningAvoidReason ?? '',
       futureZoneSafety,
     };
@@ -2548,26 +2586,28 @@ export class AutoPlayer {
     const radial = new Phaser.Math.Vector2(endpoint.x - boss.x, endpoint.y - boss.y);
     let score = 0;
 
-    if (endpointDistance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MIN) {
-      score -= (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MIN - endpointDistance) * 0.72 + 44;
-    } else if (endpointDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) {
-      score += 34 - Math.abs(endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_IDEAL) * 0.08;
-    } else {
-      const midPenalty = Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) * 0.13;
-      const farPenalty = Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_MID_RANGE_START) * 0.22
-        + Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_FAR_RANGE_START) * 0.36;
+    if (endpointDistance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE) {
+      score -= (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE - endpointDistance) * 1.1 + 54;
+    } else if (endpointDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
+      const ideal = (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE + AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) * 0.5;
 
-      score -= 12 + midPenalty + farPenalty;
+      score += 42 - Math.abs(endpointDistance - ideal) * 0.14;
+    } else {
+      const bufferPenalty = Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) * 0.45;
+      const hardBandPenalty = Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) * 1.1;
+      const emergencyPenalty = Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_EMERGENCY_LIMIT) * 2.4;
+
+      score -= 18 + bufferPenalty + hardBandPenalty + emergencyPenalty;
     }
 
-    if (currentDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX && endpointDistance < currentDistance) {
+    if (currentDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE && endpointDistance < currentDistance) {
       score += Math.min(140, currentDistance - endpointDistance) * 0.24;
     }
 
     if (
-      currentDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX
+      currentDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
       && endpointDistance > currentDistance
-      && endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_IDEAL
+      && endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
     ) {
       score -= Math.min(130, endpointDistance - currentDistance) * 0.30;
     }
@@ -2580,11 +2620,11 @@ export class AutoPlayer {
 
       score += tangentAlignment * 22;
 
-      if (outwardAlignment > 0.45 && endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) {
-        score -= outwardAlignment * Math.min(58, Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_IDEAL) * 0.22);
+      if (outwardAlignment > 0.35 && endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
+        score -= outwardAlignment * Math.min(92, Math.max(0, endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) * 0.65);
       }
 
-      if (outwardAlignment < -0.25 && currentDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) {
+      if (outwardAlignment < -0.25 && currentDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
         score += Math.abs(outwardAlignment) * 18;
       }
     }
@@ -2641,11 +2681,118 @@ export class AutoPlayer {
     return this.getEnemyEffectiveDistance(context, point, boss);
   }
 
+  private isFinalBossCloseCombatActive(context: AutoPlayerContext): boolean {
+    return !!this.getFinalBossEnemy(context)
+      || (context.bossWarnings ?? []).some((warning) => (
+        this.isFinalBossDashWarning(context, warning)
+        || this.isFinalBossRingBulletWarning(context, warning)
+      ));
+  }
+
+  private getFinalBossDistanceConstraint(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+  ): FinalBossDistanceConstraintResult {
+    if (!this.isFinalBossCloseCombatActive(context)) {
+      return {
+        active: false,
+        forbidden: false,
+        emergencyAllowed: false,
+        distance: 0,
+        reason: '',
+      };
+    }
+
+    const currentDistance = this.getFinalBossEffectiveDistance(context, player);
+    const endpointDistance = this.getFinalBossEffectiveDistance(context, endpoint);
+
+    if (!Number.isFinite(currentDistance) || !Number.isFinite(endpointDistance)) {
+      return {
+        active: false,
+        forbidden: false,
+        emergencyAllowed: false,
+        distance: endpointDistance,
+        reason: '',
+      };
+    }
+
+    const warningEscape = this.isFinalBossImmediateWarningEscape(context, player, endpoint)
+      && endpointDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_EMERGENCY_LIMIT;
+
+    if (
+      currentDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT
+      && endpointDistance > currentDistance
+    ) {
+      return {
+        active: true,
+        forbidden: true,
+        emergencyAllowed: false,
+        distance: endpointDistance,
+        reason: 'finalBossDistanceHardLimit',
+      };
+    }
+
+    if (endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) {
+      if (
+        currentDistance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
+        && endpointDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_EMERGENCY_LIMIT
+      ) {
+        return {
+          active: true,
+          forbidden: false,
+          emergencyAllowed: true,
+          distance: endpointDistance,
+          reason: 'finalBossEmergencyContactEscape',
+        };
+      }
+
+      if (warningEscape) {
+        return {
+          active: true,
+          forbidden: false,
+          emergencyAllowed: true,
+          distance: endpointDistance,
+          reason: 'finalBossEmergencyWarningEscape',
+        };
+      }
+
+      return {
+        active: true,
+        forbidden: true,
+        emergencyAllowed: false,
+        distance: endpointDistance,
+        reason: 'finalBossDistanceHardLimit',
+      };
+    }
+
+    return {
+      active: true,
+      forbidden: false,
+      emergencyAllowed: false,
+      distance: endpointDistance,
+      reason: endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
+        ? 'finalBossCloseRangeBuffer'
+        : '',
+    };
+  }
+
+  private isFinalBossImmediateWarningEscape(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+  ): boolean {
+    const currentRisk = this.getTotalBossWarningRisk(context, player);
+    const endpointRisk = this.getTotalBossWarningRisk(context, endpoint);
+
+    return currentRisk > 0.9 && endpointRisk < currentRisk * 0.45;
+  }
+
   private getFinalBossWarningCandidates(
     context: AutoPlayerContext,
     player: Phaser.Math.Vector2,
   ): Candidate[] {
-    if (!this.hasFinalBossCombatWarning(context)) {
+    if (!this.isFinalBossCloseCombatActive(context)) {
       return [];
     }
 
@@ -2666,6 +2813,7 @@ export class AutoPlayer {
     const orbitClockwise = new Phaser.Math.Vector2(normalizedRadial.y, -normalizedRadial.x);
     const orbitCounterClockwise = new Phaser.Math.Vector2(-normalizedRadial.y, normalizedRadial.x);
     const distance = this.getFinalBossEffectiveDistance(context, player);
+    let closeCutInAdded = false;
 
     for (const warning of context.bossWarnings ?? []) {
       if (this.isFinalBossDashWarning(context, warning) && warning.shape === 'line') {
@@ -2680,7 +2828,7 @@ export class AutoPlayer {
         candidates.push({ direction: orbitClockwise, reason: 'finalBossOrbitClockwise' });
         candidates.push({ direction: orbitCounterClockwise, reason: 'finalBossOrbitCounterClockwise' });
 
-        if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) {
+        if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
           const cutIn = new Phaser.Math.Vector2(boss.x - player.x, boss.y - player.y);
 
           if (cutIn.lengthSq() > 0) {
@@ -2688,12 +2836,24 @@ export class AutoPlayer {
 
             candidates.push({ direction: normalizedCutIn.clone().add(orbitClockwise.clone().scale(0.55)), reason: 'finalBossCloseCutIn' });
             candidates.push({ direction: normalizedCutIn.clone().add(orbitCounterClockwise.clone().scale(0.55)), reason: 'finalBossCloseCutIn' });
+            closeCutInAdded = true;
           }
         }
       } else if (this.isFinalBossRingBulletWarning(context, warning) && warning.shape === 'circle') {
         candidates.push({ direction: orbitClockwise, reason: 'finalBossCloseOrbit' });
         candidates.push({ direction: orbitCounterClockwise, reason: 'finalBossCloseOrbit' });
         candidates.push(...this.getFinalBossRingGapCandidates(player, warning));
+      }
+    }
+
+    if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT && !closeCutInAdded) {
+      const cutIn = new Phaser.Math.Vector2(boss.x - player.x, boss.y - player.y);
+
+      if (cutIn.lengthSq() > 0) {
+        const normalizedCutIn = cutIn.normalize();
+
+        candidates.push({ direction: normalizedCutIn.clone().add(orbitClockwise.clone().scale(0.55)), reason: 'finalBossCloseCutIn' });
+        candidates.push({ direction: normalizedCutIn.clone().add(orbitCounterClockwise.clone().scale(0.55)), reason: 'finalBossCloseCutIn' });
       }
     }
 
@@ -2714,8 +2874,8 @@ export class AutoPlayer {
 
     const currentRadius = Phaser.Math.Clamp(
       toPlayer.length(),
-      AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MIN + 22,
-      AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX,
+      AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE + 22,
+      AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE,
     );
     const angle = Math.atan2(toPlayer.y, toPlayer.x);
     const step = Math.PI * 2 / bulletCount;
@@ -2839,13 +2999,13 @@ export class AutoPlayer {
     const laneRisk = lineDistance >= dangerWidth
       ? 0
       : 1 + (dangerWidth - lineDistance) / dangerWidth;
-    const closeContactRisk = distanceToBoss < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MIN
-      ? (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MIN - distanceToBoss) / AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MIN
+    const closeContactRisk = distanceToBoss < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
+      ? (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE - distanceToBoss) / AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
       : 0;
-    const midFarAmplifier = distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX
-      ? 1 + Math.min(1.1, (distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) / 260)
+    const midFarAmplifier = distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
+      ? 1 + Math.min(1.1, (distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) / 160)
       : 0.72;
-    const farDistanceRisk = Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_MID_RANGE_START) / 520;
+    const farDistanceRisk = Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) / 260;
 
     return laneRisk * midFarAmplifier
       + closeContactRisk * 0.8
@@ -2876,12 +3036,12 @@ export class AutoPlayer {
       ? 0
       : (safeAngle - laneDistance) / safeAngle;
     const distanceToBoss = this.getFinalBossEffectiveDistance(context, point);
-    const farAmplifier = distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX
-      ? 1.2 + Math.min(0.8, (distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) / 260)
+    const farAmplifier = distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
+      ? 1.2 + Math.min(0.8, (distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) / 160)
       : 0.82;
 
     return laneRisk * laneRisk * farAmplifier
-      + Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_MID_RANGE_START) / 620;
+      + Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) / 320;
   }
 
   private getFinalBossRingBulletGapScore(
@@ -2906,7 +3066,7 @@ export class AutoPlayer {
     const gapCenterDistance = Math.abs((step / 2) - laneDistance);
     const gapScore = Phaser.Math.Clamp(1 - gapCenterDistance / (step / 2), 0, 1);
     const distanceToBoss = this.getFinalBossEffectiveDistance(context, point);
-    const distancePenalty = Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) / 260;
+    const distancePenalty = Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) / 180;
 
     return Math.max(0, gapScore - distancePenalty * 0.45);
   }
@@ -5159,7 +5319,7 @@ export class AutoPlayer {
     const side = currentSide >= 0 ? sideA : sideB;
     const distanceToBoss = this.getFinalBossEffectiveDistance(context, point);
 
-    if (distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX) {
+    if (distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
       const towardBoss = new Phaser.Math.Vector2(boss.x - point.x, boss.y - point.y);
 
       if (towardBoss.lengthSq() > 0) {
@@ -5212,9 +5372,15 @@ export class AutoPlayer {
         finalBossDashRisk: 0,
         finalBossRingGapScore: 0,
         finalBossDistancePenalty: 0,
+        finalBossDistance: 0,
+        finalBossDistanceForbiddenCandidateCount: 0,
+        finalBossDistanceHardLimitTriggered: false,
+        finalBossEmergencyDistanceEscapeUsed: false,
         finalBossOrbitCandidateChosen: false,
         finalBossRingGapDodgeChosen: false,
         finalBossDashSideStepChosen: false,
+        finalBossCloseCutInCandidateChosen: false,
+        selectedFinalBossCandidateReason: '',
         bossWarningAvoidReason: '',
       };
       return;
@@ -5233,8 +5399,8 @@ export class AutoPlayer {
 
     const distance = this.getFinalBossEffectiveDistance(context, player);
     const farPenalty = Number.isFinite(distance)
-      ? Math.max(0, distance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_RANGE_MAX)
-        + Math.max(0, distance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_MID_RANGE_START) * 0.6
+      ? Math.max(0, distance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE)
+        + Math.max(0, distance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) * 0.9
       : 0;
 
     this.autoMoveDebugSnapshot = {
@@ -5243,9 +5409,15 @@ export class AutoPlayer {
       finalBossDashRisk: dashRisk,
       finalBossRingGapScore: ringGapScore,
       finalBossDistancePenalty: farPenalty,
+      finalBossDistance: Number.isFinite(distance) ? distance : 0,
+      finalBossDistanceForbiddenCandidateCount: 0,
+      finalBossDistanceHardLimitTriggered: false,
+      finalBossEmergencyDistanceEscapeUsed: false,
       finalBossOrbitCandidateChosen: false,
       finalBossRingGapDodgeChosen: false,
       finalBossDashSideStepChosen: false,
+      finalBossCloseCutInCandidateChosen: false,
+      selectedFinalBossCandidateReason: '',
       bossWarningAvoidReason: '',
     };
   }
@@ -5264,7 +5436,27 @@ export class AutoPlayer {
         || reason === 'finalBossCloseOrbit',
       finalBossRingGapDodgeChosen: reason === 'finalBossRingGapCutThrough',
       finalBossDashSideStepChosen: reason === 'finalBossDashSideStep',
+      finalBossCloseCutInCandidateChosen: reason === 'finalBossCloseCutIn',
+      selectedFinalBossCandidateReason: reason,
       bossWarningAvoidReason: reason,
+    };
+  }
+
+  private updateFinalBossDistanceConstraintDebug(update: FinalBossDistanceConstraintDebugUpdate): void {
+    const snapshot = this.autoMoveDebugSnapshot ?? this.getEmptyAutoMoveDebugSnapshot();
+    const selectedReason = update.selectedReason || snapshot.selectedFinalBossCandidateReason;
+
+    this.autoMoveDebugSnapshot = {
+      ...snapshot,
+      finalBossDistanceForbiddenCandidateCount: update.forbiddenCandidateCount,
+      finalBossDistanceHardLimitTriggered: update.hardLimitTriggered,
+      finalBossEmergencyDistanceEscapeUsed: update.emergencyEscapeUsed,
+      selectedFinalBossCandidateReason: selectedReason,
+      bossWarningAvoidReason: update.hardLimitTriggered
+        ? 'finalBossDistanceHardLimit'
+        : update.emergencyEscapeUsed
+          ? selectedReason || 'finalBossEmergencyContactEscape'
+          : snapshot.bossWarningAvoidReason,
     };
   }
 

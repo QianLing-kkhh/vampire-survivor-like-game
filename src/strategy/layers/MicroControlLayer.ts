@@ -70,6 +70,10 @@ export class MicroControlLayer {
 
     let bestMove: MicroMoveResult | undefined;
     let bestCandidateReason = '';
+    let bestConstraintReason = '';
+    let forbiddenCandidateCount = 0;
+    let hardLimitTriggered = false;
+    let emergencyEscapeUsed = false;
 
     for (const candidate of candidates) {
       if (candidate.direction.lengthSq() === 0) {
@@ -78,6 +82,14 @@ export class MicroControlLayer {
 
       const direction = candidate.direction.clone().normalize();
       const endpoint = ops.getCandidateEndpoint(context, player, direction);
+      const distanceConstraint = ops.getFinalBossDistanceConstraint(context, player, endpoint);
+
+      if (distanceConstraint.forbidden) {
+        forbiddenCandidateCount += 1;
+        hardLimitTriggered = true;
+        continue;
+      }
+
       const score = ops.scoreMicroDirection(input, endpoint, direction, routeDirection);
       const result: MicroMoveResult = {
         direction,
@@ -88,15 +100,26 @@ export class MicroControlLayer {
       if (!bestMove || result.score > bestMove.score) {
         bestMove = result;
         bestCandidateReason = candidate.reason;
+        bestConstraintReason = distanceConstraint.reason;
+        emergencyEscapeUsed = distanceConstraint.emergencyAllowed;
       }
     }
+
+    ops.updateFinalBossDistanceConstraintDebug({
+      forbiddenCandidateCount,
+      hardLimitTriggered,
+      emergencyEscapeUsed,
+      selectedReason: bestConstraintReason || bestCandidateReason,
+    });
 
     if (bestMove) {
       ops.updateFinalBossWarningChoiceDebug(bestCandidateReason);
     }
 
     return bestMove ?? {
-      direction: routeDirection.lengthSq() > 0 ? routeDirection.normalize() : new Phaser.Math.Vector2(0, 0),
+      direction: forbiddenCandidateCount > 0 || routeDirection.lengthSq() === 0
+        ? new Phaser.Math.Vector2(0, 0)
+        : routeDirection.normalize(),
       reason: 'FOLLOW_ROUTE',
       score: 0,
     };

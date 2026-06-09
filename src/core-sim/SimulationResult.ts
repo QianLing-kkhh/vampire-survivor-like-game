@@ -1,4 +1,6 @@
-export interface SimulationResult {
+import type { RunSummary } from '../run/RunSummary';
+
+export interface SimulationResult extends RunSummary {
   seed: string;
   characterId: string;
   stageId: string;
@@ -8,14 +10,4 @@ export interface SimulationResult {
   strategyProfileHash: string;
   durationSeconds: number;
   tickMs: number;
-  result: 'gameOver' | 'completed';
-  survivalTimeSeconds: number;
-  level: number;
-  kills: number;
-  exp: number;
-  score: number;
-  damageDealt: number;
-  damageTaken: number;
-  pickupsCollected: number;
-  enemiesSpawned: number;
 }

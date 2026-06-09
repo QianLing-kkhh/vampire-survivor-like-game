@@ -28,9 +28,15 @@ export interface StrategicLookaheadDebugSnapshot {
   finalBossDashRisk: number;
   finalBossRingGapScore: number;
   finalBossDistancePenalty: number;
+  finalBossDistance: number;
+  finalBossDistanceForbiddenCandidateCount: number;
+  finalBossDistanceHardLimitTriggered: boolean;
+  finalBossEmergencyDistanceEscapeUsed: boolean;
   finalBossOrbitCandidateChosen: boolean;
   finalBossRingGapDodgeChosen: boolean;
   finalBossDashSideStepChosen: boolean;
+  finalBossCloseCutInCandidateChosen: boolean;
+  selectedFinalBossCandidateReason: string;
   bossWarningAvoidReason: string;
 }
 

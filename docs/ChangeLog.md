@@ -6,6 +6,7 @@
 - Split `AutoPlayer` internal debug, movement, memory, and constants declarations out of the main movement class.
 - Split strategy profile types, defaults, presets, save helpers, and clone helpers into separate owner modules.
 - Added run-mode factory helpers and a leaderboard key factory while preserving existing flat metadata and serialized leaderboard key format.
+- Added shared `RunSummary`, `RunModeMetadata`, and `SimulationSpeedConfig` helpers so simulation results, run metadata, speed buckets, and leaderboard keys derive from fewer sources of truth.
 - No gameplay values, auto movement scoring, CSV schema, SaveData schema, ReplayData schema, or strategy hash semantics were changed.
 
 ## 2026-06-09 Gameplay Initializer Bootstrap Split

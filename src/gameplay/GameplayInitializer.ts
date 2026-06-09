@@ -42,6 +42,7 @@ import { RelicManager } from '../relic/RelicManager';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
+import { createRunModeMetadataFromConfig } from '../run/RunModeMetadata';
 import type { RunMetadata } from '../run/RunMetadata';
 import { RunState } from '../run/RunState';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
@@ -50,6 +51,7 @@ import {
   createAutoStrategyRunModeConfig,
   createManualRunModeConfig,
 } from '../runtime/RunModeConfig';
+import { createSimulationSpeedConfigFromLegacySettings } from '../runtime/SimulationSpeedConfig';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
 import { StrategyHasher } from '../strategy/hash/StrategyHasher';
@@ -149,9 +151,10 @@ export class GameplayInitializer {
     const runtimeStrategyState = autoStrategyEnabled
       ? new RuntimeStrategyState(strategyProfile, strategyProfileHash)
       : undefined;
-    const simulationSpeedMultiplier = config.playtestSettings.fastMode
-      ? config.playtestSettings.autoTimeScale
-      : 1;
+    const simulationSpeedConfig = createSimulationSpeedConfigFromLegacySettings({
+      fastMode: config.playtestSettings.fastMode,
+      autoTimeScale: config.playtestSettings.autoTimeScale,
+    });
     const runModeConfig = autoStrategyEnabled
       ? createAutoStrategyRunModeConfig({
         autoChallengeType: config.playtestSettings.endlessMode ? 'endless' : 'normal',
@@ -160,9 +163,9 @@ export class GameplayInitializer {
         strategyProfile,
         strategyControlType: config.playtestSettings.strategyControlType,
         allowRuntimeStrategyEdit: config.playtestSettings.strategyControlType === 'live',
-        simulationSpeedMultiplier,
+        ...simulationSpeedConfig,
       })
-      : createManualRunModeConfig(simulationSpeedMultiplier);
+      : createManualRunModeConfig(simulationSpeedConfig);
     const {
       gameEventBus,
       gameEventRecorder,
@@ -312,6 +315,7 @@ export class GameplayInitializer {
       runRuleSet.rulesetId,
     );
     config.runState.setReplayId(config.runId);
+    const runModeMetadata = createRunModeMetadataFromConfig(runModeConfig);
     const runMetadata: RunMetadata = {
       runId: config.runId,
       runSeed,
@@ -333,19 +337,22 @@ export class GameplayInitializer {
       challengeId: selection.challengeId,
       rulesetId: runRuleSet.rulesetId,
       seed: selection.seed,
-      controlMode: runModeConfig.controlMode,
-      autoChallengeType: runModeConfig.autoChallengeType,
-      strategyProfileId: autoStrategyEnabled ? runModeConfig.strategyProfileId : undefined,
-      strategyProfileHash: autoStrategyEnabled ? runModeConfig.strategyProfileHash : undefined,
-      strategyControlType: runModeConfig.strategyControlType,
-      allowRuntimeStrategyEdit: runModeConfig.allowRuntimeStrategyEdit,
-      simulationSpeedMultiplier: runModeConfig.simulationSpeedMultiplier,
-      speedBucket: runModeConfig.speedBucket,
+      ...runModeMetadata,
     };
-    const leaderboardKey = LeaderboardKeyFactory.serializeFromMetadata(runMetadata, {
-      mode: selection.challengeId
-        ? 'challenge'
-        : selection.customStageId ? 'custom' : config.playtestSettings.endlessMode ? 'endless' : 'normal',
+    const leaderboardMode = selection.challengeId
+      ? 'challenge'
+      : selection.customStageId ? 'custom' : config.playtestSettings.endlessMode ? 'endless' : 'normal';
+    const leaderboardKey = LeaderboardKeyFactory.serializeFromRun({
+      runModeConfig,
+      characterId: selectedCharacter.id,
+      stageId: selectedStage.id,
+      mapId: selectedMap.id,
+      difficultyId: selectedDifficulty.id,
+      seed: selection.seed,
+      challengeId: selection.challengeId,
+      customStageId: selection.customStageId,
+      rulesetId: runRuleSet.rulesetId,
+      mode: leaderboardMode,
     });
 
     config.runState.setRunMetadata({

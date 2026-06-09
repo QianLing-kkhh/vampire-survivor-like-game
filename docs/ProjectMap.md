@@ -121,6 +121,8 @@ Run counters, result building, result coordination, and run-end summaries.
 Key owners:
 
 - `RunState`: authoritative run counters.
+- `RunSummary`: shared run summary shape for browser/runtime results and headless simulation output.
+- `RunModeMetadata`: flat compatibility metadata derived from `RunModeConfig`.
 - `RunStats`: runtime combat/stat summaries.
 - `RunResultBuilder`: result scene and CSV output data.
 - `RunEndCoordinator`: run-ended payload and result-build input preparation.
@@ -144,6 +146,15 @@ Playtest CSV rows, CSV buffers, replay recording, and replay storage.
 ### `src/settings` and `src/save`
 
 Domain settings, save schema, save migration, storage, and settings facade.
+
+### `src/runtime`
+
+Run-mode and speed configuration contracts.
+
+Key owners:
+
+- `RunModeConfig`: authoritative per-run mode source for manual, auto strategy, and replay flows.
+- `SimulationSpeedConfig`: shared simulation/view speed and speed-bucket helper used by run-mode creation.
 
 ### `src/selection`
 
