@@ -934,6 +934,32 @@ export class SettingsMenu {
       this.toggleRow('endlessMode', this.t('settings.endlessMode', 'Endless Mode'), gameplay.endlessMode, () => {
         SettingsManager.updateGameplay({ endlessMode: !SettingsManager.getGameplay().endlessMode });
       }),
+      {
+        id: 'strategyControlType',
+        label: this.t('settings.strategyControlType', 'Auto Strategy Control'),
+        type: 'select',
+        getValue: () => SettingsManager.getGameplay().strategyControlType,
+        setValue: (value) => {
+          SettingsManager.updateGameplay({
+            strategyControlType: value === 'live' ? 'live' : 'fixed',
+          });
+        },
+        options: [
+          {
+            value: 'fixed',
+            label: this.t('settings.strategyControl.fixed', 'Fixed'),
+          },
+          {
+            value: 'live',
+            label: this.t('settings.strategyControl.live', 'Live'),
+          },
+        ],
+        formatValue: (value) => (
+          value === 'live'
+            ? this.t('settings.strategyControl.live', 'Live')
+            : this.t('settings.strategyControl.fixed', 'Fixed')
+        ),
+      },
     ];
   }
 

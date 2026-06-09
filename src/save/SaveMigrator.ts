@@ -10,6 +10,7 @@ import { DEFAULT_DISPLAY_SETTINGS } from '../settings/DisplaySettings';
 import { isUIStyle } from '../ui/theme/UIStyle';
 import { DEFAULT_GAMEPLAY_SETTINGS } from '../settings/GameplaySettings';
 import { DEFAULT_INPUT_SETTINGS } from '../settings/InputSettings';
+import { isStrategyControlType } from '../runtime/RunModeConfig';
 import {
   createLeaderboardKey,
   serializeLeaderboardKey,
@@ -582,6 +583,7 @@ export class SaveMigrator {
         gameplay: {
           ...DEFAULT_GAMEPLAY_SETTINGS,
           ...(gameplay ?? {}),
+          strategyControlType: this.normalizeStrategyControlType(gameplay?.strategyControlType),
           showDetailedCooldownTime: Boolean(gameplay?.showDetailedCooldownTime),
           showDamageNumbers: migratedShowDamageNumbers === undefined
             ? DEFAULT_GAMEPLAY_SETTINGS.showDamageNumbers
@@ -633,6 +635,7 @@ export class SaveMigrator {
         autoMovement,
         autoUpgrade,
         autoOpenTreasure,
+        strategyControlType: this.normalizeStrategyControlType(rawSettings.strategyControlType),
         fastMode: Boolean(rawSettings.fastMode),
         endlessMode: Boolean(rawSettings.endlessMode),
         showDetailedCooldownTime: false,
@@ -670,6 +673,10 @@ export class SaveMigrator {
 
   private normalizeVisualModelScale(value: unknown): SaveData['settings']['display']['visualModelScale'] {
     return value === 1.5 || value === 2 ? value : 1;
+  }
+
+  private normalizeStrategyControlType(value: unknown): SaveData['settings']['gameplay']['strategyControlType'] {
+    return isStrategyControlType(value) ? value : DEFAULT_GAMEPLAY_SETTINGS.strategyControlType;
   }
 
   private readString(value: unknown, fallback: string): string {

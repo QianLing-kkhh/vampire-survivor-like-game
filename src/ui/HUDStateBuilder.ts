@@ -12,6 +12,7 @@ import { RunState } from '../run/RunState';
 import { RelicManager } from '../relic/RelicManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { StageDefinition } from '../stage/StageDefinition';
+import { RuntimeStrategyState } from '../strategy/runtime/RuntimeStrategyState';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { HUDState } from './HUD';
 
@@ -30,6 +31,7 @@ export interface HUDStateBuildInput {
   relicManager?: RelicManager;
   evolutionManager?: EvolutionManager;
   runState: RunState;
+  runtimeStrategyState?: RuntimeStrategyState;
   playtestSettings: PlaytestSettingsState;
   timeSeconds: number;
   nowMs: number;
@@ -93,9 +95,40 @@ export class HUDStateBuilder {
         : { x: 0, y: 0 },
       enemyPositions: this.getMinimapEnemyPositions(input.enemies, input.currentStage.finalBossId),
       message: input.hudMessage,
+      liveStrategy: this.buildLiveStrategyState(input),
       endlessMode: input.playtestSettings.endlessMode,
       endlessStarted: input.runState.endlessStarted,
       endlessTimeSeconds: input.runState.endlessSurvivalTime,
+    };
+  }
+
+  private buildLiveStrategyState(input: HUDStateBuildInput): HUDState['liveStrategy'] {
+    const metadata = input.runState.getRunMetadata();
+
+    if (
+      metadata.controlMode !== 'autoStrategy'
+      || metadata.strategyControlType !== 'live'
+      || metadata.allowRuntimeStrategyEdit !== true
+      || !input.runtimeStrategyState
+    ) {
+      return undefined;
+    }
+
+    const profile = input.runtimeStrategyState.getProfile();
+    const summary = input.runtimeStrategyState.getSummary();
+
+    return {
+      enabled: true,
+      movement: {
+        survivalBias: profile.movement.survivalBias,
+        combatBias: profile.movement.combatBias,
+        farmBias: profile.movement.farmBias,
+        treasureBias: profile.movement.treasureBias,
+        riskTolerance: profile.movement.riskTolerance,
+        loopBias: profile.movement.loopBias,
+      },
+      editCount: summary.editCount,
+      runtimeProfileHash: summary.runtimeProfileHash,
     };
   }
 

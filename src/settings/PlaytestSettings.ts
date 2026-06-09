@@ -1,5 +1,6 @@
 import type { AudioChannel } from '../audio/AudioManager';
 import { DEFAULT_LOCALE, SupportedLocale, isSupportedLocale } from '../i18n/Locale';
+import { isStrategyControlType, type StrategyControlType } from '../runtime/RunModeConfig';
 import { SaveManager } from '../save/SaveManager';
 
 import { SettingsData, SettingsManager } from './SettingsManager';
@@ -9,6 +10,7 @@ export interface PlaytestSettingsState {
   autoMovement: boolean;
   autoUpgrade: boolean;
   autoOpenTreasure: boolean;
+  strategyControlType: StrategyControlType;
   fastMode: boolean;
   autoTimeScale: number;
   soundEnabled: boolean;
@@ -75,6 +77,12 @@ export class PlaytestSettings {
 
   static setAutoOpenTreasure(autoOpenTreasure: boolean): PlaytestSettingsState {
     SettingsManager.updateGameplay({ autoOpenTreasure });
+
+    return this.get();
+  }
+
+  static setStrategyControlType(strategyControlType: StrategyControlType): PlaytestSettingsState {
+    SettingsManager.updateGameplay({ strategyControlType });
 
     return this.get();
   }
@@ -228,6 +236,7 @@ export class PlaytestSettings {
       autoMovement: legacyState.autoMovement,
       autoUpgrade: legacyState.autoUpgrade,
       autoOpenTreasure: legacyState.autoOpenTreasure,
+      strategyControlType: legacyState.strategyControlType,
       fastMode: legacyState.fastMode,
       endlessMode: legacyState.endlessMode,
       autoTimeScale: legacyState.autoTimeScale,
@@ -252,6 +261,9 @@ export class PlaytestSettings {
       autoMovement: gameplay.autoMovement,
       autoUpgrade: gameplay.autoUpgrade,
       autoOpenTreasure: gameplay.autoOpenTreasure,
+      strategyControlType: isStrategyControlType(gameplay.strategyControlType)
+        ? gameplay.strategyControlType
+        : 'fixed',
       fastMode: gameplay.fastMode,
       autoTimeScale: gameplay.autoTimeScale,
       soundEnabled: audio.audioEnabled,
@@ -309,6 +321,9 @@ export class PlaytestSettings {
         autoMovement,
         autoUpgrade,
         autoOpenTreasure,
+        strategyControlType: isStrategyControlType(parsedState.strategyControlType)
+          ? parsedState.strategyControlType
+          : 'fixed',
         fastMode: Boolean(parsedState.fastMode),
         autoTimeScale: typeof parsedState.autoTimeScale === 'number'
           ? parsedState.autoTimeScale

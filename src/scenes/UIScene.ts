@@ -7,6 +7,8 @@ import { UpgradeOption } from '../progression/UpgradeOption';
 import { HUD, HUDState } from '../ui/HUD';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { LevelUpPanel, LevelUpPanelConfig } from '../ui/LevelUpPanel';
+import { LiveStrategyControlPanel } from '../ui/LiveStrategyControlPanel';
+import type { LiveStrategyPatchPayload } from '../ui/LiveStrategyControlPanel';
 import { PauseMenu } from '../ui/PauseMenu';
 import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
 import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
@@ -28,6 +30,7 @@ export class UIScene extends Phaser.Scene {
   private levelUpPanel?: LevelUpPanel;
   private pauseMenu?: PauseMenu;
   private helpOverlay?: HelpOverlay;
+  private liveStrategyControlPanel?: LiveStrategyControlPanel;
   private debugPanelManager?: DebugPanelManager;
   private temporaryMessage?: Phaser.GameObjects.Text;
 
@@ -38,6 +41,9 @@ export class UIScene extends Phaser.Scene {
   create(): void {
     this.hud = new HUD(this, () => {
       this.events.emit('HudPausePressed');
+    });
+    this.liveStrategyControlPanel = new LiveStrategyControlPanel(this, (payload: LiveStrategyPatchPayload) => {
+      this.events.emit('LiveStrategyPatch', payload);
     });
     this.debugPanelManager = new DebugPanelManager(this);
     this.events.on('UpdateHUD', this.updateHUD, this);
@@ -52,6 +58,7 @@ export class UIScene extends Phaser.Scene {
 
   private updateHUD(state: HUDState): void {
     this.hud?.update(state);
+    this.liveStrategyControlPanel?.update(state.liveStrategy);
   }
 
   private updateDebugPanel(data: DebugPanelData): void {
@@ -187,6 +194,8 @@ export class UIScene extends Phaser.Scene {
     this.temporaryMessage = undefined;
     this.debugPanelManager?.destroy();
     this.debugPanelManager = undefined;
+    this.liveStrategyControlPanel?.destroy();
+    this.liveStrategyControlPanel = undefined;
     this.hud?.destroy();
     this.hud = undefined;
   }

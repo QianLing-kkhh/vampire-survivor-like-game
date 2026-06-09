@@ -69,6 +69,7 @@ import { TreasureRewardCoordinator } from '../treasure/TreasureRewardCoordinator
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { HUDStateBuilder } from '../ui/HUDStateBuilder';
+import type { LiveStrategyPatchPayload } from '../ui/LiveStrategyControlPanel';
 import { PauseFlowCoordinator, PauseFlowResult } from '../ui/pause/PauseFlowCoordinator';
 import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
 import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
@@ -455,6 +456,7 @@ export class GameScene extends Phaser.Scene {
     uiScene.events.on('PauseRestart', this.restartFromPauseMenu, this);
     uiScene.events.on('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
     uiScene.events.on('PauseOpenDeveloperScene', this.openDeveloperSceneFromPauseMenu, this);
+    uiScene.events.on('LiveStrategyPatch', this.handleLiveStrategyPatch, this);
     this.events.on('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.on('keydown-ESC', this.handleEscapePressed, this);
     this.input.keyboard?.on('keydown-F3', this.toggleDebugPanel, this);
@@ -569,6 +571,35 @@ export class GameScene extends Phaser.Scene {
     this.autoPlayer.setStrategyProfile(profile);
     this.autoUpgradeSelector.setStrategyProfile(profile);
     this.autoTreasurePolicy.setProfile(profile);
+  }
+
+  private handleLiveStrategyPatch(payload: LiveStrategyPatchPayload): void {
+    const metadata = this.runState.getRunMetadata();
+    const runtimeStrategyState = this.gameplayContext?.runtimeStrategyState;
+
+    if (
+      metadata.controlMode !== 'autoStrategy'
+      || metadata.strategyControlType !== 'live'
+      || metadata.allowRuntimeStrategyEdit !== true
+      || !runtimeStrategyState
+    ) {
+      return;
+    }
+
+    const event = runtimeStrategyState.applyPatch(
+      this.timeManager.gameTimeSeconds,
+      payload.fieldPath,
+      payload.value,
+      payload.reason,
+    );
+
+    if (!event) {
+      return;
+    }
+
+    this.syncRuntimeStrategyProfile(runtimeStrategyState.getProfile());
+    this.refreshLevelUpPanelAutoSelection();
+    this.emitHUDState();
   }
 
   private resolveCurrentRunContent(): void {
@@ -768,6 +799,7 @@ export class GameScene extends Phaser.Scene {
       relicManager: this.gameplayContext?.relicManager,
       evolutionManager: this.evolutionManager,
       runState: this.runState,
+      runtimeStrategyState: this.gameplayContext?.runtimeStrategyState,
       playtestSettings: this.playtestSettings,
       timeSeconds: this.timeManager.gameTimeSeconds,
       nowMs: this.time.now,
@@ -1586,6 +1618,7 @@ export class GameScene extends Phaser.Scene {
     this.uiScene?.events.off('PauseRestart', this.restartFromPauseMenu, this);
     this.uiScene?.events.off('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
     this.uiScene?.events.off('PauseOpenDeveloperScene', this.openDeveloperSceneFromPauseMenu, this);
+    this.uiScene?.events.off('LiveStrategyPatch', this.handleLiveStrategyPatch, this);
     this.events.off('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.off('keydown-ESC', this.handleEscapePressed, this);
     this.input.keyboard?.off('keydown-F3', this.toggleDebugPanel, this);

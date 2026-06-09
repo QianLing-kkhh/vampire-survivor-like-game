@@ -38,6 +38,10 @@ export function createSpeedBucket(speed: number): StrategySpeedBucket {
   return `${nearest.toFixed(1)}x` as StrategySpeedBucket;
 }
 
+export function isStrategyControlType(value: unknown): value is StrategyControlType {
+  return value === 'fixed' || value === 'live';
+}
+
 export function createManualRunModeConfig(speed = 1): RunModeConfig {
   const speedBucket = createSpeedBucket(speed);
 

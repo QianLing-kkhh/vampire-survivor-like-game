@@ -155,8 +155,10 @@ export class GameplayInitializer {
     const autoChallengeType = autoStrategyEnabled
       ? config.playtestSettings.endlessMode ? 'endless' : 'normal'
       : undefined;
-    const strategyControlType: StrategyControlType | undefined = autoStrategyEnabled ? 'fixed' : undefined;
-    const allowRuntimeStrategyEdit = false;
+    const strategyControlType: StrategyControlType | undefined = autoStrategyEnabled
+      ? config.playtestSettings.strategyControlType
+      : undefined;
+    const allowRuntimeStrategyEdit = strategyControlType === 'live';
     const {
       gameEventBus,
       gameEventRecorder,

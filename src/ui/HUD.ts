@@ -8,6 +8,7 @@ import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SettingsManager } from '../settings/SettingsManager';
 import { setTextHitArea, stopPointerEvent } from './input/UIInteraction';
+import type { LiveStrategyControlState } from './LiveStrategyControlPanel';
 import { MinimapOverlay } from './minimap/MinimapOverlay';
 import { MinimapEnemyPosition, WorldPosition } from './minimap/MinimapTypes';
 import { IconTooltipData } from './tooltip/IconTooltipTypes';
@@ -72,6 +73,7 @@ export interface HUDState {
   playerPosition: WorldPosition;
   enemyPositions: MinimapEnemyPosition[];
   message?: string;
+  liveStrategy?: LiveStrategyControlState;
 }
 
 type HudCooldownStatus = {
