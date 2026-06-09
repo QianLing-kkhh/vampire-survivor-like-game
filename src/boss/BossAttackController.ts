@@ -58,9 +58,15 @@ export class BossAttackController {
       shape: 'circle',
       kind: 'ring',
       danger: 'damage',
+      bossId: 'final_boss',
+      skillId: 'final_boss_ring_bullets',
       x: this.boss.body.x,
       y: this.boss.body.y,
       radius: BossAttackController.WARNING_RADIUS,
+      bulletCount: BossAttackController.PROJECTILE_COUNT,
+      angleOffset: 0,
+      projectileSpeed: BossAttackController.PROJECTILE_SPEED,
+      bulletRadius: BossAttackController.PROJECTILE_HIT_RADIUS,
       remainingMs: Math.max(0, this.timerMs),
     }];
   }

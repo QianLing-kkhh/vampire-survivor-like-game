@@ -10,7 +10,7 @@ import { SettingsManager } from '../settings/SettingsManager';
 import { setTextHitArea, stopPointerEvent } from './input/UIInteraction';
 import type { LiveStrategyControlState } from './LiveStrategyControlPanel';
 import { MinimapOverlay } from './minimap/MinimapOverlay';
-import { MinimapEnemyPosition, WorldPosition } from './minimap/MinimapTypes';
+import { MinimapEnemyPosition, MinimapViewport, WorldPosition } from './minimap/MinimapTypes';
 import { IconTooltipData } from './tooltip/IconTooltipTypes';
 import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme } from './UITheme';
@@ -72,6 +72,7 @@ export interface HUDState {
   mapMechanics?: readonly MapMechanicDefinition[];
   playerPosition: WorldPosition;
   enemyPositions: MinimapEnemyPosition[];
+  cameraView?: MinimapViewport;
   message?: string;
   liveStrategy?: LiveStrategyControlState;
 }
@@ -301,7 +302,7 @@ export class HUD {
       LayoutConfig.getHudLayout(this.screenManager).weaponsPosition.y,
     );
     this.evolutionDebugText.setText(this.getEvolutionDebugText(state));
-    const showMinimap = SettingsManager.getDisplay().showMinimap;
+    const showMinimap = SettingsManager.getDisplay().minimapScale > 0;
 
     this.minimap.setVisible(showMinimap);
     if (showMinimap) {
@@ -311,6 +312,7 @@ export class HUD {
         mapMechanics: state.mapMechanics,
         playerPosition: state.playerPosition,
         enemyPositions: state.enemyPositions,
+        cameraView: state.cameraView,
       });
     }
   }

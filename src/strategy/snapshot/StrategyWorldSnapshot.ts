@@ -103,6 +103,15 @@ export type StrategyBossWarningKind =
 
 export type StrategyBossWarningDanger = 'damage' | 'slow';
 
+export interface StrategyBossWarningMetadata {
+  bossId?: string;
+  skillId?: string;
+  bulletCount?: number;
+  angleOffset?: number;
+  projectileSpeed?: number;
+  bulletRadius?: number;
+}
+
 export type StrategyBossWarningSnapshot =
   | {
     shape: 'line';
@@ -112,7 +121,7 @@ export type StrategyBossWarningSnapshot =
     end: StrategyPosition;
     width: number;
     remainingMs?: number;
-  }
+  } & StrategyBossWarningMetadata
   | {
     shape: 'circle';
     kind: StrategyBossWarningKind;
@@ -121,7 +130,7 @@ export type StrategyBossWarningSnapshot =
     y: number;
     radius: number;
     remainingMs?: number;
-  };
+  } & StrategyBossWarningMetadata;
 
 export interface StrategyWeaponContext {
   weaponIds: readonly string[];

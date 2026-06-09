@@ -99,6 +99,7 @@
     "showDetailedCooldownTime": "Detailed CD Time",
     "damageNumbers": "Damage Numbers",
     "minimap": "Minimap",
+    "minimapScale": "Minimap Size",
     "debugOverlay": "Debug Overlay",
     "virtualJoystick": "Virtual Joystick",
     "joystickSize": "Joystick Size",

@@ -5,6 +5,7 @@ import { I18n } from '../i18n/I18n';
 import { SupportedLocale, SUPPORTED_LOCALES } from '../i18n/Locale';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { MINIMAP_SCALE_STEPS } from '../settings/DisplaySettings';
 import { SettingsManager } from '../settings/SettingsManager';
 import { UIStyle } from './theme/UIStyle';
 import { UIThemeRegistry } from './theme/UIThemeRegistry';
@@ -1061,9 +1062,16 @@ export class SettingsMenu {
         sliderSteps: [1, 1.5, 2],
         formatValue: (value) => `${value}x`,
       },
-      this.toggleRow('minimap', this.t('settings.minimap', 'Minimap'), display.showMinimap, () => {
-        SettingsManager.updateDisplay({ showMinimap: !SettingsManager.getDisplay().showMinimap });
-      }),
+      this.sliderRow(
+        'minimapScale',
+        this.t('settings.minimapScale', 'Minimap Size'),
+        () => SettingsManager.getDisplay().minimapScale,
+        [...MINIMAP_SCALE_STEPS],
+        (value) => {
+          SettingsManager.updateDisplay({ minimapScale: value as typeof MINIMAP_SCALE_STEPS[number] });
+        },
+        (value) => `x${value}`,
+      ),
       this.toggleRow('shadows', this.t('settings.shadows', 'Shadows'), display.shadowsEnabled, () => {
         SettingsManager.updateDisplay({ shadowsEnabled: !SettingsManager.getDisplay().shadowsEnabled });
       }),

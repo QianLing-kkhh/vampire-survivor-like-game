@@ -5,6 +5,7 @@ import { StrategyProfileValidator } from '../profile/StrategyProfileValidator';
 import { MicroControlLayer } from '../layers/MicroControlLayer';
 import { StrategicLayer } from '../layers/StrategicLayer';
 import { TacticalRouteLayer } from '../layers/TacticalRouteLayer';
+import type { AutoStrategyEngineEvaluateInput } from '../layers/AutoMoveLayerTypes';
 import type { AutoStrategyDecision, StrategyScoreWeights } from './AutoStrategyDecision';
 
 export class AutoStrategyEngine {
@@ -33,6 +34,29 @@ export class AutoStrategyEngine {
     return {
       intent: this.toIntent(direction),
       reason,
+    };
+  }
+
+  evaluate(input: AutoStrategyEngineEvaluateInput): AutoStrategyDecision {
+    const strategicIntent = this.strategicLayer.evaluate(input.strategic);
+    const tacticalRoute = this.tacticalRouteLayer.evaluate({
+      ...input.tactical,
+      intent: strategicIntent,
+    });
+    const microMove = this.microControlLayer.evaluate({
+      ...input.micro,
+      intent: strategicIntent,
+      route: tacticalRoute,
+    });
+
+    return {
+      intent: this.toIntent(microMove.direction),
+      strategicIntent,
+      tacticalRoute,
+      microMove,
+      debugSnapshot: input.micro.debugSnapshot,
+      mode: strategicIntent.mode,
+      reason: microMove.reason,
     };
   }
 

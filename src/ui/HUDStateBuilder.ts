@@ -39,6 +39,7 @@ export interface HUDStateBuildInput {
   evolutionCandidateStats?: string;
   worldWidth: number;
   worldHeight: number;
+  cameraView?: HUDState['cameraView'];
 }
 
 export class HUDStateBuilder {
@@ -89,6 +90,7 @@ export class HUDStateBuilder {
       playerMaxHp: playerHealth.maxHp,
       worldWidth: input.worldWidth,
       worldHeight: input.worldHeight,
+      cameraView: input.cameraView,
       mapMechanics: input.currentMap.mechanics ?? [],
       playerPosition: input.player
         ? { x: input.player.body.x, y: input.player.body.y }

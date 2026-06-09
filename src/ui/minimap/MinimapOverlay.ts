@@ -68,6 +68,8 @@ export class MinimapOverlay {
       enemyDot.setVisible(false);
     }
 
+    this.drawViewportFrame(state);
+
     const normalEnemies = state.enemyPositions.filter((position) => position.bossLike !== true);
     const bossEnemies = state.enemyPositions.filter((position) => position.bossLike === true);
 
@@ -390,6 +392,28 @@ export class MinimapOverlay {
     this.markerGraphics.fillCircle(x, y, centerRadius);
     this.markerGraphics.lineStyle(1, 0xffffff, 0.72);
     this.markerGraphics.strokeCircle(x, y, ringRadius + 1);
+  }
+
+  private drawViewportFrame(state: MinimapOverlayState): void {
+    const view = state.cameraView;
+
+    if (!view || view.width <= 0 || view.height <= 0) {
+      return;
+    }
+
+    const left = this.toMinimapX(view.x, state.worldWidth);
+    const right = this.toMinimapX(view.x + view.width, state.worldWidth);
+    const top = this.toMinimapY(view.y, state.worldHeight);
+    const bottom = this.toMinimapY(view.y + view.height, state.worldHeight);
+    const x = Math.min(left, right);
+    const y = Math.min(top, bottom);
+    const width = Math.max(2, Math.abs(right - left));
+    const height = Math.max(2, Math.abs(bottom - top));
+
+    this.markerGraphics.lineStyle(2, 0x93c5fd, 0.92);
+    this.markerGraphics.strokeRect(x, y, width, height);
+    this.markerGraphics.lineStyle(1, 0x0f172a, 0.82);
+    this.markerGraphics.strokeRect(x + 1, y + 1, Math.max(1, width - 2), Math.max(1, height - 2));
   }
 
   private drawPlayerMarker(position: WorldPosition, state: MinimapOverlayState): void {

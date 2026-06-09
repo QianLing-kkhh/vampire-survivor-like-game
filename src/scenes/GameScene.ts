@@ -784,6 +784,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private emitHUDState(): void {
+    const cameraView = this.cameras.main.worldView;
     const state = this.hudStateBuilder.build({
       currentStage: this.currentStage,
       currentMap: this.currentMap,
@@ -807,6 +808,12 @@ export class GameScene extends Phaser.Scene {
       evolutionCandidateStats: this.getEvolutionCandidateStats(),
       worldWidth: this.worldWidth,
       worldHeight: this.worldHeight,
+      cameraView: {
+        x: cameraView.x,
+        y: cameraView.y,
+        width: cameraView.width,
+        height: cameraView.height,
+      },
     });
 
     if (!state) {

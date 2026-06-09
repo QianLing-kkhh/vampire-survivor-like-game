@@ -603,7 +603,8 @@
     "previousPage": "前へ",
     "nextPage": "次へ",
     "back": "戻る",
-    "showDetailedCooldownTime": "\u8a73\u7d30CD\u6642\u9593"
+    "showDetailedCooldownTime": "詳細CD時間",
+    "minimapScale": "ミニマップサイズ"
   },
   "records": {
     "title": "記録",
@@ -777,46 +778,46 @@
   },
   "tooltip": {
     "weapon": {
-      "default": "\u6b66\u5668\u52b9\u679c\u3002\u8a73\u7d30\u306a\u6570\u5024\u306f Stats / Build \u3067\u78ba\u8a8d\u3067\u304d\u307e\u3059\u3002"
+      "default": "武器効果。詳細な数値は Stats / Build で確認できます。"
     },
     "passive": {
-      "default": "\u30d3\u30eb\u30c9\u3092\u5909\u5316\u3055\u305b\u308b\u30d1\u30c3\u30b7\u30d6\u30a2\u30a4\u30c6\u30e0\u3002",
-      "spinach": "\u6b66\u5668\u306e\u653b\u6483\u529b\u3092\u9ad8\u3081\u307e\u3059\u3002",
-      "empty_tome": "\u6b66\u5668\u304c\u6b21\u306e\u653b\u6483\u3078\u79fb\u308a\u3084\u3059\u304f\u306a\u308a\u307e\u3059\u3002",
-      "bracer": "\u6295\u5c04\u7269\u306e\u98db\u884c\u901f\u5ea6\u3092\u9ad8\u3081\u307e\u3059\u3002",
-      "clover": "\u5b9d\u7bb1\u306b\u95a2\u308f\u308b\u904b\u3092\u9ad8\u3081\u307e\u3059\u3002",
-      "pummarola": "\u751f\u547d\u529b\u3092\u5b89\u5b9a\u3057\u3066\u56de\u5fa9\u3057\u307e\u3059\u3002"
+      "default": "ビルドを変化させるパッシブアイテム。",
+      "spinach": "武器の攻撃力を高めます。",
+      "empty_tome": "武器が次の攻撃へ移りやすくなります。",
+      "bracer": "投射物の飛行速度を高めます。",
+      "clover": "宝箱に関わる運を高めます。",
+      "pummarola": "生命力を安定して回復します。"
     },
     "relic": {
-      "default": "\u30ec\u30ea\u30c3\u30af\u52b9\u679c\u3002\u8a73\u7d30\u306a\u6570\u5024\u306f Stats / Build \u3067\u78ba\u8a8d\u3067\u304d\u307e\u3059\u3002",
-      "blood_pact": "\u4f4e\u3044\u751f\u547d\u529b\u3067\u8010\u3048\u3066\u3044\u308b\u9593\u3001\u30c0\u30e1\u30fc\u30b8\u80fd\u529b\u3092\u9ad8\u3081\u307e\u3059\u3002",
-      "void_compass": "\u62fe\u5f97\u7bc4\u56f2\u3092\u5e83\u3052\u307e\u3059\u3002",
-      "golden_scarab": "\u5b9d\u7bb1\u30b9\u30b3\u30a2\u5831\u916c\u3092\u9ad8\u3081\u307e\u3059\u3002",
-      "thorn_crown": "\u30c0\u30e1\u30fc\u30b8\u3092\u53d7\u3051\u305f\u5f8c\u306b\u53cd\u6483\u3057\u307e\u3059\u3002",
-      "frozen_hourglass": "\u5468\u671f\u7684\u306b\u8fd1\u304f\u306e\u6575\u3092\u9045\u304f\u3057\u307e\u3059\u3002",
-      "berserker_charm": "Boss \u3092\u5012\u3057\u305f\u5f8c\u3001\u77ed\u6642\u9593\u306e\u30d1\u30ef\u30fc\u3092\u5f97\u307e\u3059\u3002",
-      "magnet_pearl": "\u5b9d\u7bb1\u3092\u958b\u3051\u305f\u5f8c\u3001\u62fe\u5f97\u7bc4\u56f2\u3092\u5e83\u3052\u307e\u3059\u3002",
-      "iron_shell": "\u88ab\u5f3e\u5f8c\u306e\u88ab\u30c0\u30e1\u30fc\u30b8\u3092\u6291\u3048\u307e\u3059\u3002",
-      "scholar_candle": "\u30ec\u30d9\u30eb\u30a2\u30c3\u30d7\u6642\u306b\u751f\u547d\u529b\u3092\u56de\u5fa9\u3057\u307e\u3059\u3002",
-      "rift_coin": "\u5b9d\u7bb1\u3092\u7e70\u308a\u8fd4\u3057\u958b\u3051\u308b\u3068\u8ffd\u52a0\u30b9\u30b3\u30a2\u3092\u5f97\u307e\u3059\u3002"
+      "default": "レリック効果。詳細な数値は Stats / Build で確認できます。",
+      "blood_pact": "低い生命力で耐えている間、ダメージ能力を高めます。",
+      "void_compass": "拾得範囲を広げます。",
+      "golden_scarab": "宝箱スコア報酬を高めます。",
+      "thorn_crown": "ダメージを受けた後に反撃します。",
+      "frozen_hourglass": "周期的に近くの敵を遅くします。",
+      "berserker_charm": "Boss を倒した後、短時間のパワーを得ます。",
+      "magnet_pearl": "宝箱を開けた後、拾得範囲を広げます。",
+      "iron_shell": "被弾後の被ダメージを抑えます。",
+      "scholar_candle": "レベルアップ時に生命力を回復します。",
+      "rift_coin": "宝箱を繰り返し開けると追加スコアを得ます。"
     },
     "character": {
-      "default": "\u72ec\u81ea\u306e\u521d\u671f\u6b66\u5668\u3068\u88ab\u30c0\u30e1\u30fc\u30b8\u53cd\u5fdc\u3092\u6301\u3064\u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u3002"
+      "default": "独自の初期武器と被ダメージ反応を持つキャラクター。"
     },
     "mapMechanic": {
-      "default": "\u30de\u30c3\u30d7\u30aa\u30d6\u30b8\u30a7\u30af\u30c8\u307e\u305f\u306f\u5730\u5f62\u52b9\u679c\u3002"
+      "default": "マップオブジェクトまたは地形効果。"
     },
     "status": {
-      "invulnerable": "\u4e00\u6642\u7684\u306b\u88ab\u30c0\u30e1\u30fc\u30b8\u3092\u9632\u304e\u307e\u3059\u3002",
-      "shield": "\u30b9\u30bf\u30c3\u30af\u304c\u3042\u308b\u9593\u3001HP \u640d\u5931\u3092\u9632\u304e\u307e\u3059\u3002",
-      "tempDamageTaken": "\u88ab\u30c0\u30e1\u30fc\u30b8\u3092\u4e00\u6642\u7684\u306b\u5909\u5316\u3055\u305b\u307e\u3059\u3002",
-      "overdrive": "\u30a8\u30f3\u30c9\u30ec\u30b9\u5831\u916c\u306b\u3088\u308b\u4e00\u6642\u7684\u306a\u5f37\u5316\u3002",
-      "enemySlow": "\u6575\u306e\u79fb\u52d5\u3092\u4e00\u6642\u7684\u306b\u9045\u304f\u3057\u307e\u3059\u3002",
-      "pickupVacuum": "\u62fe\u5f97\u7bc4\u56f2\u3092\u4e00\u6642\u7684\u306b\u5e83\u3052\u307e\u3059\u3002",
-      "mapSlow": "\u5730\u5f62\u306b\u3088\u3063\u3066\u79fb\u52d5\u304c\u9045\u304f\u306a\u3063\u3066\u3044\u307e\u3059\u3002"
+      "invulnerable": "一時的に被ダメージを防ぎます。",
+      "shield": "スタックがある間、HP 損失を防ぎます。",
+      "tempDamageTaken": "被ダメージを一時的に変化させます。",
+      "overdrive": "エンドレス報酬による一時的な強化。",
+      "enemySlow": "敵の移動を一時的に遅くします。",
+      "pickupVacuum": "拾得範囲を一時的に広げます。",
+      "mapSlow": "地形によって移動が遅くなっています。"
     },
     "generic": {
-      "upgradeIcon": "\u5831\u916c\u307e\u305f\u306f\u6761\u4ef6\u306e\u30a2\u30a4\u30b3\u30f3\u3002\u8a73\u7d30\u306a\u6570\u5024\u306f Stats / Build \u3067\u78ba\u8a8d\u3067\u304d\u307e\u3059\u3002"
+      "upgradeIcon": "報酬または条件のアイコン。詳細な数値は Stats / Build で確認できます。"
     }
   },
   "unlock": {

@@ -24,6 +24,14 @@ export interface StrategicLookaheadDebugSnapshot {
   linearEscapePenalty: number;
   continuationScore: number;
   deadEndAfterArrivalRisk: number;
+  finalBossCloseRangeScore: number;
+  finalBossDashRisk: number;
+  finalBossRingGapScore: number;
+  finalBossDistancePenalty: number;
+  finalBossOrbitCandidateChosen: boolean;
+  finalBossRingGapDodgeChosen: boolean;
+  finalBossDashSideStepChosen: boolean;
+  bossWarningAvoidReason: string;
 }
 
 export interface StrategicDirectionAnalysis extends StrategicLookaheadDebugSnapshot {

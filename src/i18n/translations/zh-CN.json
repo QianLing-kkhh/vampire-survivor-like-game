@@ -603,7 +603,8 @@
     "previousPage": "上一页",
     "nextPage": "下一页",
     "back": "返回",
-    "showDetailedCooldownTime": "\u663e\u793a\u8be6\u7ec6CD\u65f6\u95f4"
+    "showDetailedCooldownTime": "显示详细CD时间",
+    "minimapScale": "小地图大小"
   },
   "records": {
     "title": "记录",
@@ -777,46 +778,46 @@
   },
   "tooltip": {
     "weapon": {
-      "default": "\u6b66\u5668\u6548\u679c\u3002\u8be6\u7ec6\u6570\u503c\u8bf7\u5728 Stats / Build \u4e2d\u67e5\u770b\u3002"
+      "default": "武器效果。详细数值请在 Stats / Build 中查看。"
     },
     "passive": {
-      "default": "\u6539\u53d8\u6784\u7b51\u7684\u88ab\u52a8\u9053\u5177\u3002",
-      "spinach": "\u63d0\u5347\u6b66\u5668\u8f93\u51fa\u80fd\u529b\u3002",
-      "empty_tome": "\u5e2e\u52a9\u6b66\u5668\u66f4\u5feb\u6062\u590d\u653b\u51fb\u3002",
-      "bracer": "\u63d0\u5347\u6295\u5c04\u7269\u98de\u884c\u901f\u5ea6\u3002",
-      "clover": "\u63d0\u5347\u5b9d\u7bb1\u76f8\u5173\u8fd0\u52bf\u3002",
-      "pummarola": "\u63d0\u4f9b\u7a33\u5b9a\u751f\u547d\u6062\u590d\u3002"
+      "default": "改变构筑的被动道具。",
+      "spinach": "提升武器输出能力。",
+      "empty_tome": "帮助武器更快恢复攻击。",
+      "bracer": "提升投射物飞行速度。",
+      "clover": "提升宝箱相关运势。",
+      "pummarola": "提供稳定生命恢复。"
     },
     "relic": {
-      "default": "\u9057\u7269\u6548\u679c\u3002\u8be6\u7ec6\u6570\u503c\u8bf7\u5728 Stats / Build \u4e2d\u67e5\u770b\u3002",
-      "blood_pact": "\u5728\u4f4e\u751f\u547d\u65f6\u63d0\u5347\u4f24\u5bb3\u80fd\u529b\u3002",
-      "void_compass": "\u63d0\u5347\u62fe\u53d6\u8303\u56f4\u3002",
-      "golden_scarab": "\u63d0\u5347\u5b9d\u7bb1\u5206\u6570\u5956\u52b1\u3002",
-      "thorn_crown": "\u53d7\u4f24\u540e\u8fdb\u884c\u53cd\u51fb\u3002",
-      "frozen_hourglass": "\u5468\u671f\u6027\u51cf\u6162\u9644\u8fd1\u654c\u4eba\u3002",
-      "berserker_charm": "\u51fb\u6740 Boss \u540e\u83b7\u5f97\u77ed\u6682\u529b\u91cf\u7206\u53d1\u3002",
-      "magnet_pearl": "\u5f00\u542f\u5b9d\u7bb1\u540e\u63d0\u5347\u62fe\u53d6\u8303\u56f4\u3002",
-      "iron_shell": "\u53d7\u51fb\u540e\u964d\u4f4e\u627f\u53d7\u4f24\u5bb3\u3002",
-      "scholar_candle": "\u5347\u7ea7\u65f6\u6062\u590d\u751f\u547d\u3002",
-      "rift_coin": "\u8fde\u7eed\u5f00\u542f\u5b9d\u7bb1\u540e\u589e\u52a0\u989d\u5916\u5b9d\u7bb1\u5206\u6570\u3002"
+      "default": "遗物效果。详细数值请在 Stats / Build 中查看。",
+      "blood_pact": "在低生命时提升伤害能力。",
+      "void_compass": "提升拾取范围。",
+      "golden_scarab": "提升宝箱分数奖励。",
+      "thorn_crown": "受伤后进行反击。",
+      "frozen_hourglass": "周期性减慢附近敌人。",
+      "berserker_charm": "击杀 Boss 后获得短暂力量爆发。",
+      "magnet_pearl": "开启宝箱后提升拾取范围。",
+      "iron_shell": "受击后降低承受伤害。",
+      "scholar_candle": "升级时恢复生命。",
+      "rift_coin": "连续开启宝箱后增加额外宝箱分数。"
     },
     "character": {
-      "default": "\u62e5\u6709\u72ec\u7279\u521d\u59cb\u6b66\u5668\u548c\u53d7\u4f24\u53cd\u5e94\u7684\u89d2\u8272\u3002"
+      "default": "拥有独特初始武器和受伤反应的角色。"
     },
     "mapMechanic": {
-      "default": "\u5730\u56fe\u7269\u4ef6\u6216\u5730\u5f62\u6548\u679c\u3002"
+      "default": "地图物件或地形效果。"
     },
     "status": {
-      "invulnerable": "\u6682\u65f6\u9632\u6b62\u627f\u53d7\u4f24\u5bb3\u3002",
-      "shield": "\u62a4\u76fe\u5c42\u6570\u5b58\u5728\u65f6\u963b\u6321 HP \u635f\u5931\u3002",
-      "tempDamageTaken": "\u4e34\u65f6\u6539\u53d8\u627f\u53d7\u4f24\u5bb3\u3002",
-      "overdrive": "\u6765\u81ea\u65e0\u5c3d\u5956\u52b1\u7684\u4e34\u65f6\u5f3a\u5316\u3002",
-      "enemySlow": "\u4e34\u65f6\u51cf\u6162\u654c\u4eba\u79fb\u52a8\u3002",
-      "pickupVacuum": "\u4e34\u65f6\u63d0\u5347\u62fe\u53d6\u8303\u56f4\u3002",
-      "mapSlow": "\u5730\u5f62\u6b63\u5728\u51cf\u6162\u79fb\u52a8\u3002"
+      "invulnerable": "暂时防止承受伤害。",
+      "shield": "护盾层数存在时阻挡 HP 损失。",
+      "tempDamageTaken": "临时改变承受伤害。",
+      "overdrive": "来自无尽奖励的临时强化。",
+      "enemySlow": "临时减慢敌人移动。",
+      "pickupVacuum": "临时提升拾取范围。",
+      "mapSlow": "地形正在减慢移动。"
     },
     "generic": {
-      "upgradeIcon": "\u5956\u52b1\u6216\u6761\u4ef6\u56fe\u6807\u3002\u8be6\u7ec6\u6570\u503c\u8bf7\u5728 Stats / Build \u4e2d\u67e5\u770b\u3002"
+      "upgradeIcon": "奖励或条件图标。详细数值请在 Stats / Build 中查看。"
     }
   },
   "unlock": {

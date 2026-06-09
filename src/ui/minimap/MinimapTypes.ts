@@ -10,10 +10,18 @@ export interface MinimapEnemyPosition extends WorldPosition {
   finalBoss?: boolean;
 }
 
+export interface MinimapViewport {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface MinimapOverlayState {
   worldWidth: number;
   worldHeight: number;
   mapMechanics?: readonly MapMechanicDefinition[];
   playerPosition: WorldPosition;
   enemyPositions: MinimapEnemyPosition[];
+  cameraView?: MinimapViewport;
 }

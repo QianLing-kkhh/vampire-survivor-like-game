@@ -5,7 +5,7 @@ import { SaveManager } from '../save/SaveManager';
 
 import { AudioSettingsData } from './AudioSettings';
 import { DeveloperSettingsData } from './DeveloperSettings';
-import { DisplaySettingsData } from './DisplaySettings';
+import { DisplaySettingsData, MINIMAP_SCALE_STEPS } from './DisplaySettings';
 import { GameplaySettingsData } from './GameplaySettings';
 import { InputSettingsData } from './InputSettings';
 
@@ -94,6 +94,13 @@ export class SettingsManager {
         break;
       default:
         break;
+    }
+
+    if (typeof partial.minimapScale === 'number') {
+      nextPartial.minimapScale = SettingsManager.normalizeMinimapScale(partial.minimapScale);
+      nextPartial.showMinimap = nextPartial.minimapScale > 0;
+    } else if (typeof partial.showMinimap === 'boolean') {
+      nextPartial.minimapScale = partial.showMinimap ? previousDisplay.minimapScale || 1 : 0;
     }
 
     if (SettingsManager.doesDisplayChangeRequireRestart(previousDisplay, nextPartial)) {
@@ -197,6 +204,13 @@ export class SettingsManager {
     return typeof volume === 'number'
       ? Math.max(0, Math.min(1, volume))
       : undefined;
+  }
+
+  private static normalizeMinimapScale(value: number): DisplaySettingsData['minimapScale'] {
+    return MINIMAP_SCALE_STEPS.reduce(
+      (closest, step) => (Math.abs(step - value) < Math.abs(closest - value) ? step : closest),
+      1 as DisplaySettingsData['minimapScale'],
+    );
   }
 
   private static withoutUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {

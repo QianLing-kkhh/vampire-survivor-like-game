@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { SettingsManager } from '../settings/SettingsManager';
 import { getButtonMetrics } from '../ui/UITheme';
 import { SafeArea } from './SafeArea';
 import { ScreenManager } from './ScreenManager';
@@ -333,8 +334,9 @@ export class LayoutConfig {
     const safe = SafeArea.getInsets(screen);
     const portrait = screen.isPortrait();
     const margin = portrait ? 8 : 10;
-    const minimapWidth = portrait ? 96 : 150;
-    const minimapHeight = portrait ? 76 : 104;
+    const minimapScale = SettingsManager.getDisplay().minimapScale;
+    const minimapWidth = (portrait ? 96 : 150) * minimapScale;
+    const minimapHeight = (portrait ? 76 : 104) * minimapScale;
     const barWidth = Math.min(portrait ? screen.width * 0.54 : 230, 250);
     const portraitSize = portrait ? 48 : 56;
     const statsContentOffsetY = portraitSize + 12;

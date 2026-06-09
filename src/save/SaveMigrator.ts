@@ -6,7 +6,7 @@ import {
 import { isSupportedLocale } from '../i18n/Locale';
 import { DEFAULT_AUDIO_SETTINGS } from '../settings/AudioSettings';
 import { DEFAULT_DEVELOPER_SETTINGS } from '../settings/DeveloperSettings';
-import { DEFAULT_DISPLAY_SETTINGS } from '../settings/DisplaySettings';
+import { DEFAULT_DISPLAY_SETTINGS, MINIMAP_SCALE_STEPS } from '../settings/DisplaySettings';
 import { isUIStyle } from '../ui/theme/UIStyle';
 import { DEFAULT_GAMEPLAY_SETTINGS } from '../settings/GameplaySettings';
 import { DEFAULT_INPUT_SETTINGS } from '../settings/InputSettings';
@@ -576,6 +576,10 @@ export class SaveMigrator {
       const migratedShowDamageNumbers = gameplay?.showDamageNumbers === undefined
         ? display?.showDamageNumbers
         : gameplay.showDamageNumbers;
+      const migratedMinimapScale = this.normalizeMinimapScale(
+        display?.minimapScale,
+        display?.showMinimap,
+      );
 
       return {
         gameplay: {
@@ -601,6 +605,8 @@ export class SaveMigrator {
             ? display.uiStyle
             : DEFAULT_DISPLAY_SETTINGS.uiStyle,
           visualModelScale: this.normalizeVisualModelScale(display?.visualModelScale),
+          minimapScale: migratedMinimapScale,
+          showMinimap: migratedMinimapScale > 0,
         },
         input: {
           ...DEFAULT_INPUT_SETTINGS,
@@ -655,6 +661,8 @@ export class SaveMigrator {
         locale: isSupportedLocale(rawSettings.locale)
           ? rawSettings.locale
           : DEFAULT_DISPLAY_SETTINGS.locale,
+        minimapScale: this.normalizeMinimapScale(rawSettings.minimapScale, rawSettings.showMinimap),
+        showMinimap: this.normalizeMinimapScale(rawSettings.minimapScale, rawSettings.showMinimap) > 0,
       },
       input: { ...DEFAULT_INPUT_SETTINGS },
       developer: { ...DEFAULT_DEVELOPER_SETTINGS },
@@ -671,6 +679,20 @@ export class SaveMigrator {
 
   private normalizeVisualModelScale(value: unknown): SaveData['settings']['display']['visualModelScale'] {
     return value === 1.5 || value === 2 ? value : 1;
+  }
+
+  private normalizeMinimapScale(
+    value: unknown,
+    legacyShowMinimap: unknown,
+  ): SaveData['settings']['display']['minimapScale'] {
+    if (typeof value !== 'number') {
+      return legacyShowMinimap === false ? 0 : DEFAULT_DISPLAY_SETTINGS.minimapScale;
+    }
+
+    return MINIMAP_SCALE_STEPS.reduce(
+      (closest, step) => (Math.abs(step - value) < Math.abs(closest - value) ? step : closest),
+      DEFAULT_DISPLAY_SETTINGS.minimapScale,
+    );
   }
 
   private normalizeStrategyControlType(value: unknown): SaveData['settings']['gameplay']['strategyControlType'] {
