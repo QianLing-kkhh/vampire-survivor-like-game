@@ -16,6 +16,14 @@
   },
   "include": [
     "src/core-sim/**/*.ts",
+    "src/sim-analysis/**/*.ts",
+    "src/leaderboard/LeaderboardKey.ts",
+    "src/leaderboard/LeaderboardKeyFactory.ts",
+    "src/run/RunMetadata.ts",
+    "src/run/RunModeMetadata.ts",
+    "src/run/RunSummary.ts",
+    "src/runtime/RunModeConfig.ts",
+    "src/runtime/SimulationSpeedConfig.ts",
     "src/strategy/profile/AutoStrategyDefaults.ts",
     "src/strategy/profile/AutoStrategyProfile.ts"
   ]

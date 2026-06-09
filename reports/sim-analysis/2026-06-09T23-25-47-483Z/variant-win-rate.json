@@ -1,0 +1,10 @@
+[
+  {
+    "avgScore": 267.5,
+    "avgVsBaselineDelta": 6.2466,
+    "beatBaselineRate": 1,
+    "strategyVariantId": "top10-average-phased",
+    "winRate": 1,
+    "wins": 1
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "excludePattern": null,
+  "generatedAt": "2026-06-09T23:25:47.483Z",
+  "includePattern": "*_optimization",
+  "inputDir": "reports/sim-search",
+  "minRuns": 1,
+  "outputDir": "reports\\sim-analysis\\2026-06-09T23-25-47-483Z",
+  "phases": null,
+  "schemaVersion": 1,
+  "topN": 10
+}

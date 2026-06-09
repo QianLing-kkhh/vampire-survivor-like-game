@@ -334,13 +334,14 @@ export class LayoutConfig {
     const safe = SafeArea.getInsets(screen);
     const portrait = screen.isPortrait();
     const margin = portrait ? 8 : 10;
+    const compactHeight = screen.height <= 430;
     const minimapScale = SettingsManager.getDisplay().minimapScale;
     const minimapWidth = (portrait ? 96 : 150) * minimapScale;
     const minimapHeight = (portrait ? 76 : 104) * minimapScale;
     const barWidth = Math.min(portrait ? screen.width * 0.54 : 230, 250);
-    const portraitSize = portrait ? 48 : 56;
-    const statsContentOffsetY = portraitSize + 12;
-    const statsHeight = (portrait ? 236 : 224) + statsContentOffsetY;
+    const portraitSize = portrait ? 48 : compactHeight ? 44 : 56;
+    const statsContentOffsetY = portraitSize + (compactHeight ? 8 : 12);
+    const statsHeight = (portrait ? 236 : compactHeight ? 214 : 224) + statsContentOffsetY;
     const buildRowHeight = 64;
     const pauseWidth = portrait ? 48 : 92;
     const pauseHeight = portrait ? 48 : 40;
@@ -357,19 +358,6 @@ export class LayoutConfig {
         width: pauseWidth,
         height: pauseHeight,
       };
-    const statsRect = portrait
-      ? {
-        x: safe.left + margin,
-        y: pauseRect.y + pauseRect.height + 8,
-        width: barWidth,
-        height: statsHeight,
-      }
-      : {
-        x: safe.left + margin,
-        y: safe.top + margin,
-        width: barWidth,
-        height: statsHeight,
-      };
     const minimapTopRight = {
       x: screen.width - safe.right - minimapWidth,
       y: safe.top + margin,
@@ -384,7 +372,7 @@ export class LayoutConfig {
     };
     const minimapRect = LayoutConfig.moveToAvoidOverlap(
       minimapTopRight,
-      [pauseRect, statsRect],
+      [pauseRect],
       [
         minimapBottomRight,
         {
@@ -408,14 +396,17 @@ export class LayoutConfig {
         width: 190,
         height: 180,
       };
-    const buildStartY = statsRect.y + statsRect.height + 10;
+    const buildStartY = portrait
+      ? pauseRect.y + pauseRect.height + 10
+      : safe.top + margin;
     const maxBuildHeight = Math.max(
       34,
       virtualJoystickRect.y - buildStartY - 10,
     );
-    const maxIconRows = portrait
-      ? Math.max(1, Math.min(3, Math.floor(maxBuildHeight / buildRowHeight)))
-      : 6;
+    const maxIconRows = Math.max(
+      1,
+      Math.min(portrait ? 3 : 6, Math.floor(maxBuildHeight / buildRowHeight)),
+    );
     const buildListWidth = portrait
       ? Math.min(screen.width - safe.left - safe.right - margin * 2, 330)
       : 330;
@@ -433,9 +424,52 @@ export class LayoutConfig {
       width: buildListWidth,
       height: maxIconRows * buildRowHeight,
     };
+    const rightColumnGap = portrait ? 8 : 10;
+    const statsWidth = barWidth;
+    const statsRightX = screen.width - safe.right - statsWidth;
+    const statsPreferredY = minimapScale > 0
+      ? minimapRect.y + minimapRect.height + rightColumnGap
+      : pauseRect.y + pauseRect.height + rightColumnGap;
+    const statsPreferredRect = {
+      x: statsRightX,
+      y: statsPreferredY,
+      width: statsWidth,
+      height: statsHeight,
+    };
+    const statsCandidates = [
+      statsPreferredRect,
+      {
+        ...statsPreferredRect,
+        y: Math.max(statsPreferredY, buildListRect.y + buildListRect.height + rightColumnGap),
+      },
+      {
+        ...statsPreferredRect,
+        y: Math.max(statsPreferredY, screen.centerY - statsHeight / 2),
+      },
+      {
+        x: Math.max(safe.left + margin, minimapRect.x - statsWidth - rightColumnGap),
+        y: Math.max(safe.top + margin, buildListRect.y + buildListRect.height + rightColumnGap),
+        width: statsWidth,
+        height: statsHeight,
+      },
+      {
+        x: safe.left + margin,
+        y: buildListRect.y + buildListRect.height + rightColumnGap,
+        width: statsWidth,
+        height: statsHeight,
+      },
+    ].map((rect) => LayoutConfig.clampRectToSafeArea(rect, safe, screen));
+    const statsRect = LayoutConfig.moveToAvoidOverlap(
+      statsCandidates[0],
+      [pauseRect, minimapRect, buildListRect, virtualJoystickRect],
+      statsCandidates.slice(1),
+    );
     const passivesY = buildListRect.y + buildListRect.height + 8;
+    const passiveBottomLimit = portrait
+      ? Math.min(virtualJoystickRect.y, statsRect.y - 8)
+      : screen.height - safe.bottom;
     const maxPassiveRows = portrait
-      ? Math.max(0, Math.min(2, Math.floor((virtualJoystickRect.y - passivesY - 10) / buildRowHeight)))
+      ? Math.max(0, Math.min(2, Math.floor((passiveBottomLimit - passivesY - 10) / buildRowHeight)))
       : Math.max(0, Math.min(4, Math.floor((screen.height - safe.bottom - passivesY) / buildRowHeight)));
     const portraitBossTopGapWidth = Math.max(
       140,

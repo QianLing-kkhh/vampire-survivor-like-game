@@ -1,0 +1,38 @@
+{
+  "groups": [
+    {
+      "averageDamageDealt": 632.5,
+      "averageDamageTaken": 0,
+      "averageKills": 30,
+      "averageLevel": 2,
+      "averageScore": 680.5,
+      "averageSurvivalTimeSeconds": 60,
+      "completedRate": 1,
+      "gameOverRate": 0,
+      "key": "smoke|balanced_default|default|stage_001|prototype_field|normal|60",
+      "resultCounts": {
+        "completed": 2
+      },
+      "runCount": 2,
+      "victoryRate": 0
+    },
+    {
+      "averageDamageDealt": 405,
+      "averageDamageTaken": 4.5,
+      "averageKills": 18,
+      "averageLevel": 2,
+      "averageScore": 520,
+      "averageSurvivalTimeSeconds": 60,
+      "completedRate": 1,
+      "gameOverRate": 0,
+      "key": "smoke|balanced_default|priest|stage_001|prototype_field|normal|60",
+      "resultCounts": {
+        "completed": 2
+      },
+      "runCount": 2,
+      "victoryRate": 0
+    }
+  ],
+  "schemaVersion": 1,
+  "totalRuns": 4
+}

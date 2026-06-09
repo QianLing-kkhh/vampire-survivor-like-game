@@ -1,0 +1,48 @@
+{
+  "commandArgs": [
+    "--preset",
+    "smoke",
+    "--out",
+    "baselines/headless/smoke",
+    "--format",
+    "jsonl"
+  ],
+  "contentHash": "ch_1889f733ec2dcc",
+  "csvSchemaVersion": 10,
+  "gameVersion": "0.1.0-prototype",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "matrix": {
+    "characters": [
+      "default",
+      "priest"
+    ],
+    "difficulties": [
+      "normal"
+    ],
+    "durationsSeconds": [
+      60
+    ],
+    "presetId": "smoke",
+    "seeds": [
+      "smoke-001",
+      "smoke-002"
+    ],
+    "stageMaps": [
+      {
+        "mapId": "prototype_field",
+        "stageId": "stage_001"
+      }
+    ],
+    "strategyProfileIds": [
+      "balanced_default"
+    ],
+    "tickMs": [
+      100
+    ]
+  },
+  "matrixConfigHash": "ch_167b800d5aacde",
+  "presetId": "smoke",
+  "runCount": 4,
+  "schemaVersion": 1,
+  "tool": "headless-sim"
+}

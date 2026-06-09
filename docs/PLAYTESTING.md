@@ -62,6 +62,34 @@ The Result Scene can automatically start the next run after 10 seconds.
 
 Current Auto Test is still the legacy single-mode flow. Future scenario batches should route through `PlaytestScenarioRunner` so CSV, replay, leaderboard, seed, and selection metadata can be grouped by scenario.
 
+## Headless Simulation
+
+The project also has a Node-only headless simulation toolchain for large automated checks without launching a browser or Phaser renderer.
+
+Useful commands:
+
+```sh
+npm.cmd run simulate -- --preset smoke
+npm.cmd run simulate:batch -- --preset strategy-quick --out .tmp/headless-runs/strategy-quick
+npm.cmd run simulate:batch -- --preset balance-quick --out .tmp/headless-runs/balance-quick
+npm.cmd run simulate:compare -- --current .tmp/headless-runs/validate-smoke --baseline baselines/headless/smoke --threshold smoke
+npm.cmd run validate:sim
+```
+
+Headless outputs are reproducible artifacts:
+
+- `run-results.jsonl`
+- `run-results.csv`
+- `aggregate.json`
+- `aggregate.md`
+- `manifest.json`
+- `compare.json`
+- `compare.md`
+
+The built-in presets are `smoke`, `strategy-quick`, `balance-quick`, and `regression`. Baselines are stored under `baselines/headless/` and should only be refreshed intentionally with a batch command that writes to that directory. The compare command reads either a baseline directory or an explicit `aggregate.json` file and reports `pass`, `warn`, or `fail`.
+
+The current headless runtime is Phaser-free and data-backed. It emits deterministic trace checkpoints for future browser-vs-headless equivalence probes; visual effects, UI, audio, and scene transitions remain outside the headless boundary.
+
 Character selection can be set to `random_unlocked`. In that mode each new run resolves one real unlocked character from the run seed, including ResultScene Restart and Auto Restart. This is useful for long automatic batches that compare Assassin, Witch, Priest, and Warrior without manually changing selection between runs.
 
 Stage selection can be set to `random_unlocked_stage`. In that mode each new run resolves one real unlocked built-in stage from the run seed, including ResultScene Restart and Auto Restart. This is useful for long automatic batches that compare Prototype Field, Graveyard Night, and future unlocked stages without manually changing selection between runs.
