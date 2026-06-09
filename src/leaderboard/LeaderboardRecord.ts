@@ -1,3 +1,9 @@
+import type {
+  AutoChallengeType,
+  LeaderboardControlMode,
+  StrategySpeedBucket,
+} from '../runtime/RunModeConfig';
+
 export interface LeaderboardRecord {
   id: string;
   runId?: string;
@@ -6,6 +12,12 @@ export interface LeaderboardRecord {
   contentHash?: string;
   timestamp: string;
   mode: string;
+  controlMode?: LeaderboardControlMode;
+  autoChallengeType?: AutoChallengeType;
+  strategyProfileId?: string;
+  strategyProfileHash?: string;
+  simulationSpeedMultiplier?: number;
+  speedBucket?: StrategySpeedBucket;
   survivalTime: number;
   endlessSurvivalTime?: number;
   finalLevel: number;

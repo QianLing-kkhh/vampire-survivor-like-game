@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+import { IconTooltipData } from '../tooltip/IconTooltipTypes';
+import { attachIconTooltip } from '../tooltip/UITooltipManager';
 import { UITheme } from '../UITheme';
 
 export interface UIIconFrameConfig {
@@ -9,11 +11,15 @@ export interface UIIconFrameConfig {
   textureKey?: string | null;
   fallback?: string;
   levelText?: string;
+  tooltip?: IconTooltipData;
+  tooltipLockOnClick?: boolean;
+  tooltipEnabled?: boolean;
 }
 
 export class UIIconFrame {
   static create(scene: Phaser.Scene, config: UIIconFrameConfig): Phaser.GameObjects.Container {
     const container = scene.add.container(config.x, config.y);
+    container.setSize(config.size, config.size);
     const bg = scene.add.graphics();
     const size = config.size;
     bg.fillStyle(UITheme.colors.panelBase, 0.96);
@@ -49,6 +55,16 @@ export class UIIconFrame {
       });
       badge.setOrigin(1, 1);
       container.add(badge);
+    }
+
+    if (config.tooltip && config.tooltipEnabled !== false) {
+      container.setInteractive(
+        new Phaser.Geom.Rectangle(-config.size / 2, -config.size / 2, config.size, config.size),
+        Phaser.Geom.Rectangle.Contains,
+      );
+      attachIconTooltip(scene, container, config.tooltip, {
+        lockOnClick: config.tooltipLockOnClick,
+      });
     }
 
     return container;

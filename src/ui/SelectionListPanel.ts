@@ -12,6 +12,7 @@ import { UICard } from './components/UICard';
 import { UIIconFrame } from './components/UIIconFrame';
 import { UIStatRow } from './components/UIStatRow';
 import { createModalBlocker, setRectangleHitArea } from './input/UIInteraction';
+import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme } from './UITheme';
 
 export interface SelectionListItem {
@@ -155,7 +156,20 @@ export class SelectionListPanel {
         size: Math.min(48, rowHeight - 12),
         textureKey: item.portraitKey,
         fallback: item.id === 'random_unlocked' ? '?' : this.getInitials(item.name),
+        tooltip: {
+          kind: 'character',
+          id: item.id,
+          title: item.name,
+          description: item.description,
+        },
+        tooltipEnabled: false,
       });
+      attachIconTooltip(this.scene, card.container, {
+        kind: 'character',
+        id: item.id,
+        title: item.name,
+        description: item.description,
+      }, { lockOnClick: false });
       const name = this.scene.add.text(x + 66, rowY - 13, item.name, {
         color: selected ? UITheme.colors.accentGoldCss : UITheme.textColor,
         fontFamily: UITheme.fontFamily,
@@ -198,6 +212,12 @@ export class SelectionListPanel {
       size: portraitSize,
       textureKey: item.portraitKey,
       fallback: item.id === 'random_unlocked' ? '?' : this.getInitials(item.name),
+      tooltip: {
+        kind: 'character',
+        id: item.id,
+        title: item.name,
+        description: item.description,
+      },
     });
     const textX = portraitX + portraitSize / 2 + 22;
     const title = this.scene.add.text(textX, y + 26, item.name, {

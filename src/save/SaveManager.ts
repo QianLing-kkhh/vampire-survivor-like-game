@@ -13,11 +13,12 @@ export type SaveListener = (saveData: SaveData) => void;
 type SaveSettingsUpdate = Partial<{
   [Domain in keyof SaveData['settings']]: Partial<SaveData['settings'][Domain]>;
 }>;
-export type SaveDataUpdate = Partial<Omit<SaveData, 'settings' | 'progression' | 'selections' | 'cosmetics' | 'records'>> & {
+export type SaveDataUpdate = Partial<Omit<SaveData, 'settings' | 'progression' | 'selections' | 'cosmetics' | 'strategy' | 'records'>> & {
   settings?: SaveSettingsUpdate;
   progression?: Partial<SaveData['progression']>;
   selections?: Partial<SaveData['selections']>;
   cosmetics?: Partial<SaveData['cosmetics']>;
+  strategy?: Partial<SaveData['strategy']>;
   records?: Partial<SaveData['records']>;
 };
 
@@ -89,6 +90,14 @@ export class SaveManager {
       cosmetics: {
         ...currentSave.cosmetics,
         ...partial.cosmetics,
+      },
+      strategy: {
+        ...currentSave.strategy,
+        ...partial.strategy,
+        profilesById: {
+          ...currentSave.strategy.profilesById,
+          ...partial.strategy?.profilesById,
+        },
       },
       records: {
         ...currentSave.records,

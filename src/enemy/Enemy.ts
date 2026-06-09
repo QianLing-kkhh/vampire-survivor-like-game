@@ -133,6 +133,8 @@ export class Enemy {
   private spawnMergeLockRemainingMs = ENEMY_POPULATION_CONFIG.spawnMergeLockMs;
   private mergeCooldownRemainingMs = 0;
   private mergeCheckCooldownRemainingMs = 0;
+  private mergePreparationRemainingMs = 0;
+  private mergePreparationPartner?: Enemy;
   private movementLockRemainingMs = 0;
   private contactDamageImmunityRemainingMs = 0;
   private removedByMerge = false;
@@ -270,11 +272,55 @@ export class Enemy {
     );
   }
 
-  mergeWith(other: Enemy): boolean {
+  beginMergePreparation(other: Enemy): boolean {
+    if (!this.canMergeWith(other)) {
+      return false;
+    }
+
+    this.mergePreparationPartner = other;
+    other.mergePreparationPartner = this;
+    this.mergePreparationRemainingMs = ENEMY_POPULATION_CONFIG.mergePreparationDurationMs;
+    other.mergePreparationRemainingMs = ENEMY_POPULATION_CONFIG.mergePreparationDurationMs;
+    this.markMergeChecked();
+    other.markMergeChecked();
+    return true;
+  }
+
+  cancelMergePreparation(): void {
+    const partner = this.mergePreparationPartner;
+
+    this.mergePreparationPartner = undefined;
+    this.mergePreparationRemainingMs = 0;
+
+    if (partner?.mergePreparationPartner === this) {
+      partner.mergePreparationPartner = undefined;
+      partner.mergePreparationRemainingMs = 0;
+    }
+  }
+
+  isPreparingMerge(): boolean {
+    return this.mergePreparationPartner !== undefined;
+  }
+
+  getMergePreparationRemainingMs(): number {
+    return this.mergePreparationRemainingMs;
+  }
+
+  setMergePreparationRemainingMs(remainingMs: number): void {
+    if (!this.isPreparingMerge()) {
+      return;
+    }
+
+    this.mergePreparationRemainingMs = Math.max(0, remainingMs);
+  }
+
+  completeMergeWith(other: Enemy): boolean {
     if (this.isDead || other.isDead) {
       return false;
     }
 
+    this.cancelMergePreparation();
+    other.cancelMergePreparation();
     this.mergeLevel = Math.min(
       ENEMY_POPULATION_CONFIG.mergeMaxLevel,
       this.mergeLevel + 1,
@@ -282,13 +328,12 @@ export class Enemy {
     this.maxHp += other.maxHp;
     this.currentHp += other.currentHp;
     this.damage += other.damage;
-    this.exp += other.exp;
+    this.exp = (this.exp + other.exp) * 2;
     this.scale = this.baseScale * (
       1 + ENEMY_POPULATION_CONFIG.mergeScaleGrowthPerLevel * (this.mergeLevel - 1)
     );
     this.mergeCooldownRemainingMs = ENEMY_POPULATION_CONFIG.mergeCooldownMs;
     this.mergeCheckCooldownRemainingMs = ENEMY_POPULATION_CONFIG.mergeCheckCooldownMs;
-    this.movementLockRemainingMs = ENEMY_POPULATION_CONFIG.mergeMovementLockMs;
     this.contactDamageImmunityRemainingMs = ENEMY_POPULATION_CONFIG.mergeContactDamageImmunityMs;
     this.refreshVisualScale();
     other.isDead = true;
@@ -306,7 +351,7 @@ export class Enemy {
   }
 
   isMovementLocked(): boolean {
-    return this.movementLockRemainingMs > 0;
+    return this.movementLockRemainingMs > 0 || this.isPreparingMerge();
   }
 
   isContactDamageSuppressed(): boolean {
@@ -842,6 +887,7 @@ export class Enemy {
     return (
       this.mergeable
       && !this.isDead
+      && !this.isPreparingMerge()
       && this.mergeLevel < maxMergeLevel
       && this.spawnMergeLockRemainingMs <= 0
       && this.mergeCooldownRemainingMs <= 0

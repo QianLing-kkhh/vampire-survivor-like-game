@@ -13,6 +13,7 @@ import { UIBadge } from './components/UIBadge';
 import { UICard } from './components/UICard';
 import { UIIconFrame } from './components/UIIconFrame';
 import { UIStatRow } from './components/UIStatRow';
+import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme } from './UITheme';
 
 type UpgradeSelectedHandler = (option: UpgradeOption) => void;
@@ -139,6 +140,12 @@ export class LevelUpPanel {
       },
     });
     this.container.add(card.container);
+    attachIconTooltip(scene, card.container, {
+      kind: 'generic',
+      id: option.id,
+      title: this.getOptionLabel(option),
+      descriptionKey: 'tooltip.generic.upgradeIcon',
+    }, { lockOnClick: false });
 
     const badge = UIBadge.create(
       scene,
@@ -232,8 +239,23 @@ export class LevelUpPanel {
       textureKey: AssetFallbacks.hasTexture(scene, row.iconKey) ? row.iconKey : null,
       fallback: row.fallback,
       levelText,
+      tooltip: {
+        kind: 'generic',
+        id: row.text,
+        title: this.getTooltipTitle(row.text),
+        descriptionKey: 'tooltip.generic.upgradeIcon',
+      },
+      tooltipLockOnClick: false,
+      tooltipEnabled: false,
     });
     this.container.add(icon);
+  }
+
+  private getTooltipTitle(text: string): string {
+    return text
+      .replace(/\s+Lv\..*$/i, '')
+      .replace(/\s+\d+\s*\/\s*\d+.*$/i, '')
+      .trim() || I18n.t('levelUp.upgrade');
   }
 
   private getLevelText(row: { text: string }): string {

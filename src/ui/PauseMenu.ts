@@ -20,6 +20,8 @@ import {
 } from './input/UIInteraction';
 import { StatsBuildPanel } from './stats/StatsBuildPanel';
 import { StatsBuildSnapshot } from './stats/StatsBuildSnapshot';
+import { IconTooltipData } from './tooltip/IconTooltipTypes';
+import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 export type PauseMenuStatsData = StatsBuildSnapshot;
@@ -160,6 +162,7 @@ export class PauseMenu {
       this.resolveWeaponIconKey(weapon.displayWeaponId, weapon.iconKey),
       this.getInitials(weapon.displayWeaponId),
       `${weaponLevelText}${weapon.evolved ? ` ${I18n.t('hud.evolved')}` : ''}`,
+      { kind: 'weapon', id: weapon.displayWeaponId, title: weapon.displayName },
     );
 
     if (weapon.evolved) {
@@ -172,6 +175,7 @@ export class PauseMenu {
         this.resolvePassiveIconKey(weapon.requiredPassiveId, weapon.requiredPassiveIconKey),
         this.getInitials(weapon.requiredPassiveName ?? weapon.requiredPassiveId),
         `${I18n.t('pause.requires')}: ${passiveLevelText}`,
+        { kind: 'passive', id: weapon.requiredPassiveId, title: weapon.requiredPassiveName },
       );
     }
 
@@ -189,6 +193,7 @@ export class PauseMenu {
       this.resolvePassiveIconKey(passive.passiveId, passive.iconKey),
       this.getInitials(passive.passiveId),
       `Lv.${passive.level} / ${passive.maxLevel}`,
+      { kind: 'passive', id: passive.passiveId, title: passive.displayName },
     );
     this.addStatRow(passive.effectLabel, passive.effectValue);
 
@@ -198,6 +203,7 @@ export class PauseMenu {
           this.resolveWeaponIconKey(weaponId),
           this.getInitials(weaponId),
           this.getInitials(weaponId),
+          { kind: 'weapon', id: weaponId },
         );
       }
     }
@@ -216,7 +222,11 @@ export class PauseMenu {
 
   private addStatRow(label: string, value: string, iconKey?: string): void {
     if (iconKey) {
-      this.addIconText(iconKey, label.charAt(0), `${label}: ${value}`);
+      this.addIconText(iconKey, label.charAt(0), `${label}: ${value}`, {
+        kind: 'generic',
+        id: label,
+        title: label,
+      });
       return;
     }
 
@@ -253,10 +263,13 @@ export class PauseMenu {
     iconKey: string | undefined,
     fallback: string,
     label: string,
+    tooltip?: IconTooltipData,
   ): void {
     const group = this.scene.add.container(0, 0);
     const bg = this.scene.add.rectangle(0, 0, 22, 22, UITheme.iconBgColor, 0.82);
     bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.45);
+    bg.setInteractive({ useHandCursor: tooltip !== undefined });
+    attachIconTooltip(this.scene, bg, tooltip);
     group.add(bg);
 
     if (iconKey && this.scene.textures.exists(iconKey)) {

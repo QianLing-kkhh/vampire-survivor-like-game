@@ -3,6 +3,11 @@ import type { CharacterBaseStats } from '../character/CharacterDefinition';
 import { EVOLUTION_RULES, EvolutionRule } from '../evolution/EvolutionRule';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import type { RandomSource } from '../random/RandomSource';
+import {
+  DEFAULT_AUTO_STRATEGY_PROFILE,
+  type AutoStrategyProfile,
+} from '../strategy/profile/AutoStrategyProfile';
+import { StrategyProfileValidator } from '../strategy/profile/StrategyProfileValidator';
 import type { AutoWeaponSnapshot } from './AutoPlayer';
 
 export type AutoUpgradeSelectionMode = 'score_best';
@@ -54,9 +59,14 @@ export class AutoUpgradeSelector {
   private static readonly VACUUM_TREASURE_THRESHOLD = 2;
 
   readonly mode: AutoUpgradeSelectionMode = 'score_best';
+  private profile = StrategyProfileValidator.normalize(DEFAULT_AUTO_STRATEGY_PROFILE);
 
   setRandomSource(_random: RandomSource): void {
     // Kept for the existing initializer contract. Selection is deterministic.
+  }
+
+  setStrategyProfile(profile: AutoStrategyProfile): void {
+    this.profile = StrategyProfileValidator.normalize(profile);
   }
 
   select(
@@ -104,11 +114,11 @@ export class AutoUpgradeSelector {
     const source = context?.source ?? 'levelUp';
     let score = source === 'treasure' ? 12 : 8;
 
-    score += this.getEvolutionProgressScore(option.id, context);
+    score += this.getEvolutionProgressScore(option.id, context) * this.priorityMultiplier('evolutionPriority');
     score += this.getStateScore(option.id, context);
     score += this.getBuildScore(option.id, context);
     score += this.getCharacterSynergyScore(option.id, context);
-    score += this.getEndlessRewardScore(option.id, context);
+    score += this.getEndlessRewardScore(option.id, context) * this.priorityMultiplier('growthPriority');
 
     if (source === 'treasure') {
       score += this.getTreasureImmediateScore(option.id, context);
@@ -168,11 +178,12 @@ export class AutoUpgradeSelector {
     const weaponTotal = context?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0;
     const passiveLevel = context?.getPassiveLevel(rule.requiredPassiveId) ?? 0;
 
-    return 2000
+    return (2000
       + weaponTotal * 24
       + passiveLevel * 18
       + this.getWeaponSynergyScore(rule.baseWeaponId, context) * 5
-      + (context?.source === 'treasure' ? 120 : 0);
+      + (context?.source === 'treasure' ? 120 : 0))
+      * this.priorityMultiplier('evolutionPriority');
   }
 
   private getStateScore(
@@ -191,27 +202,27 @@ export class AutoUpgradeSelector {
 
     if (lowHp || highPressure) {
       if (upgradeId === 'max_hp_up' || upgradeId === 'pummarola') {
-        score += lowHp ? 180 : 90;
+        score += (lowHp ? 180 : 90) * this.priorityMultiplier('survivalPriority');
       }
 
       if (upgradeId === 'speed_up' || upgradeId === 'bracer') {
-        score += highPressure ? 52 : 24;
+        score += (highPressure ? 52 : 24) * this.priorityMultiplier('survivalPriority');
       }
 
       if (this.isCooldownUpgrade(upgradeId) || upgradeId === 'empty_tome') {
-        score += 42;
+        score += 42 * this.priorityMultiplier('cooldownPriority');
       }
     } else {
       if (this.isDamageUpgrade(upgradeId) || upgradeId === 'spinach') {
-        score += 58;
+        score += 58 * this.priorityMultiplier('damagePriority');
       }
 
       if (this.isProjectileCountUpgrade(upgradeId)) {
-        score += 50;
+        score += 50 * this.priorityMultiplier('damagePriority');
       }
 
       if (upgradeId === 'pickup_range_up' || upgradeId === 'clover') {
-        score += 28;
+        score += 28 * this.priorityMultiplier('growthPriority');
       }
     }
 
@@ -223,18 +234,20 @@ export class AutoUpgradeSelector {
     context?: AutoUpgradeSelectionContext,
   ): number {
     if (this.isNewWeaponUpgrade(upgradeId)) {
-      return 34;
+      return 34 * this.priorityMultiplier('newWeaponPriority');
     }
 
     const weaponId = this.getWeaponIdForUpgrade(upgradeId);
 
     if (weaponId) {
       const total = context?.getWeaponUpgradeTotal(weaponId) ?? 0;
-      return 34 + total * 14 + this.getWeaponSynergyScore(weaponId, context) * 4;
+      return (34 + total * 14 + this.getWeaponSynergyScore(weaponId, context) * 4)
+        * this.priorityMultiplier('mainWeaponPriority');
     }
 
     if (this.isPassiveUpgrade(upgradeId)) {
-      return 26 + (context?.getPassiveLevel(upgradeId) ?? 0) * 16;
+      return (26 + (context?.getPassiveLevel(upgradeId) ?? 0) * 16)
+        * this.priorityMultiplier('passivePriority');
     }
 
     return 12;
@@ -457,5 +470,9 @@ export class AutoUpgradeSelector {
     }
 
     return undefined;
+  }
+
+  private priorityMultiplier(key: keyof AutoStrategyProfile['upgrade']): number {
+    return 0.75 + this.profile.upgrade[key] / 200;
   }
 }

@@ -54,10 +54,18 @@ export interface PlayerDamageResult {
   shieldAbsorbed: boolean;
 }
 
+interface PendingEnemyMerge {
+  left: Enemy;
+  right: Enemy;
+  remainingMs: number;
+  lineEffect: Phaser.GameObjects.Line;
+}
+
 export class EnemyFlow {
   private readonly contactDamageCooldowns = new Map<Enemy, number>();
   private readonly unsubscribeEnemyKilled: () => void;
   private readonly previousPlayerPosition: Phaser.Math.Vector2;
+  private readonly pendingEnemyMerges: PendingEnemyMerge[] = [];
   private enemyMergeCount = 0;
   private enemyMergeCreatedLv2 = 0;
   private enemyMergeCreatedLv3 = 0;
@@ -97,6 +105,7 @@ export class EnemyFlow {
     this.config.characterRuntime?.updateDamageReaction(deltaMs, {
       player: this.config.player,
     });
+    this.updatePendingEnemyMerges(deltaMs);
     this.removeDeadEnemies();
     this.updateEnemyMovement(deltaMs);
     this.updateEnemyMerges();
@@ -252,6 +261,7 @@ export class EnemyFlow {
     this.unsubscribeEnemyKilled();
     this.config.characterRuntime?.clear();
     this.contactDamageCooldowns.clear();
+    this.clearPendingEnemyMerges();
   }
 
   removeDeadEnemies(): void {
@@ -494,52 +504,179 @@ export class EnemyFlow {
       return;
     }
 
-    let remainingMerges = ENEMY_POPULATION_CONFIG.maxMergesPerFrame;
+    let remainingMergeStarts = ENEMY_POPULATION_CONFIG.maxMergesPerFrame;
 
     for (let leftIndex = 0; leftIndex < this.config.enemies.length; leftIndex += 1) {
-      if (remainingMerges <= 0) {
+      if (remainingMergeStarts <= 0) {
         return;
       }
 
-      const survivor = this.config.enemies[leftIndex];
+      const left = this.config.enemies[leftIndex];
 
-      if (survivor.isDead) {
+      if (left.isDead) {
         continue;
       }
 
       for (let rightIndex = leftIndex + 1; rightIndex < this.config.enemies.length; rightIndex += 1) {
-        if (remainingMerges <= 0) {
+        if (remainingMergeStarts <= 0) {
           return;
         }
 
-        const removed = this.config.enemies[rightIndex];
+        const right = this.config.enemies[rightIndex];
 
-        if (removed.isDead || !survivor.canMergeWith(removed)) {
+        if (right.isDead || !left.canMergeWith(right)) {
           continue;
         }
 
-        const beforeMergeLevel = survivor.mergeLevel;
-
-        if (!survivor.mergeWith(removed)) {
-          survivor.markMergeChecked();
-          removed.markMergeChecked();
+        if (!left.beginMergePreparation(right)) {
+          left.markMergeChecked();
+          right.markMergeChecked();
           continue;
         }
 
-        this.config.floatingTextManager.showEnemyMergeLevelUp(
-          survivor.body.x,
-          survivor.body.y,
-          beforeMergeLevel,
-          survivor.mergeLevel,
-          ENEMY_POPULATION_CONFIG.mergeMaxLevel,
-        );
-        remainingMerges -= 1;
-        this.recordMerge(survivor.mergeLevel);
-        this.contactDamageCooldowns.delete(removed);
-        this.config.enemies.splice(rightIndex, 1);
-        rightIndex -= 1;
+        this.pendingEnemyMerges.push({
+          left,
+          right,
+          remainingMs: ENEMY_POPULATION_CONFIG.mergePreparationDurationMs,
+          lineEffect: this.createMergePreparationLine(left, right),
+        });
+        remainingMergeStarts -= 1;
       }
     }
+  }
+
+  private updatePendingEnemyMerges(deltaMs: number): void {
+    for (let index = this.pendingEnemyMerges.length - 1; index >= 0; index -= 1) {
+      const pendingMerge = this.pendingEnemyMerges[index];
+
+      if (!this.isPendingEnemyMergeValid(pendingMerge)) {
+        this.cancelPendingEnemyMerge(pendingMerge);
+        this.pendingEnemyMerges.splice(index, 1);
+        continue;
+      }
+
+      pendingMerge.remainingMs = Math.max(0, pendingMerge.remainingMs - Math.max(0, deltaMs));
+      pendingMerge.left.setMergePreparationRemainingMs(pendingMerge.remainingMs);
+      pendingMerge.right.setMergePreparationRemainingMs(pendingMerge.remainingMs);
+      this.updateMergePreparationLine(pendingMerge);
+
+      if (pendingMerge.remainingMs > 0) {
+        continue;
+      }
+
+      this.completePendingEnemyMerge(pendingMerge);
+      this.pendingEnemyMerges.splice(index, 1);
+    }
+  }
+
+  private isPendingEnemyMergeValid(pendingMerge: PendingEnemyMerge): boolean {
+    return (
+      !pendingMerge.left.isDead
+      && !pendingMerge.right.isDead
+      && this.config.enemies.includes(pendingMerge.left)
+      && this.config.enemies.includes(pendingMerge.right)
+    );
+  }
+
+  private cancelPendingEnemyMerge(pendingMerge: PendingEnemyMerge): void {
+    pendingMerge.left.cancelMergePreparation();
+    pendingMerge.right.cancelMergePreparation();
+    this.destroyMergePreparationLine(pendingMerge);
+  }
+
+  private completePendingEnemyMerge(pendingMerge: PendingEnemyMerge): void {
+    const survivor = this.getMergeSurvivor(pendingMerge);
+    const removed = survivor === pendingMerge.left ? pendingMerge.right : pendingMerge.left;
+    const beforeMergeLevel = survivor.mergeLevel;
+
+    this.destroyMergePreparationLine(pendingMerge);
+
+    if (!survivor.completeMergeWith(removed)) {
+      survivor.cancelMergePreparation();
+      removed.cancelMergePreparation();
+      survivor.markMergeChecked();
+      removed.markMergeChecked();
+      return;
+    }
+
+    this.config.floatingTextManager.showEnemyMergeLevelUp(
+      survivor.body.x,
+      survivor.body.y,
+      beforeMergeLevel,
+      survivor.mergeLevel,
+      ENEMY_POPULATION_CONFIG.mergeMaxLevel,
+    );
+    this.recordMerge(survivor.mergeLevel);
+    this.contactDamageCooldowns.delete(removed);
+    this.removeMergedEnemyFromList(removed);
+  }
+
+  private getMergeSurvivor(pendingMerge: PendingEnemyMerge): Enemy {
+    const playerX = this.config.player.body.x;
+    const playerY = this.config.player.body.y;
+    const leftDistanceSq = Phaser.Math.Distance.Squared(
+      pendingMerge.left.body.x,
+      pendingMerge.left.body.y,
+      playerX,
+      playerY,
+    );
+    const rightDistanceSq = Phaser.Math.Distance.Squared(
+      pendingMerge.right.body.x,
+      pendingMerge.right.body.y,
+      playerX,
+      playerY,
+    );
+
+    return leftDistanceSq >= rightDistanceSq ? pendingMerge.left : pendingMerge.right;
+  }
+
+  private removeMergedEnemyFromList(enemy: Enemy): void {
+    const enemyIndex = this.config.enemies.indexOf(enemy);
+
+    if (enemyIndex >= 0) {
+      this.config.enemies.splice(enemyIndex, 1);
+    }
+  }
+
+  private createMergePreparationLine(left: Enemy, right: Enemy): Phaser.GameObjects.Line {
+    const line = this.config.scene.add.line(
+      0,
+      0,
+      left.body.x,
+      left.body.y,
+      right.body.x,
+      right.body.y,
+      0x93c5fd,
+      0.65,
+    );
+
+    line.setOrigin(0, 0);
+    line.setLineWidth(3);
+    line.setDepth(35);
+    return line;
+  }
+
+  private updateMergePreparationLine(pendingMerge: PendingEnemyMerge): void {
+    pendingMerge.lineEffect.setTo(
+      pendingMerge.left.body.x,
+      pendingMerge.left.body.y,
+      pendingMerge.right.body.x,
+      pendingMerge.right.body.y,
+    );
+  }
+
+  private destroyMergePreparationLine(pendingMerge: PendingEnemyMerge): void {
+    if (pendingMerge.lineEffect.active) {
+      pendingMerge.lineEffect.destroy();
+    }
+  }
+
+  private clearPendingEnemyMerges(): void {
+    for (const pendingMerge of this.pendingEnemyMerges) {
+      this.cancelPendingEnemyMerge(pendingMerge);
+    }
+
+    this.pendingEnemyMerges.length = 0;
   }
 
   private recordMerge(mergeLevel: number): void {

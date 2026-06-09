@@ -10,6 +10,7 @@ import { HelpContentBuilder } from './help/HelpContentBuilder';
 import { HelpIconRef, HelpLine } from './help/HelpSection';
 import { HelpTabDefinition } from './help/HelpTabDefinition';
 import { setRectangleHitArea, setTextHitArea, stopPointerEvent } from './input/UIInteraction';
+import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
 
 type TabButton = {
@@ -649,6 +650,14 @@ export class HelpOverlay {
       0.78,
     );
     bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
+    if (icon.iconKind && icon.iconId) {
+      bg.setInteractive({ useHandCursor: true });
+      attachIconTooltip(scene, bg, {
+        kind: icon.iconKind === 'mapMechanic' ? 'mapMechanic' : icon.iconKind,
+        id: icon.iconId,
+        fallback: icon.fallback,
+      });
+    }
     slot.add(bg);
     this.addIconContent(scene, slot, icon, HelpOverlay.CONTENT_ICON_SIZE / 2, HelpOverlay.CONTENT_ICON_SIZE / 2);
 

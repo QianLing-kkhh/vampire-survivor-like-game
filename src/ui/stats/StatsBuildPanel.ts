@@ -12,10 +12,12 @@ import { PanelHeader } from '../components/PanelHeader';
 import { UITabBar } from '../components/UITabBar';
 import { UIBadge } from '../components/UIBadge';
 import { createModalBlocker, setRectangleHitArea } from '../input/UIInteraction';
+import { IconTooltipData } from '../tooltip/IconTooltipTypes';
 import { UITheme } from '../UITheme';
 
 import {
   StatsBuildCard,
+  StatsBuildIconRef,
   StatsBuildSnapshot,
   StatsBuildStatLine,
   StatsBuildTabId,
@@ -193,6 +195,7 @@ export class StatsBuildPanel {
       size: 48,
       textureKey: this.resolveCardIconKey(card),
       fallback: card.fallback,
+      tooltip: this.getCardTooltip(card),
     });
     const title = this.scene.add.text(-width / 2 + 74, y + 14, card.title, {
       color: UITheme.textColor,
@@ -257,6 +260,7 @@ export class StatsBuildPanel {
           size: 32,
           textureKey: this.resolveRelatedIconKey(related),
           fallback: related.fallback,
+          tooltip: this.getRelatedIconTooltip(related),
         });
         this.contentContainer.add(relatedIcon);
         iconX += 38;
@@ -301,6 +305,33 @@ export class StatsBuildPanel {
     }
 
     return related.iconKey;
+  }
+
+  private getCardTooltip(card: StatsBuildCard): IconTooltipData | undefined {
+    switch (this.selectedTab) {
+      case 'weapons':
+        return { kind: 'weapon', id: card.id, title: card.title };
+      case 'passives':
+        return { kind: 'passive', id: card.id, title: card.title };
+      case 'relics':
+        return { kind: 'relic', id: card.id, title: card.title, description: card.description };
+      case 'status':
+        return { kind: 'status', id: card.id, title: card.title, description: card.description };
+      default:
+        return undefined;
+    }
+  }
+
+  private getRelatedIconTooltip(related: StatsBuildIconRef): IconTooltipData {
+    if (this.selectedTab === 'weapons') {
+      return { kind: 'passive', id: related.id, title: related.label };
+    }
+
+    if (this.selectedTab === 'passives') {
+      return { kind: 'weapon', id: related.id, title: related.label };
+    }
+
+    return { kind: 'generic', id: related.id, title: related.label };
   }
 
   private renderFooter(currentPage: number, totalPages: number): void {

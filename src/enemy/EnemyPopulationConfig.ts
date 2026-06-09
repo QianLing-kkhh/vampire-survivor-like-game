@@ -2,6 +2,7 @@ export interface EnemyPopulationConfig {
   mergeEnabled: boolean;
   minAliveEnemies: number;
   mergeMaxLevel: number;
+  mergePreparationDurationMs: number;
   spawnMergeLockMs: number;
   mergeCooldownMs: number;
   mergeCheckCooldownMs: number;
@@ -17,6 +18,7 @@ export const ENEMY_POPULATION_CONFIG: EnemyPopulationConfig = {
   mergeEnabled: true,
   minAliveEnemies: 5,
   mergeMaxLevel: 5,
+  mergePreparationDurationMs: 3000,
   spawnMergeLockMs: 1500,
   mergeCooldownMs: 3000,
   mergeCheckCooldownMs: 500,

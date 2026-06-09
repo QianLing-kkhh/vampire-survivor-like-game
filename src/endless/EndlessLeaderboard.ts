@@ -50,6 +50,8 @@ export class EndlessLeaderboard {
     if (metadata) {
       return createLeaderboardKey({
         mode: 'endless',
+        controlMode: metadata.controlMode === 'autoStrategy' ? 'autoStrategy' : 'manual',
+        autoChallengeType: metadata.autoChallengeType,
         characterId: metadata.characterId,
         stageId: metadata.stageId,
         mapId: metadata.mapId,
@@ -58,11 +60,14 @@ export class EndlessLeaderboard {
         challengeId: metadata.challengeId,
         customStageId: metadata.customStageId,
         rulesetId: metadata.rulesetId,
+        strategyProfileHash: metadata.strategyProfileHash,
+        speedBucket: metadata.speedBucket,
       });
     }
 
     return createLeaderboardKey({
       mode: 'endless',
+      controlMode: 'manual',
       characterId: new CharacterManager().getSelectedCharacterId(),
       stageId: new StageManager().getSelectedStageId(),
       mapId: new MapManager().getSelectedMapId(),
@@ -95,6 +100,12 @@ export class EndlessLeaderboard {
       contentHash: metadata?.contentHash,
       timestamp,
       mode: 'endless',
+      controlMode: key.controlMode,
+      autoChallengeType: key.autoChallengeType,
+      strategyProfileId: metadata?.strategyProfileId,
+      strategyProfileHash: metadata?.strategyProfileHash ?? key.strategyProfileHash,
+      simulationSpeedMultiplier: metadata?.simulationSpeedMultiplier,
+      speedBucket: metadata?.speedBucket ?? key.speedBucket,
       survivalTime: entry.totalSurvivalTime ?? entry.endlessSurvivalTime ?? 0,
       endlessSurvivalTime: entry.endlessSurvivalTime ?? 0,
       finalLevel: entry.finalLevel ?? 1,

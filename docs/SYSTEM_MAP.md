@@ -8,6 +8,7 @@ This document is a quick architecture map for developers and Codex. It shows how
 Scenes
   ↓
 GameplayInitializer
+  ├─ bootstrap selection/rules/events/context helpers
   ↓
 GameplayContext
   ├─ Player / CharacterRuntime
@@ -33,7 +34,7 @@ The project is in content proof mode. Most broad foundations exist; the next use
 | Layer | Main systems | Owns | Should not own |
 |---|---|---|---|
 | Scene Layer | `BootScene`, `PreloadScene`, `TitleScene`, selection/tool scenes, `GameScene`, `UIScene`, `ResultScene` | Phaser lifecycle, scene transitions, high-level orchestration, UI event bridges | Weapon/combat/progression rules, content validation, save schemas |
-| Runtime Layer | `GameplayInitializer`, `GameplayContext`, `GameplayUpdater`, runtime context/coordinator helpers, `PerformanceMonitor`, `PoolManager` | Per-run object graph, stable creation order, frame update order, runtime snapshots, diagnostics | Persistent settings, content definitions, UI layout rules |
+| Runtime Layer | `GameplayInitializer`, `gameplay/bootstrap`, `GameplayContext`, `GameplayUpdater`, runtime context/coordinator helpers, `PerformanceMonitor`, `PoolManager` | Per-run object graph, stable creation order, run selection/rules/event setup, frame update order, runtime snapshots, diagnostics | Persistent settings, content definitions, UI layout rules |
 | Content Layer | `ContentBootstrap`, `ContentRegistry`, `ContentValidator`, `ContentPack` | Built-in JSON registration and content lookup | Save state, custom-stage storage, runtime object ownership |
 | Save/Settings Layer | `SaveManager`, `SaveStorage`, `SaveMigrator`, `SettingsManager`, `PlaytestSettings` facade | Formal save data, settings domains, selections, progression, cosmetics, records | CSV buffers, replay blobs, transient run counters |
 | Selection Layer | `SelectionManager`, `SelectionState`, `SelectionSummary` | Save-backed selected IDs and selection facade | Actual per-run random resolution details beyond manager calls |

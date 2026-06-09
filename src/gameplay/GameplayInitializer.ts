@@ -24,9 +24,6 @@ import { EnemyFlow } from '../enemy/EnemyFlow';
 import { EnemyMovement } from '../enemy/EnemyMovement';
 import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
-import { GameEventBridge } from '../events/GameEventBridge';
-import { GameEventBus } from '../events/GameEventBus';
-import { GameEventRecorder } from '../events/GameEventRecorder';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import { createLeaderboardKey, serializeLeaderboardKey } from '../leaderboard/LeaderboardKey';
@@ -41,32 +38,29 @@ import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
-import { RandomManager } from '../random/RandomManager';
 import { RelicManager } from '../relic/RelicManager';
-import { ReplayRecorder } from '../replay/ReplayRecorder';
-import { RunSeed } from '../random/RunSeed';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunState } from '../run/RunState';
-import { DifficultyManager } from '../rules/DifficultyManager';
-import { MutatorFactory } from '../rules/MutatorFactory';
-import { MutatorContext } from '../rules/MutatorContext';
-import { RunRuleSet } from '../rules/RunRuleSet';
-import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { createSpeedBucket } from '../runtime/RunModeConfig';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
-import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
+import { StrategyHasher } from '../strategy/hash/StrategyHasher';
+import { StrategyProfileRepository } from '../strategy/profile/StrategyProfileRepository';
 import { TutorialManager } from '../tutorial/TutorialManager';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { UnlockManager } from '../unlock/UnlockManager';
 import { WeaponFactory } from '../weapon/WeaponFactory';
 import { WeaponManager } from '../weapon/WeaponManager';
-import { MapManager } from '../map/MapManager';
 import { MapMechanicRuntime } from '../map/mechanics/MapMechanicRuntime';
 import { getCurrentVersionInfo } from '../version/VersionInfo';
 
+import { GameplayContextAssembler } from './bootstrap/GameplayContextAssembler';
+import { RunRuleSetFactory } from './bootstrap/RunRuleSetFactory';
+import { RunSelectionResolver } from './bootstrap/RunSelectionResolver';
+import { RuntimeEventFactory } from './bootstrap/RuntimeEventFactory';
 import { GameplayContext } from './GameplayContext';
 
 export interface GameplayInitializerCallbacks {
@@ -114,69 +108,61 @@ export class GameplayInitializer {
   private static readonly PRE_ENDLESS_NORMAL_ENEMY_BASE_CAP = 18;
   private static readonly PRE_ENDLESS_NORMAL_ENEMY_CAP_PER_MINUTE = 8;
 
+  private readonly contextAssembler = new GameplayContextAssembler();
+  private readonly eventFactory = new RuntimeEventFactory();
+  private readonly ruleSetFactory = new RunRuleSetFactory();
+  private readonly selectionResolver = new RunSelectionResolver();
+
   initialize(config: GameplayInitializerConfig): GameplayContext {
     ContentBootstrap.ensureInitialized();
     UnlockManager.initialize();
-    const characterManager = new CharacterManager();
-    const stageManager = new StageManager();
-    const mapManager = new MapManager();
-    const difficultyManager = new DifficultyManager();
-    const selection = SelectionManager.getSelection();
-    const runSeed = RunSeed.createSeedFromSelection(selection);
-    const randomManager = new RandomManager(runSeed);
+    const {
+      selection,
+      runSeed,
+      randomManager,
+      selectedCharacter,
+      characterSelectionMode,
+      selectedStageRuntime,
+      selectedStage,
+      stageSelectionMode,
+      selectedMap,
+      selectedDifficulty,
+    } = this.selectionResolver.resolve();
     const performanceMonitor = new PerformanceMonitor();
     const poolManager = new PoolManager();
     const versionInfo = getCurrentVersionInfo();
-    const gameEventBus = new GameEventBus();
-    const gameEventRecorder = new GameEventRecorder();
-    const replayRecorder = new ReplayRecorder();
-    const gameEventBridge = new GameEventBridge({
-      sourceEventBus: config.eventBus,
+    const strategyProfile = StrategyProfileRepository.getSelectedProfile();
+    const strategyProfileHash = StrategyHasher.hash(strategyProfile);
+    const autoStrategyEnabled = config.playtestSettings.autoMovement
+      || config.playtestSettings.autoUpgrade
+      || config.playtestSettings.autoOpenTreasure;
+    const simulationSpeedMultiplier = config.playtestSettings.fastMode
+      ? config.playtestSettings.autoTimeScale
+      : 1;
+    const speedBucket = createSpeedBucket(simulationSpeedMultiplier);
+    const controlMode = autoStrategyEnabled ? 'autoStrategy' : 'manual';
+    const autoChallengeType = autoStrategyEnabled
+      ? config.playtestSettings.endlessMode ? 'endless' : 'normal'
+      : undefined;
+    const {
       gameEventBus,
-      getGameTimeSeconds: () => config.timeManager.gameTimeSeconds,
-      getRunId: () => config.runId,
+      gameEventRecorder,
+      replayRecorder,
+      gameEventBridge,
+    } = this.eventFactory.create({
+      eventBus: config.eventBus,
+      timeManager: config.timeManager,
+      runId: config.runId,
+      runState: config.runState,
     });
-
-    gameEventBus.subscribeAll((event) => {
-      gameEventRecorder.record(event);
-      replayRecorder.recordEvent(event);
-      config.runState.recordGameEvent();
-    });
-    const selectedCharacter = characterManager.resolveCharacterForRun(
-      selection.characterId,
-      randomManager.getSource('character'),
-    );
-    const characterSelectionMode = characterManager.getCharacterSelectionMode(selection.characterId);
-    const selectedStageRuntime = stageManager.getSelectedStageRuntimeDefinition();
-    const selectedStage = selectedStageRuntime.source === 'custom'
-      ? selectedStageRuntime.stage
-      : stageManager.resolveStageForRun(selection.stageId, randomManager.getSource('stage'));
-    const stageSelectionMode = stageManager.isRandomStageSelection(selection.stageId)
-      ? 'random_unlocked'
-      : 'fixed';
-    const selectedMap = selectedStageRuntime.source === 'custom'
-      ? mapManager.getSelectedMap()
-      : mapManager.resolveMapForStage(selectedStage);
-    const selectedDifficulty = selectedStage.difficultyId
-      ? difficultyManager.getDifficulty(selectedStage.difficultyId)
-      : difficultyManager.getSelectedDifficulty();
-    const mutatorConfigs = selectedStage.mutators ?? [];
-    const mutators = MutatorFactory.createMany(mutatorConfigs);
-    const mutatorContext: MutatorContext = {
-      difficultyId: selectedDifficulty.id,
-      characterId: selectedCharacter.id,
-      stageId: selectedStage.id,
-      mapId: selectedMap.id,
-      mode: 'normal',
-      seed: selection.seed,
-      contentSource: selectedStageRuntime.source,
-    };
-    const runRuleSet = new RunRuleSet(
+    const { runRuleSet } = this.ruleSetFactory.create({
       selectedDifficulty,
-      mutators,
-      mutatorConfigs,
-      mutatorContext,
-    );
+      selectedCharacter,
+      selectedStage,
+      selectedMap,
+      selectedStageRuntime,
+      selection,
+    });
     const relicManager = new RelicManager({
       gameEventBus,
       runRuleSet,
@@ -245,6 +231,8 @@ export class GameplayInitializer {
     ));
     const expManager = new ExpManager(config.eventBus);
     const levelManager = new LevelManager(expManager, config.eventBus);
+    config.autoPlayer.setStrategyProfile(strategyProfile);
+    config.autoUpgradeSelector.setStrategyProfile(strategyProfile);
     config.autoUpgradeSelector.setRandomSource(randomManager.getUpgradeRandom());
     const upgradeSelector = new UpgradeSelector(
       [...upgradeOptions, ...passiveItems],
@@ -309,6 +297,8 @@ export class GameplayInitializer {
       mode: selection.challengeId
         ? 'challenge'
         : selection.customStageId ? 'custom' : config.playtestSettings.endlessMode ? 'endless' : 'normal',
+      controlMode,
+      autoChallengeType,
       characterId: selectedCharacter.id,
       stageId: selectedStage.id,
       mapId: selectedMap.id,
@@ -317,6 +307,8 @@ export class GameplayInitializer {
       challengeId: selection.challengeId,
       customStageId: selection.customStageId,
       rulesetId: runRuleSet.rulesetId,
+      strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
+      speedBucket,
     }));
     config.runState.setRunMetadata({
       runId: config.runId,
@@ -340,6 +332,12 @@ export class GameplayInitializer {
       rulesetId: runRuleSet.rulesetId,
       seed: selection.seed,
       leaderboardKey,
+      controlMode,
+      autoChallengeType,
+      strategyProfileId: autoStrategyEnabled ? strategyProfile.id : undefined,
+      strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
+      simulationSpeedMultiplier,
+      speedBucket,
     });
     replayRecorder.start({
       runId: config.runId,
@@ -363,6 +361,11 @@ export class GameplayInitializer {
         autoUpgrade: config.playtestSettings.autoUpgrade,
         fastMode: config.playtestSettings.fastMode,
         endlessMode: config.playtestSettings.endlessMode,
+        controlMode,
+        strategyProfileId: autoStrategyEnabled ? strategyProfile.id : undefined,
+        strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
+        simulationSpeedMultiplier,
+        speedBucket,
       },
       metadata: config.runState.getRunMetadata(),
       versionInfo,
@@ -493,7 +496,7 @@ export class GameplayInitializer {
     weaponManager.addWeapon(weaponFactory.create(characterRuntime.getStartingWeaponId()));
     this.syncPassiveEffects(passiveManager, weaponManager, treasureManager, playerStats);
 
-    return {
+    return this.contextAssembler.assemble({
       scene: config.scene,
       runId: config.runId,
       playtestSettings: config.playtestSettings,
@@ -555,7 +558,7 @@ export class GameplayInitializer {
       bossSpawnDirector,
       floatingTextManager,
       virtualJoystick,
-    };
+    });
   }
 
   private syncPassiveEffects(

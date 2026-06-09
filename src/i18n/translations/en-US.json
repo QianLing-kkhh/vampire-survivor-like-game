@@ -776,6 +776,50 @@
       "legendary": "Legendary"
     }
   },
+  "tooltip": {
+    "weapon": {
+      "default": "Weapon effect. Detailed numbers are listed in Stats / Build."
+    },
+    "passive": {
+      "default": "Passive item that modifies your build.",
+      "spinach": "Improves weapon damage output.",
+      "empty_tome": "Helps weapons recover faster between attacks.",
+      "bracer": "Improves projectile travel speed.",
+      "clover": "Improves treasure-related luck.",
+      "pummarola": "Provides steady health recovery."
+    },
+    "relic": {
+      "default": "Relic effect. Detailed numbers are listed in Stats / Build.",
+      "blood_pact": "Improves damage while surviving at low health.",
+      "void_compass": "Improves pickup reach.",
+      "golden_scarab": "Improves treasure score rewards.",
+      "thorn_crown": "Retaliates after taking damage.",
+      "frozen_hourglass": "Periodically slows nearby enemies.",
+      "berserker_charm": "Grants a burst of power after boss kills.",
+      "magnet_pearl": "Improves pickup reach after treasure opens.",
+      "iron_shell": "Reduces incoming damage after being hit.",
+      "scholar_candle": "Restores health when leveling up.",
+      "rift_coin": "Adds extra treasure score after repeated treasure opens."
+    },
+    "character": {
+      "default": "Character with a unique starting weapon and damage reaction."
+    },
+    "mapMechanic": {
+      "default": "Map object or terrain effect."
+    },
+    "status": {
+      "invulnerable": "Temporary protection from incoming damage.",
+      "shield": "Blocks incoming HP loss while stacks remain.",
+      "tempDamageTaken": "Temporary modifier to incoming damage.",
+      "overdrive": "Temporary boost from endless rewards.",
+      "enemySlow": "Temporary enemy movement slow.",
+      "pickupVacuum": "Temporary pickup reach boost.",
+      "mapSlow": "Movement is slowed by terrain."
+    },
+    "generic": {
+      "upgradeIcon": "Reward or requirement icon. Detailed numbers are listed in Stats / Build."
+    }
+  },
   "unlock": {
     "message": {
       "character": "Unlocked character: {name}",

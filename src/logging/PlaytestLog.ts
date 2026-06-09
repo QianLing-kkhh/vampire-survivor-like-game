@@ -1,6 +1,11 @@
 import { WeaponDamageStat } from '../weapon/WeaponManager';
 import { KeyValueStat } from '../stats/RunStats';
 import { PassiveLevel } from '../passive/PassiveItem';
+import type {
+  AutoChallengeType,
+  RunControlMode,
+  StrategySpeedBucket,
+} from '../runtime/RunModeConfig';
 import { CSV_SCHEMA_VERSION } from '../version/SchemaVersion';
 
 export type UpgradeSelectionModeLog = 'weighted_random' | 'score_best';
@@ -32,6 +37,12 @@ export interface PlaytestLogData {
   rulesetId: string;
   timestamp: string;
   autoMode: boolean;
+  controlMode?: RunControlMode;
+  autoChallengeType?: AutoChallengeType;
+  strategyProfileId?: string;
+  strategyProfileHash?: string;
+  simulationSpeedMultiplier?: number;
+  speedBucket?: StrategySpeedBucket;
   autoMovement: boolean;
   autoUpgrade: boolean;
   fastMode: boolean;
@@ -161,6 +172,12 @@ export class PlaytestLog {
     'mutatorIds',
     'rulesetId',
     'autoMode',
+    'controlMode',
+    'autoChallengeType',
+    'strategyProfileId',
+    'strategyProfileHash',
+    'simulationSpeedMultiplier',
+    'speedBucket',
     'autoMovement',
     'autoUpgrade',
     'fastMode',
@@ -303,6 +320,14 @@ export class PlaytestLog {
       data.mutatorIds.join('|'),
       data.rulesetId,
       data.autoMode ? 'true' : 'false',
+      data.controlMode ?? (data.autoMode ? 'autoStrategy' : 'manual'),
+      data.autoChallengeType ?? '',
+      data.strategyProfileId ?? '',
+      data.strategyProfileHash ?? '',
+      data.simulationSpeedMultiplier === undefined
+        ? ''
+        : PlaytestLog.formatNumber(data.simulationSpeedMultiplier),
+      data.speedBucket ?? '',
       data.autoMovement ? 'true' : 'false',
       data.autoUpgrade ? 'true' : 'false',
       data.fastMode ? 'true' : 'false',

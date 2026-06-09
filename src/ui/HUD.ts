@@ -10,6 +10,8 @@ import { SettingsManager } from '../settings/SettingsManager';
 import { setTextHitArea, stopPointerEvent } from './input/UIInteraction';
 import { MinimapOverlay } from './minimap/MinimapOverlay';
 import { MinimapEnemyPosition, WorldPosition } from './minimap/MinimapTypes';
+import { IconTooltipData } from './tooltip/IconTooltipTypes';
+import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme } from './UITheme';
 
 export interface HUDState {
@@ -84,6 +86,7 @@ type IconEntry = {
   icon?: Phaser.GameObjects.Image;
   fallback?: Phaser.GameObjects.Text;
   label: Phaser.GameObjects.Text;
+  tooltipData?: IconTooltipData;
   visualKey?: string;
 };
 
@@ -99,6 +102,8 @@ type BuildEntry = {
   passiveLevelLabel: Phaser.GameObjects.Text;
   weaponCooldownOverlay: Phaser.GameObjects.Rectangle;
   weaponCooldownText: Phaser.GameObjects.Text;
+  weaponTooltipData?: IconTooltipData;
+  passiveTooltipData?: IconTooltipData;
   visualKey?: string;
 };
 
@@ -109,6 +114,7 @@ type CharacterPortraitEntry = {
   cooldownText: Phaser.GameObjects.Text;
   icon?: Phaser.GameObjects.Image;
   fallback?: Phaser.GameObjects.Text;
+  tooltipData?: IconTooltipData;
   visualKey?: string;
 };
 
@@ -309,7 +315,7 @@ export class HUD {
 
   private updateIconList(
     entries: IconEntry[],
-    items: Array<{ id: string; textureKey?: string; label: string; fallback: string }>,
+    items: Array<{ id: string; textureKey?: string; label: string; fallback: string; tooltip?: IconTooltipData }>,
     x: number,
     y: number,
   ): void {
@@ -330,6 +336,7 @@ export class HUD {
       entry.container.setPosition(x, y + index * HUD.BUILD_ROW_HEIGHT);
       entry.container.setVisible(true);
       entry.label.setText(item.label);
+      entry.tooltipData = item.tooltip;
       const visualKey = item.textureKey && this.scene.textures.exists(item.textureKey)
         ? `texture:${item.textureKey}`
         : `fallback:${item.fallback}`;
@@ -375,6 +382,7 @@ export class HUD {
       0,
     );
     background.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
+    background.setInteractive({ useHandCursor: true });
     const label = this.scene.add.text(HUD.BUILD_ICON_SIZE / 2 + 10, -12, '', {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -383,7 +391,9 @@ export class HUD {
     });
 
     container.add([background, label]);
-    return { container, background, label };
+    const entry: IconEntry = { container, background, label };
+    attachIconTooltip(this.scene, background, () => container.visible ? entry.tooltipData : undefined);
+    return entry;
   }
 
   private createCharacterPortraitEntry(): CharacterPortraitEntry {
@@ -392,6 +402,7 @@ export class HUD {
     container.setScrollFactor(0);
     const background = this.scene.add.rectangle(0, 0, 56, 56, UITheme.iconBgColor, 0.86);
     background.setStrokeStyle(1, UITheme.panelBorderColor, 0.72);
+    background.setInteractive({ useHandCursor: true });
     const cooldownOverlay = this.scene.add.rectangle(0, 0, 56, 56, 0x020617, 0.58);
     const cooldownText = this.scene.add.text(0, 0, '', {
       color: '#f8fafc',
@@ -406,12 +417,14 @@ export class HUD {
     cooldownText.setVisible(false);
     container.add([background, cooldownOverlay, cooldownText]);
 
-    return {
+    const entry: CharacterPortraitEntry = {
       container,
       background,
       cooldownOverlay,
       cooldownText,
     };
+    attachIconTooltip(this.scene, background, () => container.visible ? entry.tooltipData : undefined);
+    return entry;
   }
 
   private updateCharacterPortrait(state: HUDState): void {
@@ -424,6 +437,10 @@ export class HUD {
     }
 
     entry.container.setVisible(true);
+    entry.tooltipData = {
+      kind: 'character',
+      id: info.characterId,
+    };
     const textureKey = info.portraitKey
       ?? AssetKeyResolver.getPlayerPortraitKey(this.scene, info.skinId, info.characterId)
       ?? undefined;
@@ -506,6 +523,8 @@ export class HUD {
       passiveLevelLabel?: string;
       cooldown?: HudCooldownStatus;
       showCooldownInHud?: boolean;
+      weaponTooltip?: IconTooltipData;
+      passiveTooltip?: IconTooltipData;
     }>,
     x: number,
     y: number,
@@ -530,6 +549,8 @@ export class HUD {
       entry.passiveLevelLabel.setText(item.passiveLevelLabel ?? '');
       entry.passiveBackground.setVisible(item.passiveIconKey !== undefined || item.passiveFallback !== undefined);
       entry.passiveLevelLabel.setVisible(item.passiveLevelLabel !== undefined);
+      entry.weaponTooltipData = item.weaponTooltip;
+      entry.passiveTooltipData = item.passiveTooltip;
       this.updateCooldownOverlay(
         entry.weaponCooldownOverlay,
         entry.weaponCooldownText,
@@ -579,8 +600,10 @@ export class HUD {
     container.setScrollFactor(0);
     const weaponBackground = this.scene.add.rectangle(0, 0, HUD.BUILD_ICON_SIZE, HUD.BUILD_ICON_SIZE, UITheme.iconBgColor, 0);
     weaponBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.55);
+    weaponBackground.setInteractive({ useHandCursor: true });
     const passiveBackground = this.scene.add.rectangle(HUD.BUILD_PASSIVE_ICON_X, 0, HUD.BUILD_ICON_SIZE, HUD.BUILD_ICON_SIZE, UITheme.iconBgColor, 0);
     passiveBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
+    passiveBackground.setInteractive({ useHandCursor: true });
     const weaponLevelLabel = this.scene.add.text(HUD.BUILD_WEAPON_LEVEL_X, -14, '', {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
@@ -618,7 +641,7 @@ export class HUD {
       weaponCooldownOverlay,
       weaponCooldownText,
     ]);
-    return {
+    const entry: BuildEntry = {
       container,
       weaponBackground,
       passiveBackground,
@@ -627,6 +650,11 @@ export class HUD {
       weaponCooldownOverlay,
       weaponCooldownText,
     };
+    attachIconTooltip(this.scene, weaponBackground, () => container.visible ? entry.weaponTooltipData : undefined);
+    attachIconTooltip(this.scene, passiveBackground, () => (
+      container.visible && passiveBackground.visible ? entry.passiveTooltipData : undefined
+    ));
+    return entry;
   }
 
   private addBuildIcon(
@@ -670,6 +698,7 @@ export class HUD {
     textureKey?: string;
     label: string;
     fallback: string;
+    tooltip?: IconTooltipData;
   }> {
     const weaponHudInfo = state.weaponHudInfo && state.weaponHudInfo.length > 0
       ? state.weaponHudInfo
@@ -680,6 +709,10 @@ export class HUD {
       textureKey: AssetKeyResolver.getWeaponIconKey(this.scene, weapon.weaponId) ?? undefined,
       label: this.getCompactWeaponLabel(weapon),
       fallback: this.getInitials(weapon.weaponId),
+      tooltip: {
+        kind: 'weapon',
+        id: weapon.weaponId,
+      },
     }));
   }
 
@@ -693,6 +726,8 @@ export class HUD {
     passiveLevelLabel?: string;
     cooldown?: HudCooldownStatus;
     showCooldownInHud?: boolean;
+    weaponTooltip?: IconTooltipData;
+    passiveTooltip?: IconTooltipData;
   }> {
     if (!state.weaponBuildHudInfo || state.weaponBuildHudInfo.length === 0) {
       return this.getWeaponIconItems(state).map((weapon) => ({
@@ -700,6 +735,7 @@ export class HUD {
         weaponIconKey: weapon.textureKey,
         weaponFallback: weapon.fallback,
         weaponLevelLabel: weapon.label,
+        weaponTooltip: weapon.tooltip,
       }));
     }
 
@@ -718,6 +754,16 @@ export class HUD {
         : undefined,
       cooldown: info.cooldown,
       showCooldownInHud: info.showCooldownInHud,
+      weaponTooltip: {
+        kind: 'weapon',
+        id: info.weaponId,
+        title: info.weaponName,
+      },
+      passiveTooltip: info.passiveId ? {
+        kind: 'passive',
+        id: info.passiveId,
+        title: info.passiveName,
+      } : undefined,
     }));
   }
 
@@ -733,6 +779,7 @@ export class HUD {
     textureKey?: string;
     label: string;
     fallback: string;
+    tooltip?: IconTooltipData;
   }> {
     const matchedPassiveIds = new Set(
       (state.weaponBuildHudInfo ?? [])
@@ -747,6 +794,11 @@ export class HUD {
         textureKey: AssetKeyResolver.getPassiveIconKey(this.scene, passive.id) ?? undefined,
         label: `Lv.${passive.level}`,
         fallback: this.getInitials(passive.id),
+        tooltip: {
+          kind: 'passive',
+          id: passive.id,
+          title: passive.name,
+        },
       }));
   }
 
@@ -755,12 +807,18 @@ export class HUD {
     textureKey?: string;
     label: string;
     fallback: string;
+    tooltip?: IconTooltipData;
   }> {
     return (state.passiveItems ?? []).map((passive) => ({
       id: passive.id,
       textureKey: AssetKeyResolver.getPassiveIconKey(this.scene, passive.id) ?? undefined,
       label: `Lv.${passive.level}`,
       fallback: this.getInitials(passive.id),
+      tooltip: {
+        kind: 'passive',
+        id: passive.id,
+        title: passive.name,
+      },
     }));
   }
 
@@ -1002,9 +1060,9 @@ export class HUD {
   }
 
   private getVisibleIconItems(
-    items: Array<{ id: string; textureKey?: string; label: string; fallback: string }>,
+    items: Array<{ id: string; textureKey?: string; label: string; fallback: string; tooltip?: IconTooltipData }>,
     maxRows = this.maxIconRows,
-  ): Array<{ id: string; textureKey?: string; label: string; fallback: string }> {
+  ): Array<{ id: string; textureKey?: string; label: string; fallback: string; tooltip?: IconTooltipData }> {
     if (maxRows <= 0) {
       return [];
     }
@@ -1034,6 +1092,8 @@ export class HUD {
       passiveLevelLabel?: string;
       cooldown?: HudCooldownStatus;
       showCooldownInHud?: boolean;
+      weaponTooltip?: IconTooltipData;
+      passiveTooltip?: IconTooltipData;
     }>,
   ): Array<{
     id: string;
@@ -1045,6 +1105,8 @@ export class HUD {
     passiveLevelLabel?: string;
     cooldown?: HudCooldownStatus;
     showCooldownInHud?: boolean;
+    weaponTooltip?: IconTooltipData;
+    passiveTooltip?: IconTooltipData;
   }> {
     if (items.length <= this.maxIconRows) {
       return items;

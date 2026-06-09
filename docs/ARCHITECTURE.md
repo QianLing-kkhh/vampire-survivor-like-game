@@ -39,6 +39,7 @@ The runtime layer keeps per-run object references and update order out of the sc
 
 - `GameplayContext`: per-run reference container for player, managers, flows, controllers, runtime settings, and active systems.
 - `GameplayInitializer`: creates per-run systems in a stable order and returns `GameplayContext`.
+- `gameplay/bootstrap`: small helpers for run selection resolution, `RunRuleSet` construction, runtime event bus/recorder/bridge creation, and final `GameplayContext` assembly. These helpers reduce initializer scope without changing the Phaser-backed runtime model yet.
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
 - `AutoPlayerContextBuilder`: builds the auto movement snapshot passed from `GameScene` into `AutoPlayer` without letting movement logic reach into scene state.
 - `UpgradeSelectionContextBuilder`: builds manual and auto upgrade selection contexts from current runtime managers and snapshots.
@@ -57,7 +58,7 @@ Current flow:
 
 1. `GameScene` starts the run.
 2. `GameScene` obtains selected character/stage/map through managers.
-3. `GameplayInitializer` builds the runtime systems and returns `GameplayContext`.
+3. `GameplayInitializer` delegates selection, rule-set creation, event runtime setup, and final context assembly to bootstrap helpers, then builds the remaining runtime systems and returns `GameplayContext`.
 4. `GameScene.update()` delegates runtime update to `GameplayUpdater`.
 5. Runtime helper classes prepare snapshots, settings sync, diagnostics, and result payloads.
 6. `GameScene` still owns Phaser scene operations, UI event emission, audio calls, pause gates, HUD emit, and ResultScene transition.

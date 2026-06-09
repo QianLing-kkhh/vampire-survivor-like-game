@@ -25,6 +25,7 @@ Per-run runtime composition and orchestration.
 Key owners:
 
 - `GameplayInitializer`: creates the runtime object graph.
+- `bootstrap/`: run selection resolution, rule-set creation, runtime event wiring, and final context assembly helpers used by `GameplayInitializer`.
 - `GameplayContext`: stores per-run references.
 - `GameplayUpdater`: advances systems in the frame update order.
 - `RuntimeDiagnosticsCollector`: gathers performance counts.

@@ -31,6 +31,7 @@ import { MapDefinition } from '../map/MapDefinition';
 import { MapManager } from '../map/MapManager';
 import { MapLightSourceDefinition } from '../map/mechanics/MapMechanicDefinition';
 import { PickupManager } from '../pickup/PickupManager';
+import { PhaserPlayerIntentAdapter } from '../phaser-adapter/PhaserPlayerIntentAdapter';
 import { TreasureManager } from '../pickup/TreasureManager';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerController } from '../player/PlayerController';
@@ -62,6 +63,8 @@ import { SpawnDirector } from '../spawn/SpawnDirector';
 import { StageDefinition } from '../stage/StageDefinition';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
+import { AutoTreasurePolicy } from '../strategy/policies/AutoTreasurePolicy';
+import { StrategyProfileRepository } from '../strategy/profile/StrategyProfileRepository';
 import { TreasureRewardCoordinator } from '../treasure/TreasureRewardCoordinator';
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -94,6 +97,7 @@ export class GameScene extends Phaser.Scene {
   private readonly autoPlayer = new AutoPlayer();
   private readonly autoPlayerContextBuilder = new AutoPlayerContextBuilder();
   private readonly autoUpgradeSelector = new AutoUpgradeSelector();
+  private readonly autoTreasurePolicy = new AutoTreasurePolicy();
   private readonly damageCalculator = new DamageCalculator();
   private readonly gameplayInitializer = new GameplayInitializer();
   private readonly gameplayUpdater = new GameplayUpdater();
@@ -954,7 +958,8 @@ export class GameScene extends Phaser.Scene {
         height: this.worldHeight,
       },
     });
-    const direction = this.autoPlayer.getMoveDirection(context);
+    const intent = this.autoPlayer.getMoveIntent(context);
+    const direction = PhaserPlayerIntentAdapter.toVector(intent);
 
     this.player.moveWithDirection(direction, deltaMs, 'auto');
   }
@@ -1117,7 +1122,16 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const result = this.upgradeFlow.applyTreasureReward(this.playtestSettings.autoOpenTreasure);
+    this.autoTreasurePolicy.setProfile(StrategyProfileRepository.getSelectedProfile());
+    const hpRatio = this.playerHealth && this.playerHealth.maxHp > 0
+      ? this.playerHealth.currentHp / this.playerHealth.maxHp
+      : 1;
+    const autoOpenTreasure = this.playtestSettings.autoOpenTreasure
+      && this.autoTreasurePolicy.shouldAutoOpenTreasure(
+        hpRatio,
+        this.getEvolutionCandidateStats().length > 0,
+      );
+    const result = this.upgradeFlow.applyTreasureReward(autoOpenTreasure);
 
     if (result.type !== 'pending' || !result.options?.length) {
       this.showTreasureRewardFloatingText(result);

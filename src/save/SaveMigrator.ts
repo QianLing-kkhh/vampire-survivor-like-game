@@ -15,6 +15,11 @@ import {
   serializeLeaderboardKey,
 } from '../leaderboard/LeaderboardKey';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
+import {
+  AutoStrategyProfile,
+  createDefaultStrategySaveData,
+} from '../strategy/profile/AutoStrategyProfile';
+import { StrategyProfileValidator } from '../strategy/profile/StrategyProfileValidator';
 import { TutorialState } from '../tutorial/TutorialState';
 import { VersionInfo, getCurrentVersionInfo } from '../version/VersionInfo';
 
@@ -58,6 +63,7 @@ export class SaveMigrator {
       progression: this.migrateProgression(save.progression),
       selections: this.migrateSelections(save.selections),
       cosmetics: this.migrateCosmetics(save.cosmetics, save.selections),
+      strategy: this.migrateStrategy(save.strategy),
       records: this.migrateRecords(save.records),
     };
   }
@@ -312,6 +318,33 @@ export class SaveMigrator {
     return createDefaultSaveData().records;
   }
 
+  private migrateStrategy(strategy: unknown): SaveData['strategy'] {
+    const defaultStrategy = createDefaultStrategySaveData();
+
+    if (!this.isObject(strategy) || !this.isObject(strategy.profilesById)) {
+      return defaultStrategy;
+    }
+
+    const profilesById = Object.entries(strategy.profilesById)
+      .reduce<Record<string, AutoStrategyProfile>>((result, [profileId, profile]) => {
+        const normalized = StrategyProfileValidator.normalize({
+          ...(this.isObject(profile) ? profile : {}),
+          id: this.isObject(profile) ? profile.id : profileId,
+        });
+
+        result[normalized.id] = normalized;
+        return result;
+      }, { ...defaultStrategy.profilesById });
+    const selectedProfileId = this.readOptionalString(strategy.selectedProfileId);
+
+    return {
+      selectedProfileId: selectedProfileId && profilesById[selectedProfileId]
+        ? selectedProfileId
+        : defaultStrategy.selectedProfileId,
+      profilesById,
+    };
+  }
+
   private normalizeLeaderboardsByKey(
     leaderboardsByKey: Record<string, unknown>,
   ): Record<string, LeaderboardRecord[]> {
@@ -429,6 +462,14 @@ export class SaveMigrator {
       contentHash: typeof record.contentHash === 'string' ? record.contentHash : undefined,
       timestamp,
       mode: typeof record.mode === 'string' ? record.mode : 'endless',
+      controlMode: record.controlMode === 'autoStrategy' ? 'autoStrategy' : 'manual',
+      autoChallengeType: this.readAutoChallengeType(record.autoChallengeType),
+      strategyProfileId: typeof record.strategyProfileId === 'string' ? record.strategyProfileId : undefined,
+      strategyProfileHash: typeof record.strategyProfileHash === 'string' ? record.strategyProfileHash : undefined,
+      simulationSpeedMultiplier: typeof record.simulationSpeedMultiplier === 'number'
+        ? record.simulationSpeedMultiplier
+        : undefined,
+      speedBucket: this.readSpeedBucket(record.speedBucket),
       survivalTime,
       endlessSurvivalTime,
       finalLevel: this.readNumber(record.finalLevel, 1, 1),
@@ -447,6 +488,25 @@ export class SaveMigrator {
       evolutionPath: this.readStringArray(record.evolutionPath),
       metadata: this.isObject(record.metadata) ? record.metadata : undefined,
     };
+  }
+
+  private readAutoChallengeType(value: unknown): LeaderboardRecord['autoChallengeType'] {
+    return value === 'normal' || value === 'endless' || value === 'scoreAttack'
+      ? value
+      : undefined;
+  }
+
+  private readSpeedBucket(value: unknown): LeaderboardRecord['speedBucket'] {
+    return (
+      value === '0.5x'
+      || value === '1.0x'
+      || value === '1.5x'
+      || value === '2.0x'
+      || value === '2.5x'
+      || value === '3.0x'
+    )
+      ? value
+      : undefined;
   }
 
   private readStringArray(value: unknown): string[] {

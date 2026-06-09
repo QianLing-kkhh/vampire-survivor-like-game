@@ -21,6 +21,10 @@ import {
 import { AchievementProgress } from '../achievement/AchievementProgress';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 import {
+  StrategySaveData,
+  createDefaultStrategySaveData,
+} from '../strategy/profile/AutoStrategyProfile';
+import {
   DEFAULT_TUTORIAL_STATE,
   TutorialState,
 } from '../tutorial/TutorialState';
@@ -78,6 +82,7 @@ export interface SaveData {
     selectedUiThemeId?: string;
     selectedWorldThemeId?: string;
   };
+  strategy: StrategySaveData;
   records: {
     leaderboardsByKey: Record<string, LeaderboardRecord[]>;
     challengeHistory: Record<string, {
@@ -154,6 +159,7 @@ export function createDefaultSaveData(): SaveData {
       selectedWeaponSkinByWeaponId: {},
       selectedEnemySkinByEnemyId: {},
     },
+    strategy: createDefaultStrategySaveData(),
     records: {
       leaderboardsByKey: {},
       challengeHistory: {},

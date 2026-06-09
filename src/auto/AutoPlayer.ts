@@ -2,6 +2,9 @@ import Phaser from 'phaser';
 
 import type { CharacterDamageReactionType } from '../character/CharacterDamageReactionSkill';
 import type { CharacterBaseStats } from '../character/CharacterDefinition';
+import type { PlayerIntent } from '../input/PlayerIntent';
+import { AutoStrategyEngine } from '../strategy/engine/AutoStrategyEngine';
+import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
 import type { WeaponTag } from '../weapon/tags/WeaponTag';
 
 export interface AutoPosition {
@@ -399,6 +402,11 @@ export class AutoPlayer {
   private autoMoveElapsedMs = 0;
   private autoMoveDebugSnapshot?: StrategicLookaheadDebugSnapshot;
   private enemyMotionSnapshots = new Map<string, EnemyMotionSnapshot>();
+  private readonly strategyEngine = new AutoStrategyEngine();
+
+  setStrategyProfile(profile: AutoStrategyProfile): void {
+    this.strategyEngine.setProfile(profile);
+  }
 
   getAutoMoveDebugSnapshot(): StrategicLookaheadDebugSnapshot | undefined {
     return this.autoMoveDebugSnapshot
@@ -518,6 +526,10 @@ export class AutoPlayer {
     return finalDirection;
   }
 
+  getMoveIntent(context: AutoPlayerContext): PlayerIntent {
+    return this.strategyEngine.toIntent(this.getMoveDirection(context));
+  }
+
   private getCommittedTacticalRoute(
     context: AutoPlayerContext,
     player: Phaser.Math.Vector2,
@@ -611,14 +623,15 @@ export class AutoPlayer {
       const stabilityScore = this.tacticalRoute && this.areRoutesSimilar(this.tacticalRoute.waypoints, route.waypoints)
         ? this.tacticalRoute.commitment
         : 0;
+      const weights = this.strategyEngine.getMovementWeights();
       const routeScore = -route.threatRank * 48
-        - route.rawThreat * 0.16
+        - route.rawThreat * 0.16 * weights.riskMultiplier
         + rewardScore
-        + route.combatFitScore
-        + xpRouteScore
-        + killRouteScore
+        + route.combatFitScore * weights.combatMultiplier
+        + xpRouteScore * weights.farmMultiplier
+        + killRouteScore * weights.combatMultiplier
         + stabilityScore
-        - overKitePenalty
+        - overKitePenalty * weights.overKitePenaltyMultiplier
         - (intent.avoidLinearEscape && route.id === 'direct' ? 34 : 0)
         - (route.hardInvalid ? 180 : 0);
       const scoredRoute = { ...route, rewardScore, xpRouteScore, killRouteScore, overKitePenalty, routeScore };
@@ -3220,7 +3233,13 @@ export class AutoPlayer {
         continue;
       }
 
-      let score = target.value - targetPressure - targetWarningRisk * 18;
+      const weights = this.strategyEngine.getMovementWeights();
+      const targetMultiplier = target.type === 'treasure'
+        ? weights.treasureMultiplier
+        : weights.farmMultiplier;
+      let score = target.value * targetMultiplier
+        - targetPressure * weights.riskMultiplier
+        - targetWarningRisk * 18;
 
       if (target.id === this.stickyTargetId) {
         score += AutoPlayer.TARGET_STICKY_BONUS;
@@ -3265,7 +3284,9 @@ export class AutoPlayer {
         ? pickup.dangerScore
         : this.getEnemyPressureAt(context, position, this.getHpRatio(context));
       const nearBonus = effectiveDistance <= 80 ? 8 : effectiveDistance <= 160 ? 4 : 0;
-      const value = 6 + clusterScore * 1.45 + nearBonus + 420 / (effectiveDistance + 80) - dangerScore * 0.35;
+      const weights = this.strategyEngine.getMovementWeights();
+      const value = (6 + clusterScore * 1.45 + nearBonus + 420 / (effectiveDistance + 80)) * weights.farmMultiplier
+        - dangerScore * 0.35 * weights.riskMultiplier;
       const id = `pickup:${Math.round(pickup.x)}:${Math.round(pickup.y)}`;
       const approachPosition = this.getApproachPosition(context, player, position, pickupRange);
       const waypoint = this.getNavigationWaypoint(context, player, approachPosition, id);
@@ -3295,7 +3316,9 @@ export class AutoPlayer {
       const dangerScore = 'dangerScore' in treasure && treasure.dangerScore !== undefined
         ? treasure.dangerScore
         : this.getEnemyPressureAt(context, position, this.getHpRatio(context));
-      const value = 18 + 900 / (effectiveDistance + 120) - dangerScore * 0.55;
+      const weights = this.strategyEngine.getMovementWeights();
+      const value = (18 + 900 / (effectiveDistance + 120)) * weights.treasureMultiplier
+        - dangerScore * 0.55 * weights.riskMultiplier;
       const id = `treasure:${Math.round(treasure.x)}:${Math.round(treasure.y)}`;
       const approachPosition = this.getApproachPosition(context, player, position, pickupRange);
       const waypoint = this.getNavigationWaypoint(context, player, approachPosition, id);

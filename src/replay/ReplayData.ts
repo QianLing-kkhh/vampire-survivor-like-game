@@ -1,5 +1,9 @@
 import { VersionInfo } from '../version/VersionInfo';
 import { RunMetadata } from '../run/RunMetadata';
+import type {
+  RunControlMode,
+  StrategySpeedBucket,
+} from '../runtime/RunModeConfig';
 
 export interface ReplaySelectionSnapshot {
   selectedCharacterId?: string;
@@ -21,6 +25,11 @@ export interface ReplaySettingsSnapshot {
   autoUpgrade: boolean;
   fastMode: boolean;
   endlessMode: boolean;
+  controlMode?: RunControlMode;
+  strategyProfileId?: string;
+  strategyProfileHash?: string;
+  simulationSpeedMultiplier?: number;
+  speedBucket?: StrategySpeedBucket;
 }
 
 export interface ReplayInputSample {

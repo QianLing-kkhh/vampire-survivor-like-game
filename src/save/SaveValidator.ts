@@ -19,6 +19,7 @@ export class SaveValidator {
     this.validateObjectField(data, 'progression', issues);
     this.validateSelections(data.selections, issues);
     this.validateCosmetics(data.cosmetics, issues);
+    this.validateStrategy(data.strategy, issues);
     this.validateRecords(data.records, issues);
 
     return createSaveImportResult(issues, issues.some((issue) => issue.level === 'error')
@@ -145,6 +146,31 @@ export class SaveValidator {
       'cosmetics.selectedEnemySkinByEnemyId',
       issues,
     );
+  }
+
+  private validateStrategy(value: unknown, issues: SaveImportIssue[]): void {
+    if (value === undefined) {
+      return;
+    }
+
+    if (!this.isObject(value)) {
+      issues.push(this.warning(
+        'invalid_strategy',
+        'strategy is invalid; migrator will apply defaults.',
+        'strategy',
+      ));
+      return;
+    }
+
+    this.validateOptionalString(value, 'selectedProfileId', 'strategy.selectedProfileId', issues);
+
+    if (value.profilesById !== undefined && !this.isObject(value.profilesById)) {
+      issues.push(this.warning(
+        'invalid_strategy_profiles',
+        'strategy.profilesById should be an object.',
+        'strategy.profilesById',
+      ));
+    }
   }
 
   private validateOptionalString(
