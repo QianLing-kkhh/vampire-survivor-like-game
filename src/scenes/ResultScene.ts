@@ -5,6 +5,7 @@ import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { CharacterManager } from '../character/CharacterManager';
 import { EndlessLeaderboardEntry } from '../endless/EndlessLeaderboard';
 import { I18n } from '../i18n/I18n';
+import type { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { PassiveLevel } from '../passive/PassiveItem';
 import { LayoutConfig } from '../responsive/LayoutConfig';
@@ -68,6 +69,8 @@ interface ResultSceneData {
   endlessDamageTaken?: number;
   endlessLeaderboardRank?: number;
   endlessLeaderboardEntries?: EndlessLeaderboardEntry[];
+  localLeaderboardRank?: number;
+  localLeaderboardEntries?: LeaderboardRecord[];
   endlessBossSpawnCount?: number;
   endlessBossKillCount?: number;
   endlessBossIdsKilled?: string[];
@@ -183,6 +186,25 @@ export class ResultScene extends Phaser.Scene {
         layout.leaderboardArea.x + layout.leaderboardArea.width / 2,
         layout.leaderboardArea.y,
         this.formatLeaderboardLines(data.endlessLeaderboardEntries, layout.leaderboardMaxRows),
+        {
+          color: UITheme.mutedTextColor,
+          fontFamily: UITheme.fontFamily,
+          fontSize: layout.smallFontSize,
+          align: 'center',
+          lineSpacing: 2,
+          wordWrap: { width: layout.leaderboardArea.width },
+        },
+      );
+      leaderboard.setOrigin(0.5, 0);
+    } else if (data.localLeaderboardEntries?.length) {
+      const leaderboard = this.add.text(
+        layout.leaderboardArea.x + layout.leaderboardArea.width / 2,
+        layout.leaderboardArea.y,
+        this.formatLocalLeaderboardLines(
+          data.localLeaderboardEntries,
+          data.localLeaderboardRank ?? 0,
+          layout.leaderboardMaxRows,
+        ),
         {
           color: UITheme.mutedTextColor,
           fontFamily: UITheme.fontFamily,
@@ -507,6 +529,31 @@ export class ResultScene extends Phaser.Scene {
       )),
       ...(hiddenCount > 0 ? [I18n.t('result.more', { count: hiddenCount })] : []),
     ];
+  }
+
+  private formatLocalLeaderboardLines(
+    entries: LeaderboardRecord[],
+    currentRank: number,
+    maxRows: number,
+  ): string[] {
+    const visibleCount = Math.max(0, maxRows - 1);
+    const visibleEntries = entries.slice(0, visibleCount);
+    const hiddenCount = Math.max(0, entries.length - visibleEntries.length);
+    const mode = entries[0]?.mode ?? 'normal';
+
+    return [
+      `Local ${mode} leaderboard${currentRank > 0 ? ` / this run #${currentRank}` : ''}`,
+      ...visibleEntries.map((entry, index) => this.formatLocalLeaderboardEntry(entry, index + 1)),
+      ...(hiddenCount > 0 ? [I18n.t('result.more', { count: hiddenCount })] : []),
+    ];
+  }
+
+  private formatLocalLeaderboardEntry(entry: LeaderboardRecord, rank: number): string {
+    if (entry.mode === 'scoreAttack') {
+      return `#${rank} ${entry.score ?? 0} score / Lv${entry.finalLevel} / ${entry.killCount} kills`;
+    }
+
+    return `#${rank} ${this.formatTime(entry.survivalTime)} / Lv${entry.finalLevel} / ${entry.killCount} kills`;
   }
 
   private addButtonHover(
