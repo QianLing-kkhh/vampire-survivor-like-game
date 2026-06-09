@@ -18,6 +18,9 @@
     "validate:external-art": "node scripts/validate-external-art.mjs",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
     "analyze:csv": "node scripts/analyze-playtest-csv.mjs",
+    "simulate": "node scripts/run-headless-sim.mjs",
+    "simulate:batch": "node scripts/run-headless-batch.mjs",
+    "validate:sim": "node scripts/check-headless-determinism.mjs",
     "pre-release": "node scripts/pre-release-check.mjs"
   },
   "dependencies": {

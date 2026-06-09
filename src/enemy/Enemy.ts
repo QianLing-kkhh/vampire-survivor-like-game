@@ -33,6 +33,7 @@ export interface EnemyKilledEvent {
   x: number;
   y: number;
   exp: number;
+  mergeLevel?: number;
   enemyId?: string;
   isBoss?: boolean;
   isBossLike?: boolean;
@@ -1005,6 +1006,7 @@ export class Enemy {
       x: this.body.x,
       y: this.body.y,
       exp: this.exp,
+      mergeLevel: this.mergeLevel,
       enemyId: this.id,
       isBoss: this.id.endsWith('_boss') || this.id === 'boss',
       isBossLike: this.bossLike,

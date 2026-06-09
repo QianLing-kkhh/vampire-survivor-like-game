@@ -12,6 +12,7 @@ import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { PlayerStats } from '../player/PlayerStats';
 import { RunState } from '../run/RunState';
+import type { ScoreSource } from '../score/ScoreRules';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -85,8 +86,13 @@ export class EnemyFlow {
         return;
       }
 
+      const scoreSource = this.getScoreSource(event);
+
       this.config.runState.recordKill();
-      this.config.runState.recordScore(this.getScoreSource(event));
+      this.config.runState.recordScore(
+        scoreSource,
+        this.getScoreMultiplier(event, scoreSource),
+      );
       AudioManager.playSfx(this.config.scene, 'enemy_killed', {
         autoMode: this.config.playtestSettings.autoMode,
       });
@@ -741,7 +747,7 @@ export class EnemyFlow {
     return body.radius ?? 12;
   }
 
-  private getScoreSource(event: GameEventMap['EnemyKilled']) {
+  private getScoreSource(event: GameEventMap['EnemyKilled']): ScoreSource {
     const enemyId = event.enemyId ?? '';
 
     if (enemyId === this.config.finalBossId) {
@@ -758,6 +764,16 @@ export class EnemyFlow {
     }
 
     return 'normalEnemy';
+  }
+
+  private getScoreMultiplier(event: GameEventMap['EnemyKilled'], scoreSource: ScoreSource): number {
+    if (scoreSource !== 'normalEnemy') {
+      return 1;
+    }
+
+    const mergeLevel = Math.max(1, Math.floor(event.mergeLevel ?? 1));
+
+    return 4 ** (mergeLevel - 1);
   }
 
 }

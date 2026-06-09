@@ -261,8 +261,8 @@ export class RunState {
 
     switch (source) {
       case 'normalEnemy':
-        this.score += SCORE_RULES.normalEnemyKill;
-        this.normalEnemyScore += SCORE_RULES.normalEnemyKill;
+        this.score += SCORE_RULES.normalEnemyKill * scoreMultiplier;
+        this.normalEnemyScore += SCORE_RULES.normalEnemyKill * scoreMultiplier;
         break;
       case 'miniBoss':
         this.score += SCORE_RULES.miniBossKill;
