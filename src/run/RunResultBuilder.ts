@@ -1,6 +1,7 @@
 import { PlaytestLog } from '../logging/PlaytestLog';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
 import { EndlessLeaderboard } from '../endless/EndlessLeaderboard';
+import { RunLeaderboard } from '../leaderboard/RunLeaderboard';
 import { ExpManager } from '../progression/ExpManager';
 import { LevelManager } from '../progression/LevelManager';
 import { UpgradeSelectionModeLog } from '../logging/PlaytestLog';
@@ -66,11 +67,13 @@ export class RunResultBuilder {
     const finalPickupRange = context.playerStats?.pickupRange ?? 0;
     const finalMaxHp = context.playerHealth?.maxHp ?? context.playerStats?.maxHp ?? 0;
     const bossFightDuration = this.getBossFightDuration(context);
-    const endlessLeaderboardRank = this.updateEndlessLeaderboard({
+    const leaderboardResult = this.updateRunLeaderboard({
       runState: context.runState,
+      resultType: context.resultType,
       survivalTime: context.survivalTime,
       finalLevel,
       killCount: context.runState.killCount,
+      score: context.runState.score,
       weaponIds,
       passiveItems,
       metadata,
@@ -169,7 +172,7 @@ export class RunResultBuilder {
       endlessDamageTaken: context.runState.endlessDamageTaken,
       endlessTreasureDropCount: context.runState.endlessTreasureDropCount,
       endlessTreasureOpenCount: context.runState.endlessTreasureOpenCount,
-      endlessLeaderboardRank,
+      endlessLeaderboardRank: context.runState.endlessStarted ? leaderboardResult.rank ?? 0 : 0,
       endlessScalingLevel: context.runState.endlessScalingLevel,
       endlessHpMultiplier: context.runState.endlessHpMultiplier,
       endlessDamageMultiplier: context.runState.endlessDamageMultiplier,
@@ -274,7 +277,7 @@ export class RunResultBuilder {
       endlessDamageTaken: context.runState.endlessDamageTaken,
       endlessTreasureDropCount: context.runState.endlessTreasureDropCount,
       endlessTreasureOpenCount: context.runState.endlessTreasureOpenCount,
-      endlessLeaderboardRank,
+      endlessLeaderboardRank: context.runState.endlessStarted ? leaderboardResult.rank ?? 0 : 0,
       endlessScalingLevel: context.runState.endlessScalingLevel,
       endlessHpMultiplier: context.runState.endlessHpMultiplier,
       endlessDamageMultiplier: context.runState.endlessDamageMultiplier,
@@ -315,6 +318,8 @@ export class RunResultBuilder {
       finalPickupRange,
       finalMaxHp,
       endlessLeaderboardEntries: EndlessLeaderboard.getEntries(metadata),
+      localLeaderboardRank: leaderboardResult.rank ?? 0,
+      localLeaderboardEntries: leaderboardResult.records,
       weaponIds,
       passiveItems,
       relicIds,
@@ -370,32 +375,33 @@ export class RunResultBuilder {
     );
   }
 
-  private updateEndlessLeaderboard(context: {
+  private updateRunLeaderboard(context: {
     runState: RunState;
+    resultType: 'gameOver' | 'victory';
     survivalTime: number;
     finalLevel: number;
     killCount: number;
+    score: number;
     weaponIds: string[];
     passiveItems: ReturnType<PassiveManager['getPassiveLevels']>;
     metadata: ReturnType<RunState['getRunMetadata']>;
-  }): number {
-    if (!context.runState.endlessStarted) {
-      context.runState.recordEndlessLeaderboardRank(null);
-      return 0;
-    }
-
-    const rank = EndlessLeaderboard.add({
-      timestamp: new Date().toISOString(),
-      endlessSurvivalTime: context.runState.endlessSurvivalTime,
-      totalSurvivalTime: context.survivalTime,
+  }): ReturnType<typeof RunLeaderboard.addRunResult> {
+    const result = RunLeaderboard.addRunResult({
+      runState: context.runState,
+      metadata: context.metadata,
+      resultType: context.resultType,
+      survivalTime: context.survivalTime,
       finalLevel: context.finalLevel,
       killCount: context.killCount,
+      score: context.score,
       weaponIds: context.weaponIds,
       passiveItems: context.passiveItems,
       evolutionPath: context.runState.evolutionPath,
-    }, context.metadata);
+    });
 
-    context.runState.recordEndlessLeaderboardRank(rank);
-    return rank ?? 0;
+    context.runState.recordEndlessLeaderboardRank(context.runState.endlessStarted
+      ? result.rank
+      : null);
+    return result;
   }
 }
