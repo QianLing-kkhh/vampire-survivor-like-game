@@ -2,6 +2,7 @@ import { VersionInfo } from '../version/VersionInfo';
 import { RunMetadata } from '../run/RunMetadata';
 import type {
   RunControlMode,
+  StrategyControlType,
   StrategySpeedBucket,
 } from '../runtime/RunModeConfig';
 
@@ -28,6 +29,8 @@ export interface ReplaySettingsSnapshot {
   controlMode?: RunControlMode;
   strategyProfileId?: string;
   strategyProfileHash?: string;
+  strategyControlType?: StrategyControlType;
+  allowRuntimeStrategyEdit?: boolean;
   simulationSpeedMultiplier?: number;
   speedBucket?: StrategySpeedBucket;
 }

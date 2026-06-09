@@ -1,6 +1,7 @@
 import type {
   AutoChallengeType,
   LeaderboardControlMode,
+  StrategyControlType,
   StrategySpeedBucket,
 } from '../runtime/RunModeConfig';
 
@@ -19,6 +20,7 @@ export interface LeaderboardKey {
   customStageId?: string;
   rulesetId?: string;
   strategyProfileHash?: string;
+  strategyControlType?: StrategyControlType;
   speedBucket?: StrategySpeedBucket;
 }
 
@@ -35,6 +37,7 @@ const LEADERBOARD_KEY_FIELDS: Array<keyof LeaderboardKey> = [
   'customStageId',
   'rulesetId',
   'strategyProfileHash',
+  'strategyControlType',
   'speedBucket',
 ];
 
@@ -60,6 +63,7 @@ export function createLeaderboardKey(params: LeaderboardKey): LeaderboardKey {
     customStageId: params.customStageId,
     rulesetId: params.rulesetId,
     strategyProfileHash: params.strategyProfileHash,
+    strategyControlType: params.strategyControlType,
     speedBucket: params.speedBucket,
   };
 }
@@ -115,6 +119,7 @@ export function parseLeaderboardKey(serialized: string): LeaderboardKey | null {
     customStageId: readOptionalValue(values, 'customStageId'),
     rulesetId: readOptionalValue(values, 'rulesetId'),
     strategyProfileHash: readOptionalValue(values, 'strategyProfileHash'),
+    strategyControlType: readStrategyControlType(values.get('strategyControlType')),
     speedBucket: readSpeedBucket(values.get('speedBucket')),
   });
 }
@@ -131,6 +136,10 @@ function readControlMode(value: string | undefined): LeaderboardControlMode | un
 
 function readAutoChallengeType(value: string | undefined): AutoChallengeType | undefined {
   return value === 'normal' || value === 'endless' || value === 'scoreAttack' ? value : undefined;
+}
+
+function readStrategyControlType(value: string | undefined): StrategyControlType | undefined {
+  return value === 'fixed' || value === 'live' ? value : undefined;
 }
 
 function readSpeedBucket(value: string | undefined): StrategySpeedBucket | undefined {

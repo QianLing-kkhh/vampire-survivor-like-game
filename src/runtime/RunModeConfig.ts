@@ -2,6 +2,7 @@ import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfil
 
 export type RunControlMode = 'manual' | 'autoStrategy' | 'replay';
 export type AutoChallengeType = 'normal' | 'endless' | 'scoreAttack';
+export type StrategyControlType = 'fixed' | 'live';
 
 export type StrategySpeedBucket =
   | '0.5x'
@@ -17,6 +18,8 @@ export interface RunModeConfig {
   strategyProfileId?: string;
   strategyProfileHash?: string;
   strategyProfile?: AutoStrategyProfile;
+  strategyControlType?: StrategyControlType;
+  allowRuntimeStrategyEdit?: boolean;
   simulationSpeedMultiplier: number;
   viewPlaybackSpeedMultiplier: number;
   speedBucket: StrategySpeedBucket;

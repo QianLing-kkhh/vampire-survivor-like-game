@@ -45,7 +45,7 @@ import { UpgradeSelectionContext, UpgradeSelector } from '../progression/Upgrade
 import { RunState } from '../run/RunState';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
-import { createSpeedBucket } from '../runtime/RunModeConfig';
+import { createSpeedBucket, type StrategyControlType } from '../runtime/RunModeConfig';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
 import { StrategyHasher } from '../strategy/hash/StrategyHasher';
@@ -151,6 +151,8 @@ export class GameplayInitializer {
     const autoChallengeType = autoStrategyEnabled
       ? config.playtestSettings.endlessMode ? 'endless' : 'normal'
       : undefined;
+    const strategyControlType: StrategyControlType | undefined = autoStrategyEnabled ? 'fixed' : undefined;
+    const allowRuntimeStrategyEdit = false;
     const {
       gameEventBus,
       gameEventRecorder,
@@ -315,6 +317,7 @@ export class GameplayInitializer {
       customStageId: selection.customStageId,
       rulesetId: runRuleSet.rulesetId,
       strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
+      strategyControlType,
       speedBucket,
     }));
     config.runState.setRunMetadata({
@@ -343,6 +346,8 @@ export class GameplayInitializer {
       autoChallengeType,
       strategyProfileId: autoStrategyEnabled ? strategyProfile.id : undefined,
       strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
+      strategyControlType,
+      allowRuntimeStrategyEdit,
       simulationSpeedMultiplier,
       speedBucket,
     });
@@ -371,6 +376,8 @@ export class GameplayInitializer {
         controlMode,
         strategyProfileId: autoStrategyEnabled ? strategyProfile.id : undefined,
         strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
+        strategyControlType,
+        allowRuntimeStrategyEdit,
         simulationSpeedMultiplier,
         speedBucket,
       },

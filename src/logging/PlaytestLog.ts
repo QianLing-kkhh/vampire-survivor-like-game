@@ -4,6 +4,7 @@ import { PassiveLevel } from '../passive/PassiveItem';
 import type {
   AutoChallengeType,
   RunControlMode,
+  StrategyControlType,
   StrategySpeedBucket,
 } from '../runtime/RunModeConfig';
 import { CSV_SCHEMA_VERSION } from '../version/SchemaVersion';
@@ -41,6 +42,12 @@ export interface PlaytestLogData {
   autoChallengeType?: AutoChallengeType;
   strategyProfileId?: string;
   strategyProfileHash?: string;
+  strategyControlType?: StrategyControlType;
+  allowRuntimeStrategyEdit?: boolean;
+  runtimeStrategyEdited?: boolean;
+  strategyEditCount?: number;
+  runtimeStrategyFinalHash?: string;
+  strategyEditTimeline?: string;
   simulationSpeedMultiplier?: number;
   speedBucket?: StrategySpeedBucket;
   strategyTelemetrySummary?: string;
@@ -177,6 +184,12 @@ export class PlaytestLog {
     'autoChallengeType',
     'strategyProfileId',
     'strategyProfileHash',
+    'strategyControlType',
+    'allowRuntimeStrategyEdit',
+    'runtimeStrategyEdited',
+    'strategyEditCount',
+    'runtimeStrategyFinalHash',
+    'strategyEditTimeline',
     'simulationSpeedMultiplier',
     'speedBucket',
     'strategyTelemetrySummary',
@@ -326,6 +339,12 @@ export class PlaytestLog {
       data.autoChallengeType ?? '',
       data.strategyProfileId ?? '',
       data.strategyProfileHash ?? '',
+      data.strategyControlType ?? '',
+      data.allowRuntimeStrategyEdit === undefined ? '' : data.allowRuntimeStrategyEdit ? 'true' : 'false',
+      data.runtimeStrategyEdited === undefined ? '' : data.runtimeStrategyEdited ? 'true' : 'false',
+      data.strategyEditCount === undefined ? '' : data.strategyEditCount.toString(),
+      data.runtimeStrategyFinalHash ?? '',
+      data.strategyEditTimeline ?? '',
       data.simulationSpeedMultiplier === undefined
         ? ''
         : PlaytestLog.formatNumber(data.simulationSpeedMultiplier),

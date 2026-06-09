@@ -1,6 +1,7 @@
 import type {
   AutoChallengeType,
   RunControlMode,
+  StrategyControlType,
   StrategySpeedBucket,
 } from '../runtime/RunModeConfig';
 
@@ -34,6 +35,8 @@ export interface RunMetadata {
   autoChallengeType?: AutoChallengeType;
   strategyProfileId?: string;
   strategyProfileHash?: string;
+  strategyControlType?: StrategyControlType;
+  allowRuntimeStrategyEdit?: boolean;
   simulationSpeedMultiplier?: number;
   speedBucket?: StrategySpeedBucket;
 }
