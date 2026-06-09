@@ -12,6 +12,7 @@ export interface AutoPosition {
 export interface AutoPlayerSnapshot {
   currentHp: number;
   maxHp: number;
+  level?: number;
   hitRadiusPx?: number;
   radiusPx?: number;
   moveSpeed?: number;
@@ -168,6 +169,7 @@ type MoveMode =
   | 'REPOSITION'
   | 'BOSS_POSITIONING'
   | 'KITE'
+  | 'COMBAT_FARM'
   | 'CHEST_APPROACH'
   | 'COLLECT';
 
@@ -194,6 +196,15 @@ interface StrategicMoveIntent {
 interface StrategicLookaheadDebugSnapshot {
   preferredPathStyle: StrategicPathStyle;
   strategicLookaheadSeconds: number;
+  farmGrowthUrgency: number;
+  combatOpportunityScore: number;
+  xpAccessScore: number;
+  killZoneScore: number;
+  weaponEffectivePositionScore: number;
+  xpRouteScore: number;
+  killRouteScore: number;
+  overKitePenalty: number;
+  combatWindow: boolean;
   futurePlayerDensityRisk: number;
   futureTargetZoneDensityRisk: number;
   futurePathInterceptionRisk: number;
@@ -228,6 +239,9 @@ interface TacticalRoute {
   rawThreat: number;
   rewardScore: number;
   combatFitScore: number;
+  xpRouteScore: number;
+  killRouteScore: number;
+  overKitePenalty: number;
   routeScore: number;
   createdAt: number;
   validUntil: number;
@@ -241,6 +255,9 @@ interface CandidateRoute {
   threatRank: number;
   rewardScore: number;
   combatFitScore: number;
+  xpRouteScore: number;
+  killRouteScore: number;
+  overKitePenalty: number;
   routeScore: number;
   hardInvalid: boolean;
 }
@@ -387,6 +404,32 @@ export class AutoPlayer {
     return this.autoMoveDebugSnapshot
       ? { ...this.autoMoveDebugSnapshot }
       : undefined;
+  }
+
+  private getEmptyAutoMoveDebugSnapshot(): StrategicLookaheadDebugSnapshot {
+    return {
+      preferredPathStyle: 'DIRECT',
+      strategicLookaheadSeconds: 0,
+      farmGrowthUrgency: 0,
+      combatOpportunityScore: 0,
+      xpAccessScore: 0,
+      killZoneScore: 0,
+      weaponEffectivePositionScore: 0,
+      xpRouteScore: 0,
+      killRouteScore: 0,
+      overKitePenalty: 0,
+      combatWindow: false,
+      futurePlayerDensityRisk: 0,
+      futureTargetZoneDensityRisk: 0,
+      futurePathInterceptionRisk: 0,
+      lureQuality: 0,
+      escapeCorridorScore: 0,
+      loopSustainability: 0,
+      futureBoundaryRisk: 0,
+      linearEscapePenalty: 0,
+      continuationScore: 0,
+      deadEndAfterArrivalRisk: 0,
+    };
   }
 
   getMoveDirection(context: AutoPlayerContext): Phaser.Math.Vector2 {
@@ -545,7 +588,10 @@ export class AutoPlayer {
         rawThreat,
         threatRank: 0,
         rewardScore: 0,
-        combatFitScore: this.evaluateRouteCombatFit(context, player, route.waypoints, danger),
+        combatFitScore: this.evaluateRouteCombatFit(context, player, route.waypoints, danger, intent),
+        xpRouteScore: 0,
+        killRouteScore: 0,
+        overKitePenalty: 0,
         routeScore: 0,
         hardInvalid: this.isRouteHardInvalid(context, player, route.waypoints, intent, rawThreat),
       };
@@ -559,6 +605,9 @@ export class AutoPlayer {
 
     for (const route of rankedRoutes) {
       const rewardScore = this.evaluateRouteRewardScore(context, player, route.waypoints, intent, route.threatRank);
+      const xpRouteScore = this.evaluateXpRouteScore(context, player, route.waypoints, intent, route.threatRank);
+      const killRouteScore = this.evaluateKillRouteScore(context, player, route.waypoints, intent, danger, route.threatRank);
+      const overKitePenalty = this.evaluateOverKitePenalty(context, player, route.waypoints, intent, danger);
       const stabilityScore = this.tacticalRoute && this.areRoutesSimilar(this.tacticalRoute.waypoints, route.waypoints)
         ? this.tacticalRoute.commitment
         : 0;
@@ -566,10 +615,13 @@ export class AutoPlayer {
         - route.rawThreat * 0.16
         + rewardScore
         + route.combatFitScore
+        + xpRouteScore
+        + killRouteScore
         + stabilityScore
+        - overKitePenalty
         - (intent.avoidLinearEscape && route.id === 'direct' ? 34 : 0)
         - (route.hardInvalid ? 180 : 0);
-      const scoredRoute = { ...route, rewardScore, routeScore };
+      const scoredRoute = { ...route, rewardScore, xpRouteScore, killRouteScore, overKitePenalty, routeScore };
 
       if (!bestRoute || scoredRoute.routeScore > bestRoute.routeScore) {
         bestRoute = scoredRoute;
@@ -583,8 +635,19 @@ export class AutoPlayer {
       threatRank: 4,
       rewardScore: 0,
       combatFitScore: 0,
+      xpRouteScore: 0,
+      killRouteScore: 0,
+      overKitePenalty: 0,
       routeScore: Number.NEGATIVE_INFINITY,
       hardInvalid: true,
+    };
+    this.autoMoveDebugSnapshot = {
+      ...(this.autoMoveDebugSnapshot ?? this.getEmptyAutoMoveDebugSnapshot()),
+      weaponEffectivePositionScore: selected.combatFitScore,
+      xpRouteScore: selected.xpRouteScore,
+      killRouteScore: selected.killRouteScore,
+      overKitePenalty: selected.overKitePenalty,
+      combatWindow: this.isCombatWindow(context, player, danger, intent),
     };
 
     return {
@@ -595,6 +658,9 @@ export class AutoPlayer {
       rawThreat: selected.rawThreat,
       rewardScore: selected.rewardScore,
       combatFitScore: selected.combatFitScore,
+      xpRouteScore: selected.xpRouteScore,
+      killRouteScore: selected.killRouteScore,
+      overKitePenalty: selected.overKitePenalty,
       routeScore: selected.routeScore,
       createdAt: this.autoMoveElapsedMs,
       validUntil: this.autoMoveElapsedMs + AutoPlayer.TACTICAL_ROUTE_VALID_MS,
@@ -935,6 +1001,7 @@ export class AutoPlayer {
     player: Phaser.Math.Vector2,
     waypoints: readonly Phaser.Math.Vector2[],
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    intent: StrategicMoveIntent,
   ): number {
     if (waypoints.length < 2) {
       return 0;
@@ -947,7 +1014,156 @@ export class AutoPlayer {
       return 0;
     }
 
-    return this.getWeaponCandidateScore(context, player, firstWaypoint, direction.normalize(), danger) * 4;
+    const normalized = direction.normalize();
+    const routeSamples = this.getRouteSamplePoints(player, waypoints);
+    const combatWindow = this.isCombatWindow(context, player, danger, intent);
+    let score = this.getWeaponCandidateScore(context, player, firstWaypoint, normalized, danger) * 4;
+
+    for (const sample of routeSamples) {
+      score += this.evaluateWeaponEffectivePosition(context, sample, danger) * (combatWindow ? 0.9 : 0.46);
+    }
+
+    if (intent.mode === 'COMBAT_FARM') {
+      score *= 1.18 + this.evaluateFarmGrowthUrgency(context) * 0.5;
+    }
+
+    return score / Math.max(1, routeSamples.length * 0.55);
+  }
+
+  private evaluateXpRouteScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+    intent: StrategicMoveIntent,
+    threatRank: number,
+  ): number {
+    if (threatRank > 1 || !this.isFarmSafeForGrowth(context, player)) {
+      return 0;
+    }
+
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const routeSamples = this.getRouteSamplePoints(player, waypoints);
+    let score = 0;
+
+    for (const pickup of context.pickupPositions) {
+      const pickupPoint = new Phaser.Math.Vector2(pickup.x, pickup.y);
+      const routeDistance = this.getDistanceToRoute(pickupPoint, waypoints);
+
+      if (routeDistance > AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.25) {
+        continue;
+      }
+
+      const pickupPressure = this.getEnemyPressureAt(context, pickupPoint, this.getHpRatio(context));
+      const warningRisk = this.getTotalBossWarningRisk(context, pickupPoint);
+
+      if (pickupPressure > 5.2 || warningRisk > 0) {
+        continue;
+      }
+
+      const expValue = this.getPickupExpValue(pickup);
+      const clusterValue = this.getPickupClusterScore(context, pickup);
+      const distanceBonus = Math.max(0, AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.25 - routeDistance)
+        / (AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.25);
+      score += (expValue * 1.2 + clusterValue * 0.42) * distanceBonus;
+    }
+
+    if (intent.target?.type === 'pickup') {
+      const routeDistance = this.getDistanceToRoute(intent.target.approachPosition, waypoints);
+      score += Math.max(0, 180 - routeDistance) * 0.055;
+    }
+
+    return score * (0.7 + growthUrgency * 1.3) / Math.max(1, routeSamples.length * 0.18);
+  }
+
+  private evaluateKillRouteScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+    intent: StrategicMoveIntent,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    threatRank: number,
+  ): number {
+    if (threatRank > 2 || context.enemyPositions.length === 0) {
+      return 0;
+    }
+
+    const routeSamples = this.getRouteSamplePoints(player, waypoints);
+    const range = this.getWeaponEffectiveRange(context);
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    let score = 0;
+
+    for (const sample of routeSamples) {
+      let enemiesInBand = 0;
+      let enemiesTooClose = 0;
+
+      for (const enemy of context.enemyPositions) {
+        const distance = this.getEnemyEffectiveDistance(context, sample, enemy);
+
+        if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+          enemiesTooClose += 1;
+          continue;
+        }
+
+        if (distance >= range.min && distance <= range.max) {
+          enemiesInBand += this.getEnemyThreatWeight(enemy);
+        }
+      }
+
+      score += enemiesInBand * 1.9 - enemiesTooClose * 4.2;
+    }
+
+    if (danger.enemyCenter.lengthSq() > 0 && waypoints.length >= 2) {
+      const firstWaypoint = waypoints[Math.min(1, waypoints.length - 1)];
+      const routeDirection = firstWaypoint.clone().subtract(player);
+      const toEnemyCenter = danger.enemyCenter.clone().subtract(player);
+
+      if (routeDirection.lengthSq() > 0 && toEnemyCenter.lengthSq() > 0) {
+        const route = routeDirection.normalize();
+        const enemyDir = toEnemyCenter.normalize();
+        const lateral = Math.abs(route.x * enemyDir.y - route.y * enemyDir.x);
+        const away = Math.max(0, route.dot(danger.fleeDirection));
+        score += lateral * (intent.mode === 'COMBAT_FARM' ? 9 : 5);
+        score -= away > 0.72 ? (away - 0.72) * 8 : 0;
+      }
+    }
+
+    return score * (intent.mode === 'COMBAT_FARM' ? 1.25 : 0.75) * (1 + growthUrgency * 0.7)
+      / Math.max(1, routeSamples.length * 0.35);
+  }
+
+  private evaluateOverKitePenalty(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    waypoints: readonly Phaser.Math.Vector2[],
+    intent: StrategicMoveIntent,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): number {
+    if (
+      intent.mode === 'SURVIVE'
+      || intent.mode === 'REPOSITION'
+      || danger.enemyCenter.lengthSq() === 0
+      || !this.isFarmSafeForGrowth(context, player)
+    ) {
+      return 0;
+    }
+
+    const endpoint = waypoints[waypoints.length - 1] ?? player;
+    const currentDistance = Phaser.Math.Distance.Between(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y);
+    const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y);
+    const range = this.getWeaponEffectiveRange(context);
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+
+    if (endpointDistance <= range.max || endpointDistance <= currentDistance) {
+      return 0;
+    }
+
+    const tooFar = endpointDistance - range.max;
+    const movingAway = endpointDistance - currentDistance;
+    const priestMultiplier = context.player?.characterId === 'priest' ? 1.5 : 1;
+
+    return (tooFar * 0.035 + movingAway * 0.045)
+      * (1 + growthUrgency)
+      * priestMultiplier;
   }
 
   private areRoutesSimilar(
@@ -1480,6 +1696,15 @@ export class AutoPlayer {
       futurePlayerDensityRisk: selectedAnalysis.futurePlayerDensityRisk,
       futureTargetZoneDensityRisk: selectedAnalysis.futureTargetZoneDensityRisk,
       futurePathInterceptionRisk: selectedAnalysis.futurePathInterceptionRisk,
+      farmGrowthUrgency: selectedAnalysis.farmGrowthUrgency,
+      combatOpportunityScore: selectedAnalysis.combatOpportunityScore,
+      xpAccessScore: selectedAnalysis.xpAccessScore,
+      killZoneScore: selectedAnalysis.killZoneScore,
+      weaponEffectivePositionScore: this.autoMoveDebugSnapshot?.weaponEffectivePositionScore ?? 0,
+      xpRouteScore: this.autoMoveDebugSnapshot?.xpRouteScore ?? 0,
+      killRouteScore: this.autoMoveDebugSnapshot?.killRouteScore ?? 0,
+      overKitePenalty: this.autoMoveDebugSnapshot?.overKitePenalty ?? 0,
+      combatWindow: selectedAnalysis.combatWindow,
       lureQuality: selectedAnalysis.lureQuality,
       escapeCorridorScore: selectedAnalysis.escapeCorridorScore,
       loopSustainability: selectedAnalysis.loopSustainability,
@@ -1548,6 +1773,17 @@ export class AutoPlayer {
       return 'BOSS_POSITIONING';
     }
 
+    if (
+      this.isFarmSafeForGrowth(context, player)
+      && (
+        (this.evaluateFarmGrowthUrgency(context) > 0.05 && (context.enemyPositions.length > 0 || context.pickupPositions.length > 0))
+        || context.enemyPositions.length > 0
+        || target?.type === 'pickup'
+      )
+    ) {
+      return 'COMBAT_FARM';
+    }
+
     if (kite.active || danger.pressureCount >= 3 || currentPressure > 2.2) {
       return 'KITE';
     }
@@ -1561,6 +1797,189 @@ export class AutoPlayer {
     }
 
     return 'KITE';
+  }
+
+  private isFarmSafeForGrowth(context: AutoPlayerContext, player: Phaser.Math.Vector2): boolean {
+    const hpRatio = this.getHpRatio(context);
+
+    if (hpRatio <= 0.45 || this.getTotalBossWarningRisk(context, player) > 0) {
+      return false;
+    }
+
+    const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
+    const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
+    const pressure = this.getEnemyPressureAt(context, player, hpRatio);
+
+    return contactRisk < 55
+      && futureContactRisk < 65
+      && pressure < 4.8;
+  }
+
+  private isCombatWindow(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    intent: StrategicMoveIntent,
+  ): boolean {
+    return this.isCombatWindowForMode(context, player, danger, intent.mode);
+  }
+
+  private isCombatWindowForMode(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    mode: MoveMode,
+  ): boolean {
+    if (mode === 'SURVIVE' || mode === 'REPOSITION' || !this.isFarmSafeForGrowth(context, player)) {
+      return false;
+    }
+
+    const range = this.getWeaponEffectiveRange(context);
+
+    return danger.nearestDistance > AutoPlayer.CONTACT_WARNING_RADIUS
+      && danger.nearestDistance < range.max * 1.35
+      && context.enemyPositions.length > 0;
+  }
+
+  private evaluateFarmGrowthUrgency(context: AutoPlayerContext): number {
+    const level = Math.max(1, context.player?.level ?? 1);
+    const minute = Phaser.Math.Clamp(Math.floor(this.autoMoveElapsedMs / 60000), 0, 5);
+    const expectedLevelByMinute = [1, 3, 5, 7, 9, 11];
+    const expectedLevel = expectedLevelByMinute[minute] ?? 11;
+    const baseUrgency = level < expectedLevel
+      ? Phaser.Math.Clamp((expectedLevel - level) / Math.max(1, expectedLevel), 0, 1)
+      : 0;
+    const priestMultiplier = context.player?.characterId === 'priest' ? 1.5 : 1;
+
+    return Phaser.Math.Clamp(baseUrgency * priestMultiplier, 0, 1.5);
+  }
+
+  private evaluateCombatOpportunityScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    mode: MoveMode,
+  ): number {
+    if (context.enemyPositions.length === 0 || mode === 'SURVIVE' || mode === 'REPOSITION') {
+      return 0;
+    }
+
+    const range = this.getWeaponEffectiveRange(context);
+    const endpointScore = this.evaluateWeaponEffectivePosition(context, endpoint, danger);
+    const currentDistance = danger.enemyCenter.lengthSq() > 0
+      ? Phaser.Math.Distance.Between(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y)
+      : Number.POSITIVE_INFINITY;
+    const endpointDistance = danger.enemyCenter.lengthSq() > 0
+      ? Phaser.Math.Distance.Between(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y)
+      : Number.POSITIVE_INFINITY;
+    const tooFarCorrection = currentDistance > range.max && endpointDistance < currentDistance ? 8 : 0;
+    const overFleePenalty = endpointDistance > range.max && endpointDistance > currentDistance
+      ? Math.min(18, (endpointDistance - Math.max(range.max, currentDistance)) * 0.04)
+      : 0;
+    const lateralScore = danger.enemyCenter.lengthSq() > 0 && direction.lengthSq() > 0
+      ? this.getStrategicLateralCombatScore(player, direction, danger.enemyCenter)
+      : 0;
+    const priestMultiplier = context.player?.characterId === 'priest' ? 1.3 : 1;
+
+    return (endpointScore + tooFarCorrection + lateralScore - overFleePenalty) * priestMultiplier;
+  }
+
+  private evaluateStrategicXpAccessScore(
+    context: AutoPlayerContext,
+    player: Phaser.Math.Vector2,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    mode: MoveMode,
+  ): number {
+    if (mode === 'SURVIVE' || mode === 'REPOSITION' || !this.isFarmSafeForGrowth(context, player)) {
+      return 0;
+    }
+
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const priestMultiplier = context.player?.characterId === 'priest' ? 1.3 : 1;
+    let score = 0;
+
+    for (const pickup of context.pickupPositions) {
+      const pickupPoint = new Phaser.Math.Vector2(pickup.x, pickup.y);
+      const distanceToEndpoint = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, pickupPoint.x, pickupPoint.y);
+
+      if (distanceToEndpoint > AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.6) {
+        continue;
+      }
+
+      const toPickup = pickupPoint.clone().subtract(player);
+
+      if (toPickup.lengthSq() === 0 || toPickup.normalize().dot(direction) < 0.2) {
+        continue;
+      }
+
+      const pickupPressure = this.getEnemyPressureAt(context, pickupPoint, this.getHpRatio(context));
+      const warningRisk = this.getTotalBossWarningRisk(context, pickupPoint);
+
+      if (pickupPressure > 5 || warningRisk > 0) {
+        continue;
+      }
+
+      const expValue = this.getPickupExpValue(pickup);
+      const clusterScore = this.getPickupClusterScore(context, pickup);
+      const distanceFactor = 1 - distanceToEndpoint / (AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.6);
+      score += (expValue * 0.8 + clusterScore * 0.32) * distanceFactor;
+    }
+
+    return score * (0.7 + growthUrgency) * priestMultiplier;
+  }
+
+  private evaluateStrategicKillZoneScore(
+    context: AutoPlayerContext,
+    endpoint: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    mode: MoveMode,
+  ): number {
+    if (mode === 'SURVIVE' || mode === 'REPOSITION' || context.enemyPositions.length === 0) {
+      return 0;
+    }
+
+    const range = this.getWeaponEffectiveRange(context);
+    let enemiesInBand = 0;
+    let tooClose = 0;
+
+    for (const enemy of context.enemyPositions) {
+      const distance = this.getEnemyEffectiveDistance(context, endpoint, enemy);
+
+      if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+        tooClose += this.getEnemyThreatWeight(enemy);
+      } else if (distance >= range.min && distance <= range.max) {
+        enemiesInBand += this.getEnemyThreatWeight(enemy);
+      }
+    }
+
+    const lateralScore = danger.enemyCenter.lengthSq() > 0 && direction.lengthSq() > 0
+      ? this.getStrategicLateralCombatScore(endpoint, direction, danger.enemyCenter) * 0.6
+      : 0;
+
+    return enemiesInBand * 2.4 + lateralScore - tooClose * 5;
+  }
+
+  private getStrategicLateralCombatScore(
+    origin: Phaser.Math.Vector2,
+    direction: Phaser.Math.Vector2,
+    enemyCenter: Phaser.Math.Vector2,
+  ): number {
+    const toEnemy = enemyCenter.clone().subtract(origin);
+
+    if (toEnemy.lengthSq() === 0 || direction.lengthSq() === 0) {
+      return 0;
+    }
+
+    const normalizedDirection = direction.clone().normalize();
+    const enemyDirection = toEnemy.normalize();
+    const lateral = Math.abs(normalizedDirection.x * enemyDirection.y - normalizedDirection.y * enemyDirection.x);
+    const toward = normalizedDirection.dot(enemyDirection);
+
+    return lateral * 8 - Math.max(0, toward - 0.55) * 5;
   }
 
   private getStrategicDirections(
@@ -1748,6 +2167,16 @@ export class AutoPlayer {
     const firstStepWeight = highPressureOrLate ? 0.5 : 0.7;
     const continuationWeight = highPressureOrLate ? 1.8 : 1.3;
     const deadEndWeight = highPressureOrLate ? 1.8 : 1.3;
+    const farmGrowthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const combatWindow = this.isCombatWindowForMode(context, player, danger, mode);
+    const combatOpportunityScore = this.evaluateCombatOpportunityScore(context, player, endpoint, direction, danger, mode);
+    const xpAccessScore = this.evaluateStrategicXpAccessScore(context, player, endpoint, direction, mode);
+    const killZoneScore = this.evaluateStrategicKillZoneScore(context, endpoint, direction, danger, mode);
+    const growthMultiplier = 1 + farmGrowthUrgency * (context.player?.characterId === 'priest' ? 1.35 : 0.9);
+    const growthSuppressed = mode === 'SURVIVE'
+      || mode === 'REPOSITION'
+      || hpRatio < 0.45
+      || this.getTotalBossWarningRisk(context, player) > 0;
 
     score = score * firstStepWeight
       + lookahead.continuationScore * continuationWeight
@@ -1762,6 +2191,12 @@ export class AutoPlayer {
       - lookahead.futureBoundaryRisk * (hpRatio < 0.35 ? 2.4 : 1.6)
       - lookahead.linearEscapePenalty * (highPressureOrLate ? 1.5 : 1);
 
+    if (!growthSuppressed) {
+      score += combatOpportunityScore * (mode === 'COMBAT_FARM' ? 1.45 : 0.85) * growthMultiplier;
+      score += xpAccessScore * (mode === 'COMBAT_FARM' ? 1.35 : 0.7) * growthMultiplier;
+      score += killZoneScore * (mode === 'COMBAT_FARM' ? 1.25 : 0.65) * growthMultiplier;
+    }
+
     return {
       direction: direction.clone().normalize(),
       targetZoneCenter: endpoint,
@@ -1769,6 +2204,15 @@ export class AutoPlayer {
       strategicLookaheadSeconds: lookahead.strategicLookaheadSeconds,
       desiredOrbitRadius: lookahead.desiredOrbitRadius,
       avoidLinearEscape: lookahead.avoidLinearEscape,
+      farmGrowthUrgency,
+      combatOpportunityScore,
+      xpAccessScore,
+      killZoneScore,
+      weaponEffectivePositionScore: this.autoMoveDebugSnapshot?.weaponEffectivePositionScore ?? 0,
+      xpRouteScore: this.autoMoveDebugSnapshot?.xpRouteScore ?? 0,
+      killRouteScore: this.autoMoveDebugSnapshot?.killRouteScore ?? 0,
+      overKitePenalty: this.autoMoveDebugSnapshot?.overKitePenalty ?? 0,
+      combatWindow,
       futurePlayerDensityRisk: lookahead.futurePlayerDensityRisk,
       futureTargetZoneDensityRisk: lookahead.futureTargetZoneDensityRisk,
       futurePathInterceptionRisk: lookahead.futurePathInterceptionRisk,
@@ -1863,6 +2307,15 @@ export class AutoPlayer {
     return {
       preferredPathStyle,
       strategicLookaheadSeconds: AutoPlayer.STRATEGIC_FAR_SECONDS,
+      farmGrowthUrgency: 0,
+      combatOpportunityScore: 0,
+      xpAccessScore: 0,
+      killZoneScore: 0,
+      weaponEffectivePositionScore: 0,
+      xpRouteScore: 0,
+      killRouteScore: 0,
+      overKitePenalty: 0,
+      combatWindow: false,
       desiredOrbitRadius: this.getDesiredStrategicOrbitRadius(context, mode),
       avoidLinearEscape,
       futurePlayerDensityRisk,
@@ -2161,6 +2614,10 @@ export class AutoPlayer {
       return leftScore >= rightScore ? 'ARC_LEFT' : 'ARC_RIGHT';
     }
 
+    if (mode === 'COMBAT_FARM' && loopSustainability > 10 && futureBoundaryRisk < 36) {
+      return leftScore >= rightScore ? 'ARC_LEFT' : 'ARC_RIGHT';
+    }
+
     return 'DIRECT';
   }
 
@@ -2344,6 +2801,10 @@ export class AutoPlayer {
 
     if (mode === 'REPOSITION') {
       return danger.nearestDistance < AutoPlayer.SAFE_DISTANCE ? 0.78 : 0.62;
+    }
+
+    if (mode === 'COMBAT_FARM') {
+      return 0.52 + Math.min(0.16, this.evaluateFarmGrowthUrgency(context) * 0.12);
     }
 
     if (mode === 'BOSS_POSITIONING' || mode === 'KITE') {
@@ -3670,6 +4131,115 @@ export class AutoPlayer {
     }
 
     return score;
+  }
+
+  private evaluateWeaponEffectivePosition(
+    context: AutoPlayerContext,
+    position: Phaser.Math.Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): number {
+    const weapons = this.getWeaponSnapshots(context);
+
+    if (weapons.length === 0 || context.enemyPositions.length === 0) {
+      return 0;
+    }
+
+    let score = 0;
+
+    for (const weapon of weapons) {
+      const weight = this.getWeaponLevelWeight(weapon);
+      const range = this.getSingleWeaponEffectiveRange(weapon);
+      let enemiesInBand = 0;
+      let closePenalty = 0;
+
+      for (const enemy of context.enemyPositions) {
+        const distance = this.getEnemyEffectiveDistance(context, position, enemy);
+
+        if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+          closePenalty += this.getEnemyThreatWeight(enemy);
+          continue;
+        }
+
+        if (distance >= range.min && distance <= range.max) {
+          enemiesInBand += this.getEnemyThreatWeight(enemy);
+        }
+      }
+
+      const centerDistance = danger.enemyCenter.lengthSq() > 0
+        ? Phaser.Math.Distance.Between(position.x, position.y, danger.enemyCenter.x, danger.enemyCenter.y)
+        : Number.POSITIVE_INFINITY;
+      const bandScore = this.scoreDistanceBand(centerDistance, range.ideal, range.min / range.ideal, range.max / range.ideal);
+      const weaponTypeBonus = weapon.tags.includes('homing') || weapon.tags.includes('magic')
+        ? Math.min(4, enemiesInBand * 0.42)
+        : enemiesInBand * 0.72;
+
+      score += (bandScore * 3 + weaponTypeBonus - closePenalty * 4.5) * weight;
+    }
+
+    return score / Math.max(1, weapons.length);
+  }
+
+  private getWeaponEffectiveRange(context: AutoPlayerContext): { min: number; ideal: number; max: number } {
+    const weapons = this.getWeaponSnapshots(context);
+
+    if (weapons.length === 0) {
+      return { min: 130, ideal: 230, max: 360 };
+    }
+
+    let totalWeight = 0;
+    let min = 0;
+    let ideal = 0;
+    let max = 0;
+
+    for (const weapon of weapons) {
+      const weight = this.getWeaponLevelWeight(weapon);
+      const range = this.getSingleWeaponEffectiveRange(weapon);
+
+      totalWeight += weight;
+      min += range.min * weight;
+      ideal += range.ideal * weight;
+      max += range.max * weight;
+    }
+
+    if (totalWeight <= 0) {
+      return { min: 130, ideal: 230, max: 360 };
+    }
+
+    return {
+      min: min / totalWeight,
+      ideal: ideal / totalWeight,
+      max: max / totalWeight,
+    };
+  }
+
+  private getSingleWeaponEffectiveRange(weapon: AutoWeaponSnapshot): { min: number; ideal: number; max: number } {
+    if (weapon.tags.includes('aura')) {
+      const radius = weapon.radiusPx ?? 130;
+
+      return { min: radius * 0.58, ideal: radius * 1.02, max: radius * 1.42 };
+    }
+
+    if (weapon.tags.includes('orbit')) {
+      const radius = weapon.radiusPx ?? 155;
+
+      return { min: radius * 0.72, ideal: radius * 1.08, max: radius * 1.55 };
+    }
+
+    if (weapon.tags.includes('arcing')) {
+      const range = weapon.rangePx ?? 260;
+
+      return { min: 145, ideal: Math.max(220, range * 0.9), max: Math.max(330, range * 1.35) };
+    }
+
+    if (weapon.tags.includes('homing') || weapon.tags.includes('magic')) {
+      const range = weapon.rangePx ?? 320;
+
+      return { min: 150, ideal: Math.max(240, range * 0.82), max: Math.max(380, range * 1.45) };
+    }
+
+    const range = weapon.rangePx ?? 360;
+
+    return { min: 160, ideal: Math.max(260, range * 0.75), max: Math.max(420, range * 1.25) };
   }
 
   private getDistanceBandDirection(

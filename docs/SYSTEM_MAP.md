@@ -33,7 +33,7 @@ The project is in content proof mode. Most broad foundations exist; the next use
 | Layer | Main systems | Owns | Should not own |
 |---|---|---|---|
 | Scene Layer | `BootScene`, `PreloadScene`, `TitleScene`, selection/tool scenes, `GameScene`, `UIScene`, `ResultScene` | Phaser lifecycle, scene transitions, high-level orchestration, UI event bridges | Weapon/combat/progression rules, content validation, save schemas |
-| Runtime Layer | `GameplayInitializer`, `GameplayContext`, `GameplayUpdater`, `PerformanceMonitor`, `PoolManager` | Per-run object graph, stable creation order, frame update order, diagnostics | Persistent settings, content definitions, UI layout rules |
+| Runtime Layer | `GameplayInitializer`, `GameplayContext`, `GameplayUpdater`, runtime context/coordinator helpers, `PerformanceMonitor`, `PoolManager` | Per-run object graph, stable creation order, frame update order, runtime snapshots, diagnostics | Persistent settings, content definitions, UI layout rules |
 | Content Layer | `ContentBootstrap`, `ContentRegistry`, `ContentValidator`, `ContentPack` | Built-in JSON registration and content lookup | Save state, custom-stage storage, runtime object ownership |
 | Save/Settings Layer | `SaveManager`, `SaveStorage`, `SaveMigrator`, `SettingsManager`, `PlaytestSettings` facade | Formal save data, settings domains, selections, progression, cosmetics, records | CSV buffers, replay blobs, transient run counters |
 | Selection Layer | `SelectionManager`, `SelectionState`, `SelectionSummary` | Save-backed selected IDs and selection facade | Actual per-run random resolution details beyond manager calls |
@@ -81,7 +81,7 @@ Scene responsibilities:
 - `ReplayToolScene`: replay record list/import/export/inspect utility; no playback.
 - `CustomStageToolScene`: paste/validate/save/export custom stage packages.
 - `CustomStageEditorLiteScene`: prompt-driven custom stage basics and wave editing.
-- `GameScene`: owns run lifecycle, pause gates, HUD emission, settings bridge, and result transition.
+- `GameScene`: owns run lifecycle, Phaser scene operations, UI event binding, HUD emission, pause gates, and result transition.
 - `UIScene`: overlay scene for HUD, level-up, pause, debug, temporary messages.
 - `ResultScene`: compact run result, CSV buttons, Settings, auto restart, endless leaderboard.
 
@@ -190,7 +190,17 @@ GameplayUpdater.update(delta)
   └─ HUD emit
 ```
 
-`GameScene` still owns pause/menu gates, settings-change handling, resize/orientation handling, HUD event emission, and the final `ResultScene` transition. New gameplay details should continue moving into runtime services instead of growing `GameScene`.
+Runtime coordination around the updater is now split into small helpers:
+
+- `AutoPlayerContextBuilder` creates the auto movement snapshot from current enemies, pickups, treasure, player stats, map mechanics, and Boss warnings.
+- `UpgradeSelectionContextBuilder` creates manual and auto upgrade contexts without embedding selector inputs in `GameScene`.
+- `RuntimeDiagnosticsCollector` owns performance count collection after update work.
+- `RuntimeTextureReadiness` checks only the current map's required ground tile texture when PNG gameplay assets are expected.
+- `RuntimeSettingsSynchronizer` applies playtest settings to `GameplayContext`; `GameScene` still performs audio, UI, and event side effects.
+- `RunEndCoordinator` prepares run-ended payloads, replay stop data, unlock context, and result build input.
+- `PauseFlowCoordinator` returns pause/resume/restart/back-to-title decisions; `GameScene` still executes Phaser scene operations.
+
+`GameScene` still owns resize/orientation handling, HUD event emission, actual pause menu display, audio calls, cleanup, and the final `ResultScene` transition. New gameplay details should continue moving into runtime services instead of growing `GameScene`.
 
 ## 7. Character / Stage / Map flow
 
@@ -471,4 +481,3 @@ Pause these unless real content, tooling, or validation pressure proves a concre
 | New external art | `public/assets/imports/manifest.json` | `validate:external-art`, docs if schema changes | Gameplay/data JSON |
 | New CSV field | `RunState` / `RunResultBuilder` / `PlaytestLog` | Analyzer/docs/schema version if needed | Formal save data |
 | New daily challenge rule | `src/challenge/` and `RunRuleSet` mutator path | Selection metadata, leaderboard key, help docs | Normal Title start logic beyond clearing active challenge |
-

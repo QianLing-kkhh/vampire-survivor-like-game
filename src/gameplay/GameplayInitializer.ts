@@ -111,6 +111,9 @@ export interface GameplayInitializerConfig {
 }
 
 export class GameplayInitializer {
+  private static readonly PRE_ENDLESS_NORMAL_ENEMY_BASE_CAP = 18;
+  private static readonly PRE_ENDLESS_NORMAL_ENEMY_CAP_PER_MINUTE = 8;
+
   initialize(config: GameplayInitializerConfig): GameplayContext {
     ContentBootstrap.ensureInitialized();
     UnlockManager.initialize();
@@ -375,7 +378,11 @@ export class GameplayInitializer {
       runRuleSet,
       randomManager.getSpawnRandom(),
       () => enemiesList.filter((enemy) => !enemy.isDead).length,
-      () => (config.runState.endlessStarted ? 200 : Number.POSITIVE_INFINITY),
+      () => (
+        config.runState.endlessStarted
+          ? 200
+          : GameplayInitializer.getPreEndlessNormalEnemyCap(config.timeManager.gameTimeSeconds)
+      ),
       () => enemiesList.filter((enemy) => (
         !enemy.isDead
         && !enemy.bossLike
@@ -586,5 +593,12 @@ export class GameplayInitializer {
         modifiers: wave.modifiers,
       };
     });
+  }
+
+  private static getPreEndlessNormalEnemyCap(gameTimeSeconds: number): number {
+    const minuteIndex = Math.max(0, Math.floor(gameTimeSeconds / 60));
+
+    return GameplayInitializer.PRE_ENDLESS_NORMAL_ENEMY_BASE_CAP
+      + GameplayInitializer.PRE_ENDLESS_NORMAL_ENEMY_CAP_PER_MINUTE * minuteIndex;
   }
 }

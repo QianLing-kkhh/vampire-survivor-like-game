@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
-import { DEFAULT_ASSET_KEY_MAP } from '../assets/AssetKeyMap';
+import { AutoPlayerContextBuilder } from '../auto/AutoPlayerContextBuilder';
 import { AutoPlayer } from '../auto/AutoPlayer';
 import {
   AutoUpgradeSelectionContext,
@@ -23,6 +23,8 @@ import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import { GameplayContext } from '../gameplay/GameplayContext';
 import { GameplayInitializer } from '../gameplay/GameplayInitializer';
 import { GameplayUpdater } from '../gameplay/GameplayUpdater';
+import { RuntimeSettingsSynchronizer } from '../gameplay/RuntimeSettingsSynchronizer';
+import { RuntimeTextureReadiness } from '../gameplay/RuntimeTextureReadiness';
 import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PlaytestLog } from '../logging/PlaytestLog';
 import { MapDefinition } from '../map/MapDefinition';
@@ -44,8 +46,10 @@ import { RelicRewardSelector } from '../relic/RelicRewardSelector';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { TreasureRewardResult, UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeOption } from '../progression/UpgradeOption';
+import { UpgradeSelectionContextBuilder } from '../progression/UpgradeSelectionContextBuilder';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunResultBuilder } from '../run/RunResultBuilder';
+import { RunEndCoordinator } from '../run/RunEndCoordinator';
 import { RunState } from '../run/RunState';
 import { SelectionManager } from '../selection/SelectionManager';
 import {
@@ -62,6 +66,7 @@ import { TreasureRewardCoordinator } from '../treasure/TreasureRewardCoordinator
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { HUDStateBuilder } from '../ui/HUDStateBuilder';
+import { PauseFlowCoordinator, PauseFlowResult } from '../ui/pause/PauseFlowCoordinator';
 import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
 import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
 import { I18n } from '../i18n/I18n';
@@ -87,13 +92,18 @@ export class GameScene extends Phaser.Scene {
 
   private eventBus = new EventBus<GameEventMap>();
   private readonly autoPlayer = new AutoPlayer();
+  private readonly autoPlayerContextBuilder = new AutoPlayerContextBuilder();
   private readonly autoUpgradeSelector = new AutoUpgradeSelector();
   private readonly damageCalculator = new DamageCalculator();
   private readonly gameplayInitializer = new GameplayInitializer();
   private readonly gameplayUpdater = new GameplayUpdater();
+  private readonly runtimeSettingsSynchronizer = new RuntimeSettingsSynchronizer();
+  private readonly runtimeTextureReadiness = new RuntimeTextureReadiness();
   private readonly debugDataCollector = new DebugDataCollector();
   private readonly hudStateBuilder = new HUDStateBuilder();
   private readonly statsBuildSnapshotBuilder = new StatsBuildSnapshotBuilder();
+  private readonly upgradeSelectionContextBuilder = new UpgradeSelectionContextBuilder();
+  private readonly pauseFlowCoordinator = new PauseFlowCoordinator();
   private readonly relicRewardSelector = new RelicRewardSelector();
   private readonly treasureRewardCoordinator = new TreasureRewardCoordinator();
   private readonly stageManager = new StageManager();
@@ -137,6 +147,7 @@ export class GameScene extends Phaser.Scene {
   private playerPickupRange = 0;
   private readonly runState = new RunState();
   private readonly runResultBuilder = new RunResultBuilder();
+  private readonly runEndCoordinator = new RunEndCoordinator();
   private readonly victoryUnlockService = new VictoryUnlockService();
   private runId = PlaytestLog.createRunId();
   private runStats = new RunStats();
@@ -448,42 +459,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   private shouldRedirectToRunPreload(data: GameSceneData): boolean {
-    return data.runtimeAssetsReady !== true
-      && this.shouldExpectRuntimeTextures()
-      && !this.hasCriticalRuntimeTextures();
-  }
-
-  private shouldExpectRuntimeTextures(): boolean {
-    const display = SettingsManager.getDisplay();
-
-    return display.assetStyle !== 'graphics'
-      && display.displayQuality !== 'minimal';
+    return this.runtimeTextureReadiness.shouldRedirectToRunPreload({
+      runtimeAssetsReady: data.runtimeAssetsReady === true,
+      currentMap: this.currentMap,
+      display: SettingsManager.getDisplay(),
+      textureExists: (key) => this.textures.exists(key),
+    });
   }
 
   private hasCriticalRuntimeTextures(): boolean {
-    return this.getCriticalRuntimeTextureKeys().every((key) => this.textures.exists(key));
-  }
-
-  private getCriticalRuntimeTextureKeys(): string[] {
-    if (!this.shouldExpectRuntimeTextures()) {
-      return [];
-    }
-
-    const groundTileKey = this.currentMap.render?.groundTileKey;
-
-    if (!groundTileKey) {
-      return [];
-    }
-
-    return [this.getWorldTilePrimaryTextureKey(groundTileKey)];
-  }
-
-  private getWorldTilePrimaryTextureKey(groundTileKey: string): string {
-    const entry = DEFAULT_ASSET_KEY_MAP.world[
-      groundTileKey as keyof typeof DEFAULT_ASSET_KEY_MAP.world
-    ];
-
-    return entry?.primary ?? `art_world_${groundTileKey}`;
+    return this.runtimeTextureReadiness.hasCriticalRuntimeTextures({
+      runtimeAssetsReady: true,
+      currentMap: this.currentMap,
+      display: SettingsManager.getDisplay(),
+      textureExists: (key) => this.textures.exists(key),
+    });
   }
 
   update(_time: number, delta: number): void {
@@ -608,7 +598,15 @@ export class GameScene extends Phaser.Scene {
     const previousSettings = this.playtestSettings;
 
     this.playtestSettings = state;
-    this.syncRuntimeSettingsToContext();
+    const syncResult = this.runtimeSettingsSynchronizer.sync({
+      gameplayContext: this.gameplayContext,
+      previousSettings,
+      nextSettings: state,
+      settingName,
+      configuredGameplayTimeScale: this.getConfiguredGameplayTimeScale(),
+    });
+    this.time.timeScale = 1;
+    (this.physics.world as unknown as { timeScale?: number }).timeScale = 1;
     this.gameplayContext?.gameEventBus.emit('ui.settingsChanged', {
       settingName,
       gameTimeSeconds: this.timeManager.gameTimeSeconds,
@@ -617,42 +615,25 @@ export class GameScene extends Phaser.Scene {
       runId: this.runId,
     });
 
-    if (settingName === 'autoMode' || settingName === 'autoMovement') {
+    if (syncResult.shouldHandleAutoMovement) {
       this.handleAutoMovementChanged(previousSettings.autoMovement, state.autoMovement);
     }
 
-    if (settingName === 'autoMode' || settingName === 'autoUpgrade') {
+    if (syncResult.shouldHandleAutoUpgrade) {
       this.handleAutoUpgradeChanged(previousSettings.autoUpgrade, state.autoUpgrade);
     }
 
-    if (settingName === 'endlessMode') {
+    if (syncResult.shouldHandleEndlessMode) {
       this.handleEndlessModeChanged(previousSettings.endlessMode, state.endlessMode);
     }
 
-    if (
-      settingName === 'audioEnabled'
-      || settingName === 'bgmVolume'
-      || settingName === 'settings'
-    ) {
+    if (syncResult.shouldSyncBgm) {
       this.syncCurrentBgm();
     }
 
-    this.emitHUDState();
-  }
-
-  private syncRuntimeSettingsToContext(): void {
-    if (!this.gameplayContext) {
-      return;
+    if (syncResult.shouldEmitHud) {
+      this.emitHUDState();
     }
-
-    this.gameplayContext.playtestSettings = this.playtestSettings;
-    this.gameplayContext.autoMode = this.playtestSettings.autoMode;
-    this.gameplayContext.autoMovementEnabled = this.playtestSettings.autoMovement;
-    this.gameplayContext.autoUpgradeEnabled = this.playtestSettings.autoUpgrade;
-    this.gameplayContext.fastMode = this.playtestSettings.fastMode;
-    this.gameplayContext.endlessMode = this.playtestSettings.endlessMode;
-    this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
-    this.runState.endlessMode = this.playtestSettings.endlessMode;
   }
 
   private handleAutoMovementChanged(
@@ -954,55 +935,26 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const pickupRangePx = this.playerPickupRange
-      * (this.gameplayContext?.characterRuntime.getPickupRangeMultiplier() ?? 1);
-    const characterSnapshot = this.gameplayContext?.characterRuntime.getAutoPlayerSnapshot();
-    const direction = this.autoPlayer.getMoveDirection({
-      playerPosition: this.player.body,
-      enemyPositions: this.enemies
-        .filter((enemy) => !enemy.isDead)
-        .map((enemy) => {
-          const targetContext = enemy.getDamageTargetContext();
-
-          return {
-            id: enemy.getAutoMoveId(),
-            x: enemy.body.x,
-            y: enemy.body.y,
-            radiusPx: enemy.body.radius,
-            moveSpeed: enemy.moveSpeed,
-            damage: enemy.damage,
-            hpRatio: enemy.maxHp > 0 ? enemy.currentHp / enemy.maxHp : 0,
-            isBoss: targetContext.isBoss,
-            isElite: targetContext.isElite,
-            isMiniBoss: enemy.id.endsWith('_boss'),
-          };
-        }),
+    const context = this.autoPlayerContextBuilder.build({
+      playerBody: this.player.body,
+      enemies: this.enemies,
       pickupPositions: this.getPickupPositions(),
       treasurePositions: this.getTreasurePositions(),
-      pickupRangePx,
-      player: {
-        currentHp: this.playerHealth?.currentHp ?? this.playerStats.maxHp,
-        maxHp: this.playerHealth?.maxHp ?? this.playerStats.maxHp,
-        hitRadiusPx: GameScene.PLAYER_HIT_RADIUS,
-        moveSpeed: this.playerStats.moveSpeed,
-        pickupRangePx,
-        characterId: characterSnapshot?.characterId,
-        damageReactionType: characterSnapshot?.damageReactionType,
-        baseStats: characterSnapshot?.baseStats,
-      },
-      weaponContext: this.weaponManager?.getAutoWeaponContext(),
-      map: this.gameplayContext?.mapMechanicRuntime.getAutoMapSnapshot(),
-      bossWarnings: [
-        ...(this.gameplayContext?.bossController.getAutoBossWarnings() ?? []),
-        ...(this.bossAttackController?.getAutoBossWarnings() ?? []),
-        ...(this.gameplayContext?.endlessBossManager.getAutoBossWarnings() ?? []),
-      ],
+      playerPickupRange: this.playerPickupRange,
+      playerHitRadiusPx: GameScene.PLAYER_HIT_RADIUS,
+      playerStats: this.playerStats,
+      playerHealth: this.playerHealth,
+      levelManager: this.levelManager,
+      weaponManager: this.weaponManager,
+      gameplayContext: this.gameplayContext,
+      bossAttackController: this.bossAttackController,
       deltaMs,
       worldBounds: {
         width: this.worldWidth,
         height: this.worldHeight,
       },
     });
+    const direction = this.autoPlayer.getMoveDirection(context);
 
     this.player.moveWithDirection(direction, deltaMs, 'auto');
   }
@@ -1090,50 +1042,17 @@ export class GameScene extends Phaser.Scene {
     this.isGameOver = true;
     this.emitHUDState();
     const survivalTime = this.timeManager.gameTimeSeconds;
-    this.gameplayContext?.gameEventBus.emit('run.ended', {
+    const endResult = this.runEndCoordinator.prepare({
       runId: this.runId,
       resultType,
       survivalTime,
-      endlessSurvivalTime: this.runState.endlessSurvivalTime,
-      killCount: this.runState.killCount,
-      treasureOpenCount: this.runState.treasureOpenCount,
-      evolutionCount: this.runState.evolutionPath.length,
-      endlessStarted: this.runState.endlessStarted,
-      gameTimeSeconds: survivalTime,
-    }, {
-      gameTimeSeconds: survivalTime,
-      runId: this.runId,
-    });
-    const replayData = this.gameplayContext?.replayRecorder?.stop({
-      resultType,
-      survivalTime,
-      endlessSurvivalTime: this.runState.endlessSurvivalTime,
-      finalLevel: this.levelManager?.currentLevel ?? 1,
-      killCount: this.runState.killCount,
-    });
-
-    if (replayData) {
-      new ReplayStorage().save(replayData);
-    }
-
-    const unlockResult = this.victoryUnlockService.unlockNextForVictory({
-      resultType,
-      characterId: this.runState.characterId,
-      stageId: this.runState.stageId,
-    });
-    const resultData = this.runResultBuilder.build({
-      runId: this.runId,
-      autoMode: this.playtestSettings.autoMovement
-        || this.playtestSettings.autoUpgrade
-        || this.playtestSettings.autoOpenTreasure,
-      fastMode: this.playtestSettings.fastMode,
-      timeScale: this.getGameplayTimeScale(),
-      upgradeSelectionMode: this.autoUpgradeSelector.mode,
-      resultType,
-      survivalTime,
-      evolutionCandidateStats: this.getEvolutionCandidateStats(),
       runState: this.runState,
       runStats: this.runStats,
+      playtestSettings: this.playtestSettings,
+      gameplayContext: this.gameplayContext,
+      timeScale: this.getGameplayTimeScale(),
+      upgradeSelectionMode: this.autoUpgradeSelector.mode,
+      evolutionCandidateStats: this.getEvolutionCandidateStats(),
       weaponManager: this.weaponManager,
       passiveManager: this.passiveManager,
       relicManager: this.gameplayContext?.relicManager,
@@ -1141,13 +1060,20 @@ export class GameScene extends Phaser.Scene {
       playerHealth: this.playerHealth,
       levelManager: this.levelManager,
       expManager: this.expManager,
-      bossState: {
-        bossSpawned: this.gameplayContext?.bossController.hasBossSpawned() ?? false,
-        bossKilled: this.gameplayContext?.bossController.hasBossBeenKilled() ?? false,
-        bossSpawnTime: this.gameplayContext?.bossController.getBossSpawnTime() ?? 0,
-        bossKillTime: this.gameplayContext?.bossController.getBossKillTime() ?? 0,
-      },
     });
+    this.gameplayContext?.gameEventBus.emit(
+      'run.ended',
+      endResult.runEndedEvent.payload,
+      endResult.runEndedEvent.meta,
+    );
+    const replayData = this.gameplayContext?.replayRecorder?.stop(endResult.replayStopContext);
+
+    if (replayData) {
+      new ReplayStorage().save(replayData);
+    }
+
+    const unlockResult = this.victoryUnlockService.unlockNextForVictory(endResult.unlockContext);
+    const resultData = this.runResultBuilder.build(endResult.resultBuildContext);
     const statsBuildSnapshot = this.buildStatsBuildSnapshot();
 
     this.cleanup();
@@ -1282,25 +1208,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleEscapePressed(): void {
-    if (this.isGameOver || this.isLevelUpSelectionActive) {
-      return;
-    }
+    const result = this.pauseFlowCoordinator.handleEscapePressed(this.getPauseFlowState());
 
-    if (this.isPauseMenuOpen) {
-      this.resumeFromPauseMenu();
-      return;
-    }
-
-    this.isPauseMenuOpen = true;
-    this.isGameplayPaused = true;
-    this.virtualJoystick?.setGameplayActive(false);
-    this.gameplayContext?.gameEventBus.emit('ui.pauseOpened', {
-      gameTimeSeconds: this.timeManager.gameTimeSeconds,
-    }, {
-      gameTimeSeconds: this.timeManager.gameTimeSeconds,
-      runId: this.runId,
-    });
-    this.scene.get('UIScene').events.emit('ShowPauseMenu', this.buildStatsBuildSnapshot());
+    this.applyPauseFlowResult(result);
   }
 
   private buildStatsBuildSnapshot(): StatsBuildSnapshot {
@@ -1417,43 +1327,87 @@ export class GameScene extends Phaser.Scene {
     return phaserTouch || hasTouch || hasCoarsePointer || isNarrowWindow;
   }
 
-  private resumeFromPauseMenu(): void {
-    if (!this.isPauseMenuOpen) {
+  private getPauseFlowState() {
+    return {
+      isGameOver: this.isGameOver,
+      isLevelUpSelectionActive: this.isLevelUpSelectionActive,
+      isPauseMenuOpen: this.isPauseMenuOpen,
+      gameTimeSeconds: this.timeManager.gameTimeSeconds,
+      runId: this.runId,
+    };
+  }
+
+  private applyPauseFlowResult(result: PauseFlowResult, sceneKey?: string): void {
+    if (result.action === 'none') {
       return;
     }
 
-    this.isPauseMenuOpen = false;
-    this.isGameplayPaused = false;
-    this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
-    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
-    this.gameplayContext?.gameEventBus.emit('ui.pauseClosed', {
-      gameTimeSeconds: this.timeManager.gameTimeSeconds,
-    }, {
-      gameTimeSeconds: this.timeManager.gameTimeSeconds,
-      runId: this.runId,
-    });
-    this.scene.get('UIScene').events.emit('HidePauseMenu');
+    if (result.isPauseMenuOpen !== undefined) {
+      this.isPauseMenuOpen = result.isPauseMenuOpen;
+    }
+
+    if (result.isGameplayPaused !== undefined) {
+      this.isGameplayPaused = result.isGameplayPaused;
+    }
+
+    if (result.event) {
+      this.gameplayContext?.gameEventBus.emit(
+        result.event.name,
+        result.event.payload,
+        result.event.meta,
+      );
+    }
+
+    switch (result.action) {
+      case 'openPause':
+        this.virtualJoystick?.setGameplayActive(false);
+        this.scene.get('UIScene').events.emit('ShowPauseMenu', this.buildStatsBuildSnapshot());
+        break;
+      case 'resumePause':
+        this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
+        this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
+        this.scene.get('UIScene').events.emit('HidePauseMenu');
+        break;
+      case 'restart':
+        this.virtualJoystick?.setGameplayActive(false);
+        this.scene.stop('UIScene');
+        this.scene.restart();
+        break;
+      case 'backToTitle':
+        this.virtualJoystick?.setGameplayActive(false);
+        this.scene.stop('UIScene');
+        this.scene.start('TitleScene');
+        break;
+      case 'openDeveloperScene':
+        if (!sceneKey) {
+          return;
+        }
+
+        this.virtualJoystick?.setGameplayActive(false);
+        this.scene.stop('UIScene');
+        this.scene.start(sceneKey);
+        break;
+      default:
+        break;
+    }
+  }
+
+  private resumeFromPauseMenu(): void {
+    const result = this.pauseFlowCoordinator.resume(this.getPauseFlowState());
+
+    this.applyPauseFlowResult(result);
   }
 
   private restartFromPauseMenu(): void {
-    this.isPauseMenuOpen = false;
-    this.virtualJoystick?.setGameplayActive(false);
-    this.scene.stop('UIScene');
-    this.scene.restart();
+    this.applyPauseFlowResult(this.pauseFlowCoordinator.restart());
   }
 
   private backToTitleFromPauseMenu(): void {
-    this.isPauseMenuOpen = false;
-    this.virtualJoystick?.setGameplayActive(false);
-    this.scene.stop('UIScene');
-    this.scene.start('TitleScene');
+    this.applyPauseFlowResult(this.pauseFlowCoordinator.backToTitle());
   }
 
   private openDeveloperSceneFromPauseMenu(sceneKey: string): void {
-    this.isPauseMenuOpen = false;
-    this.virtualJoystick?.setGameplayActive(false);
-    this.scene.stop('UIScene');
-    this.scene.start(sceneKey);
+    this.applyPauseFlowResult(this.pauseFlowCoordinator.openDeveloperScene(), sceneKey);
   }
 
   private showEnemyDamageFloatingText(payload: {
@@ -1486,114 +1440,28 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getUpgradeSelectionContext(): UpgradeSelectionContext {
-    return {
-      hasWeapon: (weaponId: string) => this.weaponManager?.hasWeapon(weaponId) ?? false,
-      getWeaponStat: (weaponId, stat) => this.weaponManager?.getWeaponStat(weaponId, stat),
-      getPassiveLevel: (passiveId: string) => this.passiveManager?.getLevel(passiveId) ?? 0,
-      isWeaponUpgradeLimitReached: (weaponId: string) => (
-        this.weaponManager?.isWeaponUpgradeLimitReached(weaponId) ?? false
-      ),
-      hasWeaponOrEvolution: (weaponId: string) => (
-        this.weaponManager?.hasWeaponOrEvolution(weaponId) ?? false
-      ),
-      isBaseWeaponEvolved: (weaponId: string) => (
-        this.weaponManager?.isBaseWeaponEvolved(weaponId) ?? false
-      ),
-      getPlayerStat: (stat) => {
-        switch (stat) {
-          case 'moveSpeed':
-            return this.playerStats?.moveSpeed ?? 0;
-          case 'pickupRange':
-            return this.playerStats?.pickupRange ?? 0;
-          case 'maxHp':
-            return this.playerHealth?.maxHp ?? this.playerStats?.maxHp ?? 0;
-          default:
-            return 0;
-        }
-      },
-      getPlayerStatLimit: (stat) => {
-        switch (stat) {
-          case 'moveSpeed':
-            return this.playerStats?.maxMoveSpeed ?? Infinity;
-          case 'pickupRange':
-            return this.playerStats?.maxPickupRange ?? Infinity;
-          case 'maxHp':
-            return this.playerStats?.maxHpLimit ?? Infinity;
-          default:
-            return Infinity;
-        }
-      },
-    };
+    return this.upgradeSelectionContextBuilder.buildUpgradeSelectionContext({
+      weaponManager: this.weaponManager,
+      passiveManager: this.passiveManager,
+      playerStats: this.playerStats,
+      playerHealth: this.playerHealth,
+    });
   }
 
   private getAutoUpgradeSelectionContext(): AutoUpgradeSelectionContext {
-    const characterSnapshot = this.gameplayContext?.characterRuntime.getAutoPlayerSnapshot();
-    const weaponContext = this.weaponManager?.getAutoWeaponContext();
-    const pickupPositions = this.getPickupPositions();
-    const hpRatio = this.playerHealth && this.playerHealth.maxHp > 0
-      ? this.playerHealth.currentHp / this.playerHealth.maxHp
-      : 1;
-    let nearestEnemyDistance = Infinity;
-    let enemyPressure = 0;
-    let bossThreat = false;
+    const playerBody = this.player?.body;
 
-    if (this.player) {
-      for (const enemy of this.enemies) {
-        if (enemy.isDead) {
-          continue;
-        }
-
-        const distance = Phaser.Math.Distance.Between(
-          this.player.body.x,
-          this.player.body.y,
-          enemy.body.x,
-          enemy.body.y,
-        );
-        nearestEnemyDistance = Math.min(nearestEnemyDistance, distance);
-
-        if (distance <= 300) {
-          const proximity = (300 - Math.max(0, distance)) / 300;
-          const targetContext = enemy.getDamageTargetContext();
-          const threat = targetContext.isBoss
-            ? 4
-            : targetContext.isElite
-              ? 2
-              : 1;
-
-          enemyPressure += proximity * proximity * threat * (hpRatio < 0.5 ? 1.25 : 1);
-          bossThreat ||= targetContext.isBoss && distance < 520;
-        }
-      }
-    }
-
-    return {
-      weaponIds: this.weaponManager?.getWeaponIds() ?? [],
-      weapons: weaponContext?.weapons,
-      player: {
-        currentHp: this.playerHealth?.currentHp ?? this.playerStats?.maxHp ?? 0,
-        maxHp: this.playerHealth?.maxHp ?? this.playerStats?.maxHp ?? 0,
-        shieldStacks: this.playerHealth?.getShieldStacks() ?? 0,
-      },
-      character: {
-        characterId: characterSnapshot?.characterId,
-        damageReactionType: characterSnapshot?.damageReactionType,
-        baseStats: characterSnapshot?.baseStats,
-      },
-      battle: {
-        enemyPressure,
-        nearestEnemyDistance,
-        bossThreat,
-      },
-      resources: {
-        pickupCount: pickupPositions.length,
-        pickupExpTotal: pickupPositions.reduce((total, pickup) => total + Math.max(1, pickup.exp), 0),
-        treasureCount: this.treasureManager?.getActiveCount() ?? 0,
-      },
-      getWeaponUpgradeTotal: (weaponId: string) => (
-        this.weaponManager?.getWeaponUpgradeTotal(weaponId) ?? 0
-      ),
-      getPassiveLevel: (passiveId: string) => this.passiveManager?.getLevel(passiveId) ?? 0,
-    };
+    return this.upgradeSelectionContextBuilder.buildAutoUpgradeSelectionContext({
+      gameplayContext: this.gameplayContext,
+      weaponManager: this.weaponManager,
+      passiveManager: this.passiveManager,
+      playerStats: this.playerStats,
+      playerHealth: this.playerHealth,
+      playerPosition: playerBody ? { x: playerBody.x, y: playerBody.y } : undefined,
+      enemies: this.enemies,
+      pickupPositions: this.getPickupPositions(),
+      treasureCount: this.treasureManager?.getActiveCount() ?? 0,
+    });
   }
 
   private getEvolutionCandidateStats(): string {

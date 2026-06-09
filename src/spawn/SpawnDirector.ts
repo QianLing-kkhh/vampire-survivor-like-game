@@ -244,7 +244,9 @@ export class SpawnDirector {
       return false;
     }
 
-    return (this.getAliveEnemyCount?.() ?? 0) >= maxAliveEnemies;
+    const aliveCountForCap = this.getAliveNormalEnemyCount?.() ?? this.getAliveEnemyCount?.() ?? 0;
+
+    return aliveCountForCap >= maxAliveEnemies;
   }
 
   private getSpawnPosition(): Position {

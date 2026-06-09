@@ -29,7 +29,7 @@ Scenes own Phaser lifecycle, scene transitions, high-level UI/gameplay coordinat
 - `RecordsScene`: read-only achievements, local leaderboards, and unlock state viewer.
 - `ReplayToolScene`: developer replay import/export/compatibility utility; no playback.
 - `DailyChallengeScene`: minimal local daily challenge summary and activation scene.
-- `GameScene`: main lifecycle, pause/resume, settings change handling, result transition, HUD emit, and gameplay runtime callbacks.
+- `GameScene`: main Phaser lifecycle, scene transitions, UI event binding, HUD emit, and thin runtime callback wiring.
 - `UIScene`: overlay scene for HUD, LevelUpPanel, PauseMenu, temporary messages, and UI events.
 - `ResultScene`: compact run summary, CSV download, auto restart, Settings, and endless leaderboard display.
 
@@ -40,6 +40,12 @@ The runtime layer keeps per-run object references and update order out of the sc
 - `GameplayContext`: per-run reference container for player, managers, flows, controllers, runtime settings, and active systems.
 - `GameplayInitializer`: creates per-run systems in a stable order and returns `GameplayContext`.
 - `GameplayUpdater`: advances runtime systems each frame in the intended update order.
+- `AutoPlayerContextBuilder`: builds the auto movement snapshot passed from `GameScene` into `AutoPlayer` without letting movement logic reach into scene state.
+- `UpgradeSelectionContextBuilder`: builds manual and auto upgrade selection contexts from current runtime managers and snapshots.
+- `RuntimeDiagnosticsCollector`: gathers performance counts and late-endless diagnostics after runtime update work.
+- `RuntimeTextureReadiness`: derives the critical runtime world tile texture from the current map and display settings before entering gameplay.
+- `RuntimeSettingsSynchronizer`: applies playtest settings to `GameplayContext` while leaving UI, audio, and event side effects in `GameScene`.
+- `RunEndCoordinator`: prepares run-ended events, replay stop context, unlock context, and `RunResultBuilder` input for `GameScene`.
 - `MapMechanicRuntime`: creates per-map mechanics for the selected map and applies low-risk terrain behavior such as obstacles, slow zones, player portals, and visual light sources.
 - `PerformanceMonitor`: per-run lightweight stats collector for FPS, real delta, effective runtime speed, counts, object lifecycle counters, and late-endless slowdown warnings.
 - `PoolManager`: per-run object pool registry for reusable runtime visuals and future high-volume objects.
@@ -53,7 +59,14 @@ Current flow:
 2. `GameScene` obtains selected character/stage/map through managers.
 3. `GameplayInitializer` builds the runtime systems and returns `GameplayContext`.
 4. `GameScene.update()` delegates runtime update to `GameplayUpdater`.
-5. `GameScene` still owns pause gates, settings changes, HUD emit, and ResultScene transition.
+5. Runtime helper classes prepare snapshots, settings sync, diagnostics, and result payloads.
+6. `GameScene` still owns Phaser scene operations, UI event emission, audio calls, pause gates, HUD emit, and ResultScene transition.
+
+Current migration boundary:
+
+- Boss dash/projectile damage, contact damage, weapon hit logic, enemy spawn flow, and upgrade application remain in their existing runtime owners.
+- Cleanup order still lives in `GameScene` because it touches many Phaser and manager lifecycles; it should only move after a dedicated cleanup regression pass.
+- New separation work should prefer pure builders/coordinators that return data or decisions, not services that directly operate on Phaser scenes.
 
 ## Event Layer
 
