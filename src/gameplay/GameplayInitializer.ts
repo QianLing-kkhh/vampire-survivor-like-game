@@ -44,10 +44,15 @@ import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
 import { RunState } from '../run/RunState';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { SettingsManager } from '../settings/SettingsManager';
 import { createSpeedBucket } from '../runtime/RunModeConfig';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
 import { StrategyHasher } from '../strategy/hash/StrategyHasher';
+import {
+  PLAYTEST_AUTO_STRATEGY_PROFILE,
+  cloneAutoStrategyProfile,
+} from '../strategy/profile/AutoStrategyProfile';
 import { StrategyProfileRepository } from '../strategy/profile/StrategyProfileRepository';
 import { TutorialManager } from '../tutorial/TutorialManager';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -131,7 +136,9 @@ export class GameplayInitializer {
     const performanceMonitor = new PerformanceMonitor();
     const poolManager = new PoolManager();
     const versionInfo = getCurrentVersionInfo();
-    const strategyProfile = StrategyProfileRepository.getSelectedProfile();
+    const strategyProfile = SettingsManager.getDeveloper().playtestMode
+      ? cloneAutoStrategyProfile(PLAYTEST_AUTO_STRATEGY_PROFILE)
+      : StrategyProfileRepository.getSelectedProfile();
     const strategyProfileHash = StrategyHasher.hash(strategyProfile);
     const autoStrategyEnabled = config.playtestSettings.autoMovement
       || config.playtestSettings.autoUpgrade

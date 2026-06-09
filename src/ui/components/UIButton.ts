@@ -26,13 +26,15 @@ export class UIButton {
   private width: number;
   private height: number;
   private state: UIButtonState;
+  private selected: boolean;
   private pressedInside = false;
 
   constructor(private readonly scene: Phaser.Scene, config: UIButtonConfig) {
     const metrics = UITheme.sizes.button[config.size ?? 'medium'];
     this.width = config.width ?? metrics.width;
     this.height = config.height ?? metrics.height;
-    this.state = config.disabled ? 'disabled' : config.selected ? 'selected' : 'normal';
+    this.selected = config.selected === true;
+    this.state = config.disabled ? 'disabled' : this.selected ? 'selected' : 'normal';
     this.container = scene.add.container(config.x, config.y);
     this.background = scene.add.graphics();
     this.label = scene.add.text(0, 0, config.label, {
@@ -51,7 +53,7 @@ export class UIButton {
     this.container.on('pointerover', () => this.setState(this.state === 'disabled' ? 'disabled' : 'hover'));
     this.container.on('pointerout', () => {
       this.pressedInside = false;
-      this.setState(config.selected ? 'selected' : 'normal');
+      this.setState(this.selected ? 'selected' : 'normal');
     });
     this.container.on('pointerdown', (
       _pointer: Phaser.Input.Pointer,
@@ -84,7 +86,7 @@ export class UIButton {
       }
 
       AudioManager.playUi(scene, 'ui_click');
-      this.setState(config.selected ? 'selected' : 'hover');
+      this.setState(this.selected ? 'selected' : 'hover');
       config.onClick?.();
     });
     this.render();
@@ -116,6 +118,7 @@ export class UIButton {
   }
 
   setSelected(selected: boolean): this {
+    this.selected = selected;
     this.setState(selected ? 'selected' : 'normal');
     return this;
   }

@@ -15,4 +15,8 @@ export class DecisionLog {
   getRecent(limit = 60): DecisionLogEntry[] {
     return this.entries.slice(-Math.max(0, limit)).map((entry) => ({ ...entry }));
   }
+
+  getCount(): number {
+    return this.entries.length;
+  }
 }

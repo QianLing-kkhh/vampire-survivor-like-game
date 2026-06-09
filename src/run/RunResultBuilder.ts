@@ -10,6 +10,7 @@ import { PlayerStats } from '../player/PlayerStats';
 import { RelicManager } from '../relic/RelicManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { RunStats } from '../stats/RunStats';
+import { StrategyTelemetry } from '../telemetry/StrategyTelemetry';
 import { WeaponManager } from '../weapon/WeaponManager';
 
 import { RunState } from './RunState';
@@ -77,6 +78,19 @@ export class RunResultBuilder {
     const postEvolutionDuration = context.runState.evolutionTime === null
       ? 0
       : Math.max(0, context.survivalTime - context.runState.evolutionTime);
+    const strategyTelemetrySummary = StrategyTelemetry.buildSummary({
+      resultType: context.resultType,
+      survivalTimeSeconds: context.survivalTime,
+      finalLevel,
+      finalExp,
+      killCount: context.runState.killCount,
+      treasureOpenCount: context.runState.treasureOpenCount,
+      upgradeCount: context.runState.totalUpgradeCount,
+      evolutionCount: context.runState.evolutionPath.length,
+      relicCount: relicIds.length,
+      damageTaken: runStatsSummary.damageTaken,
+      lowestHp: runStatsSummary.lowestHp,
+    });
     const playtestCsv = PlaytestLog.createCsv({
       runId: context.runId,
       runSeed: metadata.runSeed,
@@ -114,6 +128,7 @@ export class RunResultBuilder {
       strategyProfileHash: metadata.strategyProfileHash,
       simulationSpeedMultiplier: metadata.simulationSpeedMultiplier,
       speedBucket: metadata.speedBucket,
+      strategyTelemetrySummary: StrategyTelemetry.serializeSummary(strategyTelemetrySummary),
       autoMovement: playtestSettings.autoMovement,
       autoUpgrade: playtestSettings.autoUpgrade,
       fastMode: context.fastMode,
@@ -333,6 +348,7 @@ export class RunResultBuilder {
       strategyProfileHash: metadata.strategyProfileHash,
       simulationSpeedMultiplier: metadata.simulationSpeedMultiplier,
       speedBucket: metadata.speedBucket,
+      strategyTelemetrySummary,
       fastMode: context.fastMode,
       timeScale: context.timeScale,
       upgradeSelectionMode: context.upgradeSelectionMode,

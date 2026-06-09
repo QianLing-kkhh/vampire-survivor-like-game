@@ -43,6 +43,7 @@ export interface PlaytestLogData {
   strategyProfileHash?: string;
   simulationSpeedMultiplier?: number;
   speedBucket?: StrategySpeedBucket;
+  strategyTelemetrySummary?: string;
   autoMovement: boolean;
   autoUpgrade: boolean;
   fastMode: boolean;
@@ -178,6 +179,7 @@ export class PlaytestLog {
     'strategyProfileHash',
     'simulationSpeedMultiplier',
     'speedBucket',
+    'strategyTelemetrySummary',
     'autoMovement',
     'autoUpgrade',
     'fastMode',
@@ -328,6 +330,7 @@ export class PlaytestLog {
         ? ''
         : PlaytestLog.formatNumber(data.simulationSpeedMultiplier),
       data.speedBucket ?? '',
+      data.strategyTelemetrySummary ?? '',
       data.autoMovement ? 'true' : 'false',
       data.autoUpgrade ? 'true' : 'false',
       data.fastMode ? 'true' : 'false',

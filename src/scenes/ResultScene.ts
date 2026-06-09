@@ -13,6 +13,7 @@ import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
 import { RANDOM_UNLOCKED_STAGE_ID, StageManager } from '../stage/StageManager';
+import type { StrategyTelemetrySummary } from '../telemetry/StrategyTelemetry';
 import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { SelectionListPanel } from '../ui/SelectionListPanel';
 import { SettingsMenu } from '../ui/SettingsMenu';
@@ -79,6 +80,7 @@ interface ResultSceneData {
   upgradePath?: string[];
   playtestCsv?: string;
   bufferedRunsCount?: number;
+  strategyTelemetrySummary?: StrategyTelemetrySummary;
   unlockMessages?: string[];
   statsBuildSnapshot?: StatsBuildSnapshot;
 }
@@ -436,6 +438,7 @@ export class ResultScene extends Phaser.Scene {
       `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
       `${I18n.t('result.killCount')}: ${params.data.killCount ?? 0}`,
       `${I18n.t('result.score')}: ${params.data.score ?? 0}`,
+      ...this.getStrategyTelemetryLines(params.data),
       ...params.unlockMessages.map((message) => `${I18n.t('result.unlock')}: ${message}`),
       `${I18n.t('result.weapons')}: ${params.weaponText}`,
       `${I18n.t('result.passives')}: ${params.passiveText}`,
@@ -467,6 +470,20 @@ export class ResultScene extends Phaser.Scene {
     const shortSeed = seed.length > 14 ? `${seed.slice(0, 14)}...` : seed;
 
     return `${I18n.t('result.stage')}: ${stage}  ${I18n.t('result.character')}: ${character}${shortSeed ? `  ${I18n.t('result.seed')}: ${shortSeed}` : ''}`;
+  }
+
+  private getStrategyTelemetryLines(data: ResultSceneData): string[] {
+    const summary = data.strategyTelemetrySummary;
+
+    if (!summary) {
+      return [];
+    }
+
+    return [
+      `Strategy: ${summary.summary}`,
+      `Pace: ${summary.killsPerMinute} KPM / ${summary.expPerMinute} EXP/min / ${summary.damageTakenPerMinute} dmg/min`,
+      `Choices: ${summary.upgradeCount} upgrades / ${summary.evolutionCount} evolutions / ${summary.relicCount} relics / ${summary.treasuresOpenedPerMinute} chests/min`,
+    ];
   }
 
   private formatLeaderboardLines(entries: EndlessLeaderboardEntry[], maxRows: number): string[] {
