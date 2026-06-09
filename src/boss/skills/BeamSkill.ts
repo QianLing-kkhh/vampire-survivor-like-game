@@ -4,7 +4,7 @@ import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
 import { BeamSkillConfig } from './BossSkillConfig';
 import { getDistanceSegmentToPoint } from './DashSkill';
-import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayerTypes';
 
 export class BeamSkill implements BossSkill {
   readonly type = 'beam' as const;

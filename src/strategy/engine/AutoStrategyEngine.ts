@@ -1,6 +1,6 @@
 import type { PlayerIntent } from '../../input/PlayerIntent';
 import type { AutoStrategyProfile } from '../profile/AutoStrategyProfile';
-import { DEFAULT_AUTO_STRATEGY_PROFILE } from '../profile/AutoStrategyProfile';
+import { DEFAULT_AUTO_STRATEGY_PROFILE } from '../profile/AutoStrategyDefaults';
 import { StrategyProfileValidator } from '../profile/StrategyProfileValidator';
 import { MicroControlLayer } from '../layers/MicroControlLayer';
 import { StrategicLayer } from '../layers/StrategicLayer';

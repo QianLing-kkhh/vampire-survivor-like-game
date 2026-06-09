@@ -52,3 +52,52 @@ export function createManualRunModeConfig(speed = 1): RunModeConfig {
     speedBucket,
   };
 }
+
+export interface AutoStrategyRunModeConfigInput {
+  autoChallengeType?: AutoChallengeType;
+  strategyProfileId: string;
+  strategyProfileHash: string;
+  strategyProfile: AutoStrategyProfile;
+  strategyControlType: StrategyControlType;
+  allowRuntimeStrategyEdit: boolean;
+  simulationSpeedMultiplier?: number;
+  viewPlaybackSpeedMultiplier?: number;
+}
+
+export function createAutoStrategyRunModeConfig(
+  input: AutoStrategyRunModeConfigInput,
+): RunModeConfig {
+  const simulationSpeedMultiplier = input.simulationSpeedMultiplier ?? 1;
+  const viewPlaybackSpeedMultiplier = input.viewPlaybackSpeedMultiplier ?? simulationSpeedMultiplier;
+
+  return {
+    controlMode: 'autoStrategy',
+    autoChallengeType: input.autoChallengeType ?? 'normal',
+    strategyProfileId: input.strategyProfileId,
+    strategyProfileHash: input.strategyProfileHash,
+    strategyProfile: input.strategyProfile,
+    strategyControlType: input.strategyControlType,
+    allowRuntimeStrategyEdit: input.allowRuntimeStrategyEdit,
+    simulationSpeedMultiplier,
+    viewPlaybackSpeedMultiplier,
+    speedBucket: createSpeedBucket(simulationSpeedMultiplier),
+  };
+}
+
+export function createReplayRunModeConfig(playbackSpeed = 1): RunModeConfig {
+  return {
+    controlMode: 'replay',
+    simulationSpeedMultiplier: 1,
+    viewPlaybackSpeedMultiplier: playbackSpeed,
+    speedBucket: createSpeedBucket(playbackSpeed),
+  };
+}
+
+export function createScoreAttackRunModeConfig(
+  input: Omit<AutoStrategyRunModeConfigInput, 'autoChallengeType'>,
+): RunModeConfig {
+  return createAutoStrategyRunModeConfig({
+    ...input,
+    autoChallengeType: 'scoreAttack',
+  });
+}

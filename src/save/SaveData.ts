@@ -23,7 +23,7 @@ import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 import {
   StrategySaveData,
   createDefaultStrategySaveData,
-} from '../strategy/profile/AutoStrategyProfile';
+} from '../strategy/profile/AutoStrategySaveData';
 import {
   DEFAULT_TUTORIAL_STATE,
   TutorialState,

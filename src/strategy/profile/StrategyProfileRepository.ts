@@ -1,12 +1,12 @@
 import { SaveManager } from '../../save/SaveManager';
+import type { AutoStrategyProfile } from './AutoStrategyProfile';
+import { cloneAutoStrategyProfile } from './AutoStrategyClone';
+import { DEFAULT_AUTO_STRATEGY_PROFILE_ID } from './AutoStrategyDefaults';
+import { INTERNAL_AUTO_STRATEGY_PROFILES } from './AutoStrategyPresets';
 import {
-  AutoStrategyProfile,
-  DEFAULT_AUTO_STRATEGY_PROFILE_ID,
-  INTERNAL_AUTO_STRATEGY_PROFILES,
-  cloneAutoStrategyProfile,
   createBuiltInStrategyProfileMap,
   createDefaultStrategySaveData,
-} from './AutoStrategyProfile';
+} from './AutoStrategySaveData';
 import { StrategyProfileValidator } from './StrategyProfileValidator';
 
 export class StrategyProfileRepository {

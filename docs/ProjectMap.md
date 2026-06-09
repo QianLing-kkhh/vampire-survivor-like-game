@@ -40,7 +40,18 @@ Key owners:
 
 - `AutoPlayer`: movement policy and scoring.
 - `AutoPlayerContextBuilder`: scene-to-auto movement snapshot builder.
+- `AutoPlayerTypes` and `strategy/snapshot`: strategy snapshot type boundaries shared by auto movement, Boss warnings, map mechanics, and weapon context.
 - `AutoUpgradeSelector`: automated upgrade selection policy.
+
+### `src/strategy`
+
+Auto strategy profiles, policy helpers, strategy snapshot contracts, hashing, serialization, and runtime strategy state.
+
+Key owners:
+
+- `profile/AutoStrategyProfile`: strategy profile interfaces only.
+- `profile/AutoStrategyDefaults`, `AutoStrategyPresets`, `AutoStrategySaveData`, and `AutoStrategyClone`: default/preset/save/clone helpers for strategy profiles.
+- `snapshot/StrategyWorldSnapshot`: engine-neutral snapshot contract used by auto strategy systems.
 
 ### `src/player`
 
@@ -113,6 +124,14 @@ Key owners:
 - `RunStats`: runtime combat/stat summaries.
 - `RunResultBuilder`: result scene and CSV output data.
 - `RunEndCoordinator`: run-ended payload and result-build input preparation.
+
+### `src/leaderboard`
+
+Local leaderboard keys, records, storage facade, and run-result insertion.
+
+Key owners:
+
+- `LeaderboardKeyFactory`: canonical runtime metadata to leaderboard key conversion for new run flows.
 
 ### `src/events`
 

@@ -9,7 +9,7 @@ import { VisualScale } from '../visual/VisualScale';
 import { ENEMY_POPULATION_CONFIG } from './EnemyPopulationConfig';
 import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
 import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
-import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayerTypes';
 
 export interface EnemyStats {
   hp: number;

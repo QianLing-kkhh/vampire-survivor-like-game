@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
 import { SlowZoneSkillConfig } from './BossSkillConfig';
-import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayerTypes';
 
 export class SlowZoneSkill implements BossSkill {
   readonly type = 'slowZone' as const;

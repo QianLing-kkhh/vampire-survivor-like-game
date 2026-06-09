@@ -26,7 +26,7 @@ import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
-import { createLeaderboardKey, serializeLeaderboardKey } from '../leaderboard/LeaderboardKey';
+import { LeaderboardKeyFactory } from '../leaderboard/LeaderboardKeyFactory';
 import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PickupManager } from '../pickup/PickupManager';
 import { PerformanceMonitor } from '../performance/PerformanceMonitor';
@@ -42,18 +42,20 @@ import { RelicManager } from '../relic/RelicManager';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
 import { UpgradeSelectionContext, UpgradeSelector } from '../progression/UpgradeSelector';
+import type { RunMetadata } from '../run/RunMetadata';
 import { RunState } from '../run/RunState';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
-import { createSpeedBucket, type StrategyControlType } from '../runtime/RunModeConfig';
+import {
+  createAutoStrategyRunModeConfig,
+  createManualRunModeConfig,
+} from '../runtime/RunModeConfig';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
 import { StrategyHasher } from '../strategy/hash/StrategyHasher';
 import { RuntimeStrategyState } from '../strategy/runtime/RuntimeStrategyState';
-import {
-  PLAYTEST_AUTO_STRATEGY_PROFILE,
-  cloneAutoStrategyProfile,
-} from '../strategy/profile/AutoStrategyProfile';
+import { cloneAutoStrategyProfile } from '../strategy/profile/AutoStrategyClone';
+import { PLAYTEST_AUTO_STRATEGY_PROFILE } from '../strategy/profile/AutoStrategyDefaults';
 import { StrategyProfileRepository } from '../strategy/profile/StrategyProfileRepository';
 import { TutorialManager } from '../tutorial/TutorialManager';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -150,15 +152,17 @@ export class GameplayInitializer {
     const simulationSpeedMultiplier = config.playtestSettings.fastMode
       ? config.playtestSettings.autoTimeScale
       : 1;
-    const speedBucket = createSpeedBucket(simulationSpeedMultiplier);
-    const controlMode = autoStrategyEnabled ? 'autoStrategy' : 'manual';
-    const autoChallengeType = autoStrategyEnabled
-      ? config.playtestSettings.endlessMode ? 'endless' : 'normal'
-      : undefined;
-    const strategyControlType: StrategyControlType | undefined = autoStrategyEnabled
-      ? config.playtestSettings.strategyControlType
-      : undefined;
-    const allowRuntimeStrategyEdit = strategyControlType === 'live';
+    const runModeConfig = autoStrategyEnabled
+      ? createAutoStrategyRunModeConfig({
+        autoChallengeType: config.playtestSettings.endlessMode ? 'endless' : 'normal',
+        strategyProfileId: strategyProfile.id,
+        strategyProfileHash,
+        strategyProfile,
+        strategyControlType: config.playtestSettings.strategyControlType,
+        allowRuntimeStrategyEdit: config.playtestSettings.strategyControlType === 'live',
+        simulationSpeedMultiplier,
+      })
+      : createManualRunModeConfig(simulationSpeedMultiplier);
     const {
       gameEventBus,
       gameEventRecorder,
@@ -308,25 +312,7 @@ export class GameplayInitializer {
       runRuleSet.rulesetId,
     );
     config.runState.setReplayId(config.runId);
-    const leaderboardKey = serializeLeaderboardKey(createLeaderboardKey({
-      mode: selection.challengeId
-        ? 'challenge'
-        : selection.customStageId ? 'custom' : config.playtestSettings.endlessMode ? 'endless' : 'normal',
-      controlMode,
-      autoChallengeType,
-      characterId: selectedCharacter.id,
-      stageId: selectedStage.id,
-      mapId: selectedMap.id,
-      difficultyId: selectedDifficulty.id,
-      seed: selection.seed,
-      challengeId: selection.challengeId,
-      customStageId: selection.customStageId,
-      rulesetId: runRuleSet.rulesetId,
-      strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
-      strategyControlType,
-      speedBucket,
-    }));
-    config.runState.setRunMetadata({
+    const runMetadata: RunMetadata = {
       runId: config.runId,
       runSeed,
       gameVersion: versionInfo.gameVersion,
@@ -347,15 +333,24 @@ export class GameplayInitializer {
       challengeId: selection.challengeId,
       rulesetId: runRuleSet.rulesetId,
       seed: selection.seed,
+      controlMode: runModeConfig.controlMode,
+      autoChallengeType: runModeConfig.autoChallengeType,
+      strategyProfileId: autoStrategyEnabled ? runModeConfig.strategyProfileId : undefined,
+      strategyProfileHash: autoStrategyEnabled ? runModeConfig.strategyProfileHash : undefined,
+      strategyControlType: runModeConfig.strategyControlType,
+      allowRuntimeStrategyEdit: runModeConfig.allowRuntimeStrategyEdit,
+      simulationSpeedMultiplier: runModeConfig.simulationSpeedMultiplier,
+      speedBucket: runModeConfig.speedBucket,
+    };
+    const leaderboardKey = LeaderboardKeyFactory.serializeFromMetadata(runMetadata, {
+      mode: selection.challengeId
+        ? 'challenge'
+        : selection.customStageId ? 'custom' : config.playtestSettings.endlessMode ? 'endless' : 'normal',
+    });
+
+    config.runState.setRunMetadata({
+      ...runMetadata,
       leaderboardKey,
-      controlMode,
-      autoChallengeType,
-      strategyProfileId: autoStrategyEnabled ? strategyProfile.id : undefined,
-      strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
-      strategyControlType,
-      allowRuntimeStrategyEdit,
-      simulationSpeedMultiplier,
-      speedBucket,
     });
     replayRecorder.start({
       runId: config.runId,
@@ -379,13 +374,13 @@ export class GameplayInitializer {
         autoUpgrade: config.playtestSettings.autoUpgrade,
         fastMode: config.playtestSettings.fastMode,
         endlessMode: config.playtestSettings.endlessMode,
-        controlMode,
-        strategyProfileId: autoStrategyEnabled ? strategyProfile.id : undefined,
-        strategyProfileHash: autoStrategyEnabled ? strategyProfileHash : undefined,
-        strategyControlType,
-        allowRuntimeStrategyEdit,
-        simulationSpeedMultiplier,
-        speedBucket,
+        controlMode: runModeConfig.controlMode,
+        strategyProfileId: autoStrategyEnabled ? runModeConfig.strategyProfileId : undefined,
+        strategyProfileHash: autoStrategyEnabled ? runModeConfig.strategyProfileHash : undefined,
+        strategyControlType: runModeConfig.strategyControlType,
+        allowRuntimeStrategyEdit: runModeConfig.allowRuntimeStrategyEdit,
+        simulationSpeedMultiplier: runModeConfig.simulationSpeedMultiplier,
+        speedBucket: runModeConfig.speedBucket,
       },
       metadata: config.runState.getRunMetadata(),
       versionInfo,

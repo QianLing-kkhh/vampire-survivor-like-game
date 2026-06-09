@@ -6,7 +6,7 @@ import { MapMechanicVisualRenderer } from '../../world/MapMechanicVisualRenderer
 import { MapMechanicContext } from './MapMechanicContext';
 import { MapInteractable } from './MapInteractable';
 import { MapPortalDefinition } from './MapMechanicDefinition';
-import type { AutoPortalSnapshot } from '../../auto/AutoPlayer';
+import type { AutoPortalSnapshot } from '../../auto/AutoPlayerTypes';
 
 export class MapPortal implements MapInteractable {
   readonly id: string;

@@ -3,12 +3,10 @@ import type { CharacterBaseStats } from '../character/CharacterDefinition';
 import { EVOLUTION_RULES, EvolutionRule } from '../evolution/EvolutionRule';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import type { RandomSource } from '../random/RandomSource';
-import {
-  DEFAULT_AUTO_STRATEGY_PROFILE,
-  type AutoStrategyProfile,
-} from '../strategy/profile/AutoStrategyProfile';
+import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
+import { DEFAULT_AUTO_STRATEGY_PROFILE } from '../strategy/profile/AutoStrategyDefaults';
 import { StrategyProfileValidator } from '../strategy/profile/StrategyProfileValidator';
-import type { AutoWeaponSnapshot } from './AutoPlayer';
+import type { AutoWeaponSnapshot } from './AutoPlayerTypes';
 
 export type AutoUpgradeSelectionMode = 'score_best';
 export type AutoUpgradeSelectionSource = 'levelUp' | 'treasure';

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayerTypes';
 import { BossLifecycleController } from '../boss/BossLifecycleController';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { EventBus } from '../core/EventBus';

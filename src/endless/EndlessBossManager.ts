@@ -10,7 +10,7 @@ import { EnemyFlow } from '../enemy/EnemyFlow';
 import { RandomSource } from '../random/RandomSource';
 import { SeededRandom } from '../random/SeededRandom';
 import { RunState } from '../run/RunState';
-import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayerTypes';
 
 import { EndlessManager } from './EndlessManager';
 import { ENDLESS_BOSS_CONFIGS, EndlessBossConfig, EndlessBossId } from './EndlessBossConfig';

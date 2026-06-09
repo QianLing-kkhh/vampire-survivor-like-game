@@ -1,5 +1,5 @@
-import type { AutoPlayerContext } from '../auto/AutoPlayer';
 import type { AutoPlayer } from '../auto/AutoPlayer';
+import type { AutoPlayerContext } from '../auto/AutoPlayerTypes';
 import type { PlayerIntent } from './PlayerIntent';
 
 export class AutoStrategyIntentProvider {

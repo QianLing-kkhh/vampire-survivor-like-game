@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 import { AudioManager } from '../audio/AudioManager';
-import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayerTypes';
 import { EventBus } from '../core/EventBus';
 import { Enemy, GameEventMap } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';

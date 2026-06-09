@@ -1,9 +1,9 @@
+import type { AutoStrategyProfile } from './AutoStrategyProfile';
+import { cloneAutoStrategyProfile } from './AutoStrategyClone';
 import {
   AUTO_STRATEGY_PROFILE_VERSION,
-  AutoStrategyProfile,
   DEFAULT_AUTO_STRATEGY_PROFILE,
-  cloneAutoStrategyProfile,
-} from './AutoStrategyProfile';
+} from './AutoStrategyDefaults';
 
 const WEIGHT_MIN = 0;
 const WEIGHT_MAX = 100;

@@ -1,6 +1,6 @@
 import { BossSkillContext } from './BossSkillContext';
 import { BossSkillType } from './BossSkillConfig';
-import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayerTypes';
 
 export interface BossSkill {
   readonly type: BossSkillType;

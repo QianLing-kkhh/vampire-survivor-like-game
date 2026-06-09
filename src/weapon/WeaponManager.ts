@@ -1,6 +1,6 @@
 import { Enemy } from '../enemy/Enemy';
 import { CharacterRuntime } from '../character/CharacterRuntime';
-import type { AutoWeaponSnapshot, WeaponAutoContext } from '../auto/AutoPlayer';
+import type { AutoWeaponSnapshot, WeaponAutoContext } from '../auto/AutoPlayerTypes';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerCombatModifierSnapshot } from '../player/PlayerStats';
 import { RunStats } from '../stats/RunStats';

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
 import { Enemy } from '../enemy/Enemy';
-import type { AutoBossWarningSnapshot } from '../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../auto/AutoPlayerTypes';
 
 import { BossProjectile } from './BossProjectile';
 

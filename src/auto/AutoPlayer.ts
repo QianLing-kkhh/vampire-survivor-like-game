@@ -1,384 +1,66 @@
 import Phaser from 'phaser';
 
-import type { CharacterDamageReactionType } from '../character/CharacterDamageReactionSkill';
-import type { CharacterBaseStats } from '../character/CharacterDefinition';
 import type { PlayerIntent } from '../input/PlayerIntent';
 import { AutoStrategyEngine } from '../strategy/engine/AutoStrategyEngine';
 import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
 import type { WeaponTag } from '../weapon/tags/WeaponTag';
 
-export interface AutoPosition {
-  x: number;
-  y: number;
-}
+import { AUTO_PLAYER_CONSTANTS } from './AutoPlayerConstants';
+import type {
+  AutoBossWarningSnapshot,
+  AutoEnemySnapshot,
+  AutoObstacleSnapshot,
+  AutoPickupSnapshot,
+  AutoPlayerContext,
+  AutoPortalSnapshot,
+  AutoPosition,
+  AutoSlowZoneSnapshot,
+  AutoWeaponSnapshot,
+} from './AutoPlayerTypes';
+import type {
+  StrategicDirectionAnalysis,
+  StrategicLookaheadDebugSnapshot,
+  StrategicLookaheadResult,
+} from './AutoPlayerDebugTypes';
+import type {
+  AutoTarget,
+  Candidate,
+  CandidateRoute,
+  MicroMoveResult,
+  MoveMode,
+  StrategicPathStyle,
+  StrategicMoveIntent,
+  TacticalRoute,
+} from './AutoPlayerMovementTypes';
+import type {
+  CornerTrapInfo,
+  EnemyMotionSnapshot,
+  KiteInfo,
+  MovementMemoryInfo,
+  SegmentPointInfo,
+  SurroundInfo,
+  TerrainEscapeInfo,
+} from './AutoPlayerMemoryTypes';
 
-export interface AutoPlayerSnapshot {
-  currentHp: number;
-  maxHp: number;
-  level?: number;
-  hitRadiusPx?: number;
-  radiusPx?: number;
-  moveSpeed?: number;
-  pickupRangePx?: number;
-  characterId?: string;
-  damageReactionType?: CharacterDamageReactionType;
-  baseStats?: Partial<CharacterBaseStats>;
-}
-
-export interface AutoWeaponSnapshot {
-  weaponId: string;
-  baseWeaponId: string;
-  level: number;
-  maxLevel: number;
-  tags: readonly WeaponTag[];
-  radiusPx?: number;
-  rangePx?: number;
-}
-
-export interface AutoEnemySnapshot extends AutoPosition {
-  id?: string;
-  vx?: number;
-  vy?: number;
-  radiusPx?: number;
-  moveSpeed?: number;
-  damage?: number;
-  hpRatio?: number;
-  isBoss?: boolean;
-  isElite?: boolean;
-  isMiniBoss?: boolean;
-}
-
-export interface AutoPickupSnapshot extends AutoPosition {
-  exp?: number;
-  effectiveDistance?: number;
-  clusterScore?: number;
-  dangerScore?: number;
-}
-
-export interface AutoTreasureSnapshot extends AutoPosition {
-  effectiveDistance?: number;
-  dangerScore?: number;
-}
-
-export interface AutoObstacleSnapshot {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  shape: 'circle' | 'rect';
-  blocksPlayer: boolean;
-}
-
-export interface AutoSlowZoneSnapshot {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  radius: number;
-  shape: 'circle' | 'rect';
-  playerSpeedMultiplier: number;
-  enemySpeedMultiplier: number;
-}
-
-export interface AutoPortalSnapshot {
-  id: string;
-  x: number;
-  y: number;
-  radius: number;
-  target?: AutoPosition;
-  isAvailable?: boolean;
-  cooldownRemainingMs?: number;
-}
-
-export interface AutoMapSnapshot {
-  obstacles: readonly AutoObstacleSnapshot[];
-  slowZones: readonly AutoSlowZoneSnapshot[];
-  portals: readonly AutoPortalSnapshot[];
-}
-
-export type AutoBossWarningKind =
-  | 'dash'
-  | 'beam'
-  | 'shockwave'
-  | 'ring'
-  | 'slowZone'
-  | 'impact';
-
-export type AutoBossWarningDanger = 'damage' | 'slow';
-
-export type AutoBossWarningSnapshot =
-  | {
-    shape: 'line';
-    kind: AutoBossWarningKind;
-    danger: AutoBossWarningDanger;
-    start: AutoPosition;
-    end: AutoPosition;
-    width: number;
-    remainingMs?: number;
-  }
-  | {
-    shape: 'circle';
-    kind: AutoBossWarningKind;
-    danger: AutoBossWarningDanger;
-    x: number;
-    y: number;
-    radius: number;
-    remainingMs?: number;
-  };
-
-export interface WeaponAutoContext {
-  weaponIds: readonly string[];
-  garlicRadiusPx?: number;
-  bibleRadiusPx?: number;
-  weapons?: readonly AutoWeaponSnapshot[];
-}
-
-export interface AutoPlayerContext {
-  playerPosition: AutoPosition;
-  enemyPositions: readonly (AutoPosition | AutoEnemySnapshot)[];
-  pickupPositions: readonly (AutoPosition | AutoPickupSnapshot)[];
-  treasurePositions?: readonly (AutoPosition | AutoTreasureSnapshot)[];
-  pickupRangePx?: number;
-  player?: AutoPlayerSnapshot;
-  weaponContext?: WeaponAutoContext;
-  map?: AutoMapSnapshot;
-  bossWarnings?: readonly AutoBossWarningSnapshot[];
-  deltaMs?: number;
-  worldBounds: {
-    width: number;
-    height: number;
-  };
-}
-
-interface AutoTarget {
-  id: string;
-  type: 'pickup' | 'treasure';
-  position: Phaser.Math.Vector2;
-  approachPosition: Phaser.Math.Vector2;
-  value: number;
-  effectiveDistance: number;
-  blocked: boolean;
-}
-
-interface Candidate {
-  direction: Phaser.Math.Vector2;
-  reason: string;
-}
-
-type MoveMode =
-  | 'SURVIVE'
-  | 'REPOSITION'
-  | 'BOSS_POSITIONING'
-  | 'KITE'
-  | 'COMBAT_FARM'
-  | 'CHEST_APPROACH'
-  | 'COLLECT';
-
-type StrategicPathStyle =
-  | 'DIRECT'
-  | 'ARC_LEFT'
-  | 'ARC_RIGHT'
-  | 'LOOP_CLOCKWISE'
-  | 'LOOP_COUNTERCLOCKWISE';
-
-interface StrategicMoveIntent {
-  mode: MoveMode;
-  targetDirection: Phaser.Math.Vector2;
-  targetPosition?: Phaser.Math.Vector2;
-  preferredPathStyle: StrategicPathStyle;
-  strategicLookaheadSeconds: number;
-  desiredOrbitRadius: number;
-  avoidLinearEscape: boolean;
-  urgency: number;
-  validMs: number;
-  target?: AutoTarget;
-}
-
-interface StrategicLookaheadDebugSnapshot {
-  preferredPathStyle: StrategicPathStyle;
-  strategicLookaheadSeconds: number;
-  farmGrowthUrgency: number;
-  combatOpportunityScore: number;
-  xpAccessScore: number;
-  killZoneScore: number;
-  weaponEffectivePositionScore: number;
-  xpRouteScore: number;
-  killRouteScore: number;
-  overKitePenalty: number;
-  combatWindow: boolean;
-  futurePlayerDensityRisk: number;
-  futureTargetZoneDensityRisk: number;
-  futurePathInterceptionRisk: number;
-  lureQuality: number;
-  escapeCorridorScore: number;
-  loopSustainability: number;
-  futureBoundaryRisk: number;
-  linearEscapePenalty: number;
-  continuationScore: number;
-  deadEndAfterArrivalRisk: number;
-}
-
-interface StrategicDirectionAnalysis extends StrategicLookaheadDebugSnapshot {
-  direction: Phaser.Math.Vector2;
-  targetZoneCenter: Phaser.Math.Vector2;
-  desiredOrbitRadius: number;
-  avoidLinearEscape: boolean;
-  score: number;
-}
-
-interface StrategicLookaheadResult extends StrategicLookaheadDebugSnapshot {
-  futureZoneSafety: number;
-  desiredOrbitRadius: number;
-  avoidLinearEscape: boolean;
-}
-
-interface TacticalRoute {
-  id: string;
-  waypoints: Phaser.Math.Vector2[];
-  currentWaypointIndex: number;
-  threatRank: number;
-  rawThreat: number;
-  rewardScore: number;
-  combatFitScore: number;
-  xpRouteScore: number;
-  killRouteScore: number;
-  overKitePenalty: number;
-  routeScore: number;
-  createdAt: number;
-  validUntil: number;
-  commitment: number;
-}
-
-interface CandidateRoute {
-  id: string;
-  waypoints: Phaser.Math.Vector2[];
-  rawThreat: number;
-  threatRank: number;
-  rewardScore: number;
-  combatFitScore: number;
-  xpRouteScore: number;
-  killRouteScore: number;
-  overKitePenalty: number;
-  routeScore: number;
-  hardInvalid: boolean;
-}
-
-interface MicroMoveResult {
-  direction: Phaser.Math.Vector2;
-  reason:
-    | 'FOLLOW_ROUTE'
-    | 'AVOID_CLOSE_ENEMY'
-    | 'AVOID_BOSS_WARNING'
-    | 'AVOID_OBSTACLE'
-    | 'EMERGENCY_ESCAPE';
-  score: number;
-}
-
-interface CornerTrapInfo {
-  active: boolean;
-  inwardDirection: Phaser.Math.Vector2;
-}
-
-interface MovementMemoryInfo {
-  stalled: boolean;
-  prolonged: boolean;
-  stallMs: number;
-  anchor: Phaser.Math.Vector2;
-  recentDisplacement: number;
-}
-
-interface SurroundInfo {
-  surrounded: boolean;
-  blockedSectors: number;
-  safestDirection: Phaser.Math.Vector2;
-  safestScore: number;
-}
-
-interface KiteInfo {
-  active: boolean;
-  direction: Phaser.Math.Vector2;
-  inwardDirection: Phaser.Math.Vector2;
-  currentPressure: number;
-  nearBorder: boolean;
-  nearCorner: boolean;
-}
-
-interface TerrainEscapeInfo {
-  active: boolean;
-  direction: Phaser.Math.Vector2;
-  enemySectors: number;
-  nearBorder: boolean;
-  nearObstacle: boolean;
-  inSlowZone: boolean;
-}
-
-interface SegmentPointInfo {
-  distance: number;
-  t: number;
-  point: Phaser.Math.Vector2;
-}
-
-interface EnemyMotionSnapshot {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-}
+export type {
+  AutoBossWarningDanger,
+  AutoBossWarningKind,
+  AutoBossWarningSnapshot,
+  AutoEnemySnapshot,
+  AutoMapSnapshot,
+  AutoObstacleSnapshot,
+  AutoPickupSnapshot,
+  AutoPlayerContext,
+  AutoPlayerSnapshot,
+  AutoPortalSnapshot,
+  AutoPosition,
+  AutoSlowZoneSnapshot,
+  AutoTreasureSnapshot,
+  AutoWeaponSnapshot,
+  WeaponAutoContext,
+} from './AutoPlayerTypes';
 
 export class AutoPlayer {
-  private static readonly DANGER_RADIUS = 300;
-  private static readonly PANIC_DISTANCE = 125;
-  private static readonly SAFE_DISTANCE = 230;
-  private static readonly PICKUP_SEEK_RADIUS = 900;
-  private static readonly TREASURE_SEEK_RADIUS = 1200;
-  private static readonly PICKUP_CLUSTER_RADIUS = 180;
-  private static readonly HARD_BORDER_MARGIN = 44;
-  private static readonly BORDER_WARNING_MARGIN = 190;
-  private static readonly NAVIGATION_MARGIN = 42;
-  private static readonly STEP_DISTANCE = 115;
-  private static readonly TARGET_STICKY_BONUS = 2.2;
-  private static readonly TARGET_COOLDOWN_FRAMES = 45;
-  private static readonly PORTAL_ESCAPE_SEEK_RADIUS = 420;
-  private static readonly STALL_RADIUS = 38;
-  private static readonly STALL_TRIGGER_MS = 1400;
-  private static readonly PROLONGED_STALL_MS = 2800;
-  private static readonly BREAKOUT_STICKY_FRAMES = 16;
-  private static readonly SURROUND_BLOCKED_SCORE = 9;
-  private static readonly KITE_STICKY_FRAMES = 28;
-  private static readonly CONTACT_DANGER_RADIUS = 78;
-  private static readonly CONTACT_WARNING_RADIUS = 138;
-  private static readonly CONTACT_PATH_RADIUS = 96;
-  private static readonly DEFAULT_PLAYER_COLLISION_RADIUS = 28;
-  private static readonly DEFAULT_ENEMY_COLLISION_RADIUS = 18;
-  private static readonly FINAL_BOSS_DASH_MIN_DISTANCE = 170;
-  private static readonly FINAL_BOSS_DASH_IDEAL_DISTANCE = 270;
-  private static readonly FINAL_BOSS_DASH_MAX_DISTANCE = 390;
-  private static readonly PRE_ENCIRCLE_RADIUS = 430;
-  private static readonly TERRAIN_ESCAPE_MARGIN = 150;
-  private static readonly STRATEGIC_DISTANCE = 420;
-  private static readonly STRATEGIC_NEAR_SECONDS = 2.0;
-  private static readonly STRATEGIC_MID_SECONDS = 4.0;
-  private static readonly STRATEGIC_FAR_SECONDS = 6.0;
-  private static readonly HIGH_PRESSURE_THRESHOLD = 7.5;
-  private static readonly LATE_GAME_MS = 240000;
-  private static readonly STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS = 260;
-  private static readonly STRATEGIC_CONTINUATION_DISTANCE = 360;
-  private static readonly STRATEGIC_REFRESH_MS = 450;
-  private static readonly STRATEGIC_URGENT_REFRESH_MS = 250;
-  private static readonly STRATEGIC_SAFE_REFRESH_MS = 650;
-  private static readonly STRATEGIC_SWITCH_RATIO = 0.14;
-  private static readonly TACTICAL_ROUTE_REFRESH_MS = 420;
-  private static readonly TACTICAL_ROUTE_URGENT_REFRESH_MS = 220;
-  private static readonly TACTICAL_ROUTE_VALID_MS = 650;
-  private static readonly TACTICAL_ROUTE_SWITCH_RATIO = 0.16;
-  private static readonly ROUTE_WAYPOINT_REACHED_DISTANCE = 82;
-  private static readonly MICRO_ROUTE_DEVIATION_LIMIT = 150;
-  private static readonly MICRO_THREAT_RADIUS = 230;
-  private static readonly TACTICAL_BACKTRACK_GRACE_MS = 260;
-  private static readonly TACTICAL_BACKTRACK_LIMIT_MS = 780;
-
   private stickyTargetId?: string;
   private stickyWaypoint?: Phaser.Math.Vector2;
   private stickyWaypointTargetId?: string;
@@ -475,7 +157,7 @@ export class AutoPlayer {
     if (
       intent.target
       && (intent.mode === 'COLLECT' || intent.mode === 'CHEST_APPROACH')
-      && danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
+      && danger.nearestDistance > AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE
       && !movement.stalled
       && this.canPickupFrom(context, player, intent.target.position)
       && this.getTotalBossWarningRisk(context, player) <= 0
@@ -676,7 +358,7 @@ export class AutoPlayer {
       overKitePenalty: selected.overKitePenalty,
       routeScore: selected.routeScore,
       createdAt: this.autoMoveElapsedMs,
-      validUntil: this.autoMoveElapsedMs + AutoPlayer.TACTICAL_ROUTE_VALID_MS,
+      validUntil: this.autoMoveElapsedMs + AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_VALID_MS,
       commitment: Phaser.Math.Clamp(22 - selected.threatRank * 3 + intent.urgency * 8, 8, 30),
     };
   }
@@ -691,14 +373,14 @@ export class AutoPlayer {
     }
 
     const switchRatio = intent.mode === 'SURVIVE'
-      ? AutoPlayer.TACTICAL_ROUTE_SWITCH_RATIO * 0.5
-      : AutoPlayer.TACTICAL_ROUTE_SWITCH_RATIO;
+      ? AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_SWITCH_RATIO * 0.5
+      : AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_SWITCH_RATIO;
     const requiredGain = Math.max(6, Math.abs(currentRoute.routeScore) * switchRatio);
 
     if (nextRoute.routeScore < currentRoute.routeScore + requiredGain) {
       return {
         ...currentRoute,
-        validUntil: Math.max(currentRoute.validUntil, this.autoMoveElapsedMs + AutoPlayer.TACTICAL_ROUTE_VALID_MS * 0.45),
+        validUntil: Math.max(currentRoute.validUntil, this.autoMoveElapsedMs + AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_VALID_MS * 0.45),
       };
     }
 
@@ -739,7 +421,7 @@ export class AutoPlayer {
       candidates.push({ direction: warningEscapeDirection, reason: 'AVOID_BOSS_WARNING' });
     }
 
-    if (danger.nearestDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+    if (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
       candidates.push(...this.getNearestEnemyEscapeCandidates(context, player).map((candidate) => ({
         ...candidate,
         reason: 'AVOID_CLOSE_ENEMY',
@@ -815,8 +497,8 @@ export class AutoPlayer {
 
   private getTacticalRouteUpdateInterval(mode: MoveMode): number {
     return mode === 'SURVIVE' || mode === 'REPOSITION'
-      ? AutoPlayer.TACTICAL_ROUTE_URGENT_REFRESH_MS
-      : AutoPlayer.TACTICAL_ROUTE_REFRESH_MS;
+      ? AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_URGENT_REFRESH_MS
+      : AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_REFRESH_MS;
   }
 
   private generateCandidateRoutes(
@@ -837,7 +519,7 @@ export class AutoPlayer {
     const normalized = forward.clone().normalize();
     const left = new Phaser.Math.Vector2(-normalized.y, normalized.x);
     const right = new Phaser.Math.Vector2(normalized.y, -normalized.x);
-    const distance = Math.min(forward.length(), AutoPlayer.STRATEGIC_DISTANCE);
+    const distance = Math.min(forward.length(), AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE);
     const midDistance = Math.max(120, distance * 0.52);
     const narrowOffset = Math.max(90, distance * 0.28);
     const wideOffset = Math.max(150, distance * 0.45);
@@ -919,7 +601,7 @@ export class AutoPlayer {
     if (intent.targetDirection.lengthSq() > 0) {
       return this.clampToWorld(
         context,
-        player.clone().add(intent.targetDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE)),
+        player.clone().add(intent.targetDirection.clone().normalize().scale(AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE)),
       );
     }
 
@@ -1062,7 +744,7 @@ export class AutoPlayer {
       const pickupPoint = new Phaser.Math.Vector2(pickup.x, pickup.y);
       const routeDistance = this.getDistanceToRoute(pickupPoint, waypoints);
 
-      if (routeDistance > AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.25) {
+      if (routeDistance > AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.25) {
         continue;
       }
 
@@ -1075,8 +757,8 @@ export class AutoPlayer {
 
       const expValue = this.getPickupExpValue(pickup);
       const clusterValue = this.getPickupClusterScore(context, pickup);
-      const distanceBonus = Math.max(0, AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.25 - routeDistance)
-        / (AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.25);
+      const distanceBonus = Math.max(0, AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.25 - routeDistance)
+        / (AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.25);
       score += (expValue * 1.2 + clusterValue * 0.42) * distanceBonus;
     }
 
@@ -1112,7 +794,7 @@ export class AutoPlayer {
       for (const enemy of context.enemyPositions) {
         const distance = this.getEnemyEffectiveDistance(context, sample, enemy);
 
-        if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+        if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
           enemiesTooClose += 1;
           continue;
         }
@@ -1200,7 +882,7 @@ export class AutoPlayer {
     if (
       waypoint
       && index < route.waypoints.length - 1
-      && Phaser.Math.Distance.Between(player.x, player.y, waypoint.x, waypoint.y) < AutoPlayer.ROUTE_WAYPOINT_REACHED_DISTANCE
+      && Phaser.Math.Distance.Between(player.x, player.y, waypoint.x, waypoint.y) < AUTO_PLAYER_CONSTANTS.ROUTE_WAYPOINT_REACHED_DISTANCE
     ) {
       route.currentWaypointIndex = index + 1;
     }
@@ -1226,7 +908,7 @@ export class AutoPlayer {
     const closest = this.getClosestPointOnRoute(player, route.waypoints);
     const distance = Phaser.Math.Distance.Between(player.x, player.y, closest.x, closest.y);
 
-    if (distance < AutoPlayer.MICRO_ROUTE_DEVIATION_LIMIT) {
+    if (distance < AUTO_PLAYER_CONSTANTS.MICRO_ROUTE_DEVIATION_LIMIT) {
       return new Phaser.Math.Vector2(0, 0);
     }
 
@@ -1263,7 +945,7 @@ export class AutoPlayer {
 
     if (routeDirection.lengthSq() > 0) {
       const alignment = direction.dot(routeDirection);
-      const immediateThreat = danger.nearestDistance < AutoPlayer.CONTACT_DANGER_RADIUS
+      const immediateThreat = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS
         || this.getTotalBossWarningRisk(context, player) > 0
         || hardContactRisk > 120;
 
@@ -1282,7 +964,7 @@ export class AutoPlayer {
     score += this.getEnemyPathClearanceScore(context, player, endpoint, hpRatio) * 0.8;
     score += this.getFinalBossDashPositioningScore(context, player, endpoint, intent.mode, false) * 0.6;
 
-    if (danger.fleeDirection.lengthSq() > 0 && danger.nearestDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+    if (danger.fleeDirection.lengthSq() > 0 && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
       score += direction.dot(danger.fleeDirection) * (intent.mode === 'SURVIVE' ? 18 : 9);
     }
 
@@ -1325,7 +1007,7 @@ export class AutoPlayer {
     const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, this.getHpRatio(context));
 
     if (
-      danger.nearestDistance < AutoPlayer.CONTACT_DANGER_RADIUS
+      danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS
       || contactRisk > 60
       || futureContactRisk > 70
     ) {
@@ -1469,7 +1151,7 @@ export class AutoPlayer {
 
     if (alignment < -0.15) {
       this.tacticalBacktrackMs = Math.min(
-        AutoPlayer.TACTICAL_BACKTRACK_LIMIT_MS,
+        AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_LIMIT_MS,
         this.tacticalBacktrackMs + deltaMs,
       );
     } else if (alignment >= 0.15) {
@@ -1578,7 +1260,7 @@ export class AutoPlayer {
         breakoutDirection,
       );
       const canKeepCurrent = this.strategicIntent.mode === nextIntent.mode
-        && currentScore >= nextScore * (1 - AutoPlayer.STRATEGIC_SWITCH_RATIO)
+        && currentScore >= nextScore * (1 - AUTO_PLAYER_CONSTANTS.STRATEGIC_SWITCH_RATIO)
         && this.getTotalBossWarningRisk(context, player) <= 0;
 
       if (canKeepCurrent) {
@@ -1586,7 +1268,7 @@ export class AutoPlayer {
           ...nextIntent,
           targetDirection: this.strategicIntent.targetDirection.clone(),
           targetPosition: player.clone().add(
-            this.strategicIntent.targetDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE),
+            this.strategicIntent.targetDirection.clone().normalize().scale(AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE),
           ),
           preferredPathStyle: this.strategicIntent.preferredPathStyle,
           strategicLookaheadSeconds: this.strategicIntent.strategicLookaheadSeconds,
@@ -1763,10 +1445,10 @@ export class AutoPlayer {
     if (
       hpRatio < 0.35
       || currentWarningRisk > 0
-      || danger.nearestDistance < AutoPlayer.CONTACT_DANGER_RADIUS
+      || danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS
       || contactRisk > 80
       || futureContactRisk > 70
-      || (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE && currentPressure > 2)
+      || (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE && currentPressure > 2)
     ) {
       return 'SURVIVE';
     }
@@ -1849,7 +1531,7 @@ export class AutoPlayer {
 
     const range = this.getWeaponEffectiveRange(context);
 
-    return danger.nearestDistance > AutoPlayer.CONTACT_WARNING_RADIUS
+    return danger.nearestDistance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
       && danger.nearestDistance < range.max * 1.35
       && context.enemyPositions.length > 0;
   }
@@ -1918,7 +1600,7 @@ export class AutoPlayer {
       const pickupPoint = new Phaser.Math.Vector2(pickup.x, pickup.y);
       const distanceToEndpoint = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, pickupPoint.x, pickupPoint.y);
 
-      if (distanceToEndpoint > AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.6) {
+      if (distanceToEndpoint > AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.6) {
         continue;
       }
 
@@ -1937,7 +1619,7 @@ export class AutoPlayer {
 
       const expValue = this.getPickupExpValue(pickup);
       const clusterScore = this.getPickupClusterScore(context, pickup);
-      const distanceFactor = 1 - distanceToEndpoint / (AutoPlayer.PICKUP_CLUSTER_RADIUS * 1.6);
+      const distanceFactor = 1 - distanceToEndpoint / (AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.6);
       score += (expValue * 0.8 + clusterScore * 0.32) * distanceFactor;
     }
 
@@ -1962,7 +1644,7 @@ export class AutoPlayer {
     for (const enemy of context.enemyPositions) {
       const distance = this.getEnemyEffectiveDistance(context, endpoint, enemy);
 
-      if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+      if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
         tooClose += this.getEnemyThreatWeight(enemy);
       } else if (distance >= range.min && distance <= range.max) {
         enemiesInBand += this.getEnemyThreatWeight(enemy);
@@ -2104,7 +1786,7 @@ export class AutoPlayer {
     const hpRatio = this.getHpRatio(context);
     const endpoint = this.clampToWorld(
       context,
-      player.clone().add(direction.clone().normalize().scale(AutoPlayer.STRATEGIC_DISTANCE)),
+      player.clone().add(direction.clone().normalize().scale(AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE)),
     );
     const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
     const endpointPressure = this.getEnemyPressureAt(context, endpoint, hpRatio);
@@ -2112,7 +1794,7 @@ export class AutoPlayer {
       - this.getNearestBorderDistance(context, player);
     const obstacleProgress = this.getNearestObstacleClearance(context, endpoint)
       - this.getNearestObstacleClearance(context, player);
-    const density = this.getEnemyDensityInDirection(context, player, direction, AutoPlayer.PRE_ENCIRCLE_RADIUS);
+    const density = this.getEnemyDensityInDirection(context, player, direction, AUTO_PLAYER_CONSTANTS.PRE_ENCIRCLE_RADIUS);
     let score = 0;
 
     score -= endpointPressure * (mode === 'SURVIVE' ? 16 : 8);
@@ -2252,18 +1934,18 @@ export class AutoPlayer {
   ): StrategicLookaheadResult {
     const normalized = direction.clone().normalize();
     const predictedPlayerPositions = [
-      this.predictPlayerPosition(context, player, normalized, AutoPlayer.STRATEGIC_NEAR_SECONDS),
-      this.predictPlayerPosition(context, player, normalized, AutoPlayer.STRATEGIC_MID_SECONDS),
-      this.predictPlayerPosition(context, player, normalized, AutoPlayer.STRATEGIC_FAR_SECONDS),
+      this.predictPlayerPosition(context, player, normalized, AUTO_PLAYER_CONSTANTS.STRATEGIC_NEAR_SECONDS),
+      this.predictPlayerPosition(context, player, normalized, AUTO_PLAYER_CONSTANTS.STRATEGIC_MID_SECONDS),
+      this.predictPlayerPosition(context, player, normalized, AUTO_PLAYER_CONSTANTS.STRATEGIC_FAR_SECONDS),
     ];
     const futureEnemiesByTime = predictedPlayerPositions.map((predictedPosition, index) => (
       context.enemyPositions.map((enemy) => this.predictEnemyPositionTowardPlayerPath(
         enemy,
         predictedPosition,
         [
-          AutoPlayer.STRATEGIC_NEAR_SECONDS,
-          AutoPlayer.STRATEGIC_MID_SECONDS,
-          AutoPlayer.STRATEGIC_FAR_SECONDS,
+          AUTO_PLAYER_CONSTANTS.STRATEGIC_NEAR_SECONDS,
+          AUTO_PLAYER_CONSTANTS.STRATEGIC_MID_SECONDS,
+          AUTO_PLAYER_CONSTANTS.STRATEGIC_FAR_SECONDS,
         ][index],
       ))
     ));
@@ -2319,7 +2001,7 @@ export class AutoPlayer {
 
     return {
       preferredPathStyle,
-      strategicLookaheadSeconds: AutoPlayer.STRATEGIC_FAR_SECONDS,
+      strategicLookaheadSeconds: AUTO_PLAYER_CONSTANTS.STRATEGIC_FAR_SECONDS,
       farmGrowthUrgency: 0,
       combatOpportunityScore: 0,
       xpAccessScore: 0,
@@ -2352,7 +2034,7 @@ export class AutoPlayer {
     seconds: number,
   ): Phaser.Math.Vector2 {
     const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
-    const distance = Math.min(AutoPlayer.STRATEGIC_DISTANCE * 1.45, moveSpeed * seconds * 0.78);
+    const distance = Math.min(AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE * 1.45, moveSpeed * seconds * 0.78);
 
     return this.clampToWorld(context, player.clone().add(direction.clone().normalize().scale(distance)));
   }
@@ -2378,14 +2060,14 @@ export class AutoPlayer {
     playerPos: Phaser.Math.Vector2,
     futureEnemies: readonly Phaser.Math.Vector2[],
   ): number {
-    return this.evaluateFutureDensityAt(playerPos, futureEnemies, AutoPlayer.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS);
+    return this.evaluateFutureDensityAt(playerPos, futureEnemies, AUTO_PLAYER_CONSTANTS.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS);
   }
 
   private evaluateFutureTargetZoneDensityRisk(
     targetZoneCenter: Phaser.Math.Vector2,
     futureEnemies: readonly Phaser.Math.Vector2[],
   ): number {
-    return this.evaluateFutureDensityAt(targetZoneCenter, futureEnemies, AutoPlayer.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS * 1.08);
+    return this.evaluateFutureDensityAt(targetZoneCenter, futureEnemies, AUTO_PLAYER_CONSTANTS.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS * 1.08);
   }
 
   private evaluateFuturePathInterceptionRisk(
@@ -2396,7 +2078,7 @@ export class AutoPlayer {
 
     for (const futureEnemies of futureEnemiesByTime) {
       for (const sample of routeOrLineSamples) {
-        risk += this.evaluateFutureDensityAt(sample, futureEnemies, AutoPlayer.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS * 0.72) * 0.22;
+        risk += this.evaluateFutureDensityAt(sample, futureEnemies, AUTO_PLAYER_CONSTANTS.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS * 0.72) * 0.22;
       }
     }
 
@@ -2451,7 +2133,7 @@ export class AutoPlayer {
     for (const sample of pathSamples) {
       score -= this.getBorderPenalty(context, sample, undefined) * 0.08;
       score -= this.getObstaclePenalty(context, sample) * 0.22;
-      score += this.getNearestBorderDistance(context, sample) > AutoPlayer.BORDER_WARNING_MARGIN ? 1.4 : -2.4;
+      score += this.getNearestBorderDistance(context, sample) > AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN ? 1.4 : -2.4;
 
       const leftPoint = this.clampToWorld(context, sample.clone().add(left.clone().scale(130)));
       const rightPoint = this.clampToWorld(context, sample.clone().add(right.clone().scale(130)));
@@ -2471,7 +2153,7 @@ export class AutoPlayer {
   ): number {
     const ringDirections = this.getBaseDirections();
     let openDirections = 0;
-    let score = this.getNearestBorderDistance(context, targetZoneCenter) > AutoPlayer.BORDER_WARNING_MARGIN
+    let score = this.getNearestBorderDistance(context, targetZoneCenter) > AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN
       ? 16
       : -18;
 
@@ -2507,12 +2189,12 @@ export class AutoPlayer {
       const nearestBorder = this.getNearestBorderDistance(context, position);
       const cornerDistance = this.getNearestCornerDistance(context, position);
 
-      if (nearestBorder < AutoPlayer.BORDER_WARNING_MARGIN) {
-        risk += (AutoPlayer.BORDER_WARNING_MARGIN - nearestBorder) * 0.45;
+      if (nearestBorder < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
+        risk += (AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN - nearestBorder) * 0.45;
       }
 
-      if (cornerDistance < AutoPlayer.BORDER_WARNING_MARGIN * 1.35) {
-        risk += (AutoPlayer.BORDER_WARNING_MARGIN * 1.35 - cornerDistance) * 0.32;
+      if (cornerDistance < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN * 1.35) {
+        risk += (AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN * 1.35 - cornerDistance) * 0.32;
       }
     }
 
@@ -2531,7 +2213,7 @@ export class AutoPlayer {
     }
 
     const alignment = candidateDirection.clone().normalize().dot(currentMoveDirection.clone().normalize());
-    const pressureFactor = Math.max(0, pressureLevel - AutoPlayer.HIGH_PRESSURE_THRESHOLD);
+    const pressureFactor = Math.max(0, pressureLevel - AUTO_PLAYER_CONSTANTS.HIGH_PRESSURE_THRESHOLD);
     const linearFactor = Math.max(0, alignment - 0.72);
     const loopPenalty = Math.max(0, 22 - loopSustainability) * 0.35;
 
@@ -2551,13 +2233,13 @@ export class AutoPlayer {
     for (const nextDirection of this.getStrategicDirectionsFrom(firstDirection)) {
       const secondZone = this.clampToWorld(
         context,
-        firstZone.clone().add(nextDirection.clone().normalize().scale(AutoPlayer.STRATEGIC_CONTINUATION_DISTANCE)),
+        firstZone.clone().add(nextDirection.clone().normalize().scale(AUTO_PLAYER_CONSTANTS.STRATEGIC_CONTINUATION_DISTANCE)),
       );
       const futureEnemiesAfterSecond = context.enemyPositions.map((enemy) => (
         this.predictEnemyPositionTowardPlayerPath(
           enemy,
           secondZone,
-          AutoPlayer.STRATEGIC_NEAR_SECONDS + AutoPlayer.STRATEGIC_MID_SECONDS,
+          AUTO_PLAYER_CONSTANTS.STRATEGIC_NEAR_SECONDS + AUTO_PLAYER_CONSTANTS.STRATEGIC_MID_SECONDS,
         )
       ));
       const secondPathSamples = this.getLineSamplePoints(firstZone, secondZone, 4);
@@ -2600,7 +2282,7 @@ export class AutoPlayer {
     continuationScore: number,
     mode: MoveMode,
   ): StrategicPathStyle {
-    const highPressureOrLate = this.autoMoveElapsedMs > AutoPlayer.LATE_GAME_MS
+    const highPressureOrLate = this.autoMoveElapsedMs > AUTO_PLAYER_CONSTANTS.LATE_GAME_MS
       || context.enemyPositions.length >= 18
       || mode === 'SURVIVE'
       || mode === 'REPOSITION'
@@ -2651,7 +2333,7 @@ export class AutoPlayer {
 
   private getDesiredStrategicOrbitRadius(context: AutoPlayerContext, mode: MoveMode): number {
     if (mode === 'BOSS_POSITIONING') {
-      return AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE;
+      return AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_IDEAL_DISTANCE;
     }
 
     const weapons = this.getWeaponSnapshots(context);
@@ -2680,8 +2362,8 @@ export class AutoPlayer {
   }
 
   private isStrategicHighPressureOrLate(currentPressure: number, currentDensity: number): boolean {
-    return this.getStrategicPressureLevelFromValues(currentPressure, currentDensity) > AutoPlayer.HIGH_PRESSURE_THRESHOLD
-      || this.autoMoveElapsedMs > AutoPlayer.LATE_GAME_MS;
+    return this.getStrategicPressureLevelFromValues(currentPressure, currentDensity) > AUTO_PLAYER_CONSTANTS.HIGH_PRESSURE_THRESHOLD
+      || this.autoMoveElapsedMs > AUTO_PLAYER_CONSTANTS.LATE_GAME_MS;
   }
 
   private getStrategicPressureLevelFromValues(currentPressure: number, currentDensity: number): number {
@@ -2795,7 +2477,7 @@ export class AutoPlayer {
 
     return this.getTotalBossWarningRisk(context, player) > 0
       || (hpRatio < 0.35 && intent.mode !== 'SURVIVE')
-      || (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE && intent.mode !== 'SURVIVE')
+      || (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE && intent.mode !== 'SURVIVE')
       || (movement.prolonged && intent.mode !== 'REPOSITION');
   }
 
@@ -2813,7 +2495,7 @@ export class AutoPlayer {
     }
 
     if (mode === 'REPOSITION') {
-      return danger.nearestDistance < AutoPlayer.SAFE_DISTANCE ? 0.78 : 0.62;
+      return danger.nearestDistance < AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE ? 0.78 : 0.62;
     }
 
     if (mode === 'COMBAT_FARM') {
@@ -2829,14 +2511,14 @@ export class AutoPlayer {
 
   private getStrategicValidMs(mode: MoveMode): number {
     if (mode === 'SURVIVE' || mode === 'REPOSITION') {
-      return AutoPlayer.STRATEGIC_URGENT_REFRESH_MS;
+      return AUTO_PLAYER_CONSTANTS.STRATEGIC_URGENT_REFRESH_MS;
     }
 
     if (mode === 'COLLECT' || mode === 'CHEST_APPROACH') {
-      return AutoPlayer.STRATEGIC_SAFE_REFRESH_MS;
+      return AUTO_PLAYER_CONSTANTS.STRATEGIC_SAFE_REFRESH_MS;
     }
 
-    return AutoPlayer.STRATEGIC_REFRESH_MS;
+    return AUTO_PLAYER_CONSTANTS.STRATEGIC_REFRESH_MS;
   }
 
   private isStrategicTargetAllowed(
@@ -2943,22 +2625,22 @@ export class AutoPlayer {
     const scale = strategic ? 1.35 : 1;
     let score = 0;
 
-    if (endpointDistance < AutoPlayer.FINAL_BOSS_DASH_MIN_DISTANCE) {
-      score -= (AutoPlayer.FINAL_BOSS_DASH_MIN_DISTANCE - endpointDistance) * 0.55 * scale + 18 * scale;
-    } else if (endpointDistance <= AutoPlayer.FINAL_BOSS_DASH_MAX_DISTANCE) {
-      score += (18 - Math.abs(endpointDistance - AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE) * 0.045) * scale;
+    if (endpointDistance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_MIN_DISTANCE) {
+      score -= (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_MIN_DISTANCE - endpointDistance) * 0.55 * scale + 18 * scale;
+    } else if (endpointDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_MAX_DISTANCE) {
+      score += (18 - Math.abs(endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_IDEAL_DISTANCE) * 0.045) * scale;
     } else {
-      score -= (endpointDistance - AutoPlayer.FINAL_BOSS_DASH_MAX_DISTANCE) * 0.22 * scale + 16 * scale;
+      score -= (endpointDistance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_MAX_DISTANCE) * 0.22 * scale + 16 * scale;
     }
 
-    if (currentDistance > AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE && endpointDistance < currentDistance) {
+    if (currentDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_IDEAL_DISTANCE && endpointDistance < currentDistance) {
       score += Math.min(90, currentDistance - endpointDistance) * 0.18 * scale;
     }
 
     if (
-      currentDistance <= AutoPlayer.FINAL_BOSS_DASH_MAX_DISTANCE
+      currentDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_MAX_DISTANCE
       && endpointDistance > currentDistance
-      && endpointDistance > AutoPlayer.FINAL_BOSS_DASH_IDEAL_DISTANCE
+      && endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_IDEAL_DISTANCE
     ) {
       score -= Math.min(90, endpointDistance - currentDistance) * 0.24 * scale;
     }
@@ -3122,7 +2804,7 @@ export class AutoPlayer {
       }
 
       if (target.id === this.stickyTargetId) {
-        score += movement.stalled ? 0 : AutoPlayer.TARGET_STICKY_BONUS * 0.5;
+        score += movement.stalled ? 0 : AUTO_PLAYER_CONSTANTS.TARGET_STICKY_BONUS * 0.5;
       }
 
       if (this.canPickupFrom(context, endpoint, target.position)) {
@@ -3134,11 +2816,11 @@ export class AutoPlayer {
       if (intent.mode === 'SURVIVE') {
         const fleeWeight = kite.active
           ? 1.2
-          : danger.nearestDistance > AutoPlayer.SAFE_DISTANCE
+          : danger.nearestDistance > AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE
             ? 0.7
-            : (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE ? 16 : 7);
+            : (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE ? 16 : 7);
         score += direction.dot(danger.fleeDirection) * fleeWeight;
-      } else if (danger.nearestDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+      } else if (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
         score += direction.dot(danger.fleeDirection) * 12;
       }
     }
@@ -3170,13 +2852,13 @@ export class AutoPlayer {
     const endpointWarningRisk = this.getTotalBossWarningRisk(context, endpoint);
     const warningEscape = currentWarningRisk > 0 && endpointWarningRisk < currentWarningRisk;
     const graceRatio = Phaser.Math.Clamp(
-      this.tacticalBacktrackMs / AutoPlayer.TACTICAL_BACKTRACK_GRACE_MS,
+      this.tacticalBacktrackMs / AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_GRACE_MS,
       0,
       1,
     );
     const overrunRatio = Phaser.Math.Clamp(
-      (this.tacticalBacktrackMs - AutoPlayer.TACTICAL_BACKTRACK_GRACE_MS)
-        / Math.max(1, AutoPlayer.TACTICAL_BACKTRACK_LIMIT_MS - AutoPlayer.TACTICAL_BACKTRACK_GRACE_MS),
+      (this.tacticalBacktrackMs - AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_GRACE_MS)
+        / Math.max(1, AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_LIMIT_MS - AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_GRACE_MS),
       0,
       1,
     );
@@ -3185,7 +2867,7 @@ export class AutoPlayer {
       + this.getEnemyPathContactRisk(
         context,
         player,
-        player.clone().add(strategic.clone().scale(AutoPlayer.STEP_DISTANCE)),
+        player.clone().add(strategic.clone().scale(AUTO_PLAYER_CONSTANTS.STEP_DISTANCE)),
         hpRatio,
       );
     const emergencyContact = localDanger > 100 || currentContactRisk > 80 || hpRatio < 0.35;
@@ -3229,7 +2911,7 @@ export class AutoPlayer {
         continue;
       }
 
-      if (hpRatio < 0.35 && (targetPressure > 4 || nearestEnemyDistance < AutoPlayer.PANIC_DISTANCE)) {
+      if (hpRatio < 0.35 && (targetPressure > 4 || nearestEnemyDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE)) {
         continue;
       }
 
@@ -3242,7 +2924,7 @@ export class AutoPlayer {
         - targetWarningRisk * 18;
 
       if (target.id === this.stickyTargetId) {
-        score += AutoPlayer.TARGET_STICKY_BONUS;
+        score += AUTO_PLAYER_CONSTANTS.TARGET_STICKY_BONUS;
       }
 
       if (target.blocked) {
@@ -3273,7 +2955,7 @@ export class AutoPlayer {
         ? pickup.effectiveDistance
         : Math.max(0, rawDistance - pickupRange);
 
-      if (effectiveDistance > AutoPlayer.PICKUP_SEEK_RADIUS) {
+      if (effectiveDistance > AUTO_PLAYER_CONSTANTS.PICKUP_SEEK_RADIUS) {
         continue;
       }
 
@@ -3309,7 +2991,7 @@ export class AutoPlayer {
         ? treasure.effectiveDistance
         : Math.max(0, rawDistance - pickupRange);
 
-      if (effectiveDistance > AutoPlayer.TREASURE_SEEK_RADIUS) {
+      if (effectiveDistance > AUTO_PLAYER_CONSTANTS.TREASURE_SEEK_RADIUS) {
         continue;
       }
 
@@ -3323,7 +3005,7 @@ export class AutoPlayer {
       const approachPosition = this.getApproachPosition(context, player, position, pickupRange);
       const waypoint = this.getNavigationWaypoint(context, player, approachPosition, id);
 
-      if (nearestEnemyDistance < AutoPlayer.PANIC_DISTANCE && dangerScore > 2) {
+      if (nearestEnemyDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE && dangerScore > 2) {
         continue;
       }
 
@@ -3367,11 +3049,11 @@ export class AutoPlayer {
     target: Phaser.Math.Vector2,
     pickupRange: number,
   ): Phaser.Math.Vector2 | undefined {
-    const margin = AutoPlayer.HARD_BORDER_MARGIN + AutoPlayer.NAVIGATION_MARGIN;
-    const isNearBorder = target.x < AutoPlayer.BORDER_WARNING_MARGIN
-      || target.y < AutoPlayer.BORDER_WARNING_MARGIN
-      || target.x > context.worldBounds.width - AutoPlayer.BORDER_WARNING_MARGIN
-      || target.y > context.worldBounds.height - AutoPlayer.BORDER_WARNING_MARGIN;
+    const margin = AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
+    const isNearBorder = target.x < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN
+      || target.y < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN
+      || target.x > context.worldBounds.width - AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN
+      || target.y > context.worldBounds.height - AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
 
     if (!isNearBorder) {
       return undefined;
@@ -3443,7 +3125,7 @@ export class AutoPlayer {
     obstacle: AutoObstacleSnapshot,
     context: AutoPlayerContext,
   ): Phaser.Math.Vector2[] {
-    const margin = AutoPlayer.NAVIGATION_MARGIN;
+    const margin = AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
 
     if (obstacle.shape === 'circle') {
       const radius = Math.max(obstacle.width, obstacle.height) / 2 + margin;
@@ -3487,9 +3169,9 @@ export class AutoPlayer {
 
       nearestDistance = Math.min(nearestDistance, distance);
 
-      if (distance <= AutoPlayer.DANGER_RADIUS) {
+      if (distance <= AUTO_PLAYER_CONSTANTS.DANGER_RADIUS) {
         pressureCount += 1;
-        const weight = ((AutoPlayer.DANGER_RADIUS - Math.max(1, distance)) / AutoPlayer.DANGER_RADIUS) * threat;
+        const weight = ((AUTO_PLAYER_CONSTANTS.DANGER_RADIUS - Math.max(1, distance)) / AUTO_PLAYER_CONSTANTS.DANGER_RADIUS) * threat;
         fleeDirection.x += ((player.x - enemy.x) / Math.max(1, centerDistance)) * weight;
         fleeDirection.y += ((player.y - enemy.y) / Math.max(1, centerDistance)) * weight;
         enemyCenter.add(enemyPosition.scale(weight));
@@ -3533,7 +3215,7 @@ export class AutoPlayer {
       this.stallAnchor.y,
     );
 
-    if (anchorDistance <= AutoPlayer.STALL_RADIUS) {
+    if (anchorDistance <= AUTO_PLAYER_CONSTANTS.STALL_RADIUS) {
       this.stallMs += deltaMs;
     } else {
       this.stallAnchor = player.clone();
@@ -3543,8 +3225,8 @@ export class AutoPlayer {
     this.lastPosition = player.clone();
 
     return {
-      stalled: this.stallMs >= AutoPlayer.STALL_TRIGGER_MS,
-      prolonged: this.stallMs >= AutoPlayer.PROLONGED_STALL_MS,
+      stalled: this.stallMs >= AUTO_PLAYER_CONSTANTS.STALL_TRIGGER_MS,
+      prolonged: this.stallMs >= AUTO_PLAYER_CONSTANTS.PROLONGED_STALL_MS,
       stallMs: this.stallMs,
       anchor: this.stallAnchor.clone(),
       recentDisplacement,
@@ -3600,7 +3282,7 @@ export class AutoPlayer {
       const borderPenalty = this.getBorderPenalty(context, endpoint);
       const obstaclePenalty = this.getObstaclePenalty(context, endpoint);
       const warningRisk = this.getTotalBossWarningRisk(context, endpoint);
-      const noProgressPenalty = actualMove < AutoPlayer.STEP_DISTANCE * 0.45 ? 12 : 0;
+      const noProgressPenalty = actualMove < AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.45 ? 12 : 0;
       const sectorScore = pressure * 2.2
         + borderPenalty * 0.65
         + obstaclePenalty * 0.9
@@ -3608,10 +3290,10 @@ export class AutoPlayer {
         + noProgressPenalty;
 
       if (
-        sectorScore >= AutoPlayer.SURROUND_BLOCKED_SCORE
+        sectorScore >= AUTO_PLAYER_CONSTANTS.SURROUND_BLOCKED_SCORE
         || obstaclePenalty >= 20
         || borderPenalty >= 24
-        || actualMove < AutoPlayer.STEP_DISTANCE * 0.35
+        || actualMove < AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.35
       ) {
         blockedSectors += 1;
       }
@@ -3627,7 +3309,7 @@ export class AutoPlayer {
 
     const surrounded = blockedSectors >= 6
       || (blockedSectors >= 5 && danger.pressureCount >= 3)
-      || (movement.stalled && blockedSectors >= 4 && danger.nearestDistance < AutoPlayer.DANGER_RADIUS);
+      || (movement.stalled && blockedSectors >= 4 && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.DANGER_RADIUS);
 
     return {
       surrounded,
@@ -3641,9 +3323,9 @@ export class AutoPlayer {
     context: AutoPlayerContext,
     player: Phaser.Math.Vector2,
   ): TerrainEscapeInfo {
-    const enemySectors = this.getEnemySectorCount(context, player, AutoPlayer.PRE_ENCIRCLE_RADIUS);
-    const nearBorder = this.getNearestBorderDistance(context, player) < AutoPlayer.BORDER_WARNING_MARGIN;
-    const nearObstacle = this.getNearestObstacleClearance(context, player) < AutoPlayer.TERRAIN_ESCAPE_MARGIN;
+    const enemySectors = this.getEnemySectorCount(context, player, AUTO_PLAYER_CONSTANTS.PRE_ENCIRCLE_RADIUS);
+    const nearBorder = this.getNearestBorderDistance(context, player) < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
+    const nearObstacle = this.getNearestObstacleClearance(context, player) < AUTO_PLAYER_CONSTANTS.TERRAIN_ESCAPE_MARGIN;
     const inSlowZone = this.isInPlayerSlowZone(context, player);
     const active = enemySectors >= 4 && (nearBorder || nearObstacle || inSlowZone);
     const info: TerrainEscapeInfo = {
@@ -3813,7 +3495,7 @@ export class AutoPlayer {
       }
     }
 
-    if (!nearestObstacle || nearestClearance >= AutoPlayer.TERRAIN_ESCAPE_MARGIN) {
+    if (!nearestObstacle || nearestClearance >= AUTO_PLAYER_CONSTANTS.TERRAIN_ESCAPE_MARGIN) {
       return new Phaser.Math.Vector2(0, 0);
     }
 
@@ -3828,12 +3510,12 @@ export class AutoPlayer {
 
   private getObstacleClearanceAt(point: Phaser.Math.Vector2, obstacle: AutoObstacleSnapshot): number {
     if (obstacle.shape === 'circle') {
-      const radius = Math.max(obstacle.width, obstacle.height) / 2 + AutoPlayer.NAVIGATION_MARGIN;
+      const radius = Math.max(obstacle.width, obstacle.height) / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
       return Math.max(0, Phaser.Math.Distance.Between(point.x, point.y, obstacle.x, obstacle.y) - radius);
     }
 
-    const dx = Math.max(Math.abs(point.x - obstacle.x) - obstacle.width / 2 - AutoPlayer.NAVIGATION_MARGIN, 0);
-    const dy = Math.max(Math.abs(point.y - obstacle.y) - obstacle.height / 2 - AutoPlayer.NAVIGATION_MARGIN, 0);
+    const dx = Math.max(Math.abs(point.x - obstacle.x) - obstacle.width / 2 - AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN, 0);
+    const dy = Math.max(Math.abs(point.y - obstacle.y) - obstacle.height / 2 - AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN, 0);
 
     return Math.hypot(dx, dy);
   }
@@ -3853,7 +3535,7 @@ export class AutoPlayer {
     kite: KiteInfo,
   ): Phaser.Math.Vector2 {
     const shouldBreakout = surround.surrounded
-      || (movement.stalled && danger.nearestDistance < AutoPlayer.DANGER_RADIUS)
+      || (movement.stalled && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.DANGER_RADIUS)
       || movement.prolonged;
 
     if (!shouldBreakout) {
@@ -3887,14 +3569,14 @@ export class AutoPlayer {
     const hpRatio = this.getHpRatio(context);
     const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
     const inwardDirection = this.getSoftBorderDirection(context, player);
-    const nearBorder = this.getNearestBorderDistance(context, player) < AutoPlayer.BORDER_WARNING_MARGIN;
-    const nearCorner = this.isNearCorner(context, player, AutoPlayer.BORDER_WARNING_MARGIN);
-    const enemyCountPressure = context.enemyPositions.length >= 12 && danger.nearestDistance < AutoPlayer.DANGER_RADIUS;
+    const nearBorder = this.getNearestBorderDistance(context, player) < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
+    const nearCorner = this.isNearCorner(context, player, AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN);
+    const enemyCountPressure = context.enemyPositions.length >= 12 && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.DANGER_RADIUS;
     const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
     const highSpeedClusterShaping = moveSpeed >= 170
       && context.enemyPositions.length >= 4
-      && danger.nearestDistance < AutoPlayer.DANGER_RADIUS + 80
-      && danger.nearestDistance > AutoPlayer.CONTACT_WARNING_RADIUS * 0.85;
+      && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.DANGER_RADIUS + 80
+      && danger.nearestDistance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS * 0.85;
     const highPressure = currentPressure >= (hpRatio < 0.5 ? 3.6 : 4.6)
       || danger.pressureCount >= 6
       || enemyCountPressure
@@ -4017,7 +3699,7 @@ export class AutoPlayer {
     score -= this.getTotalBossWarningRisk(context, endpoint) * 90;
     score -= this.getBorderPenalty(context, endpoint) * (kite.nearBorder ? 5.2 : 2.6);
     score += Math.max(0, borderProgress) * (kite.nearBorder ? 0.72 : 0.22);
-    score += Math.max(0, actualMove - AutoPlayer.STEP_DISTANCE * 0.35) * 0.08;
+    score += Math.max(0, actualMove - AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.35) * 0.08;
 
     if (kite.nearBorder && borderProgress <= 2) {
       score -= 24;
@@ -4027,7 +3709,7 @@ export class AutoPlayer {
       score -= 22;
     }
 
-    if (this.isNearCorner(context, endpoint, AutoPlayer.BORDER_WARNING_MARGIN)) {
+    if (this.isNearCorner(context, endpoint, AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN)) {
       score -= 28;
     }
 
@@ -4057,7 +3739,7 @@ export class AutoPlayer {
     const currentBorderDistance = this.getNearestBorderDistance(context, player);
     const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
 
-    if (actualMove < AutoPlayer.STEP_DISTANCE * 0.35) {
+    if (actualMove < AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.35) {
       return false;
     }
 
@@ -4065,7 +3747,7 @@ export class AutoPlayer {
       return false;
     }
 
-    if (endpointBorderDistance < AutoPlayer.HARD_BORDER_MARGIN + 12) {
+    if (endpointBorderDistance < AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN + 12) {
       return false;
     }
 
@@ -4086,7 +3768,7 @@ export class AutoPlayer {
     return this.getObstaclePenalty(context, endpoint) < 20
       && this.getBorderPenalty(context, endpoint) < 30
       && Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y)
-        >= AutoPlayer.STEP_DISTANCE * 0.35;
+        >= AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.35;
   }
 
   private getWeaponDirection(
@@ -4178,7 +3860,7 @@ export class AutoPlayer {
       for (const enemy of context.enemyPositions) {
         const distance = this.getEnemyEffectiveDistance(context, position, enemy);
 
-        if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
+        if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
           closePenalty += this.getEnemyThreatWeight(enemy);
           continue;
         }
@@ -4367,24 +4049,24 @@ export class AutoPlayer {
     for (const enemy of context.enemyPositions) {
       const distance = this.getEnemyEffectiveDistance(context, point, enemy);
 
-      if (distance > AutoPlayer.DANGER_RADIUS) {
+      if (distance > AUTO_PLAYER_CONSTANTS.DANGER_RADIUS) {
         continue;
       }
 
-      const proximity = (AutoPlayer.DANGER_RADIUS - Math.max(0, distance)) / AutoPlayer.DANGER_RADIUS;
+      const proximity = (AUTO_PLAYER_CONSTANTS.DANGER_RADIUS - Math.max(0, distance)) / AUTO_PLAYER_CONSTANTS.DANGER_RADIUS;
       const threat = this.getEnemyThreatWeight(enemy);
-      const farMultiplier = distance > AutoPlayer.SAFE_DISTANCE ? 0.32 : 1;
+      const farMultiplier = distance > AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE ? 0.32 : 1;
       let enemyPressure = proximity * proximity * threat * farMultiplier;
 
-      if (distance < AutoPlayer.CONTACT_WARNING_RADIUS) {
-        const contactProximity = (AutoPlayer.CONTACT_WARNING_RADIUS - Math.max(0, distance))
-          / AutoPlayer.CONTACT_WARNING_RADIUS;
+      if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
+        const contactProximity = (AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - Math.max(0, distance))
+          / AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
         enemyPressure += contactProximity * contactProximity * 7.5 * threat;
       }
 
-      if (distance < AutoPlayer.CONTACT_DANGER_RADIUS) {
-        const dangerProximity = (AutoPlayer.CONTACT_DANGER_RADIUS - Math.max(0, distance))
-          / AutoPlayer.CONTACT_DANGER_RADIUS;
+      if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS) {
+        const dangerProximity = (AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS - Math.max(0, distance))
+          / AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS;
         enemyPressure += (5 + dangerProximity * dangerProximity * 14) * threat;
       }
 
@@ -4404,18 +4086,18 @@ export class AutoPlayer {
     for (const enemy of context.enemyPositions) {
       const distance = this.getEnemyEffectiveDistance(context, point, enemy);
 
-      if (distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
+      if (distance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
         continue;
       }
 
       const threat = this.getEnemyThreatWeight(enemy);
-      const warningProximity = (AutoPlayer.CONTACT_WARNING_RADIUS - Math.max(0, distance))
-        / AutoPlayer.CONTACT_WARNING_RADIUS;
+      const warningProximity = (AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - Math.max(0, distance))
+        / AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
       risk += warningProximity * warningProximity * 52 * threat;
 
-      if (distance < AutoPlayer.CONTACT_DANGER_RADIUS) {
-        const dangerProximity = (AutoPlayer.CONTACT_DANGER_RADIUS - Math.max(0, distance))
-          / AutoPlayer.CONTACT_DANGER_RADIUS;
+      if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS) {
+        const dangerProximity = (AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS - Math.max(0, distance))
+          / AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS;
         risk += (96 + dangerProximity * 150) * threat;
       }
     }
@@ -4446,16 +4128,16 @@ export class AutoPlayer {
       const futureY = enemy.y + predictedVy * predictSeconds;
       const distance = this.getEnemyEffectiveDistance(context, point, enemy, futureX, futureY);
 
-      if (distance > AutoPlayer.CONTACT_WARNING_RADIUS) {
+      if (distance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
         continue;
       }
 
       const threat = this.getEnemyThreatWeight(enemy);
-      const proximity = (AutoPlayer.CONTACT_WARNING_RADIUS - Math.max(0, distance))
-        / AutoPlayer.CONTACT_WARNING_RADIUS;
+      const proximity = (AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - Math.max(0, distance))
+        / AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
       risk += proximity * proximity * 36 * threat;
 
-      if (distance < AutoPlayer.CONTACT_DANGER_RADIUS) {
+      if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS) {
         risk += 48 * threat;
       }
     }
@@ -4478,18 +4160,18 @@ export class AutoPlayer {
       const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
       const pathDistance = this.getEnemyEffectivePathDistance(context, pathInfo.distance, enemy);
 
-      if (pathDistance > AutoPlayer.CONTACT_PATH_RADIUS) {
+      if (pathDistance > AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS) {
         continue;
       }
 
       const threat = this.getEnemyThreatWeight(enemy);
-      const proximity = (AutoPlayer.CONTACT_PATH_RADIUS - Math.max(0, pathDistance))
-        / AutoPlayer.CONTACT_PATH_RADIUS;
+      const proximity = (AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS - Math.max(0, pathDistance))
+        / AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS;
       const movingAway = endpointDistance >= currentDistance + 8;
       const crossingMidPath = pathInfo.t > 0.12 && pathInfo.t < 0.88;
       const escapingStartContact = movingAway
         && pathInfo.t <= 0.12
-        && currentDistance < AutoPlayer.CONTACT_WARNING_RADIUS;
+        && currentDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
       const approachMultiplier = endpointDistance < currentDistance - 8
         ? 1
         : escapingStartContact
@@ -4499,7 +4181,7 @@ export class AutoPlayer {
             : 0.55;
       risk += proximity * proximity * 86 * threat * approachMultiplier;
 
-      if (pathDistance < AutoPlayer.CONTACT_DANGER_RADIUS) {
+      if (pathDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS) {
         risk += (crossingMidPath ? 112 : 62) * threat * approachMultiplier;
       }
     }
@@ -4522,21 +4204,21 @@ export class AutoPlayer {
       const startDistance = this.getEnemyEffectiveDistance(context, start, enemy);
       const endDistance = this.getEnemyEffectiveDistance(context, end, enemy);
 
-      if (Math.min(startDistance, endDistance) > AutoPlayer.DANGER_RADIUS + AutoPlayer.STEP_DISTANCE) {
+      if (Math.min(startDistance, endDistance) > AUTO_PLAYER_CONSTANTS.DANGER_RADIUS + AUTO_PLAYER_CONSTANTS.STEP_DISTANCE) {
         continue;
       }
 
       const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
       const pathDistance = this.getEnemyEffectivePathDistance(context, pathInfo.distance, enemy);
 
-      if (pathDistance > AutoPlayer.CONTACT_WARNING_RADIUS) {
+      if (pathDistance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
         continue;
       }
 
       nearbyEnemies += 1;
       nearestPathDistance = Math.min(nearestPathDistance, pathDistance);
 
-      if (pathInfo.t > 0.12 && pathInfo.t < 0.88 && pathDistance < AutoPlayer.CONTACT_PATH_RADIUS) {
+      if (pathInfo.t > 0.12 && pathInfo.t < 0.88 && pathDistance < AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS) {
         dangerCrossings += 1;
       }
     }
@@ -4551,16 +4233,16 @@ export class AutoPlayer {
       return -36 * dangerCrossings * pressureMultiplier;
     }
 
-    if (nearestPathDistance < AutoPlayer.CONTACT_PATH_RADIUS) {
-      const narrowness = (AutoPlayer.CONTACT_PATH_RADIUS - nearestPathDistance)
-        / AutoPlayer.CONTACT_PATH_RADIUS;
+    if (nearestPathDistance < AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS) {
+      const narrowness = (AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS - nearestPathDistance)
+        / AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS;
 
       return -18 * narrowness * pressureMultiplier;
     }
 
     const openRatio = Phaser.Math.Clamp(
-      (nearestPathDistance - AutoPlayer.CONTACT_PATH_RADIUS)
-        / Math.max(1, AutoPlayer.CONTACT_WARNING_RADIUS - AutoPlayer.CONTACT_PATH_RADIUS),
+      (nearestPathDistance - AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS)
+        / Math.max(1, AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS),
       0,
       1,
     );
@@ -4589,12 +4271,12 @@ export class AutoPlayer {
 
     let penalty = Math.max(0, approach - 8) * 0.45;
 
-    if (endpointDistance < AutoPlayer.CONTACT_WARNING_RADIUS) {
-      penalty += (AutoPlayer.CONTACT_WARNING_RADIUS - endpointDistance) * 1.15;
+    if (endpointDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
+      penalty += (AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - endpointDistance) * 1.15;
     }
 
-    if (endpointDistance < AutoPlayer.CONTACT_DANGER_RADIUS) {
-      penalty += (AutoPlayer.CONTACT_DANGER_RADIUS - endpointDistance) * 3.1 + 86;
+    if (endpointDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS) {
+      penalty += (AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS - endpointDistance) * 3.1 + 86;
     }
 
     return penalty * (hpRatio < 0.5 ? 1.3 : 1);
@@ -4612,8 +4294,8 @@ export class AutoPlayer {
       return 0;
     }
 
-    const safeMin = AutoPlayer.CONTACT_WARNING_RADIUS + 26;
-    const safeMax = AutoPlayer.SAFE_DISTANCE;
+    const safeMin = AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS + 26;
+    const safeMax = AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE;
     const idealDistance = (safeMin + safeMax) / 2;
     let score = 0;
 
@@ -4653,8 +4335,8 @@ export class AutoPlayer {
     const positionRadius = (context.playerPosition as AutoPosition & { radius?: number }).radius;
 
     return positionRadius !== undefined && Number.isFinite(positionRadius) && positionRadius > 0
-      ? Math.max(positionRadius, AutoPlayer.DEFAULT_PLAYER_COLLISION_RADIUS)
-      : AutoPlayer.DEFAULT_PLAYER_COLLISION_RADIUS;
+      ? Math.max(positionRadius, AUTO_PLAYER_CONSTANTS.DEFAULT_PLAYER_COLLISION_RADIUS)
+      : AUTO_PLAYER_CONSTANTS.DEFAULT_PLAYER_COLLISION_RADIUS;
   }
 
   private getEnemyCollisionRadius(enemy: AutoPosition | AutoEnemySnapshot): number {
@@ -4662,7 +4344,7 @@ export class AutoPlayer {
 
     return radius !== undefined && Number.isFinite(radius) && radius > 0
       ? radius
-      : AutoPlayer.DEFAULT_ENEMY_COLLISION_RADIUS;
+      : AUTO_PLAYER_CONSTANTS.DEFAULT_ENEMY_COLLISION_RADIUS;
   }
 
   private getEnemyCombinedCollisionRadius(
@@ -4793,7 +4475,7 @@ export class AutoPlayer {
         continue;
       }
 
-      if (distance > portal.radius + AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS) {
+      if (distance > portal.radius + AUTO_PLAYER_CONSTANTS.PORTAL_ESCAPE_SEEK_RADIUS) {
         continue;
       }
 
@@ -4812,7 +4494,7 @@ export class AutoPlayer {
       }
 
       const score = (currentRisk - exitRisk) * 5
-        + Math.max(0, AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS - Math.max(0, distance - portal.radius)) * 0.035
+        + Math.max(0, AUTO_PLAYER_CONSTANTS.PORTAL_ESCAPE_SEEK_RADIUS - Math.max(0, distance - portal.radius)) * 0.035
         + (hpRatio < 0.35 ? 8 : 0);
 
       if (score > bestScore) {
@@ -4845,7 +4527,7 @@ export class AutoPlayer {
 
       const playerDistance = Phaser.Math.Distance.Between(player.x, player.y, portal.x, portal.y);
 
-      if (playerDistance > portal.radius + AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS) {
+      if (playerDistance > portal.radius + AUTO_PLAYER_CONSTANTS.PORTAL_ESCAPE_SEEK_RADIUS) {
         continue;
       }
 
@@ -4896,7 +4578,7 @@ export class AutoPlayer {
 
       if (
         endpointDistance > portal.radius
-        || playerDistance > portal.radius + AutoPlayer.PORTAL_ESCAPE_SEEK_RADIUS
+        || playerDistance > portal.radius + AUTO_PLAYER_CONSTANTS.PORTAL_ESCAPE_SEEK_RADIUS
       ) {
         continue;
       }
@@ -4921,7 +4603,7 @@ export class AutoPlayer {
     const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
 
     return hpRatio < 0.45
-      || danger.nearestDistance < AutoPlayer.PANIC_DISTANCE
+      || danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE
       || danger.pressureCount >= 4
       || currentPressure >= 5
       || this.getTotalBossWarningRisk(context, player) > 0;
@@ -5023,8 +4705,8 @@ export class AutoPlayer {
     score += Math.max(-4, pressureDrop) * (surround.surrounded ? 8 : 4);
     score += Math.max(0, borderProgress) * (surround.surrounded || kite.active ? 0.34 : 0.14);
     score += Math.max(0, obstacleProgress) * 0.10;
-    score += Math.max(0, actualMove - AutoPlayer.STEP_DISTANCE * 0.35) * 0.11;
-    score += Math.max(0, anchorDistance - AutoPlayer.STALL_RADIUS) * (movement.prolonged ? 0.20 : 0.10);
+    score += Math.max(0, actualMove - AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.35) * 0.11;
+    score += Math.max(0, anchorDistance - AUTO_PLAYER_CONSTANTS.STALL_RADIUS) * (movement.prolonged ? 0.20 : 0.10);
     score += Math.max(0, direction.dot(surround.safestDirection)) * (surround.surrounded ? 34 : 16);
 
     if (kite.active && kite.direction.lengthSq() > 0) {
@@ -5037,11 +4719,11 @@ export class AutoPlayer {
       score += Math.max(0, direction.dot(this.stickyBreakoutDirection)) * 14;
     }
 
-    if (actualMove < AutoPlayer.STEP_DISTANCE * 0.35) {
+    if (actualMove < AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.35) {
       score -= 26;
     }
 
-    if (anchorDistance <= AutoPlayer.STALL_RADIUS * 0.8) {
+    if (anchorDistance <= AUTO_PLAYER_CONSTANTS.STALL_RADIUS * 0.8) {
       score -= movement.prolonged ? 28 : 14;
     }
 
@@ -5092,11 +4774,11 @@ export class AutoPlayer {
       score -= 26;
     }
 
-    if (endpointBorderDistance < AutoPlayer.BORDER_WARNING_MARGIN) {
-      score -= (1 - endpointBorderDistance / AutoPlayer.BORDER_WARNING_MARGIN) * (kite.nearBorder ? 30 : 16);
+    if (endpointBorderDistance < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
+      score -= (1 - endpointBorderDistance / AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) * (kite.nearBorder ? 30 : 16);
     }
 
-    if (this.isNearCorner(context, endpoint, AutoPlayer.BORDER_WARNING_MARGIN)) {
+    if (this.isNearCorner(context, endpoint, AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN)) {
       score -= kite.nearCorner ? 44 : 28;
     }
 
@@ -5235,9 +4917,9 @@ export class AutoPlayer {
         continue;
       }
 
-      if (this.pointIntersectsObstacle(endpoint, obstacle, AutoPlayer.NAVIGATION_MARGIN * 0.45)) {
+      if (this.pointIntersectsObstacle(endpoint, obstacle, AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN * 0.45)) {
         penalty += 30;
-      } else if (this.pointIntersectsObstacle(endpoint, obstacle, AutoPlayer.NAVIGATION_MARGIN)) {
+      } else if (this.pointIntersectsObstacle(endpoint, obstacle, AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN)) {
         penalty += 6;
       }
     }
@@ -5257,7 +4939,7 @@ export class AutoPlayer {
       }
 
       if (obstacle.shape === 'circle') {
-        const radius = Math.max(obstacle.width, obstacle.height) / 2 + AutoPlayer.NAVIGATION_MARGIN;
+        const radius = Math.max(obstacle.width, obstacle.height) / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
         clearance = Math.min(
           clearance,
           Phaser.Math.Distance.Between(point.x, point.y, obstacle.x, obstacle.y) - radius,
@@ -5265,8 +4947,8 @@ export class AutoPlayer {
         continue;
       }
 
-      const halfWidth = obstacle.width / 2 + AutoPlayer.NAVIGATION_MARGIN;
-      const halfHeight = obstacle.height / 2 + AutoPlayer.NAVIGATION_MARGIN;
+      const halfWidth = obstacle.width / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
+      const halfHeight = obstacle.height / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
       const dx = Math.max(Math.abs(point.x - obstacle.x) - halfWidth, 0);
       const dy = Math.max(Math.abs(point.y - obstacle.y) - halfHeight, 0);
       const outsideDistance = Math.sqrt(dx * dx + dy * dy);
@@ -5289,8 +4971,8 @@ export class AutoPlayer {
     point: Phaser.Math.Vector2,
     target?: AutoTarget,
   ): number {
-    const hard = AutoPlayer.HARD_BORDER_MARGIN;
-    const warning = AutoPlayer.BORDER_WARNING_MARGIN;
+    const hard = AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN;
+    const warning = AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
 
     if (
       point.x < hard
@@ -5332,10 +5014,10 @@ export class AutoPlayer {
     const borderProgress = endpointBorderDistance - currentBorderDistance;
     let penalty = 0;
 
-    if (endpointBorderDistance < AutoPlayer.HARD_BORDER_MARGIN + 12) {
+    if (endpointBorderDistance < AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN + 12) {
       penalty += 52;
-    } else if (endpointBorderDistance < AutoPlayer.BORDER_WARNING_MARGIN) {
-      penalty += (1 - endpointBorderDistance / AutoPlayer.BORDER_WARNING_MARGIN) * (kite.nearBorder ? 24 : 14);
+    } else if (endpointBorderDistance < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
+      penalty += (1 - endpointBorderDistance / AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) * (kite.nearBorder ? 24 : 14);
     }
 
     if (endpointBorderDistance < currentBorderDistance - 2) {
@@ -5346,7 +5028,7 @@ export class AutoPlayer {
       penalty += 22;
     }
 
-    if (this.isNearCorner(context, endpoint, AutoPlayer.BORDER_WARNING_MARGIN)) {
+    if (this.isNearCorner(context, endpoint, AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN)) {
       penalty += kite.nearCorner ? 42 : 26;
     }
 
@@ -5367,10 +5049,10 @@ export class AutoPlayer {
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): CornerTrapInfo {
     const inwardDirection = new Phaser.Math.Vector2(0, 0);
-    const nearLeft = player.x < AutoPlayer.BORDER_WARNING_MARGIN;
-    const nearRight = player.x > context.worldBounds.width - AutoPlayer.BORDER_WARNING_MARGIN;
-    const nearTop = player.y < AutoPlayer.BORDER_WARNING_MARGIN;
-    const nearBottom = player.y > context.worldBounds.height - AutoPlayer.BORDER_WARNING_MARGIN;
+    const nearLeft = player.x < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
+    const nearRight = player.x > context.worldBounds.width - AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
+    const nearTop = player.y < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
+    const nearBottom = player.y > context.worldBounds.height - AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
 
     if (nearLeft) {
       inwardDirection.x = 1;
@@ -5385,7 +5067,7 @@ export class AutoPlayer {
     }
 
     const nearCorner = inwardDirection.x !== 0 && inwardDirection.y !== 0;
-    const enemyPressure = danger.nearestDistance < AutoPlayer.DANGER_RADIUS
+    const enemyPressure = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.DANGER_RADIUS
       || danger.pressureCount >= 3;
 
     return {
@@ -5429,7 +5111,7 @@ export class AutoPlayer {
       score -= 16;
     }
 
-    if (danger.nearestDistance < AutoPlayer.PANIC_DISTANCE) {
+    if (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE) {
       score += Math.max(0, inwardAlignment) * 10;
     }
 
@@ -5447,12 +5129,12 @@ export class AutoPlayer {
     direction: Phaser.Math.Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): number {
-    if (danger.nearestDistance >= AutoPlayer.DANGER_RADIUS) {
+    if (danger.nearestDistance >= AUTO_PLAYER_CONSTANTS.DANGER_RADIUS) {
       return 0;
     }
 
     const intendedEndpoint = player.clone().add(
-      direction.clone().normalize().scale(AutoPlayer.STEP_DISTANCE),
+      direction.clone().normalize().scale(AUTO_PLAYER_CONSTANTS.STEP_DISTANCE),
     );
     const intendedMove = Phaser.Math.Distance.Between(
       player.x,
@@ -5467,7 +5149,7 @@ export class AutoPlayer {
     }
 
     const endpointNearBorder = this.getNearestBorderDistance(context, endpoint)
-      < AutoPlayer.HARD_BORDER_MARGIN + 8;
+      < AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN + 8;
 
     return endpointNearBorder ? 24 : 0;
   }
@@ -5498,15 +5180,15 @@ export class AutoPlayer {
   private getSoftBorderDirection(context: AutoPlayerContext, player: Phaser.Math.Vector2): Phaser.Math.Vector2 {
     const direction = new Phaser.Math.Vector2(0, 0);
 
-    if (player.x < AutoPlayer.BORDER_WARNING_MARGIN) {
+    if (player.x < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
       direction.x += 1;
-    } else if (player.x > context.worldBounds.width - AutoPlayer.BORDER_WARNING_MARGIN) {
+    } else if (player.x > context.worldBounds.width - AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
       direction.x -= 1;
     }
 
-    if (player.y < AutoPlayer.BORDER_WARNING_MARGIN) {
+    if (player.y < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
       direction.y += 1;
-    } else if (player.y > context.worldBounds.height - AutoPlayer.BORDER_WARNING_MARGIN) {
+    } else if (player.y > context.worldBounds.height - AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
       direction.y -= 1;
     }
 
@@ -5539,7 +5221,7 @@ export class AutoPlayer {
     obstacle: AutoObstacleSnapshot,
   ): boolean {
     if (obstacle.shape === 'circle') {
-      const radius = Math.max(obstacle.width, obstacle.height) / 2 + AutoPlayer.NAVIGATION_MARGIN;
+      const radius = Math.max(obstacle.width, obstacle.height) / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
       const center = new Phaser.Math.Vector2(obstacle.x, obstacle.y);
       const segment = end.clone().subtract(start);
       const lengthSq = segment.lengthSq();
@@ -5553,7 +5235,7 @@ export class AutoPlayer {
       return Phaser.Math.Distance.Between(closest.x, closest.y, center.x, center.y) <= radius;
     }
 
-    const margin = AutoPlayer.NAVIGATION_MARGIN;
+    const margin = AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
     const left = obstacle.x - obstacle.width / 2 - margin;
     const right = obstacle.x + obstacle.width / 2 + margin;
     const top = obstacle.y - obstacle.height / 2 - margin;
@@ -5719,7 +5401,7 @@ export class AutoPlayer {
     direction: Phaser.Math.Vector2,
   ): Phaser.Math.Vector2 {
     const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
-    const stepDistance = Math.min(AutoPlayer.STEP_DISTANCE, Math.max(70, moveSpeed * 0.65));
+    const stepDistance = Math.min(AUTO_PLAYER_CONSTANTS.STEP_DISTANCE, Math.max(70, moveSpeed * 0.65));
 
     return this.clampToWorld(context, player.clone().add(direction.clone().normalize().scale(stepDistance)));
   }
@@ -5732,7 +5414,7 @@ export class AutoPlayer {
   }
 
   private clampToSafeWorld(context: AutoPlayerContext, point: Phaser.Math.Vector2): Phaser.Math.Vector2 {
-    const margin = AutoPlayer.HARD_BORDER_MARGIN + 4;
+    const margin = AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN + 4;
 
     return new Phaser.Math.Vector2(
       Phaser.Math.Clamp(point.x, margin, context.worldBounds.width - margin),
@@ -5757,7 +5439,7 @@ export class AutoPlayer {
     for (const otherPickup of context.pickupPositions) {
       if (
         Phaser.Math.Distance.Between(pickup.x, pickup.y, otherPickup.x, otherPickup.y)
-        <= AutoPlayer.PICKUP_CLUSTER_RADIUS
+        <= AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS
       ) {
         clusterScore += this.getPickupExpValue(otherPickup);
       }
@@ -5809,14 +5491,14 @@ export class AutoPlayer {
 
     if (reason === 'border') {
       this.suppressedTargetId = target.id;
-      this.suppressedTargetFrames = AutoPlayer.TARGET_COOLDOWN_FRAMES;
+      this.suppressedTargetFrames = AUTO_PLAYER_CONSTANTS.TARGET_COOLDOWN_FRAMES;
     }
 
     if (reason === 'breakout') {
       this.suppressedTargetId = target.id;
       this.suppressedTargetFrames = Math.max(
         this.suppressedTargetFrames,
-        Math.floor(AutoPlayer.TARGET_COOLDOWN_FRAMES * 0.6),
+        Math.floor(AUTO_PLAYER_CONSTANTS.TARGET_COOLDOWN_FRAMES * 0.6),
       );
     }
   }
@@ -5827,7 +5509,7 @@ export class AutoPlayer {
     }
 
     this.stickyBreakoutDirection = direction.clone().normalize();
-    this.stickyBreakoutFrames = AutoPlayer.BREAKOUT_STICKY_FRAMES;
+    this.stickyBreakoutFrames = AUTO_PLAYER_CONSTANTS.BREAKOUT_STICKY_FRAMES;
   }
 
   private updateKiteStability(kite: KiteInfo, reason: string, direction: Phaser.Math.Vector2): void {
@@ -5841,7 +5523,7 @@ export class AutoPlayer {
       || (kite.direction.lengthSq() > 0 && direction.dot(kite.direction) > 0.72)
     ) {
       this.stickyKiteDirection = direction.clone().normalize();
-      this.stickyKiteFrames = AutoPlayer.KITE_STICKY_FRAMES;
+      this.stickyKiteFrames = AUTO_PLAYER_CONSTANTS.KITE_STICKY_FRAMES;
     }
   }
 
@@ -5866,3 +5548,4 @@ export class AutoPlayer {
     this.suppressedTargetFrames -= 1;
   }
 }
+

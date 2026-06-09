@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
 import { DashSkillConfig } from './BossSkillConfig';
-import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayerTypes';
 
 export class DashSkill implements BossSkill {
   readonly type = 'dash' as const;

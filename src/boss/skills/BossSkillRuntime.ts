@@ -1,6 +1,6 @@
 import { BossSkill } from './BossSkill';
 import { BossSkillContext } from './BossSkillContext';
-import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayer';
+import type { AutoBossWarningSnapshot } from '../../auto/AutoPlayerTypes';
 
 export class BossSkillRuntime {
   constructor(

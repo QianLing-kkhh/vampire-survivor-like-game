@@ -16,10 +16,8 @@ import {
   serializeLeaderboardKey,
 } from '../leaderboard/LeaderboardKey';
 import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
-import {
-  AutoStrategyProfile,
-  createDefaultStrategySaveData,
-} from '../strategy/profile/AutoStrategyProfile';
+import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
+import { createDefaultStrategySaveData } from '../strategy/profile/AutoStrategySaveData';
 import { StrategyProfileValidator } from '../strategy/profile/StrategyProfileValidator';
 import { TutorialState } from '../tutorial/TutorialState';
 import { VersionInfo, getCurrentVersionInfo } from '../version/VersionInfo';

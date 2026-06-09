@@ -6,7 +6,7 @@ import { MapMechanicVisualRenderer } from '../../world/MapMechanicVisualRenderer
 import { MapMechanicContext, MapMechanicEntity } from './MapMechanicContext';
 import { MapInteractable } from './MapInteractable';
 import { MapObstacleDefinition } from './MapMechanicDefinition';
-import type { AutoObstacleSnapshot } from '../../auto/AutoPlayer';
+import type { AutoObstacleSnapshot } from '../../auto/AutoPlayerTypes';
 
 export class MapObstacle implements MapInteractable {
   readonly id: string;

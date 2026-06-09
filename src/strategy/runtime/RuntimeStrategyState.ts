@@ -1,5 +1,5 @@
 import type { AutoStrategyProfile } from '../profile/AutoStrategyProfile';
-import { cloneAutoStrategyProfile } from '../profile/AutoStrategyProfile';
+import { cloneAutoStrategyProfile } from '../profile/AutoStrategyClone';
 import { StrategyProfileValidator } from '../profile/StrategyProfileValidator';
 import { StrategyHasher } from '../hash/StrategyHasher';
 

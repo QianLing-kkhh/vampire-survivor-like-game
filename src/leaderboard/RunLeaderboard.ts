@@ -2,7 +2,8 @@ import type { PassiveLevel } from '../passive/PassiveItem';
 import type { RunMetadata } from '../run/RunMetadata';
 import type { RunState } from '../run/RunState';
 
-import { createLeaderboardKey, LeaderboardKey } from './LeaderboardKey';
+import { LeaderboardKey } from './LeaderboardKey';
+import { LeaderboardKeyFactory } from './LeaderboardKeyFactory';
 import { LeaderboardManager } from './LeaderboardManager';
 import type { LeaderboardRecord } from './LeaderboardRecord';
 
@@ -52,35 +53,16 @@ export class RunLeaderboard {
   }
 
   static createKeyFromMetadata(metadata: RunMetadata): LeaderboardKey {
-    return createLeaderboardKey({
-      mode: metadata.autoChallengeType === 'scoreAttack'
-        ? 'scoreAttack'
-        : metadata.autoChallengeType === 'endless' ? 'endless' : 'normal',
-      controlMode: metadata.controlMode === 'autoStrategy' ? 'autoStrategy' : 'manual',
-      autoChallengeType: metadata.autoChallengeType,
-      characterId: metadata.characterId,
-      stageId: metadata.stageId,
-      mapId: metadata.mapId,
-      difficultyId: metadata.difficultyId,
-      seed: metadata.seed,
-      challengeId: metadata.challengeId,
-      customStageId: metadata.customStageId,
-      rulesetId: metadata.rulesetId,
-      strategyProfileHash: metadata.controlMode === 'autoStrategy'
-        ? metadata.strategyProfileHash
-        : undefined,
-      strategyControlType: metadata.controlMode === 'autoStrategy'
-        ? metadata.strategyControlType
-        : undefined,
-      speedBucket: metadata.speedBucket,
+    return LeaderboardKeyFactory.createFromMetadata(metadata, {
+      includeChallengeCustomModes: false,
     });
   }
 
   private static createKey(context: RunLeaderboardContext): LeaderboardKey {
     if (context.runState.endlessStarted) {
-      return createLeaderboardKey({
-        ...this.createKeyFromMetadata(context.metadata),
+      return LeaderboardKeyFactory.createFromMetadata(context.metadata, {
         mode: 'endless',
+        includeChallengeCustomModes: false,
       });
     }
 

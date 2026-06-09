@@ -5,7 +5,7 @@ import type { LevelManager } from '../progression/LevelManager';
 import type { PlayerHealth } from '../player/PlayerHealth';
 import type { PlayerStats } from '../player/PlayerStats';
 import type { WeaponManager } from '../weapon/WeaponManager';
-import type { AutoPlayerContext, AutoPickupSnapshot, AutoTreasureSnapshot } from './AutoPlayer';
+import type { AutoPlayerContext, AutoPickupSnapshot, AutoTreasureSnapshot } from './AutoPlayerTypes';
 
 export interface AutoPlayerContextBuilderConfig {
   playerBody: {

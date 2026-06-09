@@ -1,5 +1,5 @@
 import type { AutoStrategyProfile } from '../profile/AutoStrategyProfile';
-import { DEFAULT_AUTO_STRATEGY_PROFILE } from '../profile/AutoStrategyProfile';
+import { DEFAULT_AUTO_STRATEGY_PROFILE } from '../profile/AutoStrategyDefaults';
 import { StrategyProfileValidator } from '../profile/StrategyProfileValidator';
 
 export class AutoRelicPolicy {

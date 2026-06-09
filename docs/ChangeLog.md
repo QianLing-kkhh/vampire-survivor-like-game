@@ -1,5 +1,13 @@
 # Change Log
 
+## 2026-06-09 Auto Strategy Structure Split
+
+- Moved auto movement snapshot contracts into `src/strategy/snapshot` with `src/auto/AutoPlayerTypes` compatibility aliases.
+- Split `AutoPlayer` internal debug, movement, memory, and constants declarations out of the main movement class.
+- Split strategy profile types, defaults, presets, save helpers, and clone helpers into separate owner modules.
+- Added run-mode factory helpers and a leaderboard key factory while preserving existing flat metadata and serialized leaderboard key format.
+- No gameplay values, auto movement scoring, CSV schema, SaveData schema, ReplayData schema, or strategy hash semantics were changed.
+
 ## 2026-06-09 Gameplay Initializer Bootstrap Split
 
 - Split run selection resolution, rule-set creation, runtime event setup, and final context assembly into `src/gameplay/bootstrap/` helpers.

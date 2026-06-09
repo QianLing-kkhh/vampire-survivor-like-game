@@ -1,6 +1,6 @@
 import { Enemy } from '../../enemy/Enemy';
 import { PlayerController } from '../../player/PlayerController';
-import type { AutoMapSnapshot } from '../../auto/AutoPlayer';
+import type { AutoMapSnapshot } from '../../auto/AutoPlayerTypes';
 
 import { MapInteractable } from './MapInteractable';
 import { MapMechanicContext, MapMechanicEntity } from './MapMechanicContext';

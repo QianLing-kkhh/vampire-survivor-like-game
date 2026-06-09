@@ -6,7 +6,7 @@ import { MapMechanicVisualRenderer } from '../../world/MapMechanicVisualRenderer
 import { MapMechanicContext } from './MapMechanicContext';
 import { MapInteractable } from './MapInteractable';
 import { MapSlowZoneDefinition } from './MapMechanicDefinition';
-import type { AutoSlowZoneSnapshot } from '../../auto/AutoPlayer';
+import type { AutoSlowZoneSnapshot } from '../../auto/AutoPlayerTypes';
 
 export class MapSlowZone implements MapInteractable {
   readonly id: string;
