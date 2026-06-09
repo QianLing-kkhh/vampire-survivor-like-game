@@ -1,6 +1,7 @@
 import type {
   AutoChallengeType,
   LeaderboardControlMode,
+  StrategyControlType,
   StrategySpeedBucket,
 } from '../runtime/RunModeConfig';
 
@@ -16,6 +17,7 @@ export interface LeaderboardRecord {
   autoChallengeType?: AutoChallengeType;
   strategyProfileId?: string;
   strategyProfileHash?: string;
+  strategyControlType?: StrategyControlType;
   simulationSpeedMultiplier?: number;
   speedBucket?: StrategySpeedBucket;
   resultType?: 'gameOver' | 'victory';

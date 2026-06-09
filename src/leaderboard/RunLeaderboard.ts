@@ -69,6 +69,9 @@ export class RunLeaderboard {
       strategyProfileHash: metadata.controlMode === 'autoStrategy'
         ? metadata.strategyProfileHash
         : undefined,
+      strategyControlType: metadata.controlMode === 'autoStrategy'
+        ? metadata.strategyControlType
+        : undefined,
       speedBucket: metadata.speedBucket,
     });
   }
@@ -100,6 +103,7 @@ export class RunLeaderboard {
       autoChallengeType: key.autoChallengeType,
       strategyProfileId: context.metadata.strategyProfileId,
       strategyProfileHash: key.strategyProfileHash,
+      strategyControlType: key.strategyControlType,
       simulationSpeedMultiplier: context.metadata.simulationSpeedMultiplier,
       speedBucket: context.metadata.speedBucket,
       resultType: context.resultType,

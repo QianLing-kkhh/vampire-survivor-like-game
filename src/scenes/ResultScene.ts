@@ -36,6 +36,18 @@ interface ResultSceneData {
   seed?: string;
   leaderboardKey?: string;
   autoMode?: boolean;
+  controlMode?: 'manual' | 'autoStrategy' | 'replay';
+  autoChallengeType?: 'normal' | 'endless' | 'scoreAttack';
+  strategyProfileId?: string;
+  strategyProfileHash?: string;
+  strategyControlType?: 'fixed' | 'live';
+  allowRuntimeStrategyEdit?: boolean;
+  runtimeStrategyEdited?: boolean;
+  strategyEditCount?: number;
+  runtimeStrategyFinalHash?: string;
+  strategyEditTimeline?: string;
+  simulationSpeedMultiplier?: number;
+  speedBucket?: string;
   fastMode?: boolean;
   timeScale?: number;
   survivalTime?: number;
@@ -457,6 +469,7 @@ export class ResultScene extends Phaser.Scene {
         `${I18n.t('result.endlessSurvivalTime')}: ${this.formatTime(params.data.endlessSurvivalTime ?? 0)}`,
       ] : []),
       this.formatMetadataLine(params.data),
+      ...this.getStrategyControlLines(params.data),
       `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
       `${I18n.t('result.killCount')}: ${params.data.killCount ?? 0}`,
       `${I18n.t('result.score')}: ${params.data.score ?? 0}`,
@@ -482,6 +495,25 @@ export class ResultScene extends Phaser.Scene {
     return [
       ...lines.slice(0, Math.max(1, params.maxRows - 1)),
       I18n.t('result.more', { count: lines.length - params.maxRows + 1 }),
+    ];
+  }
+
+  private getStrategyControlLines(data: ResultSceneData): string[] {
+    if (data.controlMode !== 'autoStrategy') {
+      return ['Mode: Manual'];
+    }
+
+    const controlLabel = data.strategyControlType === 'live'
+      ? 'Live Auto Strategy'
+      : 'Fixed Auto Strategy';
+    const baseHash = this.shortenHash(data.strategyProfileHash);
+    const finalHash = this.shortenHash(data.runtimeStrategyFinalHash ?? data.strategyProfileHash);
+    const editSuffix = data.strategyControlType === 'live'
+      ? ` / edits ${data.strategyEditCount ?? 0}${data.runtimeStrategyEdited ? ` / final ${finalHash}` : ''}`
+      : '';
+
+    return [
+      `Mode: ${controlLabel}${editSuffix}${baseHash ? ` / base ${baseHash}` : ''}`,
     ];
   }
 
@@ -540,12 +572,23 @@ export class ResultScene extends Phaser.Scene {
     const visibleEntries = entries.slice(0, visibleCount);
     const hiddenCount = Math.max(0, entries.length - visibleEntries.length);
     const mode = entries[0]?.mode ?? 'normal';
+    const control = this.formatLeaderboardControl(entries[0]);
 
     return [
-      `Local ${mode} leaderboard${currentRank > 0 ? ` / this run #${currentRank}` : ''}`,
+      `Local ${control} ${mode} leaderboard${currentRank > 0 ? ` / this run #${currentRank}` : ''}`,
       ...visibleEntries.map((entry, index) => this.formatLocalLeaderboardEntry(entry, index + 1)),
       ...(hiddenCount > 0 ? [I18n.t('result.more', { count: hiddenCount })] : []),
     ];
+  }
+
+  private formatLeaderboardControl(entry: LeaderboardRecord | undefined): string {
+    if (entry?.controlMode !== 'autoStrategy') {
+      return 'Manual';
+    }
+
+    return entry.strategyControlType === 'live'
+      ? 'Live Auto'
+      : 'Fixed Auto';
   }
 
   private formatLocalLeaderboardEntry(entry: LeaderboardRecord, rank: number): string {
@@ -554,6 +597,10 @@ export class ResultScene extends Phaser.Scene {
     }
 
     return `#${rank} ${this.formatTime(entry.survivalTime)} / Lv${entry.finalLevel} / ${entry.killCount} kills`;
+  }
+
+  private shortenHash(hash: string | undefined): string {
+    return hash ? hash.slice(0, 8) : '';
   }
 
   private addButtonHover(

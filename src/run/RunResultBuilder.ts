@@ -11,6 +11,7 @@ import { PlayerStats } from '../player/PlayerStats';
 import { RelicManager } from '../relic/RelicManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { RunStats } from '../stats/RunStats';
+import type { RuntimeStrategyState } from '../strategy/runtime/RuntimeStrategyState';
 import { StrategyTelemetry } from '../telemetry/StrategyTelemetry';
 import { WeaponManager } from '../weapon/WeaponManager';
 
@@ -37,6 +38,7 @@ export interface RunResultBuildContext {
   weaponManager?: WeaponManager;
   passiveManager?: PassiveManager;
   relicManager?: RelicManager;
+  runtimeStrategyState?: RuntimeStrategyState;
   playerStats?: PlayerStats;
   playerHealth?: PlayerHealth;
   levelManager?: LevelManager;
@@ -61,6 +63,12 @@ export class RunResultBuilder {
     const weaponDamageStats = context.weaponManager?.getWeaponDamageStats() ?? [];
     const runStatsSummary = context.runStats.getSummary();
     const playtestSettings = PlaytestSettings.get();
+    const runtimeStrategySummary = context.runtimeStrategyState?.getSummary();
+    const runtimeStrategyEdited = runtimeStrategySummary?.edited ?? false;
+    const strategyEditCount = runtimeStrategySummary?.editCount ?? 0;
+    const runtimeStrategyFinalHash = runtimeStrategySummary?.runtimeProfileHash
+      ?? metadata.strategyProfileHash;
+    const strategyEditTimeline = runtimeStrategySummary?.editTimeline ?? '';
     const finalLevel = context.levelManager?.currentLevel ?? 1;
     const finalExp = context.expManager?.totalExp ?? 0;
     const finalMoveSpeed = context.playerStats?.moveSpeed ?? 0;
@@ -131,10 +139,10 @@ export class RunResultBuilder {
       strategyProfileHash: metadata.strategyProfileHash,
       strategyControlType: metadata.strategyControlType,
       allowRuntimeStrategyEdit: metadata.allowRuntimeStrategyEdit,
-      runtimeStrategyEdited: false,
-      strategyEditCount: 0,
-      runtimeStrategyFinalHash: metadata.strategyProfileHash,
-      strategyEditTimeline: '',
+      runtimeStrategyEdited,
+      strategyEditCount,
+      runtimeStrategyFinalHash,
+      strategyEditTimeline,
       simulationSpeedMultiplier: metadata.simulationSpeedMultiplier,
       speedBucket: metadata.speedBucket,
       strategyTelemetrySummary: StrategyTelemetry.serializeSummary(strategyTelemetrySummary),
@@ -359,10 +367,10 @@ export class RunResultBuilder {
       strategyProfileHash: metadata.strategyProfileHash,
       strategyControlType: metadata.strategyControlType,
       allowRuntimeStrategyEdit: metadata.allowRuntimeStrategyEdit,
-      runtimeStrategyEdited: false,
-      strategyEditCount: 0,
-      runtimeStrategyFinalHash: metadata.strategyProfileHash,
-      strategyEditTimeline: '',
+      runtimeStrategyEdited,
+      strategyEditCount,
+      runtimeStrategyFinalHash,
+      strategyEditTimeline,
       simulationSpeedMultiplier: metadata.simulationSpeedMultiplier,
       speedBucket: metadata.speedBucket,
       strategyTelemetrySummary,

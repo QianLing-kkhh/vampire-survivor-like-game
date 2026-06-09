@@ -116,6 +116,7 @@ export class RunEndCoordinator {
         weaponManager: context.weaponManager,
         passiveManager: context.passiveManager,
         relicManager: context.relicManager,
+        runtimeStrategyState: context.gameplayContext?.runtimeStrategyState,
         playerStats: context.playerStats,
         playerHealth: context.playerHealth,
         levelManager: context.levelManager,
