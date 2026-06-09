@@ -4,7 +4,7 @@ import type {
   StrategySpeedBucket,
 } from '../runtime/RunModeConfig';
 
-export type LeaderboardMode = 'normal' | 'endless' | 'challenge' | 'custom';
+export type LeaderboardMode = 'normal' | 'endless' | 'scoreAttack' | 'challenge' | 'custom';
 
 export interface LeaderboardKey {
   mode: LeaderboardMode;
@@ -41,6 +41,7 @@ const LEADERBOARD_KEY_FIELDS: Array<keyof LeaderboardKey> = [
 const VALID_MODES = new Set<LeaderboardMode>([
   'normal',
   'endless',
+  'scoreAttack',
   'challenge',
   'custom',
 ]);

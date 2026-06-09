@@ -69,9 +69,10 @@ export class LeaderboardManager {
     return [...records].sort((a, b) => {
       const aScore = LeaderboardManager.getScore(key, a);
       const bScore = LeaderboardManager.getScore(key, b);
+      const direction = LeaderboardManager.getSortDirection(key);
 
       if (bScore !== aScore) {
-        return bScore - aScore;
+        return direction * (bScore - aScore);
       }
 
       return b.timestamp.localeCompare(a.timestamp);
@@ -83,6 +84,14 @@ export class LeaderboardManager {
       return record.endlessSurvivalTime ?? record.survivalTime;
     }
 
+    if (key.mode === 'scoreAttack') {
+      return record.score ?? 0;
+    }
+
     return record.survivalTime;
+  }
+
+  private static getSortDirection(key: LeaderboardKey): 1 | -1 {
+    return key.mode === 'normal' ? -1 : 1;
   }
 }

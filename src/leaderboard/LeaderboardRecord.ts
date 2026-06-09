@@ -18,8 +18,10 @@ export interface LeaderboardRecord {
   strategyProfileHash?: string;
   simulationSpeedMultiplier?: number;
   speedBucket?: StrategySpeedBucket;
+  resultType?: 'gameOver' | 'victory';
   survivalTime: number;
   endlessSurvivalTime?: number;
+  score?: number;
   finalLevel: number;
   killCount: number;
   characterId: string;
