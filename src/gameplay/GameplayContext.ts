@@ -41,6 +41,7 @@ import { RunRuleSet } from '../rules/RunRuleSet';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
+import { RuntimeStrategyState } from '../strategy/runtime/RuntimeStrategyState';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { WeaponManager } from '../weapon/WeaponManager';
 
@@ -51,6 +52,7 @@ export interface GameplayContext {
   autoMode: boolean;
   autoMovementEnabled: boolean;
   autoUpgradeEnabled: boolean;
+  runtimeStrategyState?: RuntimeStrategyState;
   fastMode: boolean;
   endlessMode: boolean;
   timeScale: number;

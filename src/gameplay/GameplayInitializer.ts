@@ -49,6 +49,7 @@ import { createSpeedBucket, type StrategyControlType } from '../runtime/RunModeC
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
 import { StrategyHasher } from '../strategy/hash/StrategyHasher';
+import { RuntimeStrategyState } from '../strategy/runtime/RuntimeStrategyState';
 import {
   PLAYTEST_AUTO_STRATEGY_PROFILE,
   cloneAutoStrategyProfile,
@@ -143,6 +144,9 @@ export class GameplayInitializer {
     const autoStrategyEnabled = config.playtestSettings.autoMovement
       || config.playtestSettings.autoUpgrade
       || config.playtestSettings.autoOpenTreasure;
+    const runtimeStrategyState = autoStrategyEnabled
+      ? new RuntimeStrategyState(strategyProfile, strategyProfileHash)
+      : undefined;
     const simulationSpeedMultiplier = config.playtestSettings.fastMode
       ? config.playtestSettings.autoTimeScale
       : 1;
@@ -517,6 +521,7 @@ export class GameplayInitializer {
       autoMode: config.playtestSettings.autoMode,
       autoMovementEnabled: config.playtestSettings.autoMovement,
       autoUpgradeEnabled: config.playtestSettings.autoUpgrade,
+      runtimeStrategyState,
       fastMode: config.playtestSettings.fastMode,
       endlessMode: config.playtestSettings.endlessMode,
       timeScale: config.playtestSettings.fastMode

@@ -64,7 +64,7 @@ import { StageDefinition } from '../stage/StageDefinition';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
 import { AutoTreasurePolicy } from '../strategy/policies/AutoTreasurePolicy';
-import { StrategyProfileRepository } from '../strategy/profile/StrategyProfileRepository';
+import { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
 import { TreasureRewardCoordinator } from '../treasure/TreasureRewardCoordinator';
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -558,6 +558,17 @@ export class GameScene extends Phaser.Scene {
     this.floatingTextManager = context.floatingTextManager;
     this.virtualJoystick = context.virtualJoystick;
     this.playerPickupRange = context.playerPickupRange;
+    this.syncRuntimeStrategyProfile(context.runtimeStrategyState?.getProfile());
+  }
+
+  private syncRuntimeStrategyProfile(profile?: AutoStrategyProfile): void {
+    if (!profile) {
+      return;
+    }
+
+    this.autoPlayer.setStrategyProfile(profile);
+    this.autoUpgradeSelector.setStrategyProfile(profile);
+    this.autoTreasurePolicy.setProfile(profile);
   }
 
   private resolveCurrentRunContent(): void {
@@ -1122,7 +1133,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.autoTreasurePolicy.setProfile(StrategyProfileRepository.getSelectedProfile());
+    this.syncRuntimeStrategyProfile(this.gameplayContext?.runtimeStrategyState?.getProfile());
     const hpRatio = this.playerHealth && this.playerHealth.maxHp > 0
       ? this.playerHealth.currentHp / this.playerHealth.maxHp
       : 1;
