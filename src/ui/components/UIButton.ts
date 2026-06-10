@@ -123,6 +123,12 @@ export class UIButton {
     return this;
   }
 
+  setDisabled(disabled: boolean): this {
+    this.pressedInside = false;
+    this.setState(disabled ? 'disabled' : this.selected ? 'selected' : 'normal');
+    return this;
+  }
+
   setVisible(visible: boolean): this {
     this.container.setVisible(visible);
     return this;

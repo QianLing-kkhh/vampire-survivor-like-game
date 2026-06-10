@@ -7,16 +7,18 @@ import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { MINIMAP_SCALE_STEPS } from '../settings/DisplaySettings';
 import { SettingsManager } from '../settings/SettingsManager';
+import { UIButton } from './components/UIButton';
+import { UIPager } from './components/UIPager';
+import { UITabBar } from './components/UITabBar';
 import { UIStyle } from './theme/UIStyle';
 import { UIThemeRegistry } from './theme/UIThemeRegistry';
 import { ASSET_STYLES, AssetStyle, DISPLAY_QUALITIES, DisplayQuality } from '../visual/DisplayQuality';
 import {
   createModalBlocker,
   setRectangleHitArea,
-  setTextHitArea,
   stopPointerEvent,
 } from './input/UIInteraction';
-import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
+import { UITheme, toCssColor } from './UITheme';
 
 type SettingsMenuHandler = () => void;
 type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'input';
@@ -40,13 +42,6 @@ interface SettingRowDefinition {
   onToggle?: () => void;
   options?: Array<SettingRowOption>;
   sliderSteps?: number[];
-}
-
-interface TabButton {
-  id: SettingsTabId;
-  container: Phaser.GameObjects.Container;
-  background: Phaser.GameObjects.Rectangle;
-  label: Phaser.GameObjects.Text;
 }
 
 interface RowControl {
@@ -77,11 +72,9 @@ export class SettingsMenu {
   private readonly background: Phaser.GameObjects.Rectangle;
   private readonly panelImage?: Phaser.GameObjects.Image;
   private readonly title: Phaser.GameObjects.Text;
-  private readonly closeButton: Phaser.GameObjects.Text;
-  private readonly prevPageButton: Phaser.GameObjects.Text;
-  private readonly nextPageButton: Phaser.GameObjects.Text;
-  private readonly pageText: Phaser.GameObjects.Text;
-  private readonly tabButtons: TabButton[] = [];
+  private readonly closeButton: UIButton;
+  private readonly pager: UIPager;
+  private tabBar?: UITabBar<SettingsTabId>;
   private readonly rowControls: RowControl[] = [];
   private readonly pageByTab: Record<SettingsTabId, number> = {
     gameplay: 0,
@@ -126,29 +119,22 @@ export class SettingsMenu {
     });
     this.title.setOrigin(0.5);
     this.closeButton = this.createCloseButton();
-    this.prevPageButton = this.createPageButton(this.t('settings.previousPage', 'Prev'), () => {
-      this.setCurrentPage(this.getCurrentPage() - 1);
+    this.pager = new UIPager(scene, {
+      x: 0,
+      y: 0,
+      width: 420,
+      onPageChanged: (page) => {
+        this.pageByTab[this.selectedTab] = page;
+        this.applyLayout();
+      },
     });
-    this.nextPageButton = this.createPageButton(this.t('settings.nextPage', 'Next'), () => {
-      this.setCurrentPage(this.getCurrentPage() + 1);
-    });
-    this.pageText = scene.add.text(0, 0, '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'center',
-    });
-    this.pageText.setOrigin(0.5);
     this.container.add([
       this.background,
       ...(this.panelImage ? [this.panelImage] : []),
       this.title,
-      this.prevPageButton,
-      this.nextPageButton,
-      this.pageText,
-      this.closeButton,
+      this.pager.container,
+      this.closeButton.container,
     ]);
-    this.createTabs();
     this.renderRows();
     this.applyLayout();
     this.unsubscribeResize = this.screenManager.onResize(() => {
@@ -162,42 +148,11 @@ export class SettingsMenu {
     this.unsubscribeResize = undefined;
     this.closeDropdown();
     this.clearRows();
+    this.tabBar?.destroy();
+    this.tabBar = undefined;
     this.screenManager.dispose();
     this.blocker.destroy();
     this.container.destroy(true);
-  }
-
-  private createTabs(): void {
-    for (const tabId of SETTINGS_TABS) {
-      const tab = this.scene.add.container(0, 0);
-      const background = this.scene.add.rectangle(0, 0, 96, 34, UITheme.buttonBgColor, 0.94);
-      background.setStrokeStyle(1, UITheme.panelBorderColor, 0.72);
-      background.setInteractive({ useHandCursor: true });
-      const label = this.scene.add.text(0, 0, this.getTabLabel(tabId), {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.smallFontSize,
-        align: 'center',
-      });
-      label.setOrigin(0.5);
-      tab.add([background, label]);
-      background.on('pointerdown', (
-        _pointer: Phaser.Input.Pointer,
-        _localX: number,
-        _localY: number,
-        event: Phaser.Types.Input.EventData,
-      ) => {
-        stopPointerEvent(event);
-        AudioManager.playUi(this.scene, 'ui_click');
-        this.closeDropdown();
-        this.selectedTab = tabId;
-        this.pageByTab[tabId] = 0;
-        this.renderRows();
-        this.applyLayout();
-      });
-      this.tabButtons.push({ id: tabId, container: tab, background, label });
-      this.container.add(tab);
-    }
   }
 
   private renderRows(): void {
@@ -535,10 +490,16 @@ export class SettingsMenu {
     const tabWidth = compact ? 94 : 108;
     const tabHeight = compact ? 30 : 34;
     const tabGap = compact ? 6 : 8;
-    const tabColumns = this.getTabColumns(panel.content.width, tabWidth, tabGap);
-    const tabRows = Math.ceil(this.tabButtons.length / tabColumns);
     const tabTop = panel.content.y + 54;
-    const tabAreaBottom = tabTop + tabRows * tabHeight + Math.max(0, tabRows - 1) * tabGap;
+    const tabAreaHeight = this.renderTabBar(
+      panel.content.x + panel.content.width / 2,
+      tabTop,
+      panel.content.width,
+      tabWidth,
+      tabHeight,
+      tabGap,
+    );
+    const tabAreaBottom = tabTop + tabAreaHeight;
     const closeY = panel.y + panel.height - (compact ? 28 : 34);
     const contentTop = tabAreaBottom + (compact ? 12 : 18);
     const pagingAreaHeight = compact ? 28 : 32;
@@ -564,7 +525,6 @@ export class SettingsMenu {
     this.title.setPosition(centerX, panel.content.y + 24);
     this.title.setFontSize(fonts.header);
     this.title.setColor(UITheme.textColor);
-    this.layoutTabs(panel.content.x, tabTop, tabColumns, tabWidth, tabHeight, tabGap);
 
     this.rowControls.forEach((row, index) => {
       if (index < pageStart || index >= pageEnd) {
@@ -598,12 +558,11 @@ export class SettingsMenu {
 
     this.layoutPagingControls(panel.content.x, closeY - pagingAreaHeight - 4, rowWidth, pageCount, currentPage, compact);
 
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
     this.closeButton.setPosition(centerX, closeY);
-    this.closeButton.setFontSize(metrics.fontSize);
-    setTextHitArea(this.closeButton, metrics.width, metrics.height);
-    this.closeButton.setColor(UITheme.textColor);
-    this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+    this.closeButton.setSize(
+      this.screenManager.isPortrait() ? 144 : 180,
+      compact ? 36 : 40,
+    );
   }
 
   private getRowWorldPosition(row: RowControl): { x: number; y: number } {
@@ -623,69 +582,43 @@ export class SettingsMenu {
     compact: boolean,
   ): void {
     const visible = pageCount > 1;
-    const buttonWidth = compact ? 74 : 86;
-    const buttonHeight = compact ? 24 : 28;
-    const fontSize = compact ? '10px' : UITheme.smallFontSize;
-
-    this.prevPageButton.setVisible(visible);
-    this.nextPageButton.setVisible(visible);
-    this.pageText.setVisible(visible);
-
-    if (!visible) {
-      return;
-    }
-
-    this.prevPageButton.setText(this.t('settings.previousPage', 'Prev'));
-    this.nextPageButton.setText(this.t('settings.nextPage', 'Next'));
-    this.pageText.setText(`${this.t('settings.page', 'Page')} ${currentPage + 1}/${pageCount}`);
-    this.pageText.setPosition(left + width / 2, y);
-    this.pageText.setFontSize(fontSize);
-    this.pageText.setColor(UITheme.mutedTextColor);
-
-    this.layoutPageButton(this.prevPageButton, left + buttonWidth / 2, y, buttonWidth, buttonHeight, fontSize, currentPage > 0);
-    this.layoutPageButton(this.nextPageButton, left + width - buttonWidth / 2, y, buttonWidth, buttonHeight, fontSize, currentPage < pageCount - 1);
+    this.pager.container.setVisible(visible);
+    this.pager.setPosition(left + width / 2, y);
+    this.pager.setSize(width, compact);
+    this.pager.setPage(currentPage, pageCount);
   }
 
-  private layoutPageButton(
-    button: Phaser.GameObjects.Text,
+  private renderTabBar(
     x: number,
     y: number,
     width: number,
-    height: number,
-    fontSize: string,
-    enabled: boolean,
-  ): void {
-    button.setPosition(x, y);
-    button.setFontSize(fontSize);
-    setTextHitArea(button, width, height);
-    button.setColor(enabled ? UITheme.textColor : UITheme.mutedTextColor);
-    button.setAlpha(enabled ? 1 : 0.45);
-    button.setBackgroundColor(toCssColor(enabled ? UITheme.buttonBgColor : UITheme.iconBgColor));
-  }
-
-  private layoutTabs(
-    left: number,
-    top: number,
-    columns: number,
     tabWidth: number,
     tabHeight: number,
     gap: number,
-  ): void {
-    this.tabButtons.forEach((tab, index) => {
-      const row = Math.floor(index / columns);
-      const column = index % columns;
-      const selected = tab.id === this.selectedTab;
-      setRectangleHitArea(tab.background, tabWidth, tabHeight);
-      tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
-      tab.background.setStrokeStyle(2, selected ? UITheme.successAccentColor : UITheme.panelBorderColor, selected ? 1 : 0.75);
-      tab.container.setPosition(
-        left + tabWidth / 2 + column * (tabWidth + gap),
-        top + tabHeight / 2 + row * (tabHeight + gap),
-      );
-      tab.label.setText(this.getTabLabel(tab.id));
-      tab.label.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
-      tab.label.setWordWrapWidth(tabWidth - 8);
+  ): number {
+    this.tabBar?.destroy();
+    this.tabBar = new UITabBar(this.scene, {
+      x,
+      y,
+      width,
+      items: SETTINGS_TABS.map((id) => ({
+        id,
+        label: this.getTabLabel(id),
+      })),
+      selectedId: this.selectedTab,
+      tabWidth,
+      tabHeight,
+      gap,
+      onSelect: (tabId) => {
+        this.closeDropdown();
+        this.selectedTab = tabId;
+        this.pageByTab[tabId] = 0;
+        this.renderRows();
+        this.applyLayout();
+      },
     });
+    this.container.add(this.tabBar.container);
+    return this.tabBar.height;
   }
 
   private layoutToggleRow(row: RowControl, rowWidth: number, rowHeight: number): void {
@@ -811,100 +744,20 @@ export class SettingsMenu {
     return 0;
   }
 
-  private getTabColumns(panelWidth: number, tabWidth: number, gap: number): number {
-    if (this.screenManager.isLandscape() && panelWidth >= SETTINGS_TABS.length * tabWidth) {
-      return SETTINGS_TABS.length;
-    }
-
-    return Math.max(2, Math.min(3, Math.floor((panelWidth + gap) / (tabWidth + gap))));
-  }
-
-  private createCloseButton(): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.scene.scale.width, this.scene.scale.height);
-    const button = this.scene.add.text(0, 0, this.t('settings.back', I18n.t('common.close')), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
-      },
+  private createCloseButton(): UIButton {
+    return new UIButton(this.scene, {
+      x: 0,
+      y: 0,
+      width: 180,
+      height: 40,
+      size: 'medium',
+      label: this.t('settings.back', I18n.t('common.close')),
+      onClick: () => this.onClose(),
     });
-
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this.scene, 'ui_click');
-      this.onClose();
-    });
-
-    return button;
-  }
-
-  private createPageButton(label: string, onClick: () => void): Phaser.GameObjects.Text {
-    const button = this.scene.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'center',
-      fixedWidth: 86,
-      fixedHeight: 28,
-      padding: { x: 0, y: 5 },
-    });
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      if (button.alpha >= 1) {
-        button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-      }
-    });
-    button.on('pointerout', () => {
-      if (button.alpha >= 1) {
-        button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-      }
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      if (button.alpha < 1) {
-        return;
-      }
-
-      AudioManager.playUi(this.scene, 'ui_click');
-      onClick();
-    });
-    button.setVisible(false);
-    return button;
   }
 
   private getCurrentPage(): number {
     return this.pageByTab[this.selectedTab] ?? 0;
-  }
-
-  private setCurrentPage(page: number): void {
-    this.pageByTab[this.selectedTab] = Math.max(0, page);
-    this.applyLayout();
   }
 
   private getRowsForTab(tabId: SettingsTabId): SettingRowDefinition[] {

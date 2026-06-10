@@ -6,12 +6,13 @@ import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { UIPager } from './components/UIPager';
 import { HelpContentBuilder } from './help/HelpContentBuilder';
 import { HelpIconRef, HelpLine } from './help/HelpSection';
 import { HelpTabDefinition } from './help/HelpTabDefinition';
-import { setRectangleHitArea, setTextHitArea, stopPointerEvent } from './input/UIInteraction';
+import { setRectangleHitArea, stopPointerEvent } from './input/UIInteraction';
 import { attachIconTooltip } from './tooltip/UITooltipManager';
-import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
+import { UITheme } from './UITheme';
 
 type TabButton = {
   container: Phaser.GameObjects.Container;
@@ -35,10 +36,7 @@ export class HelpOverlay {
   private readonly panel: Phaser.GameObjects.Rectangle;
   private readonly panelImage?: Phaser.GameObjects.Image;
   private readonly title: Phaser.GameObjects.Text;
-  private readonly closeButton: Phaser.GameObjects.Text;
-  private readonly prevPageButton: Phaser.GameObjects.Text;
-  private readonly nextPageButton: Phaser.GameObjects.Text;
-  private readonly pageText: Phaser.GameObjects.Text;
+  private readonly pager: UIPager;
   private readonly tabs: HelpTabDefinition[];
   private readonly tabButtons: TabButton[] = [];
   private readonly contentItems: Phaser.GameObjects.Container[] = [];
@@ -91,33 +89,28 @@ export class HelpOverlay {
     });
     this.title.setOrigin(0.5);
 
-    this.closeButton = this.createTextButton(scene, I18n.t('common.close'), () => {
-      this.destroy();
-      onClose?.();
+    this.pager = new UIPager(scene, {
+      x: 0,
+      y: 0,
+      width: 520,
+      closeLabel: I18n.t('common.close'),
+      onPageChanged: (page) => {
+        const tab = this.tabs[this.selectedTabIndex];
+        this.pageByTab[tab.id] = page;
+        this.applyLayout();
+      },
+      onClose: () => {
+        this.destroy();
+        onClose?.();
+      },
     });
-    this.prevPageButton = this.createTextButton(scene, I18n.t('settings.previousPage'), () => {
-      this.changePage(scene, -1);
-    });
-    this.nextPageButton = this.createTextButton(scene, I18n.t('settings.nextPage'), () => {
-      this.changePage(scene, 1);
-    });
-    this.pageText = scene.add.text(0, 0, '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'center',
-    });
-    this.pageText.setOrigin(0.5);
 
     this.container.add([
       this.dimmer,
       this.panel,
       ...(this.panelImage ? [this.panelImage] : []),
       this.title,
-      this.closeButton,
-      this.prevPageButton,
-      this.nextPageButton,
-      this.pageText,
+      this.pager.container,
     ]);
 
     this.createTabs(scene);
@@ -133,53 +126,6 @@ export class HelpOverlay {
     this.unsubscribeResize = undefined;
     this.screenManager.dispose();
     this.container.destroy(true);
-  }
-
-  private createTextButton(
-    scene: Phaser.Scene,
-    label: string,
-    onClick: () => void,
-  ): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(scene.scale.width, scene.scale.height);
-    const button = scene.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
-      },
-    });
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      if (button.alpha >= 1) {
-        button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-      }
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      if (button.alpha < 1) {
-        return;
-      }
-
-      AudioManager.playUi(scene, 'ui_click');
-      onClick();
-    });
-
-    return button;
   }
 
   private createTabs(scene: Phaser.Scene): void {
@@ -452,9 +398,7 @@ export class HelpOverlay {
     });
 
     const pageCount = Math.max(1, pages.length);
-    this.pageText.setText(`${I18n.t('settings.page')} ${pageIndex + 1}/${pageCount}`);
-    this.setPagingButtonEnabled(this.prevPageButton, pageIndex > 0);
-    this.setPagingButtonEnabled(this.nextPageButton, pageIndex < pageCount - 1);
+    this.pager.setPage(pageIndex, pageCount);
   }
 
   private updateContentItemMetrics(
@@ -549,32 +493,10 @@ export class HelpOverlay {
   }
 
   private layoutPageControls(centerX: number, pageControlY: number, closeY: number): void {
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
-    const pageButtonWidth = Math.max(72, Math.floor(metrics.width * 0.58));
-    this.prevPageButton.setPosition(centerX - pageButtonWidth - 54, pageControlY);
-    this.nextPageButton.setPosition(centerX + pageButtonWidth + 54, pageControlY);
-    this.pageText.setPosition(centerX, pageControlY);
-
-    for (const button of [this.prevPageButton, this.nextPageButton]) {
-      button.setFontSize(Math.max(11, Number.parseInt(`${metrics.fontSize}`, 10) - 1));
-      setTextHitArea(button, pageButtonWidth, Math.max(30, metrics.height - 8));
-      button.setPadding(0, Math.max(0, Math.floor((Math.max(30, metrics.height - 8) - 22) / 2)), 0, 0);
-    }
-
-    this.closeButton.setPosition(centerX, closeY);
-    this.closeButton.setFontSize(metrics.fontSize);
-    setTextHitArea(this.closeButton, metrics.width, metrics.height);
-  }
-
-  private setPagingButtonEnabled(button: Phaser.GameObjects.Text, enabled: boolean): void {
-    button.setAlpha(enabled ? 1 : 0.35);
-    button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-  }
-
-  private changePage(scene: Phaser.Scene, delta: number): void {
-    const tab = this.tabs[this.selectedTabIndex];
-    this.pageByTab[tab.id] = Math.max(0, (this.pageByTab[tab.id] ?? 0) + delta);
-    this.applyLayout();
+    const compact = this.screenManager.isPortrait() || this.screenManager.width <= 700;
+    this.pager.setPosition(centerX, pageControlY);
+    this.pager.setSize(Math.min(this.screenManager.width - 80, compact ? 330 : 520), compact);
+    this.pager.closeButton?.setPosition(0, closeY - pageControlY);
   }
 
   private layoutTabs(

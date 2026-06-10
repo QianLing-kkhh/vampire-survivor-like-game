@@ -9,6 +9,7 @@ import { ScreenManager } from '../responsive/ScreenManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { PassiveDetailInfo } from '../passive/PassiveManager';
 import { WeaponDetailInfo } from '../weapon/WeaponManager';
+import { UIButton } from './components/UIButton';
 import { DeveloperMenu } from './DeveloperMenu';
 import { HelpOverlay } from './HelpOverlay';
 import { SettingsMenu } from './SettingsMenu';
@@ -16,13 +17,12 @@ import {
   createModalBlocker,
   setRectangleHitArea,
   setTextHitArea,
-  stopPointerEvent,
 } from './input/UIInteraction';
 import { StatsBuildPanel } from './stats/StatsBuildPanel';
 import { StatsBuildSnapshot } from './stats/StatsBuildSnapshot';
 import { IconTooltipData } from './tooltip/IconTooltipTypes';
 import { attachIconTooltip } from './tooltip/UITooltipManager';
-import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
+import { UITheme, getButtonMetrics } from './UITheme';
 
 export type PauseMenuStatsData = StatsBuildSnapshot;
 
@@ -300,42 +300,21 @@ export class PauseMenu {
   private createButton(
     label: string,
     onClick: () => void,
-  ): Phaser.GameObjects.Text {
-    const button = this.scene.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: getButtonMetrics(this.screenManager.width, this.screenManager.height).fontSize,
-      align: 'center',
-      fixedWidth: getButtonMetrics(this.screenManager.width, this.screenManager.height).width,
-      fixedHeight: getButtonMetrics(this.screenManager.width, this.screenManager.height).height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((getButtonMetrics(this.screenManager.width, this.screenManager.height).height - 22) / 2)),
-      },
+  ): Phaser.GameObjects.Container {
+    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
+    const button = new UIButton(this.scene, {
+      x: 0,
+      y: 0,
+      label,
+      width: metrics.width,
+      height: metrics.height,
+      size: 'medium',
+      onClick,
     });
+    button.container.setData('uiButton', button);
+    this.container.add(button.container);
 
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this.scene, 'ui_click');
-      onClick();
-    });
-    this.container.add(button);
-
-    return button;
+    return button.container;
   }
 
   private applyLayout(): void {
@@ -370,11 +349,12 @@ export class PauseMenu {
         return;
       }
 
-      const button = item as Phaser.GameObjects.Text;
+      const button = item as Phaser.GameObjects.Container;
       const position = buttonLayout.positions[index];
       button.setPosition(position.x, position.y);
-      button.setFontSize(buttonLayout.fontSize);
-      setTextHitArea(button, buttonLayout.width, buttonLayout.height);
+      const uiButton = button.getData('uiButton') as UIButton | undefined;
+      uiButton?.setFontSize(buttonLayout.fontSize);
+      uiButton?.setSize(buttonLayout.width, buttonLayout.height);
     });
   }
 

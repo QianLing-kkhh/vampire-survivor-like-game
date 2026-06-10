@@ -6,6 +6,8 @@ import { ScreenManager } from '../responsive/ScreenManager';
 import { SettingsManager } from '../settings/SettingsManager';
 import type { StrategyEditReason } from '../strategy/runtime/RuntimeStrategyState';
 import { I18n } from '../i18n/I18n';
+import { UIButton } from './components/UIButton';
+import { UICollapsiblePanel } from './components/UICollapsiblePanel';
 import { setRectangleHitArea, stopPointerEvent } from './input/UIInteraction';
 import { UITheme } from './UITheme';
 
@@ -72,8 +74,7 @@ interface PresetConfig {
 
 interface PresetButton {
   config: PresetConfig;
-  background: Phaser.GameObjects.Rectangle;
-  label: Phaser.GameObjects.Text;
+  button: UIButton;
 }
 
 const SLIDERS: readonly SliderConfig[] = [
@@ -144,12 +145,8 @@ const PRESETS: readonly PresetConfig[] = [
 
 export class LiveStrategyControlPanel {
   private readonly screenManager: ScreenManager;
-  private readonly container: Phaser.GameObjects.Container;
-  private readonly background: Phaser.GameObjects.Rectangle;
-  private readonly titleText: Phaser.GameObjects.Text;
+  private readonly shell: UICollapsiblePanel;
   private readonly statusText: Phaser.GameObjects.Text;
-  private readonly collapseButtonBg: Phaser.GameObjects.Rectangle;
-  private readonly collapseButtonText: Phaser.GameObjects.Text;
   private readonly pauseToggleBg: Phaser.GameObjects.Rectangle;
   private readonly pauseToggleKnob: Phaser.GameObjects.Arc;
   private readonly pauseToggleText: Phaser.GameObjects.Text;
@@ -165,42 +162,24 @@ export class LiveStrategyControlPanel {
     private readonly options: LiveStrategyControlPanelOptions = {},
   ) {
     this.screenManager = new ScreenManager(scene);
-    this.container = scene.add.container(0, 0);
-    this.container.setDepth(2100);
-    this.container.setScrollFactor(0);
-
-    this.background = scene.add.rectangle(0, 0, 100, 100, 0x0f172a, 0.9);
-    this.background.setStrokeStyle(1, 0x38bdf8, 0.55);
-    this.background.setInteractive({ useHandCursor: true });
-    this.background.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      if (this.collapsed) {
-        this.setCollapsed(false);
-      }
+    this.shell = new UICollapsiblePanel(scene, {
+      x: 0,
+      y: 0,
+      width: 140,
+      height: 40,
+      title: I18n.t('strategyPanel.title'),
+      collapsed: true,
+      orientation: 'bottomBar',
+      collapsedLabel: I18n.t('strategyPanel.collapsed'),
+      expandedLabel: I18n.t('strategyPanel.collapse'),
+      onToggle: (collapsed) => {
+        this.applyCollapsed(collapsed, true);
+      },
     });
+    this.shell.setDepth(2100);
+    this.shell.setScrollFactor(0);
 
-    this.titleText = this.createText('', '#e0f2fe', '13px', true);
     this.statusText = this.createText('', UITheme.mutedTextColor, '11px', false);
-    this.collapseButtonBg = scene.add.rectangle(0, 0, 74, 24, 0x1e293b, 0.95);
-    this.collapseButtonBg.setStrokeStyle(1, 0x64748b, 0.72);
-    this.collapseButtonBg.setInteractive({ useHandCursor: true });
-    this.collapseButtonBg.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.setCollapsed(true);
-    });
-    this.collapseButtonText = this.createText('', UITheme.textColor, '11px', false);
-    this.collapseButtonText.setOrigin(0.5);
-
     this.pauseToggleBg = scene.add.rectangle(0, 0, 42, 20, 0x334155, 1);
     this.pauseToggleBg.setStrokeStyle(1, 0x64748b, 0.7);
     this.pauseToggleBg.setInteractive({ useHandCursor: true });
@@ -216,19 +195,15 @@ export class LiveStrategyControlPanel {
     this.pauseToggleKnob = scene.add.circle(-10, 0, 7, 0xe0f2fe, 1);
     this.pauseToggleText = this.createText('', UITheme.textColor, '11px', false);
 
-    this.container.add([
-      this.background,
-      this.titleText,
+    this.shell.contentContainer.add([
       this.statusText,
-      this.collapseButtonBg,
-      this.collapseButtonText,
       this.pauseToggleBg,
       this.pauseToggleKnob,
       this.pauseToggleText,
     ]);
     this.createPresetButtons();
     this.createSliders();
-    this.container.setVisible(false);
+    this.shell.setVisible(false);
   }
 
   update(state?: LiveStrategyControlState): void {
@@ -247,7 +222,7 @@ export class LiveStrategyControlPanel {
     if (!this.collapsed && previousPauseWhenOpen !== state.pauseWhenOpen) {
       this.emitExpandedChanged(true);
     }
-    this.container.setVisible(true);
+    this.shell.setVisible(true);
     this.updateText();
     this.layout();
     this.updateInteractivity();
@@ -260,7 +235,7 @@ export class LiveStrategyControlPanel {
   destroy(): void {
     this.hidePanel();
     this.screenManager.dispose();
-    this.container.destroy(true);
+    this.shell.destroy();
   }
 
   private hidePanel(): void {
@@ -269,15 +244,22 @@ export class LiveStrategyControlPanel {
       this.emitExpandedChanged(false);
     }
 
-    this.container.setVisible(false);
+    this.shell.setVisible(false);
   }
 
   private setCollapsed(collapsed: boolean): void {
+    this.applyCollapsed(collapsed, false);
+  }
+
+  private applyCollapsed(collapsed: boolean, fromShell: boolean): void {
     if (this.collapsed === collapsed) {
       return;
     }
 
     this.collapsed = collapsed;
+    if (!fromShell) {
+      this.shell.setCollapsed(collapsed);
+    }
     this.emitExpandedChanged(!collapsed);
     this.updateText();
     this.layout();
@@ -314,29 +296,25 @@ export class LiveStrategyControlPanel {
 
   private createPresetButtons(): void {
     for (const config of PRESETS) {
-      const background = this.scene.add.rectangle(0, 0, 64, 24, 0x1e293b, 0.96);
-      background.setStrokeStyle(1, 0x64748b, 0.7);
-      background.setInteractive({ useHandCursor: true });
-      background.on('pointerdown', (
-        _pointer: Phaser.Input.Pointer,
-        _localX: number,
-        _localY: number,
-        event: Phaser.Types.Input.EventData,
-      ) => {
-        stopPointerEvent(event);
-        if (!this.state?.enabled || !this.state.editable) {
-          return;
-        }
+      const button = new UIButton(this.scene, {
+        x: 0,
+        y: 0,
+        width: 64,
+        height: 24,
+        size: 'small',
+        label: I18n.t(config.labelKey),
+        onClick: () => {
+          if (!this.state?.enabled || !this.state.editable) {
+            return;
+          }
 
-        for (const patch of config.patches) {
-          this.onPatch({ ...patch, reason: 'preset' });
-        }
+          for (const patch of config.patches) {
+            this.onPatch({ ...patch, reason: 'preset' });
+          }
+        },
       });
-
-      const label = this.createText('', UITheme.textColor, '11px', false);
-      label.setOrigin(0.5);
-      this.container.add([background, label]);
-      this.presetButtons.push({ config, background, label });
+      this.shell.contentContainer.add(button.container);
+      this.presetButtons.push({ config, button });
     }
   }
 
@@ -370,7 +348,7 @@ export class LiveStrategyControlPanel {
       ) => this.handleSliderPointer(control, pointer, event));
       knob.on('drag', (pointer: Phaser.Input.Pointer) => this.handleSliderPointer(control, pointer));
 
-      this.container.add([labelText, track, fill, knob, valueText]);
+      this.shell.contentContainer.add([labelText, track, fill, knob, valueText]);
       this.sliders.push(control);
     }
   }
@@ -397,26 +375,15 @@ export class LiveStrategyControlPanel {
       ? this.screenManager.height - height / 2 - margin
       : this.screenManager.centerY;
 
-    this.background.setPosition(x, y);
-    setRectangleHitArea(this.background, width, height);
-    this.background.setFillStyle(0x0f172a, 0.92);
-    this.background.setStrokeStyle(1, 0x38bdf8, 0.72);
-    this.titleText.setText(portrait
-      ? `${I18n.t('strategyPanel.title')} ^`
-      : `< ${I18n.t('strategyPanel.collapsed')}`);
-    this.titleText.setFontSize(portrait ? '13px' : '12px');
-    this.titleText.setOrigin(0.5);
-    this.titleText.setRotation(portrait ? 0 : -Math.PI / 2);
-    this.titleText.setPosition(x, y);
-
-    this.statusText.setVisible(false);
-    this.collapseButtonBg.setVisible(false);
-    this.collapseButtonText.setVisible(false);
-    this.pauseToggleBg.setVisible(false);
-    this.pauseToggleKnob.setVisible(false);
-    this.pauseToggleText.setVisible(false);
-    this.setPresetButtonsVisible(false);
-    this.setSlidersVisible(false);
+    this.shell.setLayout({
+      width,
+      height,
+      orientation: portrait ? 'bottomBar' : 'rightSidebar',
+    });
+    this.shell.setPosition(x, y);
+    if (!this.shell.isCollapsed()) {
+      this.shell.setCollapsed(true);
+    }
   }
 
   private layoutExpanded(portrait: boolean): void {
@@ -441,38 +408,36 @@ export class LiveStrategyControlPanel {
       );
     const centerX = left + width / 2;
     const centerY = top + height / 2;
+    const localLeft = -width / 2;
+    const localTop = -height / 2;
 
-    this.background.setPosition(centerX, centerY);
-    setRectangleHitArea(this.background, width, height);
-    this.background.setFillStyle(0x0f172a, 0.92);
-    this.background.setStrokeStyle(1, 0x38bdf8, 0.72);
-    this.titleText.setOrigin(0, 0.5);
-    this.titleText.setRotation(0);
-    this.titleText.setFontSize(portrait ? '13px' : '14px');
-    this.titleText.setPosition(left + 12, top + 18);
+    this.shell.setLayout({
+      width,
+      height,
+      orientation: portrait ? 'bottomBar' : 'rightSidebar',
+    });
+    this.shell.setPosition(centerX, centerY);
+    if (this.shell.isCollapsed()) {
+      this.shell.setCollapsed(false);
+    }
+
     this.statusText.setVisible(true);
-    this.statusText.setPosition(left + 12, top + 38);
-
-    this.collapseButtonBg.setVisible(true);
-    this.collapseButtonText.setVisible(true);
-    this.collapseButtonBg.setPosition(left + width - 46, top + 18);
-    setRectangleHitArea(this.collapseButtonBg, 76, 24);
-    this.collapseButtonText.setPosition(left + width - 46, top + 18);
+    this.statusText.setPosition(localLeft + 12, localTop + 42);
 
     this.pauseToggleText.setVisible(true);
     this.pauseToggleBg.setVisible(true);
     this.pauseToggleKnob.setVisible(true);
-    this.pauseToggleText.setPosition(left + 12, top + 64);
-    this.pauseToggleBg.setPosition(left + width - 34, top + 64);
+    this.pauseToggleText.setPosition(localLeft + 12, localTop + 66);
+    this.pauseToggleBg.setPosition(localLeft + width - 34, localTop + 66);
     setRectangleHitArea(this.pauseToggleBg, 44, 22);
     this.pauseToggleKnob.setPosition(
-      left + width - 34 + (this.state?.pauseWhenOpen ? 10 : -10),
-      top + 64,
+      localLeft + width - 34 + (this.state?.pauseWhenOpen ? 10 : -10),
+      localTop + 66,
     );
     this.pauseToggleBg.setFillStyle(this.state?.pauseWhenOpen ? 0x22c55e : 0x334155, 1);
 
-    this.layoutPresets(left, top, width, portrait);
-    this.layoutSliders(left, top, width, height, portrait);
+    this.layoutPresets(localLeft, localTop, width, portrait);
+    this.layoutSliders(localLeft, localTop, width, height, portrait);
   }
 
   private layoutPresets(left: number, top: number, width: number, portrait: boolean): void {
@@ -488,10 +453,9 @@ export class LiveStrategyControlPanel {
       const row = Math.floor(index / columns);
       const x = left + 12 + buttonWidth / 2 + column * (buttonWidth + gap);
       const y = startY + row * (buttonHeight + gap);
-      button.background.setPosition(x, y);
-      setRectangleHitArea(button.background, buttonWidth, buttonHeight);
-      button.label.setPosition(x, y);
-      button.label.setFontSize('11px');
+      button.button.setPosition(x, y);
+      button.button.setSize(buttonWidth, buttonHeight);
+      button.button.setFontSize('11px');
     });
   }
 
@@ -543,14 +507,19 @@ export class LiveStrategyControlPanel {
   private updateText(): void {
     const state = this.state;
     const editable = state?.editable === true;
-    this.titleText.setText(I18n.t('strategyPanel.title'));
+    this.shell.setLabels({
+      title: I18n.t('strategyPanel.title'),
+      collapsedLabel: this.screenManager.isPortrait()
+        ? `${I18n.t('strategyPanel.title')} ^`
+        : `< ${I18n.t('strategyPanel.collapsed')}`,
+      expandedLabel: I18n.t('strategyPanel.collapse'),
+    });
     this.statusText.setText(editable
       ? I18n.t('strategyPanel.edits', { count: state?.editCount ?? 0 })
       : I18n.t('strategyPanel.readOnly'));
-    this.collapseButtonText.setText(I18n.t('strategyPanel.collapse'));
     this.pauseToggleText.setText(I18n.t('strategyPanel.pauseWhenOpen'));
     this.presetButtons.forEach((button) => {
-      button.label.setText(I18n.t(button.config.labelKey));
+      button.button.setText(I18n.t(button.config.labelKey));
     });
     this.sliders.forEach((slider) => {
       slider.labelText.setText(I18n.t(slider.labelKey));
@@ -560,8 +529,8 @@ export class LiveStrategyControlPanel {
   private updateInteractivity(): void {
     const editable = this.state?.editable === true;
     this.presetButtons.forEach((button) => {
-      button.background.setAlpha(editable ? 1 : 0.42);
-      button.label.setAlpha(editable ? 1 : 0.55);
+      button.button.setDisabled(!editable);
+      button.button.container.setAlpha(editable ? 1 : 0.55);
     });
     this.sliders.forEach((slider) => {
       const alpha = editable ? 1 : 0.45;
@@ -575,8 +544,7 @@ export class LiveStrategyControlPanel {
 
   private setPresetButtonsVisible(visible: boolean): void {
     this.presetButtons.forEach((button) => {
-      button.background.setVisible(visible);
-      button.label.setVisible(visible);
+      button.button.setVisible(visible);
     });
   }
 

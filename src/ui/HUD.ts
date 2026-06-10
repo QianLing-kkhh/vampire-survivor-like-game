@@ -7,7 +7,8 @@ import { MapMechanicDefinition } from '../map/mechanics/MapMechanicDefinition';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SettingsManager } from '../settings/SettingsManager';
-import { setTextHitArea, stopPointerEvent } from './input/UIInteraction';
+import { UIButton } from './components/UIButton';
+import { UIProgressBar } from './components/UIProgressBar';
 import type { LiveStrategyControlState } from './LiveStrategyControlPanel';
 import { MinimapOverlay } from './minimap/MinimapOverlay';
 import { MinimapEnemyPosition, MinimapViewport, WorldPosition } from './minimap/MinimapTypes';
@@ -147,9 +148,7 @@ type RelicIconEntry = {
 
 type BossBarEntry = {
   container: Phaser.GameObjects.Container;
-  background: Phaser.GameObjects.Rectangle;
-  fill: Phaser.GameObjects.Rectangle;
-  border: Phaser.GameObjects.Rectangle;
+  progressBar: UIProgressBar;
   nameText: Phaser.GameObjects.Text;
   hpText: Phaser.GameObjects.Text;
 };
@@ -174,11 +173,9 @@ export class HUD {
   private readonly statsPanelImage?: Phaser.GameObjects.Image;
   private readonly buildPanelBg: Phaser.GameObjects.Rectangle;
   private readonly buildPanelImage?: Phaser.GameObjects.Image;
-  private readonly hpBarBg: Phaser.GameObjects.Rectangle;
-  private readonly hpBarFill: Phaser.GameObjects.Rectangle;
+  private readonly hpBar: UIProgressBar;
   private readonly expText: Phaser.GameObjects.Text;
-  private readonly expBarBg: Phaser.GameObjects.Rectangle;
-  private readonly expBarFill: Phaser.GameObjects.Rectangle;
+  private readonly expBar: UIProgressBar;
   private readonly timeText: Phaser.GameObjects.Text;
   private readonly scoreText: Phaser.GameObjects.Text;
   private readonly relicText: Phaser.GameObjects.Text;
@@ -193,7 +190,7 @@ export class HUD {
   private readonly weaponEntries: IconEntry[] = [];
   private readonly passiveEntries: IconEntry[] = [];
   private readonly minimap: MinimapOverlay;
-  private readonly pauseButton: Phaser.GameObjects.Text;
+  private readonly pauseButton: UIButton;
   private barWidth = HUD.BAR_WIDTH;
   private maxIconRows = 6;
   private maxPassiveRows = 3;
@@ -209,11 +206,27 @@ export class HUD {
     this.buildPanelImage = undefined;
     this.characterPortraitEntry = this.createCharacterPortraitEntry();
     this.hpText = this.createText(16, 12, UITheme.smallFontSize);
-    this.hpBarBg = this.createBarBackground(16, 34, HUD.BAR_WIDTH, HUD.BAR_HEIGHT);
-    this.hpBarFill = this.createBarFill(16, 34, UITheme.hpBarColor);
+    this.hpBar = new UIProgressBar(scene, {
+      x: 16,
+      y: 34,
+      width: HUD.BAR_WIDTH,
+      height: HUD.BAR_HEIGHT,
+      variant: 'hp',
+      compact: true,
+    });
+    this.hpBar.container.setDepth(900);
+    this.hpBar.container.setScrollFactor(0);
     this.expText = this.createText(16, 54, UITheme.smallFontSize);
-    this.expBarBg = this.createBarBackground(16, 76, HUD.BAR_WIDTH, HUD.BAR_HEIGHT);
-    this.expBarFill = this.createBarFill(16, 76, UITheme.expBarColor);
+    this.expBar = new UIProgressBar(scene, {
+      x: 16,
+      y: 76,
+      width: HUD.BAR_WIDTH,
+      height: HUD.BAR_HEIGHT,
+      variant: 'exp',
+      compact: true,
+    });
+    this.expBar.container.setDepth(900);
+    this.expBar.container.setScrollFactor(0);
     this.timeText = this.createText(16, 100, '24px');
     this.timeText.setStyle({ fontStyle: 'bold' });
     this.timeText.setStroke('#000000', 4);
@@ -227,29 +240,19 @@ export class HUD {
     this.evolutionDebugText = this.createText(16, 520, '12px', UITheme.mutedTextColor);
     this.minimap = new MinimapOverlay(scene);
 
-    this.pauseButton = scene.add.text(0, 0, I18n.t('ui.pause'), {
-      backgroundColor: '#111827',
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '14px',
-      padding: {
-        x: 14,
-        y: 9,
+    this.pauseButton = new UIButton(scene, {
+      x: 0,
+      y: 0,
+      width: 92,
+      height: 40,
+      size: 'small',
+      label: I18n.t('ui.pause'),
+      onClick: () => {
+        this.onPause?.();
       },
     });
-    this.pauseButton.setOrigin(0.5);
-    this.pauseButton.setDepth(1200);
-    this.pauseButton.setScrollFactor(0);
-    this.pauseButton.setInteractive({ useHandCursor: true });
-    this.pauseButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.onPause?.();
-    });
+    this.pauseButton.container.setDepth(1200);
+    this.pauseButton.container.setScrollFactor(0);
 
     this.update({
       currentHp: 0,
@@ -284,11 +287,9 @@ export class HUD {
     this.statsPanelImage?.destroy();
     this.buildPanelBg.destroy();
     this.buildPanelImage?.destroy();
-    this.hpBarBg.destroy();
-    this.hpBarFill.destroy();
+    this.hpBar.destroy();
     this.expText.destroy();
-    this.expBarBg.destroy();
-    this.expBarFill.destroy();
+    this.expBar.destroy();
     this.timeText.destroy();
     this.scoreText.destroy();
     this.relicText.destroy();
@@ -325,9 +326,9 @@ export class HUD {
     const requiredExp = Math.max(1, Math.floor(state.requiredExp));
 
     this.hpText.setText(`${I18n.t('hud.hp')} ${currentHp} / ${maxHp}`);
-    this.setBarRatio(this.hpBarFill, state.currentHp / Math.max(state.playerMaxHp ?? state.maxHp, 1));
+    this.hpBar.setRatio(state.currentHp / Math.max(state.playerMaxHp ?? state.maxHp, 1));
     this.expText.setText(`${I18n.t('hud.level')}.${state.level}  ${I18n.t('hud.exp')} ${exp} / ${requiredExp}`);
-    this.setBarRatio(this.expBarFill, state.currentExp / requiredExp);
+    this.expBar.setRatio(state.currentExp / requiredExp);
     this.timeText.setText(`${I18n.t('hud.time')} ${this.formatTime(state.timeSeconds)}`);
     this.scoreText.setText(`${I18n.t('hud.score')} ${this.formatInteger(state.score)}`);
     this.relicText.setText(`${I18n.t('hud.relics')}: ${state.relicCount ?? 0}`);
@@ -1013,36 +1014,6 @@ export class HUD {
     return text;
   }
 
-  private createBarBackground(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-  ): Phaser.GameObjects.Rectangle {
-    const bar = this.scene.add.rectangle(x, y, width, height, UITheme.barBgColor, 0.82);
-    bar.setOrigin(0, 0);
-    bar.setStrokeStyle(1, UITheme.panelBorderColor, 0.45);
-    bar.setDepth(900);
-    bar.setScrollFactor(0);
-    return bar;
-  }
-
-  private createBarFill(
-    x: number,
-    y: number,
-    color: number,
-  ): Phaser.GameObjects.Rectangle {
-    const bar = this.scene.add.rectangle(x, y, this.barWidth, HUD.BAR_HEIGHT, color, 0.92);
-    bar.setOrigin(0, 0);
-    bar.setDepth(901);
-    bar.setScrollFactor(0);
-    return bar;
-  }
-
-  private setBarRatio(bar: Phaser.GameObjects.Rectangle, ratio: number): void {
-    bar.displayWidth = this.barWidth * Phaser.Math.Clamp(ratio, 0, 1);
-  }
-
   private applyLayout(): ReturnType<typeof LayoutConfig.getHudLayout> {
     const layout = LayoutConfig.getHudLayout(this.screenManager);
     const stats = layout.statsPosition;
@@ -1072,14 +1043,12 @@ export class HUD {
 
     this.hpText.setPosition(stats.x, contentY);
     this.hpText.setFontSize(layout.fontSize);
-    this.hpBarBg.setPosition(stats.x, contentY + 22);
-    this.hpBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
-    this.hpBarFill.setPosition(stats.x, contentY + 22);
+    this.hpBar.container.setPosition(stats.x, contentY + 22);
+    this.hpBar.resize(this.barWidth, HUD.BAR_HEIGHT);
     this.expText.setPosition(stats.x, contentY + 42);
     this.expText.setFontSize(layout.fontSize);
-    this.expBarBg.setPosition(stats.x, contentY + 64);
-    this.expBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
-    this.expBarFill.setPosition(stats.x, contentY + 64);
+    this.expBar.container.setPosition(stats.x, contentY + 64);
+    this.expBar.resize(this.barWidth, HUD.BAR_HEIGHT);
     this.timeText.setPosition(stats.x, contentY + 90);
     this.timeText.setFontSize(compact ? '22px' : '26px');
     this.scoreText.setPosition(stats.x, contentY + 118);
@@ -1106,7 +1075,7 @@ export class HUD {
         : I18n.t('ui.pause'),
     );
     this.pauseButton.setFontSize(layout.fontSize);
-    setTextHitArea(this.pauseButton, layout.pauseButtonRect.width, layout.pauseButtonRect.height);
+    this.pauseButton.setSize(layout.pauseButtonRect.width, layout.pauseButtonRect.height);
 
     return layout;
   }
@@ -1182,16 +1151,14 @@ export class HUD {
       }
 
       const barLayout = this.getBossBarLayout(index, layout);
-      const fillWidth = Math.max(0, (barLayout.width - 4) * Phaser.Math.Clamp(boss.hpRatio, 0, 1));
       const hpPercent = Math.round(Phaser.Math.Clamp(boss.hpRatio, 0, 1) * 100);
 
       entry.container.setVisible(true);
       entry.container.setPosition(barLayout.x, barLayout.y);
-      entry.background.setSize(barLayout.width, barLayout.height);
-      entry.border.setSize(barLayout.width, barLayout.height);
-      entry.fill.setSize(fillWidth, barLayout.height - 4);
-      entry.fill.setPosition(-barLayout.width / 2 + 2 + fillWidth / 2, 0);
-      entry.fill.setFillStyle(this.getBossBarFillColor(boss.hpRatio));
+      entry.progressBar.container.setPosition(-barLayout.width / 2, -barLayout.height / 2);
+      entry.progressBar.resize(barLayout.width, barLayout.height);
+      entry.progressBar.setRatio(boss.hpRatio);
+      entry.progressBar.setFillColor(this.getBossBarFillColor(boss.hpRatio));
       entry.nameText.setText(boss.name);
       entry.nameText.setPosition(-barLayout.width / 2 + 10, -barLayout.height / 2 - 18);
       entry.nameText.setFontSize(this.screenManager.isPortrait() ? '12px' : '14px');
@@ -1206,14 +1173,14 @@ export class HUD {
     container.setDepth(950);
     container.setScrollFactor(0);
 
-    const background = this.scene.add.rectangle(0, 0, 420, 14, UITheme.barBgColor, 0.82);
-    background.setStrokeStyle(1, UITheme.panelBorderColor, 0.7);
-
-    const fill = this.scene.add.rectangle(-208, 0, 416, 10, 0xdc2626, 0.95);
-    fill.setOrigin(0.5);
-
-    const border = this.scene.add.rectangle(0, 0, 420, 14, 0x000000, 0);
-    border.setStrokeStyle(1, 0xfacc15, 0.65);
+    const progressBar = new UIProgressBar(this.scene, {
+      x: -210,
+      y: -7,
+      width: 420,
+      height: 14,
+      variant: 'boss',
+      compact: true,
+    });
 
     const nameText = this.scene.add.text(0, 0, '', {
       color: UITheme.textColor,
@@ -1235,9 +1202,9 @@ export class HUD {
     });
     hpText.setOrigin(1, 0);
 
-    container.add([background, fill, border, nameText, hpText]);
+    container.add([progressBar.container, nameText, hpText]);
 
-    return { container, background, fill, border, nameText, hpText };
+    return { container, progressBar, nameText, hpText };
   }
 
   private getBossBarLayout(

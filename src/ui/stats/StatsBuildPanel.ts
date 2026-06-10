@@ -7,6 +7,8 @@ import { ScreenManager } from '../../responsive/ScreenManager';
 import { UIButton } from '../components/UIButton';
 import { UICard } from '../components/UICard';
 import { UIIconFrame } from '../components/UIIconFrame';
+import { UIPager } from '../components/UIPager';
+import { UIStatRow } from '../components/UIStatRow';
 import { PanelFrame } from '../components/PanelFrame';
 import { PanelHeader } from '../components/PanelHeader';
 import { UITabBar } from '../components/UITabBar';
@@ -155,29 +157,8 @@ export class StatsBuildPanel {
   }
 
   private renderRow(row: StatsBuildStatLine, y: number): void {
-    const width = this.layout.contentWidth;
-    const background = this.scene.add.rectangle(
-      0,
-      y + 14,
-      width,
-      28,
-      UITheme.colors.panelInner,
-      0.58,
-    );
-    const label = this.scene.add.text(-width / 2 + 12, y + 4, row.label, {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: this.screen.isPortrait() ? '13px' : '14px',
-      fontStyle: 'bold',
-      wordWrap: { width: width * 0.42 },
-    });
-    const value = this.scene.add.text(-width / 2 + width * 0.48, y + 4, row.value, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: this.screen.isPortrait() ? '13px' : '14px',
-      wordWrap: { width: width * 0.48 },
-    });
-    this.contentContainer.add([background, label, value]);
+    const statRow = UIStatRow.create(this.scene, 0, y + 14, this.layout.contentWidth, row.label, row.value);
+    this.contentContainer.add(statRow);
   }
 
   private renderCard(card: StatsBuildCard, y: number): void {
@@ -336,53 +317,22 @@ export class StatsBuildPanel {
 
   private renderFooter(currentPage: number, totalPages: number): void {
     const y = this.layout.height / 2 - 32;
-    const buttonWidth = this.screen.isPortrait() ? 110 : 132;
-    const prev = new UIButton(this.scene, {
-      x: -this.layout.width / 2 + buttonWidth / 2 + 44,
-      y,
-      width: buttonWidth,
-      height: 36,
-      size: 'small',
-      label: I18n.t('settings.previousPage'),
-      disabled: currentPage <= 0,
-      onClick: () => {
-        this.pageByTab.set(this.selectedTab, Math.max(0, currentPage - 1));
-        this.renderContent();
-      },
-    });
-    const next = new UIButton(this.scene, {
-      x: this.layout.width / 2 - buttonWidth / 2 - 44,
-      y,
-      width: buttonWidth,
-      height: 36,
-      size: 'small',
-      label: I18n.t('settings.nextPage'),
-      disabled: currentPage >= totalPages - 1,
-      onClick: () => {
-        this.pageByTab.set(this.selectedTab, Math.min(totalPages - 1, currentPage + 1));
-        this.renderContent();
-      },
-    });
-    const close = new UIButton(this.scene, {
+    const pager = new UIPager(this.scene, {
       x: 0,
       y,
-      width: this.screen.isPortrait() ? 144 : 180,
-      height: 40,
-      size: 'medium',
-      label: I18n.t('common.close'),
-      onClick: () => this.config.onClose(),
+      width: this.layout.width - 88,
+      currentPage,
+      totalPages,
+      compact: this.screen.isPortrait(),
+      closeLabel: I18n.t('common.close'),
+      onPageChanged: (page) => {
+        this.pageByTab.set(this.selectedTab, page);
+        this.renderContent();
+      },
+      onClose: () => this.config.onClose(),
     });
-    const pageText = this.scene.add.text(0, y - 34, I18n.t('statsBuild.page', {
-      page: currentPage + 1,
-      total: totalPages,
-    }), {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '12px',
-      align: 'center',
-    });
-    pageText.setOrigin(0.5);
-    this.footerContainer.add([prev.container, next.container, close.container, pageText]);
+    pager.pageText.setPosition(0, -34);
+    this.footerContainer.add(pager.container);
   }
 
   private getItemsForTab(tabId: StatsBuildTabId): StatsBuildPanelItem[] {

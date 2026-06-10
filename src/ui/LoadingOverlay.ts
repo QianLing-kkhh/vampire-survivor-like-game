@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { I18n } from '../i18n/I18n';
+import { UIProgressBar } from './components/UIProgressBar';
 
 export interface LoadingOverlayRunInfo {
   map: {
@@ -62,8 +63,7 @@ export class LoadingOverlay {
   private readonly container: Phaser.GameObjects.Container;
   private readonly background: Phaser.GameObjects.Graphics;
   private readonly panel: Phaser.GameObjects.Graphics;
-  private readonly progressTrack: Phaser.GameObjects.Graphics;
-  private readonly progressFill: Phaser.GameObjects.Graphics;
+  private readonly progressBar: UIProgressBar;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly messageText: Phaser.GameObjects.Text;
   private readonly percentText: Phaser.GameObjects.Text;
@@ -78,8 +78,14 @@ export class LoadingOverlay {
     this.container.setDepth(10000);
     this.background = scene.add.graphics();
     this.panel = scene.add.graphics();
-    this.progressTrack = scene.add.graphics();
-    this.progressFill = scene.add.graphics();
+    this.progressBar = new UIProgressBar(scene, {
+      x: 0,
+      y: 0,
+      width: 320,
+      height: 14,
+      variant: 'loading',
+      compact: false,
+    });
     this.titleText = this.createText(config.title, '30px', '#f8fafc', true);
     this.messageText = this.createText(config.message, '16px', '#cbd5e1');
     this.percentText = this.createText('0%', '18px', '#facc15', true);
@@ -88,8 +94,7 @@ export class LoadingOverlay {
     this.container.add([
       this.background,
       this.panel,
-      this.progressTrack,
-      this.progressFill,
+      this.progressBar.container,
       this.titleText,
       this.messageText,
       this.percentText,
@@ -108,6 +113,7 @@ export class LoadingOverlay {
   setProgress(value: number): void {
     this.progress = Phaser.Math.Clamp(value, 0, 1);
     this.percentText.setText(`${Math.round(this.progress * 100)}%`);
+    this.progressBar.setProgress(this.progress);
     this.render();
   }
 
@@ -383,15 +389,10 @@ export class LoadingOverlay {
   }
 
   private renderProgress(x: number, y: number, width: number, height: number, compact: boolean): void {
-    this.progressTrack.clear();
-    this.progressTrack.fillStyle(0x111827, 1);
-    this.progressTrack.fillRoundedRect(x, y, width, height, 8);
-    this.progressTrack.lineStyle(1, 0x93c5fd, 0.55);
-    this.progressTrack.strokeRoundedRect(x, y, width, height, 8);
-
-    this.progressFill.clear();
-    this.progressFill.fillStyle(0x60a5fa, 0.95);
-    this.progressFill.fillRoundedRect(x + 2, y + 2, Math.max(0, (width - 4) * this.progress), height - 4, compact ? 5 : 6);
+    this.progressBar.container.setPosition(x, y);
+    this.progressBar.resize(width, height);
+    this.progressBar.setProgress(this.progress);
+    this.progressBar.setLabel(compact ? undefined : this.percentText.text);
   }
 
   private createText(text: string, fontSize: string, color: string, bold = false): Phaser.GameObjects.Text {
