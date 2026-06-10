@@ -1,11 +1,12 @@
 {
   "root": "public/assets/art/",
-  "style": "refined 2.5D JRPG-style dark fantasy prototype art, transparent PNG, clearer directional movement silhouettes",
+  "style": "2.5D JRPG field-sprite art, Kiseki-era inspired direction-readable prototype assets",
   "notes": [
     "Transparent PNG only.",
-    "Per-direction player walk/idle sheets keep the existing runtime-compatible 64x64 frame size with 4 horizontal frames.",
-    "Additional player walk_8dir_sheet files are 80x80 frames, 4 columns x 8 rows, direction order: up, up_right, right, down_right, down, down_left, left, up_left.",
-    "All assets under this package are regenerated as a visually unified refined prototype art pass."
+    "Playable character walk sprites use 80x80 frames.",
+    "New character walking standard: 4 columns x 8 rows combined sheet, row order up/up_right/right/down_right/down/down_left/left/up_left.",
+    "Each direction is independently posed with clear front/side/back/diagonal silhouette, body lean, alternating legs, arm swing, and cloth/weapon follow-through.",
+    "Per-direction walk_*.png files are provided for compatibility with existing skin-aware Phaser animation keys."
   ],
   "directions": [
     "up",
@@ -184,71 +185,109 @@
       "type": "spritesheet",
       "frameWidth": 80,
       "frameHeight": 80,
-      "frames": 32
+      "frames": 32,
+      "columns": 4,
+      "rows": 8,
+      "directionOrder": [
+        "up",
+        "up_right",
+        "right",
+        "down_right",
+        "down",
+        "down_left",
+        "left",
+        "up_left"
+      ],
+      "framesPerDirection": 4,
+      "notes": "New standard: 2.5D JRPG field character, independent 8-direction walking poses, strong directional readability."
     },
     {
       "path": "player/assassin_default/walk_up.png",
       "key": "art_player_assassin_default_walk_up",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/walk_up_right.png",
       "key": "art_player_assassin_default_walk_up_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/walk_right.png",
       "key": "art_player_assassin_default_walk_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/walk_down_right.png",
       "key": "art_player_assassin_default_walk_down_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/walk_down.png",
       "key": "art_player_assassin_default_walk_down",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/walk_down_left.png",
       "key": "art_player_assassin_default_walk_down_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/walk_left.png",
       "key": "art_player_assassin_default_walk_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/walk_up_left.png",
       "key": "art_player_assassin_default_walk_up_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/assassin_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/assassin_default/idle_up.png",
@@ -336,71 +375,109 @@
       "type": "spritesheet",
       "frameWidth": 80,
       "frameHeight": 80,
-      "frames": 32
+      "frames": 32,
+      "columns": 4,
+      "rows": 8,
+      "directionOrder": [
+        "up",
+        "up_right",
+        "right",
+        "down_right",
+        "down",
+        "down_left",
+        "left",
+        "up_left"
+      ],
+      "framesPerDirection": 4,
+      "notes": "New standard: 2.5D JRPG field character, independent 8-direction walking poses, strong directional readability."
     },
     {
       "path": "player/witch_default/walk_up.png",
       "key": "art_player_witch_default_walk_up",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/walk_up_right.png",
       "key": "art_player_witch_default_walk_up_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/walk_right.png",
       "key": "art_player_witch_default_walk_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/walk_down_right.png",
       "key": "art_player_witch_default_walk_down_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/walk_down.png",
       "key": "art_player_witch_default_walk_down",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/walk_down_left.png",
       "key": "art_player_witch_default_walk_down_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/walk_left.png",
       "key": "art_player_witch_default_walk_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/walk_up_left.png",
       "key": "art_player_witch_default_walk_up_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/witch_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/witch_default/idle_up.png",
@@ -488,71 +565,109 @@
       "type": "spritesheet",
       "frameWidth": 80,
       "frameHeight": 80,
-      "frames": 32
+      "frames": 32,
+      "columns": 4,
+      "rows": 8,
+      "directionOrder": [
+        "up",
+        "up_right",
+        "right",
+        "down_right",
+        "down",
+        "down_left",
+        "left",
+        "up_left"
+      ],
+      "framesPerDirection": 4,
+      "notes": "New standard: 2.5D JRPG field character, independent 8-direction walking poses, strong directional readability."
     },
     {
       "path": "player/priest_default/walk_up.png",
       "key": "art_player_priest_default_walk_up",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/walk_up_right.png",
       "key": "art_player_priest_default_walk_up_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/walk_right.png",
       "key": "art_player_priest_default_walk_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/walk_down_right.png",
       "key": "art_player_priest_default_walk_down_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/walk_down.png",
       "key": "art_player_priest_default_walk_down",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/walk_down_left.png",
       "key": "art_player_priest_default_walk_down_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/walk_left.png",
       "key": "art_player_priest_default_walk_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/walk_up_left.png",
       "key": "art_player_priest_default_walk_up_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/priest_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/priest_default/idle_up.png",
@@ -640,71 +755,109 @@
       "type": "spritesheet",
       "frameWidth": 80,
       "frameHeight": 80,
-      "frames": 32
+      "frames": 32,
+      "columns": 4,
+      "rows": 8,
+      "directionOrder": [
+        "up",
+        "up_right",
+        "right",
+        "down_right",
+        "down",
+        "down_left",
+        "left",
+        "up_left"
+      ],
+      "framesPerDirection": 4,
+      "notes": "New standard: 2.5D JRPG field character, independent 8-direction walking poses, strong directional readability."
     },
     {
       "path": "player/warrior_default/walk_up.png",
       "key": "art_player_warrior_default_walk_up",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/walk_up_right.png",
       "key": "art_player_warrior_default_walk_up_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/walk_right.png",
       "key": "art_player_warrior_default_walk_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/walk_down_right.png",
       "key": "art_player_warrior_default_walk_down_right",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_right",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/walk_down.png",
       "key": "art_player_warrior_default_walk_down",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/walk_down_left.png",
       "key": "art_player_warrior_default_walk_down_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "down_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/walk_left.png",
       "key": "art_player_warrior_default_walk_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/walk_up_left.png",
       "key": "art_player_warrior_default_walk_up_left",
       "type": "spritesheet",
-      "frameWidth": 64,
-      "frameHeight": 64,
-      "frames": 4
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4,
+      "direction": "up_left",
+      "framesPerDirection": 4,
+      "sourceSheet": "player/warrior_default/walk_8dir_sheet.png"
     },
     {
       "path": "player/warrior_default/idle_up.png",
