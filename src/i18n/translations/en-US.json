@@ -98,6 +98,10 @@
     "applyAfterRestart": "Applies after restart or next run.",
     "showDetailedCooldownTime": "Detailed CD Time",
     "damageNumbers": "Damage Numbers",
+    "strategyTacticsPanel": "Strategy / Tactics Panel",
+    "pauseWhenStrategyPanelOpen": "Pause When Tactics Open",
+    "manualHidesStrategyPanel": "Manual mode always keeps this panel hidden.",
+    "strategyTacticsPanelNextRunNotice": "Strategy / Tactics Panel loads on the next run.",
     "minimap": "Minimap",
     "minimapScale": "Minimap Size",
     "debugOverlay": "Debug Overlay",
@@ -120,6 +124,31 @@
     "previousPage": "Prev",
     "nextPage": "Next",
     "back": "Back"
+  },
+  "strategyPanel": {
+    "title": "Strategy / Tactics",
+    "collapsed": "Strategy",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "pauseWhenOpen": "Pause when open",
+    "readOnly": "Read-only",
+    "edits": "Edits {count}",
+    "preset": {
+      "safe": "Safe",
+      "farm": "Farm",
+      "combat": "Combat",
+      "chest": "Chest",
+      "boss": "Boss",
+      "loop": "Loop"
+    },
+    "slider": {
+      "survive": "Survive",
+      "combat": "Combat",
+      "farm": "Farm",
+      "treasure": "Treasure",
+      "risk": "Risk",
+      "loop": "Loop"
+    }
   },
   "title": {
     "gameTitle": "Vampire Survivor Prototype",
@@ -638,6 +667,7 @@
     "evolved": "Evo",
     "endless": "Endless",
     "relics": "Relics",
+    "moreRelics": "+{count}",
     "shield": "Shield"
   },
   "developer": {
@@ -770,6 +800,7 @@
     }
   },
   "relic": {
+    "acquiredTitle": "Relic Acquired",
     "rarity": {
       "common": "Common",
       "rare": "Rare",
@@ -832,7 +863,28 @@
     "titleAssets": "Loading title assets",
     "runAssets": "Preparing run",
     "complete": "Complete",
-    "failedAsset": "Retrying fallback for {key}"
+    "failedAsset": "Retrying fallback for {key}",
+    "map": "Map",
+    "character": "Character",
+    "startingWeapon": "Starting Weapon",
+    "mapSize": "Map Size",
+    "grid": "Grid",
+    "landmarkSpacing": "Landmark Spacing",
+    "mechanics": "Mechanics",
+    "noSpecialMechanics": "No special mechanics",
+    "initialStats": "Initial Stats",
+    "growth": "Growth",
+    "reaction": "Reaction",
+    "levelUp": "Level-up",
+    "weaponType": "Type",
+    "behavior": "Behavior",
+    "tags": "Tags",
+    "coreStats": "Core Stats",
+    "currentFile": "Current",
+    "maxHp": "Max HP",
+    "moveSpeed": "Move Speed",
+    "pickupRange": "Pickup Range",
+    "expMultiplier": "EXP Multiplier"
   },
   "game": {
     "bossAppears": "Boss Appears",

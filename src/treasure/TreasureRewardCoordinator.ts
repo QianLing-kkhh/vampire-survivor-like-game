@@ -17,6 +17,9 @@ export interface TreasureOpenedResult {
   relicAwarded?: {
     id: string;
     name: string;
+    description?: string;
+    rarity?: string;
+    iconKey?: string;
   };
   shouldRefreshHud: boolean;
 }
@@ -37,6 +40,9 @@ export class TreasureRewardCoordinator {
       relicAwarded: relicAwarded ? {
         id: relicAwarded.id,
         name: relicAwarded.name ?? relicAwarded.nameKey ?? relicAwarded.id,
+        description: relicAwarded.description ?? relicAwarded.descriptionKey,
+        rarity: relicAwarded.rarity ?? 'common',
+        iconKey: relicAwarded.iconKey,
       } : undefined,
       shouldRefreshHud: relicAwarded !== undefined,
     };

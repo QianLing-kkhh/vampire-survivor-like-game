@@ -78,6 +78,11 @@ export function loadHeadlessSimulationRuntime() {
   const strategySearch = requireFromOutput(path.join(outDir, 'sim-analysis', 'StrategyWeightSearch.js'));
   const strategyOptimizationAnalyzer = requireFromOutput(path.join(outDir, 'sim-analysis', 'StrategyOptimizationAnalyzer.js'));
   const strategyStableProfileBuilder = requireFromOutput(path.join(outDir, 'sim-analysis', 'StrategyStableProfileBuilder.js'));
+  const strategyPatternDiscovery = requireFromOutput(path.join(outDir, 'sim-analysis', 'StrategyPatternDiscovery.js'));
+  const generalStrategySearch = requireFromOutput(path.join(outDir, 'sim-analysis', 'GeneralStrategySearch.js'));
+  const generalStrategySampler = requireFromOutput(path.join(outDir, 'sim-analysis', 'GeneralStrategyScenarioSampler.js'));
+  const generalStrategyEvaluator = requireFromOutput(path.join(outDir, 'sim-analysis', 'GeneralStrategyEvaluator.js'));
+  const generatedTestStrategyWriter = requireFromOutput(path.join(outDir, 'sim-analysis', 'GeneratedTestStrategyWriter.js'));
   const defaults = requireFromOutput(path.join(outDir, 'strategy', 'profile', 'AutoStrategyDefaults.js'));
 
   loadedRuntime = {
@@ -92,6 +97,11 @@ export function loadHeadlessSimulationRuntime() {
     ...strategySearch,
     ...strategyOptimizationAnalyzer,
     ...strategyStableProfileBuilder,
+    ...strategyPatternDiscovery,
+    ...generalStrategySearch,
+    ...generalStrategySampler,
+    ...generalStrategyEvaluator,
+    ...generatedTestStrategyWriter,
     profiles: {
       [defaults.DEFAULT_AUTO_STRATEGY_PROFILE_ID]: defaults.DEFAULT_AUTO_STRATEGY_PROFILE,
       [defaults.PLAYTEST_AUTO_STRATEGY_PROFILE_ID]: defaults.PLAYTEST_AUTO_STRATEGY_PROFILE,
@@ -196,7 +206,11 @@ export function createMatrixFromArgs(args, options = {}) {
   const preset = options.preset ?? getArg(args, ['preset'], undefined);
 
   if (preset) {
-    return runtime.createPresetMatrix(preset, content);
+    return applyMatrixArgOverrides(
+      runtime.createPresetMatrix(preset, content),
+      args,
+      content,
+    );
   }
 
   const seedCount = Math.max(1, Math.floor(Number(getArg(args, ['seedCount'], 1))));
@@ -223,7 +237,11 @@ export function createSimulationInputFromArgs(args, overrides = {}) {
   const runtime = loadHeadlessSimulationRuntime();
   const content = loadSimulationContent();
   const matrix = createMatrixFromArgs(args);
-  const runs = runtime.expandSimulationMatrix(matrix, runtime.profiles, content);
+  if (matrix.strategyProfileIds.includes('generated_test')) {
+    requireGeneratedTestStrategy();
+  }
+  const catalog = loadHeadlessStrategyCatalog(runtime);
+  const runs = runtime.expandSimulationMatrix(matrix, catalog.profiles, content, catalog.phasedStrategies);
   const run = {
     ...runs[0],
     ...overrides,
@@ -240,7 +258,11 @@ export function expandRunsFromArgs(args) {
   const runtime = loadHeadlessSimulationRuntime();
   const content = loadSimulationContent();
   const matrix = createMatrixFromArgs(args);
-  const runs = runtime.expandSimulationMatrix(matrix, runtime.profiles, content);
+  if (matrix.strategyProfileIds.includes('generated_test')) {
+    requireGeneratedTestStrategy();
+  }
+  const catalog = loadHeadlessStrategyCatalog(runtime);
+  const runs = runtime.expandSimulationMatrix(matrix, catalog.profiles, content, catalog.phasedStrategies);
 
   return {
     matrix,
@@ -385,6 +407,113 @@ function createManifest(matrix, results, commandArgs) {
     runCount: results.length,
     matrix,
   };
+}
+
+function applyMatrixArgOverrides(matrix, args, content) {
+  const strategyProfileIds = getArg(args, ['strategyProfileId', 'strategy'], undefined);
+  const seedCount = getArg(args, ['seedCount'], undefined);
+  const durationSeconds = getArg(args, ['durationSeconds', 'duration'], undefined);
+  const tickMs = getArg(args, ['tickMs', 'deltaMs'], undefined);
+  const characterIds = getArg(args, ['characters', 'characterId', 'character'], undefined);
+  const difficultyIds = getArg(args, ['difficulties', 'difficultyId', 'difficulty'], undefined);
+  const stageId = getArg(args, ['stageId', 'stage'], undefined);
+  const mapId = getArg(args, ['mapId', 'map'], undefined);
+  const next = { ...matrix };
+
+  if (strategyProfileIds !== undefined) {
+    next.strategyProfileIds = splitList(strategyProfileIds);
+  }
+
+  if (seedCount !== undefined) {
+    const count = Math.max(1, Math.floor(Number(seedCount)));
+    const seedPrefix = String(getArg(args, ['seedPrefix'], matrix.presetId ?? 'headless-seed'));
+    next.seeds = Array.from({ length: count }, (_, index) => `${seedPrefix}-${String(index + 1).padStart(3, '0')}`);
+  }
+
+  if (durationSeconds !== undefined) {
+    next.durationsSeconds = splitList(durationSeconds).map(Number);
+  }
+
+  if (tickMs !== undefined) {
+    next.tickMs = splitList(tickMs).map(Number);
+  }
+
+  if (characterIds !== undefined) {
+    next.characters = splitList(characterIds);
+  }
+
+  if (difficultyIds !== undefined) {
+    next.difficulties = splitList(difficultyIds);
+  }
+
+  if (stageId !== undefined || mapId !== undefined) {
+    const resolvedStageId = String(stageId ?? matrix.stageMaps[0]?.stageId ?? 'stage_001');
+    const resolvedMapId = String(mapId ?? content.stages[resolvedStageId]?.mapId ?? matrix.stageMaps[0]?.mapId ?? 'prototype_field');
+    next.stageMaps = [{ stageId: resolvedStageId, mapId: resolvedMapId }];
+  }
+
+  return next;
+}
+
+function splitList(value) {
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function loadHeadlessStrategyCatalog(runtime = loadHeadlessSimulationRuntime()) {
+  const catalog = {
+    profiles: { ...runtime.profiles },
+    phasedStrategies: {},
+  };
+  const generated = loadGeneratedTestStrategyIfRequested();
+
+  if (generated) {
+    const firstPhase = generated.phases[0];
+    catalog.profiles.generated_test = firstPhase.profile;
+    catalog.phasedStrategies.generated_test = {
+      phases: generated.phases.map((phase) => ({
+        startSeconds: phase.startSeconds,
+        endSeconds: phase.endSeconds,
+        profile: phase.profile,
+      })),
+    };
+  }
+
+  return catalog;
+}
+
+export function loadGeneratedTestStrategyIfRequested() {
+  const strategyPath = path.join(rootDir, 'src', 'strategy', 'generated', 'generated-test-strategy.json');
+
+  if (!fs.existsSync(strategyPath)) {
+    return undefined;
+  }
+
+  const raw = JSON.parse(fs.readFileSync(strategyPath, 'utf8'));
+
+  if (raw.id === 'generated_test' && Array.isArray(raw.phases) && raw.phases.length > 0) {
+    return raw;
+  }
+
+  return undefined;
+}
+
+export function requireGeneratedTestStrategy() {
+  const strategyPath = path.join(rootDir, 'src', 'strategy', 'generated', 'generated-test-strategy.json');
+
+  if (!fs.existsSync(strategyPath)) {
+    throw new Error('generated_test strategy is not installed. Run npm.cmd run simulate:apply-generated-strategy -- --source <best-general-strategy.json> first.');
+  }
+
+  const raw = JSON.parse(fs.readFileSync(strategyPath, 'utf8'));
+
+  if (raw.id !== 'generated_test' || !Array.isArray(raw.phases) || raw.phases.length === 0) {
+    throw new Error('generated_test strategy file is not applied or is invalid. Run npm.cmd run simulate:apply-generated-strategy -- --source <best-general-strategy.json> first.');
+  }
+
+  return raw;
 }
 
 function compileCoreSimulation() {

@@ -35,6 +35,10 @@ export interface StrategyProfileCatalog {
   [profileId: string]: AutoStrategyProfile;
 }
 
+export interface StrategyPhasedCatalog {
+  [profileId: string]: SimulationConfigInput['phasedStrategy'];
+}
+
 export function createPresetMatrix(
   presetId: HeadlessPresetId,
   content: SimulationContentBundle,
@@ -121,6 +125,7 @@ export function expandSimulationMatrix(
   matrix: SimulationMatrixConfig,
   profiles: StrategyProfileCatalog,
   content: SimulationContentBundle,
+  phasedStrategies: StrategyPhasedCatalog = {},
 ): SimulationRunInput[] {
   validateMatrix(matrix, profiles, content);
 
@@ -153,6 +158,7 @@ export function expandSimulationMatrix(
                   strategyProfileId,
                   strategyProfile,
                   strategyProfileHash: hashStableValue('fnv1a', strategyProfile),
+                  phasedStrategy: phasedStrategies[strategyProfileId],
                   characterId,
                   stageId: stageMap.stageId,
                   mapId: stageMap.mapId,

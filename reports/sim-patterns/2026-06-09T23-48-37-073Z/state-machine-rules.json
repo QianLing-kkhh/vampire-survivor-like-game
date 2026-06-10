@@ -1,0 +1,42 @@
+{
+  "id": "discovered_strategy_state_machine_2026_06_09T23_48_37_073Z",
+  "name": "Discovered Strategy State Machine",
+  "sourceOptimizationCount": 1,
+  "states": [
+    {
+      "confidence": 0.75,
+      "endSeconds": 60,
+      "entryConditions": [
+        "elapsedSeconds >= 0",
+        "phase evidence is mixed or confidence is below threshold"
+      ],
+      "evidenceFields": [
+        {
+          "avg": 28,
+          "fieldPath": "movement.survivalBias",
+          "median": 28,
+          "stabilityLabel": "stable-low",
+          "stdDev": 0
+        }
+      ],
+      "exitConditions": [
+        "elapsedSeconds >= 60",
+        "a stronger objective signal appears"
+      ],
+      "name": "Balanced Transition Phase",
+      "patternId": "balanced-transition",
+      "phaseIds": [
+        "0-30",
+        "30-60"
+      ],
+      "recommendedFocus": [
+        "No single stable weight cluster dominates; keep a conservative blended policy.",
+        "Use live runtime signals to choose between farm, evolution, survival, and boss objectives."
+      ],
+      "startSeconds": 0,
+      "stateId": "balanced-transition-01"
+    }
+  ],
+  "transitions": [],
+  "version": 1
+}

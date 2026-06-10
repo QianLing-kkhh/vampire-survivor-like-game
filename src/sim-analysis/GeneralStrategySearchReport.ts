@@ -1,0 +1,103 @@
+import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
+import type { SimulationResult } from '../core-sim/SimulationResult';
+
+import type { GeneralStrategyScenario, GeneralStrategySearchConfig } from './GeneralStrategySearchConfig';
+
+export interface GeneralStrategyRunRecord {
+  candidateId: string;
+  strategyVariantId: string;
+  strategyProfileHash: string;
+  round: number;
+  scenario: GeneralStrategyScenario;
+  result: Pick<
+    SimulationResult,
+    | 'result'
+    | 'score'
+    | 'survivalTimeSeconds'
+    | 'durationSeconds'
+    | 'level'
+    | 'kills'
+    | 'damageTaken'
+    | 'damageDealt'
+    | 'pickupsCollected'
+    | 'enemiesSpawned'
+  >;
+}
+
+export interface GeneralStrategyCandidateStats {
+  candidateId: string;
+  strategyVariantId: string;
+  strategyProfileHash: string;
+  runs: number;
+  scenarioCount: number;
+  avgScore: number;
+  medianScore: number;
+  p10Score: number;
+  p90Score: number;
+  minScore: number;
+  maxScore: number;
+  avgSurvivalTimeSeconds: number;
+  completionRate: number;
+  avgLevel: number;
+  avgKills: number;
+  avgDamageTaken: number;
+  scoreStdDev: number;
+  consistencyScore: number;
+  generalFitnessScore: number;
+}
+
+export interface GeneralStrategyPhase {
+  phaseId: string;
+  startSeconds: number;
+  endSeconds: number;
+  profile: AutoStrategyProfile;
+}
+
+export interface GeneratedGeneralStrategy {
+  version: 1;
+  id: string;
+  name: 'Generated General Strategy';
+  source: 'headless-general-search';
+  simulationKind: 'core-sim-simplified';
+  createdAt: string;
+  searchConfig: GeneralStrategySearchConfig;
+  generalFitnessScore: number;
+  stats: GeneralStrategyCandidateStats;
+  phases: GeneralStrategyPhase[];
+}
+
+export interface GeneralStrategyRoundSummary {
+  round: number;
+  searchMode: 'random' | 'centered';
+  mutationRadius?: number;
+  candidateCount: number;
+  evaluatedStrategyCount: number;
+  bestCandidateId: string;
+  bestVariantId: string;
+  bestGeneralFitnessScore: number;
+}
+
+export interface GeneralStrategyBaselineComparisonEntry {
+  strategyId: string;
+  avgScore: number;
+  medianScore: number;
+  p10Score: number;
+  completionRate: number;
+  avgSurvivalTimeSeconds: number;
+  avgDamageTaken: number;
+  generalFitnessScore: number;
+  deltaVsBalancedDefault: number;
+  deltaPctVsBalancedDefault: number;
+}
+
+export interface GeneralStrategySearchReport {
+  schemaVersion: 1;
+  config: GeneralStrategySearchConfig;
+  scenarios: GeneralStrategyScenario[];
+  candidateRuns: GeneralStrategyRunRecord[];
+  candidateAggregate: GeneralStrategyCandidateStats[];
+  roundSummary: GeneralStrategyRoundSummary[];
+  bestGeneralStrategy: GeneratedGeneralStrategy;
+  baselineComparison: GeneralStrategyBaselineComparisonEntry[];
+  warnings: string[];
+}

@@ -1,0 +1,133 @@
+[
+  {
+    "confidence": 0.5,
+    "endSeconds": 30,
+    "phaseId": "0-30",
+    "primaryPatternId": "balanced-transition",
+    "primaryPatternName": "Balanced Transition Phase",
+    "scores": [
+      {
+        "confidence": 0.5,
+        "name": "Balanced Transition Phase",
+        "negativeEvidence": [],
+        "patternId": "balanced-transition",
+        "positiveEvidence": [],
+        "score": 49
+      },
+      {
+        "confidence": 0.3219,
+        "name": "Early Farm Phase",
+        "negativeEvidence": [
+          "movement.survivalBias=28"
+        ],
+        "patternId": "early-farm",
+        "positiveEvidence": [
+          "movement.farmBias=66"
+        ],
+        "score": 57.875
+      },
+      {
+        "confidence": 0.0929,
+        "name": "Survival Phase",
+        "negativeEvidence": [],
+        "patternId": "survival",
+        "positiveEvidence": [],
+        "score": 48.7143
+      },
+      {
+        "confidence": 0.0821,
+        "name": "Evolution Rush Phase",
+        "negativeEvidence": [],
+        "patternId": "evolution-rush",
+        "positiveEvidence": [],
+        "score": 48.2857
+      },
+      {
+        "confidence": 0.0393,
+        "name": "Boss Preparation Phase",
+        "negativeEvidence": [],
+        "patternId": "boss-preparation",
+        "positiveEvidence": [
+          "upgrade.damagePriority=66"
+        ],
+        "score": 46.5714
+      }
+    ],
+    "stableHighFields": [],
+    "stableLowFields": [
+      {
+        "avg": 28,
+        "endSeconds": 30,
+        "fieldPath": "movement.survivalBias",
+        "max": 28,
+        "median": 28,
+        "min": 28,
+        "p10": 28,
+        "p90": 28,
+        "phaseId": "0-30",
+        "sampleCount": 1,
+        "stabilityLabel": "stable-low",
+        "startSeconds": 0,
+        "stdDev": 0
+      }
+    ],
+    "startSeconds": 0,
+    "unstableFields": []
+  },
+  {
+    "confidence": 1,
+    "endSeconds": 60,
+    "phaseId": "30-60",
+    "primaryPatternId": "balanced-transition",
+    "primaryPatternName": "Balanced Transition Phase",
+    "scores": [
+      {
+        "confidence": 1,
+        "name": "Balanced Transition Phase",
+        "negativeEvidence": [],
+        "patternId": "balanced-transition",
+        "positiveEvidence": [],
+        "score": 50
+      },
+      {
+        "confidence": 0.1893,
+        "name": "Boss Preparation Phase",
+        "negativeEvidence": [],
+        "patternId": "boss-preparation",
+        "positiveEvidence": [],
+        "score": 52.5714
+      },
+      {
+        "confidence": 0.1429,
+        "name": "Survival Phase",
+        "negativeEvidence": [],
+        "patternId": "survival",
+        "positiveEvidence": [
+          "movement.survivalBias=69",
+          "upgrade.survivalPriority=66"
+        ],
+        "score": 50.7143
+      },
+      {
+        "confidence": 0.1031,
+        "name": "Early Farm Phase",
+        "negativeEvidence": [],
+        "patternId": "early-farm",
+        "positiveEvidence": [],
+        "score": 49.125
+      },
+      {
+        "confidence": 0.0786,
+        "name": "Evolution Rush Phase",
+        "negativeEvidence": [],
+        "patternId": "evolution-rush",
+        "positiveEvidence": [],
+        "score": 48.1429
+      }
+    ],
+    "stableHighFields": [],
+    "stableLowFields": [],
+    "startSeconds": 30,
+    "unstableFields": []
+  }
+]

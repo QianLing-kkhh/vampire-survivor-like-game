@@ -1,0 +1,38 @@
+[
+  {
+    "avgDamageTaken": 3.9,
+    "avgScore": 815.5,
+    "avgSurvivalTimeSeconds": 60,
+    "completionRate": 1,
+    "deltaPctVsBalancedDefault": 0.0883,
+    "deltaVsBalancedDefault": 231.5185,
+    "generalFitnessScore": 2852.6562,
+    "medianScore": 819.5,
+    "p10Score": 797.2,
+    "strategyId": "best_general_strategy"
+  },
+  {
+    "avgDamageTaken": 1.5,
+    "avgScore": 738.5,
+    "avgSurvivalTimeSeconds": 60,
+    "completionRate": 1,
+    "deltaPctVsBalancedDefault": 0,
+    "deltaVsBalancedDefault": 0,
+    "generalFitnessScore": 2621.1377,
+    "medianScore": 714,
+    "p10Score": 676,
+    "strategyId": "balanced_default"
+  },
+  {
+    "avgDamageTaken": 1.5,
+    "avgScore": 738.5,
+    "avgSurvivalTimeSeconds": 60,
+    "completionRate": 1,
+    "deltaPctVsBalancedDefault": 0,
+    "deltaVsBalancedDefault": 0,
+    "generalFitnessScore": 2621.1377,
+    "medianScore": 714,
+    "p10Score": 676,
+    "strategyId": "playtest_baseline"
+  }
+]

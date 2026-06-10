@@ -1,0 +1,22 @@
+[
+  {
+    "bestCandidateId": "general_top1-phased_e8a6d3ee",
+    "bestGeneralFitnessScore": 2776.1095,
+    "bestVariantId": "top1-phased",
+    "candidateCount": 20,
+    "evaluatedStrategyCount": 25,
+    "mutationRadius": null,
+    "round": 1,
+    "searchMode": "random"
+  },
+  {
+    "bestCandidateId": "centered_candidate_000019_8a6d4fc4",
+    "bestGeneralFitnessScore": 2852.6562,
+    "bestVariantId": "centered-gaussian",
+    "candidateCount": 20,
+    "evaluatedStrategyCount": 25,
+    "mutationRadius": 15,
+    "round": 2,
+    "searchMode": "centered"
+  }
+]

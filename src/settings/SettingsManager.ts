@@ -230,6 +230,7 @@ export class SettingsManager {
     return (
       (partial.displayQuality !== undefined && partial.displayQuality !== previousDisplay.displayQuality)
       || (partial.assetStyle !== undefined && partial.assetStyle !== previousDisplay.assetStyle)
+      || (partial.uiStyle !== undefined && partial.uiStyle !== previousDisplay.uiStyle)
       || (
         partial.visualScalePreset !== undefined
         && partial.visualScalePreset !== previousDisplay.visualScalePreset

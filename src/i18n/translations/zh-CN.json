@@ -544,7 +544,8 @@
     "evolved": "进化",
     "endless": "Endless",
     "relics": "Relics",
-    "shield": "Shield"
+    "shield": "Shield",
+    "moreRelics": "+{count}"
   },
   "settings": {
     "title": "设置",
@@ -604,7 +605,36 @@
     "nextPage": "下一页",
     "back": "返回",
     "showDetailedCooldownTime": "显示详细CD时间",
+    "strategyTacticsPanel": "战略 / 战术面板",
+    "pauseWhenStrategyPanelOpen": "打开战术面板时暂停",
+    "manualHidesStrategyPanel": "手动模式下该面板始终关闭。",
+    "strategyTacticsPanelNextRunNotice": "战略 / 战术面板将在下一局载入。",
     "minimapScale": "小地图大小"
+  },
+  "strategyPanel": {
+    "title": "战略 / 战术",
+    "collapsed": "战略",
+    "collapse": "折叠",
+    "expand": "展开",
+    "pauseWhenOpen": "打开时暂停",
+    "readOnly": "只读",
+    "edits": "编辑 {count}",
+    "preset": {
+      "safe": "保命",
+      "farm": "发育",
+      "combat": "战斗",
+      "chest": "宝箱",
+      "boss": "Boss",
+      "loop": "绕圈"
+    },
+    "slider": {
+      "survive": "生存",
+      "combat": "战斗",
+      "farm": "经验",
+      "treasure": "宝箱",
+      "risk": "风险",
+      "loop": "绕圈"
+    }
   },
   "records": {
     "title": "记录",
@@ -774,7 +804,8 @@
       "rare": "稀有",
       "epic": "史诗",
       "legendary": "传说"
-    }
+    },
+    "acquiredTitle": "获得遗物"
   },
   "tooltip": {
     "weapon": {
@@ -831,7 +862,28 @@
     "titleAssets": "正在加载标题资源",
     "runAssets": "正在准备本局资源",
     "complete": "加载完成",
-    "failedAsset": "正在尝试备用资源：{key}"
+    "failedAsset": "正在尝试备用资源：{key}",
+    "map": "地图",
+    "character": "角色",
+    "startingWeapon": "初始武器",
+    "mapSize": "地图尺寸",
+    "grid": "网格",
+    "landmarkSpacing": "地标间距",
+    "mechanics": "机制",
+    "noSpecialMechanics": "无特殊机制",
+    "initialStats": "初始属性",
+    "growth": "成长",
+    "reaction": "受击反应",
+    "levelUp": "升级",
+    "weaponType": "类型",
+    "behavior": "行为",
+    "tags": "标签",
+    "coreStats": "核心属性",
+    "currentFile": "当前文件",
+    "maxHp": "最大生命",
+    "moveSpeed": "移动速度",
+    "pickupRange": "拾取范围",
+    "expMultiplier": "经验倍率"
   },
   "game": {
     "bossAppears": "Boss Appears",
