@@ -1,0 +1,91 @@
+{
+  "id": "searched_phased_strategy_071d28af",
+  "name": "Searched Phased Strategy",
+  "phases": [
+    {
+      "endSeconds": 30,
+      "profile": {
+        "id": "search_candidate_000011_1ec5245d",
+        "movement": {
+          "bossBias": 17,
+          "combatBias": 22,
+          "farmBias": 82,
+          "loopBias": 63,
+          "overKitePenalty": 59,
+          "riskTolerance": 16,
+          "survivalBias": 37,
+          "treasureBias": 14
+        },
+        "name": "Search Candidate 000011",
+        "relic": {
+          "damageRelicPriority": 13,
+          "economyRelicPriority": 94,
+          "rarityPriority": 59,
+          "survivalRelicPriority": 1,
+          "synergyPriority": 14
+        },
+        "treasure": {
+          "evolutionChestPriority": 55,
+          "openRiskTolerance": 100,
+          "relicExpectedValuePriority": 67,
+          "routeDeviationTolerance": 95
+        },
+        "upgrade": {
+          "cooldownPriority": 25,
+          "damagePriority": 11,
+          "evolutionPriority": 43,
+          "growthPriority": 43,
+          "mainWeaponPriority": 41,
+          "newWeaponPriority": 34,
+          "passivePriority": 70,
+          "survivalPriority": 82
+        },
+        "version": 1
+      },
+      "startSeconds": 0
+    },
+    {
+      "endSeconds": 60,
+      "profile": {
+        "id": "search_candidate_000010_a0191c22",
+        "movement": {
+          "bossBias": 65,
+          "combatBias": 59,
+          "farmBias": 78,
+          "loopBias": 39,
+          "overKitePenalty": 70,
+          "riskTolerance": 8,
+          "survivalBias": 47,
+          "treasureBias": 90
+        },
+        "name": "Search Candidate 000010",
+        "relic": {
+          "damageRelicPriority": 42,
+          "economyRelicPriority": 41,
+          "rarityPriority": 7,
+          "survivalRelicPriority": 72,
+          "synergyPriority": 83
+        },
+        "treasure": {
+          "evolutionChestPriority": 5,
+          "openRiskTolerance": 65,
+          "relicExpectedValuePriority": 63,
+          "routeDeviationTolerance": 93
+        },
+        "upgrade": {
+          "cooldownPriority": 97,
+          "damagePriority": 10,
+          "evolutionPriority": 69,
+          "growthPriority": 83,
+          "mainWeaponPriority": 96,
+          "newWeaponPriority": 35,
+          "passivePriority": 87,
+          "survivalPriority": 59
+        },
+        "version": 1
+      },
+      "startSeconds": 30
+    }
+  ],
+  "version": 1
+}

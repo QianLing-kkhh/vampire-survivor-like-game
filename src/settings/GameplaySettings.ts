@@ -9,6 +9,8 @@ export interface GameplaySettingsData {
   endlessMode: boolean;
   showDetailedCooldownTime: boolean;
   showDamageNumbers: boolean;
+  showStrategyTacticsPanel: boolean;
+  pauseWhenStrategyPanelOpen: boolean;
   autoTimeScale: number;
 }
 
@@ -21,5 +23,7 @@ export const DEFAULT_GAMEPLAY_SETTINGS: GameplaySettingsData = {
   endlessMode: false,
   showDetailedCooldownTime: false,
   showDamageNumbers: false,
+  showStrategyTacticsPanel: false,
+  pauseWhenStrategyPanelOpen: false,
   autoTimeScale: 3,
 };

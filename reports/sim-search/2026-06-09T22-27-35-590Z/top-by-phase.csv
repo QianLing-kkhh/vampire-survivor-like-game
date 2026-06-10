@@ -1,0 +1,11 @@
+phaseId,rank,candidateId,strategyProfileHash,phaseFitnessScore,survivalRate,avgScoreGain,avgExpGain,avgLevelGain,avgKills,avgDamageDealt,avgDamageTaken,avgPickupsCollected,avgEnemiesSpawned
+0-30,1,search_candidate_000011_1ec5245d,fnv1a-54f2ae82,5.3334,1,181,2.6667,0,2.6667,56.6667,0,2.6667,32
+0-30,2,search_candidate_000020_05879dac,fnv1a-a0f3475f,4.9333,1,180.6667,2.3333,0,2.6667,56.6667,0,2.3333,32
+0-30,3,search_candidate_000029_f73a716e,fnv1a-f5981e46,4.7334,1,180.3333,2.6667,0,2.6667,56.6667,0.4,2.6667,32
+0-30,4,search_candidate_000010_a0191c22,fnv1a-0876df09,4.6666,1,176.6667,2.3333,0,2.3333,53.3333,0,2.3333,32
+0-30,5,search_candidate_000006_a85c4c4e,fnv1a-f7d1a587,4.2666,1,176,2,0,2.3333,53.3333,0,2,32
+30-60,1,search_candidate_000010_a0191c22,fnv1a-0876df09,161,1,390,14,1,18.6667,416.6667,0,14,50
+30-60,2,search_candidate_000008_e05c1b0e,fnv1a-4cdc4d29,158.76,1,377.6667,14.3333,1,17.6667,410,0.8,14.3333,50
+30-60,3,search_candidate_000007_7ec2cf34,fnv1a-87e935e7,157.28,1,391.3333,14,1,19,412,2.2,14,50
+30-60,4,search_candidate_000026_3f35f4cf,fnv1a-4b1a6863,156.24,1,386.6667,13.3333,1,18.6667,410,2.2,13.3333,50
+30-60,5,search_candidate_000027_90b40c9d,fnv1a-4cc10e18,153.14,1,435.3333,13,1,23.3333,506.3333,7.4,13,50

@@ -12,7 +12,9 @@ import {
   resolveArtManifestPath,
   resolvePlayerSkinId,
 } from '../assets/AssetManifest';
+import { MapMechanicIconKind, MapMechanicVisualKind } from '../assets/AssetKeyMap';
 import { AssetLoadPlan } from '../assets/AssetLoadPlan';
+import { logAssetLoadPlan } from '../assets/AssetLoadPlanInspector';
 import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
 import { queueLoadPlan } from '../assets/AssetLoadRegistry';
 import { CharacterManager } from '../character/CharacterManager';
@@ -24,9 +26,30 @@ import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
 import { StageManager } from '../stage/StageManager';
-import { LoadingOverlay } from '../ui/LoadingOverlay';
+import { LoadingOverlay, LoadingOverlayRunInfo } from '../ui/LoadingOverlay';
+import weaponsData from '../data/weapons.json';
+import wavesData from '../data/waves.json';
 
 type RunPreloadSceneData = Record<string, unknown>;
+type WaveRecord = {
+  enemy?: string;
+  enemyId?: string;
+};
+type WeaponRecord = {
+  type?: string;
+  tags?: string[];
+  behavior?: {
+    type?: string;
+  };
+  damage?: number;
+  cooldown?: number;
+  radius?: number;
+  projectileSpeed?: number;
+  projectileCount?: number;
+  pierce?: number;
+  orbitCount?: number;
+  orbitSpeed?: number;
+};
 
 export class RunPreloadScene extends Phaser.Scene {
   private plan?: AssetLoadPlan;
@@ -43,9 +66,9 @@ export class RunPreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.createLoadingOverlay(I18n.t('loading.runAssets'));
-    ExternalArtRegistry.loadManifest(this);
     this.context = this.resolveRunPreloadContext();
+    this.createLoadingOverlay(I18n.t('loading.runAssets'), this.buildLoadingRunInfo(this.context));
+    ExternalArtRegistry.loadManifest(this);
     if (this.shouldForceRefreshPlayerRuntimeAssets()) {
       const resolvedSkinId = resolvePlayerSkinId(
         this.context?.skinId,
@@ -73,11 +96,12 @@ export class RunPreloadScene extends Phaser.Scene {
     });
   }
 
-  private createLoadingOverlay(message: string): void {
+  private createLoadingOverlay(message: string, runInfo?: LoadingOverlayRunInfo): void {
     this.loadingOverlay?.destroy();
     this.loadingOverlay = new LoadingOverlay(this, {
       title: I18n.t('loading.title'),
       message,
+      runInfo,
     });
     this.load.on('progress', this.handleLoadProgress, this);
     this.load.on('fileprogress', this.handleFileProgress, this);
@@ -136,6 +160,12 @@ export class RunPreloadScene extends Phaser.Scene {
       : mapManager.resolveMapForStage(selectedStage);
     const display = SettingsManager.getDisplay();
     const playtest = PlaytestSettings.get();
+    const startingWeaponId = selectedCharacter.startingWeaponId;
+    const waveEnemyIds = this.getWaveEnemyIds(
+      selectedStage.waveSetId,
+      selectedStageRuntime.customStagePackage?.waves,
+    );
+    const mapMechanicKinds = this.getMapMechanicKinds(selectedMap.mechanics ?? []);
 
     return {
       selectedCharacterId: selection.characterId,
@@ -154,7 +184,282 @@ export class RunPreloadScene extends Phaser.Scene {
         selectedCharacter.id,
       ),
       endlessMode: playtest.endlessMode,
+      startingWeaponId,
+      finalBossId: selectedStage.finalBossId,
+      waveEnemyIds,
+      groundTileKey: selectedMap.render?.groundTileKey,
+      landmarkTypes: Object.entries(selectedMap.render?.landmarkWeights ?? {})
+        .filter(([, weight]) => Number(weight) > 0)
+        .map(([type]) => type),
+      mapMechanicVisualKinds: mapMechanicKinds.visualKinds,
+      mapMechanicMinimapIconKinds: mapMechanicKinds.minimapIconKinds,
+      audioEnabled: playtest.audioEnabled,
+      minimapScale: display.minimapScale,
     };
+  }
+
+  private getWaveEnemyIds(
+    waveSetId: string | undefined,
+    customWaves: readonly unknown[] | undefined,
+  ): string[] {
+    const waves = (customWaves as readonly WaveRecord[] | undefined)
+      ?? (wavesData as Record<string, readonly WaveRecord[]>)[waveSetId ?? 'default']
+      ?? [];
+
+    return Array.from(new Set(
+      waves
+        .map((wave) => wave.enemy ?? wave.enemyId)
+        .filter((enemyId): enemyId is string => (
+          typeof enemyId === 'string' && enemyId.length > 0
+        )),
+    ));
+  }
+
+  private getMapMechanicKinds(mechanics: readonly { type: string; visualType?: string }[]): {
+    visualKinds: MapMechanicVisualKind[];
+    minimapIconKinds: MapMechanicIconKind[];
+  } {
+    const visualKinds = new Set<MapMechanicVisualKind>();
+    const minimapIconKinds = new Set<MapMechanicIconKind>();
+
+    for (const mechanic of mechanics) {
+      switch (mechanic.type) {
+        case 'slowZone':
+          this.addSlowZoneMechanicKinds(mechanic.visualType, visualKinds, minimapIconKinds);
+          break;
+        case 'portal':
+          this.addPortalMechanicKinds(mechanic.visualType, visualKinds, minimapIconKinds);
+          break;
+        case 'lightSource':
+          this.addLightMechanicKinds(mechanic.visualType, visualKinds, minimapIconKinds);
+          break;
+        case 'obstacle':
+          this.addObstacleMechanicKinds(mechanic.visualType, visualKinds, minimapIconKinds);
+          break;
+        case 'hazard':
+          this.addHazardMechanicKinds(mechanic.visualType, visualKinds, minimapIconKinds);
+          break;
+        case 'altar':
+          visualKinds.add('altar');
+          minimapIconKinds.add('altar');
+          break;
+        case 'spawner':
+          visualKinds.add('spawner');
+          minimapIconKinds.add('spawner');
+          break;
+        default:
+          break;
+      }
+    }
+
+    return {
+      visualKinds: Array.from(visualKinds),
+      minimapIconKinds: Array.from(minimapIconKinds),
+    };
+  }
+
+  private addSlowZoneMechanicKinds(
+    visualType: string | undefined,
+    visualKinds: Set<MapMechanicVisualKind>,
+    minimapIconKinds: Set<MapMechanicIconKind>,
+  ): void {
+    switch (visualType) {
+      case 'swamp':
+        visualKinds.add('swamp');
+        minimapIconKinds.add('swamp');
+        break;
+      case 'mud':
+        visualKinds.add('mud');
+        minimapIconKinds.add('mud');
+        break;
+      case 'river':
+      default:
+        visualKinds.add('river');
+        minimapIconKinds.add('river');
+        break;
+    }
+  }
+
+  private addPortalMechanicKinds(
+    visualType: string | undefined,
+    visualKinds: Set<MapMechanicVisualKind>,
+    minimapIconKinds: Set<MapMechanicIconKind>,
+  ): void {
+    switch (visualType) {
+      case 'purple':
+        visualKinds.add('portalPurple');
+        minimapIconKinds.add('portalPurple');
+        break;
+      case 'green':
+        visualKinds.add('portalGreen');
+        minimapIconKinds.add('portalGreen');
+        break;
+      case 'blue':
+      default:
+        visualKinds.add('portalBlue');
+        minimapIconKinds.add('portalBlue');
+        break;
+    }
+  }
+
+  private addLightMechanicKinds(
+    visualType: string | undefined,
+    visualKinds: Set<MapMechanicVisualKind>,
+    minimapIconKinds: Set<MapMechanicIconKind>,
+  ): void {
+    switch (visualType) {
+      case 'torch':
+        visualKinds.add('lightTorch');
+        break;
+      case 'crystal':
+        visualKinds.add('lightCrystal');
+        break;
+      case 'lamp':
+      default:
+        visualKinds.add('lightLamp');
+        break;
+    }
+
+    minimapIconKinds.add('light');
+  }
+
+  private addObstacleMechanicKinds(
+    visualType: string | undefined,
+    visualKinds: Set<MapMechanicVisualKind>,
+    minimapIconKinds: Set<MapMechanicIconKind>,
+  ): void {
+    switch (visualType) {
+      case 'tree':
+        visualKinds.add('obstacleTree');
+        break;
+      case 'grave':
+        visualKinds.add('obstacleGrave');
+        break;
+      case 'wall':
+        visualKinds.add('obstacleWall');
+        break;
+      case 'rock':
+      default:
+        visualKinds.add('obstacleRock');
+        break;
+    }
+
+    minimapIconKinds.add('obstacle');
+  }
+
+  private addHazardMechanicKinds(
+    visualType: string | undefined,
+    visualKinds: Set<MapMechanicVisualKind>,
+    minimapIconKinds: Set<MapMechanicIconKind>,
+  ): void {
+    switch (visualType) {
+      case 'fire':
+        visualKinds.add('hazardFire');
+        break;
+      case 'poison':
+        visualKinds.add('hazardPoison');
+        break;
+      case 'spike':
+      default:
+        visualKinds.add('hazardSpike');
+        break;
+    }
+
+    minimapIconKinds.add('hazard');
+  }
+
+  private buildLoadingRunInfo(context: RunPreloadContext): LoadingOverlayRunInfo {
+    const characterManager = new CharacterManager();
+    const mapManager = new MapManager();
+    const character = characterManager.getCharacter(context.characterId);
+    const map = mapManager.getMap(context.mapId);
+    const startingWeaponId = character.startingWeaponId;
+    const weapon = (weaponsData as Record<string, WeaponRecord>)[startingWeaponId] ?? {};
+
+    return {
+      map: {
+        id: map.id,
+        name: map.name || map.id,
+        worldWidth: map.worldWidth,
+        worldHeight: map.worldHeight,
+        gridSize: map.gridSize,
+        landmarkSpacing: map.landmarkSpacing,
+        mechanics: map.mechanics?.map((mechanic) => mechanic.type) ?? [],
+      },
+      character: {
+        id: character.id,
+        name: this.translateOrFallback(character.nameKey, character.name || character.id),
+        startingWeaponId,
+        maxHp: character.initialStats.maxHp,
+        moveSpeed: character.initialStats.moveSpeed,
+        pickupRange: character.initialStats.pickupRange,
+        expMultiplier: character.initialStats.expMultiplier,
+        growthSummary: this.formatGrowthSummary(character.growthPerLevel),
+        reactionSummary: character.damageReactionSkill?.type,
+        levelUpSummary: character.levelUpEffect?.type,
+      },
+      startingWeapon: {
+        id: startingWeaponId,
+        name: this.formatIdLabel(startingWeaponId),
+        type: weapon.type,
+        behaviorType: weapon.behavior?.type,
+        tags: weapon.tags,
+        stats: this.getWeaponCoreStats(weapon),
+      },
+    };
+  }
+
+  private getWeaponCoreStats(weapon: WeaponRecord): Record<string, number | string> {
+    const stats: Record<string, number | string> = {};
+
+    for (const key of [
+      'damage',
+      'cooldown',
+      'radius',
+      'projectileSpeed',
+      'projectileCount',
+      'pierce',
+      'orbitCount',
+      'orbitSpeed',
+    ] as const) {
+      const value = weapon[key];
+
+      if (typeof value === 'number') {
+        stats[key] = value;
+      }
+    }
+
+    return stats;
+  }
+
+  private formatGrowthSummary(growth: object | undefined): string | undefined {
+    if (!growth) {
+      return undefined;
+    }
+
+    const entries = Object.entries(growth)
+      .filter(([, value]) => typeof value === 'number' && value !== 0)
+      .slice(0, 2)
+      .map(([key, value]) => `${this.formatIdLabel(key)} +${value}`);
+
+    return entries.length > 0 ? entries.join(' / ') : undefined;
+  }
+
+  private translateOrFallback(key: string | undefined, fallback: string): string {
+    if (!key) {
+      return fallback;
+    }
+
+    const translated = I18n.t(key);
+    return translated === key ? fallback : translated;
+  }
+
+  private formatIdLabel(id: string): string {
+    return id
+      .split(/[_-]/)
+      .filter((part) => part.length > 0)
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join(' ');
   }
 
   private shouldForceRefreshPlayerRuntimeAssets(): boolean {
@@ -175,6 +480,7 @@ export class RunPreloadScene extends Phaser.Scene {
 
       queuedPlan = true;
       this.plan = buildRunLoadPlan(this.context);
+      this.logRunLoadPlanIfDebugEnabled(this.plan);
       queueLoadPlan(this, this.plan);
     };
 
@@ -198,6 +504,7 @@ export class RunPreloadScene extends Phaser.Scene {
         manifestAssets,
         getArtManifestVersion(manifest),
       );
+      this.logRunLoadPlanIfDebugEnabled(this.plan);
       queueLoadPlan(this, this.plan);
     };
 
@@ -212,6 +519,19 @@ export class RunPreloadScene extends Phaser.Scene {
       queueFallbackPlan();
     });
     this.load.json(ART_MANIFEST_CACHE_KEY, manifestPath);
+  }
+
+  private logRunLoadPlanIfDebugEnabled(plan: AssetLoadPlan): void {
+    const developer = SettingsManager.getDeveloper();
+    const display = SettingsManager.getDisplay();
+
+    if (
+      developer.showDebugLogs
+      || developer.showDebugPanel
+      || display.showDebugOverlay
+    ) {
+      logAssetLoadPlan(plan, 'run-preload');
+    }
   }
 
   private clearPlayerRuntimeAssets(skinId: string): void {

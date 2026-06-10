@@ -1,6 +1,7 @@
 import { Enemy } from '../enemy/Enemy';
 import { EvolutionManager } from '../evolution/EvolutionManager';
 import { CharacterRuntime } from '../character/CharacterRuntime';
+import { I18n } from '../i18n/I18n';
 import { MapDefinition } from '../map/MapDefinition';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerController } from '../player/PlayerController';
@@ -11,6 +12,7 @@ import { LevelManager } from '../progression/LevelManager';
 import { RunState } from '../run/RunState';
 import { RelicManager } from '../relic/RelicManager';
 import { PlaytestSettingsState } from '../settings/PlaytestSettings';
+import { SettingsManager } from '../settings/SettingsManager';
 import { StageDefinition } from '../stage/StageDefinition';
 import { RuntimeStrategyState } from '../strategy/runtime/RuntimeStrategyState';
 import { WeaponManager } from '../weapon/WeaponManager';
@@ -32,6 +34,7 @@ export interface HUDStateBuildInput {
   evolutionManager?: EvolutionManager;
   runState: RunState;
   runtimeStrategyState?: RuntimeStrategyState;
+  strategyTacticsPanelEnabledForRun?: boolean;
   playtestSettings: PlaytestSettingsState;
   timeSeconds: number;
   nowMs: number;
@@ -65,6 +68,12 @@ export class HUDStateBuilder {
       targetTimeSeconds: input.currentStage.finalBossSpawnTimeSeconds,
       score: input.runState.score,
       relicCount: input.relicManager?.getRelicIds().length ?? 0,
+      relics: input.relicManager?.getRelicDisplayInfo().map((relic) => ({
+        id: relic.id,
+        name: relic.name,
+        rarity: relic.rarity,
+        iconKey: relic.iconKey,
+      })) ?? [],
       weaponIds: input.weaponManager?.getWeaponIds() ?? [],
       characterHudInfo: input.characterRuntime ? {
         characterId: input.characterRuntime.getCharacterId(),
@@ -96,6 +105,7 @@ export class HUDStateBuilder {
         ? { x: input.player.body.x, y: input.player.body.y }
         : { x: 0, y: 0 },
       enemyPositions: this.getMinimapEnemyPositions(input.enemies, input.currentStage.finalBossId),
+      bossBars: this.getBossBars(input.enemies, input.currentStage.finalBossId),
       message: input.hudMessage,
       liveStrategy: this.buildLiveStrategyState(input),
       endlessMode: input.playtestSettings.endlessMode,
@@ -106,12 +116,15 @@ export class HUDStateBuilder {
 
   private buildLiveStrategyState(input: HUDStateBuildInput): HUDState['liveStrategy'] {
     const metadata = input.runState.getRunMetadata();
+    const gameplay = SettingsManager.getGameplay();
 
     if (
       metadata.controlMode !== 'autoStrategy'
       || metadata.strategyControlType !== 'live'
       || metadata.allowRuntimeStrategyEdit !== true
       || !input.runtimeStrategyState
+      || input.strategyTacticsPanelEnabledForRun !== true
+      || gameplay.showStrategyTacticsPanel !== true
     ) {
       return undefined;
     }
@@ -121,6 +134,10 @@ export class HUDStateBuilder {
 
     return {
       enabled: true,
+      editable: true,
+      controlMode: metadata.controlMode,
+      showPanel: true,
+      pauseWhenOpen: gameplay.pauseWhenStrategyPanelOpen,
       movement: {
         survivalBias: profile.movement.survivalBias,
         combatBias: profile.movement.combatBias,
@@ -162,5 +179,65 @@ export class HUDStateBuilder {
     return enemy.id === finalBossId
       || enemy.id.endsWith('_boss')
       || enemy.id.startsWith('endless_');
+  }
+
+  private getBossBars(
+    enemies: Enemy[],
+    finalBossId: string,
+  ): HUDState['bossBars'] {
+    const maxVisibleBossBars = 4;
+    const bossBars = enemies
+      .filter((enemy) => !enemy.isDead)
+      .filter((enemy) => enemy.currentHp > 0)
+      .filter((enemy) => this.isHudBossEnemy(enemy, finalBossId))
+      .map((enemy) => {
+        const maxHp = Math.max(1, enemy.maxHp);
+        const currentHp = Math.max(0, enemy.currentHp);
+        const hpRatio = this.clamp01(currentHp / maxHp);
+
+        return {
+          id: enemy.id,
+          name: this.formatBossName(enemy.id),
+          currentHp,
+          maxHp,
+          hpRatio,
+          finalBoss: enemy.id === finalBossId,
+          bossLike: enemy.bossLike,
+        };
+      });
+
+    const finalBosses = bossBars.filter((boss) => boss.finalBoss);
+    const otherBosses = bossBars
+      .filter((boss) => !boss.finalBoss)
+      .sort((a, b) => a.hpRatio - b.hpRatio);
+
+    return [...finalBosses, ...otherBosses].slice(0, maxVisibleBossBars);
+  }
+
+  private isHudBossEnemy(enemy: Enemy, finalBossId: string): boolean {
+    return enemy.id === finalBossId
+      || enemy.bossLike
+      || enemy.id === 'boss'
+      || enemy.id.endsWith('_boss')
+      || enemy.id.startsWith('endless_');
+  }
+
+  private formatBossName(enemyId: string): string {
+    const key = `enemy.${enemyId}.name`;
+    const translated = I18n.t(key);
+
+    if (translated !== key) {
+      return translated;
+    }
+
+    return enemyId
+      .split('_')
+      .filter((part) => part.length > 0)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  private clamp01(value: number): number {
+    return Math.min(1, Math.max(0, value));
   }
 }

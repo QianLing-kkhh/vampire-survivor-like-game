@@ -20,6 +20,13 @@
     "analyze:csv": "node scripts/analyze-playtest-csv.mjs",
     "simulate": "node scripts/run-headless-sim.mjs",
     "simulate:batch": "node scripts/run-headless-batch.mjs",
+    "simulate:matrix": "node scripts/run-headless-batch.mjs",
+    "simulate:compare": "node scripts/compare-headless-sim.mjs",
+    "simulate:search": "node scripts/search-strategy-weights.mjs",
+    "simulate:analyze-optimizations": "node scripts/analyze-strategy-optimizations.mjs",
+    "simulate:discover-patterns": "node scripts/discover-strategy-patterns.mjs",
+    "simulate:search-general": "node scripts/search-general-strategy.mjs",
+    "simulate:apply-generated-strategy": "node scripts/apply-generated-test-strategy.mjs",
     "validate:sim": "node scripts/check-headless-determinism.mjs",
     "pre-release": "node scripts/pre-release-check.mjs"
   },

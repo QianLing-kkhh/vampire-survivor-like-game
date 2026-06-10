@@ -10,6 +10,7 @@ import { LevelUpPanel, LevelUpPanelConfig } from '../ui/LevelUpPanel';
 import { LiveStrategyControlPanel } from '../ui/LiveStrategyControlPanel';
 import type { LiveStrategyPatchPayload } from '../ui/LiveStrategyControlPanel';
 import { PauseMenu } from '../ui/PauseMenu';
+import { RelicAcquiredPanel } from '../ui/RelicAcquiredPanel';
 import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
 import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
 
@@ -30,6 +31,7 @@ export class UIScene extends Phaser.Scene {
   private levelUpPanel?: LevelUpPanel;
   private pauseMenu?: PauseMenu;
   private helpOverlay?: HelpOverlay;
+  private relicAcquiredPanel?: RelicAcquiredPanel;
   private liveStrategyControlPanel?: LiveStrategyControlPanel;
   private debugPanelManager?: DebugPanelManager;
   private temporaryMessage?: Phaser.GameObjects.Text;
@@ -42,14 +44,12 @@ export class UIScene extends Phaser.Scene {
     this.hud = new HUD(this, () => {
       this.events.emit('HudPausePressed');
     });
-    this.liveStrategyControlPanel = new LiveStrategyControlPanel(this, (payload: LiveStrategyPatchPayload) => {
-      this.events.emit('LiveStrategyPatch', payload);
-    });
     this.debugPanelManager = new DebugPanelManager(this);
     this.events.on('UpdateHUD', this.updateHUD, this);
     this.events.on('UpdateDebugPanel', this.updateDebugPanel, this);
     this.events.on('ShowLevelUpOptions', this.showLevelUpOptions, this);
     this.events.on('ShowTemporaryMessage', this.showTemporaryMessage, this);
+    this.events.on('ShowRelicAcquired', this.showRelicAcquired, this);
     this.events.on('ShowPauseMenu', this.showPauseMenu, this);
     this.events.on('HidePauseMenu', this.hidePauseMenu, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
@@ -58,7 +58,31 @@ export class UIScene extends Phaser.Scene {
 
   private updateHUD(state: HUDState): void {
     this.hud?.update(state);
+    if (state.liveStrategy?.enabled === true) {
+      this.ensureLiveStrategyControlPanel();
+    }
     this.liveStrategyControlPanel?.update(state.liveStrategy);
+  }
+
+  private ensureLiveStrategyControlPanel(): void {
+    if (this.liveStrategyControlPanel) {
+      return;
+    }
+
+    this.liveStrategyControlPanel = new LiveStrategyControlPanel(
+      this,
+      (payload: LiveStrategyPatchPayload) => {
+        this.events.emit('LiveStrategyPatch', payload);
+      },
+      {
+        onExpandedChanged: (payload) => {
+          this.events.emit('StrategyTacticsPanelExpandedChanged', payload);
+        },
+        onPauseWhenOpenChanged: (pauseWhenOpen) => {
+          this.events.emit('StrategyTacticsPanelPauseWhenOpenChanged', pauseWhenOpen);
+        },
+      },
+    );
   }
 
   private updateDebugPanel(data: DebugPanelData): void {
@@ -177,11 +201,29 @@ export class UIScene extends Phaser.Scene {
     });
   }
 
+  private showRelicAcquired(payload: {
+    id: string;
+    name: string;
+    description?: string;
+    rarity?: string;
+    iconKey?: string;
+  }): void {
+    this.relicAcquiredPanel?.destroy();
+    this.relicAcquiredPanel = new RelicAcquiredPanel(this, {
+      ...payload,
+      onComplete: () => {
+        this.relicAcquiredPanel?.destroy();
+        this.relicAcquiredPanel = undefined;
+      },
+    });
+  }
+
   private cleanup(): void {
     this.events.off('UpdateHUD', this.updateHUD, this);
     this.events.off('UpdateDebugPanel', this.updateDebugPanel, this);
     this.events.off('ShowLevelUpOptions', this.showLevelUpOptions, this);
     this.events.off('ShowTemporaryMessage', this.showTemporaryMessage, this);
+    this.events.off('ShowRelicAcquired', this.showRelicAcquired, this);
     this.events.off('ShowPauseMenu', this.showPauseMenu, this);
     this.events.off('HidePauseMenu', this.hidePauseMenu, this);
     this.levelUpPanel?.destroy();
@@ -190,6 +232,8 @@ export class UIScene extends Phaser.Scene {
     this.pauseMenu = undefined;
     this.helpOverlay?.destroy();
     this.helpOverlay = undefined;
+    this.relicAcquiredPanel?.destroy();
+    this.relicAcquiredPanel = undefined;
     this.temporaryMessage?.destroy();
     this.temporaryMessage = undefined;
     this.debugPanelManager?.destroy();

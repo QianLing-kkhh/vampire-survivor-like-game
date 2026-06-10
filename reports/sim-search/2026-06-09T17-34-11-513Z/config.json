@@ -1,0 +1,30 @@
+{
+  "candidates": 20,
+  "characterId": "priest",
+  "difficultyId": "normal",
+  "durationSeconds": 60,
+  "generatedAt": "2026-06-09T17:34:11.513Z",
+  "locked": {},
+  "mapId": "prototype_field",
+  "outputDir": "reports\\sim-search\\2026-06-09T17-34-11-513Z",
+  "phases": [
+    {
+      "endSeconds": 30,
+      "phaseId": "0-30",
+      "startSeconds": 0
+    },
+    {
+      "endSeconds": 60,
+      "phaseId": "30-60",
+      "startSeconds": 30
+    }
+  ],
+  "presetId": null,
+  "randomSeed": "strategy-search-001",
+  "ranges": {},
+  "schemaVersion": 1,
+  "seedCount": 3,
+  "stageId": "stage_001",
+  "tickMs": 100,
+  "topN": 5
+}

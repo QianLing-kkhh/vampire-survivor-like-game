@@ -64,6 +64,13 @@ import { StageDefinition } from '../stage/StageDefinition';
 import { StageManager } from '../stage/StageManager';
 import { RunStats } from '../stats/RunStats';
 import { AutoTreasurePolicy } from '../strategy/policies/AutoTreasurePolicy';
+import {
+  GENERATED_TEST_STRATEGY_ID,
+  GeneratedTestStrategy,
+  getGeneratedStrategyPhaseIdAtSeconds,
+  getGeneratedStrategyProfileAtSeconds,
+  loadGeneratedTestStrategy,
+} from '../strategy/generated/GeneratedStrategyLoader';
 import { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
 import { TreasureRewardCoordinator } from '../treasure/TreasureRewardCoordinator';
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
@@ -156,7 +163,12 @@ export class GameScene extends Phaser.Scene {
   private readonly victoryUnlockService = new VictoryUnlockService();
   private runId = PlaytestLog.createRunId();
   private runStats = new RunStats();
+  private generatedTestStrategy?: GeneratedTestStrategy;
+  private activeGeneratedTestPhaseId?: string;
   private isGameplayPaused = false;
+  private isStrategyPanelPauseActive = false;
+  private isStrategyTacticsPanelExpanded = false;
+  private strategyTacticsPanelEnabledForRun = false;
   private isLevelUpSelectionActive = false;
   private isPauseMenuOpen = false;
   private isGameOver = false;
@@ -215,6 +227,8 @@ export class GameScene extends Phaser.Scene {
     this.playtestSettings = PlaytestSettings.get();
     this.runState.reset();
     this.runId = PlaytestLog.createRunId();
+    this.generatedTestStrategy = undefined;
+    this.activeGeneratedTestPhaseId = undefined;
     this.player = undefined;
     this.playerHitRange = undefined;
     this.playerHealth = undefined;
@@ -224,6 +238,9 @@ export class GameScene extends Phaser.Scene {
     this.upgradeApplier = undefined;
     this.upgradeFlow = undefined;
     this.isGameplayPaused = false;
+    this.isStrategyPanelPauseActive = false;
+    this.isStrategyTacticsPanelExpanded = false;
+    this.strategyTacticsPanelEnabledForRun = SettingsManager.getGameplay().showStrategyTacticsPanel === true;
     this.isLevelUpSelectionActive = false;
     this.isPauseMenuOpen = false;
     this.isGameOver = false;
@@ -357,7 +374,7 @@ export class GameScene extends Phaser.Scene {
     this.unsubscribeSettings = PlaytestSettings.subscribe((settingName, state) => {
       this.handleSettingsChanged(settingName, state);
     });
-    context.virtualJoystick.setGameplayActive(!this.playtestSettings.autoMovement);
+    context.virtualJoystick.setGameplayActive(this.shouldVirtualJoystickBeActive());
     this.createOrientationOverlay();
     this.scale.on('resize', this.handleResize, this);
     this.playerHitRange = this.add.circle(
@@ -457,6 +474,16 @@ export class GameScene extends Phaser.Scene {
     uiScene.events.on('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
     uiScene.events.on('PauseOpenDeveloperScene', this.openDeveloperSceneFromPauseMenu, this);
     uiScene.events.on('LiveStrategyPatch', this.handleLiveStrategyPatch, this);
+    uiScene.events.on(
+      'StrategyTacticsPanelExpandedChanged',
+      this.handleStrategyTacticsPanelExpandedChanged,
+      this,
+    );
+    uiScene.events.on(
+      'StrategyTacticsPanelPauseWhenOpenChanged',
+      this.handleStrategyTacticsPanelPauseWhenOpenChanged,
+      this,
+    );
     this.events.on('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.on('keydown-ESC', this.handleEscapePressed, this);
     this.input.keyboard?.on('keydown-F3', this.toggleDebugPanel, this);
@@ -493,7 +520,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (this.isGameplayPaused) {
+    if (this.isGameplayPaused || this.isStrategyPanelPauseActive) {
       this.virtualJoystick?.setGameplayActive(false);
       this.emitHUDState();
       return;
@@ -504,6 +531,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.updatePlayerPickupRangeFromStats();
+    if (this.generatedTestStrategy) {
+      this.syncRuntimeStrategyProfile(this.gameplayContext.runtimeStrategyState?.getProfile());
+    }
 
       this.gameplayUpdater.update(this.gameplayContext, {
         deltaMs: delta,
@@ -538,6 +568,8 @@ export class GameScene extends Phaser.Scene {
     this.gameplayContext = context;
     this.playtestSettings = context.playtestSettings;
     this.runStats = context.runStats;
+    this.generatedTestStrategy = this.resolveGeneratedTestStrategyForRun(context);
+    this.activeGeneratedTestPhaseId = undefined;
     this.player = context.player;
     this.playerHealth = context.playerHealth;
     this.enemies = context.enemies;
@@ -564,13 +596,48 @@ export class GameScene extends Phaser.Scene {
   }
 
   private syncRuntimeStrategyProfile(profile?: AutoStrategyProfile): void {
-    if (!profile) {
+    const activeProfile = this.getActiveGeneratedTestStrategyProfile() ?? profile;
+
+    if (!activeProfile) {
       return;
     }
 
-    this.autoPlayer.setStrategyProfile(profile);
-    this.autoUpgradeSelector.setStrategyProfile(profile);
-    this.autoTreasurePolicy.setProfile(profile);
+    this.autoPlayer.setStrategyProfile(activeProfile);
+    this.autoUpgradeSelector.setStrategyProfile(activeProfile);
+    this.autoTreasurePolicy.setProfile(activeProfile);
+  }
+
+  private resolveGeneratedTestStrategyForRun(context: GameplayContext): GeneratedTestStrategy | undefined {
+    if (context.runState.getRunMetadata().strategyProfileId !== GENERATED_TEST_STRATEGY_ID) {
+      return undefined;
+    }
+
+    const generatedStrategy = loadGeneratedTestStrategy();
+
+    if (!generatedStrategy) {
+      console.warn(
+        '[generated-strategy] Run metadata requested generated_test, but generated-test-strategy.json is unavailable.',
+      );
+      return undefined;
+    }
+
+    return generatedStrategy;
+  }
+
+  private getActiveGeneratedTestStrategyProfile(): AutoStrategyProfile | undefined {
+    if (!this.generatedTestStrategy) {
+      return undefined;
+    }
+
+    const elapsedSeconds = this.timeManager.gameTimeSeconds;
+    const phaseId = getGeneratedStrategyPhaseIdAtSeconds(this.generatedTestStrategy, elapsedSeconds);
+
+    if (phaseId !== this.activeGeneratedTestPhaseId) {
+      this.activeGeneratedTestPhaseId = phaseId;
+      console.info(`[generated-strategy] strategyProfileId=generated_test phase=${phaseId}`);
+    }
+
+    return getGeneratedStrategyProfileAtSeconds(this.generatedTestStrategy, elapsedSeconds);
   }
 
   private handleLiveStrategyPatch(payload: LiveStrategyPatchPayload): void {
@@ -599,6 +666,38 @@ export class GameScene extends Phaser.Scene {
 
     this.syncRuntimeStrategyProfile(runtimeStrategyState.getProfile());
     this.refreshLevelUpPanelAutoSelection();
+    this.emitHUDState();
+  }
+
+  private handleStrategyTacticsPanelExpandedChanged(payload: {
+    expanded: boolean;
+    pauseWhenOpen: boolean;
+  }): void {
+    const metadata = this.runState.getRunMetadata();
+
+    if (metadata.controlMode === 'manual') {
+      this.isStrategyTacticsPanelExpanded = false;
+      this.isStrategyPanelPauseActive = false;
+      return;
+    }
+
+    this.isStrategyTacticsPanelExpanded = payload.expanded;
+    this.isStrategyPanelPauseActive = payload.expanded && payload.pauseWhenOpen;
+    this.virtualJoystick?.setGameplayActive(this.shouldVirtualJoystickBeActive());
+    this.emitHUDState();
+  }
+
+  private handleStrategyTacticsPanelPauseWhenOpenChanged(pauseWhenOpen: boolean): void {
+    const metadata = this.runState.getRunMetadata();
+
+    if (metadata.controlMode === 'manual') {
+      this.isStrategyTacticsPanelExpanded = false;
+      this.isStrategyPanelPauseActive = false;
+      return;
+    }
+
+    this.isStrategyPanelPauseActive = this.isStrategyTacticsPanelExpanded && pauseWhenOpen;
+    this.virtualJoystick?.setGameplayActive(this.shouldVirtualJoystickBeActive());
     this.emitHUDState();
   }
 
@@ -690,8 +789,8 @@ export class GameScene extends Phaser.Scene {
       this.player?.clearExternalMoveDirection();
     }
 
-    if (!this.isGameplayPaused && !this.isLevelUpSelectionActive) {
-      this.virtualJoystick?.setGameplayActive(!autoMovement);
+    if (!this.isGameplayPaused && !this.isStrategyPanelPauseActive && !this.isLevelUpSelectionActive) {
+      this.virtualJoystick?.setGameplayActive(this.shouldVirtualJoystickBeActive());
     }
 
     if (previousAutoMovement !== autoMovement) {
@@ -801,6 +900,7 @@ export class GameScene extends Phaser.Scene {
       evolutionManager: this.evolutionManager,
       runState: this.runState,
       runtimeStrategyState: this.gameplayContext?.runtimeStrategyState,
+      strategyTacticsPanelEnabledForRun: this.strategyTacticsPanelEnabledForRun,
       playtestSettings: this.playtestSettings,
       timeSeconds: this.timeManager.gameTimeSeconds,
       nowMs: this.time.now,
@@ -861,6 +961,13 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.updatePlayerPickupRangeFromStats();
+    this.uiScene?.events.emit('ShowRelicAcquired', {
+      id: result.relicAwarded.id,
+      name: result.relicAwarded.name,
+      description: result.relicAwarded.description,
+      rarity: result.relicAwarded.rarity,
+      iconKey: result.relicAwarded.iconKey,
+    });
     this.showCenterMessage(
       I18n.t('result.relicAcquired', { name: result.relicAwarded.name }),
     );
@@ -1164,7 +1271,7 @@ export class GameScene extends Phaser.Scene {
     this.isGameplayPaused = false;
     this.currentLevelUpOptions = [];
     this.activeUpgradeSelectionSource = undefined;
-    this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
+    this.virtualJoystick?.setGameplayActive(this.shouldVirtualJoystickBeActive());
   }
 
   private handleTreasureRewardRequested(): void {
@@ -1429,7 +1536,7 @@ export class GameScene extends Phaser.Scene {
         break;
       case 'resumePause':
         this.applyRuntimeTimeScale(this.getConfiguredGameplayTimeScale());
-        this.virtualJoystick?.setGameplayActive(!this.playtestSettings.autoMovement);
+        this.virtualJoystick?.setGameplayActive(this.shouldVirtualJoystickBeActive());
         this.scene.get('UIScene').events.emit('HidePauseMenu');
         break;
       case 'restart':
@@ -1501,6 +1608,12 @@ export class GameScene extends Phaser.Scene {
 
   private shouldShowDamageNumbers(): boolean {
     return SettingsManager.getGameplay().showDamageNumbers;
+  }
+
+  private shouldVirtualJoystickBeActive(): boolean {
+    return !this.playtestSettings.autoMovement
+      && !this.isGameplayPaused
+      && !this.isStrategyPanelPauseActive;
   }
 
   private getUpgradeSelectionContext(): UpgradeSelectionContext {
@@ -1626,11 +1739,23 @@ export class GameScene extends Phaser.Scene {
     this.uiScene?.events.off('PauseBackToTitle', this.backToTitleFromPauseMenu, this);
     this.uiScene?.events.off('PauseOpenDeveloperScene', this.openDeveloperSceneFromPauseMenu, this);
     this.uiScene?.events.off('LiveStrategyPatch', this.handleLiveStrategyPatch, this);
+    this.uiScene?.events.off(
+      'StrategyTacticsPanelExpandedChanged',
+      this.handleStrategyTacticsPanelExpandedChanged,
+      this,
+    );
+    this.uiScene?.events.off(
+      'StrategyTacticsPanelPauseWhenOpenChanged',
+      this.handleStrategyTacticsPanelPauseWhenOpenChanged,
+      this,
+    );
     this.events.off('EnemyDamagedFloatingText', this.showEnemyDamageFloatingText, this);
     this.input.keyboard?.off('keydown-ESC', this.handleEscapePressed, this);
     this.input.keyboard?.off('keydown-F3', this.toggleDebugPanel, this);
     this.scale.off('resize', this.handleResize, this);
     this.uiScene = undefined;
+    this.isStrategyPanelPauseActive = false;
+    this.isStrategyTacticsPanelExpanded = false;
     this.gameplayContext?.enemyFlow.clear();
     this.gameplayContext?.bossController.clear();
     this.gameplayContext?.mapMechanicRuntime.destroy();

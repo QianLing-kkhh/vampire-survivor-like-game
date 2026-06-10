@@ -1,0 +1,82 @@
+[
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_001",
+    "seed": "general-strategy-001-general-001-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_002",
+    "seed": "general-strategy-001-general-001-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_003",
+    "seed": "general-strategy-001-general-002-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_004",
+    "seed": "general-strategy-001-general-002-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_005",
+    "seed": "general-strategy-001-general-003-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_006",
+    "seed": "general-strategy-001-general-003-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_007",
+    "seed": "general-strategy-001-general-004-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_008",
+    "seed": "general-strategy-001-general-004-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_009",
+    "seed": "general-strategy-001-general-005-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_010",
+    "seed": "general-strategy-001-general-005-002",
+    "stageId": "stage_001"
+  }
+]

@@ -1,4 +1,17 @@
-import { parseArgs, runSimulationFromArgs } from './headless-sim-runtime.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import {
+  parseArgs,
+  runSimulationFromArgs,
+  runSimulationBatchFromArgs,
+  writeHeadlessArtifacts,
+  readAggregateFromPath,
+  writeCompareArtifacts,
+  loadHeadlessSimulationRuntime,
+  stableStringify,
+  rootDir,
+} from './headless-sim-runtime.mjs';
 
 const args = {
   seed: 'determinism-001',
@@ -27,20 +40,46 @@ if (failedIndex >= 0) {
   process.exit(1);
 }
 
-console.info('[validate:sim] Headless simulation determinism passed.');
-console.info(JSON.stringify(results[0], null, 2));
+const smoke = runSimulationBatchFromArgs({ preset: 'smoke' });
+const smokeOut = '.tmp/headless-runs/validate-smoke';
+const artifact = writeHeadlessArtifacts(smokeOut, {
+  matrix: smoke.matrix,
+  results: smoke.results,
+  commandArgs: ['--preset', 'smoke'],
+});
+const aggregate = readAggregateFromPath(smokeOut);
+const runtime = loadHeadlessSimulationRuntime();
+const compare = runtime.compareSimulationAggregates(
+  aggregate,
+  aggregate,
+  runtime.createThresholdPolicy('smoke'),
+);
+const compareOut = path.join('.tmp', 'headless-runs', 'validate-smoke-compare');
 
-function stableStringify(value) {
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
+writeCompareArtifacts(compareOut, compare);
+
+const requiredFiles = [
+  'manifest.json',
+  'run-results.jsonl',
+  'run-results.csv',
+  'aggregate.json',
+  'aggregate.md',
+];
+
+for (const file of requiredFiles) {
+  const fullPath = path.join(artifact.outDir, file);
+  if (!fs.existsSync(fullPath)) {
+    console.error(`[validate:sim] Missing artifact ${fullPath}`);
+    process.exit(1);
   }
-
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
-  }
-
-  const record = value;
-  const keys = Object.keys(record).sort();
-
-  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(',')}}`;
 }
+
+if (compare.status === 'fail') {
+  console.error('[validate:sim] Smoke self-compare failed.');
+  console.error(stableStringify(compare));
+  process.exit(1);
+}
+
+console.info('[validate:sim] Headless simulation determinism passed.');
+console.info(`[validate:sim] Smoke preset produced ${smoke.results.length} runs at ${path.join(rootDir, smokeOut)}.`);
+console.info(JSON.stringify(results[0], null, 2));

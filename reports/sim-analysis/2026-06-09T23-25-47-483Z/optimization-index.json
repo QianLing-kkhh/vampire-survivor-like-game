@@ -1,0 +1,25 @@
+[
+  {
+    "beatsBaseline": true,
+    "bestAvgScore": 267.5,
+    "bestStrategyId": "searched_top10-average-phased_7b406d07",
+    "bestVsBaselineDelta": 6.2466,
+    "candidates": 40,
+    "createdAt": "2026-06-09T23:02:42.799Z",
+    "durationSeconds": 60,
+    "mutationSettings": {
+      "carryForwardTop": 0,
+      "centerStrategyMode": "best",
+      "initialMutationRadius": 12,
+      "mutationDecay": 0.6
+    },
+    "optimizationDir": "C:\\Users\\sdewq\\Documents\\vampire-survivor-like-game\\reports\\sim-search\\2026-06-09T23-02-42-799Z_optimization",
+    "phaseList": [
+      "0-30",
+      "30-60"
+    ],
+    "rounds": 3,
+    "seedCount": 3,
+    "tickMs": 100
+  }
+]

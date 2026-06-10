@@ -1,0 +1,306 @@
+{
+  "0-30": {
+    "movement.bossBias": {
+      "avg": 18.6,
+      "max": 24,
+      "median": 20,
+      "min": 12
+    },
+    "movement.combatBias": {
+      "avg": 24.8,
+      "max": 32,
+      "median": 27,
+      "min": 12
+    },
+    "movement.farmBias": {
+      "avg": 82.2,
+      "max": 90,
+      "median": 83,
+      "min": 75
+    },
+    "movement.loopBias": {
+      "avg": 59.4,
+      "max": 71,
+      "median": 54,
+      "min": 54
+    },
+    "movement.overKitePenalty": {
+      "avg": 54.6,
+      "max": 58,
+      "median": 56,
+      "min": 51
+    },
+    "movement.riskTolerance": {
+      "avg": 16.2,
+      "max": 25,
+      "median": 13,
+      "min": 12
+    },
+    "movement.survivalBias": {
+      "avg": 38.2,
+      "max": 45,
+      "median": 36,
+      "min": 35
+    },
+    "movement.treasureBias": {
+      "avg": 13.6,
+      "max": 22,
+      "median": 13,
+      "min": 7
+    },
+    "relic.damageRelicPriority": {
+      "avg": 11.2,
+      "max": 13,
+      "median": 12,
+      "min": 9
+    },
+    "relic.economyRelicPriority": {
+      "avg": 93.8,
+      "max": 100,
+      "median": 94,
+      "min": 87
+    },
+    "relic.rarityPriority": {
+      "avg": 60,
+      "max": 67,
+      "median": 60,
+      "min": 50
+    },
+    "relic.survivalRelicPriority": {
+      "avg": 4.2,
+      "max": 9,
+      "median": 4,
+      "min": 0
+    },
+    "relic.synergyPriority": {
+      "avg": 8.6,
+      "max": 15,
+      "median": 7,
+      "min": 4
+    },
+    "treasure.evolutionChestPriority": {
+      "avg": 61.6,
+      "max": 65,
+      "median": 63,
+      "min": 55
+    },
+    "treasure.openRiskTolerance": {
+      "avg": 95.6,
+      "max": 100,
+      "median": 95,
+      "min": 91
+    },
+    "treasure.relicExpectedValuePriority": {
+      "avg": 70.4,
+      "max": 74,
+      "median": 72,
+      "min": 66
+    },
+    "treasure.routeDeviationTolerance": {
+      "avg": 93,
+      "max": 100,
+      "median": 93,
+      "min": 86
+    },
+    "upgrade.cooldownPriority": {
+      "avg": 21.6,
+      "max": 26,
+      "median": 20,
+      "min": 18
+    },
+    "upgrade.damagePriority": {
+      "avg": 13,
+      "max": 20,
+      "median": 13,
+      "min": 6
+    },
+    "upgrade.evolutionPriority": {
+      "avg": 41,
+      "max": 50,
+      "median": 38,
+      "min": 33
+    },
+    "upgrade.growthPriority": {
+      "avg": 43.6,
+      "max": 51,
+      "median": 43,
+      "min": 38
+    },
+    "upgrade.mainWeaponPriority": {
+      "avg": 43.6,
+      "max": 50,
+      "median": 47,
+      "min": 33
+    },
+    "upgrade.newWeaponPriority": {
+      "avg": 32.8,
+      "max": 37,
+      "median": 35,
+      "min": 27
+    },
+    "upgrade.passivePriority": {
+      "avg": 69.4,
+      "max": 76,
+      "median": 70,
+      "min": 61
+    },
+    "upgrade.survivalPriority": {
+      "avg": 81.4,
+      "max": 89,
+      "median": 84,
+      "min": 72
+    }
+  },
+  "30-60": {
+    "movement.bossBias": {
+      "avg": 65.4,
+      "max": 74,
+      "median": 64,
+      "min": 60
+    },
+    "movement.combatBias": {
+      "avg": 59,
+      "max": 68,
+      "median": 56,
+      "min": 56
+    },
+    "movement.farmBias": {
+      "avg": 80,
+      "max": 88,
+      "median": 81,
+      "min": 72
+    },
+    "movement.loopBias": {
+      "avg": 42.8,
+      "max": 49,
+      "median": 48,
+      "min": 30
+    },
+    "movement.overKitePenalty": {
+      "avg": 69.6,
+      "max": 79,
+      "median": 68,
+      "min": 62
+    },
+    "movement.riskTolerance": {
+      "avg": 10.2,
+      "max": 18,
+      "median": 13,
+      "min": 3
+    },
+    "movement.survivalBias": {
+      "avg": 49.8,
+      "max": 55,
+      "median": 49,
+      "min": 44
+    },
+    "movement.treasureBias": {
+      "avg": 87.2,
+      "max": 97,
+      "median": 82,
+      "min": 81
+    },
+    "relic.damageRelicPriority": {
+      "avg": 39.6,
+      "max": 44,
+      "median": 41,
+      "min": 35
+    },
+    "relic.economyRelicPriority": {
+      "avg": 34,
+      "max": 43,
+      "median": 32,
+      "min": 31
+    },
+    "relic.rarityPriority": {
+      "avg": 8.4,
+      "max": 14,
+      "median": 11,
+      "min": 0
+    },
+    "relic.survivalRelicPriority": {
+      "avg": 72.6,
+      "max": 78,
+      "median": 75,
+      "min": 66
+    },
+    "relic.synergyPriority": {
+      "avg": 85.4,
+      "max": 93,
+      "median": 85,
+      "min": 79
+    },
+    "treasure.evolutionChestPriority": {
+      "avg": 5.6,
+      "max": 13,
+      "median": 5,
+      "min": 0
+    },
+    "treasure.openRiskTolerance": {
+      "avg": 63.6,
+      "max": 74,
+      "median": 64,
+      "min": 57
+    },
+    "treasure.relicExpectedValuePriority": {
+      "avg": 61.6,
+      "max": 70,
+      "median": 59,
+      "min": 54
+    },
+    "treasure.routeDeviationTolerance": {
+      "avg": 86.8,
+      "max": 90,
+      "median": 87,
+      "min": 84
+    },
+    "upgrade.cooldownPriority": {
+      "avg": 94.8,
+      "max": 100,
+      "median": 95,
+      "min": 89
+    },
+    "upgrade.damagePriority": {
+      "avg": 5.8,
+      "max": 20,
+      "median": 2,
+      "min": 0
+    },
+    "upgrade.evolutionPriority": {
+      "avg": 68,
+      "max": 78,
+      "median": 68,
+      "min": 61
+    },
+    "upgrade.growthPriority": {
+      "avg": 82.4,
+      "max": 88,
+      "median": 83,
+      "min": 75
+    },
+    "upgrade.mainWeaponPriority": {
+      "avg": 89.4,
+      "max": 94,
+      "median": 88,
+      "min": 86
+    },
+    "upgrade.newWeaponPriority": {
+      "avg": 38.4,
+      "max": 44,
+      "median": 39,
+      "min": 28
+    },
+    "upgrade.passivePriority": {
+      "avg": 83.8,
+      "max": 93,
+      "median": 83,
+      "min": 78
+    },
+    "upgrade.survivalPriority": {
+      "avg": 62.2,
+      "max": 66,
+      "median": 64,
+      "min": 54
+    }
+  }
+}

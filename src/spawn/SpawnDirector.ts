@@ -28,6 +28,8 @@ export class SpawnDirector {
   private static readonly SPAWN_MARGIN = 100;
   private static readonly MAX_SPAWN_ATTEMPTS = 20;
   private static readonly MAX_SPAWN_BATCHES_PER_FRAME = 24;
+  private static readonly CAMERA_VIEW_PADDING = 24;
+  private static readonly WORLD_CORNER_PADDING = 24;
 
   private readonly pendingWaves: RuntimeSpawnWave[];
   private readonly activeWaves: ActiveWave[] = [];
@@ -253,6 +255,7 @@ export class SpawnDirector {
     const playerPosition = this.getPlayerPosition();
     const worldBounds = this.getWorldBounds();
     const cameraView = this.getCameraWorldView();
+    let safeCornerFallback: Position | undefined;
 
     this.spawnCount += 1;
 
@@ -261,12 +264,43 @@ export class SpawnDirector {
         ? this.getCameraEdgeSpawnPosition(cameraView, worldBounds, attempt)
         : this.getBoundarySpawnPosition(worldBounds, attempt);
 
-      if (this.isSafeSpawnPosition(position, playerPosition)) {
+      if (
+        !this.isSafeSpawnPosition(position, playerPosition)
+        || !this.isOutsideCameraView(position, cameraView)
+      ) {
+        continue;
+      }
+
+      if (!this.isNearWorldCorner(position, worldBounds)) {
         return position;
       }
+
+      safeCornerFallback ??= position;
     }
 
-    return this.getFarthestBoundaryPosition(worldBounds, playerPosition);
+    for (let attempt = 0; attempt < SpawnDirector.MAX_SPAWN_ATTEMPTS; attempt += 1) {
+      const position = this.getPlayerRingSpawnPosition(
+        worldBounds,
+        playerPosition,
+        cameraView,
+        attempt,
+      );
+
+      if (
+        !this.isSafeSpawnPosition(position, playerPosition)
+        || !this.isOutsideCameraView(position, cameraView)
+      ) {
+        continue;
+      }
+
+      if (!this.isNearWorldCorner(position, worldBounds)) {
+        return position;
+      }
+
+      safeCornerFallback ??= position;
+    }
+
+    return safeCornerFallback ?? this.getFarthestBoundaryPosition(worldBounds, playerPosition);
   }
 
   private getCameraEdgeSpawnPosition(
@@ -299,6 +333,30 @@ export class SpawnDirector {
     }
 
     return this.clampToWorldBounds({ x, y }, worldBounds);
+  }
+
+  private getPlayerRingSpawnPosition(
+    worldBounds: Phaser.Geom.Rectangle,
+    playerPosition: Position,
+    cameraView: Phaser.Geom.Rectangle | undefined,
+    attempt: number,
+  ): Position {
+    const cameraDiagonal = cameraView
+      ? Math.hypot(cameraView.width, cameraView.height)
+      : 0;
+    const spawnDistance = Math.max(
+      SpawnDirector.SAFE_SPAWN_RADIUS + SpawnDirector.SPAWN_MARGIN,
+      cameraDiagonal / 2 + SpawnDirector.SPAWN_MARGIN,
+    );
+    const angle = this.random.nextFloat(0, Math.PI * 2) + attempt * 0.61803398875;
+
+    return this.clampToWorldBounds(
+      {
+        x: playerPosition.x + Math.cos(angle) * spawnDistance,
+        y: playerPosition.y + Math.sin(angle) * spawnDistance,
+      },
+      worldBounds,
+    );
   }
 
   private getBoundarySpawnPosition(
@@ -338,6 +396,41 @@ export class SpawnDirector {
       playerPosition.x,
       playerPosition.y,
     ) >= SpawnDirector.SAFE_SPAWN_RADIUS;
+  }
+
+  private isOutsideCameraView(
+    position: Position,
+    cameraView: Phaser.Geom.Rectangle | undefined,
+  ): boolean {
+    if (!cameraView) {
+      return true;
+    }
+
+    const padding = SpawnDirector.CAMERA_VIEW_PADDING;
+
+    return (
+      position.x < cameraView.left - padding
+      || position.x > cameraView.right + padding
+      || position.y < cameraView.top - padding
+      || position.y > cameraView.bottom + padding
+    );
+  }
+
+  private isNearWorldCorner(
+    position: Position,
+    worldBounds: Phaser.Geom.Rectangle,
+  ): boolean {
+    const padding = SpawnDirector.WORLD_CORNER_PADDING;
+    const nearHorizontalEdge = (
+      Math.abs(position.x - worldBounds.left) <= padding
+      || Math.abs(position.x - worldBounds.right) <= padding
+    );
+    const nearVerticalEdge = (
+      Math.abs(position.y - worldBounds.top) <= padding
+      || Math.abs(position.y - worldBounds.bottom) <= padding
+    );
+
+    return nearHorizontalEdge && nearVerticalEdge;
   }
 
   private getFarthestBoundaryPosition(

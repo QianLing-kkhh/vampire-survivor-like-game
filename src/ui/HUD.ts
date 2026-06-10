@@ -25,6 +25,21 @@ export interface HUDState {
   targetTimeSeconds: number;
   score: number;
   relicCount?: number;
+  relics?: Array<{
+    id: string;
+    name: string;
+    rarity: string;
+    iconKey?: string;
+  }>;
+  bossBars?: Array<{
+    id: string;
+    name: string;
+    currentHp: number;
+    maxHp: number;
+    hpRatio: number;
+    finalBoss?: boolean;
+    bossLike?: boolean;
+  }>;
   characterHudInfo?: {
     characterId: string;
     skinId?: string;
@@ -121,6 +136,24 @@ type CharacterPortraitEntry = {
   visualKey?: string;
 };
 
+type RelicIconEntry = {
+  container: Phaser.GameObjects.Container;
+  background: Phaser.GameObjects.Rectangle;
+  icon?: Phaser.GameObjects.Image;
+  fallback?: Phaser.GameObjects.Text;
+  tooltipData?: IconTooltipData;
+  visualKey?: string;
+};
+
+type BossBarEntry = {
+  container: Phaser.GameObjects.Container;
+  background: Phaser.GameObjects.Rectangle;
+  fill: Phaser.GameObjects.Rectangle;
+  border: Phaser.GameObjects.Rectangle;
+  nameText: Phaser.GameObjects.Text;
+  hpText: Phaser.GameObjects.Text;
+};
+
 export class HUD {
   private static readonly SHOW_DEBUG_OVERLAY = false;
   private static readonly BAR_WIDTH = 230;
@@ -132,6 +165,7 @@ export class HUD {
   private static readonly BUILD_WEAPON_LEVEL_X = 38;
   private static readonly BUILD_PASSIVE_ICON_X = 150;
   private static readonly BUILD_PASSIVE_LEVEL_X = 188;
+  private static readonly RELIC_ICON_SIZE = 26;
 
   private readonly scene: Phaser.Scene;
   private readonly screenManager: ScreenManager;
@@ -153,6 +187,8 @@ export class HUD {
   private readonly shieldText: Phaser.GameObjects.Text;
   private readonly evolutionDebugText: Phaser.GameObjects.Text;
   private readonly characterPortraitEntry: CharacterPortraitEntry;
+  private readonly relicEntries: RelicIconEntry[] = [];
+  private readonly bossBarEntries: BossBarEntry[] = [];
   private readonly buildEntries: BuildEntry[] = [];
   private readonly weaponEntries: IconEntry[] = [];
   private readonly passiveEntries: IconEntry[] = [];
@@ -225,6 +261,8 @@ export class HUD {
       targetTimeSeconds: 300,
       score: 0,
       relicCount: 0,
+      relics: [],
+      bossBars: [],
       weaponIds: [],
       autoMode: false,
       weaponHudInfo: [],
@@ -259,6 +297,13 @@ export class HUD {
     this.shieldText.destroy();
     this.evolutionDebugText.destroy();
     this.characterPortraitEntry.container.destroy(true);
+    this.relicEntries.forEach((entry) => {
+      entry.container.destroy(true);
+    });
+    this.bossBarEntries.forEach((entry) => {
+      entry.container.destroy(true);
+    });
+    this.bossBarEntries.length = 0;
     this.minimap.destroy();
     this.pauseButton.destroy();
     this.buildEntries.forEach((entry) => {
@@ -273,7 +318,7 @@ export class HUD {
   }
 
   update(state: HUDState): void {
-    this.applyLayout();
+    const layout = this.applyLayout();
     const currentHp = this.formatInteger(state.currentHp);
     const maxHp = this.formatInteger(state.playerMaxHp ?? state.maxHp);
     const exp = Math.floor(state.currentExp);
@@ -286,20 +331,22 @@ export class HUD {
     this.timeText.setText(`${I18n.t('hud.time')} ${this.formatTime(state.timeSeconds)}`);
     this.scoreText.setText(`${I18n.t('hud.score')} ${this.formatInteger(state.score)}`);
     this.relicText.setText(`${I18n.t('hud.relics')}: ${state.relicCount ?? 0}`);
+    this.updateRelicIconList(state, layout);
     this.goalText.setText(this.getGoalText(state));
-    this.updateHudMessage(state.message);
+    this.updateBossBars(state, layout);
+    this.updateHudMessage(state.message, layout);
     this.updateCharacterPortrait(state);
     this.updateShieldText();
     this.updateIconList(
       this.passiveEntries,
       this.getOtherPassiveIconItems(state),
-      LayoutConfig.getHudLayout(this.screenManager).passivesPosition.x,
-      LayoutConfig.getHudLayout(this.screenManager).passivesPosition.y,
+      layout.passivesPosition.x,
+      layout.passivesPosition.y,
     );
     this.updateBuildList(
       this.getBuildItems(state),
-      LayoutConfig.getHudLayout(this.screenManager).weaponsPosition.x,
-      LayoutConfig.getHudLayout(this.screenManager).weaponsPosition.y,
+      layout.weaponsPosition.x,
+      layout.weaponsPosition.y,
     );
     this.evolutionDebugText.setText(this.getEvolutionDebugText(state));
     const showMinimap = SettingsManager.getDisplay().minimapScale > 0;
@@ -396,6 +443,85 @@ export class HUD {
 
     container.add([background, label]);
     const entry: IconEntry = { container, background, label };
+    attachIconTooltip(this.scene, background, () => container.visible ? entry.tooltipData : undefined);
+    return entry;
+  }
+
+  private updateRelicIconList(state: HUDState, layout: ReturnType<typeof LayoutConfig.getHudLayout>): void {
+    const items = this.getVisibleRelicItems(state);
+    const iconSize = HUD.RELIC_ICON_SIZE;
+    const gap = 4;
+    const labelWidth = layout.density === 'compact' ? 64 : 82;
+    const startX = this.relicText.x + labelWidth + iconSize / 2;
+    const y = this.relicText.y + 10;
+
+    while (this.relicEntries.length < items.length) {
+      this.relicEntries.push(this.createRelicIconEntry());
+    }
+
+    this.relicEntries.forEach((entry, index) => {
+      const item = items[index];
+
+      if (!item) {
+        entry.container.setVisible(false);
+        return;
+      }
+
+      entry.container.setPosition(startX + index * (iconSize + gap), y);
+      entry.container.setVisible(true);
+      entry.background.setStrokeStyle(1, this.getRelicRarityColor(item.rarity), 0.82);
+      entry.tooltipData = item.tooltip;
+      const textureKey = item.iconKey && this.scene.textures.exists(item.iconKey)
+        ? item.iconKey
+        : undefined;
+      const visualKey = textureKey
+        ? `texture:${textureKey}`
+        : `fallback:${item.fallback}`;
+
+      if (entry.visualKey === visualKey) {
+        return;
+      }
+
+      entry.icon?.destroy();
+      entry.fallback?.destroy();
+      entry.icon = undefined;
+      entry.fallback = undefined;
+      entry.visualKey = visualKey;
+
+      if (textureKey) {
+        entry.icon = this.scene.add.image(0, 0, textureKey);
+        entry.icon.setDisplaySize(iconSize - 6, iconSize - 6);
+        entry.container.addAt(entry.icon, 1);
+        return;
+      }
+
+      entry.fallback = this.scene.add.text(0, 0, item.fallback, {
+        color: UITheme.textColor,
+        fontFamily: UITheme.fontFamily,
+        fontSize: item.id === 'more' ? '12px' : '11px',
+        fontStyle: 'bold',
+      });
+      entry.fallback.setOrigin(0.5);
+      entry.container.addAt(entry.fallback, 1);
+    });
+  }
+
+  private createRelicIconEntry(): RelicIconEntry {
+    const container = this.scene.add.container(0, 0);
+    container.setDepth(902);
+    container.setScrollFactor(0);
+    const background = this.scene.add.rectangle(
+      0,
+      0,
+      HUD.RELIC_ICON_SIZE,
+      HUD.RELIC_ICON_SIZE,
+      UITheme.iconBgColor,
+      0.86,
+    );
+    background.setStrokeStyle(1, UITheme.panelBorderColor, 0.7);
+    background.setInteractive({ useHandCursor: true });
+    container.add(background);
+    const entry: RelicIconEntry = { container, background };
     attachIconTooltip(this.scene, background, () => container.visible ? entry.tooltipData : undefined);
     return entry;
   }
@@ -917,10 +1043,11 @@ export class HUD {
     bar.displayWidth = this.barWidth * Phaser.Math.Clamp(ratio, 0, 1);
   }
 
-  private applyLayout(): void {
+  private applyLayout(): ReturnType<typeof LayoutConfig.getHudLayout> {
     const layout = LayoutConfig.getHudLayout(this.screenManager);
     const stats = layout.statsPosition;
     const contentY = stats.y + layout.statsContentOffsetY;
+    const compact = layout.density === 'compact';
 
     this.barWidth = layout.barWidth;
     this.maxIconRows = layout.maxIconRows;
@@ -954,9 +1081,9 @@ export class HUD {
     this.expBarBg.setSize(this.barWidth, HUD.BAR_HEIGHT);
     this.expBarFill.setPosition(stats.x, contentY + 64);
     this.timeText.setPosition(stats.x, contentY + 90);
-    this.timeText.setFontSize(this.screenManager.isPortrait() ? '22px' : '26px');
+    this.timeText.setFontSize(compact ? '22px' : '26px');
     this.scoreText.setPosition(stats.x, contentY + 118);
-    this.scoreText.setFontSize(this.screenManager.isPortrait() ? '20px' : '22px');
+    this.scoreText.setFontSize(compact ? '20px' : '22px');
     this.relicText.setPosition(stats.x, contentY + 150);
     this.relicText.setFontSize(layout.fontSize);
     this.goalText.setPosition(stats.x, contentY + 174);
@@ -980,6 +1107,8 @@ export class HUD {
     );
     this.pauseButton.setFontSize(layout.fontSize);
     setTextHitArea(this.pauseButton, layout.pauseButtonRect.width, layout.pauseButtonRect.height);
+
+    return layout;
   }
 
   private createPanelBackground(
@@ -1004,15 +1133,19 @@ export class HUD {
       : 'II';
   }
 
-  private updateHudMessage(message: string | undefined): void {
+  private updateHudMessage(
+    message: string | undefined,
+    layout: ReturnType<typeof LayoutConfig.getHudLayout>,
+  ): void {
     this.messageText.setText(message ?? '');
+    this.messageText.setPosition(layout.bossTextPosition.x, layout.bossTextPosition.y);
 
     if (this.isBossHudMessage(message)) {
       this.messageText.setColor('#facc15');
       this.messageText.setFontSize(
-        this.screenManager.width <= 430
+        layout.density === 'compact'
           ? '22px'
-          : this.screenManager.isPortrait() ? '26px' : '34px',
+          : '34px',
       );
       this.messageText.setStyle({ fontStyle: 'bold' });
       this.messageText.setStroke('#7f1d1d', 5);
@@ -1020,13 +1153,122 @@ export class HUD {
     }
 
     this.messageText.setColor(UITheme.successTextColor);
-    this.messageText.setFontSize(LayoutConfig.getHudLayout(this.screenManager).fontSize);
+    this.messageText.setFontSize(layout.fontSize);
     this.messageText.setStyle({ fontStyle: '' });
     this.messageText.setStroke('#000000', 0);
   }
 
   private isBossHudMessage(message: string | undefined): boolean {
     return message !== undefined && /boss|incoming|warning/i.test(message);
+  }
+
+  private updateBossBars(
+    state: HUDState,
+    layout: ReturnType<typeof LayoutConfig.getHudLayout>,
+  ): void {
+    const maxBars = this.screenManager.isPortrait() ? 3 : 4;
+    const visibleBosses = (state.bossBars ?? []).slice(0, maxBars);
+
+    while (this.bossBarEntries.length < visibleBosses.length) {
+      this.bossBarEntries.push(this.createBossBarEntry());
+    }
+
+    this.bossBarEntries.forEach((entry, index) => {
+      const boss = visibleBosses[index];
+
+      if (!boss) {
+        entry.container.setVisible(false);
+        return;
+      }
+
+      const barLayout = this.getBossBarLayout(index, layout);
+      const fillWidth = Math.max(0, (barLayout.width - 4) * Phaser.Math.Clamp(boss.hpRatio, 0, 1));
+      const hpPercent = Math.round(Phaser.Math.Clamp(boss.hpRatio, 0, 1) * 100);
+
+      entry.container.setVisible(true);
+      entry.container.setPosition(barLayout.x, barLayout.y);
+      entry.background.setSize(barLayout.width, barLayout.height);
+      entry.border.setSize(barLayout.width, barLayout.height);
+      entry.fill.setSize(fillWidth, barLayout.height - 4);
+      entry.fill.setPosition(-barLayout.width / 2 + 2 + fillWidth / 2, 0);
+      entry.fill.setFillStyle(this.getBossBarFillColor(boss.hpRatio));
+      entry.nameText.setText(boss.name);
+      entry.nameText.setPosition(-barLayout.width / 2 + 10, -barLayout.height / 2 - 18);
+      entry.nameText.setFontSize(this.screenManager.isPortrait() ? '12px' : '14px');
+      entry.hpText.setText(`${hpPercent}%`);
+      entry.hpText.setPosition(barLayout.width / 2 - 10, -barLayout.height / 2 - 18);
+      entry.hpText.setFontSize(this.screenManager.isPortrait() ? '11px' : '13px');
+    });
+  }
+
+  private createBossBarEntry(): BossBarEntry {
+    const container = this.scene.add.container(0, 0);
+    container.setDepth(950);
+    container.setScrollFactor(0);
+
+    const background = this.scene.add.rectangle(0, 0, 420, 14, UITheme.barBgColor, 0.82);
+    background.setStrokeStyle(1, UITheme.panelBorderColor, 0.7);
+
+    const fill = this.scene.add.rectangle(-208, 0, 416, 10, 0xdc2626, 0.95);
+    fill.setOrigin(0.5);
+
+    const border = this.scene.add.rectangle(0, 0, 420, 14, 0x000000, 0);
+    border.setStrokeStyle(1, 0xfacc15, 0.65);
+
+    const nameText = this.scene.add.text(0, 0, '', {
+      color: UITheme.textColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: '14px',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    });
+
+    const hpText = this.scene.add.text(0, 0, '', {
+      align: 'right',
+      color: UITheme.mutedTextColor,
+      fontFamily: UITheme.fontFamily,
+      fontSize: '13px',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    });
+    hpText.setOrigin(1, 0);
+
+    container.add([background, fill, border, nameText, hpText]);
+
+    return { container, background, fill, border, nameText, hpText };
+  }
+
+  private getBossBarLayout(
+    index: number,
+    hudLayout: ReturnType<typeof LayoutConfig.getHudLayout>,
+  ): { x: number; y: number; width: number; height: number } {
+    const zone = hudLayout.hudZones.topCenter;
+    const compact = hudLayout.density === 'compact';
+    const width = Math.min(zone.width, compact ? 340 : 420);
+    const height = compact ? 12 : 14;
+    const gap = compact ? 26 : 32;
+    const y = zone.y + (compact ? 24 : 28) + index * gap;
+
+    return {
+      x: zone.x + zone.width / 2,
+      y,
+      width,
+      height,
+    };
+  }
+
+  private getBossBarFillColor(hpRatio: number): number {
+    if (hpRatio <= 0.25) {
+      return 0xef4444;
+    }
+
+    if (hpRatio <= 0.5) {
+      return 0xf97316;
+    }
+
+    return 0xdc2626;
   }
 
   private createPanelImage(): Phaser.GameObjects.Image | undefined {
@@ -1083,6 +1325,64 @@ export class HUD {
         fallback: '+',
       },
     ];
+  }
+
+  private getVisibleRelicItems(state: HUDState): Array<{
+    id: string;
+    name: string;
+    rarity: string;
+    iconKey?: string;
+    fallback: string;
+    tooltip?: IconTooltipData;
+  }> {
+    const relics = state.relics ?? [];
+    const stride = HUD.RELIC_ICON_SIZE + 4;
+    const maxByWidth = Math.max(1, Math.floor((this.barWidth - 74) / stride));
+    const compact = this.screenManager.isPortrait() || this.screenManager.width <= 900 || this.screenManager.height <= 430;
+    const maxItems = Math.max(1, compact
+      ? Math.min(this.screenManager.isPortrait() ? 3 : 4, maxByWidth)
+      : Math.min(6, maxByWidth));
+    const items = relics.map((relic) => ({
+      id: relic.id,
+      name: relic.name,
+      rarity: relic.rarity,
+      iconKey: relic.iconKey,
+      fallback: this.getInitials(relic.id),
+      tooltip: {
+        kind: 'relic' as const,
+        id: relic.id,
+        title: relic.name,
+      },
+    }));
+
+    if (items.length <= maxItems) {
+      return items;
+    }
+
+    return [
+      ...items.slice(0, Math.max(0, maxItems - 1)),
+      {
+        id: 'more',
+        name: I18n.t('hud.moreRelics', { count: items.length - maxItems + 1 }),
+        rarity: 'common',
+        fallback: I18n.t('hud.moreRelics', { count: items.length - maxItems + 1 }),
+        tooltip: undefined,
+      },
+    ];
+  }
+
+  private getRelicRarityColor(rarity: string): number {
+    switch (rarity) {
+      case 'legendary':
+        return 0xf97316;
+      case 'epic':
+        return 0xa78bfa;
+      case 'rare':
+        return 0x60a5fa;
+      case 'common':
+      default:
+        return 0x94a3b8;
+    }
   }
 
   private getVisibleBuildItems(

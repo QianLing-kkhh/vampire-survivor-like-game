@@ -54,10 +54,12 @@ import {
 import { createSimulationSpeedConfigFromLegacySettings } from '../runtime/SimulationSpeedConfig';
 import { RuntimeSpawnWave, SpawnDirector } from '../spawn/SpawnDirector';
 import { RunStats } from '../stats/RunStats';
+import {
+  GENERATED_TEST_STRATEGY_ID,
+  getBrowserAutoTestDefaultStrategy,
+} from '../strategy/generated/GeneratedStrategyLoader';
 import { StrategyHasher } from '../strategy/hash/StrategyHasher';
 import { RuntimeStrategyState } from '../strategy/runtime/RuntimeStrategyState';
-import { cloneAutoStrategyProfile } from '../strategy/profile/AutoStrategyClone';
-import { PLAYTEST_AUTO_STRATEGY_PROFILE } from '../strategy/profile/AutoStrategyDefaults';
 import { StrategyProfileRepository } from '../strategy/profile/StrategyProfileRepository';
 import { TutorialManager } from '../tutorial/TutorialManager';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
@@ -141,13 +143,27 @@ export class GameplayInitializer {
     const performanceMonitor = new PerformanceMonitor();
     const poolManager = new PoolManager();
     const versionInfo = getCurrentVersionInfo();
-    const strategyProfile = SettingsManager.getDeveloper().playtestMode
-      ? cloneAutoStrategyProfile(PLAYTEST_AUTO_STRATEGY_PROFILE)
-      : StrategyProfileRepository.getSelectedProfile();
-    const strategyProfileHash = StrategyHasher.hash(strategyProfile);
     const autoStrategyEnabled = config.playtestSettings.autoMovement
       || config.playtestSettings.autoUpgrade
       || config.playtestSettings.autoOpenTreasure;
+    const developerSettings = SettingsManager.getDeveloper();
+    const browserAutoTestStrategy = autoStrategyEnabled && developerSettings.playtestMode
+      ? getBrowserAutoTestDefaultStrategy({
+        playtestMode: developerSettings.playtestMode,
+        autoMode: config.playtestSettings.autoMode,
+        autoMovement: config.playtestSettings.autoMovement,
+        autoUpgrade: config.playtestSettings.autoUpgrade,
+        autoOpenTreasure: config.playtestSettings.autoOpenTreasure,
+      })
+      : undefined;
+    const strategyProfile = browserAutoTestStrategy?.profile
+      ?? StrategyProfileRepository.getSelectedProfile();
+    const strategyProfileHash = StrategyHasher.hash(strategyProfile);
+
+    if (browserAutoTestStrategy?.source === GENERATED_TEST_STRATEGY_ID) {
+      console.info('[generated-strategy] Browser auto test default strategyProfileId=generated_test.');
+    }
+
     const runtimeStrategyState = autoStrategyEnabled
       ? new RuntimeStrategyState(strategyProfile, strategyProfileHash)
       : undefined;

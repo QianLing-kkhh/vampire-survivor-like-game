@@ -1,0 +1,11 @@
+strategyId,generationMethod,phaseId,startSeconds,endSeconds,baselineFitnessScore,phasedFitnessScore,deltaFitnessScore,baselineSurvivalRate,phasedSurvivalRate,deltaSurvivalRate,baselineAvgScoreGain,phasedAvgScoreGain,deltaAvgScoreGain,baselineAvgExpGain,phasedAvgExpGain,deltaAvgExpGain,baselineAvgKills,phasedAvgKills,deltaAvgKills,baselineAvgDamageTaken,phasedAvgDamageTaken,deltaAvgDamageTaken,improved
+searched_top1-phased_2ba90e89,top1-phased,0-30,0,30,3.4666,3.3666,-0.1,1,1,0,175,175.3333,0.3333,1.3333,2,0.6667,2.3333,2.3333,0,0,0.6,0.6,false
+searched_top1-phased_2ba90e89,top1-phased,30-60,30,60,162.4867,154.2067,-8.28,1,1,0,402.3333,358.3333,-44,14,12.6667,-1.3333,19.6667,16.3333,-3.3334,0,1.2,1.2,false
+searched_top5-average-phased_19d1a6aa,top5-average-phased,0-30,0,30,3.4666,0.3,-3.1666,1,1,0,175,169,-6,1.3333,1.6667,0.3334,2.3333,2,-0.3333,0,2.2,2.2,false
+searched_top5-average-phased_19d1a6aa,top5-average-phased,30-60,30,60,162.4867,155.1267,-7.36,1,1,0,402.3333,365.6667,-36.6666,14,11.6667,-2.3333,19.6667,17,-2.6667,0,0.6,0.6,false
+searched_top10-average-phased_ba12cf77,top10-average-phased,0-30,0,30,3.4666,1.2666,-2.2,1,1,0,175,173.6667,-1.3333,1.3333,2,0.6667,2.3333,2.3333,0,0,2,2,false
+searched_top10-average-phased_ba12cf77,top10-average-phased,30-60,30,60,162.4867,149.04,-13.4467,1,1,0,402.3333,357.6667,-44.6666,14,11,-3,19.6667,16.6667,-3,0,3.2,3.2,false
+searched_top10-median-phased_48e5aea6,top10-median-phased,0-30,0,30,3.4666,1.5666,-1.9,1,1,0,175,174,-1,1.3333,2,0.6667,2.3333,2.3333,0,0,1.8,1.8,false
+searched_top10-median-phased_48e5aea6,top10-median-phased,30-60,30,60,162.4867,140.5867,-21.9,1,1,0,402.3333,356.3333,-46,14,12,-2,19.6667,17,-2.6667,0,9,9,false
+searched_topN-median-phased_700ee7af,topN-median-phased,0-30,0,30,3.4666,2.7666,-0.7,1,1,0,175,174.6667,-0.3333,1.3333,2,0.6667,2.3333,2.3333,0,0,1,1,false
+searched_topN-median-phased_700ee7af,topN-median-phased,30-60,30,60,162.4867,142.2066,-20.2801,1,1,0,402.3333,373,-29.3333,14,13,-1,19.6667,18.3333,-1.3334,0,9.8,9.8,false

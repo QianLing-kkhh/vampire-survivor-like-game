@@ -544,7 +544,8 @@
     "evolved": "進化",
     "endless": "Endless",
     "relics": "Relics",
-    "shield": "Shield"
+    "shield": "Shield",
+    "moreRelics": "+{count}"
   },
   "settings": {
     "title": "設定",
@@ -604,7 +605,36 @@
     "nextPage": "次へ",
     "back": "戻る",
     "showDetailedCooldownTime": "詳細CD時間",
+    "strategyTacticsPanel": "戦略 / 戦術パネル",
+    "pauseWhenStrategyPanelOpen": "戦術パネル展開中に一時停止",
+    "manualHidesStrategyPanel": "手動モードではこのパネルは常に非表示になります。",
+    "strategyTacticsPanelNextRunNotice": "戦略 / 戦術パネルは次のランで読み込まれます。",
     "minimapScale": "ミニマップサイズ"
+  },
+  "strategyPanel": {
+    "title": "戦略 / 戦術",
+    "collapsed": "戦略",
+    "collapse": "折りたたむ",
+    "expand": "展開",
+    "pauseWhenOpen": "展開中に一時停止",
+    "readOnly": "読み取り専用",
+    "edits": "編集 {count}",
+    "preset": {
+      "safe": "安全",
+      "farm": "育成",
+      "combat": "戦闘",
+      "chest": "宝箱",
+      "boss": "ボス",
+      "loop": "周回"
+    },
+    "slider": {
+      "survive": "生存",
+      "combat": "戦闘",
+      "farm": "経験値",
+      "treasure": "宝箱",
+      "risk": "リスク",
+      "loop": "周回"
+    }
   },
   "records": {
     "title": "記録",
@@ -774,7 +804,8 @@
       "rare": "レア",
       "epic": "エピック",
       "legendary": "レジェンド"
-    }
+    },
+    "acquiredTitle": "レリック獲得"
   },
   "tooltip": {
     "weapon": {
@@ -831,7 +862,28 @@
     "titleAssets": "タイトル素材を読み込み中",
     "runAssets": "ランの素材を準備中",
     "complete": "完了",
-    "failedAsset": "代替素材を試行中：{key}"
+    "failedAsset": "代替素材を試行中：{key}",
+    "map": "マップ",
+    "character": "キャラクター",
+    "startingWeapon": "初期武器",
+    "mapSize": "マップサイズ",
+    "grid": "グリッド",
+    "landmarkSpacing": "ランドマーク間隔",
+    "mechanics": "ギミック",
+    "noSpecialMechanics": "特殊ギミックなし",
+    "initialStats": "初期能力",
+    "growth": "成長",
+    "reaction": "被ダメ反応",
+    "levelUp": "レベルアップ",
+    "weaponType": "タイプ",
+    "behavior": "挙動",
+    "tags": "タグ",
+    "coreStats": "主要能力",
+    "currentFile": "現在のファイル",
+    "maxHp": "最大HP",
+    "moveSpeed": "移動速度",
+    "pickupRange": "取得範囲",
+    "expMultiplier": "経験値倍率"
   },
   "game": {
     "bossAppears": "Boss Appears",

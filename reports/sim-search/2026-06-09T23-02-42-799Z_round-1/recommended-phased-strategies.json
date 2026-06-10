@@ -1,0 +1,462 @@
+[
+  {
+    "generationMethod": "top1-phased",
+    "id": "searched_top1-phased_d0fabfd2",
+    "name": "Top1 Phased Strategy",
+    "phases": [
+      {
+        "endSeconds": 30,
+        "profile": {
+          "id": "searched_top1-phased_d0fabfd2_0_30",
+          "movement": {
+            "bossBias": 59,
+            "combatBias": 58,
+            "farmBias": 49,
+            "loopBias": 40,
+            "overKitePenalty": 90,
+            "riskTolerance": 23,
+            "survivalBias": 58,
+            "treasureBias": 26
+          },
+          "name": "Top1 Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 76,
+            "economyRelicPriority": 86,
+            "rarityPriority": 5,
+            "survivalRelicPriority": 60,
+            "synergyPriority": 32
+          },
+          "treasure": {
+            "evolutionChestPriority": 63,
+            "openRiskTolerance": 22,
+            "relicExpectedValuePriority": 92,
+            "routeDeviationTolerance": 27
+          },
+          "upgrade": {
+            "cooldownPriority": 10,
+            "damagePriority": 54,
+            "evolutionPriority": 21,
+            "growthPriority": 26,
+            "mainWeaponPriority": 46,
+            "newWeaponPriority": 85,
+            "passivePriority": 68,
+            "survivalPriority": 68
+          },
+          "version": 1
+        },
+        "startSeconds": 0
+      },
+      {
+        "endSeconds": 60,
+        "profile": {
+          "id": "searched_top1-phased_d0fabfd2_30_60",
+          "movement": {
+            "bossBias": 91,
+            "combatBias": 98,
+            "farmBias": 48,
+            "loopBias": 98,
+            "overKitePenalty": 30,
+            "riskTolerance": 14,
+            "survivalBias": 81,
+            "treasureBias": 18
+          },
+          "name": "Top1 Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 81,
+            "economyRelicPriority": 13,
+            "rarityPriority": 51,
+            "survivalRelicPriority": 91,
+            "synergyPriority": 52
+          },
+          "treasure": {
+            "evolutionChestPriority": 66,
+            "openRiskTolerance": 80,
+            "relicExpectedValuePriority": 69,
+            "routeDeviationTolerance": 74
+          },
+          "upgrade": {
+            "cooldownPriority": 83,
+            "damagePriority": 35,
+            "evolutionPriority": 76,
+            "growthPriority": 71,
+            "mainWeaponPriority": 63,
+            "newWeaponPriority": 90,
+            "passivePriority": 65,
+            "survivalPriority": 73
+          },
+          "version": 1
+        },
+        "startSeconds": 30
+      }
+    ],
+    "version": 1
+  },
+  {
+    "generationMethod": "top5-average-phased",
+    "id": "searched_top5-average-phased_d821b963",
+    "name": "Top5 Average Phased Strategy",
+    "phases": [
+      {
+        "endSeconds": 30,
+        "profile": {
+          "id": "searched_top5-average-phased_d821b963_0_30",
+          "movement": {
+            "bossBias": 46,
+            "combatBias": 64,
+            "farmBias": 66,
+            "loopBias": 58,
+            "overKitePenalty": 66,
+            "riskTolerance": 47,
+            "survivalBias": 33,
+            "treasureBias": 60
+          },
+          "name": "Top5 Average Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 69,
+            "economyRelicPriority": 53,
+            "rarityPriority": 32,
+            "survivalRelicPriority": 59,
+            "synergyPriority": 40
+          },
+          "treasure": {
+            "evolutionChestPriority": 54,
+            "openRiskTolerance": 38,
+            "relicExpectedValuePriority": 37,
+            "routeDeviationTolerance": 41
+          },
+          "upgrade": {
+            "cooldownPriority": 55,
+            "damagePriority": 74,
+            "evolutionPriority": 44,
+            "growthPriority": 40,
+            "mainWeaponPriority": 43,
+            "newWeaponPriority": 58,
+            "passivePriority": 45,
+            "survivalPriority": 51
+          },
+          "version": 1
+        },
+        "startSeconds": 0
+      },
+      {
+        "endSeconds": 60,
+        "profile": {
+          "id": "searched_top5-average-phased_d821b963_30_60",
+          "movement": {
+            "bossBias": 48,
+            "combatBias": 80,
+            "farmBias": 63,
+            "loopBias": 60,
+            "overKitePenalty": 39,
+            "riskTolerance": 31,
+            "survivalBias": 59,
+            "treasureBias": 55
+          },
+          "name": "Top5 Average Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 53,
+            "economyRelicPriority": 46,
+            "rarityPriority": 49,
+            "survivalRelicPriority": 66,
+            "synergyPriority": 49
+          },
+          "treasure": {
+            "evolutionChestPriority": 38,
+            "openRiskTolerance": 63,
+            "relicExpectedValuePriority": 48,
+            "routeDeviationTolerance": 54
+          },
+          "upgrade": {
+            "cooldownPriority": 52,
+            "damagePriority": 41,
+            "evolutionPriority": 62,
+            "growthPriority": 35,
+            "mainWeaponPriority": 67,
+            "newWeaponPriority": 74,
+            "passivePriority": 51,
+            "survivalPriority": 74
+          },
+          "version": 1
+        },
+        "startSeconds": 30
+      }
+    ],
+    "version": 1
+  },
+  {
+    "generationMethod": "top10-average-phased",
+    "id": "searched_top10-average-phased_7b406d07",
+    "name": "Top10 Average Phased Strategy",
+    "phases": [
+      {
+        "endSeconds": 30,
+        "profile": {
+          "id": "searched_top10-average-phased_7b406d07_0_30",
+          "movement": {
+            "bossBias": 37,
+            "combatBias": 50,
+            "farmBias": 66,
+            "loopBias": 48,
+            "overKitePenalty": 58,
+            "riskTolerance": 48,
+            "survivalBias": 28,
+            "treasureBias": 66
+          },
+          "name": "Top10 Average Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 61,
+            "economyRelicPriority": 51,
+            "rarityPriority": 41,
+            "survivalRelicPriority": 57,
+            "synergyPriority": 31
+          },
+          "treasure": {
+            "evolutionChestPriority": 47,
+            "openRiskTolerance": 43,
+            "relicExpectedValuePriority": 51,
+            "routeDeviationTolerance": 46
+          },
+          "upgrade": {
+            "cooldownPriority": 48,
+            "damagePriority": 66,
+            "evolutionPriority": 48,
+            "growthPriority": 46,
+            "mainWeaponPriority": 52,
+            "newWeaponPriority": 60,
+            "passivePriority": 45,
+            "survivalPriority": 55
+          },
+          "version": 1
+        },
+        "startSeconds": 0
+      },
+      {
+        "endSeconds": 60,
+        "profile": {
+          "id": "searched_top10-average-phased_7b406d07_30_60",
+          "movement": {
+            "bossBias": 52,
+            "combatBias": 66,
+            "farmBias": 53,
+            "loopBias": 61,
+            "overKitePenalty": 34,
+            "riskTolerance": 48,
+            "survivalBias": 69,
+            "treasureBias": 50
+          },
+          "name": "Top10 Average Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 55,
+            "economyRelicPriority": 56,
+            "rarityPriority": 58,
+            "survivalRelicPriority": 44,
+            "synergyPriority": 59
+          },
+          "treasure": {
+            "evolutionChestPriority": 38,
+            "openRiskTolerance": 60,
+            "relicExpectedValuePriority": 48,
+            "routeDeviationTolerance": 54
+          },
+          "upgrade": {
+            "cooldownPriority": 60,
+            "damagePriority": 51,
+            "evolutionPriority": 52,
+            "growthPriority": 42,
+            "mainWeaponPriority": 62,
+            "newWeaponPriority": 62,
+            "passivePriority": 46,
+            "survivalPriority": 66
+          },
+          "version": 1
+        },
+        "startSeconds": 30
+      }
+    ],
+    "version": 1
+  },
+  {
+    "generationMethod": "top10-median-phased",
+    "id": "searched_top10-median-phased_7021ae3c",
+    "name": "Top10 Median Phased Strategy",
+    "phases": [
+      {
+        "endSeconds": 30,
+        "profile": {
+          "id": "searched_top10-median-phased_7021ae3c_0_30",
+          "movement": {
+            "bossBias": 41,
+            "combatBias": 58,
+            "farmBias": 66,
+            "loopBias": 48,
+            "overKitePenalty": 61,
+            "riskTolerance": 46,
+            "survivalBias": 27,
+            "treasureBias": 75
+          },
+          "name": "Top10 Median Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 70,
+            "economyRelicPriority": 53,
+            "rarityPriority": 42,
+            "survivalRelicPriority": 61,
+            "synergyPriority": 26
+          },
+          "treasure": {
+            "evolutionChestPriority": 49,
+            "openRiskTolerance": 36,
+            "relicExpectedValuePriority": 42,
+            "routeDeviationTolerance": 42
+          },
+          "upgrade": {
+            "cooldownPriority": 61,
+            "damagePriority": 67,
+            "evolutionPriority": 39,
+            "growthPriority": 46,
+            "mainWeaponPriority": 52,
+            "newWeaponPriority": 69,
+            "passivePriority": 48,
+            "survivalPriority": 69
+          },
+          "version": 1
+        },
+        "startSeconds": 0
+      },
+      {
+        "endSeconds": 60,
+        "profile": {
+          "id": "searched_top10-median-phased_7021ae3c_30_60",
+          "movement": {
+            "bossBias": 56,
+            "combatBias": 64,
+            "farmBias": 55,
+            "loopBias": 65,
+            "overKitePenalty": 33,
+            "riskTolerance": 48,
+            "survivalBias": 73,
+            "treasureBias": 57
+          },
+          "name": "Top10 Median Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 50,
+            "economyRelicPriority": 56,
+            "rarityPriority": 59,
+            "survivalRelicPriority": 34,
+            "synergyPriority": 55
+          },
+          "treasure": {
+            "evolutionChestPriority": 36,
+            "openRiskTolerance": 73,
+            "relicExpectedValuePriority": 49,
+            "routeDeviationTolerance": 50
+          },
+          "upgrade": {
+            "cooldownPriority": 69,
+            "damagePriority": 56,
+            "evolutionPriority": 57,
+            "growthPriority": 35,
+            "mainWeaponPriority": 66,
+            "newWeaponPriority": 70,
+            "passivePriority": 43,
+            "survivalPriority": 81
+          },
+          "version": 1
+        },
+        "startSeconds": 30
+      }
+    ],
+    "version": 1
+  },
+  {
+    "generationMethod": "topN-median-phased",
+    "id": "searched_topN-median-phased_98cf8c23",
+    "name": "TopN Median Phased Strategy",
+    "phases": [
+      {
+        "endSeconds": 30,
+        "profile": {
+          "id": "searched_topN-median-phased_98cf8c23_0_30",
+          "movement": {
+            "bossBias": 52,
+            "combatBias": 63,
+            "farmBias": 65,
+            "loopBias": 55,
+            "overKitePenalty": 82,
+            "riskTolerance": 42,
+            "survivalBias": 29,
+            "treasureBias": 64
+          },
+          "name": "TopN Median Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 87,
+            "economyRelicPriority": 57,
+            "rarityPriority": 30,
+            "survivalRelicPriority": 60,
+            "synergyPriority": 32
+          },
+          "treasure": {
+            "evolutionChestPriority": 63,
+            "openRiskTolerance": 31,
+            "relicExpectedValuePriority": 28,
+            "routeDeviationTolerance": 27
+          },
+          "upgrade": {
+            "cooldownPriority": 78,
+            "damagePriority": 72,
+            "evolutionPriority": 21,
+            "growthPriority": 31,
+            "mainWeaponPriority": 43,
+            "newWeaponPriority": 74,
+            "passivePriority": 43,
+            "survivalPriority": 68
+          },
+          "version": 1
+        },
+        "startSeconds": 0
+      },
+      {
+        "endSeconds": 60,
+        "profile": {
+          "id": "searched_topN-median-phased_98cf8c23_30_60",
+          "movement": {
+            "bossBias": 37,
+            "combatBias": 93,
+            "farmBias": 63,
+            "loopBias": 62,
+            "overKitePenalty": 39,
+            "riskTolerance": 14,
+            "survivalBias": 59,
+            "treasureBias": 57
+          },
+          "name": "TopN Median Phased Strategy",
+          "relic": {
+            "damageRelicPriority": 50,
+            "economyRelicPriority": 45,
+            "rarityPriority": 51,
+            "survivalRelicPriority": 82,
+            "synergyPriority": 52
+          },
+          "treasure": {
+            "evolutionChestPriority": 33,
+            "openRiskTolerance": 76,
+            "relicExpectedValuePriority": 50,
+            "routeDeviationTolerance": 51
+          },
+          "upgrade": {
+            "cooldownPriority": 66,
+            "damagePriority": 35,
+            "evolutionPriority": 76,
+            "growthPriority": 32,
+            "mainWeaponPriority": 69,
+            "newWeaponPriority": 90,
+            "passivePriority": 52,
+            "survivalPriority": 89
+          },
+          "version": 1
+        },
+        "startSeconds": 30
+      }
+    ],
+    "version": 1
+  }
+]

@@ -91,6 +91,7 @@ export class SettingsMenu {
   };
   private selectedTab: SettingsTabId = 'display';
   private uiStyleReopenNotice = false;
+  private strategyPanelNextRunNotice = false;
   private unsubscribeResize?: () => void;
   private openDropdown?: OpenDropdown;
   private activeDraggedSlider?: RowControl;
@@ -923,7 +924,7 @@ export class SettingsMenu {
   private getGameplayRows(): SettingRowDefinition[] {
     const gameplay = SettingsManager.getGameplay();
 
-    return [
+    const rows: SettingRowDefinition[] = [
       this.toggleRow('showDetailedCooldownTime', this.t('settings.showDetailedCooldownTime', 'Detailed CD Time'), gameplay.showDetailedCooldownTime, () => {
         SettingsManager.updateGameplay({
           showDetailedCooldownTime: !SettingsManager.getGameplay().showDetailedCooldownTime,
@@ -935,6 +936,22 @@ export class SettingsMenu {
       this.toggleRow('endlessMode', this.t('settings.endlessMode', 'Endless Mode'), gameplay.endlessMode, () => {
         SettingsManager.updateGameplay({ endlessMode: !SettingsManager.getGameplay().endlessMode });
       }),
+      this.toggleRow('strategyTacticsPanel', this.t('settings.strategyTacticsPanel', 'Strategy / Tactics Panel'), gameplay.showStrategyTacticsPanel, () => {
+        this.strategyPanelNextRunNotice = true;
+        SettingsManager.updateGameplay({
+          showStrategyTacticsPanel: !SettingsManager.getGameplay().showStrategyTacticsPanel,
+        });
+      }),
+      this.toggleRow('pauseWhenStrategyPanelOpen', this.t('settings.pauseWhenStrategyPanelOpen', 'Pause When Tactics Open'), gameplay.pauseWhenStrategyPanelOpen, () => {
+        SettingsManager.updateGameplay({
+          pauseWhenStrategyPanelOpen: !SettingsManager.getGameplay().pauseWhenStrategyPanelOpen,
+        });
+      }),
+      {
+        id: 'manualHidesStrategyPanel',
+        label: this.t('settings.manualHidesStrategyPanel', 'Manual mode always keeps this panel hidden.'),
+        type: 'info',
+      },
       {
         id: 'strategyControlType',
         label: this.t('settings.strategyControlType', 'Auto Strategy Control'),
@@ -962,6 +979,16 @@ export class SettingsMenu {
         ),
       },
     ];
+
+    if (this.strategyPanelNextRunNotice) {
+      rows.splice(5, 0, {
+        id: 'strategyTacticsPanelNextRunNotice',
+        label: this.t('settings.strategyTacticsPanelNextRunNotice', 'Strategy / Tactics Panel loads on the next run.'),
+        type: 'info',
+      });
+    }
+
+    return rows;
   }
 
   private getAudioRows(): SettingRowDefinition[] {

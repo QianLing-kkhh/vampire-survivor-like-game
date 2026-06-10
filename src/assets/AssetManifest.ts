@@ -1,4 +1,5 @@
 import { DisplaySettingsData } from '../settings/DisplaySettings';
+import { MapMechanicIconKind, MapMechanicVisualKind } from './AssetKeyMap';
 import {
   EXTERNAL_ART_MANIFEST_CACHE_KEY,
   EXTERNAL_ART_MANIFEST_PATH,
@@ -7,6 +8,7 @@ import {
 } from './ExternalArtManifest';
 import { ExternalArtRegistry } from './ExternalArtRegistry';
 import { AssetLoadPlan, AssetRequest } from './AssetLoadPlan';
+import { RunRequiredAssetKeys, buildRunRequiredAssetKeys } from './RunRequiredAssetKeys';
 
 export type ArtManifestAsset = {
   path: string;
@@ -34,6 +36,15 @@ export type RunPreloadContext = {
   displayQuality: DisplaySettingsData['displayQuality'];
   skinId?: string;
   endlessMode?: boolean;
+  startingWeaponId?: string;
+  finalBossId?: string;
+  waveEnemyIds?: string[];
+  groundTileKey?: string;
+  landmarkTypes?: string[];
+  mapMechanicVisualKinds?: MapMechanicVisualKind[];
+  mapMechanicMinimapIconKinds?: MapMechanicIconKind[];
+  audioEnabled?: boolean;
+  minimapScale?: number;
 };
 
 export const ART_MANIFEST_CACHE_KEY = 'art_animation_manifest';
@@ -326,46 +337,243 @@ export function buildRunLoadPlan(
   manifestAssets?: readonly ArtManifestAsset[],
   manifestVersion?: string,
 ): AssetLoadPlan {
-  const usesGraphicsFallback = context.assetStyle === 'graphics'
-    || (context.displayQuality === 'minimal' && context.assetStyle !== 'art001');
-  const styleAwareArtToRequest = (asset: ArtManifestAsset): AssetRequest => (
-    artToRequest(asset, context.assetStyle, manifestVersion)
-  );
-  const styleAwareAssets = (assets: readonly AssetRequest[]): AssetRequest[] => (
-    assets.map((asset) => {
-      if (!asset.path.startsWith('assets/art/')) {
-        return asset;
-      }
-
-      return {
-        ...asset,
-        path: appendCacheVersion(
-          remapAssetStylePath(asset.path, context.assetStyle),
-          manifestVersion,
-        ),
-      };
-    })
-  );
-  const minimapIconAssets = MAP_MECHANIC_MINIMAP_ICON_ASSETS.map(styleAwareArtToRequest);
-  const manifestDrivenArtAssets = getManifestDrivenArtAssets(
-    context,
-    manifestAssets,
-  ).map(styleAwareArtToRequest);
-  const artAssets = usesGraphicsFallback
-    ? minimapIconAssets
-    : manifestDrivenArtAssets;
+  const requiredKeys = buildRunRequiredAssetKeys(context);
 
   return {
-    id: `run:${context.characterId}:${context.stageId}:${context.mapId}`,
-    assets: [
-      ...LEGACY_GAMEPLAY_ASSETS,
-      ...styleAwareAssets(TITLE_UI_ASSETS),
-      ...styleAwareAssets(TITLE_ICON_ASSETS),
-      ...artAssets,
-      ...GAMEPLAY_AUDIO_ASSETS,
-      ...getExternalRuntimeAssets(),
-    ],
+    id: [
+      'run',
+      context.characterId,
+      context.stageId,
+      context.mapId,
+      context.assetStyle,
+      context.displayQuality,
+    ].join(':'),
+    assets: dedupeAssetRequests([
+      ...getRequiredLegacyRuntimeAssets(requiredKeys),
+      ...getRequiredRunUiAssets(context, manifestVersion),
+      ...getRequiredRunIconAssets(context, requiredKeys, manifestVersion),
+      ...getRequiredRunArtAssets(context, requiredKeys, manifestAssets, manifestVersion),
+      ...getRequiredRunAudioAssets(requiredKeys),
+      ...getRequiredExternalRuntimeAssets(context, requiredKeys),
+    ]),
   };
+}
+
+export function dedupeAssetRequests(assets: readonly AssetRequest[]): AssetRequest[] {
+  const deduped = new Map<string, AssetRequest>();
+
+  for (const asset of assets) {
+    const existing = deduped.get(asset.key);
+
+    if (existing && getAssetRequestSignature(existing) !== getAssetRequestSignature(asset)) {
+      console.warn(`[assets] Duplicate asset key with different request skipped by override: ${asset.key}`);
+    }
+
+    deduped.set(asset.key, asset);
+  }
+
+  return Array.from(deduped.values());
+}
+
+function getRequiredLegacyRuntimeAssets(requiredKeys: RunRequiredAssetKeys): AssetRequest[] {
+  return LEGACY_GAMEPLAY_ASSETS.filter((asset) => requiredKeys.textures.has(asset.key));
+}
+
+function getRequiredRunUiAssets(
+  context: RunPreloadContext,
+  manifestVersion: string | undefined,
+): AssetRequest[] {
+  const requiredUiKeys = new Set([
+    'art_ui_pause_panel_bg',
+    'art_ui_hud_panel_bg',
+    'art_ui_help_panel_bg',
+    'art_ui_levelup_panel_bg',
+    'art_ui_hp_icon',
+    'art_ui_exp_icon',
+    'art_ui_time_icon',
+    'hp_icon',
+    'exp_icon',
+    'time_icon',
+  ]);
+
+  return styleAwareAssetRequests(
+    TITLE_UI_ASSETS.filter((asset) => requiredUiKeys.has(asset.key)),
+    context.assetStyle,
+    manifestVersion,
+  );
+}
+
+function getRequiredRunIconAssets(
+  context: RunPreloadContext,
+  requiredKeys: RunRequiredAssetKeys,
+  manifestVersion: string | undefined,
+): AssetRequest[] {
+  return styleAwareAssetRequests(
+    TITLE_ICON_ASSETS.filter((asset) => requiredKeys.textures.has(asset.key)),
+    context.assetStyle,
+    manifestVersion,
+  );
+}
+
+function getRequiredRunArtAssets(
+  context: RunPreloadContext,
+  requiredKeys: RunRequiredAssetKeys,
+  manifestAssets: readonly ArtManifestAsset[] | undefined,
+  manifestVersion: string | undefined,
+): AssetRequest[] {
+  const requiredArtKeys = getRequiredArtTextureKeys(context, requiredKeys);
+  const manifestAssetMap = createManifestAssetMap(manifestAssets);
+  const builtInAssetMap = createManifestAssetMap(getBuiltInRuntimeArtAssets(context));
+  const assets: ArtManifestAsset[] = [];
+
+  for (const key of requiredArtKeys) {
+    const asset = manifestAssetMap.get(key) ?? builtInAssetMap.get(key);
+
+    if (asset) {
+      assets.push(asset);
+    }
+  }
+
+  return assets.map((asset) => artToRequest(asset, context.assetStyle, manifestVersion));
+}
+
+function getRequiredRunAudioAssets(requiredKeys: RunRequiredAssetKeys): AssetRequest[] {
+  return GAMEPLAY_AUDIO_ASSETS.filter((asset) => requiredKeys.audio.has(asset.key));
+}
+
+function getRequiredExternalRuntimeAssets(
+  context: RunPreloadContext,
+  requiredKeys: RunRequiredAssetKeys,
+): AssetRequest[] {
+  return ExternalArtRegistry.getAssets()
+    .filter((asset) => isExternalRuntimeAssetRequired(asset, context, requiredKeys))
+    .map(externalArtToRequest)
+    .filter((asset): asset is AssetRequest => asset !== undefined);
+}
+
+function styleAwareAssetRequests(
+  assets: readonly AssetRequest[],
+  assetStyle: DisplaySettingsData['assetStyle'],
+  manifestVersion: string | undefined,
+): AssetRequest[] {
+  return assets.map((asset) => {
+    if (!asset.path.startsWith('assets/art/')) {
+      return asset;
+    }
+
+    return {
+      ...asset,
+      path: appendCacheVersion(
+        remapAssetStylePath(asset.path, assetStyle),
+        manifestVersion,
+      ),
+    };
+  });
+}
+
+function getRequiredArtTextureKeys(
+  context: RunPreloadContext,
+  requiredKeys: RunRequiredAssetKeys,
+): Set<string> {
+  const usesLegacyOrGraphicsRuntime = context.assetStyle === 'graphics'
+    || context.assetStyle === 'legacy'
+    || context.displayQuality === 'minimal';
+  const requiredArtKeys = new Set<string>();
+
+  for (const key of requiredKeys.textures) {
+    if (!key.startsWith('art_')) {
+      continue;
+    }
+
+    if (usesLegacyOrGraphicsRuntime && !key.includes('_minimap')) {
+      continue;
+    }
+
+    requiredArtKeys.add(key);
+  }
+
+  return requiredArtKeys;
+}
+
+function getBuiltInRuntimeArtAssets(context: RunPreloadContext): ArtManifestAsset[] {
+  const skinId = resolvePlayerSkinId(context.skinId, context.characterId);
+
+  return [
+    ...GAMEPLAY_ART_ASSETS,
+    getGenericPlayerWalkSheetAsset(context.assetStyle),
+    ...getPlayerRuntimeArtAssets(skinId, context.assetStyle),
+    ...getPlayerSkillArtAssets(skinId),
+  ];
+}
+
+function isExternalRuntimeAssetRequired(
+  asset: ExternalArtAsset,
+  context: RunPreloadContext,
+  requiredKeys: RunRequiredAssetKeys,
+): boolean {
+  const logicalKeys = [
+    asset.logicalKey,
+    ...(asset.logicalKeys ?? []),
+  ].filter((key): key is string => typeof key === 'string' && key.length > 0);
+
+  if (
+    requiredKeys.textures.has(asset.textureKey)
+    || logicalKeys.some((key) => requiredKeys.textures.has(key))
+  ) {
+    return true;
+  }
+
+  switch (asset.category) {
+    case 'player':
+      return asset.skinId === context.skinId;
+    case 'weapon':
+      return asset.targetId === context.startingWeaponId;
+    case 'enemy':
+    case 'boss':
+      return [
+        ...(context.waveEnemyIds ?? []),
+        context.finalBossId,
+        ...(context.endlessMode ? [
+          'endless_berserker',
+          'endless_summoner',
+          'endless_freezer',
+          'endless_sniper',
+          'endless_tanker',
+        ] : []),
+      ].includes(asset.targetId ?? '');
+    case 'pickup':
+      return asset.targetId === 'exp_gem' || asset.targetId === 'treasure_chest';
+    case 'world':
+      return [
+        context.mapId,
+        context.groundTileKey,
+        ...(context.landmarkTypes ?? []),
+      ].includes(asset.targetId ?? '');
+    case 'effect':
+      return [
+        'hit_flash',
+        'level_up_glow',
+        'boss_dash_warning',
+        'boss_dash_impact',
+      ].includes(asset.targetId ?? '');
+    default:
+      return false;
+  }
+}
+
+function getAssetRequestSignature(asset: AssetRequest): string {
+  switch (asset.type) {
+    case 'spritesheet':
+      return [
+        asset.type,
+        asset.path,
+        asset.frameWidth,
+        asset.frameHeight,
+        asset.endFrame ?? '',
+      ].join('|');
+    default:
+      return [asset.type, asset.path].join('|');
+  }
 }
 
 export function parseArtManifestAssets(manifest: unknown): ArtManifestAsset[] {
@@ -473,34 +681,6 @@ export function artToRequest(
   }
 
   return image(asset.key, path);
-}
-
-function getManifestDrivenArtAssets(
-  context: RunPreloadContext,
-  manifestAssets: readonly ArtManifestAsset[] | undefined,
-): ArtManifestAsset[] {
-  if (manifestAssets && manifestAssets.length > 0) {
-    return mergeArtManifestAssets(manifestAssets);
-  }
-
-  const skinId = resolvePlayerSkinId(context.skinId, context.characterId);
-
-  return [
-    ...GAMEPLAY_ART_ASSETS,
-    getGenericPlayerWalkSheetAsset(context.assetStyle),
-    ...getPlayerRuntimeArtAssets(skinId, context.assetStyle),
-    ...getPlayerSkillArtAssets(skinId),
-  ];
-}
-
-function mergeArtManifestAssets(assets: readonly ArtManifestAsset[]): ArtManifestAsset[] {
-  const merged = new Map<string, ArtManifestAsset>();
-
-  for (const asset of assets) {
-    merged.set(asset.key, asset);
-  }
-
-  return Array.from(merged.values());
 }
 
 function createManifestAssetMap(

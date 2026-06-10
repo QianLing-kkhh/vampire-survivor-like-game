@@ -1,0 +1,11 @@
+strategyId,generationMethod,phaseId,startSeconds,endSeconds,baselineFitnessScore,phasedFitnessScore,deltaFitnessScore,baselineSurvivalRate,phasedSurvivalRate,deltaSurvivalRate,baselineAvgScoreGain,phasedAvgScoreGain,deltaAvgScoreGain,baselineAvgExpGain,phasedAvgExpGain,deltaAvgExpGain,baselineAvgKills,phasedAvgKills,deltaAvgKills,baselineAvgDamageTaken,phasedAvgDamageTaken,deltaAvgDamageTaken,improved
+searched_top1-phased_d0fabfd2,top1-phased,0-30,0,30,4.5334,5.2,0.6666,1,1,0,180,184.6667,4.6667,2,2.3333,0.3333,2.6667,3,0.3333,0,0,0,true
+searched_top1-phased_d0fabfd2,top1-phased,30-60,30,60,142.2133,139.2399,-2.9734,1,1,0,351,335,-16,13.3333,10.3333,-3,16.3333,15.3333,-1,8.4,7.8,-0.6,false
+searched_top5-average-phased_d821b963,top5-average-phased,0-30,0,30,4.5334,4.6666,0.1332,1,1,0,180,176.6667,-3.3333,2,2.3333,0.3333,2.6667,2.3333,-0.3334,0,0,0,true
+searched_top5-average-phased_d821b963,top5-average-phased,30-60,30,60,142.2133,101.0266,-41.1867,1,1,0,351,334,-17,13.3333,13.3333,0,16.3333,17.3333,1,8.4,32.2,23.8,false
+searched_top10-average-phased_7b406d07,top10-average-phased,0-30,0,30,4.5334,3.9666,-0.5668,1,1,0,180,175.6667,-4.3333,2,2,0,2.6667,2.3333,-0.3334,0,0.2,0.2,false
+searched_top10-average-phased_7b406d07,top10-average-phased,30-60,30,60,142.2133,149.0267,6.8134,1,1,0,351,359.3333,8.3333,13.3333,13.3333,0,16.3333,16.6667,0.3334,8.4,4.8,-3.6,true
+searched_top10-median-phased_7021ae3c,top10-median-phased,0-30,0,30,4.5334,4.9333,0.3999,1,1,0,180,180.6667,0.6667,2,2.3333,0.3333,2.6667,2.6667,0,0,0,0,true
+searched_top10-median-phased_7021ae3c,top10-median-phased,30-60,30,60,142.2133,115.2266,-26.9867,1,1,0,351,342.3333,-8.6667,13.3333,11,-2.3333,16.3333,17.3333,1,8.4,22.8,14.4,false
+searched_topN-median-phased_98cf8c23,topN-median-phased,0-30,0,30,4.5334,5.3334,0.8,1,1,0,180,181,1,2,2.6667,0.6667,2.6667,2.6667,0,0,0,0,true
+searched_topN-median-phased_98cf8c23,topN-median-phased,30-60,30,60,142.2133,104.2334,-37.9799,1,1,0,351,340.3333,-10.6667,13.3333,13.6667,0.3334,16.3333,17.6667,1.3334,8.4,30.8,22.4,false
