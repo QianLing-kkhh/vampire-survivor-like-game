@@ -641,6 +641,7 @@ export class CoreSimulation {
       playerX: Number(this.state.player.x.toFixed(3)),
       playerY: Number(this.state.player.y.toFixed(3)),
       playerHp: Number(this.state.player.currentHp.toFixed(3)),
+      playerMaxHp: Number(this.state.player.maxHp.toFixed(3)),
       level: this.state.player.level,
       enemyCount: this.state.enemies.length,
       pickupCount: this.state.pickups.length,

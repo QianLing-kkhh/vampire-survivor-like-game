@@ -71,6 +71,7 @@ export interface SimTracePoint {
   playerX: number;
   playerY: number;
   playerHp: number;
+  playerMaxHp: number;
   level: number;
   enemyCount: number;
   pickupCount: number;

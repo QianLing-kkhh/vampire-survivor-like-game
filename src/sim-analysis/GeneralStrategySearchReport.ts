@@ -22,6 +22,18 @@ export interface GeneralStrategyRunRecord {
     | 'pickupsCollected'
     | 'enemiesSpawned'
   >;
+  damageWindow: GeneralStrategyDamageWindowMetrics;
+}
+
+export interface GeneralStrategyDamageWindowMetrics {
+  windowSeconds: 30;
+  maxDamageRatioLimit: 0.15;
+  passed: boolean;
+  violationCount: number;
+  maxWindowDamage: number;
+  maxWindowDamageRatio: number;
+  totalExcessDamage: number;
+  totalExcessDamageRatio: number;
 }
 
 export interface GeneralStrategyCandidateStats {
@@ -41,6 +53,10 @@ export interface GeneralStrategyCandidateStats {
   avgLevel: number;
   avgKills: number;
   avgDamageTaken: number;
+  damageWindowPassRate: number;
+  avgDamageWindowViolationCount: number;
+  avgMaxDamageWindowRatio: number;
+  damageSafetyPenalty: number;
   scoreStdDev: number;
   consistencyScore: number;
   generalFitnessScore: number;
@@ -85,6 +101,8 @@ export interface GeneralStrategyBaselineComparisonEntry {
   completionRate: number;
   avgSurvivalTimeSeconds: number;
   avgDamageTaken: number;
+  damageWindowPassRate: number;
+  damageSafetyPenalty: number;
   generalFitnessScore: number;
   deltaVsBalancedDefault: number;
   deltaPctVsBalancedDefault: number;

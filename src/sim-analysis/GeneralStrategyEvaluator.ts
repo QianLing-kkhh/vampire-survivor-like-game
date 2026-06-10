@@ -1,4 +1,14 @@
-import type { GeneralStrategyBaselineComparisonEntry, GeneralStrategyCandidateStats, GeneralStrategyRunRecord } from './GeneralStrategySearchReport';
+import type {
+  GeneralStrategyBaselineComparisonEntry,
+  GeneralStrategyCandidateStats,
+  GeneralStrategyDamageWindowMetrics,
+  GeneralStrategyRunRecord,
+} from './GeneralStrategySearchReport';
+
+const DAMAGE_WINDOW_SECONDS = 30;
+const DAMAGE_WINDOW_MAX_RATIO = 0.15;
+const DAMAGE_WINDOW_VIOLATION_PENALTY = 5000;
+const DAMAGE_WINDOW_EXCESS_RATIO_PENALTY = 10000;
 
 export function aggregateGeneralStrategyRuns(
   runs: readonly GeneralStrategyRunRecord[],
@@ -22,7 +32,7 @@ export function aggregateGeneralStrategyRuns(
 
 export function generalStrategyAggregateCsv(stats: readonly GeneralStrategyCandidateStats[]): string {
   return [
-    'candidateId,strategyVariantId,runs,scenarioCount,avgScore,medianScore,p10Score,p90Score,completionRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageTaken,scoreStdDev,consistencyScore,generalFitnessScore',
+    'candidateId,strategyVariantId,runs,scenarioCount,avgScore,medianScore,p10Score,p90Score,completionRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageTaken,damageWindowPassRate,avgDamageWindowViolationCount,avgMaxDamageWindowRatio,damageSafetyPenalty,scoreStdDev,consistencyScore,generalFitnessScore',
     ...stats.map((row) => [
       row.candidateId,
       row.strategyVariantId,
@@ -37,6 +47,10 @@ export function generalStrategyAggregateCsv(stats: readonly GeneralStrategyCandi
       row.avgLevel,
       row.avgKills,
       row.avgDamageTaken,
+      row.damageWindowPassRate,
+      row.avgDamageWindowViolationCount,
+      row.avgMaxDamageWindowRatio,
+      row.damageSafetyPenalty,
       row.scoreStdDev,
       row.consistencyScore,
       row.generalFitnessScore,
@@ -61,6 +75,8 @@ export function createBaselineComparison(
       completionRate: stats.completionRate,
       avgSurvivalTimeSeconds: stats.avgSurvivalTimeSeconds,
       avgDamageTaken: stats.avgDamageTaken,
+      damageWindowPassRate: stats.damageWindowPassRate,
+      damageSafetyPenalty: stats.damageSafetyPenalty,
       generalFitnessScore: stats.generalFitnessScore,
       deltaVsBalancedDefault: delta,
       deltaPctVsBalancedDefault: balancedFitness === 0
@@ -74,12 +90,12 @@ export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselin
   const lines = [
     '# General Strategy Baseline Comparison',
     '',
-    '| Strategy | Avg Score | Median | P10 | Completion | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
-    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    '| Strategy | Avg Score | Median | P10 | Completion | Damage Window Pass | Safety Penalty | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
   ];
 
   for (const row of rows) {
-    lines.push(`| ${row.strategyId} | ${row.avgScore} | ${row.medianScore} | ${row.p10Score} | ${row.completionRate} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
+    lines.push(`| ${row.strategyId} | ${row.avgScore} | ${row.medianScore} | ${row.p10Score} | ${row.completionRate} | ${row.damageWindowPassRate} | ${row.damageSafetyPenalty} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
   }
 
   return `${lines.join('\n')}\n`;
@@ -89,6 +105,7 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
   const scores = runs.map((run) => run.result.score);
   const scoreStdDev = stdDev(scores);
   const avgDamageTaken = average(runs.map((run) => run.result.damageTaken));
+  const damageSafetyPenalty = average(runs.map((run) => calculateDamageSafetyPenalty(run.damageWindow)));
   const completionRate = runs.filter((run) => run.result.result === 'completed' || run.result.result === 'victory').length / Math.max(1, runs.length);
   const avgScore = average(scores);
   const medianScore = percentile(scores, 0.5);
@@ -99,7 +116,7 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     + p10Score * 0.8
     + completionRate * 1000
     - scoreStdDev * 0.2
-    - avgDamageTaken * 2.0
+    - damageSafetyPenalty
   );
 
   return {
@@ -119,10 +136,138 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     avgLevel: roundMetric(average(runs.map((run) => run.result.level))),
     avgKills: roundMetric(average(runs.map((run) => run.result.kills))),
     avgDamageTaken: roundMetric(avgDamageTaken),
+    damageWindowPassRate: roundMetric(runs.filter((run) => run.damageWindow.passed).length / Math.max(1, runs.length)),
+    avgDamageWindowViolationCount: roundMetric(average(runs.map((run) => run.damageWindow.violationCount))),
+    avgMaxDamageWindowRatio: roundMetric(average(runs.map((run) => run.damageWindow.maxWindowDamageRatio))),
+    damageSafetyPenalty: roundMetric(damageSafetyPenalty),
     scoreStdDev: roundMetric(scoreStdDev),
     consistencyScore: roundMetric(p10Score - scoreStdDev * 0.5),
     generalFitnessScore: roundMetric(generalFitnessScore),
   };
+}
+
+export function calculateDamageWindowMetrics(result: {
+  damageTaken: number;
+  durationSeconds: number;
+  survivalTimeSeconds: number;
+  trace?: readonly {
+    timeMs: number;
+    damageTaken: number;
+    playerHp: number;
+    playerMaxHp?: number;
+  }[];
+}): GeneralStrategyDamageWindowMetrics {
+  const trace = result.trace ?? [];
+
+  if (trace.length === 0) {
+    const fallbackMaxHp = 100;
+    const ratio = result.damageTaken / fallbackMaxHp;
+    const excessRatio = Math.max(0, ratio - DAMAGE_WINDOW_MAX_RATIO);
+
+    return {
+      windowSeconds: DAMAGE_WINDOW_SECONDS,
+      maxDamageRatioLimit: DAMAGE_WINDOW_MAX_RATIO,
+      passed: excessRatio === 0,
+      violationCount: excessRatio > 0 ? 1 : 0,
+      maxWindowDamage: roundMetric(result.damageTaken),
+      maxWindowDamageRatio: roundMetric(ratio),
+      totalExcessDamage: roundMetric(excessRatio * fallbackMaxHp),
+      totalExcessDamageRatio: roundMetric(excessRatio),
+    };
+  }
+
+  const endSeconds = Math.max(
+    Math.min(result.durationSeconds, result.survivalTimeSeconds),
+    trace[trace.length - 1].timeMs / 1000,
+  );
+  let violationCount = 0;
+  let maxWindowDamage = 0;
+  let maxWindowDamageRatio = 0;
+  let totalExcessDamage = 0;
+  let totalExcessDamageRatio = 0;
+
+  for (let startSeconds = 0; startSeconds < endSeconds; startSeconds += DAMAGE_WINDOW_SECONDS) {
+    const windowEndSeconds = Math.min(startSeconds + DAMAGE_WINDOW_SECONDS, endSeconds);
+    const startDamage = readCumulativeDamageAt(trace, startSeconds);
+    const endDamage = readCumulativeDamageAt(trace, windowEndSeconds);
+    const windowDamage = Math.max(0, endDamage - startDamage);
+    const maxHp = readWindowMaxHp(trace, startSeconds, windowEndSeconds);
+    const threshold = maxHp * DAMAGE_WINDOW_MAX_RATIO;
+    const ratio = maxHp > 0 ? windowDamage / maxHp : 0;
+    const excessDamage = Math.max(0, windowDamage - threshold);
+    const excessRatio = Math.max(0, ratio - DAMAGE_WINDOW_MAX_RATIO);
+
+    maxWindowDamage = Math.max(maxWindowDamage, windowDamage);
+    maxWindowDamageRatio = Math.max(maxWindowDamageRatio, ratio);
+
+    if (excessDamage > 0.0001) {
+      violationCount += 1;
+      totalExcessDamage += excessDamage;
+      totalExcessDamageRatio += excessRatio;
+    }
+  }
+
+  return {
+    windowSeconds: DAMAGE_WINDOW_SECONDS,
+    maxDamageRatioLimit: DAMAGE_WINDOW_MAX_RATIO,
+    passed: violationCount === 0,
+    violationCount,
+    maxWindowDamage: roundMetric(maxWindowDamage),
+    maxWindowDamageRatio: roundMetric(maxWindowDamageRatio),
+    totalExcessDamage: roundMetric(totalExcessDamage),
+    totalExcessDamageRatio: roundMetric(totalExcessDamageRatio),
+  };
+}
+
+function calculateDamageSafetyPenalty(metrics: GeneralStrategyDamageWindowMetrics): number {
+  if (metrics.passed) {
+    return 0;
+  }
+
+  return metrics.violationCount * DAMAGE_WINDOW_VIOLATION_PENALTY
+    + metrics.totalExcessDamageRatio * DAMAGE_WINDOW_EXCESS_RATIO_PENALTY;
+}
+
+function readCumulativeDamageAt(
+  trace: readonly { timeMs: number; damageTaken: number }[],
+  seconds: number,
+): number {
+  if (seconds <= 0) {
+    return 0;
+  }
+
+  const targetMs = seconds * 1000;
+  let previous = trace[0];
+
+  for (const point of trace) {
+    if (point.timeMs > targetMs) {
+      return previous.damageTaken;
+    }
+
+    previous = point;
+  }
+
+  return previous.damageTaken;
+}
+
+function readWindowMaxHp(
+  trace: readonly { timeMs: number; playerHp: number; playerMaxHp?: number }[],
+  startSeconds: number,
+  endSeconds: number,
+): number {
+  const startMs = startSeconds * 1000;
+  const endMs = endSeconds * 1000;
+  const values = trace
+    .filter((point) => point.timeMs > startMs && point.timeMs <= endMs)
+    .map((point) => point.playerMaxHp ?? Math.max(1, point.playerHp));
+
+  if (values.length === 0) {
+    const nearest = trace.find((point) => point.timeMs >= startMs) ?? trace[trace.length - 1];
+
+    return nearest.playerMaxHp ?? Math.max(1, nearest.playerHp);
+  }
+
+  return Math.max(1, ...values);
 }
 
 function percentile(values: readonly number[], ratio: number): number {

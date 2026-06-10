@@ -210,6 +210,12 @@ function evaluateStrategies(strategies, scenarios, round) {
         content,
         versionInfo,
       });
+      const damageWindow = runtime.calculateDamageWindowMetrics({
+        damageTaken: result.damageTaken,
+        durationSeconds: result.durationSeconds,
+        survivalTimeSeconds: result.survivalTimeSeconds,
+        trace: result.trace,
+      });
 
       records.push({
         candidateId: strategy.candidateId,
@@ -229,6 +235,7 @@ function evaluateStrategies(strategies, scenarios, round) {
           pickupsCollected: result.pickupsCollected,
           enemiesSpawned: result.enemiesSpawned,
         },
+        damageWindow,
       });
       runIndex += 1;
     }

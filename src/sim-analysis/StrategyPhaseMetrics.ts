@@ -263,6 +263,7 @@ function createZeroTracePoint(): SimTracePoint {
     playerX: 0,
     playerY: 0,
     playerHp: 0,
+    playerMaxHp: 0,
     level: 1,
     enemyCount: 0,
     pickupCount: 0,
