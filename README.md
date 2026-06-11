@@ -1,8 +1,22 @@
 # Vampire Survivor Like Game
 
-A **Phaser + TypeScript Vampire Survivors-like prototype** for testing survival gameplay systems, automated playtesting, balance data, and architecture foundations.
+A **Phaser + TypeScript Vampire Survivors-like baseline game** for preserving the behavior of the legacy prototype.
 
-This is not a finished game. The current project focus is system architecture, gameplay prototyping, automated testing, CSV analysis, responsive UI, and content/save foundations for future expansion.
+## Maintenance Mode
+
+This Phaser project is in maintenance mode. It is no longer the main feature-development line.
+
+The project is kept as a playable legacy baseline and migration reference for the formal Godot project, `xianxia-survivor-godot`. Future production development should happen in the Godot project, not by adding new gameplay systems to this Phaser codebase.
+
+Allowed work in this repository is limited to:
+
+- keeping the existing game start/play/end flow working;
+- fixing obvious blockers in the legacy baseline;
+- preserving existing save, replay, result, and simulation behavior;
+- documenting baseline behavior for migration reference;
+- hiding unreleased, experimental, or developer-facing entries from normal player navigation.
+
+Do not use this repository for new weapons, enemies, characters, bosses, balance passes, major architecture rewrites, new services, or Godot code migration.
 
 ## Tech Stack
 
@@ -76,7 +90,7 @@ The current Vite production bundle can show a chunk-size warning. That warning i
 - Progression: `UpgradeFlow`, `UpgradeSelector`, `UpgradeApplier`, weapon/passive/evolution managers
 - Enemy and Boss flow: `EnemyFlow`, `BossController`, `EndlessBossManager`
 - Endless mode: `EndlessManager`, `EndlessRewardManager`, `EndlessLeaderboard`
-- UI: responsive HUD, minimal selection scenes, Records, Replay Tool, Daily Challenge, custom stage tools, SettingsMenu, HelpOverlay, ResultScene
+- UI: responsive HUD, minimal selection scenes, Records, SettingsMenu, HelpOverlay, ResultScene, plus legacy developer/testing tools that are kept for reference but hidden from normal player navigation
 - Support layers: AudioManager channels, i18n, art pack / spritesheet assets, version/content metadata, seeded RNG, GameEvent foundation
 
 ## Current Systems
@@ -92,7 +106,7 @@ Implemented systems currently include:
 - Content registry architecture for built-in content and future custom/mod content packs
 - Content pack manifest and local/remote provider interfaces for future mods and online adapters
 - Minimal Character / Stage selection UI and save-backed selection data flow
-- Custom Stage Tool, Editor Lite, validation, local storage, Stage Select integration, and playable custom stage runtime path
+- Custom Stage Tool, Editor Lite, validation, local storage, Stage Select integration, and playable custom stage runtime path retained as legacy reference behavior
 - Seeded `RandomManager`, run metadata, version/content hash metadata, and Replay foundation
 - GameEvent foundation plus Achievement, Tutorial, Unlock, Relic, Daily Challenge, Records, DebugPanel, and Playtest Scenario foundations
 - Responsive UI, virtual joystick, SettingsMenu, tabbed HelpOverlay, and compact ResultScene
@@ -104,7 +118,7 @@ Implemented systems currently include:
 
 ## Auto Playtest
 
-The Title Scene starts an Auto Movement + Auto Upgrade + Fast Mode test automatically after 10 seconds with no user input.
+The Title Scene starts an Auto Movement + Auto Upgrade + Fast Mode test automatically after 10 seconds with no user input. This behavior is preserved as legacy automated-playtest baseline behavior.
 
 Current automated settings are split:
 
@@ -128,6 +142,7 @@ Audio can be enabled and channel volumes can be changed in Settings. Missing aud
 
 ## Documentation
 
+- [`docs/PHASER_BASELINE_BEHAVIOR.md`](docs/PHASER_BASELINE_BEHAVIOR.md)
 - [`docs/SYSTEM_MAP.md`](docs/SYSTEM_MAP.md)
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/FUTURE_ARCHITECTURE.md`](docs/FUTURE_ARCHITECTURE.md)
@@ -146,7 +161,7 @@ Audio can be enabled and channel volumes can be changed in Settings. Missing aud
 
 ## Known Issues / Temporary Items
 
-- Gameplay balance is still under active tuning.
+- Gameplay balance is frozen as legacy baseline behavior unless a future maintenance fix explicitly requires otherwise.
 - Mod loading, remote content, cloud save, online leaderboard, and remote daily challenge services are interface-only foundations; no network requests are made.
 - Custom stages support local validation, storage, selection, and play using existing enemies/Bosses. They do not support custom enemies, weapons, passives, assets, or online sharing yet.
 - Character and stage selection have minimal UI. Map, cosmetic, difficulty, random stage, and custom challenge selection remain planned or foundation-only.

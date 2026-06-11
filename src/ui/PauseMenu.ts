@@ -9,7 +9,6 @@ import { ScreenManager } from '../responsive/ScreenManager';
 import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { PassiveDetailInfo } from '../passive/PassiveManager';
 import { WeaponDetailInfo } from '../weapon/WeaponManager';
-import { DeveloperMenu } from './DeveloperMenu';
 import { HelpOverlay } from './HelpOverlay';
 import { SettingsMenu } from './SettingsMenu';
 import {
@@ -39,7 +38,6 @@ export class PauseMenu {
   private unsubscribeResize?: () => void;
   private helpOverlay?: HelpOverlay;
   private settingsMenu?: SettingsMenu;
-  private developerMenu?: DeveloperMenu;
   private statsBuildPanel?: StatsBuildPanel;
   private page: MenuPage = 'main';
 
@@ -50,7 +48,7 @@ export class PauseMenu {
     private readonly onRestart: () => void,
     private readonly onBackToTitle: () => void,
     _onHelp: () => void,
-    private readonly onOpenDeveloperScene?: (sceneKey: string) => void,
+    _onOpenDeveloperScene?: (sceneKey: string) => void,
   ) {
     this.screenManager = new ScreenManager(scene);
     this.blocker = createModalBlocker(scene, 1199);
@@ -100,8 +98,6 @@ export class PauseMenu {
     this.helpOverlay = undefined;
     this.settingsMenu?.destroy();
     this.settingsMenu = undefined;
-    this.developerMenu?.destroy();
-    this.developerMenu = undefined;
     this.statsBuildPanel?.destroy();
     this.statsBuildPanel = undefined;
     this.clearPageItems();
@@ -127,10 +123,6 @@ export class PauseMenu {
       {
         label: I18n.t('pause.settings'),
         action: () => this.showSettingsMenu(),
-      },
-      {
-        label: I18n.t('developer.title'),
-        action: () => this.showDeveloperMenu(),
       },
       {
         label: I18n.t('common.help'),
@@ -501,18 +493,5 @@ export class PauseMenu {
       .map((part) => part.charAt(0).toUpperCase())
       .join('')
       .slice(0, 2);
-  }
-
-  private showDeveloperMenu(): void {
-    this.developerMenu?.destroy();
-    this.developerMenu = new DeveloperMenu(this.scene, {
-      onClose: () => {
-        this.developerMenu = undefined;
-        this.renderMainPage();
-      },
-      onOpenScene: (sceneKey) => {
-        this.onOpenDeveloperScene?.(sceneKey);
-      },
-    });
   }
 }
