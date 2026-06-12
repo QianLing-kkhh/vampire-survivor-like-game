@@ -10,7 +10,6 @@ import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
 import { UnlockManager } from '../unlock/UnlockManager';
-import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { SettingsMenu } from '../ui/SettingsMenu';
 import { setTextHitArea, stopPointerEvent } from '../ui/input/UIInteraction';
@@ -26,11 +25,9 @@ export class TitleScene extends Phaser.Scene {
   private startButton?: Phaser.GameObjects.Text;
   private selectCharacterButton?: Phaser.GameObjects.Text;
   private selectStageButton?: Phaser.GameObjects.Text;
-  private strategyButton?: Phaser.GameObjects.Text;
   private recordsButton?: Phaser.GameObjects.Text;
   private settingsButton?: Phaser.GameObjects.Text;
   private helpButton?: Phaser.GameObjects.Text;
-  private developerButton?: Phaser.GameObjects.Text;
   private backgroundImage?: Phaser.GameObjects.Image;
   private autoStartText?: Phaser.GameObjects.Text;
   private autoStartTimer?: Phaser.Time.TimerEvent;
@@ -38,7 +35,6 @@ export class TitleScene extends Phaser.Scene {
   private autoStartCanceled = false;
   private helpOverlay?: HelpOverlay;
   private settingsMenu?: SettingsMenu;
-  private developerMenu?: DeveloperMenu;
   private screenManager?: ScreenManager;
   private unsubscribeResize?: () => void;
   private cleaningUp = false;
@@ -111,11 +107,6 @@ export class TitleScene extends Phaser.Scene {
       this.scene.start('StageSelectScene');
     });
 
-    this.strategyButton = this.createButton(centerX, centerY + 202, 'Auto Strategy', () => {
-      this.cancelAutoStartCountdown();
-      this.scene.start('StrategyEditorScene');
-    });
-
     this.recordsButton = this.createButton(centerX, centerY + 250, I18n.t('title.records'), () => {
       this.cancelAutoStartCountdown();
       this.scene.start('RecordsScene');
@@ -129,11 +120,6 @@ export class TitleScene extends Phaser.Scene {
     this.helpButton = this.createButton(centerX + 140, centerY + 132, I18n.t('common.help'), () => {
       this.cancelAutoStartCountdown();
       this.showHelpOverlay();
-    });
-
-    this.developerButton = this.createButton(centerX, centerY + 132, I18n.t('developer.title'), () => {
-      this.cancelAutoStartCountdown();
-      this.showDeveloperMenu();
     });
 
     this.applyLayout();
@@ -205,11 +191,9 @@ export class TitleScene extends Phaser.Scene {
       this.startButton,
       this.selectCharacterButton,
       this.selectStageButton,
-      this.strategyButton,
       this.recordsButton,
       this.settingsButton,
       this.helpButton,
-      this.developerButton,
     ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
     const buttonLayout = LayoutConfig.getButtonListLayout({
       screen: this.screenManager,
@@ -278,11 +262,9 @@ export class TitleScene extends Phaser.Scene {
     this.startButton?.setText(I18n.t('title.startGame'));
     this.selectCharacterButton?.setText(I18n.t('title.selectCharacter'));
     this.selectStageButton?.setText(I18n.t('title.selectStage'));
-    this.strategyButton?.setText('Auto Strategy');
     this.recordsButton?.setText(I18n.t('title.records'));
     this.settingsButton?.setText(I18n.t('title.settings'));
     this.helpButton?.setText(I18n.t('common.help'));
-    this.developerButton?.setText(I18n.t('developer.title'));
     this.selectionText?.setText(this.formatSelectionSummary());
     this.refreshStatus();
 
@@ -356,27 +338,6 @@ export class TitleScene extends Phaser.Scene {
     }, () => this.refreshTexts());
   }
 
-  private showDeveloperMenu(): void {
-    this.developerMenu?.destroy();
-    this.developerMenu = new DeveloperMenu(this, {
-      onClose: () => {
-        this.developerMenu = undefined;
-        if (this.cleaningUp || !this.scene.isActive()) {
-          return;
-        }
-        this.refreshTexts();
-      },
-      onStartAutoTest: () => {
-        this.cancelAutoStartCountdown();
-        DeveloperPlaytestPreset.startFullAutoTestRun(this);
-      },
-      onOpenScene: (sceneKey) => {
-        this.cancelAutoStartCountdown();
-        this.scene.start(sceneKey);
-      },
-    });
-  }
-
   private formatStatus(): string {
     const settings = PlaytestSettings.get();
 
@@ -416,8 +377,6 @@ export class TitleScene extends Phaser.Scene {
     this.helpOverlay = undefined;
     this.settingsMenu?.destroy();
     this.settingsMenu = undefined;
-    this.developerMenu?.destroy({ notifyClose: false });
-    this.developerMenu = undefined;
   }
 
   private t(key: string, fallback: string): string {

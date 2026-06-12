@@ -15,7 +15,6 @@ import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSet
 import { SettingsManager } from '../settings/SettingsManager';
 import { RANDOM_UNLOCKED_STAGE_ID, StageManager } from '../stage/StageManager';
 import type { StrategyTelemetrySummary } from '../telemetry/StrategyTelemetry';
-import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { SelectionListPanel } from '../ui/SelectionListPanel';
 import { SettingsMenu } from '../ui/SettingsMenu';
 import { setTextHitArea, stopPointerEvent } from '../ui/input/UIInteraction';
@@ -116,7 +115,6 @@ export class ResultScene extends Phaser.Scene {
   private currentData?: ResultSceneData;
   private backgroundImage?: Phaser.GameObjects.Image;
   private settingsMenu?: SettingsMenu;
-  private developerMenu?: DeveloperMenu;
   private selectionPanel?: SelectionListPanel;
   private statsBuildPanel?: StatsBuildPanel;
 
@@ -153,7 +151,6 @@ export class ResultScene extends Phaser.Scene {
     const evolutionPathText = data.evolutionPath && data.evolutionPath.length > 0
       ? this.truncateList(data.evolutionPath, 3)
       : I18n.t('common.none');
-    const playtestCsv = data.playtestCsv ?? '';
 
     const resultTitle = isEndlessResult
       ? I18n.t('result.endlessVictory')
@@ -389,31 +386,6 @@ export class ResultScene extends Phaser.Scene {
       this.showSettingsMenu();
     });
 
-    const developerButton = this.add.text(centerX, 0, I18n.t('developer.title'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    developerButton.setOrigin(0.5);
-    developerButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(developerButton);
-    developerButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.showDeveloperMenu(playtestCsv);
-    });
-
     this.layoutButtons([
       selectCharacterButton,
       selectStageButton,
@@ -421,7 +393,6 @@ export class ResultScene extends Phaser.Scene {
       restartButton,
       titleButton,
       settingsButton,
-      developerButton,
     ]);
     this.screenManager.onResize(() => {
       this.scheduleResponsiveRestart();
@@ -685,17 +656,6 @@ export class ResultScene extends Phaser.Scene {
     );
   }
 
-  private copyCsv(playtestCsv: string): void {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(playtestCsv).catch(() => {
-        console.log('Playtest CSV:', playtestCsv);
-      });
-      return;
-    }
-
-    console.log('Playtest CSV:', playtestCsv);
-  }
-
   private downloadAllCsv(): void {
     if (!PlaytestLogBuffer.hasRows()) {
       console.warn('No buffered playtest CSV rows to download');
@@ -752,20 +712,6 @@ export class ResultScene extends Phaser.Scene {
     });
   }
 
-  private showDeveloperMenu(playtestCsv: string): void {
-    this.developerMenu?.destroy();
-    this.developerMenu = new DeveloperMenu(this, {
-      currentCsv: playtestCsv,
-      onClose: () => {
-        this.developerMenu = undefined;
-      },
-      onOpenScene: (sceneKey) => {
-        this.closeSelectionPanel();
-        this.scene.start(sceneKey);
-      },
-    });
-  }
-
   private showStatsBuildPanel(): void {
     const snapshot = this.currentData?.statsBuildSnapshot;
 
@@ -784,8 +730,6 @@ export class ResultScene extends Phaser.Scene {
   }
 
   private showCharacterSelection(): void {
-    this.developerMenu?.destroy();
-    this.developerMenu = undefined;
     this.closeSelectionPanel();
 
     const characterManager = new CharacterManager();
@@ -818,8 +762,6 @@ export class ResultScene extends Phaser.Scene {
   }
 
   private showStageSelection(): void {
-    this.developerMenu?.destroy();
-    this.developerMenu = undefined;
     this.closeSelectionPanel();
 
     const stageManager = new StageManager();
@@ -947,8 +889,6 @@ export class ResultScene extends Phaser.Scene {
     this.resizeTimer = undefined;
     this.settingsMenu?.destroy();
     this.settingsMenu = undefined;
-    this.developerMenu?.destroy();
-    this.developerMenu = undefined;
     this.statsBuildPanel?.destroy();
     this.statsBuildPanel = undefined;
     this.closeSelectionPanel();

@@ -1,5 +1,13 @@
 # Change Log
 
+## 2026-06-12 Legacy Phaser Baseline Finalization
+
+- Marked the Phaser project as maintenance-mode baseline/reference for the future `xianxia-survivor-godot` project.
+- Hid developer-facing navigation from the title, pause, and result screens.
+- Hid the title-screen Auto Strategy editor entry from normal player navigation after auditing it as automated-playtest tooling rather than a normal player feature.
+- Added `PHASER_BASELINE_BEHAVIOR.md` to record preserved runtime behavior and the minimum legacy smoke check.
+- No weapons, enemies, characters, bosses, gameplay values, save formats, replay formats, CSV schemas, or Godot code were changed.
+
 ## 2026-06-09 Auto Strategy Structure Split
 
 - Moved auto movement snapshot contracts into `src/strategy/snapshot` with `src/auto/AutoPlayerTypes` compatibility aliases.

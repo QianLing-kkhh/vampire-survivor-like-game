@@ -2,6 +2,8 @@
 
 This checklist is for local release and GitHub Pages deployment preparation. It does not replace GitHub Actions, and it does not deploy automatically.
 
+This Phaser project is now a maintenance-mode legacy baseline. Release work should preserve the existing playable behavior and should not add new gameplay, balance changes, services, assets, or Godot code.
+
 ## Pre-Release
 
 1. Confirm `git status` is clean or contains only expected release changes.
@@ -38,6 +40,8 @@ This checklist is for local release and GitHub Pages deployment preparation. It 
 
 7. Confirm CSV schema/version changes are intentional when CSV fields changed.
 8. Confirm save migration behavior when `SaveData` or schema versions changed.
+9. Confirm the change does not add new weapons, enemies, characters, bosses, systems, balance changes, backend services, Steam integrations, or Godot code.
+10. Confirm `docs/PHASER_BASELINE_BEHAVIOR.md` still describes the preserved baseline accurately.
 
 ## Smoke Test
 
@@ -52,6 +56,16 @@ Before deployment, run at least one local smoke test:
 7. Download current CSV or All CSV if playtest logging changed.
 8. Start Auto Test and confirm it still runs.
 9. Test Endless Mode when endless, Boss, reward, or scaling code changed.
+
+## Legacy Baseline UI Check
+
+Confirm normal player navigation does not expose hidden developer or experimental entries:
+
+1. Title screen does not show `Developer`.
+2. Title screen does not show `Auto Strategy`.
+3. Pause menu does not show `Developer`.
+4. Result screen does not show `Developer`.
+5. The normal player flow still exposes Start, Character Select, Stage Select, Records, Settings, Help, Pause, Resume, Restart, Return to Title, and Result navigation where applicable.
 
 ## Deploy
 
