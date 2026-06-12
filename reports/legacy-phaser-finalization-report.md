@@ -2,9 +2,9 @@
 
 Worker Status: COMPLETED
 
-Branch Pushed: PENDING
+Branch Pushed: YES
 
-Ready For Main Review: PENDING
+Ready For Main Review: YES
 
 Human Intervention Required: No
 
