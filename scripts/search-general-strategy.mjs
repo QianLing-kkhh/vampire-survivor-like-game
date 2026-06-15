@@ -32,6 +32,7 @@ writeGeneralSearchArtifacts(outputDir, report);
 console.log(`General strategy search complete: ${outputDir}`);
 console.log(`best strategy: ${report.bestGeneralStrategy.id}`);
 console.log(`exp fitness: ${report.bestGeneralStrategy.generalFitnessScore}`);
+console.log(`boss kill rate: ${report.bestGeneralStrategy.stats.bossKillRate}`);
 
 function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   const warnings = [...scenarioSampleInput.warnings];
@@ -47,7 +48,10 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
     const searchMode = centerStrategy ? 'centered' : 'random';
     const strategies = createRoundStrategies(searchConfig, round, centerStrategy, mutationRadius);
     const candidateRuns = evaluateStrategies(strategies, scenarioSampleInput.scenarios, round);
-    const candidateAggregate = runtime.aggregateGeneralStrategyRuns(candidateRuns);
+    const candidateAggregate = rankStrategyStats(
+      runtime.aggregateGeneralStrategyRuns(candidateRuns),
+      searchConfig.minBossKillRate,
+    );
     const rankedStrategies = candidateAggregate
       .map((stats) => strategyById.get(stats.candidateId) ?? strategies.find((strategy) => strategy.candidateId === stats.candidateId))
       .filter(Boolean);
@@ -57,10 +61,10 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
     });
     const variantRuns = evaluateStrategies(variants, scenarioSampleInput.scenarios, round);
     const variantAggregate = runtime.aggregateGeneralStrategyRuns(variantRuns);
-    const roundAggregates = [...candidateAggregate, ...variantAggregate].sort((a, b) => (
-      b.generalFitnessScore - a.generalFitnessScore
-      || a.candidateId.localeCompare(b.candidateId)
-    ));
+    const roundAggregates = rankStrategyStats(
+      [...candidateAggregate, ...variantAggregate],
+      searchConfig.minBossKillRate,
+    );
     const bestRoundStats = roundAggregates[0];
     const bestRoundStrategy = [...strategies, ...variants].find((strategy) => strategy.candidateId === bestRoundStats.candidateId);
 
@@ -82,7 +86,10 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
       bestGeneralFitnessScore: bestRoundStats.generalFitnessScore,
     });
 
-    if (!bestOverall || bestRoundStats.generalFitnessScore > bestOverall.stats.generalFitnessScore) {
+    if (
+      bestRoundStats.bossKillRate >= searchConfig.minBossKillRate
+      && (!bestOverall || compareEligibleStrategyStats(bestRoundStats, bestOverall.stats) < 0)
+    ) {
       bestOverall = {
         stats: bestRoundStats,
         strategy: bestRoundStrategy,
@@ -97,7 +104,8 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   }
 
   if (!bestOverall?.strategy) {
-    throw new Error('No general strategy candidate was evaluated.');
+    const bestAttempt = rankStrategyStats(allAggregates, searchConfig.minBossKillRate)[0];
+    throw new Error(`No candidate met minBossKillRate=${searchConfig.minBossKillRate}. Best observed bossKillRate=${bestAttempt?.bossKillRate ?? 0}, avgExp=${bestAttempt?.avgExp ?? 0}.`);
   }
 
   const bestGeneralStrategy = runtime.createGeneratedGeneralStrategy({
@@ -114,10 +122,7 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
     config: searchConfig,
     scenarios: scenarioSampleInput.scenarios,
     candidateRuns: allRuns,
-    candidateAggregate: allAggregates.sort((a, b) => (
-      b.generalFitnessScore - a.generalFitnessScore
-      || a.candidateId.localeCompare(b.candidateId)
-    )),
+    candidateAggregate: rankStrategyStats(allAggregates, searchConfig.minBossKillRate),
     roundSummary,
     bestGeneralStrategy,
     baselineComparison,
@@ -233,6 +238,7 @@ function evaluateStrategies(strategies, scenarios, round) {
           damageDealt: result.damageDealt,
           pickupsCollected: result.pickupsCollected,
           enemiesSpawned: result.enemiesSpawned,
+          bossKilled: result.bossKilled,
         },
         damageWindow,
       });
@@ -338,6 +344,7 @@ function createSearchConfig(parsedArgs) {
     seedCount: positiveIntegerArg(parsedArgs, 'seedCount', 5),
     durationSeconds: positiveNumberArg(parsedArgs, 'durationSeconds', 120),
     tickMs: positiveIntegerArg(parsedArgs, 'tickMs', 50),
+    minBossKillRate: rateArg(parsedArgs, 'minBossKillRate', 0),
     topN: positiveIntegerArg(parsedArgs, 'topN', 10),
     randomSeed: String(getArg(parsedArgs, ['randomSeed'], 'general-strategy-001')),
     phases: runtime.parseStrategyPhases(String(getArg(parsedArgs, ['phase'], '0-30,30-60,60-120'))),
@@ -383,6 +390,42 @@ function nonNegativeNumberArg(parsedArgs, name, fallback) {
   return value;
 }
 
+function rateArg(parsedArgs, name, fallback) {
+  const value = Number(getArg(parsedArgs, [name], fallback));
+
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`--${name} must be a number between 0 and 1.`);
+  }
+
+  return value;
+}
+
+function rankStrategyStats(stats, minBossKillRate) {
+  return [...stats].sort((a, b) => compareStrategyStats(a, b, minBossKillRate));
+}
+
+function compareStrategyStats(a, b, minBossKillRate) {
+  const aEligible = a.bossKillRate >= minBossKillRate;
+  const bEligible = b.bossKillRate >= minBossKillRate;
+
+  if (aEligible !== bEligible) {
+    return aEligible ? -1 : 1;
+  }
+
+  if (aEligible && bEligible) {
+    return compareEligibleStrategyStats(a, b);
+  }
+
+  return b.bossKillRate - a.bossKillRate
+    || b.generalFitnessScore - a.generalFitnessScore
+    || a.candidateId.localeCompare(b.candidateId);
+}
+
+function compareEligibleStrategyStats(a, b) {
+  return b.generalFitnessScore - a.generalFitnessScore
+    || a.candidateId.localeCompare(b.candidateId);
+}
+
 function stablePrettyJson(value) {
   return JSON.stringify(JSON.parse(stableStringify(value)), null, 2);
 }
@@ -402,6 +445,7 @@ Options:
   --seedCount              Seeds per sampled coordinate
   --durationSeconds        Simulation duration
   --tickMs                 Fixed tick size
+  --minBossKillRate        Required boss kill rate, 0-1
   --topN                   Top candidate count for topN-median variant
   --randomSeed             Deterministic random seed
   --phase                  Phase ranges, e.g. 0-30,30-60,60-120
