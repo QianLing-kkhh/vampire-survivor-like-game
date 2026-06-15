@@ -17,6 +17,7 @@ export interface GeneralStrategyRunRecord {
     | 'durationSeconds'
     | 'level'
     | 'kills'
+    | 'exp'
     | 'damageTaken'
     | 'damageDealt'
     | 'pickupsCollected'
@@ -52,11 +53,21 @@ export interface GeneralStrategyCandidateStats {
   completionRate: number;
   avgLevel: number;
   avgKills: number;
+  avgExp: number;
+  medianExp: number;
+  p10Exp: number;
+  p90Exp: number;
+  expStdDev: number;
+  avgDamageDealt: number;
+  medianDamageDealt: number;
+  p10DamageDealt: number;
+  p90DamageDealt: number;
   avgDamageTaken: number;
   damageWindowPassRate: number;
   avgDamageWindowViolationCount: number;
   avgMaxDamageWindowRatio: number;
   damageSafetyPenalty: number;
+  damageDealtStdDev: number;
   scoreStdDev: number;
   consistencyScore: number;
   generalFitnessScore: number;
@@ -100,6 +111,12 @@ export interface GeneralStrategyBaselineComparisonEntry {
   p10Score: number;
   completionRate: number;
   avgSurvivalTimeSeconds: number;
+  avgExp: number;
+  medianExp: number;
+  p10Exp: number;
+  avgDamageDealt: number;
+  medianDamageDealt: number;
+  p10DamageDealt: number;
   avgDamageTaken: number;
   damageWindowPassRate: number;
   damageSafetyPenalty: number;
