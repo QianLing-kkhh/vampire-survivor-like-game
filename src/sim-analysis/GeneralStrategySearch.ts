@@ -126,8 +126,13 @@ export function bestGeneralStrategyMarkdown(input: {
     '## Overall Performance',
     '',
     `- Evaluated random scenarios: ${input.scenarioCount}`,
-    `- General fitness score: ${input.strategy.generalFitnessScore}`,
-    `- Fitness target: damage dealt first, with 30s damage-window safety penalty retained.`,
+    `- Exp fitness score: ${input.strategy.generalFitnessScore}`,
+    `- Fitness target: average gained experience only. Other metrics are diagnostic and do not affect ranking.`,
+    `- Avg exp: ${input.strategy.stats.avgExp}`,
+    `- Median exp: ${input.strategy.stats.medianExp}`,
+    `- P10 exp: ${input.strategy.stats.p10Exp}`,
+    `- P90 exp: ${input.strategy.stats.p90Exp}`,
+    `- Exp std dev: ${input.strategy.stats.expStdDev}`,
     `- Avg damage dealt: ${input.strategy.stats.avgDamageDealt}`,
     `- Median damage dealt: ${input.strategy.stats.medianDamageDealt}`,
     `- P10 damage dealt: ${input.strategy.stats.p10DamageDealt}`,
@@ -144,7 +149,7 @@ export function bestGeneralStrategyMarkdown(input: {
     '',
     '## Balanced Default Comparison',
     '',
-    `- Balanced fitness: ${input.balancedStats?.generalFitnessScore ?? 'n/a'}`,
+    `- Balanced exp fitness: ${input.balancedStats?.generalFitnessScore ?? 'n/a'}`,
     `- Delta: ${input.balancedStats ? Number((input.strategy.generalFitnessScore - input.balancedStats.generalFitnessScore).toFixed(4)) : 'n/a'}`,
     '',
     '## Phase Weight Tables',
@@ -184,7 +189,7 @@ export function roundSummaryMarkdown(rows: readonly {
   const lines = [
     '# General Strategy Search Rounds',
     '',
-    '| Round | Mode | Mutation Radius | Candidates | Evaluated Strategies | Best Candidate | Variant | Fitness |',
+    '| Round | Mode | Mutation Radius | Candidates | Evaluated Strategies | Best Candidate | Variant | Exp Fitness |',
     '| ---: | --- | ---: | ---: | ---: | --- | --- | ---: |',
   ];
 

@@ -17,6 +17,7 @@ export interface GeneralStrategyRunRecord {
     | 'durationSeconds'
     | 'level'
     | 'kills'
+    | 'exp'
     | 'damageTaken'
     | 'damageDealt'
     | 'pickupsCollected'
@@ -52,6 +53,11 @@ export interface GeneralStrategyCandidateStats {
   completionRate: number;
   avgLevel: number;
   avgKills: number;
+  avgExp: number;
+  medianExp: number;
+  p10Exp: number;
+  p90Exp: number;
+  expStdDev: number;
   avgDamageDealt: number;
   medianDamageDealt: number;
   p10DamageDealt: number;
@@ -105,6 +111,9 @@ export interface GeneralStrategyBaselineComparisonEntry {
   p10Score: number;
   completionRate: number;
   avgSurvivalTimeSeconds: number;
+  avgExp: number;
+  medianExp: number;
+  p10Exp: number;
   avgDamageDealt: number;
   medianDamageDealt: number;
   p10DamageDealt: number;

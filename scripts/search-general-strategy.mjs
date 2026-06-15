@@ -31,7 +31,7 @@ writeGeneralSearchArtifacts(outputDir, report);
 
 console.log(`General strategy search complete: ${outputDir}`);
 console.log(`best strategy: ${report.bestGeneralStrategy.id}`);
-console.log(`general fitness: ${report.bestGeneralStrategy.generalFitnessScore}`);
+console.log(`exp fitness: ${report.bestGeneralStrategy.generalFitnessScore}`);
 
 function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   const warnings = [...scenarioSampleInput.warnings];
@@ -59,7 +59,6 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
     const variantAggregate = runtime.aggregateGeneralStrategyRuns(variantRuns);
     const roundAggregates = [...candidateAggregate, ...variantAggregate].sort((a, b) => (
       b.generalFitnessScore - a.generalFitnessScore
-      || b.avgScore - a.avgScore
       || a.candidateId.localeCompare(b.candidateId)
     ));
     const bestRoundStats = roundAggregates[0];
@@ -117,7 +116,6 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
     candidateRuns: allRuns,
     candidateAggregate: allAggregates.sort((a, b) => (
       b.generalFitnessScore - a.generalFitnessScore
-      || b.avgScore - a.avgScore
       || a.candidateId.localeCompare(b.candidateId)
     )),
     roundSummary,
@@ -230,6 +228,7 @@ function evaluateStrategies(strategies, scenarios, round) {
           durationSeconds: result.durationSeconds,
           level: result.level,
           kills: result.kills,
+          exp: result.exp,
           damageTaken: result.damageTaken,
           damageDealt: result.damageDealt,
           pickupsCollected: result.pickupsCollected,

@@ -25,19 +25,23 @@ export function aggregateGeneralStrategyRuns(
     .map(summarizeCandidateRuns)
     .sort((a, b) => (
       b.generalFitnessScore - a.generalFitnessScore
-      || b.avgScore - a.avgScore
       || a.candidateId.localeCompare(b.candidateId)
     ));
 }
 
 export function generalStrategyAggregateCsv(stats: readonly GeneralStrategyCandidateStats[]): string {
   return [
-    'candidateId,strategyVariantId,runs,scenarioCount,avgScore,medianScore,p10Score,p90Score,completionRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageDealt,medianDamageDealt,p10DamageDealt,p90DamageDealt,avgDamageTaken,damageWindowPassRate,avgDamageWindowViolationCount,avgMaxDamageWindowRatio,damageSafetyPenalty,damageDealtStdDev,scoreStdDev,consistencyScore,generalFitnessScore',
+    'candidateId,strategyVariantId,runs,scenarioCount,avgExp,medianExp,p10Exp,p90Exp,expStdDev,avgScore,medianScore,p10Score,p90Score,completionRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageDealt,medianDamageDealt,p10DamageDealt,p90DamageDealt,avgDamageTaken,damageWindowPassRate,avgDamageWindowViolationCount,avgMaxDamageWindowRatio,damageSafetyPenalty,damageDealtStdDev,scoreStdDev,consistencyScore,generalFitnessScore',
     ...stats.map((row) => [
       row.candidateId,
       row.strategyVariantId,
       row.runs,
       row.scenarioCount,
+      row.avgExp,
+      row.medianExp,
+      row.p10Exp,
+      row.p90Exp,
+      row.expStdDev,
       row.avgScore,
       row.medianScore,
       row.p10Score,
@@ -79,6 +83,9 @@ export function createBaselineComparison(
       p10Score: stats.p10Score,
       completionRate: stats.completionRate,
       avgSurvivalTimeSeconds: stats.avgSurvivalTimeSeconds,
+      avgExp: stats.avgExp,
+      medianExp: stats.medianExp,
+      p10Exp: stats.p10Exp,
       avgDamageDealt: stats.avgDamageDealt,
       medianDamageDealt: stats.medianDamageDealt,
       p10DamageDealt: stats.p10DamageDealt,
@@ -98,12 +105,12 @@ export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselin
   const lines = [
     '# General Strategy Baseline Comparison',
     '',
-    '| Strategy | Avg Damage Dealt | Median Damage | P10 Damage | Avg Score | Completion | Damage Window Pass | Safety Penalty | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
+    '| Strategy | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Score | Completion | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
     '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
   ];
 
   for (const row of rows) {
-    lines.push(`| ${row.strategyId} | ${row.avgDamageDealt} | ${row.medianDamageDealt} | ${row.p10DamageDealt} | ${row.avgScore} | ${row.completionRate} | ${row.damageWindowPassRate} | ${row.damageSafetyPenalty} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
+    lines.push(`| ${row.strategyId} | ${row.avgExp} | ${row.medianExp} | ${row.p10Exp} | ${row.avgDamageDealt} | ${row.avgScore} | ${row.completionRate} | ${row.damageWindowPassRate} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
   }
 
   return `${lines.join('\n')}\n`;
@@ -111,8 +118,10 @@ export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselin
 
 function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): GeneralStrategyCandidateStats {
   const scores = runs.map((run) => run.result.score);
+  const expValues = runs.map((run) => run.result.exp);
   const damageDealtValues = runs.map((run) => run.result.damageDealt);
   const scoreStdDev = stdDev(scores);
+  const expStdDev = stdDev(expValues);
   const damageDealtStdDev = stdDev(damageDealtValues);
   const avgDamageTaken = average(runs.map((run) => run.result.damageTaken));
   const damageSafetyPenalty = average(runs.map((run) => calculateDamageSafetyPenalty(run.damageWindow)));
@@ -120,18 +129,15 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
   const avgScore = average(scores);
   const medianScore = percentile(scores, 0.5);
   const p10Score = percentile(scores, 0.1);
+  const avgExp = average(expValues);
+  const medianExp = percentile(expValues, 0.5);
+  const p10Exp = percentile(expValues, 0.1);
+  const p90Exp = percentile(expValues, 0.9);
   const avgDamageDealt = average(damageDealtValues);
   const medianDamageDealt = percentile(damageDealtValues, 0.5);
   const p10DamageDealt = percentile(damageDealtValues, 0.1);
   const p90DamageDealt = percentile(damageDealtValues, 0.9);
-  const generalFitnessScore = (
-    avgDamageDealt * 1.0
-    + medianDamageDealt * 0.5
-    + p10DamageDealt * 0.8
-    + completionRate * 500
-    - damageDealtStdDev * 0.1
-    - damageSafetyPenalty
-  );
+  const generalFitnessScore = avgExp;
 
   return {
     candidateId: runs[0]?.candidateId ?? '',
@@ -149,6 +155,11 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     completionRate: roundMetric(completionRate),
     avgLevel: roundMetric(average(runs.map((run) => run.result.level))),
     avgKills: roundMetric(average(runs.map((run) => run.result.kills))),
+    avgExp: roundMetric(avgExp),
+    medianExp: roundMetric(medianExp),
+    p10Exp: roundMetric(p10Exp),
+    p90Exp: roundMetric(p90Exp),
+    expStdDev: roundMetric(expStdDev),
     avgDamageDealt: roundMetric(avgDamageDealt),
     medianDamageDealt: roundMetric(medianDamageDealt),
     p10DamageDealt: roundMetric(p10DamageDealt),
@@ -160,7 +171,7 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     damageSafetyPenalty: roundMetric(damageSafetyPenalty),
     damageDealtStdDev: roundMetric(damageDealtStdDev),
     scoreStdDev: roundMetric(scoreStdDev),
-    consistencyScore: roundMetric(p10DamageDealt - damageDealtStdDev * 0.5),
+    consistencyScore: roundMetric(p10Exp - expStdDev * 0.5),
     generalFitnessScore: roundMetric(generalFitnessScore),
   };
 }
