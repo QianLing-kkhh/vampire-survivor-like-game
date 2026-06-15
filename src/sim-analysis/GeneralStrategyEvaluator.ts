@@ -31,12 +31,13 @@ export function aggregateGeneralStrategyRuns(
 
 export function generalStrategyAggregateCsv(stats: readonly GeneralStrategyCandidateStats[]): string {
   return [
-    'candidateId,strategyVariantId,runs,scenarioCount,avgExp,medianExp,p10Exp,p90Exp,expStdDev,avgScore,medianScore,p10Score,p90Score,completionRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageDealt,medianDamageDealt,p10DamageDealt,p90DamageDealt,avgDamageTaken,damageWindowPassRate,avgDamageWindowViolationCount,avgMaxDamageWindowRatio,damageSafetyPenalty,damageDealtStdDev,scoreStdDev,consistencyScore,generalFitnessScore',
+    'candidateId,strategyVariantId,runs,scenarioCount,bossKillRate,avgExp,medianExp,p10Exp,p90Exp,expStdDev,avgScore,medianScore,p10Score,p90Score,completionRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageDealt,medianDamageDealt,p10DamageDealt,p90DamageDealt,avgDamageTaken,damageWindowPassRate,avgDamageWindowViolationCount,avgMaxDamageWindowRatio,damageSafetyPenalty,damageDealtStdDev,scoreStdDev,consistencyScore,generalFitnessScore',
     ...stats.map((row) => [
       row.candidateId,
       row.strategyVariantId,
       row.runs,
       row.scenarioCount,
+      row.bossKillRate,
       row.avgExp,
       row.medianExp,
       row.p10Exp,
@@ -83,6 +84,7 @@ export function createBaselineComparison(
       p10Score: stats.p10Score,
       completionRate: stats.completionRate,
       avgSurvivalTimeSeconds: stats.avgSurvivalTimeSeconds,
+      bossKillRate: stats.bossKillRate,
       avgExp: stats.avgExp,
       medianExp: stats.medianExp,
       p10Exp: stats.p10Exp,
@@ -105,12 +107,12 @@ export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselin
   const lines = [
     '# General Strategy Baseline Comparison',
     '',
-    '| Strategy | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Score | Completion | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
-    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Score | Completion | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
   ];
 
   for (const row of rows) {
-    lines.push(`| ${row.strategyId} | ${row.avgExp} | ${row.medianExp} | ${row.p10Exp} | ${row.avgDamageDealt} | ${row.avgScore} | ${row.completionRate} | ${row.damageWindowPassRate} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
+    lines.push(`| ${row.strategyId} | ${row.bossKillRate} | ${row.avgExp} | ${row.medianExp} | ${row.p10Exp} | ${row.avgDamageDealt} | ${row.avgScore} | ${row.completionRate} | ${row.damageWindowPassRate} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
   }
 
   return `${lines.join('\n')}\n`;
@@ -126,6 +128,7 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
   const avgDamageTaken = average(runs.map((run) => run.result.damageTaken));
   const damageSafetyPenalty = average(runs.map((run) => calculateDamageSafetyPenalty(run.damageWindow)));
   const completionRate = runs.filter((run) => run.result.result === 'completed' || run.result.result === 'victory').length / Math.max(1, runs.length);
+  const bossKillRate = runs.filter((run) => run.result.bossKilled).length / Math.max(1, runs.length);
   const avgScore = average(scores);
   const medianScore = percentile(scores, 0.5);
   const p10Score = percentile(scores, 0.1);
@@ -155,6 +158,7 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     completionRate: roundMetric(completionRate),
     avgLevel: roundMetric(average(runs.map((run) => run.result.level))),
     avgKills: roundMetric(average(runs.map((run) => run.result.kills))),
+    bossKillRate: roundMetric(bossKillRate),
     avgExp: roundMetric(avgExp),
     medianExp: roundMetric(medianExp),
     p10Exp: roundMetric(p10Exp),

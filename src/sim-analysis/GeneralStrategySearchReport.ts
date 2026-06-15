@@ -22,6 +22,7 @@ export interface GeneralStrategyRunRecord {
     | 'damageDealt'
     | 'pickupsCollected'
     | 'enemiesSpawned'
+    | 'bossKilled'
   >;
   damageWindow: GeneralStrategyDamageWindowMetrics;
 }
@@ -53,6 +54,7 @@ export interface GeneralStrategyCandidateStats {
   completionRate: number;
   avgLevel: number;
   avgKills: number;
+  bossKillRate: number;
   avgExp: number;
   medianExp: number;
   p10Exp: number;
@@ -111,6 +113,7 @@ export interface GeneralStrategyBaselineComparisonEntry {
   p10Score: number;
   completionRate: number;
   avgSurvivalTimeSeconds: number;
+  bossKillRate: number;
   avgExp: number;
   medianExp: number;
   p10Exp: number;

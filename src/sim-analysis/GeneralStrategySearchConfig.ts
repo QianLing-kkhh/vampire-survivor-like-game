@@ -12,6 +12,7 @@ export interface GeneralStrategySearchConfig {
   seedCount: number;
   durationSeconds: number;
   tickMs: number;
+  minBossKillRate: number;
   topN: number;
   randomSeed: string;
   phases: StrategySearchPhase[];
