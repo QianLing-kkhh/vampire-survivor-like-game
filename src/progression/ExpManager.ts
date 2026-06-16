@@ -1,5 +1,5 @@
 import { EventBus } from '../core/EventBus';
-import { GameEventMap } from '../enemy/Enemy';
+import type { GameEventMap } from '../core/domain/GameEvents';
 
 export class ExpManager {
   private exp = 0;

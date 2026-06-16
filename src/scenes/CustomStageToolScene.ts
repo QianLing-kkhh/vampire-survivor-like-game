@@ -12,21 +12,38 @@ import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { CustomStageValidationPanel } from '../ui/CustomStageValidationPanel';
-import {
-  UITheme,
-  getButtonMetrics,
-  toCssColor,
-} from '../ui/UITheme';
+import { SceneHeader } from '../ui/components/SceneHeader';
+import { UIActionBar, UIActionBarAction } from '../ui/components/UIActionBar';
+import { UIListRow, UIListRowTone } from '../ui/components/UIListRow';
+import { UITextBlock } from '../ui/components/UITextBlock';
+
+type StoredStageRow = {
+  label: string;
+  status?: string;
+  tone?: UIListRowTone;
+  selected?: boolean;
+  stageId?: string;
+};
+
+type CustomStageToolActionId = 'paste' | 'validate' | 'save' | 'export' | 'editor' | 'back';
 
 export class CustomStageToolScene extends Phaser.Scene {
   private readonly storage = new CustomStageStorage();
   private readonly validator = new CustomStageValidator();
   private screenManager?: ScreenManager;
   private panel?: CustomStageValidationPanel;
-  private titleText?: Phaser.GameObjects.Text;
+  private titleHeader?: SceneHeader;
   private inputText?: Phaser.GameObjects.Text;
-  private storedText?: Phaser.GameObjects.Text;
-  private buttons: Phaser.GameObjects.Text[] = [];
+  private readonly storedRowObjects: Phaser.GameObjects.Container[] = [];
+  private storedRows: StoredStageRow[] = [];
+  private storedListLayout?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    compact: boolean;
+  };
+  private actionBar?: UIActionBar<CustomStageToolActionId>;
   private draftPackage?: CustomStagePackage;
   private validationResult?: CustomStageValidationResult;
   private selectedStoredId?: string;
@@ -39,37 +56,20 @@ export class CustomStageToolScene extends Phaser.Scene {
   create(): void {
     this.screenManager = new ScreenManager(this);
     this.cameras.main.setBackgroundColor('#020617');
-    this.titleText = this.add.text(0, 0, I18n.t('customStage.title'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
+    this.titleHeader = new SceneHeader(this, {
+      title: I18n.t('customStage.title'),
     });
-    this.titleText.setOrigin(0.5);
-    this.inputText = this.add.text(0, 0, I18n.t('customStage.pasteJson'), {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
+    this.inputText = new UITextBlock(this, {
+      x: 0,
+      y: 0,
+      text: I18n.t('customStage.pasteJson'),
+      tone: 'muted',
+      fontSize: '13px',
       align: 'center',
-      wordWrap: { width: 560 },
-    });
-    this.inputText.setOrigin(0.5);
-    this.storedText = this.add.text(0, 0, '', {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      lineSpacing: 4,
-      wordWrap: { width: 560 },
-    });
+      width: 560,
+    }).text;
     this.panel = new CustomStageValidationPanel(this, 0, 0, 560);
-    this.buttons = [
-      this.createButton(I18n.t('customStage.pasteJson'), () => this.promptForJson()),
-      this.createButton(I18n.t('customStage.validate'), () => this.validateDraft()),
-      this.createButton(I18n.t('customStage.save'), () => this.saveDraft()),
-      this.createButton(I18n.t('customStage.export'), () => this.exportSelected()),
-      this.createButton(I18n.t('customStage.editorTitle'), () => this.scene.start('CustomStageEditorLiteScene')),
-      this.createButton(I18n.t('customStage.back'), () => this.scene.start('TitleScene')),
-    ];
+    this.actionBar = new UIActionBar<CustomStageToolActionId>(this, this.getActions());
     this.refreshStoredList();
     this.applyLayout();
     this.unsubscribeResize = this.screenManager.onResize(() => this.applyLayout());
@@ -151,20 +151,30 @@ export class CustomStageToolScene extends Phaser.Scene {
       this.selectedStoredId = packages[0].id;
     }
 
-    const lines = packages.length === 0
-      ? [I18n.t('customStage.storedStages'), I18n.t('common.none')]
-      : [
-        I18n.t('customStage.storedStages'),
-        ...packages.slice(0, 6).map((stagePackage) => (
-          `${stagePackage.id === this.selectedStoredId ? '>' : ' '} ${stagePackage.id}`
-        )),
-      ];
+    this.storedRows = packages.length === 0
+      ? [
+        {
+          label: I18n.t('common.none'),
+          status: '-',
+          tone: 'muted',
+        },
+      ]
+      : packages.slice(0, 6).map((stagePackage, index) => ({
+        label: stagePackage.id,
+        status: `#${index + 1}`,
+        selected: stagePackage.id === this.selectedStoredId,
+        tone: stagePackage.id === this.selectedStoredId ? 'normal' : 'muted',
+        stageId: stagePackage.id,
+      }));
 
     if (packages.length > 6) {
-      lines.push(`+${packages.length - 6} more`);
+      this.storedRows.push({
+        label: `+${packages.length - 6}`,
+        tone: 'muted',
+      });
     }
 
-    this.storedText?.setText(lines.join('\n'));
+    this.renderStoredRows();
   }
 
   private applyLayout(): void {
@@ -172,63 +182,134 @@ export class CustomStageToolScene extends Phaser.Scene {
       return;
     }
 
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
     const panel = LayoutConfig.getPanelLayout(this.screenManager, {
-      maxWidth: this.screenManager.isPortrait() ? 360 : 640,
-      maxHeight: this.screenManager.isPortrait() ? 680 : 620,
-      padding: 24,
+      maxWidth: this.screenManager.isPortrait() ? 320 : tiny ? 460 : compact ? 540 : 620,
+      maxHeight: this.screenManager.isPortrait() ? compact ? 560 : 620 : tiny ? 280 : compact ? 390 : 500,
+      padding: compact ? 16 : 22,
     });
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
-    const mode = this.screenManager.isPortrait() ? 'vertical' : 'twoColumn';
-    const buttonLayout = LayoutConfig.getButtonListLayout({
-      screen: this.screenManager,
-      count: this.buttons.length,
-      centerX: this.screenManager.centerX,
-      startY: panel.y + panel.height - (this.screenManager.isPortrait() ? 210 : 120),
-      mode,
-      gap: metrics.height + 8,
+    const actionAreaHeight = this.screenManager.isPortrait()
+      ? tiny ? 160 : 174
+      : tiny ? 56 : compact ? 78 : 86;
+    const buttonArea = {
+      x: panel.content.x,
+      y: panel.y + panel.height - actionAreaHeight - (this.screenManager.isPortrait() ? tiny ? 14 : 16 : tiny ? 10 : compact ? 14 : 18),
+      width: panel.content.width,
+      height: actionAreaHeight,
+    };
+    this.actionBar?.layout(this.screenManager, buttonArea, {
+      columns: this.screenManager.isPortrait() ? 2 : 3,
+      compact,
+      minWidth: 96,
+      maxWidth: tiny ? 138 : compact ? 160 : 184,
+      minHeight: tiny ? 22 : 26,
+      maxHeight: tiny ? 28 : compact ? 32 : 36,
+      fontSize: tiny ? '9px' : compact ? '10px' : '11px',
     });
 
-    this.titleText?.setPosition(this.screenManager.centerX, panel.y + 32);
-    this.titleText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
-    this.inputText?.setPosition(this.screenManager.centerX, panel.y + 72);
+    this.titleHeader?.setLayout(
+      this.screenManager.centerX,
+      panel.y + (tiny ? 22 : compact ? 26 : 32),
+      Math.min(panel.width - 24, 720),
+      { titleFontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).header },
+    );
+    this.inputText?.setPosition(this.screenManager.centerX, panel.y + (tiny ? 52 : compact ? 60 : 72));
     this.inputText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
-    this.panel?.setPosition(panel.x + 20, panel.y + 104);
-    this.storedText?.setPosition(panel.x + 20, panel.y + 304);
-    this.storedText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
+    this.inputText?.setWordWrapWidth(panel.content.width);
+    const validationWidth = panel.content.width;
+    const validationHeight = tiny
+      ? this.screenManager.isPortrait() ? 142 : 96
+      : compact ? 150 : 164;
+    const validationX = panel.content.x;
+    const validationY = panel.y + (tiny ? this.screenManager.isPortrait() ? 78 : 58 : compact ? 88 : 104);
+    this.panel?.setPosition(validationX, validationY);
+    this.panel?.updateLayout(validationWidth, validationHeight);
+    const storedTop = validationY + validationHeight + (tiny ? 8 : 12);
+    this.storedListLayout = {
+      x: panel.content.x,
+      y: storedTop,
+      width: panel.content.width,
+      height: Math.max(1, buttonArea.y - storedTop - (tiny ? 6 : 10)),
+      compact,
+    };
+    this.renderStoredRows();
 
-    this.buttons.forEach((button, index) => {
-      const position = buttonLayout.positions[index];
-      button.setPosition(position.x, position.y);
-      button.setFontSize(buttonLayout.fontSize);
-      button.setFixedSize(buttonLayout.width, buttonLayout.height);
+  }
+
+  private renderStoredRows(): void {
+    this.clearStoredRows();
+    if (!this.storedListLayout) {
+      return;
+    }
+
+    const { x, y, width, height, compact } = this.storedListLayout;
+    const titleHeight = compact ? 20 : 24;
+    const rowHeight = compact ? 20 : 24;
+    const rowGap = compact ? 4 : 5;
+    const maxRows = Math.max(1, Math.floor((height - titleHeight - rowGap) / (rowHeight + rowGap)));
+
+    const titleRow = UIListRow.create(this, {
+      x: x + width / 2,
+      y: y + titleHeight / 2,
+      width,
+      height: titleHeight,
+      label: I18n.t('customStage.storedStages'),
+      tone: 'section',
+      compact,
+    });
+    this.storedRowObjects.push(titleRow);
+
+    this.storedRows.slice(0, maxRows).forEach((row, index) => {
+      const rowObject = UIListRow.create(this, {
+        x: x + width / 2,
+        y: y + titleHeight + rowGap + rowHeight / 2 + index * (rowHeight + rowGap),
+        width,
+        height: rowHeight,
+        label: row.label,
+        status: row.status,
+        tone: row.tone,
+        selected: row.selected,
+        disabled: !row.stageId,
+        compact,
+        onClick: row.stageId ? () => {
+          this.selectedStoredId = row.stageId;
+          this.refreshStoredList();
+        } : undefined,
+      });
+      this.storedRowObjects.push(rowObject);
     });
   }
 
-  private createButton(label: string, onClick: () => void): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.scale.width, this.scale.height);
-    const button = this.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: { x: 0, y: Math.max(0, Math.floor((metrics.height - 22) / 2)) },
-    });
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor)));
-    button.on('pointerout', () => button.setBackgroundColor(toCssColor(UITheme.buttonBgColor)));
-    button.on('pointerdown', onClick);
-    return button;
+  private clearStoredRows(): void {
+    this.storedRowObjects.forEach((row) => row.destroy(true));
+    this.storedRowObjects.length = 0;
+  }
+
+  private getActions(): Array<UIActionBarAction<CustomStageToolActionId>> {
+    return [
+      { id: 'paste', label: I18n.t('customStage.pasteJson'), onClick: () => this.promptForJson() },
+      { id: 'validate', label: I18n.t('customStage.validate'), onClick: () => this.validateDraft() },
+      { id: 'save', label: I18n.t('customStage.save'), onClick: () => this.saveDraft() },
+      { id: 'export', label: I18n.t('customStage.export'), onClick: () => this.exportSelected() },
+      { id: 'editor', label: I18n.t('customStage.editorTitle'), onClick: () => this.scene.start('CustomStageEditorLiteScene') },
+      { id: 'back', label: I18n.t('customStage.back'), onClick: () => this.scene.start('TitleScene') },
+    ];
   }
 
   private cleanup(): void {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
+    this.titleHeader?.destroy();
+    this.titleHeader = undefined;
     this.panel?.destroy();
     this.panel = undefined;
+    this.inputText?.destroy();
+    this.inputText = undefined;
+    this.actionBar?.destroy();
+    this.actionBar = undefined;
+    this.clearStoredRows();
     this.screenManager?.dispose();
     this.screenManager = undefined;
   }

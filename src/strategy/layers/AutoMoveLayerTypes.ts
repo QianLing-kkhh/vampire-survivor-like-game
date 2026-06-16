@@ -1,5 +1,4 @@
-import Phaser from 'phaser';
-
+import type { Vector2 } from '../../core/domain/Vector2';
 import type {
   AutoTarget,
   Candidate,
@@ -20,8 +19,8 @@ import type { StrategyScoreWeights } from '../engine/AutoStrategyDecision';
 
 export interface AutoMoveDangerInfo {
   nearestDistance: number;
-  fleeDirection: Phaser.Math.Vector2;
-  enemyCenter: Phaser.Math.Vector2;
+  fleeDirection: Vector2;
+  enemyCenter: Vector2;
   [key: string]: unknown;
 }
 
@@ -30,16 +29,16 @@ export interface StrategicLayerOps {
   evaluateIntent(input: StrategicLayerInput): StrategicMoveIntent;
   scoreDirection(
     input: StrategicLayerInput,
-    direction: Phaser.Math.Vector2,
+    direction: Vector2,
     mode: StrategicMoveIntent['mode'],
   ): number;
-  getBossWarningRisk(context: AutoPlayerContext, player: Phaser.Math.Vector2): number;
+  getBossWarningRisk(context: AutoPlayerContext, player: Vector2): number;
   commitIntentState(intent: StrategicMoveIntent, remainingMs: number): void;
 }
 
 export interface StrategicLayerInput {
   context: AutoPlayerContext;
-  player: Phaser.Math.Vector2;
+  player: Vector2;
   danger: AutoMoveDangerInfo;
   cornerTrap: CornerTrapInfo;
   surround: SurroundInfo;
@@ -47,9 +46,9 @@ export interface StrategicLayerInput {
   terrainEscape: TerrainEscapeInfo;
   kite: KiteInfo;
   target?: AutoTarget;
-  warningEscapeDirection: Phaser.Math.Vector2;
-  portalEscapeDirection: Phaser.Math.Vector2;
-  breakoutDirection: Phaser.Math.Vector2;
+  warningEscapeDirection: Vector2;
+  portalEscapeDirection: Vector2;
+  breakoutDirection: Vector2;
   currentIntent?: StrategicMoveIntent;
   intentRemainingMs: number;
   ops: StrategicLayerOps;
@@ -69,7 +68,7 @@ export interface TacticalRouteLayerOps {
 
 export interface TacticalRouteLayerInput {
   context: AutoPlayerContext;
-  player: Phaser.Math.Vector2;
+  player: Vector2;
   danger: AutoMoveDangerInfo;
   intent: StrategicMoveIntent;
   cornerTrap: CornerTrapInfo;
@@ -77,9 +76,9 @@ export interface TacticalRouteLayerInput {
   movement: MovementMemoryInfo;
   kite: KiteInfo;
   terrainEscape: TerrainEscapeInfo;
-  warningEscapeDirection: Phaser.Math.Vector2;
-  portalEscapeDirection: Phaser.Math.Vector2;
-  breakoutDirection: Phaser.Math.Vector2;
+  warningEscapeDirection: Vector2;
+  portalEscapeDirection: Vector2;
+  breakoutDirection: Vector2;
   currentRoute?: TacticalRoute;
   routeRemainingMs: number;
   elapsedMs: number;
@@ -88,32 +87,32 @@ export interface TacticalRouteLayerInput {
 }
 
 export interface MicroControlLayerOps {
-  advanceRouteWaypoint(route: TacticalRoute, player: Phaser.Math.Vector2): void;
+  advanceRouteWaypoint(route: TacticalRoute, player: Vector2): void;
   getRouteDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     route: TacticalRoute,
     intent: StrategicMoveIntent,
-  ): Phaser.Math.Vector2;
-  getBossWarningEscapeDirection(context: AutoPlayerContext, player: Phaser.Math.Vector2): Phaser.Math.Vector2;
-  getRouteReturnDirection(player: Phaser.Math.Vector2, route: TacticalRoute): Phaser.Math.Vector2;
-  getFinalBossWarningCandidates(context: AutoPlayerContext, player: Phaser.Math.Vector2): Candidate[];
-  getNearestEnemyEscapeCandidates(context: AutoPlayerContext, player: Phaser.Math.Vector2): Candidate[];
+  ): Vector2;
+  getBossWarningEscapeDirection(context: AutoPlayerContext, player: Vector2): Vector2;
+  getRouteReturnDirection(player: Vector2, route: TacticalRoute): Vector2;
+  getFinalBossWarningCandidates(context: AutoPlayerContext, player: Vector2): Candidate[];
+  getNearestEnemyEscapeCandidates(context: AutoPlayerContext, player: Vector2): Candidate[];
   getCandidateEndpoint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2;
+    player: Vector2,
+    direction: Vector2,
+  ): Vector2;
   getFinalBossDistanceConstraint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
   ): FinalBossDistanceConstraintResult;
   scoreMicroDirection(
     input: MicroControlLayerInput,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
-    routeDirection: Phaser.Math.Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
+    routeDirection: Vector2,
   ): number;
   getMicroResultReason(reason: string): MicroMoveResult['reason'];
   updateFinalBossWarningChoiceDebug(reason: string): void;
@@ -137,7 +136,7 @@ export interface FinalBossDistanceConstraintDebugUpdate {
 
 export interface MicroControlLayerInput {
   context: AutoPlayerContext;
-  player: Phaser.Math.Vector2;
+  player: Vector2;
   route: TacticalRoute;
   intent: StrategicMoveIntent;
   danger: AutoMoveDangerInfo;
@@ -146,7 +145,7 @@ export interface MicroControlLayerInput {
   movement: MovementMemoryInfo;
   kite: KiteInfo;
   terrainEscape: TerrainEscapeInfo;
-  lastMoveDirection?: Phaser.Math.Vector2;
+  lastMoveDirection?: Vector2;
   debugSnapshot?: StrategicLookaheadDebugSnapshot;
   ops: MicroControlLayerOps;
 }

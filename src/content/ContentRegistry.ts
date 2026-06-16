@@ -1,11 +1,12 @@
 import { CharacterDefinition } from '../character/CharacterDefinition';
-import { EnemyStats } from '../enemy/Enemy';
+import type { EnemyStats } from '../core/domain/EnemyTypes';
+import type { WeaponConfig } from '../core/domain/WeaponTypes';
+import { EvolutionRule } from '../evolution/EvolutionRule';
 import { MapDefinition } from '../map/MapDefinition';
 import { PassiveItem } from '../passive/PassiveItem';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import { SpawnWave } from '../spawn/SpawnWave';
 import { StageDefinition } from '../stage/StageDefinition';
-import { WeaponConfig } from '../weapon/Weapon';
 
 import { ContentPack } from './ContentPack';
 
@@ -19,6 +20,7 @@ export class ContentRegistry {
   private static readonly characters = new Map<string, CharacterDefinition>();
   private static readonly stages = new Map<string, StageDefinition>();
   private static readonly maps = new Map<string, MapDefinition>();
+  private static readonly evolutions: EvolutionRule[] = [];
 
   static registerPack(pack: ContentPack): void {
     if (this.packs.has(pack.id)) {
@@ -38,6 +40,10 @@ export class ContentRegistry {
       this.upgrades.push(...pack.upgrades.map((upgrade) => ({ ...upgrade })));
     }
 
+    if (pack.evolutions) {
+      this.evolutions.push(...pack.evolutions.map((rule) => ({ ...rule })));
+    }
+
     this.packs.set(pack.id, pack);
   }
 
@@ -51,6 +57,7 @@ export class ContentRegistry {
     this.characters.clear();
     this.stages.clear();
     this.maps.clear();
+    this.evolutions.splice(0, this.evolutions.length);
   }
 
   static getWeapon(id: string): WeaponConfig | undefined {
@@ -107,6 +114,10 @@ export class ContentRegistry {
 
   static listMaps(): MapDefinition[] {
     return Array.from(this.maps.values()).map((map) => this.clone(map));
+  }
+
+  static listEvolutionRules(): EvolutionRule[] {
+    return this.evolutions.map((rule) => ({ ...rule }));
   }
 
   private static registerMap<T>(

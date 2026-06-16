@@ -15,13 +15,18 @@ import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSet
 import { SettingsManager } from '../settings/SettingsManager';
 import { RANDOM_UNLOCKED_STAGE_ID, StageManager } from '../stage/StageManager';
 import type { StrategyTelemetrySummary } from '../telemetry/StrategyTelemetry';
+import { UIActionBar, UIActionBarAction } from '../ui/components/UIActionBar';
+import { UIListRow, UIListRowTone } from '../ui/components/UIListRow';
+import { PanelFrame } from '../ui/components/PanelFrame';
+import { PanelHeader } from '../ui/components/PanelHeader';
+import { UIStatRow } from '../ui/components/UIStatRow';
+import { UITextBlock } from '../ui/components/UITextBlock';
 import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { SelectionListPanel } from '../ui/SelectionListPanel';
 import { SettingsMenu } from '../ui/SettingsMenu';
-import { setTextHitArea, stopPointerEvent } from '../ui/input/UIInteraction';
 import { StatsBuildPanel } from '../ui/stats/StatsBuildPanel';
 import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
-import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
+import { UITheme } from '../ui/UITheme';
 
 interface ResultSceneData {
   runId?: string;
@@ -100,13 +105,36 @@ interface ResultSceneData {
   statsBuildSnapshot?: StatsBuildSnapshot;
 }
 
+type ResultSummaryLine = {
+  label?: string;
+  value?: string;
+  text?: string;
+  emphasis?: boolean;
+};
+
+type ResultLeaderboardRow = {
+  label: string;
+  value?: string;
+  status?: string;
+  tone?: UIListRowTone;
+};
+
+type ResultPrimaryActionId = 'restart';
+type ResultSecondaryActionId =
+  | 'selectCharacter'
+  | 'selectStage'
+  | 'statsBuild'
+  | 'title'
+  | 'settings'
+  | 'developer';
+
 export class ResultScene extends Phaser.Scene {
   private static readonly AUTO_RESTART_SECONDS = 10;
 
   private hasRestarted = false;
   private settingsText?: Phaser.GameObjects.Text;
   private csvLogText?: Phaser.GameObjects.Text;
-  private autoRestartText?: Phaser.GameObjects.Text;
+  private autoRestartText?: UITextBlock;
   private autoRestartTimer?: Phaser.Time.TimerEvent;
   private autoRestartRemainingSeconds = ResultScene.AUTO_RESTART_SECONDS;
   private autoRestartCanceled = false;
@@ -119,6 +147,8 @@ export class ResultScene extends Phaser.Scene {
   private developerMenu?: DeveloperMenu;
   private selectionPanel?: SelectionListPanel;
   private statsBuildPanel?: StatsBuildPanel;
+  private primaryActionBar?: UIActionBar<ResultPrimaryActionId>;
+  private secondaryActionBar?: UIActionBar<ResultSecondaryActionId>;
 
   constructor() {
     super('ResultScene');
@@ -137,292 +167,51 @@ export class ResultScene extends Phaser.Scene {
     const survivalTimeSeconds = data.survivalTime ?? data.survivalTimeSeconds ?? 0;
     const isVictory = data.resultType === 'victory';
     const isEndlessResult = data.endlessStarted === true;
-    const weaponText = data.weaponIds && data.weaponIds.length > 0
-      ? this.truncateList(data.weaponIds)
-      : I18n.t('common.none');
-    const passiveText = data.passiveItems && data.passiveItems.length > 0
-      ? this.truncateList(data.passiveItems
-        .map((passive) => `${passive.name} Lv${passive.level}`)
-        , 4)
-      : I18n.t('common.none');
-    const relicText = data.relicNames && data.relicNames.length > 0
-      ? this.truncateList(data.relicNames, 4)
-      : data.relicIds && data.relicIds.length > 0
-        ? this.truncateList(data.relicIds, 4)
-        : I18n.t('common.none');
-    const evolutionPathText = data.evolutionPath && data.evolutionPath.length > 0
-      ? this.truncateList(data.evolutionPath, 3)
-      : I18n.t('common.none');
     const playtestCsv = data.playtestCsv ?? '';
 
     const resultTitle = isEndlessResult
       ? I18n.t('result.endlessVictory')
       : isVictory ? I18n.t('result.victory') : I18n.t('result.gameOver');
-    const title = this.add.text(centerX, layout.headerY, resultTitle, {
-      color: isVictory ? UITheme.successTextColor : UITheme.dangerTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: this.screenManager.isPortrait() ? '28px' : UITheme.titleFontSize,
-      fontStyle: 'bold',
-    });
-    title.setOrigin(0.5);
+    this.createResultShell(layout, resultTitle, isVictory);
 
     const summaryLines = this.getSummaryLines({
       data,
       resultTitle,
       survivalTimeSeconds,
       isEndlessResult,
-      weaponText,
-      passiveText,
-      relicText,
-      evolutionPathText,
       unlockMessages: data.unlockMessages ?? [],
       maxRows: layout.summaryMaxRows,
     });
-    const result = this.add.text(
-      layout.summaryArea.x + layout.summaryArea.width / 2,
-      layout.summaryArea.y,
-      summaryLines,
-      {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: layout.fontSize,
-        align: 'center',
-        lineSpacing: this.screenManager.isPortrait() ? 2 : 4,
-        wordWrap: { width: layout.summaryArea.width },
-      },
-    );
-    result.setOrigin(0.5, 0);
+    this.createInfoPanel(layout.summaryArea, 0.22);
+    this.renderSummaryLines(layout.summaryArea, summaryLines, layout);
 
     if (isEndlessResult && data.endlessLeaderboardEntries?.length) {
-      const leaderboard = this.add.text(
-        layout.leaderboardArea.x + layout.leaderboardArea.width / 2,
-        layout.leaderboardArea.y,
-        this.formatLeaderboardLines(data.endlessLeaderboardEntries, layout.leaderboardMaxRows),
-        {
-          color: UITheme.mutedTextColor,
-          fontFamily: UITheme.fontFamily,
-          fontSize: layout.smallFontSize,
-          align: 'center',
-          lineSpacing: 2,
-          wordWrap: { width: layout.leaderboardArea.width },
-        },
+      this.createInfoPanel(layout.leaderboardArea, 0.16);
+      this.renderLeaderboardRows(
+        layout.leaderboardArea,
+        this.formatLeaderboardRows(data.endlessLeaderboardEntries, layout.leaderboardMaxRows),
       );
-      leaderboard.setOrigin(0.5, 0);
     } else if (data.localLeaderboardEntries?.length) {
-      const leaderboard = this.add.text(
-        layout.leaderboardArea.x + layout.leaderboardArea.width / 2,
-        layout.leaderboardArea.y,
-        this.formatLocalLeaderboardLines(
+      this.createInfoPanel(layout.leaderboardArea, 0.16);
+      this.renderLeaderboardRows(
+        layout.leaderboardArea,
+        this.formatLocalLeaderboardRows(
           data.localLeaderboardEntries,
           data.localLeaderboardRank ?? 0,
           layout.leaderboardMaxRows,
         ),
-        {
-          color: UITheme.mutedTextColor,
-          fontFamily: UITheme.fontFamily,
-          fontSize: layout.smallFontSize,
-          align: 'center',
-          lineSpacing: 2,
-          wordWrap: { width: layout.leaderboardArea.width },
-        },
       );
-      leaderboard.setOrigin(0.5, 0);
     }
 
-    this.autoRestartText = this.add.text(centerX, layout.autoRestartY, '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
+    this.autoRestartText = new UITextBlock(this, {
+      x: centerX,
+      y: layout.autoRestartY,
+      tone: 'muted',
       fontSize: layout.smallFontSize,
-      align: 'center',
-    });
-    this.autoRestartText.setOrigin(0.5);
-
-    const selectCharacterButton = this.add.text(centerX, 0, I18n.t('title.selectCharacter'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    selectCharacterButton.setOrigin(0.5);
-    selectCharacterButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(selectCharacterButton);
-    selectCharacterButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.showCharacterSelection();
     });
 
-    const selectStageButton = this.add.text(centerX, 0, I18n.t('title.selectStage'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    selectStageButton.setOrigin(0.5);
-    selectStageButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(selectStageButton);
-    selectStageButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.showStageSelection();
-    });
-
-    const statsBuildButton = this.add.text(centerX, 0, I18n.t('pause.statsBuild'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    statsBuildButton.setOrigin(0.5);
-    statsBuildButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(statsBuildButton);
-    statsBuildButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.showStatsBuildPanel();
-    });
-
-    const restartButton = this.add.text(centerX, 0, I18n.t('result.restart'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 16,
-        y: 8,
-      },
-    });
-    restartButton.setOrigin(0.5);
-    restartButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(restartButton);
-    restartButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.restartGame();
-    });
-
-    const titleButton = this.add.text(centerX, 0, I18n.t('common.returnToTitle'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 16,
-        y: 8,
-      },
-    });
-    titleButton.setOrigin(0.5);
-    titleButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(titleButton);
-    titleButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.scene.stop('UIScene');
-      this.scene.stop('GameScene');
-      this.scene.start('TitleScene');
-    });
-
-    const settingsButton = this.add.text(centerX, 0, I18n.t('result.settings'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    settingsButton.setOrigin(0.5);
-    settingsButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(settingsButton);
-    settingsButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.showSettingsMenu();
-    });
-
-    const developerButton = this.add.text(centerX, 0, I18n.t('developer.title'), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.buttonLayout.fontSize,
-      padding: {
-        x: 12,
-        y: 8,
-      },
-    });
-    developerButton.setOrigin(0.5);
-    developerButton.setInteractive({ useHandCursor: true });
-    this.addButtonHover(developerButton);
-    developerButton.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this, 'ui_click');
-      this.cancelAutoRestart();
-      this.showDeveloperMenu(playtestCsv);
-    });
-
-    this.layoutButtons([
-      selectCharacterButton,
-      selectStageButton,
-      statsBuildButton,
-      restartButton,
-      titleButton,
-      settingsButton,
-      developerButton,
-    ]);
+    this.createActionBars(playtestCsv);
+    this.layoutButtons();
     this.screenManager.onResize(() => {
       this.scheduleResponsiveRestart();
     });
@@ -442,12 +231,156 @@ export class ResultScene extends Phaser.Scene {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  private truncateList(items: readonly string[], maxItems = 5): string {
-    if (items.length <= maxItems) {
-      return items.join(', ');
+  private createResultShell(
+    layout: ReturnType<typeof LayoutConfig.getResultSceneLayout>,
+    resultTitle: string,
+    isVictory: boolean,
+  ): void {
+    if (!this.screenManager) {
+      return;
     }
 
-    return `${items.slice(0, maxItems).join(', ')} ${I18n.t('result.more', { count: items.length - maxItems })}`;
+    const shellTop = Math.max(10, layout.headerY - (this.screenManager.isPortrait() ? 28 : 34));
+    const shellBottom = Math.min(
+      this.screenManager.height - 10,
+      layout.buttonArea.y + layout.buttonArea.height + (this.screenManager.isPortrait() ? 8 : 10),
+    );
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
+    const shellWidth = Math.min(
+      this.screenManager.width - (compact ? 20 : 32),
+      layout.summaryArea.width + (compact ? 34 : 52),
+      this.screenManager.isPortrait() ? 430 : density === 'spacious' ? 820 : 760,
+    );
+    const shellHeight = Math.max(compact ? 232 : 260, shellBottom - shellTop);
+    const shellCenterY = shellTop + shellHeight / 2;
+
+    const frame = PanelFrame.create(this, {
+      x: this.screenManager.centerX,
+      y: shellCenterY,
+      width: shellWidth,
+      height: shellHeight,
+      alpha: UITheme.panelBgAlpha,
+      variant: 'modal',
+    });
+    frame.setDepth(-10);
+
+    const header = PanelHeader.create(this, {
+      x: this.screenManager.centerX,
+      y: layout.headerY,
+      width: Math.max(240, shellWidth - 64),
+      title: resultTitle,
+      titleColor: isVictory ? UITheme.successTextColor : UITheme.dangerTextColor,
+      titleFontSize: density === 'tiny' ? '24px' : compact ? '28px' : UITheme.titleFontSize,
+    });
+    header.setDepth(-5);
+  }
+
+  private createInfoPanel(rect: { x: number; y: number; width: number; height: number }, alpha: number): void {
+    const panel = PanelFrame.create(this, {
+      x: rect.x + rect.width / 2,
+      y: rect.y + rect.height / 2,
+      width: rect.width,
+      height: rect.height,
+      alpha,
+      variant: 'card',
+    });
+    panel.setDepth(-7);
+  }
+
+  private renderSummaryLines(
+    rect: { x: number; y: number; width: number; height: number },
+    lines: ResultSummaryLine[],
+    layout: ReturnType<typeof LayoutConfig.getResultSceneLayout>,
+  ): void {
+    if (!this.screenManager) {
+      return;
+    }
+
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
+    const rowHeight = density === 'tiny' ? 18 : compact ? 20 : 24;
+    const rowGap = density === 'tiny' ? 3 : 4;
+    const innerX = rect.x + 12;
+    let y = rect.y + (compact ? 8 : 10);
+    const rowWidth = rect.width - 24;
+    const bottom = rect.y + rect.height - 8;
+
+    lines.forEach((line) => {
+      if (y + rowHeight > bottom) {
+        return;
+      }
+
+      if (line.label !== undefined) {
+        const row = UIStatRow.create(
+          this,
+          innerX + rowWidth / 2,
+          y + rowHeight / 2,
+          rowWidth,
+          line.label,
+          line.value ?? '',
+          {
+            height: rowHeight,
+            fontSize: layout.smallFontSize,
+            backgroundAlpha: 0.28,
+            borderAlpha: 0.12,
+          },
+        );
+        row.setDepth(1);
+        y += rowHeight + rowGap;
+        return;
+      }
+
+      const container = UIListRow.create(this, {
+        x: innerX + rowWidth / 2,
+        y: y + rowHeight / 2,
+        width: rowWidth,
+        height: rowHeight,
+        label: line.text ?? '',
+        tone: line.emphasis === false ? 'muted' : 'section',
+        compact,
+      });
+      container.setDepth(1);
+      y += rowHeight + rowGap;
+    });
+  }
+
+  private renderLeaderboardRows(
+    rect: { x: number; y: number; width: number; height: number },
+    rows: ResultLeaderboardRow[],
+  ): void {
+    if (!this.screenManager) {
+      return;
+    }
+
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
+    const rowHeight = density === 'tiny' ? 18 : compact ? 20 : 24;
+    const rowGap = density === 'tiny' ? 3 : 4;
+    const rowWidth = rect.width - 20;
+    const x = rect.x + rect.width / 2;
+    let y = rect.y + (compact ? 8 : 10);
+    const bottom = rect.y + rect.height - 8;
+
+    rows.forEach((row) => {
+      if (y + rowHeight > bottom) {
+        return;
+      }
+
+      const container = UIListRow.create(this, {
+        x,
+        y: y + rowHeight / 2,
+        width: rowWidth,
+        height: rowHeight,
+        label: row.label,
+        value: row.value,
+        status: row.status,
+        tone: row.tone,
+        compact,
+      });
+      container.setDepth(1);
+      y += rowHeight + rowGap;
+    });
   }
 
   private getSummaryLines(params: {
@@ -455,36 +388,35 @@ export class ResultScene extends Phaser.Scene {
     resultTitle: string;
     survivalTimeSeconds: number;
     isEndlessResult: boolean;
-    weaponText: string;
-    passiveText: string;
-    relicText: string;
-    evolutionPathText: string;
     unlockMessages: string[];
     maxRows: number;
-  }): string[] {
-    const lines = [
-      `${I18n.t('result.result')}: ${params.resultTitle}`,
-      `${I18n.t('result.survivalTime')}: ${this.formatTime(params.survivalTimeSeconds)}`,
+  }): ResultSummaryLine[] {
+    const lines: ResultSummaryLine[] = [
+      { label: I18n.t('result.result'), value: params.resultTitle },
+      { label: I18n.t('result.survivalTime'), value: this.formatTime(params.survivalTimeSeconds) },
       ...(params.isEndlessResult ? [
-        `${I18n.t('result.endlessSurvivalTime')}: ${this.formatTime(params.data.endlessSurvivalTime ?? 0)}`,
+        { label: I18n.t('result.endlessSurvivalTime'), value: this.formatTime(params.data.endlessSurvivalTime ?? 0) },
       ] : []),
       this.formatMetadataLine(params.data),
       ...this.getStrategyControlLines(params.data),
-      `${I18n.t('result.finalLevel')}: ${params.data.finalLevel ?? 1}`,
-      `${I18n.t('result.killCount')}: ${params.data.killCount ?? 0}`,
-      `${I18n.t('result.score')}: ${params.data.score ?? 0}`,
+      { label: I18n.t('result.finalLevel'), value: `${params.data.finalLevel ?? 1}` },
+      { label: I18n.t('result.killCount'), value: `${params.data.killCount ?? 0}` },
+      { label: I18n.t('result.score'), value: `${params.data.score ?? 0}` },
       ...this.getStrategyTelemetryLines(params.data),
-      ...params.unlockMessages.map((message) => `${I18n.t('result.unlock')}: ${message}`),
-      `${I18n.t('result.weapons')}: ${params.weaponText}`,
-      `${I18n.t('result.passives')}: ${params.passiveText}`,
-      `${I18n.t('result.relics')}: ${params.relicText}`,
-      `${I18n.t('result.evolutionPath')}: ${params.evolutionPathText}`,
-      `${I18n.t('result.treasureOpens')}: ${params.data.treasureOpenCount ?? 0}`,
-      `${I18n.t('result.chestUpgrades')}: ${params.data.chestUpgradeCount ?? 0}`,
-      `${I18n.t('result.chestEvolutions')}: ${params.data.chestEvolutionCount ?? 0}`,
-      `${I18n.t('result.bossDashes')}: ${params.data.bossDashCount ?? 0} / ${I18n.t('result.bossDashHits')}: ${params.data.bossDashHitCount ?? 0}`,
+      ...params.unlockMessages.map((message) => ({ label: I18n.t('result.unlock'), value: message })),
+      this.getBuildSummaryLine(params.data),
+      { label: I18n.t('result.treasureOpens'), value: `${params.data.treasureOpenCount ?? 0}` },
+      { label: I18n.t('result.chestUpgrades'), value: `${params.data.chestUpgradeCount ?? 0}` },
+      { label: I18n.t('result.chestEvolutions'), value: `${params.data.chestEvolutionCount ?? 0}` },
+      {
+        label: I18n.t('result.bossDashes'),
+        value: `${params.data.bossDashCount ?? 0} / ${I18n.t('result.bossDashHits')} ${params.data.bossDashHitCount ?? 0}`,
+      },
       ...(params.isEndlessResult ? [
-        `${I18n.t('result.endlessBosses')}: ${params.data.endlessBossKillCount ?? 0}/${params.data.endlessBossSpawnCount ?? 0} ${I18n.t('result.killed')}, ${I18n.t('result.skills')}: ${params.data.endlessBossSkillHitCount ?? 0}/${params.data.endlessBossSkillUseCount ?? 0}`,
+        {
+          label: I18n.t('result.endlessBosses'),
+          value: `${params.data.endlessBossKillCount ?? 0}/${params.data.endlessBossSpawnCount ?? 0} ${I18n.t('result.killed')}, ${I18n.t('result.skills')} ${params.data.endlessBossSkillHitCount ?? 0}/${params.data.endlessBossSkillUseCount ?? 0}`,
+        },
       ] : []),
     ];
 
@@ -494,39 +426,69 @@ export class ResultScene extends Phaser.Scene {
 
     return [
       ...lines.slice(0, Math.max(1, params.maxRows - 1)),
-      I18n.t('result.more', { count: lines.length - params.maxRows + 1 }),
+      { text: I18n.t('result.more', { count: lines.length - params.maxRows + 1 }), emphasis: false },
     ];
   }
 
-  private getStrategyControlLines(data: ResultSceneData): string[] {
+  private getBuildSummaryLine(data: ResultSceneData): ResultSummaryLine {
+    const weaponCount = data.weaponIds?.length ?? 0;
+    const passiveCount = data.passiveItems?.length ?? 0;
+    const relicCount = data.relicNames?.length ?? data.relicIds?.length ?? 0;
+    const evolutionCount = data.evolutionPath?.length ?? 0;
+
+    return {
+      label: I18n.t('ui.build'),
+      value: [
+      `${I18n.t('result.weapons')} ${weaponCount}`,
+      `${I18n.t('result.passives')} ${passiveCount}`,
+      `${I18n.t('result.relics')} ${relicCount}`,
+      `${I18n.t('result.evolutionPath')} ${evolutionCount}`,
+      ].join(' / '),
+    };
+  }
+
+  private getStrategyControlLines(data: ResultSceneData): ResultSummaryLine[] {
     if (data.controlMode !== 'autoStrategy') {
-      return ['Mode: Manual'];
+      return [{ label: I18n.t('result.mode'), value: I18n.t('result.control.manual') }];
     }
 
     const controlLabel = data.strategyControlType === 'live'
-      ? 'Live Auto Strategy'
-      : 'Fixed Auto Strategy';
+      ? I18n.t('result.control.liveAutoStrategy')
+      : I18n.t('result.control.fixedAutoStrategy');
     const baseHash = this.shortenHash(data.strategyProfileHash);
     const finalHash = this.shortenHash(data.runtimeStrategyFinalHash ?? data.strategyProfileHash);
-    const editSuffix = data.strategyControlType === 'live'
-      ? ` / edits ${data.strategyEditCount ?? 0}${data.runtimeStrategyEdited ? ` / final ${finalHash}` : ''}`
-      : '';
+    const details = [controlLabel];
+
+    if (data.strategyControlType === 'live') {
+      details.push(`${I18n.t('result.edits')} ${data.strategyEditCount ?? 0}`);
+
+      if (data.runtimeStrategyEdited) {
+        details.push(`${I18n.t('result.final')} ${finalHash}`);
+      }
+    }
+
+    if (baseHash) {
+      details.push(`${I18n.t('result.base')} ${baseHash}`);
+    }
 
     return [
-      `Mode: ${controlLabel}${editSuffix}${baseHash ? ` / base ${baseHash}` : ''}`,
+      { label: I18n.t('result.mode'), value: details.join(' / ') },
     ];
   }
 
-  private formatMetadataLine(data: ResultSceneData): string {
+  private formatMetadataLine(data: ResultSceneData): ResultSummaryLine {
     const stage = data.customStageId ?? data.stageId ?? '-';
     const character = data.characterId ?? '-';
     const seed = data.seed ?? data.runSeed ?? '';
     const shortSeed = seed.length > 14 ? `${seed.slice(0, 14)}...` : seed;
 
-    return `${I18n.t('result.stage')}: ${stage}  ${I18n.t('result.character')}: ${character}${shortSeed ? `  ${I18n.t('result.seed')}: ${shortSeed}` : ''}`;
+    return {
+      label: I18n.t('result.stage'),
+      value: `${stage} / ${I18n.t('result.character')} ${character}${shortSeed ? ` / ${I18n.t('result.seed')} ${shortSeed}` : ''}`,
+    };
   }
 
-  private getStrategyTelemetryLines(data: ResultSceneData): string[] {
+  private getStrategyTelemetryLines(data: ResultSceneData): ResultSummaryLine[] {
     const summary = data.strategyTelemetrySummary;
 
     if (!summary) {
@@ -534,86 +496,104 @@ export class ResultScene extends Phaser.Scene {
     }
 
     return [
-      `Strategy: ${summary.summary}`,
-      `Pace: ${summary.killsPerMinute} KPM / ${summary.expPerMinute} EXP/min / ${summary.damageTakenPerMinute} dmg/min`,
-      `Choices: ${summary.upgradeCount} upgrades / ${summary.evolutionCount} evolutions / ${summary.relicCount} relics / ${summary.treasuresOpenedPerMinute} chests/min`,
+      { label: I18n.t('result.strategy'), value: summary.summary },
+      {
+        label: I18n.t('result.pace'),
+        value: `${summary.killsPerMinute} ${I18n.t('result.kpm')} / ${summary.expPerMinute} ${I18n.t('result.expPerMinute')} / ${summary.damageTakenPerMinute} ${I18n.t('result.damagePerMinute')}`,
+      },
+      {
+        label: I18n.t('result.choices'),
+        value: `${summary.upgradeCount} ${I18n.t('result.upgrades')} / ${summary.evolutionCount} ${I18n.t('result.evolutions')} / ${summary.relicCount} ${I18n.t('result.relics')} / ${summary.treasuresOpenedPerMinute} ${I18n.t('result.chestsPerMinute')}`,
+      },
     ];
   }
 
-  private formatLeaderboardLines(entries: EndlessLeaderboardEntry[], maxRows: number): string[] {
+  private formatLeaderboardRows(entries: EndlessLeaderboardEntry[], maxRows: number): ResultLeaderboardRow[] {
     if (entries.length === 0) {
-      return [I18n.t('result.endlessLeaderboard', { state: I18n.t('result.none') })];
+      return [{
+        label: I18n.t('result.endlessLeaderboard', { state: I18n.t('result.none') }),
+        tone: 'muted',
+      }];
     }
 
-    const visibleCount = Math.max(0, maxRows);
+    const visibleCount = Math.max(0, maxRows - 1);
     const visibleEntries = entries.slice(0, visibleCount);
     const hiddenCount = Math.max(0, entries.length - visibleEntries.length);
 
     return [
-      I18n.t('result.endlessLeaderboardTop', { count: maxRows }),
-      ...visibleEntries.map((entry, index) => (
-        I18n.t('result.leaderboardEntry', {
-          rank: index + 1,
-          time: this.formatTime(entry.endlessSurvivalTime),
-          level: entry.finalLevel,
-          kills: entry.killCount,
-        })
-      )),
-      ...(hiddenCount > 0 ? [I18n.t('result.more', { count: hiddenCount })] : []),
+      {
+        label: I18n.t('result.endlessLeaderboardTop', { count: maxRows }),
+        tone: 'section',
+      },
+      ...visibleEntries.map((entry, index) => ({
+        status: `#${index + 1}`,
+        label: this.formatTime(entry.endlessSurvivalTime),
+        value: `Lv${entry.finalLevel} / ${entry.killCount} ${I18n.t('result.kills')}`,
+        tone: index === 0 ? 'success' as UIListRowTone : 'normal' as UIListRowTone,
+      })),
+      ...(hiddenCount > 0 ? [{
+        label: I18n.t('result.more', { count: hiddenCount }),
+        tone: 'muted' as UIListRowTone,
+      }] : []),
     ];
   }
 
-  private formatLocalLeaderboardLines(
+  private formatLocalLeaderboardRows(
     entries: LeaderboardRecord[],
     currentRank: number,
     maxRows: number,
-  ): string[] {
+  ): ResultLeaderboardRow[] {
     const visibleCount = Math.max(0, maxRows - 1);
     const visibleEntries = entries.slice(0, visibleCount);
     const hiddenCount = Math.max(0, entries.length - visibleEntries.length);
     const mode = entries[0]?.mode ?? 'normal';
     const control = this.formatLeaderboardControl(entries[0]);
+    const currentRankText = currentRank > 0 ? ` / ${I18n.t('result.thisRunRank')} #${currentRank}` : '';
 
     return [
-      `Local ${control} ${mode} leaderboard${currentRank > 0 ? ` / this run #${currentRank}` : ''}`,
-      ...visibleEntries.map((entry, index) => this.formatLocalLeaderboardEntry(entry, index + 1)),
-      ...(hiddenCount > 0 ? [I18n.t('result.more', { count: hiddenCount })] : []),
+      {
+        label: I18n.t('result.localLeaderboard'),
+        value: `${control} ${mode}${currentRankText}`,
+        tone: 'section',
+      },
+      ...visibleEntries.map((entry, index) => this.formatLocalLeaderboardEntryRow(entry, index + 1)),
+      ...(hiddenCount > 0 ? [{
+        label: I18n.t('result.more', { count: hiddenCount }),
+        tone: 'muted' as UIListRowTone,
+      }] : []),
     ];
   }
 
   private formatLeaderboardControl(entry: LeaderboardRecord | undefined): string {
     if (entry?.controlMode !== 'autoStrategy') {
-      return 'Manual';
+      return I18n.t('result.control.manual');
     }
 
     return entry.strategyControlType === 'live'
-      ? 'Live Auto'
-      : 'Fixed Auto';
+      ? I18n.t('result.control.liveAuto')
+      : I18n.t('result.control.fixedAuto');
   }
 
-  private formatLocalLeaderboardEntry(entry: LeaderboardRecord, rank: number): string {
+  private formatLocalLeaderboardEntryRow(entry: LeaderboardRecord, rank: number): ResultLeaderboardRow {
     if (entry.mode === 'scoreAttack') {
-      return `#${rank} ${entry.score ?? 0} score / Lv${entry.finalLevel} / ${entry.killCount} kills`;
+      return {
+        status: `#${rank}`,
+        label: `${entry.score ?? 0} ${I18n.t('result.score')}`,
+        value: `Lv${entry.finalLevel} / ${entry.killCount} ${I18n.t('result.kills')}`,
+        tone: rank === 1 ? 'success' : 'normal',
+      };
     }
 
-    return `#${rank} ${this.formatTime(entry.survivalTime)} / Lv${entry.finalLevel} / ${entry.killCount} kills`;
+    return {
+      status: `#${rank}`,
+      label: this.formatTime(entry.survivalTime),
+      value: `Lv${entry.finalLevel} / ${entry.killCount} ${I18n.t('result.kills')}`,
+      tone: rank === 1 ? 'success' : 'normal',
+    };
   }
 
   private shortenHash(hash: string | undefined): string {
     return hash ? hash.slice(0, 8) : '';
-  }
-
-  private addButtonHover(
-    button: Phaser.GameObjects.Text,
-    backgroundColor = toCssColor(UITheme.buttonBgColor),
-    hoverColor = toCssColor(UITheme.buttonHoverColor),
-  ): void {
-    button.on('pointerover', () => {
-      button.setBackgroundColor(hoverColor);
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(backgroundColor);
-    });
   }
 
   private formatSettingsText(): string {
@@ -877,27 +857,127 @@ export class ResultScene extends Phaser.Scene {
     this.scene.start('RunPreloadScene');
   }
 
-  private layoutButtons(buttons: Phaser.GameObjects.Text[]): void {
+  private createActionBars(playtestCsv: string): void {
+    const primaryActions: Array<UIActionBarAction<ResultPrimaryActionId>> = [{
+      id: 'restart',
+      label: I18n.t('result.restart'),
+      onClick: () => {
+        this.cancelAutoRestart();
+        this.restartGame();
+      },
+    }];
+    const secondaryActions: Array<UIActionBarAction<ResultSecondaryActionId>> = [
+      {
+        id: 'selectCharacter',
+        label: I18n.t('title.selectCharacter'),
+        onClick: () => {
+          this.cancelAutoRestart();
+          this.showCharacterSelection();
+        },
+      },
+      {
+        id: 'selectStage',
+        label: I18n.t('title.selectStage'),
+        onClick: () => {
+          this.cancelAutoRestart();
+          this.showStageSelection();
+        },
+      },
+      {
+        id: 'statsBuild',
+        label: I18n.t('pause.statsBuild'),
+        onClick: () => {
+          this.cancelAutoRestart();
+          this.showStatsBuildPanel();
+        },
+      },
+      {
+        id: 'title',
+        label: I18n.t('common.returnToTitle'),
+        onClick: () => {
+          this.cancelAutoRestart();
+          this.scene.stop('UIScene');
+          this.scene.stop('GameScene');
+          this.scene.start('TitleScene');
+        },
+      },
+      {
+        id: 'settings',
+        label: I18n.t('result.settings'),
+        onClick: () => {
+          this.cancelAutoRestart();
+          this.showSettingsMenu();
+        },
+      },
+      {
+        id: 'developer',
+        label: I18n.t('developer.title'),
+        onClick: () => {
+          this.cancelAutoRestart();
+          this.showDeveloperMenu(playtestCsv);
+        },
+      },
+    ];
+
+    this.primaryActionBar?.destroy();
+    this.secondaryActionBar?.destroy();
+    this.primaryActionBar = new UIActionBar(this, primaryActions);
+    this.secondaryActionBar = new UIActionBar(this, secondaryActions);
+    this.primaryActionBar.container.setDepth(100);
+    this.secondaryActionBar.container.setDepth(100);
+    this.primaryActionBar.container.setScrollFactor(0);
+    this.secondaryActionBar.container.setScrollFactor(0);
+  }
+
+  private layoutButtons(): void {
     if (!this.screenManager) {
       return;
     }
 
     const layout = LayoutConfig.getResultSceneLayout(this.screenManager);
-    const buttonLayout = layout.buttonLayout;
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const tinyLandscape = tiny && !this.screenManager.isPortrait();
+    const primaryWidth = Math.min(
+      layout.buttonArea.width - (tiny ? 20 : 32),
+      tiny ? 190 : compact ? 228 : 260,
+    );
+    const primaryHeight = tinyLandscape ? 30 : tiny ? 32 : compact ? 36 : 42;
+    const primaryY = layout.buttonArea.y + primaryHeight / 2;
+    const secondaryTop = primaryY + primaryHeight / 2 + (tinyLandscape ? 3 : tiny ? 5 : 7);
+    const secondaryFontSize = tiny ? '9px' : compact ? '10px' : '12px';
 
     this.layoutBackground();
 
-    buttons.forEach((button, index) => {
-      const position = buttonLayout.positions[index];
-      const x = buttonLayout.mode === 'twoColumn' && buttons.length % 2 === 1 && index === buttons.length - 1
-        ? this.screenManager?.centerX ?? position.x
-        : position.x;
+    this.primaryActionBar?.layout(this.screenManager, {
+      x: layout.buttonArea.x,
+      y: primaryY - primaryHeight / 2,
+      width: layout.buttonArea.width,
+      height: primaryHeight,
+    }, {
+      columns: 1,
+      compact,
+      minWidth: Math.min(primaryWidth, 120),
+      maxWidth: primaryWidth,
+      minHeight: primaryHeight,
+      maxHeight: primaryHeight,
+      fontSize: tiny ? '12px' : compact ? '14px' : layout.fontSize,
+    });
 
-      button.setFontSize(metrics.fontSize);
-      setTextHitArea(button, metrics.width, metrics.height);
-      button.setAlign('center');
-      button.setPosition(x, position.y);
+    this.secondaryActionBar?.layout(this.screenManager, {
+      x: layout.buttonArea.x + (tiny ? 6 : 10),
+      y: secondaryTop,
+      width: layout.buttonArea.width - (tiny ? 12 : 20),
+      height: Math.max(1, layout.buttonArea.y + layout.buttonArea.height - secondaryTop),
+    }, {
+      columns: this.screenManager.isPortrait() ? 2 : 3,
+      compact,
+      minWidth: tiny ? 82 : 102,
+      maxWidth: tiny ? 132 : compact ? 158 : 180,
+      minHeight: tinyLandscape ? 22 : tiny ? 24 : 28,
+      maxHeight: tinyLandscape ? 24 : tiny ? 28 : compact ? 32 : 36,
+      fontSize: secondaryFontSize,
     });
   }
 
@@ -951,6 +1031,12 @@ export class ResultScene extends Phaser.Scene {
     this.developerMenu = undefined;
     this.statsBuildPanel?.destroy();
     this.statsBuildPanel = undefined;
+    this.primaryActionBar?.destroy();
+    this.primaryActionBar = undefined;
+    this.secondaryActionBar?.destroy();
+    this.secondaryActionBar = undefined;
+    this.autoRestartText?.destroy();
+    this.autoRestartText = undefined;
     this.closeSelectionPanel();
     this.screenManager?.dispose();
     this.screenManager = undefined;

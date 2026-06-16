@@ -6,17 +6,17 @@ import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SettingsManager } from '../settings/SettingsManager';
 import { ChallengeSummaryPanel } from '../ui/ChallengeSummaryPanel';
+import { UIActionBar } from '../ui/components/UIActionBar';
+import { SceneHeader } from '../ui/components/SceneHeader';
 import { DailyChallengePanel } from '../ui/DailyChallengePanel';
-import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
+
+type DailyChallengeActionId = 'start' | 'copySeed' | 'records' | 'back';
 
 export class DailyChallengeScene extends Phaser.Scene {
   private readonly challengeManager = new ChallengeManager();
   private screenManager?: ScreenManager;
-  private titleText?: Phaser.GameObjects.Text;
-  private startButton?: Phaser.GameObjects.Text;
-  private copySeedButton?: Phaser.GameObjects.Text;
-  private recordsButton?: Phaser.GameObjects.Text;
-  private backButton?: Phaser.GameObjects.Text;
+  private titleHeader?: SceneHeader;
+  private actionBar?: UIActionBar<DailyChallengeActionId>;
   private summaryPanel?: ChallengeSummaryPanel;
   private detailPanel?: DailyChallengePanel;
   private unsubscribeResize?: () => void;
@@ -29,31 +29,16 @@ export class DailyChallengeScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#020617');
     this.screenManager = new ScreenManager(this);
 
-    this.titleText = this.add.text(
-      this.screenManager.centerX,
-      38,
-      I18n.t('dailyChallenge.title'),
-      {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.titleFontSize,
-        fontStyle: 'bold',
-      },
-    );
-    this.titleText.setOrigin(0.5);
+    this.titleHeader = new SceneHeader(this, {
+      title: I18n.t('dailyChallenge.title'),
+    });
 
-    this.startButton = this.createButton(I18n.t('dailyChallenge.start'), () => {
-      this.startChallenge();
-    });
-    this.copySeedButton = this.createButton(I18n.t('dailyChallenge.copySeed'), () => {
-      void this.copySeed();
-    });
-    this.recordsButton = this.createButton(I18n.t('title.records'), () => {
-      this.scene.start('RecordsScene');
-    });
-    this.backButton = this.createButton(I18n.t('dailyChallenge.back'), () => {
-      this.scene.start('TitleScene');
-    });
+    this.actionBar = new UIActionBar<DailyChallengeActionId>(this, [
+      { id: 'start', label: I18n.t('dailyChallenge.start'), onClick: () => this.startChallenge() },
+      { id: 'copySeed', label: I18n.t('dailyChallenge.copySeed'), onClick: () => { void this.copySeed(); } },
+      { id: 'records', label: I18n.t('title.records'), onClick: () => this.scene.start('RecordsScene') },
+      { id: 'back', label: I18n.t('dailyChallenge.back'), onClick: () => this.scene.start('TitleScene') },
+    ]);
 
     this.createOrUpdatePanels();
     this.applyLayout();
@@ -66,66 +51,51 @@ export class DailyChallengeScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
   }
 
-  private createButton(
-    label: string,
-    onClick: () => void,
-  ): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.scale.width, this.scale.height);
-    const button = this.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
-      },
-    });
-
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor)));
-    button.on('pointerout', () => button.setBackgroundColor(toCssColor(UITheme.buttonBgColor)));
-    button.on('pointerdown', onClick);
-
-    return button;
-  }
-
   private applyLayout(): void {
     if (!this.screenManager) {
       return;
     }
 
     const fonts = LayoutConfig.getResponsiveFontSizes(this.screenManager);
-    this.titleText?.setPosition(this.screenManager.centerX, 38);
-    this.titleText?.setFontSize(fonts.title);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const safeMargin = tiny ? 10 : compact ? 12 : 16;
+    this.titleHeader?.setLayout(
+      this.screenManager.centerX,
+      tiny ? 24 : compact ? 30 : 38,
+      Math.min(this.screenManager.width - 24, 760),
+      { titleFontSize: fonts.title },
+    );
 
-    const buttons = [
-      this.startButton,
-      this.copySeedButton,
-      this.recordsButton,
-      this.backButton,
-    ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
-    const buttonLayout = LayoutConfig.getButtonListLayout({
-      screen: this.screenManager,
-      count: buttons.length,
-      startY: this.screenManager.isPortrait() ? 92 : 86,
-      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
-      gap: this.screenManager.isPortrait() ? 42 : 44,
-    });
-
-    buttons.forEach((button, index) => {
-      const position = buttonLayout.positions[index];
-      button.setFontSize(buttonLayout.fontSize);
-      button.setFixedSize(buttonLayout.width, buttonLayout.height);
-      button.setPosition(position.x, position.y);
-    });
-
+    this.layoutActionButtons(compact, tiny, safeMargin);
     this.createOrUpdatePanels();
     this.render();
+  }
+
+  private layoutActionButtons(compact: boolean, tiny: boolean, safeMargin: number): void {
+    if (!this.screenManager || !this.actionBar) {
+      return;
+    }
+
+    this.actionBar.layout(
+      this.screenManager,
+      {
+        x: safeMargin,
+        y: this.getActionAreaTop(tiny, compact, safeMargin),
+        width: this.screenManager.width - safeMargin * 2,
+        height: this.getActionAreaHeight(tiny, compact),
+      },
+      {
+        columns: this.screenManager.isPortrait() ? 2 : 4,
+        compact,
+        minWidth: tiny ? 78 : 98,
+        maxWidth: tiny ? 120 : compact ? 150 : 176,
+        minHeight: tiny ? 24 : 28,
+        maxHeight: tiny ? 28 : compact ? 32 : 36,
+        fontSize: tiny ? '9px' : compact ? '10px' : '12px',
+      },
+    );
   }
 
   private createOrUpdatePanels(): void {
@@ -133,21 +103,28 @@ export class DailyChallengeScene extends Phaser.Scene {
       return;
     }
 
-    const top = this.screenManager.isPortrait() ? 260 : 164;
-    const margin = 18;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const margin = tiny ? 10 : compact ? 12 : 18;
+    const top = tiny ? 58 : compact ? 68 : 82;
     const width = this.screenManager.width - margin * 2;
-    const detailHeight = this.screenManager.isPortrait() ? 98 : 88;
-    const summaryHeight = Math.max(
-      240,
-      this.screenManager.height - top - detailHeight - 42,
+    const bottom = this.getActionAreaTop(tiny, compact, margin) - (tiny ? 8 : 12);
+    const gap = tiny ? 8 : 12;
+    const availableHeight = Math.max(tiny ? 170 : 220, bottom - top);
+    const detailHeight = Phaser.Math.Clamp(
+      availableHeight * (this.screenManager.isPortrait() ? 0.28 : 0.24),
+      this.screenManager.isPortrait() ? tiny ? 112 : 128 : tiny ? 64 : 78,
+      this.screenManager.isPortrait() ? tiny ? 220 : 240 : compact ? 128 : 240,
     );
+    const summaryHeight = Math.max(tiny ? 120 : compact ? 150 : 190, availableHeight - detailHeight - gap);
 
     if (!this.summaryPanel) {
       this.summaryPanel = new ChallengeSummaryPanel(this, margin, top, width, summaryHeight);
       this.detailPanel = new DailyChallengePanel(
         this,
         margin,
-        top + summaryHeight + 12,
+        top + summaryHeight + gap,
         width,
         detailHeight,
       );
@@ -155,7 +132,27 @@ export class DailyChallengeScene extends Phaser.Scene {
     }
 
     this.summaryPanel.updateLayout(margin, top, width, summaryHeight);
-    this.detailPanel?.updateLayout(margin, top + summaryHeight + 12, width, detailHeight);
+    this.detailPanel?.updateLayout(margin, top + summaryHeight + gap, width, detailHeight);
+  }
+
+  private getActionAreaTop(tiny: boolean, compact: boolean, margin: number): number {
+    if (!this.screenManager) {
+      return 0;
+    }
+
+    return this.screenManager.height - margin - this.getActionAreaHeight(tiny, compact);
+  }
+
+  private getActionAreaHeight(tiny: boolean, compact: boolean): number {
+    if (!this.screenManager) {
+      return 0;
+    }
+
+    if (this.screenManager.isPortrait()) {
+      return tiny ? 64 : compact ? 72 : 84;
+    }
+
+    return tiny ? 30 : compact ? 36 : 42;
   }
 
   private render(): void {
@@ -202,6 +199,10 @@ export class DailyChallengeScene extends Phaser.Scene {
   private cleanup(): void {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
+    this.titleHeader?.destroy();
+    this.titleHeader = undefined;
+    this.actionBar?.destroy();
+    this.actionBar = undefined;
     this.summaryPanel?.destroy();
     this.summaryPanel = undefined;
     this.detailPanel?.destroy();

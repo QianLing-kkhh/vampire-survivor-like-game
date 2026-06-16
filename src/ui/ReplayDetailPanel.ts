@@ -5,12 +5,17 @@ import { ReplayData } from '../replay/ReplayData';
 import { ReplaySerializer } from '../replay/ReplaySerializer';
 import { CompatibilityCheck } from '../version/CompatibilityCheck';
 
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIStatRow } from './components/UIStatRow';
 import { UITheme } from './UITheme';
 
 export class ReplayDetailPanel {
-  private readonly background: Phaser.GameObjects.Rectangle;
-  private readonly titleText: Phaser.GameObjects.Text;
-  private readonly bodyText: Phaser.GameObjects.Text;
+  private readonly container: Phaser.GameObjects.Container;
+  private frame?: Phaser.GameObjects.Container;
+  private header?: Phaser.GameObjects.Container;
+  private readonly rowObjects: Phaser.GameObjects.GameObject[] = [];
+  private rows: Array<{ label: string; value: string }> = [];
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -19,47 +24,45 @@ export class ReplayDetailPanel {
     private width: number,
     private height: number,
   ) {
-    this.background = scene.add.rectangle(
-      x + width / 2,
-      y + height / 2,
-      width,
-      height,
-      UITheme.panelBgColor,
-      UITheme.panelBgAlpha,
-    );
-    this.background.setStrokeStyle(2, UITheme.panelBorderColor, 0.7);
-    this.titleText = scene.add.text(x + 16, y + 12, I18n.t('replay.title'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
-    });
-    this.bodyText = scene.add.text(x + 16, y + 54, '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.bodyFontSize,
-      lineSpacing: 7,
-      wordWrap: { width: width - 32 },
-    });
+    this.container = scene.add.container(0, 0);
+    this.updateLayout(x, y, width, height);
   }
 
   updateLayout(x: number, y: number, width: number, height: number): void {
+    const compact = width <= 360 || height <= 260;
+    const paddingX = compact ? 12 : 16;
+    const paddingTop = compact ? 10 : 12;
+
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
-    this.background.setPosition(x + width / 2, y + height / 2);
-    this.background.setSize(width, height);
-    this.titleText.setPosition(x + 16, y + 12);
-    this.bodyText.setPosition(x + 16, y + 54);
-    this.bodyText.setWordWrapWidth(width - 32);
-    this.bodyText.setFixedSize(width - 32, height - 70);
+    this.frame?.destroy(true);
+    this.frame = PanelFrame.create(this.scene, {
+      x: x + width / 2,
+      y: y + height / 2,
+      width,
+      height,
+      variant: 'card',
+    });
+    this.container.addAt(this.frame, 0);
+    this.header?.destroy(true);
+    this.header = PanelHeader.create(this.scene, {
+      x: x + width / 2,
+      y: y + paddingTop + (compact ? 7 : 10),
+      width: width - paddingX * 2,
+      title: I18n.t('replay.title'),
+      align: 'left',
+      titleFontSize: compact ? UITheme.bodyFontSize : UITheme.headerFontSize,
+    });
+    this.container.add(this.header);
+    this.renderRows();
   }
 
   render(replay: ReplayData | undefined): void {
     if (!replay) {
-      this.titleText.setText(I18n.t('replay.title'));
-      this.bodyText.setText(I18n.t('replay.empty'));
+      this.rows = [{ label: I18n.t('replay.status'), value: I18n.t('replay.empty') }];
+      this.renderRows();
       return;
     }
 
@@ -70,29 +73,25 @@ export class ReplayDetailPanel {
       : validation.errors.length > 0 || compatibility.errors.length > 0
         ? I18n.t('replay.invalid')
         : I18n.t('replay.warning');
-    const lines = [
-      `Replay v${replay.replayVersion}`,
-      `Game: ${replay.versionInfo?.gameVersion ?? replay.gameVersion ?? ''}`,
-      `Content: ${this.shorten(replay.versionInfo?.contentHash ?? replay.contentHash ?? '')}`,
-      `Seed: ${replay.runSeed}`,
-      `Character: ${replay.selection.characterId}`,
-      `Stage: ${replay.selection.stageId}`,
-      `Map: ${replay.selection.mapId}`,
-      `Result: ${replay.result?.resultType ?? ''}`,
-      `Survival: ${replay.result ? this.formatTime(replay.result.survivalTime) : ''}`,
-      `Events: ${replay.events.length}`,
-      `Inputs: ${replay.inputSamples.length}`,
-      `Compatibility: ${compatibilityText}`,
+    this.rows = [
+      { label: I18n.t('replay.version'), value: `v${replay.replayVersion}` },
+      { label: I18n.t('replay.game'), value: replay.versionInfo?.gameVersion ?? replay.gameVersion ?? '' },
+      { label: I18n.t('replay.content'), value: this.shorten(replay.versionInfo?.contentHash ?? replay.contentHash ?? '') },
+      { label: I18n.t('replay.seed'), value: replay.runSeed },
+      { label: I18n.t('replay.character'), value: replay.selection.characterId },
+      { label: I18n.t('replay.stage'), value: replay.selection.stageId },
+      { label: I18n.t('replay.map'), value: replay.selection.mapId },
+      { label: I18n.t('replay.result'), value: replay.result?.resultType ?? '' },
+      { label: I18n.t('replay.survival'), value: replay.result ? this.formatTime(replay.result.survivalTime) : '' },
+      { label: I18n.t('replay.events'), value: `${replay.events.length}` },
+      { label: I18n.t('replay.inputs'), value: `${replay.inputSamples.length}` },
+      { label: I18n.t('replay.compatibility'), value: compatibilityText },
     ];
-
-    this.titleText.setText(I18n.t('replay.title'));
-    this.bodyText.setText(lines.join('\n'));
+    this.renderRows();
   }
 
   destroy(): void {
-    this.background.destroy();
-    this.titleText.destroy();
-    this.bodyText.destroy();
+    this.container.destroy(true);
   }
 
   private formatTime(seconds: number): string {
@@ -105,5 +104,41 @@ export class ReplayDetailPanel {
 
   private shorten(value: string): string {
     return value.length <= 12 ? value : `${value.slice(0, 12)}...`;
+  }
+
+  private renderRows(): void {
+    this.clearRows();
+    const compact = this.width <= 360 || this.height <= 260;
+    const paddingX = compact ? 12 : 16;
+    const paddingTop = compact ? 10 : 12;
+    const headerGap = compact ? 42 : 54;
+    const rowHeight = compact ? 18 : 23;
+    const rowGap = compact ? 4 : 6;
+    const rowWidth = this.width - paddingX * 2;
+    const maxRows = Math.max(1, Math.floor((this.height - paddingTop - headerGap - 10 + rowGap) / (rowHeight + rowGap)));
+
+    this.rows.slice(0, maxRows).forEach((row, index) => {
+      const rowObject = UIStatRow.create(
+        this.scene,
+        this.x + this.width / 2,
+        this.y + paddingTop + headerGap + rowHeight / 2 + index * (rowHeight + rowGap),
+        rowWidth,
+        row.label,
+        row.value,
+        {
+          height: rowHeight,
+          fontSize: compact ? '10px' : UITheme.smallFontSize,
+          labelRatio: 0.34,
+          backgroundAlpha: 0.32,
+        },
+      );
+      this.rowObjects.push(rowObject);
+      this.container.add(rowObject);
+    });
+  }
+
+  private clearRows(): void {
+    this.rowObjects.forEach((row) => row.destroy(true));
+    this.rowObjects.length = 0;
   }
 }

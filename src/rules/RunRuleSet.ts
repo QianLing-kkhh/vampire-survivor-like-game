@@ -1,4 +1,4 @@
-import { EnemyStats } from '../enemy/Enemy';
+import type { EnemyStats } from '../core/domain/EnemyTypes';
 
 import { DifficultyDefinition } from './DifficultyDefinition';
 import { Mutator } from './Mutator';

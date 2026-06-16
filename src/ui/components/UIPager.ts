@@ -33,8 +33,8 @@ export class UIPager {
     this.width = config.width;
     this.compact = config.compact === true;
     this.container = scene.add.container(config.x, config.y);
-    const buttonWidth = this.compact ? 96 : 132;
-    const buttonHeight = this.compact ? 32 : 36;
+    const buttonWidth = this.compact ? 84 : 116;
+    const buttonHeight = this.compact ? 28 : 32;
     this.prevButton = new UIButton(scene, {
       x: -this.width / 2 + buttonWidth / 2,
       y: 0,
@@ -65,9 +65,9 @@ export class UIPager {
     if (config.onClose) {
       this.closeButton = new UIButton(scene, {
         x: 0,
-        y: this.compact ? 40 : 44,
-        width: this.compact ? 144 : 180,
-        height: this.compact ? 36 : 40,
+        y: this.compact ? 36 : 40,
+        width: this.compact ? 128 : 164,
+        height: this.compact ? 32 : 36,
         size: 'medium',
         label: config.closeLabel ?? I18n.t('common.close'),
         onClick: config.onClose,
@@ -85,13 +85,20 @@ export class UIPager {
   setSize(width: number, compact = this.compact): void {
     this.width = width;
     this.compact = compact;
-    const buttonWidth = this.compact ? 96 : 132;
-    const buttonHeight = this.compact ? 32 : 36;
+    const buttonWidth = this.compact ? 84 : 116;
+    const buttonHeight = this.compact ? 28 : 32;
     this.prevButton.setSize(buttonWidth, buttonHeight);
     this.nextButton.setSize(buttonWidth, buttonHeight);
     this.prevButton.setPosition(-width / 2 + buttonWidth / 2, 0);
     this.nextButton.setPosition(width / 2 - buttonWidth / 2, 0);
     this.pageText.setFontSize(this.compact ? '10px' : '12px');
+
+    if (this.closeButton) {
+      this.closeButton.setPosition(0, this.compact ? 36 : 40);
+      this.closeButton.setSize(this.compact ? 128 : 164, this.compact ? 32 : 36);
+    }
+
+    this.render();
   }
 
   setPage(currentPage: number, totalPages: number): void {

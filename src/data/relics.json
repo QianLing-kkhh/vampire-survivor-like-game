@@ -7,6 +7,7 @@
     "descriptionKey": "relic.bloodPact.description",
     "rarity": "rare",
     "enabled": true,
+    "iconKey": "art_relics_blood_pact_icon",
     "tags": ["damage", "low_health"],
     "effects": [
       {
@@ -24,6 +25,7 @@
     "descriptionKey": "relic.voidCompass.description",
     "rarity": "common",
     "enabled": true,
+    "iconKey": "art_relics_void_compass_icon",
     "tags": ["resource", "pickup"],
     "effects": [
       {
@@ -40,6 +42,7 @@
     "descriptionKey": "relic.goldenScarab.description",
     "rarity": "common",
     "enabled": true,
+    "iconKey": "art_relics_golden_scarab_icon",
     "tags": ["treasure", "score"],
     "effects": [
       {
@@ -56,6 +59,7 @@
     "descriptionKey": "relic.thornCrown.description",
     "rarity": "rare",
     "enabled": true,
+    "iconKey": "art_relics_thorn_crown_icon",
     "tags": ["defense", "counter"],
     "effects": [
       {
@@ -74,6 +78,7 @@
     "descriptionKey": "relic.frozenHourglass.description",
     "rarity": "epic",
     "enabled": false,
+    "iconKey": "art_relics_frozen_hourglass_icon",
     "tags": ["control", "slow"],
     "effects": [
       {
@@ -93,6 +98,7 @@
     "descriptionKey": "relic.berserkerCharm.description",
     "rarity": "rare",
     "enabled": true,
+    "iconKey": "art_relics_berserker_charm_icon",
     "tags": ["damage", "boss"],
     "effects": [
       {
@@ -110,6 +116,7 @@
     "descriptionKey": "relic.magnetPearl.description",
     "rarity": "common",
     "enabled": true,
+    "iconKey": "art_relics_magnet_pearl_icon",
     "tags": ["resource", "pickup", "temporary"],
     "effects": [
       {
@@ -127,6 +134,7 @@
     "descriptionKey": "relic.ironShell.description",
     "rarity": "epic",
     "enabled": true,
+    "iconKey": "art_relics_iron_shell_icon",
     "tags": ["defense", "mitigation", "cooldown"],
     "effects": [
       {
@@ -145,6 +153,7 @@
     "descriptionKey": "relic.scholarCandle.description",
     "rarity": "common",
     "enabled": true,
+    "iconKey": "art_relics_scholar_candle_icon",
     "tags": ["defense", "heal", "levelUp"],
     "effects": [
       {
@@ -161,6 +170,7 @@
     "descriptionKey": "relic.riftCoin.description",
     "rarity": "rare",
     "enabled": true,
+    "iconKey": "art_relics_rift_coin_icon",
     "tags": ["treasure", "score", "progression"],
     "effects": [
       {

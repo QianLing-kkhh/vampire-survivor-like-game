@@ -52,9 +52,9 @@ export const ClassicUITheme: UIThemeDefinition = {
   },
   sizes: {
     button: {
-      small: { width: 190, height: 38, fontSize: '13px' },
-      medium: { width: 260, height: 48, fontSize: '18px' },
-      large: { width: 300, height: 56, fontSize: '20px' },
+      small: { width: 170, height: 34, fontSize: '12px' },
+      medium: { width: 230, height: 42, fontSize: '16px' },
+      large: { width: 270, height: 50, fontSize: '18px' },
     },
     icon: {
       small: 28,

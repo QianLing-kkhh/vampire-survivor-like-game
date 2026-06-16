@@ -9,18 +9,31 @@ import { CustomStageValidator } from '../custom/CustomStageValidator';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { SceneHeader } from '../ui/components/SceneHeader';
+import { UIActionBar, UIActionBarAction } from '../ui/components/UIActionBar';
 import { CustomStageEditorPanel } from '../ui/CustomStageEditorPanel';
 import { CustomWaveEditorPanel } from '../ui/CustomWaveEditorPanel';
-import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
+
+type CustomStageEditorActionId =
+  | 'new'
+  | 'load'
+  | 'editBasic'
+  | 'addWave'
+  | 'editWave'
+  | 'removeWave'
+  | 'validate'
+  | 'save'
+  | 'exportJson'
+  | 'back';
 
 export class CustomStageEditorLiteScene extends Phaser.Scene {
   private readonly storage = new CustomStageStorage();
   private readonly validator = new CustomStageValidator();
   private screenManager?: ScreenManager;
-  private titleText?: Phaser.GameObjects.Text;
+  private titleHeader?: SceneHeader;
   private editorPanel?: CustomStageEditorPanel;
   private wavePanel?: CustomWaveEditorPanel;
-  private buttons: Phaser.GameObjects.Text[] = [];
+  private actionBar?: UIActionBar<CustomStageEditorActionId>;
   private draftPackage: CustomStagePackage = CustomStageTemplate.createDefaultCustomStagePackage();
   private validationResult?: CustomStageValidationResult;
   private selectedWaveIndex = 0;
@@ -33,28 +46,11 @@ export class CustomStageEditorLiteScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#020617');
     this.screenManager = new ScreenManager(this);
-    this.titleText = this.add.text(0, 0, I18n.t('customStage.editorTitle'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.titleFontSize,
-      fontStyle: 'bold',
+    this.titleHeader = new SceneHeader(this, {
+      title: I18n.t('customStage.editorTitle'),
     });
-    this.titleText.setOrigin(0.5);
 
-    this.buttons = [
-      this.createButton(I18n.t('customStage.new'), () => this.createNewPackage()),
-      this.createButton(I18n.t('customStage.load'), () => this.loadSavedPackage()),
-      this.createButton(I18n.t('customStage.editBasic'), () => this.editBasicFields()),
-      this.createButton(I18n.t('customStage.addWave'), () => this.addWave()),
-      this.createButton(I18n.t('customStage.editWave'), () => this.editSelectedWave()),
-      this.createButton(I18n.t('customStage.removeWave'), () => this.removeSelectedWave()),
-      this.createButton(I18n.t('customStage.validate'), () => this.validateDraft()),
-      this.createButton(I18n.t('customStage.save'), () => this.saveDraft()),
-      this.createButton(I18n.t('customStage.exportJson'), () => {
-        void this.exportDraft();
-      }),
-      this.createButton(I18n.t('customStage.back'), () => this.scene.start('CustomStageToolScene')),
-    ];
+    this.actionBar = new UIActionBar<CustomStageEditorActionId>(this, this.getActions());
 
     this.createOrUpdatePanels();
     this.validateDraft();
@@ -66,56 +62,62 @@ export class CustomStageEditorLiteScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
   }
 
-  private createButton(label: string, onClick: () => void): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.scale.width, this.scale.height);
-    const button = this.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: { x: 0, y: Math.max(0, Math.floor((metrics.height - 22) / 2)) },
-    });
-
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor)));
-    button.on('pointerout', () => button.setBackgroundColor(toCssColor(UITheme.buttonBgColor)));
-    button.on('pointerdown', onClick);
-
-    return button;
-  }
-
   private applyLayout(): void {
     if (!this.screenManager) {
       return;
     }
 
     const fonts = LayoutConfig.getResponsiveFontSizes(this.screenManager);
-    const top = this.screenManager.isPortrait() ? 232 : 126;
-    const buttonLayout = LayoutConfig.getButtonListLayout({
-      screen: this.screenManager,
-      count: this.buttons.length,
-      startY: this.screenManager.isPortrait() ? 92 : 82,
-      mode: 'twoColumn',
-      gap: this.screenManager.isPortrait() ? 40 : 42,
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const buttonArea = {
+      x: tiny ? 10 : 16,
+      y: this.screenManager.isPortrait() ? tiny ? 50 : compact ? 58 : 70 : compact ? 54 : 68,
+      width: this.screenManager.width - (tiny ? 20 : 32),
+      height: this.screenManager.isPortrait() ? tiny ? 164 : compact ? 180 : 214 : tiny ? 72 : compact ? 82 : 96,
+    };
+    const top = buttonArea.y + buttonArea.height + (this.screenManager.isPortrait() ? tiny ? 8 : 12 : compact ? 10 : 16);
+    this.actionBar?.layout(this.screenManager, buttonArea, {
+      columns: this.screenManager.isPortrait() ? 2 : 5,
+      compact,
+      minWidth: 84,
+      maxWidth: tiny ? 122 : compact ? 138 : 154,
+      minHeight: tiny ? 20 : 24,
+      maxHeight: tiny ? 24 : compact ? 27 : 30,
+      fontSize: tiny ? '9px' : compact ? '10px' : '11px',
     });
 
-    this.titleText?.setPosition(this.screenManager.centerX, 34);
-    this.titleText?.setFontSize(fonts.title);
-
-    this.buttons.forEach((button, index) => {
-      const position = buttonLayout.positions[index];
-
-      button.setPosition(position.x, position.y);
-      button.setFontSize(buttonLayout.fontSize);
-      button.setFixedSize(buttonLayout.width, buttonLayout.height);
-    });
+    this.titleHeader?.setLayout(
+      this.screenManager.centerX,
+      tiny ? 24 : compact ? 28 : 34,
+      Math.min(this.screenManager.width - 24, 820),
+      { titleFontSize: fonts.title },
+    );
 
     this.createOrUpdatePanels(top);
     this.render();
+  }
+
+  private getActions(): Array<UIActionBarAction<CustomStageEditorActionId>> {
+    return [
+      { id: 'new', label: I18n.t('customStage.new'), onClick: () => this.createNewPackage() },
+      { id: 'load', label: I18n.t('customStage.load'), onClick: () => this.loadSavedPackage() },
+      { id: 'editBasic', label: I18n.t('customStage.editBasic'), onClick: () => this.editBasicFields() },
+      { id: 'addWave', label: I18n.t('customStage.addWave'), onClick: () => this.addWave() },
+      { id: 'editWave', label: I18n.t('customStage.editWave'), onClick: () => this.editSelectedWave() },
+      { id: 'removeWave', label: I18n.t('customStage.removeWave'), onClick: () => this.removeSelectedWave() },
+      { id: 'validate', label: I18n.t('customStage.validate'), onClick: () => this.validateDraft() },
+      { id: 'save', label: I18n.t('customStage.save'), onClick: () => this.saveDraft() },
+      {
+        id: 'exportJson',
+        label: I18n.t('customStage.exportJson'),
+        onClick: () => {
+          void this.exportDraft();
+        },
+      },
+      { id: 'back', label: I18n.t('customStage.back'), onClick: () => this.scene.start('CustomStageToolScene') },
+    ];
   }
 
   private createOrUpdatePanels(top = 126): void {
@@ -123,9 +125,12 @@ export class CustomStageEditorLiteScene extends Phaser.Scene {
       return;
     }
 
-    const margin = 16;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const margin = tiny ? 10 : compact ? 12 : 16;
     const availableWidth = this.screenManager.width - margin * 2;
-    const availableHeight = Math.max(240, this.screenManager.height - top - 18);
+    const availableHeight = Math.max(tiny ? 150 : compact ? 190 : 240, this.screenManager.height - top - (tiny ? 10 : 18));
     const editorWidth = this.screenManager.isPortrait()
       ? availableWidth
       : Math.floor(availableWidth * 0.52);
@@ -346,10 +351,14 @@ export class CustomStageEditorLiteScene extends Phaser.Scene {
   private cleanup(): void {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
+    this.titleHeader?.destroy();
+    this.titleHeader = undefined;
     this.editorPanel?.destroy();
     this.editorPanel = undefined;
     this.wavePanel?.destroy();
     this.wavePanel = undefined;
+    this.actionBar?.destroy();
+    this.actionBar = undefined;
     this.screenManager?.dispose();
     this.screenManager = undefined;
   }

@@ -25,6 +25,7 @@ export class UIProgressBar {
   private width: number;
   private height: number;
   private color: number;
+  private ratio = 0;
 
   constructor(scene: Phaser.Scene, config: UIProgressBarConfig);
   constructor(scene: Phaser.Scene, x: number, y: number, width: number, height: number, color: number);
@@ -72,7 +73,8 @@ export class UIProgressBar {
   }
 
   setRatio(ratio: number): void {
-    this.fill.displayWidth = Math.max(0, (this.width - 2) * Phaser.Math.Clamp(ratio, 0, 1));
+    this.ratio = Phaser.Math.Clamp(ratio, 0, 1);
+    this.fill.displayWidth = Math.max(0, (this.width - 2) * this.ratio);
   }
 
   setProgress(ratio: number): void {
@@ -94,6 +96,7 @@ export class UIProgressBar {
     this.background.setSize(width, height);
     this.border.setSize(width, height);
     this.fill.setSize(Math.max(0, width - 2), Math.max(0, height - 2));
+    this.setRatio(this.ratio);
     this.labelText.setPosition(width / 2, height / 2);
   }
 

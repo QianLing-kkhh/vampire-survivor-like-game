@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { AchievementManager } from '../achievement/AchievementManager';
+import { PhaserAudioAdapter } from '../audio/PhaserAudioAdapter';
 import { AutoPlayer } from '../auto/AutoPlayer';
 import {
   AutoUpgradeSelectionContext,
@@ -16,8 +17,9 @@ import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
 import { ContentRegistry } from '../content/ContentRegistry';
 import { CustomWaveDefinition } from '../custom/CustomStageSchema';
 import { EventBus } from '../core/EventBus';
+import type { GameEventMap } from '../core/domain/GameEvents';
 import { TimeManager } from '../core/TimeManager';
-import { Enemy, GameEventMap } from '../enemy/Enemy';
+import { Enemy } from '../enemy/Enemy';
 import { BossController } from '../enemy/BossController';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { EnemyFlow } from '../enemy/EnemyFlow';
@@ -25,7 +27,6 @@ import { EnemyMovement } from '../enemy/EnemyMovement';
 import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
 import { EvolutionManager } from '../evolution/EvolutionManager';
-import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import { LeaderboardKeyFactory } from '../leaderboard/LeaderboardKeyFactory';
 import { VirtualJoystick } from '../input/VirtualJoystick';
 import { PickupManager } from '../pickup/PickupManager';
@@ -229,7 +230,8 @@ export class GameplayInitializer {
     const playerStats = PlayerStats.fromConfig(characterRuntime.getBaseStats());
     const runStats = new RunStats(playerStats.maxHp);
     const weaponFactory = new WeaponFactory(config.scene, weaponConfigs);
-    const weaponManager = new WeaponManager(runStats, weaponFactory);
+    const evolutionRules = ContentRegistry.listEvolutionRules();
+    const weaponManager = new WeaponManager(runStats, weaponFactory, evolutionRules);
     const passiveManager = new PassiveManager(passiveItems);
     const playerHealth = new PlayerHealth(playerStats.maxHp);
     const upgradeApplier = new UpgradeApplier(
@@ -253,6 +255,7 @@ export class GameplayInitializer {
       selectedCharacter.id,
       selectedCharacter.skinId,
     );
+    const playerState = player.bindHealth(playerHealth);
     const virtualJoystick = new VirtualJoystick(config.scene, config.callbacks.onPauseRequested);
     relicManager.setContext({
       scene: config.scene,
@@ -276,7 +279,7 @@ export class GameplayInitializer {
       [...upgradeOptions, ...passiveItems],
       randomManager.getUpgradeRandom(),
     );
-    const evolutionManager = new EvolutionManager(EVOLUTION_RULES);
+    const evolutionManager = new EvolutionManager(evolutionRules);
     const upgradeFlow = new UpgradeFlow({
       upgradeSelector,
       upgradeApplier,
@@ -297,6 +300,7 @@ export class GameplayInitializer {
       onUpgradeApplied: config.callbacks.onUpgradeApplied,
     });
     const pickupManager = new PickupManager(config.scene, config.eventBus, expManager);
+    const audioPort = new PhaserAudioAdapter(config.scene);
     const treasureManager = new TreasureManager(
       config.scene,
       config.eventBus,
@@ -310,6 +314,7 @@ export class GameplayInitializer {
       () => config.timeManager.gameTimeSeconds,
       () => config.runId,
       config.callbacks.onTreasureRewardRequested,
+      audioPort,
     );
     const enemyFactory = new EnemyFactory(config.scene, enemyConfigs, runRuleSet);
     const bossFactory = new BossFactory(config.scene, enemyConfigs, runRuleSet);
@@ -320,9 +325,11 @@ export class GameplayInitializer {
     const mapMechanicRuntime = new MapMechanicRuntime(selectedMap.mechanics, {
       scene: config.scene,
       player,
+      playerHealth,
       enemies: enemiesList,
       worldWidth: config.worldWidth,
       worldHeight: config.worldHeight,
+      floatingTextManager,
     });
     config.runState.endlessMode = config.playtestSettings.endlessMode;
     config.runState.setRuleSetInfo(
@@ -411,7 +418,7 @@ export class GameplayInitializer {
     const spawnDirector = new SpawnDirector(
       waveSet,
       enemyFactory,
-      () => player.body,
+      () => player.getPositionLike(),
       () => ({ width: config.scene.scale.width, height: config.scene.scale.height }),
       (enemy) => {
         config.callbacks.onEnemySpawned(enemy);
@@ -434,7 +441,7 @@ export class GameplayInitializer {
     );
     const bossSpawnDirector = new BossSpawnDirector(
       bossFactory,
-      () => player.body,
+      () => player.getPositionLike(),
       () => ({
         width: config.worldWidth,
         height: config.worldHeight,
@@ -447,7 +454,7 @@ export class GameplayInitializer {
       scene: config.scene,
       enemyFactory,
       enemies: enemiesList,
-      getPlayerPosition: () => player.body,
+      getPlayerPosition: () => player.getPositionLike(),
       getWorldSize: () => ({
         width: config.worldWidth,
         height: config.worldHeight,
@@ -520,7 +527,10 @@ export class GameplayInitializer {
       enemies: enemiesList,
       enemyFlow,
       runState: config.runState,
-      getPlayerPosition: () => new Phaser.Math.Vector2(player.body.x, player.body.y),
+      getPlayerPosition: () => {
+        const position = player.getPositionLike();
+        return new Phaser.Math.Vector2(position.x, position.y);
+      },
       getWorldSize: () => ({
         width: config.worldWidth,
         height: config.worldHeight,
@@ -573,6 +583,7 @@ export class GameplayInitializer {
       runState: config.runState,
       runStats,
       player,
+      playerState,
       playerStats,
       playerHealth,
       playerPickupRange: playerStats.pickupRange * 48,
@@ -612,6 +623,8 @@ export class GameplayInitializer {
       damageMultiplier: effects.damageMultiplier,
       cooldownMultiplier: effects.cooldownMultiplier,
       projectileSpeedMultiplier: effects.projectileSpeedMultiplier,
+      knockbackPowerMultiplier: effects.knockbackPowerMultiplier,
+      scopedWeaponModifiers: effects.scopedWeaponModifiers,
     });
     weaponManager.setCharacterStatModifiers(playerStats.getCombatModifierSnapshot());
     treasureManager.setBonusDropChance(effects.treasureDropBonus);

@@ -83,6 +83,26 @@ export class UpgradeSelector {
     const hasAxeOrEvolution = context.hasWeaponOrEvolution?.('axe') ?? hasAxe;
 
     return this.upgrades.filter((upgrade) => {
+      const metadataWeaponId = this.getMetadataWeaponIdForUpgrade(upgrade);
+      const isNewWeapon = this.isNewWeaponUpgradeOption(upgrade);
+      const isPassive = this.isPassiveUpgradeOption(upgrade);
+
+      if (
+        metadataWeaponId
+        && !isNewWeapon
+        && !(context.hasWeaponOrEvolution?.(metadataWeaponId) ?? context.hasWeapon(metadataWeaponId))
+      ) {
+        return false;
+      }
+
+      if (
+        isNewWeapon
+        && metadataWeaponId
+        && (context.hasWeaponOrEvolution?.(metadataWeaponId) ?? context.hasWeapon(metadataWeaponId))
+      ) {
+        return false;
+      }
+
       if (!hasGarlicOrEvolution && this.isGarlicUpgrade(upgrade.id)) {
         return false;
       }
@@ -143,10 +163,11 @@ export class UpgradeSelector {
         return false;
       }
 
-      const weaponUpgradeId = this.getWeaponIdForUpgrade(upgrade.id);
+      const weaponUpgradeId = metadataWeaponId ?? this.getWeaponIdForUpgrade(upgrade.id);
 
       if (
         weaponUpgradeId
+        && !isNewWeapon
         && (context.hasWeaponOrEvolution?.(weaponUpgradeId) ?? context.hasWeapon(weaponUpgradeId))
         && context.isWeaponUpgradeLimitReached?.(weaponUpgradeId)
       ) {
@@ -154,8 +175,8 @@ export class UpgradeSelector {
       }
 
       if (
-        this.isPassiveUpgrade(upgrade.id)
-        && (context.getPassiveLevel?.(upgrade.id) ?? 0) >= 5
+        isPassive
+        && (context.getPassiveLevel?.(this.getPassiveIdForUpgrade(upgrade)) ?? 0) >= 5
       ) {
         return false;
       }
@@ -240,7 +261,7 @@ export class UpgradeSelector {
     }
 
     const availableNewWeaponUpgrades = availableUpgrades.filter((upgrade) => (
-      this.isNewWeaponUpgrade(upgrade.id)
+      this.isNewWeaponUpgradeOption(upgrade)
     ));
 
     if (availableNewWeaponUpgrades.length === 0) {
@@ -259,6 +280,10 @@ export class UpgradeSelector {
     );
   }
 
+  private isNewWeaponUpgradeOption(upgrade: UpgradeOption): boolean {
+    return upgrade.kind === 'addWeapon' || this.isNewWeaponUpgrade(upgrade.id);
+  }
+
   private isPassiveUpgrade(upgradeId: string): boolean {
     return (
       upgradeId === 'spinach'
@@ -267,6 +292,22 @@ export class UpgradeSelector {
       || upgradeId === 'clover'
       || upgradeId === 'pummarola'
     );
+  }
+
+  private isPassiveUpgradeOption(upgrade: UpgradeOption): boolean {
+    return upgrade.kind === 'passive' || this.isPassiveUpgrade(upgrade.id);
+  }
+
+  private getPassiveIdForUpgrade(upgrade: UpgradeOption): string {
+    return upgrade.passiveId ?? upgrade.id;
+  }
+
+  private getMetadataWeaponIdForUpgrade(upgrade: UpgradeOption): string | undefined {
+    if (upgrade.kind === 'addWeapon' || upgrade.kind === 'weaponStat') {
+      return upgrade.weaponId;
+    }
+
+    return undefined;
   }
 
   private getWeaponIdForUpgrade(upgradeId: string): string | undefined {

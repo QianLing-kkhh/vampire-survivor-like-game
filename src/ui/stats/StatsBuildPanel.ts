@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../../assets/AssetKeyResolver';
 import { I18n } from '../../i18n/I18n';
+import { LayoutConfig } from '../../responsive/LayoutConfig';
 import { SafeArea } from '../../responsive/SafeArea';
 import { ScreenManager } from '../../responsive/ScreenManager';
 import { UIButton } from '../components/UIButton';
@@ -13,6 +14,7 @@ import { PanelFrame } from '../components/PanelFrame';
 import { PanelHeader } from '../components/PanelHeader';
 import { UITabBar } from '../components/UITabBar';
 import { UIBadge } from '../components/UIBadge';
+import { UITextBlock } from '../components/UITextBlock';
 import { createModalBlocker, setRectangleHitArea } from '../input/UIInteraction';
 import { IconTooltipData } from '../tooltip/IconTooltipTypes';
 import { UITheme } from '../UITheme';
@@ -96,34 +98,37 @@ export class StatsBuildPanel {
     });
     const header = PanelHeader.create(this.scene, {
       x: 0,
-      y: -this.layout.height / 2 + 42,
+      y: -this.layout.height / 2 + this.getHeaderOffsetY(),
       width: this.layout.width - 34,
       title: this.config.snapshot.title,
       subtitle: I18n.t('statsBuild.subtitle', {
         time: this.formatTime(this.config.snapshot.createdAtSeconds),
       }),
+      titleFontSize: this.getTitleFontSize(),
+      subtitleFontSize: this.getSmallFontSize(),
     });
+    const tabMetrics = this.getTabMetrics();
     this.tabBar = new UITabBar(this.scene, {
       x: 0,
-      y: -this.layout.height / 2 + 82,
+      y: -this.layout.height / 2 + tabMetrics.y,
       width: this.layout.width - 52,
       items: TAB_IDS.map((id) => ({
         id,
         label: I18n.t(`statsBuild.tab.${id}`),
       })),
       selectedId: this.selectedTab,
-      tabWidth: this.screen.isPortrait() ? 86 : 112,
-      tabHeight: this.screen.isPortrait() ? 30 : 34,
-      gap: this.screen.isPortrait() ? 5 : 7,
+      tabWidth: tabMetrics.width,
+      tabHeight: tabMetrics.height,
+      gap: tabMetrics.gap,
       onSelect: (tabId) => {
         this.selectedTab = tabId;
         this.tabBar?.setSelected(tabId);
         this.renderContent();
       },
     });
-    this.layout.contentY = -this.layout.height / 2 + 92 + this.tabBar.height + 18;
-    this.layout.contentHeight = this.layout.height / 2 - 58 - this.layout.contentY;
-    this.layout.contentWidth = this.layout.width - 88;
+    this.layout.contentY = -this.layout.height / 2 + tabMetrics.y + this.tabBar.height + this.getContentTopGap();
+    this.layout.contentHeight = this.layout.height / 2 - this.getFooterReserve() - this.layout.contentY;
+    this.layout.contentWidth = this.layout.width - this.getHorizontalContentInset() * 2;
     this.container.add([frame, header, this.tabBar.container, this.contentContainer, this.footerContainer]);
     this.renderContent();
   }
@@ -157,13 +162,24 @@ export class StatsBuildPanel {
   }
 
   private renderRow(row: StatsBuildStatLine, y: number): void {
-    const statRow = UIStatRow.create(this.scene, 0, y + 14, this.layout.contentWidth, row.label, row.value);
+    const rowHeight = this.getRowHeight();
+    const statRow = UIStatRow.create(this.scene, 0, y + rowHeight / 2, this.layout.contentWidth, row.label, row.value, {
+      height: Math.max(22, rowHeight - 6),
+      fontSize: this.getSmallFontSize(),
+      backgroundAlpha: 0.34,
+    });
     this.contentContainer.add(statRow);
   }
 
   private renderCard(card: StatsBuildCard, y: number): void {
     const width = this.layout.contentWidth;
     const height = this.getCardHeight(card);
+    const density = LayoutConfig.getContentDensity(this.screen);
+    const tiny = density === 'tiny';
+    const compact = tiny || density === 'compact' || this.screen.isPortrait();
+    const iconSize = tiny ? 30 : compact ? 36 : 40;
+    const cardPaddingX = tiny ? 10 : compact ? 12 : 16;
+    const titleX = -width / 2 + cardPaddingX + iconSize + (tiny ? 10 : 14);
     const cardUi = new UICard(this.scene, {
       x: 0,
       y: y + height / 2,
@@ -171,103 +187,127 @@ export class StatsBuildPanel {
       height,
     });
     const icon = UIIconFrame.create(this.scene, {
-      x: -width / 2 + 36,
-      y: y + 36,
-      size: 48,
+      x: -width / 2 + cardPaddingX + iconSize / 2,
+      y: y + cardPaddingX + iconSize / 2,
+      size: iconSize,
       textureKey: this.resolveCardIconKey(card),
       fallback: card.fallback,
       tooltip: this.getCardTooltip(card),
     });
-    const title = this.scene.add.text(-width / 2 + 74, y + 14, card.title, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '16px',
+    const title = new UITextBlock(this.scene, {
+      x: titleX,
+      y: y + cardPaddingX - 2,
+      text: card.title,
+      fontSize: compact ? '13px' : '15px',
       fontStyle: 'bold',
-      wordWrap: { width: width - 156 },
-    });
-    const subtitle = this.scene.add.text(-width / 2 + 74, y + 38, card.subtitle ?? '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '12px',
-      wordWrap: { width: width - 156 },
-    });
+      align: 'left',
+      width: width - (titleX + width / 2) - 72,
+    }).text;
+    const subtitle = new UITextBlock(this.scene, {
+      x: titleX,
+      y: y + cardPaddingX + (compact ? 18 : 22),
+      text: card.subtitle ?? '',
+      tone: 'muted',
+      fontSize: this.getSmallFontSize(),
+      align: 'left',
+      width: width - (titleX + width / 2) - 72,
+    }).text;
     this.contentContainer.add([cardUi.container, icon, title, subtitle]);
 
     let badgeX = width / 2 - 20;
     for (const badgeLabel of card.badges ?? []) {
-      const badge = UIBadge.create(this.scene, badgeX, y + 24, badgeLabel);
-      badge.setScale(0.9);
-      badgeX -= Math.max(64, badgeLabel.length * 8 + 16);
+      const badge = UIBadge.create(this.scene, badgeX, y + (compact ? 16 : 21), badgeLabel);
+      badge.setScale(compact ? 0.72 : 0.82);
+      badgeX -= Math.max(compact ? 48 : 58, badgeLabel.length * (compact ? 6 : 7) + 14);
       this.contentContainer.add(badge);
     }
 
-    let rowY = y + 70;
+    let rowY = y + (compact ? 50 : 62);
     if (card.description) {
-      const description = this.scene.add.text(-width / 2 + 18, rowY, card.description, {
-        color: UITheme.mutedTextColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '12px',
-        wordWrap: { width: width - 36 },
-      });
+      const description = new UITextBlock(this.scene, {
+        x: -width / 2 + cardPaddingX,
+        y: rowY,
+        text: card.description,
+        tone: 'muted',
+        fontSize: this.getSmallFontSize(),
+        align: 'left',
+        width: width - cardPaddingX * 2,
+      }).text;
+      description.setMaxLines(compact ? 2 : 2);
       this.contentContainer.add(description);
-      rowY += Math.max(22, description.height + 8);
+      rowY += Math.max(compact ? 16 : 20, description.height + (compact ? 4 : 6));
     }
 
     for (const row of card.rows) {
-      const label = this.scene.add.text(-width / 2 + 18, rowY, row.label, {
-        color: UITheme.mutedTextColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '12px',
-        fontStyle: 'bold',
-        wordWrap: { width: width * 0.34 },
-      });
-      const value = this.scene.add.text(-width / 2 + width * 0.42, rowY, row.value, {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '12px',
-        wordWrap: { width: width * 0.52 },
-      });
-      this.contentContainer.add([label, value]);
-      rowY += Math.max(22, label.height, value.height);
+      const detailRowHeight = compact ? 18 : 22;
+      const statRow = UIStatRow.create(
+        this.scene,
+        0,
+        rowY + detailRowHeight / 2,
+        width - cardPaddingX * 2,
+        row.label,
+        row.value,
+        {
+          height: detailRowHeight,
+          fontSize: this.getSmallFontSize(),
+          backgroundAlpha: 0.24,
+          borderAlpha: 0.12,
+          labelRatio: 0.36,
+          truncate: true,
+          valueFontStyle: 'normal',
+        },
+      );
+      this.contentContainer.add(statRow);
+      rowY += detailRowHeight + (compact ? 2 : 3);
     }
 
     if (card.relatedIcons?.length) {
-      let iconX = -width / 2 + 22;
-      const iconY = y + height - 26;
-      for (const related of card.relatedIcons.slice(0, 6)) {
+      let iconX = -width / 2 + cardPaddingX;
+      const iconY = y + height - (compact ? 17 : 22);
+      const relatedSize = compact ? 22 : 28;
+      for (const related of card.relatedIcons.slice(0, compact ? 4 : 6)) {
         const relatedIcon = UIIconFrame.create(this.scene, {
-          x: iconX + 16,
+          x: iconX + relatedSize / 2,
           y: iconY,
-          size: 32,
+          size: relatedSize,
           textureKey: this.resolveRelatedIconKey(related),
           fallback: related.fallback,
           tooltip: this.getRelatedIconTooltip(related),
         });
         this.contentContainer.add(relatedIcon);
-        iconX += 38;
+        iconX += relatedSize + 6;
       }
     }
   }
 
   private renderEmpty(y: number): void {
-    const text = this.scene.add.text(0, y + 32, I18n.t('statsBuild.empty'), {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
+    const text = new UITextBlock(this.scene, {
+      x: 0,
+      y: y + 32,
+      text: I18n.t('statsBuild.empty'),
+      tone: 'muted',
       fontSize: '16px',
       align: 'center',
-    });
-    text.setOrigin(0.5);
+    }).text;
     this.contentContainer.add(text);
   }
 
   private resolveCardIconKey(card: StatsBuildCard): string | undefined {
     if (this.selectedTab === 'weapons') {
-      return AssetKeyResolver.getWeaponIconKey(this.scene, card.id)
+      return AssetKeyResolver.getWeaponIconKey(
+        this.scene,
+        card.id,
+        this.getVisualTierFromCard(card),
+      )
         ?? card.iconKey;
     }
 
     if (this.selectedTab === 'passives') {
-      return AssetKeyResolver.getPassiveIconKey(this.scene, card.id)
+      return AssetKeyResolver.getPassiveIconKey(
+        this.scene,
+        card.id,
+        this.getVisualTierFromCard(card),
+      )
         ?? card.iconKey;
     }
 
@@ -286,6 +326,17 @@ export class StatsBuildPanel {
     }
 
     return related.iconKey;
+  }
+
+  private getVisualTierFromCard(card: StatsBuildCard): { level?: number; maxLevel?: number; evolved?: boolean } {
+    const joinedBadges = (card.badges ?? []).join(' ');
+    const levelMatch = /Lv\.(\d+)\s*\/\s*(\d+)/i.exec(joinedBadges);
+
+    return {
+      level: levelMatch ? Number(levelMatch[1]) : undefined,
+      maxLevel: levelMatch ? Number(levelMatch[2]) : undefined,
+      evolved: /\bEvolved\b/i.test(joinedBadges),
+    };
   }
 
   private getCardTooltip(card: StatsBuildCard): IconTooltipData | undefined {
@@ -316,14 +367,16 @@ export class StatsBuildPanel {
   }
 
   private renderFooter(currentPage: number, totalPages: number): void {
-    const y = this.layout.height / 2 - 32;
+    const density = LayoutConfig.getContentDensity(this.screen);
+    const compact = density === 'tiny' || density === 'compact' || this.screen.isPortrait();
+    const y = this.layout.height / 2 - (compact ? 42 : 48);
     const pager = new UIPager(this.scene, {
       x: 0,
       y,
-      width: this.layout.width - 88,
+      width: this.layout.width - this.getHorizontalContentInset() * 2,
       currentPage,
       totalPages,
-      compact: this.screen.isPortrait(),
+      compact,
       closeLabel: I18n.t('common.close'),
       onPageChanged: (page) => {
         this.pageByTab.set(this.selectedTab, page);
@@ -331,7 +384,7 @@ export class StatsBuildPanel {
       },
       onClose: () => this.config.onClose(),
     });
-    pager.pageText.setPosition(0, -34);
+    pager.pageText.setPosition(0, compact ? -24 : -28);
     this.footerContainer.add(pager.container);
   }
 
@@ -381,16 +434,24 @@ export class StatsBuildPanel {
 
   private getItemHeight(item: StatsBuildPanelItem): number {
     if (item.type === 'row') {
-      return 34;
+      return this.getRowHeight();
     }
 
-    return this.getCardHeight(item.card) + 10;
+    return this.getCardHeight(item.card) + this.getItemGap();
   }
 
   private getCardHeight(card: StatsBuildCard): number {
-    const descriptionHeight = card.description ? 42 : 0;
-    const relatedHeight = card.relatedIcons?.length ? 36 : 0;
-    return Math.max(106, 78 + descriptionHeight + card.rows.length * 23 + relatedHeight);
+    const density = LayoutConfig.getContentDensity(this.screen);
+    const tiny = density === 'tiny';
+    const compact = tiny || density === 'compact' || this.screen.isPortrait();
+    const descriptionHeight = card.description ? compact ? 28 : 34 : 0;
+    const relatedHeight = card.relatedIcons?.length ? compact ? 24 : 30 : 0;
+    const rowHeight = compact ? 20 : 25;
+
+    return Math.max(
+      tiny ? 76 : compact ? 86 : 98,
+      (compact ? 52 : 66) + descriptionHeight + card.rows.length * rowHeight + relatedHeight,
+    );
   }
 
   private calculateLayout(): typeof this.layout {
@@ -398,20 +459,143 @@ export class StatsBuildPanel {
     const availableWidth = this.screen.width - safe.left - safe.right;
     const availableHeight = this.screen.height - safe.top - safe.bottom;
     const isPortrait = this.screen.isPortrait();
+    const density = LayoutConfig.getContentDensity(this.screen);
+    const tiny = density === 'tiny';
+    const compact = tiny || density === 'compact';
     const width = isPortrait
-      ? Math.min(availableWidth * 0.96, 720)
-      : Math.min(availableWidth * 0.78, 1080);
+      ? Math.min(availableWidth * 0.84, tiny ? 304 : 440)
+      : Math.min(availableWidth * (compact ? 0.62 : 0.56), compact ? 640 : 740);
     const height = isPortrait
-      ? Math.min(availableHeight * 0.9, 760)
-      : Math.min(availableHeight * 0.82, 640);
+      ? Math.min(availableHeight * (tiny ? 0.68 : 0.72), tiny ? 460 : 540)
+      : Math.min(availableHeight * (compact ? 0.68 : 0.58), compact ? 400 : 460);
+    const headerReserve = tiny ? 86 : compact || isPortrait ? 98 : 118;
+    const footerReserve = tiny ? 58 : compact || isPortrait ? 68 : 86;
+    const horizontalInset = tiny ? 18 : compact || isPortrait ? 24 : 32;
 
     return {
       width,
       height,
-      contentY: -height / 2 + 140,
-      contentHeight: height - 220,
-      contentWidth: width - 88,
+      contentY: -height / 2 + headerReserve,
+      contentHeight: Math.max(60, height - headerReserve - footerReserve),
+      contentWidth: width - horizontalInset * 2,
     };
+  }
+
+  private getHeaderOffsetY(): number {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    if (density === 'tiny') {
+      return 22;
+    }
+
+    if (density === 'compact' || this.screen.isPortrait()) {
+      return 26;
+    }
+
+    return 30;
+  }
+
+  private getTitleFontSize(): string | undefined {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    if (density === 'tiny') {
+      return '18px';
+    }
+
+    if (density === 'compact' || this.screen.isPortrait()) {
+      return '20px';
+    }
+
+    return undefined;
+  }
+
+  private getSmallFontSize(): string {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    if (density === 'tiny') {
+      return '10px';
+    }
+
+    if (density === 'compact' || this.screen.isPortrait()) {
+      return '11px';
+    }
+
+    return '12px';
+  }
+
+  private getTabMetrics(): { y: number; width: number; height: number; gap: number } {
+    const density = LayoutConfig.getContentDensity(this.screen);
+    const tiny = density === 'tiny';
+    const compact = tiny || density === 'compact' || this.screen.isPortrait();
+
+    return {
+      y: tiny ? 46 : compact ? 54 : 64,
+      width: tiny ? 58 : compact ? 68 : 88,
+      height: tiny ? 22 : compact ? 24 : 28,
+      gap: tiny ? 2 : compact ? 3 : 5,
+    };
+  }
+
+  private getContentTopGap(): number {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    if (density === 'tiny') {
+      return 6;
+    }
+
+    if (density === 'compact' || this.screen.isPortrait()) {
+      return 8;
+    }
+
+    return 12;
+  }
+
+  private getFooterReserve(): number {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    if (density === 'tiny') {
+      return 58;
+    }
+
+    if (density === 'compact' || this.screen.isPortrait()) {
+      return 68;
+    }
+
+    return 86;
+  }
+
+  private getHorizontalContentInset(): number {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    if (density === 'tiny') {
+      return 18;
+    }
+
+    if (density === 'compact' || this.screen.isPortrait()) {
+      return 24;
+    }
+
+    return 32;
+  }
+
+  private getRowHeight(): number {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    if (density === 'tiny') {
+      return 22;
+    }
+
+    if (density === 'compact' || this.screen.isPortrait()) {
+      return 26;
+    }
+
+    return 30;
+  }
+
+  private getItemGap(): number {
+    const density = LayoutConfig.getContentDensity(this.screen);
+
+    return density === 'tiny' ? 4 : density === 'compact' || this.screen.isPortrait() ? 6 : 8;
   }
 
   private formatTime(timeSeconds: number): string {

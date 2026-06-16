@@ -1,0 +1,107 @@
+[
+  {
+    "baseWeaponId": "knife",
+    "requiredPassiveId": "bracer",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "thousand_edge"
+  },
+  {
+    "baseWeaponId": "bible",
+    "requiredPassiveId": "empty_tome",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "unholy_vespers"
+  },
+  {
+    "baseWeaponId": "magic_wand",
+    "requiredPassiveId": "spinach",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "holy_wand"
+  },
+  {
+    "baseWeaponId": "axe",
+    "requiredPassiveId": "spinach",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "death_spiral"
+  },
+  {
+    "baseWeaponId": "garlic",
+    "requiredPassiveId": "pummarola",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "soul_eater"
+  },
+  {
+    "baseWeaponId": "runic_orb",
+    "requiredPassiveId": "focus_lens",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "astral_core"
+  },
+  {
+    "baseWeaponId": "moon_bow",
+    "requiredPassiveId": "hunter_quiver",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "eclipse_barrage"
+  },
+  {
+    "baseWeaponId": "clockwork_saw",
+    "requiredPassiveId": "cogwheel",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "gearstorm"
+  },
+  {
+    "baseWeaponId": "bone_spear",
+    "requiredPassiveId": "grave_charm",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "ossuary_lance"
+  },
+  {
+    "baseWeaponId": "spirit_fist",
+    "requiredPassiveId": "prayer_beads",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "enlightened_palm"
+  },
+  {
+    "baseWeaponId": "acid_vial",
+    "requiredPassiveId": "glass_flask",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "plague_crucible"
+  },
+  {
+    "baseWeaponId": "rapier_flurry",
+    "requiredPassiveId": "duelist_glove",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "crimson_flurry"
+  },
+  {
+    "baseWeaponId": "stone_ring",
+    "requiredPassiveId": "granite_core",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "tectonic_crown"
+  },
+  {
+    "baseWeaponId": "thunder_javelin",
+    "requiredPassiveId": "storm_battery",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "tempest_lance"
+  },
+  {
+    "baseWeaponId": "shield_disc",
+    "requiredPassiveId": "iron_sigil",
+    "requiredPassiveLevel": 4,
+    "requiredWeaponUpgradeTotal": 6,
+    "evolvedWeaponId": "aegis_maelstrom"
+  }
+]

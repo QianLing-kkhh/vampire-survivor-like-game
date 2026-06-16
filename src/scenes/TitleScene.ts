@@ -10,29 +10,35 @@ import { SelectionManager } from '../selection/SelectionManager';
 import { PlaytestSettings, PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
 import { UnlockManager } from '../unlock/UnlockManager';
+import { PanelFrame } from '../ui/components/PanelFrame';
+import { SceneHeader } from '../ui/components/SceneHeader';
+import { UIActionBar, UIActionBarAction } from '../ui/components/UIActionBar';
+import { UITextBlock } from '../ui/components/UITextBlock';
 import { DeveloperMenu } from '../ui/DeveloperMenu';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { SettingsMenu } from '../ui/SettingsMenu';
-import { setTextHitArea, stopPointerEvent } from '../ui/input/UIInteraction';
-import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
+import { UITheme } from '../ui/UITheme';
+
+type TitlePrimaryActionId = 'start';
+type TitleSecondaryActionId =
+  | 'selectCharacter'
+  | 'selectStage'
+  | 'settings'
+  | 'help'
+  | 'developer';
 
 export class TitleScene extends Phaser.Scene {
   private static readonly AUTO_START_SECONDS = 10;
   private static autoStartCountdownConsumed = false;
 
-  private statusText?: Phaser.GameObjects.Text;
-  private selectionText?: Phaser.GameObjects.Text;
-  private titleText?: Phaser.GameObjects.Text;
-  private startButton?: Phaser.GameObjects.Text;
-  private selectCharacterButton?: Phaser.GameObjects.Text;
-  private selectStageButton?: Phaser.GameObjects.Text;
-  private strategyButton?: Phaser.GameObjects.Text;
-  private recordsButton?: Phaser.GameObjects.Text;
-  private settingsButton?: Phaser.GameObjects.Text;
-  private helpButton?: Phaser.GameObjects.Text;
-  private developerButton?: Phaser.GameObjects.Text;
+  private statusText?: UITextBlock;
+  private selectionText?: UITextBlock;
+  private titleHeader?: SceneHeader;
+  private menuFrame?: Phaser.GameObjects.Container;
+  private primaryActionBar?: UIActionBar<TitlePrimaryActionId>;
+  private secondaryActionBar?: UIActionBar<TitleSecondaryActionId>;
   private backgroundImage?: Phaser.GameObjects.Image;
-  private autoStartText?: Phaser.GameObjects.Text;
+  private autoStartText?: UITextBlock;
   private autoStartTimer?: Phaser.Time.TimerEvent;
   private autoStartRemainingSeconds = TitleScene.AUTO_START_SECONDS;
   private autoStartCanceled = false;
@@ -59,82 +65,36 @@ export class TitleScene extends Phaser.Scene {
     this.backgroundImage = this.createBackgroundImage();
     AudioManager.playBgm(this, 'title_bgm');
 
-    this.titleText = this.add.text(centerX, centerY - 170, I18n.t('title.gameTitle'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.titleFontSize,
-      fontStyle: 'bold',
+    this.titleHeader = new SceneHeader(this, {
+      title: I18n.t('title.gameTitle'),
+      depth: 30,
     });
-    this.titleText.setOrigin(0.5);
 
-    this.statusText = this.add.text(centerX, centerY - 92, this.formatStatus(), {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
+    this.statusText = new UITextBlock(this, {
+      x: centerX,
+      y: centerY - 92,
+      text: this.formatStatus(),
+      tone: 'muted',
       fontSize: UITheme.bodyFontSize,
-      align: 'center',
       lineSpacing: 8,
     });
-    this.statusText.setOrigin(0.5);
 
-    this.selectionText = this.add.text(centerX, centerY - 122, this.formatSelectionSummary(), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
+    this.selectionText = new UITextBlock(this, {
+      x: centerX,
+      y: centerY - 122,
+      text: this.formatSelectionSummary(),
+      tone: 'primary',
       fontSize: UITheme.smallFontSize,
-      align: 'center',
     });
-    this.selectionText.setOrigin(0.5);
 
-    this.autoStartText = this.add.text(centerX, centerY - 44, '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
+    this.autoStartText = new UITextBlock(this, {
+      x: centerX,
+      y: centerY - 44,
+      tone: 'muted',
       fontSize: UITheme.bodyFontSize,
-      align: 'center',
-    });
-    this.autoStartText.setOrigin(0.5);
-
-    this.startButton = this.createButton(centerX, centerY - 8, I18n.t('title.startGame'), () => {
-      this.cancelAutoStartCountdown();
-      SelectionManager.clearChallengeSelection();
-      PlaytestSettings.setAutoMode(false);
-      PlaytestSettings.setFastMode(false);
-      this.refreshStatus();
-      this.scene.start('RunPreloadScene');
     });
 
-    this.selectCharacterButton = this.createButton(centerX, centerY + 106, I18n.t('title.selectCharacter'), () => {
-      this.cancelAutoStartCountdown();
-      this.scene.start('CharacterSelectScene');
-    });
-
-    this.selectStageButton = this.createButton(centerX, centerY + 154, I18n.t('title.selectStage'), () => {
-      this.cancelAutoStartCountdown();
-      this.scene.start('StageSelectScene');
-    });
-
-    this.strategyButton = this.createButton(centerX, centerY + 202, 'Auto Strategy', () => {
-      this.cancelAutoStartCountdown();
-      this.scene.start('StrategyEditorScene');
-    });
-
-    this.recordsButton = this.createButton(centerX, centerY + 250, I18n.t('title.records'), () => {
-      this.cancelAutoStartCountdown();
-      this.scene.start('RecordsScene');
-    });
-
-    this.settingsButton = this.createButton(centerX - 140, centerY + 132, I18n.t('title.settings'), () => {
-      this.cancelAutoStartCountdown();
-      this.showSettingsMenu();
-    });
-
-    this.helpButton = this.createButton(centerX + 140, centerY + 132, I18n.t('common.help'), () => {
-      this.cancelAutoStartCountdown();
-      this.showHelpOverlay();
-    });
-
-    this.developerButton = this.createButton(centerX, centerY + 132, I18n.t('developer.title'), () => {
-      this.cancelAutoStartCountdown();
-      this.showDeveloperMenu();
-    });
+    this.createActionBars();
 
     this.applyLayout();
     this.unsubscribeResize = this.screenManager.onResize(() => {
@@ -150,49 +110,71 @@ export class TitleScene extends Phaser.Scene {
     }
   }
 
-  private createButton(
-    x: number,
-    y: number,
-    label: string,
-    onClick: () => void,
-  ): Phaser.GameObjects.Text {
-    const fontSize = this.screenManager
-      ? LayoutConfig.getTitleLayout(this.screenManager).fontSize
-      : '22px';
-    const metrics = getButtonMetrics(this.scale.width, this.scale.height);
-    const button = this.add.text(x, y, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
+  private createActionBars(): void {
+    this.primaryActionBar?.destroy();
+    this.secondaryActionBar?.destroy();
+
+    const primaryActions: Array<UIActionBarAction<TitlePrimaryActionId>> = [
+      {
+        id: 'start',
+        label: I18n.t('title.startGame'),
+        onClick: () => {
+          this.cancelAutoStartCountdown();
+          SelectionManager.clearChallengeSelection();
+          PlaytestSettings.setAutoMode(false);
+          PlaytestSettings.setFastMode(false);
+          this.refreshStatus();
+          this.scene.start('RunPreloadScene');
+        },
       },
-    });
+    ];
+    const secondaryActions: Array<UIActionBarAction<TitleSecondaryActionId>> = [
+      {
+        id: 'selectCharacter',
+        label: I18n.t('title.selectCharacter'),
+        onClick: () => {
+          this.cancelAutoStartCountdown();
+          this.scene.start('CharacterSelectScene');
+        },
+      },
+      {
+        id: 'selectStage',
+        label: I18n.t('title.selectStage'),
+        onClick: () => {
+          this.cancelAutoStartCountdown();
+          this.scene.start('StageSelectScene');
+        },
+      },
+      {
+        id: 'settings',
+        label: I18n.t('title.settings'),
+        onClick: () => {
+          this.cancelAutoStartCountdown();
+          this.showSettingsMenu();
+        },
+      },
+      {
+        id: 'help',
+        label: I18n.t('common.help'),
+        onClick: () => {
+          this.cancelAutoStartCountdown();
+          this.showHelpOverlay();
+        },
+      },
+      {
+        id: 'developer',
+        label: I18n.t('developer.title'),
+        onClick: () => {
+          this.cancelAutoStartCountdown();
+          this.showDeveloperMenu();
+        },
+      },
+    ];
 
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      onClick();
-    });
-
-    return button;
+    this.primaryActionBar = new UIActionBar(this, primaryActions);
+    this.secondaryActionBar = new UIActionBar(this, secondaryActions);
+    this.primaryActionBar.container.setDepth(40);
+    this.secondaryActionBar.container.setDepth(40);
   }
 
   private applyLayout(): void {
@@ -201,27 +183,56 @@ export class TitleScene extends Phaser.Scene {
     }
 
     const layout = LayoutConfig.getTitleLayout(this.screenManager);
-    const buttons = [
-      this.startButton,
-      this.selectCharacterButton,
-      this.selectStageButton,
-      this.strategyButton,
-      this.recordsButton,
-      this.settingsButton,
-      this.helpButton,
-      this.developerButton,
-    ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
-    const buttonLayout = LayoutConfig.getButtonListLayout({
-      screen: this.screenManager,
-      count: buttons.length,
-      startY: layout.buttonStartY,
-      mode: this.screenManager.isPortrait() && buttons.length <= 8 ? 'vertical' : 'twoColumn',
-      gap: layout.buttonGap,
-    });
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const buttonRects: Array<{ x: number; y: number; width: number; height: number }> = [];
+    const primaryWidth = Math.min(
+      this.screenManager.width - (tiny ? 24 : 36),
+      tiny ? 220 : compact ? 260 : 300,
+    );
+    const primaryHeight = tiny ? 34 : compact ? 38 : 44;
+    const primaryFontSize = tiny ? '13px' : compact ? '15px' : layout.fontSize;
+
+    if (this.primaryActionBar) {
+      const primaryLayout = this.primaryActionBar.layout(
+        this.screenManager,
+        {
+          x: this.screenManager.centerX - primaryWidth / 2,
+          y: layout.buttonStartY - primaryHeight / 2,
+          width: primaryWidth,
+          height: primaryHeight,
+        },
+        {
+          columns: 1,
+          compact,
+          minWidth: primaryWidth,
+          maxWidth: primaryWidth,
+          minHeight: primaryHeight,
+          maxHeight: primaryHeight,
+          fontSize: primaryFontSize,
+        },
+      );
+      const position = primaryLayout.positions[0];
+      buttonRects.push({
+        x: position.x - primaryLayout.width / 2,
+        y: position.y - primaryLayout.height / 2,
+        width: primaryLayout.width,
+        height: primaryLayout.height,
+      });
+    }
+
+    const secondaryTop = layout.buttonStartY + primaryHeight / 2 + (tiny ? 8 : 10);
     this.layoutBackground();
 
-    this.titleText?.setPosition(layout.titlePosition.x, layout.titlePosition.y);
-    this.titleText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).title);
+    this.titleHeader?.setLayout(
+      layout.titlePosition.x,
+      layout.titlePosition.y,
+      Math.min(this.screenManager.width - (tiny ? 24 : 48), compact ? 520 : 760),
+      {
+        titleFontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).title,
+      },
+    );
     this.selectionText?.setPosition(layout.statusPosition.x, layout.statusPosition.y - 30);
     this.selectionText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
     this.statusText?.setPosition(layout.statusPosition.x, layout.statusPosition.y);
@@ -229,12 +240,82 @@ export class TitleScene extends Phaser.Scene {
     this.autoStartText?.setPosition(layout.countdownPosition.x, layout.countdownPosition.y);
     this.autoStartText?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
 
-    buttons.forEach((button, index) => {
-      const position = buttonLayout.positions[index];
-      button.setFontSize(buttonLayout.fontSize);
-      setTextHitArea(button, buttonLayout.width, buttonLayout.height);
-      button.setPosition(position.x, position.y);
+    if (this.secondaryActionBar) {
+      const secondaryColumns = this.screenManager.isPortrait() ? 2 : 3;
+      const secondaryButtonHeight = tiny ? 30 : compact ? 34 : 38;
+      const secondaryRows = Math.ceil(5 / secondaryColumns);
+      const secondaryGap = tiny ? 4 : compact ? 6 : 8;
+      const secondaryAreaHeight = secondaryRows * secondaryButtonHeight
+        + Math.max(0, secondaryRows - 1) * secondaryGap
+        + (tiny ? 4 : 6);
+      const secondaryLayout = this.secondaryActionBar.layout(
+        this.screenManager,
+        {
+          x: tiny ? 10 : 14,
+          y: secondaryTop,
+          width: this.screenManager.width - (tiny ? 20 : 28),
+          height: Math.max(
+            1,
+            Math.min(
+              this.screenManager.height - secondaryTop - (tiny ? 10 : 16),
+              secondaryAreaHeight,
+            ),
+          ),
+        },
+        {
+          columns: secondaryColumns,
+          compact,
+          minWidth: tiny ? 86 : 104,
+          maxWidth: tiny ? 126 : compact ? 152 : 172,
+          minHeight: tiny ? 26 : 30,
+          maxHeight: secondaryButtonHeight,
+          fontSize: tiny ? '10px' : compact ? '11px' : '13px',
+        },
+      );
+      secondaryLayout.positions.forEach((position) => {
+        buttonRects.push({
+          x: position.x - secondaryLayout.width / 2,
+          y: position.y - secondaryLayout.height / 2,
+          width: secondaryLayout.width,
+          height: secondaryLayout.height,
+        });
+      });
+    }
+    this.layoutMenuFrame(layout, buttonRects);
+  }
+
+  private layoutMenuFrame(
+    layout: ReturnType<typeof LayoutConfig.getTitleLayout>,
+    buttonRects: Array<{ x: number; y: number; width: number; height: number }>,
+  ): void {
+    this.menuFrame?.destroy(true);
+    this.menuFrame = undefined;
+
+    if (!this.screenManager || buttonRects.length === 0) {
+      return;
+    }
+
+    const buttonLeft = Math.min(...buttonRects.map((rect) => rect.x));
+    const buttonRight = Math.max(...buttonRects.map((rect) => rect.x + rect.width));
+    const buttonBottom = Math.max(...buttonRects.map((rect) => rect.y + rect.height));
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
+    const top = layout.statusPosition.y - (compact ? 28 : 34);
+    const bottom = buttonBottom + (compact ? 10 : 14);
+    const width = Math.min(
+      this.screenManager.width - 24,
+      Math.max(buttonRight - buttonLeft + (compact ? 34 : 44), this.screenManager.isPortrait() ? 286 : 460),
+    );
+    const height = Math.max(compact ? 142 : 164, bottom - top);
+    this.menuFrame = PanelFrame.create(this, {
+      x: this.screenManager.centerX,
+      y: top + height / 2,
+      width,
+      height,
+      alpha: UITheme.hudPanelAlpha,
+      variant: 'modal',
     });
+    this.menuFrame.setDepth(-20);
   }
 
   private createBackgroundImage(): Phaser.GameObjects.Image | undefined {
@@ -274,24 +355,19 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private refreshTexts(): void {
-    this.titleText?.setText(I18n.t('title.gameTitle'));
-    this.startButton?.setText(I18n.t('title.startGame'));
-    this.selectCharacterButton?.setText(I18n.t('title.selectCharacter'));
-    this.selectStageButton?.setText(I18n.t('title.selectStage'));
-    this.strategyButton?.setText('Auto Strategy');
-    this.recordsButton?.setText(I18n.t('title.records'));
-    this.settingsButton?.setText(I18n.t('title.settings'));
-    this.helpButton?.setText(I18n.t('common.help'));
-    this.developerButton?.setText(I18n.t('developer.title'));
+    this.titleHeader?.setText(I18n.t('title.gameTitle'));
+    this.createActionBars();
     this.selectionText?.setText(this.formatSelectionSummary());
     this.refreshStatus();
 
     if (this.autoStartCanceled) {
       this.autoStartText?.setText(I18n.t('title.autoTestCanceled'));
+      this.applyLayout();
       return;
     }
 
     this.updateAutoStartText();
+    this.applyLayout();
   }
 
   private startAutoStartCountdown(): void {
@@ -381,8 +457,8 @@ export class TitleScene extends Phaser.Scene {
     const settings = PlaytestSettings.get();
 
     return [
-      `Auto Move ${settings.autoMovement ? I18n.t('common.on') : I18n.t('common.off')} / Auto Upgrade ${settings.autoUpgrade ? I18n.t('common.on') : I18n.t('common.off')}`,
-      `${I18n.t('common.fastMode')} ${settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')} / Endless ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')} / ${I18n.t('common.timeScale')} ${this.getDisplayedTimeScale(settings)}x`,
+      `${I18n.t('settings.autoMovement')} ${settings.autoMovement ? I18n.t('common.on') : I18n.t('common.off')} / ${I18n.t('settings.autoUpgrade')} ${settings.autoUpgrade ? I18n.t('common.on') : I18n.t('common.off')}`,
+      `${I18n.t('common.fastMode')} ${settings.fastMode ? I18n.t('common.on') : I18n.t('common.off')} / ${I18n.t('settings.endlessMode')} ${settings.endlessMode ? I18n.t('common.on') : I18n.t('common.off')} / ${I18n.t('common.timeScale')} ${this.getDisplayedTimeScale(settings)}x`,
     ].join('\n');
   }
 
@@ -418,6 +494,20 @@ export class TitleScene extends Phaser.Scene {
     this.settingsMenu = undefined;
     this.developerMenu?.destroy({ notifyClose: false });
     this.developerMenu = undefined;
+    this.primaryActionBar?.destroy();
+    this.primaryActionBar = undefined;
+    this.secondaryActionBar?.destroy();
+    this.secondaryActionBar = undefined;
+    this.titleHeader?.destroy();
+    this.titleHeader = undefined;
+    this.menuFrame?.destroy(true);
+    this.menuFrame = undefined;
+    this.statusText?.destroy();
+    this.statusText = undefined;
+    this.selectionText?.destroy();
+    this.selectionText = undefined;
+    this.autoStartText?.destroy();
+    this.autoStartText = undefined;
   }
 
   private t(key: string, fallback: string): string {

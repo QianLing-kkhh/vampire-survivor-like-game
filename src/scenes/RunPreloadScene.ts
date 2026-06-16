@@ -240,8 +240,12 @@ export class RunPreloadScene extends Phaser.Scene {
           this.addHazardMechanicKinds(mechanic.visualType, visualKinds, minimapIconKinds);
           break;
         case 'altar':
-          visualKinds.add('altar');
-          minimapIconKinds.add('altar');
+          visualKinds.add(mechanic.visualType === 'library'
+            ? 'altarLibrary'
+            : mechanic.visualType === 'cathedral'
+              ? 'altarCathedral'
+              : 'altar');
+          minimapIconKinds.add(mechanic.visualType === 'library' ? 'altarLibrary' : 'altar');
           break;
         case 'spawner':
           visualKinds.add('spawner');
@@ -272,6 +276,10 @@ export class RunPreloadScene extends Phaser.Scene {
         visualKinds.add('mud');
         minimapIconKinds.add('mud');
         break;
+      case 'ink':
+        visualKinds.add('ink');
+        minimapIconKinds.add('ink');
+        break;
       case 'river':
       default:
         visualKinds.add('river');
@@ -294,6 +302,10 @@ export class RunPreloadScene extends Phaser.Scene {
         visualKinds.add('portalGreen');
         minimapIconKinds.add('portalGreen');
         break;
+      case 'gold':
+        visualKinds.add('portalGold');
+        minimapIconKinds.add('portalGold');
+        break;
       case 'blue':
       default:
         visualKinds.add('portalBlue');
@@ -313,6 +325,12 @@ export class RunPreloadScene extends Phaser.Scene {
         break;
       case 'crystal':
         visualKinds.add('lightCrystal');
+        break;
+      case 'candle':
+        visualKinds.add('lightCandle');
+        break;
+      case 'arcaneLamp':
+        visualKinds.add('lightArcaneLamp');
         break;
       case 'lamp':
       default:
@@ -337,6 +355,18 @@ export class RunPreloadScene extends Phaser.Scene {
         break;
       case 'wall':
         visualKinds.add('obstacleWall');
+        break;
+      case 'cathedralWall':
+        visualKinds.add('obstacleCathedralWall');
+        break;
+      case 'cathedralPillar':
+        visualKinds.add('obstacleCathedralPillar');
+        break;
+      case 'bookshelf':
+        visualKinds.add('obstacleBookshelf');
+        break;
+      case 'archivePillar':
+        visualKinds.add('obstacleArchivePillar');
         break;
       case 'rock':
       default:

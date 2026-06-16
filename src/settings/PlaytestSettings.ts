@@ -2,6 +2,7 @@ import type { AudioChannel } from '../audio/AudioManager';
 import { DEFAULT_LOCALE, SupportedLocale, isSupportedLocale } from '../i18n/Locale';
 import { isStrategyControlType, type StrategyControlType } from '../runtime/RunModeConfig';
 import { SaveManager } from '../save/SaveManager';
+import { LocalStorageAdapter } from '../save/storage/LocalStorageAdapter';
 
 import { SettingsData, SettingsManager } from './SettingsManager';
 
@@ -32,6 +33,7 @@ export type PlaytestSettingsListener = (
 export class PlaytestSettings {
   private static readonly STORAGE_KEY = 'vampire-survivor-like-game:playtest-settings';
   private static readonly listeners = new Set<PlaytestSettingsListener>();
+  private static readonly legacyStorage = new LocalStorageAdapter();
   private static unsubscribeSettingsManager?: () => void;
   private static legacyMigrated = false;
 
@@ -195,12 +197,7 @@ export class PlaytestSettings {
 
   static clearLegacyStorage(): void {
     PlaytestSettings.legacyMigrated = true;
-
-    try {
-      globalThis.localStorage?.removeItem(PlaytestSettings.STORAGE_KEY);
-    } catch {
-      // Save-backed settings are already the source of truth.
-    }
+    PlaytestSettings.legacyStorage.removeItem(PlaytestSettings.STORAGE_KEY);
   }
 
   private static ensureSettingsManagerSubscription(): void {
@@ -294,7 +291,7 @@ export class PlaytestSettings {
 
   private static readLegacyStoredState(): PlaytestSettingsState | undefined {
     try {
-      const rawState = globalThis.localStorage?.getItem(PlaytestSettings.STORAGE_KEY);
+      const rawState = PlaytestSettings.legacyStorage.getItem(PlaytestSettings.STORAGE_KEY);
 
       if (!rawState) {
         return undefined;

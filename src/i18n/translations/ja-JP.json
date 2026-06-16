@@ -142,9 +142,17 @@
       "name": "遺跡の門",
       "description": "壊れた壁とポータルで構成された遺跡ステージ。"
     },
+    "cursedCathedral": {
+      "name": "呪われた大聖堂",
+      "description": "壁、ろうそく、ポータル、回復の祭壇を備えた高精細な大聖堂ステージ。"
+    },
     "builtIn": "Built-In",
     "custom": "Custom",
-    "warningsCount": "{count} warnings"
+    "warningsCount": "{count} warnings",
+    "sunkenLibrary": {
+      "name": "沈んだ図書館",
+      "description": "水没した書庫のステージ。書架、インク溜まり、魔法灯、ポータル、回復の祭壇があります。"
+    }
   },
   "map": {
     "graveyard": {
@@ -155,6 +163,12 @@
     },
     "ruinedGate": {
       "name": "遺跡の門"
+    },
+    "cursedCathedral": {
+      "name": "呪われた大聖堂"
+    },
+    "sunkenLibrary": {
+      "name": "沈んだ図書館"
     }
   },
   "stageSelection": {
@@ -187,7 +201,13 @@
     "invalid": "カスタムステージは無効です",
     "errors": "エラー",
     "warnings": "警告",
-    "storedStages": "保存済みカスタムステージ"
+    "storedStages": "保存済みカスタムステージ",
+    "id": "ID",
+    "name": "名前",
+    "finalBoss": "最終ボス",
+    "endless": "エンドレス",
+    "status": "状態",
+    "notValidated": "未検証"
   },
   "pause": {
     "title": "一時停止",
@@ -265,8 +285,31 @@
     "relics": "Relics",
     "seed": "Seed",
     "settings": "Settings",
-    "skills": "Skills",
-    "stage": "Stage"
+    "skills": "スキル",
+    "stage": "ステージ",
+    "mode": "モード",
+    "edits": "編集",
+    "final": "最終",
+    "base": "基準",
+    "strategy": "戦略",
+    "pace": "ペース",
+    "choices": "選択",
+    "kpm": "撃破/分",
+    "expPerMinute": "EXP/分",
+    "damagePerMinute": "ダメージ/分",
+    "upgrades": "強化",
+    "evolutions": "進化",
+    "chestsPerMinute": "宝箱/分",
+    "localLeaderboard": "ローカルランキング",
+    "thisRunRank": "今回の順位",
+    "kills": "撃破",
+    "control": {
+      "manual": "手動",
+      "liveAuto": "ライブ自動",
+      "fixedAuto": "固定自動",
+      "liveAutoStrategy": "ライブ自動戦略",
+      "fixedAutoStrategy": "固定自動戦略"
+    }
   },
   "help": {
     "tab": {
@@ -443,7 +486,7 @@
         },
         "altar": {
           "_label": "祭壇",
-          "description": "ステージ設定で使われる特殊なランドマークです。"
+          "description": "範囲内に立つとチャージし、回復などの設定された祭壇効果を発動します。"
         },
         "spawner": {
           "_label": "スポーン地点",
@@ -636,6 +679,63 @@
       "loop": "周回"
     }
   },
+  "strategyEditor": {
+    "subtitle": "自動戦略プロファイルを編集",
+    "activeProfile": "現在の戦略：{name}（{id}、{type}）",
+    "route": "ルート",
+    "action": {
+      "save": "保存",
+      "copy": "コピー",
+      "delete": "削除",
+      "export": "エクスポート",
+      "import": "インポート",
+      "reset": "リセット"
+    },
+    "section": {
+      "movement": "移動",
+      "upgrade": "アップグレード",
+      "treasure": "宝箱",
+      "relic": "レリック"
+    },
+    "slider": {
+      "survival": "生存",
+      "farm": "経験値",
+      "treasure": "宝箱",
+      "boss": "ボス",
+      "risk": "リスク",
+      "loop": "周回",
+      "evolution": "進化",
+      "mainWeapon": "主武器",
+      "survivalUp": "生存強化",
+      "damageUp": "ダメージ強化",
+      "chestRisk": "宝箱リスク",
+      "evoChest": "進化宝箱",
+      "relicSynergy": "レリック連携",
+      "damageRelic": "ダメージレリック",
+      "survivalRelic": "生存レリック",
+      "economyRelic": "経済レリック"
+    },
+    "readonly": {
+      "builtin": "内蔵",
+      "custom": "カスタム"
+    },
+    "prompt": {
+      "importJson": "自動戦略 JSON を貼り付け"
+    },
+    "status": {
+      "saved": "{name} を保存しました。",
+      "copied": "{name} にコピーしました。",
+      "builtinDeleteBlocked": "内蔵プロファイルは削除できません。",
+      "deleted": "{name} を削除しました。",
+      "clipboardCopied": "戦略 JSON をクリップボードにコピーしました。",
+      "clipboardFailed": "クリップボードに失敗しました。JSON をコンソールに出力しました。",
+      "jsonLogged": "戦略 JSON をコンソールに出力しました。",
+      "imported": "{name} をインポートしました。",
+      "importFailed": "インポート失敗：戦略 JSON が無効です。",
+      "editBuiltin": "内蔵プロファイルの編集はカスタムコピーとして保存されます。",
+      "editCustom": "カスタムプロファイルの編集は保存時に上書きされます。"
+    }
+  },
   "records": {
     "title": "記録",
     "achievements": "実績",
@@ -656,7 +756,20 @@
     "empty": "リプレイなし",
     "compatible": "互換あり",
     "warning": "警告",
-    "invalid": "無効"
+    "invalid": "無効",
+    "status": "状態",
+    "version": "リプレイ",
+    "game": "ゲーム",
+    "content": "コンテンツ",
+    "seed": "シード",
+    "character": "キャラクター",
+    "stage": "ステージ",
+    "map": "マップ",
+    "result": "結果",
+    "survival": "生存",
+    "events": "イベント",
+    "inputs": "入力",
+    "compatibility": "互換性"
   },
   "dailyChallenge": {
     "title": "デイリーチャレンジ",
@@ -667,7 +780,19 @@
     "copySeed": "シードをコピー",
     "rules": "ルール",
     "mode": "モード",
-    "noChallenge": "チャレンジがありません"
+    "date": "日付",
+    "character": "キャラクター",
+    "stage": "ステージ",
+    "map": "マップ",
+    "difficulty": "難易度",
+    "normal": "通常",
+    "endless": "エンドレス",
+    "none": "なし",
+    "noChallenge": "チャレンジがありません",
+    "challengeId": "チャレンジ",
+    "ruleset": "ルールセット",
+    "leaderboard": "ランキング",
+    "status": "状態"
   },
   "developer": {
     "title": "開発者メニュー",
@@ -888,5 +1013,85 @@
   "game": {
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."
-  }
+  },
+  "character.arcanist.name": "アーケニスト",
+  "character.arcanist.description": "固有の秘術武器ルートで開始します。",
+  "unlock.character.arcanist.name": "アーケニスト",
+  "character.ranger.name": "レンジャー",
+  "character.ranger.description": "固有のレンジャー武器ルートで開始します。",
+  "unlock.character.ranger.name": "レンジャー",
+  "character.engineer.name": "エンジニア",
+  "character.engineer.description": "固有の工学武器ルートで開始します。",
+  "unlock.character.engineer.name": "エンジニア",
+  "character.necromancer.name": "ネクロマンサー",
+  "character.necromancer.description": "固有の死霊武器ルートで開始します。",
+  "unlock.character.necromancer.name": "ネクロマンサー",
+  "character.monk.name": "モンク",
+  "character.monk.description": "固有の武僧武器ルートで開始します。",
+  "unlock.character.monk.name": "モンク",
+  "character.alchemist.name": "アルケミスト",
+  "character.alchemist.description": "固有の錬金武器ルートで開始します。",
+  "unlock.character.alchemist.name": "アルケミスト",
+  "character.duelist.name": "デュエリスト",
+  "character.duelist.description": "固有の決闘武器ルートで開始します。",
+  "unlock.character.duelist.name": "デュエリスト",
+  "character.geomancer.name": "ジオマンサー",
+  "character.geomancer.description": "固有の地脈武器ルートで開始します。",
+  "unlock.character.geomancer.name": "ジオマンサー",
+  "character.stormcaller.name": "ストームコーラー",
+  "character.stormcaller.description": "固有の嵐武器ルートで開始します。",
+  "unlock.character.stormcaller.name": "ストームコーラー",
+  "character.sentinel.name": "センチネル",
+  "character.sentinel.description": "固有の守護武器ルートで開始します。",
+  "unlock.character.sentinel.name": "センチネル",
+  "stage.crystalCaverns.name": "水晶洞窟",
+  "stage.crystalCaverns.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.crystal_caverns_stage.name": "水晶洞窟",
+  "stage.ashFoundry.name": "灰の鋳造所",
+  "stage.ashFoundry.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.ash_foundry_stage.name": "灰の鋳造所",
+  "stage.moonlitRooftops.name": "月明かりの屋根",
+  "stage.moonlitRooftops.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.moonlit_rooftops_stage.name": "月明かりの屋根",
+  "stage.frostMonastery.name": "霜の修道院",
+  "stage.frostMonastery.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.frost_monastery_stage.name": "霜の修道院",
+  "stage.bloodGarden.name": "血の庭園",
+  "stage.bloodGarden.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.blood_garden_stage.name": "血の庭園",
+  "stage.desertObelisk.name": "砂漠のオベリスク",
+  "stage.desertObelisk.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.desert_obelisk_stage.name": "砂漠のオベリスク",
+  "stage.stormCoast.name": "嵐の海岸",
+  "stage.stormCoast.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.storm_coast_stage.name": "嵐の海岸",
+  "stage.clockworkBastion.name": "機械仕掛けの砦",
+  "stage.clockworkBastion.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.clockwork_bastion_stage.name": "機械仕掛けの砦",
+  "stage.fungalDepths.name": "菌糸の深層",
+  "stage.fungalDepths.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.fungal_depths_stage.name": "菌糸の深層",
+  "stage.mirrorLabyrinth.name": "鏡の迷宮",
+  "stage.mirrorLabyrinth.description": "固有の地形とマップ機構を持つ上級ステージです。",
+  "unlock.stage.mirror_labyrinth_stage.name": "鏡の迷宮",
+  "map.crystalCaverns.name": "水晶洞窟",
+  "unlock.map.crystal_caverns_map.name": "水晶洞窟",
+  "map.ashFoundry.name": "灰の鋳造所",
+  "unlock.map.ash_foundry_map.name": "灰の鋳造所",
+  "map.moonlitRooftops.name": "月明かりの屋根",
+  "unlock.map.moonlit_rooftops_map.name": "月明かりの屋根",
+  "map.frostMonastery.name": "霜の修道院",
+  "unlock.map.frost_monastery_map.name": "霜の修道院",
+  "map.bloodGarden.name": "血の庭園",
+  "unlock.map.blood_garden_map.name": "血の庭園",
+  "map.desertObelisk.name": "砂漠のオベリスク",
+  "unlock.map.desert_obelisk_map.name": "砂漠のオベリスク",
+  "map.stormCoast.name": "嵐の海岸",
+  "unlock.map.storm_coast_map.name": "嵐の海岸",
+  "map.clockworkBastion.name": "機械仕掛けの砦",
+  "unlock.map.clockwork_bastion_map.name": "機械仕掛けの砦",
+  "map.fungalDepths.name": "菌糸の深層",
+  "unlock.map.fungal_depths_map.name": "菌糸の深層",
+  "map.mirrorLabyrinth.name": "鏡の迷宮",
+  "unlock.map.mirror_labyrinth_map.name": "鏡の迷宮"
 }

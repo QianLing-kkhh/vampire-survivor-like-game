@@ -1,6 +1,7 @@
 import type { CharacterDamageReactionType } from '../../character/CharacterDamageReactionSkill';
 import type { CharacterBaseStats } from '../../character/CharacterDefinition';
-import type { WeaponTag } from '../../weapon/tags/WeaponTag';
+import type { Vector2Like } from '../../core/domain/Vector2';
+import type { WeaponTag } from '../../core/domain/WeaponTypes';
 
 export interface StrategyPosition {
   x: number;
@@ -13,6 +14,10 @@ export interface StrategyPlayerSnapshot {
   level?: number;
   hitRadiusPx?: number;
   radiusPx?: number;
+  velocity?: Vector2Like;
+  aimDirection?: Vector2Like;
+  facingDirection?: Vector2Like;
+  isAlive?: boolean;
   moveSpeed?: number;
   pickupRangePx?: number;
   characterId?: string;

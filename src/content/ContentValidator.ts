@@ -1,4 +1,3 @@
-import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import {
   BossTimingMutatorConfig,
   EnemyStatMutatorConfig,
@@ -9,9 +8,11 @@ import {
   WeaponPoolMutatorConfig,
 } from '../rules/MutatorConfig';
 import { MutatorFactory } from '../rules/MutatorFactory';
-import { WeaponBehaviorConfig } from '../weapon/behavior/WeaponBehaviorConfig';
+import type {
+  WeaponBehaviorConfig,
+  WeaponConfig,
+} from '../core/domain/WeaponTypes';
 import { WeaponBehaviorRegistry } from '../weapon/behavior/WeaponBehaviorRegistry';
-import { WeaponConfig } from '../weapon/Weapon';
 import { WeaponTagRegistry } from '../weapon/tags/WeaponTagRegistry';
 
 import { ContentPack } from './ContentPack';
@@ -152,7 +153,7 @@ export class ContentValidator {
   }
 
   private validateEvolutionRules(pack: ContentPack): void {
-    for (const rule of EVOLUTION_RULES) {
+    for (const rule of pack.evolutions ?? []) {
       if (!pack.weapons?.[rule.baseWeaponId]) {
         console.warn(`Evolution rule references missing base weapon: ${rule.baseWeaponId}`);
       }

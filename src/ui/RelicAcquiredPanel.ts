@@ -1,6 +1,13 @@
 import Phaser from 'phaser';
 
 import { I18n } from '../i18n/I18n';
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIBadge } from './components/UIBadge';
+import { UIGlowAccent } from './components/UIGlowAccent';
+import { UIIconFrame } from './components/UIIconFrame';
+import { UITextBlock } from './components/UITextBlock';
+import { truncateTextToWidth } from './components/UITextUtils';
 import { UITheme } from './UITheme';
 
 export type RelicAcquiredPanelConfig = {
@@ -14,6 +21,10 @@ export type RelicAcquiredPanelConfig = {
 };
 
 export class RelicAcquiredPanel {
+  private static readonly PANEL_WIDTH = 340;
+  private static readonly PANEL_HEIGHT = 166;
+  private static readonly MIN_SCALE = 0.76;
+
   private readonly container: Phaser.GameObjects.Container;
   private readonly resizeHandler = () => this.layout();
   private completed = false;
@@ -46,56 +57,90 @@ export class RelicAcquiredPanel {
   }
 
   private build(): void {
-    const title = this.scene.add.text(0, -96, I18n.t('relic.acquiredTitle'), {
-      color: '#facc15',
-      fontFamily: UITheme.fontFamily,
-      fontSize: '24px',
-      fontStyle: 'bold',
-      stroke: '#111827',
-      strokeThickness: 4,
+    const glow = UIGlowAccent.create(this.scene, {
+      width: RelicAcquiredPanel.PANEL_WIDTH,
+      height: RelicAcquiredPanel.PANEL_HEIGHT,
+      color: this.getRarityColor(),
+      alpha: 0.16,
+      padding: 10,
     });
-    title.setOrigin(0.5);
 
-    const bg = this.scene.add.graphics();
-    const glow = this.scene.add.graphics();
-    const iconFrame = this.scene.add.rectangle(-96, -12, 72, 72, UITheme.iconBgColor, 0.94);
-    iconFrame.setStrokeStyle(2, this.getRarityColor(), 0.9);
-
-    const icon = this.createIconObject(-96, -12);
-    const nameText = this.scene.add.text(-42, -38, this.resolveText(this.config.name), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '20px',
-      fontStyle: 'bold',
-      wordWrap: { width: 260 },
+    const frame = PanelFrame.create(this.scene, {
+      x: 0,
+      y: 0,
+      width: RelicAcquiredPanel.PANEL_WIDTH,
+      height: RelicAcquiredPanel.PANEL_HEIGHT,
+      variant: 'modal',
+      alpha: UITheme.alpha.modal,
     });
-    nameText.setOrigin(0, 0.5);
+    const header = PanelHeader.create(this.scene, {
+      x: 0,
+      y: -61,
+      width: RelicAcquiredPanel.PANEL_WIDTH - 48,
+      title: I18n.t('relic.acquiredTitle'),
+      align: 'center',
+      titleFontSize: '18px',
+    });
 
-    const rarityText = this.scene.add.text(-42, -10, this.getRarityLabel(), {
-      color: '#020617',
-      fontFamily: UITheme.fontFamily,
+    const icon = UIIconFrame.create(this.scene, {
+      x: -92,
+      y: -4,
+      size: 56,
+      textureKey: this.config.iconKey,
+      fallback: this.getFallbackText(),
+      fillAlpha: 0.92,
+      borderColor: this.getRarityColor(),
+      borderAlpha: 0.92,
+      tooltip: {
+        kind: 'relic',
+        id: this.config.id,
+        title: this.resolveText(this.config.name),
+        description: this.getDescriptionText(),
+      },
+    });
+    const nameFontSize = '18px';
+    const nameText = new UITextBlock(this.scene, {
+      x: -48,
+      y: -27,
+      text: truncateTextToWidth(this.resolveText(this.config.name), 220, nameFontSize),
+      fontSize: nameFontSize,
+      fontStyle: 'bold',
+      align: 'left',
+      width: 220,
+    }).text;
+    nameText.setMaxLines(2);
+
+    const rarityBadge = UIBadge.create(this.scene, 0, 0, this.getRarityLabel(), this.getRarityColor());
+    rarityBadge.setPosition(-48 + rarityBadge.getBounds().width / 2, -2);
+
+    const description = new UITextBlock(this.scene, {
+      x: -140,
+      y: 38,
+      text: this.getDescriptionText(),
+      tone: 'muted',
       fontSize: '12px',
-      fontStyle: 'bold',
-      padding: { x: 8, y: 3 },
-      backgroundColor: this.getRarityCssColor(),
-    });
-    rarityText.setOrigin(0, 0.5);
+      lineSpacing: 2,
+      align: 'left',
+      width: 280,
+    }).text;
+    description.setMaxLines(2);
 
-    const description = this.scene.add.text(-150, 50, this.getDescriptionText(), {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '14px',
-      lineSpacing: 4,
-      wordWrap: { width: 300 },
-    });
-    description.setOrigin(0, 0);
-
-    this.container.add([glow, bg, title, iconFrame, icon, nameText, rarityText, description]);
-    this.drawPanelBackground(bg, glow);
+    this.container.add([glow, frame, header, icon, nameText, rarityBadge, description]);
   }
 
   private layout(): void {
-    this.container.setPosition(this.scene.scale.width / 2, this.scene.scale.height * 0.34);
+    const width = this.scene.scale.width;
+    const height = this.scene.scale.height;
+    const scale = this.getResponsiveScale(width, height);
+    const scaledPanelHeight = RelicAcquiredPanel.PANEL_HEIGHT * scale;
+    const y = Phaser.Math.Clamp(
+      height * (height > width ? 0.22 : 0.24),
+      scaledPanelHeight / 2 + 16,
+      height - scaledPanelHeight / 2 - 96,
+    );
+
+    this.container.setScale(scale);
+    this.container.setPosition(width / 2, y);
   }
 
   private complete(): void {
@@ -107,57 +152,24 @@ export class RelicAcquiredPanel {
     this.config.onComplete?.();
   }
 
-  private drawPanelBackground(
-    bg: Phaser.GameObjects.Graphics,
-    glow: Phaser.GameObjects.Graphics,
-  ): void {
-    const width = 380;
-    const height = 210;
-    const x = -width / 2;
-    const y = -height / 2;
-
-    glow.clear();
-    glow.fillStyle(this.getRarityColor(), 0.16);
-    glow.fillRoundedRect(x - 10, y - 10, width + 20, height + 20, 16);
-
-    bg.clear();
-    bg.fillStyle(0x020617, 0.62);
-    bg.fillRoundedRect(x - 18, y - 18, width + 36, height + 36, 18);
-    bg.fillStyle(UITheme.panelBgColor, 0.94);
-    bg.fillRoundedRect(x, y, width, height, 12);
-    bg.lineStyle(2, UITheme.panelBorderColor, 0.86);
-    bg.strokeRoundedRect(x, y, width, height, 12);
-    bg.lineStyle(1, this.getRarityColor(), 0.92);
-    bg.strokeRoundedRect(x + 8, y + 8, width - 16, height - 16, 8);
-  }
-
-  private createIconObject(x: number, y: number): Phaser.GameObjects.Image | Phaser.GameObjects.Text {
-    const key = this.config.iconKey;
-
-    if (key && this.scene.textures.exists(key)) {
-      const image = this.scene.add.image(x, y, key);
-      image.setDisplaySize(54, 54);
-      return image;
-    }
-
-    const fallback = this.scene.add.text(x, y, this.getFallbackText(), {
-      color: '#f8fafc',
-      fontFamily: UITheme.fontFamily,
-      fontSize: '24px',
-      fontStyle: 'bold',
-    });
-    fallback.setOrigin(0.5);
-    return fallback;
+  private getResponsiveScale(width: number, height: number): number {
+    const widthScale = (width - 32) / RelicAcquiredPanel.PANEL_WIDTH;
+    const heightScale = (height * 0.42) / RelicAcquiredPanel.PANEL_HEIGHT;
+    return Phaser.Math.Clamp(
+      Math.min(1, widthScale, heightScale),
+      RelicAcquiredPanel.MIN_SCALE,
+      1,
+    );
   }
 
   private getDescriptionText(): string {
     const text = this.resolveText(this.config.description ?? '');
 
-    if (text.length <= 120) {
+    if (text.length <= 96) {
       return text;
     }
 
-    return `${text.slice(0, 117)}...`;
+    return `${text.slice(0, 93)}...`;
   }
 
   private resolveText(value: string): string {
@@ -189,10 +201,6 @@ export class RelicAcquiredPanel {
       default:
         return 0x94a3b8;
     }
-  }
-
-  private getRarityCssColor(): string {
-    return `#${this.getRarityColor().toString(16).padStart(6, '0')}`;
   }
 
   private getFallbackText(): string {

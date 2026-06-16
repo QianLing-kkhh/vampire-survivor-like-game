@@ -3,14 +3,25 @@ import Phaser from 'phaser';
 import { ReplayData } from '../replay/ReplayData';
 
 import { I18n } from '../i18n/I18n';
-import { UITheme, toCssColor } from './UITheme';
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIListRow, UIListRowTone } from './components/UIListRow';
+import { UITheme } from './UITheme';
 
 const MAX_REPLAY_ROWS = 8;
 
+type ReplayListRowData = {
+  label: string;
+  value?: string;
+  status?: string;
+  tone?: UIListRowTone;
+};
+
 export class ReplayListPanel {
-  private readonly background: Phaser.GameObjects.Rectangle;
-  private readonly titleText: Phaser.GameObjects.Text;
-  private readonly rowTexts: Phaser.GameObjects.Text[] = [];
+  private readonly container: Phaser.GameObjects.Container;
+  private frame?: Phaser.GameObjects.Container;
+  private header?: Phaser.GameObjects.Container;
+  private readonly rowContainers: Phaser.GameObjects.Container[] = [];
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -19,21 +30,8 @@ export class ReplayListPanel {
     private width: number,
     private height: number,
   ) {
-    this.background = scene.add.rectangle(
-      x + width / 2,
-      y + height / 2,
-      width,
-      height,
-      UITheme.panelBgColor,
-      UITheme.panelBgAlpha,
-    );
-    this.background.setStrokeStyle(2, UITheme.panelBorderColor, 0.7);
-    this.titleText = scene.add.text(x + 16, y + 12, I18n.t('replay.title'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
-    });
+    this.container = scene.add.container(0, 0);
+    this.updateLayout(x, y, width, height);
   }
 
   updateLayout(x: number, y: number, width: number, height: number): void {
@@ -41,9 +39,26 @@ export class ReplayListPanel {
     this.y = y;
     this.width = width;
     this.height = height;
-    this.background.setPosition(x + width / 2, y + height / 2);
-    this.background.setSize(width, height);
-    this.titleText.setPosition(x + 16, y + 12);
+    this.frame?.destroy(true);
+    this.header?.destroy(true);
+    this.frame = PanelFrame.create(this.scene, {
+      x: x + width / 2,
+      y: y + height / 2,
+      width,
+      height,
+      variant: 'card',
+    });
+    this.container.addAt(this.frame, 0);
+    const compact = width <= 360 || height <= 260;
+    this.header = PanelHeader.create(this.scene, {
+      x: x + width / 2,
+      y: y + (compact ? 22 : 28),
+      width: width - (compact ? 18 : 26),
+      title: I18n.t('replay.title'),
+      align: 'left',
+      titleFontSize: compact ? UITheme.bodyFontSize : UITheme.headerFontSize,
+    });
+    this.container.add(this.header);
   }
 
   render(
@@ -54,65 +69,93 @@ export class ReplayListPanel {
     this.clearRows();
 
     if (replays.length === 0) {
-      this.addRow(I18n.t('replay.empty'), 0, false);
+      this.addRow({ label: I18n.t('replay.empty'), tone: 'muted' }, 0, false);
       return;
     }
 
-    const visibleReplays = replays.slice(0, MAX_REPLAY_ROWS);
+    const visibleLimit = this.getVisibleRowLimit();
+    const visibleReplays = replays.slice(0, visibleLimit);
     visibleReplays.forEach((replay, index) => {
-      const row = this.addRow(
+      this.addRow(
         this.formatReplayRow(replay),
         index,
         replay.runId === selectedRunId,
+        () => onSelect(replay),
       );
-
-      row.setInteractive({ useHandCursor: true });
-      row.on('pointerdown', () => onSelect(replay));
     });
 
     if (replays.length > visibleReplays.length) {
-      this.addRow(`+${replays.length - visibleReplays.length} more`, visibleReplays.length, false);
+      this.addRow(
+        { label: I18n.t('selection.more', { count: replays.length - visibleReplays.length }), tone: 'muted' },
+        visibleReplays.length,
+        false,
+      );
     }
   }
 
   destroy(): void {
     this.clearRows();
-    this.background.destroy();
-    this.titleText.destroy();
+    this.container.destroy(true);
   }
 
   private addRow(
-    text: string,
+    rowData: ReplayListRowData,
     index: number,
     selected: boolean,
-  ): Phaser.GameObjects.Text {
-    const row = this.scene.add.text(this.x + 16, this.y + 58 + index * 34, text, {
-      backgroundColor: selected ? toCssColor(UITheme.buttonHoverColor) : undefined,
-      color: selected ? UITheme.textColor : UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      fixedWidth: this.width - 32,
-      fixedHeight: 28,
-      padding: { x: 8, y: 5 },
+    onClick?: () => void,
+  ): void {
+    const compact = this.width <= 360 || this.height <= 260;
+    const paddingX = compact ? 12 : 16;
+    const rowHeight = compact ? 24 : 28;
+    const rowStride = compact ? 28 : 34;
+    const rowTop = this.y + (compact ? 50 : 64);
+    const rowWidth = this.width - paddingX * 2;
+    const rowY = rowTop + index * rowStride + rowHeight / 2;
+    const row = UIListRow.create(this.scene, {
+      x: this.x + this.width / 2,
+      y: rowY,
+      width: rowWidth,
+      height: rowHeight,
+      label: rowData.label,
+      value: rowData.value,
+      status: rowData.status,
+      tone: selected ? 'normal' : rowData.tone ?? 'muted',
+      selected,
+      disabled: !onClick,
+      onClick,
+      compact,
     });
+    this.rowContainers.push(row);
+    this.container.add(row);
+  }
 
-    this.rowTexts.push(row);
-    return row;
+  private getVisibleRowLimit(): number {
+    const compact = this.width <= 360 || this.height <= 260;
+    const rowTop = compact ? 50 : 64;
+    const rowStride = compact ? 28 : 34;
+    const availableHeight = Math.max(rowStride, this.height - rowTop - 12);
+
+    return Math.max(1, Math.min(MAX_REPLAY_ROWS, Math.floor(availableHeight / rowStride)));
   }
 
   private clearRows(): void {
-    this.rowTexts.forEach((row) => row.destroy());
-    this.rowTexts.length = 0;
+    this.rowContainers.forEach((row) => row.destroy(true));
+    this.rowContainers.length = 0;
   }
 
-  private formatReplayRow(replay: ReplayData): string {
+  private formatReplayRow(replay: ReplayData): ReplayListRowData {
     const date = this.formatShortDate(replay.createdAt);
     const seed = this.shorten(replay.runSeed);
     const stage = replay.selection.stageId;
     const result = replay.result?.resultType ?? 'pending';
-    const time = replay.result ? ` ${this.formatTime(replay.result.survivalTime)}` : '';
+    const time = replay.result ? this.formatTime(replay.result.survivalTime) : undefined;
 
-    return `${date} ${seed} ${stage} ${result}${time}`;
+    return {
+      status: this.formatResultStatus(result),
+      label: `${date} ${seed}`,
+      value: time ? `${stage} / ${time}` : stage,
+      tone: this.getResultTone(result),
+    };
   }
 
   private formatShortDate(value: string): string {
@@ -135,5 +178,26 @@ export class ReplayListPanel {
 
   private shorten(value: string): string {
     return value.length <= 10 ? value : `${value.slice(0, 10)}...`;
+  }
+
+  private formatResultStatus(result: string): string {
+    const key = `result.${result}`;
+    const translated = I18n.t(key);
+    if (translated !== key) {
+      return translated;
+    }
+
+    return result;
+  }
+
+  private getResultTone(result: string): UIListRowTone {
+    if (result === 'victory') {
+      return 'success';
+    }
+    if (result === 'gameOver') {
+      return 'danger';
+    }
+
+    return 'muted';
   }
 }

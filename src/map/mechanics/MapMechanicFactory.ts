@@ -1,12 +1,14 @@
 import { MapMechanicContext } from './MapMechanicContext';
 import { MapInteractable } from './MapInteractable';
 import {
+  MapAltarDefinition,
   MapLightSourceDefinition,
   MapMechanicDefinition,
   MapObstacleDefinition,
   MapPortalDefinition,
   MapSlowZoneDefinition,
 } from './MapMechanicDefinition';
+import { MapAltar } from './MapAltar';
 import { MapLightSource } from './MapLightSource';
 import { MapObstacle } from './MapObstacle';
 import { MapPortal } from './MapPortal';
@@ -55,6 +57,10 @@ export class MapMechanicFactory {
         }
         case 'lightSource': {
           interactables.push(new MapLightSource(context, definition as MapLightSourceDefinition));
+          break;
+        }
+        case 'altar': {
+          interactables.push(new MapAltar(context, definition as MapAltarDefinition));
           break;
         }
         default:

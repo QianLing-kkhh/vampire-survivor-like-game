@@ -1,5 +1,4 @@
-import Phaser from 'phaser';
-
+import { Math2D } from '../../core/domain/Math2D';
 import type { TreasureStrategyConfig } from '../profile/AutoStrategyProfile';
 import type { TacticalRoute } from '../../auto/AutoPlayerMovementTypes';
 
@@ -11,7 +10,7 @@ export class TacticalRouteLayer {
   }
 
   evaluate(input: TacticalRouteLayerInput): TacticalRoute {
-    const remainingMs = input.routeRemainingMs - Phaser.Math.Clamp(input.context.deltaMs ?? 16, 0, 120);
+    const remainingMs = input.routeRemainingMs - Math2D.clamp(input.context.deltaMs ?? 16, 0, 120);
 
     if (
       input.currentRoute

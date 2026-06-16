@@ -4,13 +4,14 @@ import type { AutoBossWarningSnapshot } from '../auto/AutoPlayerTypes';
 import { BossLifecycleController } from '../boss/BossLifecycleController';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { EventBus } from '../core/EventBus';
+import type { GameEventMap } from '../core/domain/GameEvents';
 import { EnemyFactory } from './EnemyFactory';
 import { EnemyMovement } from './EnemyMovement';
 import { PlayerController } from '../player/PlayerController';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { RunState } from '../run/RunState';
 
-import { Enemy, GameEventMap } from './Enemy';
+import { Enemy } from './Enemy';
 import { EnemyFlow } from './EnemyFlow';
 
 export interface BossControllerConfig {

@@ -13,6 +13,7 @@ import { UIBadge } from './components/UIBadge';
 import { UICard } from './components/UICard';
 import { UIIconFrame } from './components/UIIconFrame';
 import { UIStatRow } from './components/UIStatRow';
+import { UITextBlock } from './components/UITextBlock';
 import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme } from './UITheme';
 
@@ -73,6 +74,9 @@ export class LevelUpPanel {
 
   private layout(scene: Phaser.Scene): void {
     const layout = LayoutConfig.getLevelUpPanelLayout(this.screenManager);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
     this.container.removeAll(true);
     this.container.setPosition(layout.panelCenter.x, layout.panelCenter.y);
 
@@ -90,20 +94,23 @@ export class LevelUpPanel {
 
     const header = PanelHeader.create(scene, {
       x: 0,
-      y: -layout.panelHeight / 2 + 40,
-      width: layout.panelWidth,
+      y: -layout.panelHeight / 2 + (tiny ? 28 : compact ? 32 : 40),
+      width: Math.max(220, layout.panelWidth - (compact ? 42 : 56)),
       title: I18n.t('levelUp.title').toUpperCase(),
       subtitle: I18n.t('levelUp.chooseUpgrade'),
+      titleFontSize: tiny ? '22px' : compact ? '24px' : undefined,
+      subtitleFontSize: tiny ? '10px' : compact ? '11px' : undefined,
     });
     this.container.add(header);
 
     if (this.options.length === 0) {
-      const emptyText = scene.add.text(0, 8, I18n.t('levelUp.emptyMessage'), {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
+      const emptyText = new UITextBlock(scene, {
+        x: 0,
+        y: 8,
+        text: I18n.t('levelUp.emptyMessage'),
         fontSize: layout.fontSize,
-      });
-      emptyText.setOrigin(0.5);
+        align: 'center',
+      }).text;
       this.container.add(emptyText);
       return;
     }
@@ -119,6 +126,9 @@ export class LevelUpPanel {
     index: number,
   ): void {
     const layout = LayoutConfig.getLevelUpPanelLayout(this.screenManager);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
     const totalWidth = layout.cardWidth * this.options.length
       + layout.cardGap * Math.max(0, this.options.length - 1);
     const totalHeight = layout.cardHeight * this.options.length
@@ -127,8 +137,8 @@ export class LevelUpPanel {
       ? -totalWidth / 2 + layout.cardWidth / 2 + index * (layout.cardWidth + layout.cardGap)
       : 0;
     const y = layout.layoutMode === 'vertical'
-      ? -totalHeight / 2 + layout.cardHeight / 2 + index * (layout.cardHeight + layout.cardGap) + 58
-      : 42;
+      ? -totalHeight / 2 + layout.cardHeight / 2 + index * (layout.cardHeight + layout.cardGap) + (tiny ? 40 : 46)
+      : compact ? 34 : 42;
     const card = new UICard(scene, {
       x,
       y,
@@ -149,42 +159,61 @@ export class LevelUpPanel {
 
     const badge = UIBadge.create(
       scene,
-      x - layout.cardWidth / 2 + 56,
-      y - layout.cardHeight / 2 + 20,
+      x - layout.cardWidth / 2 + (tiny ? 42 : 52),
+      y - layout.cardHeight / 2 + (tiny ? 16 : 20),
       this.getOptionKind(option),
       this.getOptionKindColor(option),
     );
     this.container.add(badge);
 
-    const label = scene.add.text(x, y - layout.cardHeight / 2 + (layout.layoutMode === 'vertical' ? 32 : 40), this.getOptionLabel(option), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
+    const cardTop = y - layout.cardHeight / 2;
+    const cardBottom = y + layout.cardHeight / 2;
+    const titleY = cardTop + (layout.layoutMode === 'vertical' ? tiny ? 24 : 28 : compact ? 30 : 34);
+    const titleBlockHeight = layout.layoutMode === 'vertical'
+      ? tiny ? 28 : 32
+      : compact ? 34 : 40;
+    const label = new UITextBlock(scene, {
+      x,
+      y: titleY,
+      text: this.getOptionLabel(option),
       fontSize: layout.fontSize,
       fontStyle: 'bold',
       align: 'center',
-      wordWrap: { width: layout.cardWidth - 28 },
-    });
+      width: layout.cardWidth - (tiny ? 24 : 30),
+    }).text;
     label.setOrigin(0.5, 0);
 
-    const visibleRows = option.displayInfo?.rows.slice(0, this.screenManager.isPortrait() ? 3 : 4) ?? [];
-    const iconStartY = y - layout.cardHeight / 2 + (layout.layoutMode === 'vertical' ? 58 : 76);
+    const portrait = this.screenManager.isPortrait();
+    const visibleRows = option.displayInfo?.rows.slice(0, portrait ? 2 : compact ? 3 : 4) ?? [];
+    const footerRows = option.displayInfo?.rows.slice(0, 1) ?? [];
+    const iconStartY = Math.max(
+      titleY + titleBlockHeight,
+      cardTop + (layout.layoutMode === 'vertical' ? tiny ? 44 : 50 : compact ? 58 : 68),
+    );
     const previewY = option.displayInfo
       ? this.addIconSummary(scene, x, iconStartY, layout.cardWidth, visibleRows) + 8
-      : y - layout.cardHeight / 2 + 84;
-    const deltaRowCount = Math.min(visibleRows.length, this.screenManager.isPortrait() ? 1 : 2);
-    const statRowsTop = y + layout.cardHeight / 2 - 20 - Math.max(0, deltaRowCount - 1) * 30;
+      : iconStartY + (layout.layoutMode === 'vertical' ? 38 : 48);
+    const deltaRowCount = Math.min(footerRows.length, 1);
+    const statRowHeight = tiny ? 17 : compact ? 19 : 21;
+    const statRowsTop = cardBottom - statRowHeight / 2 - (tiny ? 7 : 9) - Math.max(0, deltaRowCount - 1) * (statRowHeight + 4);
     const descriptionHeight = statRowsTop - previewY - 6;
-    const description = scene.add.text(x - layout.cardWidth / 2 + 18, previewY, option.preview ?? option.description, {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: layout.descriptionFontSize,
-      align: 'center',
-      lineSpacing: this.screenManager.isPortrait() ? 2 : 4,
-      wordWrap: { width: layout.cardWidth - 36 },
-    });
-    description.setMaxLines(Math.max(1, Math.floor(Math.max(16, descriptionHeight) / (this.screenManager.isPortrait() ? 14 : 17))));
-    this.addDeltaRows(scene, x, statRowsTop, layout.cardWidth, visibleRows);
-    this.container.add([label, description]);
+    label.setMaxLines(2);
+    const descriptionMinHeight = tiny ? 12 : portrait ? 14 : 16;
+    const description = descriptionHeight >= descriptionMinHeight
+      ? new UITextBlock(scene, {
+        x: x - layout.cardWidth / 2 + (tiny ? 14 : 18),
+        y: previewY,
+        text: option.preview ?? option.description,
+        tone: 'muted',
+        fontSize: layout.descriptionFontSize,
+        align: 'left',
+        lineSpacing: tiny ? 0 : portrait ? 1 : 2,
+        width: layout.cardWidth - (tiny ? 28 : 36),
+      }).text
+      : undefined;
+    description?.setMaxLines(Math.max(1, Math.floor(descriptionHeight / (portrait ? 13 : 15))));
+    this.addDeltaRows(scene, x, statRowsTop, layout.cardWidth, footerRows, statRowHeight);
+    this.container.add(description ? [label, description] : [label]);
   }
 
   private addIconSummary(
@@ -192,7 +221,7 @@ export class LevelUpPanel {
     centerX: number,
     startY: number,
     cardWidth: number,
-    rows: Array<{ iconKey?: string; fallback: string; text: string }>,
+    rows: Array<{ iconKey?: string; iconFallbackKeys?: string[]; fallback: string; text: string }>,
   ): number {
     const mainRow = rows[0];
 
@@ -200,16 +229,20 @@ export class LevelUpPanel {
       return startY;
     }
 
-    const mainIconSize = this.screenManager.isPortrait() ? 42 : 54;
-    const auxIconSize = this.screenManager.isPortrait() ? 28 : 34;
+    const portrait = this.screenManager.isPortrait();
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const mainIconSize = portrait ? tiny ? 30 : 34 : compact ? 40 : 48;
+    const auxIconSize = portrait ? 20 : compact ? 26 : 30;
     const mainY = startY + mainIconSize / 2;
 
     const mainLevel = this.getLevelText(mainRow);
     this.addIcon(scene, centerX, mainY, mainIconSize, mainRow, mainLevel.startsWith('Lv') ? mainLevel : undefined);
 
-    const auxRows = rows.slice(1, this.screenManager.isPortrait() ? 3 : 4);
-    const auxY = mainY + mainIconSize / 2 + 34;
-    const auxGap = 12;
+    const auxRows = portrait ? [] : rows.slice(1, 4);
+    const auxY = mainY + mainIconSize / 2 + (compact ? 26 : 34);
+    const auxGap = compact ? 8 : 12;
     const totalAuxWidth = auxRows.length * auxIconSize + Math.max(0, auxRows.length - 1) * auxGap;
     const auxStartX = centerX - totalAuxWidth / 2 + auxIconSize / 2;
 
@@ -220,8 +253,8 @@ export class LevelUpPanel {
     });
 
     return auxRows.length > 0
-      ? auxY + auxIconSize / 2 + 10
-      : mainY + mainIconSize / 2 + 12;
+      ? auxY + auxIconSize / 2 + (compact ? 6 : 8)
+      : mainY + mainIconSize / 2 + (compact ? 6 : 8);
   }
 
   private addIcon(
@@ -229,14 +262,14 @@ export class LevelUpPanel {
     x: number,
     y: number,
     size: number,
-    row: { iconKey?: string; fallback: string; text: string },
+    row: { iconKey?: string; iconFallbackKeys?: string[]; fallback: string; text: string },
     levelText?: string,
   ): void {
     const icon = UIIconFrame.create(scene, {
       x,
       y,
       size,
-      textureKey: AssetFallbacks.hasTexture(scene, row.iconKey) ? row.iconKey : null,
+      textureKey: this.resolveIconKey(scene, row),
       fallback: row.fallback,
       levelText,
       tooltip: {
@@ -259,7 +292,12 @@ export class LevelUpPanel {
   }
 
   private getLevelText(row: { text: string }): string {
-    return /(Lv\.\d+\s*\/\s*\d+)/.exec(row.text)?.[1] ?? row.text;
+    const match = /Lv\.(\d+)\s*\/\s*(\d+)/.exec(row.text);
+    if (!match) {
+      return row.text;
+    }
+
+    return this.formatLevelText(Number(match[1]), Number(match[2]));
   }
 
   private getOptionLabel(option: UpgradeOptionView): string {
@@ -317,43 +355,63 @@ export class LevelUpPanel {
     y: number,
     cardWidth: number,
     rows: Array<{ text: string }>,
+    rowHeight: number,
   ): void {
     const visible = rows.slice(0, this.screenManager.isPortrait() ? 1 : 2);
     const rowWidth = cardWidth - 30;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
 
     visible.forEach((row, index) => {
       const parsed = this.parseDeltaRow(row.text);
       const statRow = UIStatRow.create(
         scene,
         centerX,
-        y + index * 30,
+        y + index * (rowHeight + 4),
         rowWidth,
         parsed.label,
         parsed.value,
+        {
+          height: rowHeight,
+          fontSize: compact ? '10px' : UITheme.smallFontSize,
+          backgroundAlpha: 0.32,
+          borderAlpha: 0.18,
+          labelRatio: 0.38,
+        },
       );
       this.container.add(statRow);
     });
   }
 
+  private resolveIconKey(
+    scene: Phaser.Scene,
+    row: { iconKey?: string; iconFallbackKeys?: string[] },
+  ): string | null {
+    return [
+      row.iconKey,
+      ...(row.iconFallbackKeys ?? []),
+    ].find((key) => AssetFallbacks.hasTexture(scene, key)) ?? null;
+  }
+
   private parseDeltaRow(text: string): { label: string; value: string } {
-    const clean = text.replace(/\s+/g, ' ').trim();
+    const clean = text.replace(/\u2192/g, '->').replace(/\s+/g, ' ').trim();
     if (/no matching weapon owned/i.test(clean)) {
       return { label: I18n.t('ui.weapon'), value: '-' };
     }
 
-    const levelMatch = /(Lv\.\d+\s*\/\s*\d+)/.exec(clean);
+    const levelMatch = /Lv\.(\d+)\s*\/\s*(\d+)/.exec(clean);
     if (levelMatch) {
       return {
         label: this.getDeltaLabel(clean),
-        value: levelMatch[1].replace(/\s+/g, ''),
+        value: this.formatLevelText(Number(levelMatch[1]), Number(levelMatch[2])),
       };
     }
 
-    const arrowMatch = /^(.+?)\s*(?:->|→)\s*(.+)$/.exec(clean);
+    const arrowMatch = /^(.+?)\s*->\s*(.+)$/.exec(clean);
     if (arrowMatch) {
       return {
         label: this.compactDeltaLabel(arrowMatch[1]),
-        value: arrowMatch[2],
+        value: this.compactDeltaValue(arrowMatch[2]),
       };
     }
 
@@ -361,7 +419,7 @@ export class LevelUpPanel {
     if (signMatch) {
       return {
         label: this.compactDeltaLabel(signMatch[1]),
-        value: signMatch[2],
+        value: this.compactDeltaValue(signMatch[2]),
       };
     }
 
@@ -398,6 +456,15 @@ export class LevelUpPanel {
       || '-';
   }
 
+  private formatLevelText(level: number, maxLevel: number): string {
+    const safeLevel = Number.isFinite(level) ? level : 0;
+    const safeMaxLevel = Number.isFinite(maxLevel) ? maxLevel : 0;
+
+    return safeMaxLevel > 0 && safeLevel >= safeMaxLevel
+      ? `Lv.${safeLevel}Max`
+      : `Lv.${safeLevel}`;
+  }
+
   private escapeRegExp(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
@@ -416,61 +483,6 @@ export class LevelUpPanel {
     image.setScale(Math.max(width / frame.width, height / frame.height));
     image.setAlpha(UITheme.levelUpPanelAlpha);
     this.container.add(image);
-  }
-
-  private addInfoRow(
-    scene: Phaser.Scene,
-    x: number,
-    y: number,
-    width: number,
-    row: { iconKey?: string; fallback: string; text: string },
-  ): void {
-    const iconBackground = scene.add.rectangle(x + 10, y + 10, 20, 20, UITheme.iconBgColor, 0.8);
-    iconBackground.setStrokeStyle(1, UITheme.panelBorderColor, 0.45);
-    this.container.add(iconBackground);
-
-    if (AssetFallbacks.hasTexture(scene, row.iconKey)) {
-      const icon = scene.add.image(x + 10, y + 10, row.iconKey);
-      icon.setDisplaySize(16, 16);
-      this.container.add(icon);
-    } else {
-      const fallback = scene.add.text(x + 10, y + 10, row.fallback, {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '10px',
-        fontStyle: 'bold',
-      });
-      fallback.setOrigin(0.5);
-      this.container.add(fallback);
-    }
-
-    const text = scene.add.text(x + 26, y + 1, row.text, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '12px',
-      wordWrap: { width: width - 30 },
-    });
-    text.setText(this.formatIconRowText(row, scene));
-    this.container.add(text);
-  }
-
-  private formatIconRowText(
-    row: { iconKey?: string; fallback: string; text: string },
-    scene: Phaser.Scene,
-  ): string {
-    if (!AssetFallbacks.hasTexture(scene, row.iconKey)) {
-      return row.text;
-    }
-
-    const levelMatch = /(Lv\.\d+\s*\/\s*\d+)/.exec(row.text);
-
-    if (levelMatch) {
-      return levelMatch[1];
-    }
-
-    return row.text
-      .replace(/^[A-Za-z ]+:\s*/, '')
-      .replace(/^[A-Za-z ]+\s+/, '');
   }
 
   private scheduleAutoSelect(

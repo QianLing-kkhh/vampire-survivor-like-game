@@ -12,6 +12,7 @@
     "art001:self-check": "node scripts/art001/art001_self_check.mjs",
     "art001:package": "node scripts/art001/package_art001.mjs",
     "validate": "node scripts/validate-project.mjs",
+    "validate:ui": "node scripts/validate-ui.mjs",
     "validate:docs": "node scripts/check-doc-links.mjs",
     "validate:content": "node scripts/check-content-audit.mjs",
     "validate:assets": "node scripts/check-assets.mjs",

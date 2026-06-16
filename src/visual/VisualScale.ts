@@ -1,6 +1,14 @@
 import { VisualSettings } from './VisualSettings';
 
-export type LandmarkVisualType = 'tree' | 'rock' | 'grave';
+export type LandmarkVisualType =
+  | 'tree'
+  | 'rock'
+  | 'grave'
+  | 'wall'
+  | 'cathedralWall'
+  | 'cathedralPillar'
+  | 'bookshelf'
+  | 'archivePillar';
 
 export const VisualScale = {
   playerDisplaySize: 72,
@@ -94,6 +102,13 @@ export const VisualScale = {
       switch (type) {
         case 'tree':
           return 176;
+        case 'wall':
+        case 'cathedralWall':
+        case 'bookshelf':
+          return 192;
+        case 'cathedralPillar':
+        case 'archivePillar':
+          return 168;
         case 'rock':
         case 'grave':
         default:

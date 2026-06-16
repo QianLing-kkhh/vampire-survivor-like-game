@@ -90,9 +90,10 @@ export class MagicWandWeapon extends Weapon {
       return;
     }
 
+    const playerPosition = context.player.getPositionLike();
     for (const target of targets.slice(0, this.projectileCount)) {
       this.projectiles.push({
-        body: this.createProjectileBody(context.player.x, context.player.y),
+        body: this.createProjectileBody(playerPosition.x, playerPosition.y),
         target,
         ageMs: 0,
       });
@@ -199,13 +200,14 @@ export class MagicWandWeapon extends Weapon {
     player: WeaponUpdateContext['player'],
     enemies: readonly Enemy[],
   ): Enemy[] {
+    const playerPosition = player.getPositionLike();
     return enemies
       .filter((enemy) => !enemy.isDead)
       .map((enemy) => ({
         enemy,
         distanceSq: Phaser.Math.Distance.Squared(
-          player.x,
-          player.y,
+          playerPosition.x,
+          playerPosition.y,
           enemy.body.x,
           enemy.body.y,
         ),
@@ -215,8 +217,9 @@ export class MagicWandWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): MagicProjectileBody {
-    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
-    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const visualTier = this.getVisualTierInput();
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id, visualTier);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id, visualTier);
     const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
     if (textureKey && animationKey) {

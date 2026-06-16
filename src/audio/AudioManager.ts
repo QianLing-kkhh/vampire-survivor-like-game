@@ -79,7 +79,7 @@ export class AudioManager {
     'ui_confirm',
   ];
   private static readonly COOLDOWNS_MS: Partial<Record<AudioEventKey, number>> = {
-    enemy_hit: 80,
+    enemy_hit: 180, // Late-game enemy swarms can trigger hundreds of hits per second.
     enemy_killed: 50,
     ui_hover: 120,
     knife_attack: 80,

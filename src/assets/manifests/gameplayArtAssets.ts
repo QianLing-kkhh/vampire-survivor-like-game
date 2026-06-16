@@ -6,6 +6,101 @@ import {
   PLAYER_CHARACTER_IMAGE_ASSETS,
 } from './playerArtAssets';
 
+const ADDITIONAL_WEAPON_IDS = [
+  'runic_orb',
+  'astral_core',
+  'moon_bow',
+  'eclipse_barrage',
+  'clockwork_saw',
+  'gearstorm',
+  'bone_spear',
+  'ossuary_lance',
+  'spirit_fist',
+  'enlightened_palm',
+  'acid_vial',
+  'plague_crucible',
+  'rapier_flurry',
+  'crimson_flurry',
+  'stone_ring',
+  'tectonic_crown',
+  'thunder_javelin',
+  'tempest_lance',
+  'shield_disc',
+  'aegis_maelstrom',
+] as const;
+
+const LEGACY_TIERED_WEAPON_IDS = [
+  'knife',
+  'garlic',
+  'bible',
+  'magic_wand',
+  'axe',
+  'thousand_edge',
+  'unholy_vespers',
+  'holy_wand',
+  'death_spiral',
+  'soul_eater',
+] as const;
+
+const ADDITIONAL_PASSIVE_IDS = [
+  'focus_lens',
+  'hunter_quiver',
+  'cogwheel',
+  'grave_charm',
+  'prayer_beads',
+  'glass_flask',
+  'duelist_glove',
+  'granite_core',
+  'storm_battery',
+  'iron_sigil',
+] as const;
+
+const LEGACY_TIERED_PASSIVE_IDS = [
+  'spinach',
+  'empty_tome',
+  'bracer',
+  'clover',
+  'pummarola',
+] as const;
+
+const TIERED_WEAPON_ART_ASSETS: ArtManifestAsset[] = [
+  ...LEGACY_TIERED_WEAPON_IDS,
+  ...ADDITIONAL_WEAPON_IDS,
+].flatMap(
+  (weaponId) => [1, 2, 3].flatMap((tier) => [
+    {
+      path: `weapons/${weaponId}_icon_tier${tier}.png`,
+      key: `art_weapons_${weaponId}_icon_tier${tier}`,
+      type: 'image' as const,
+      frameWidth: 64,
+      frameHeight: 64,
+      frames: 1,
+    },
+    {
+      path: `weapons/${weaponId}_projectile_tier${tier}_sheet.png`,
+      key: `art_weapons_${weaponId}_projectile_tier${tier}_sheet`,
+      type: 'spritesheet' as const,
+      frameWidth: 64,
+      frameHeight: 64,
+      frames: 4,
+    },
+  ]),
+);
+
+const TIERED_PASSIVE_ART_ASSETS: ArtManifestAsset[] = [
+  ...LEGACY_TIERED_PASSIVE_IDS,
+  ...ADDITIONAL_PASSIVE_IDS,
+].flatMap(
+  (passiveId) => [1, 2, 3].map((tier) => ({
+    path: `passives/${passiveId}_icon_tier${tier}.png`,
+    key: `art_passives_${passiveId}_icon_tier${tier}`,
+    type: 'image' as const,
+    frameWidth: 64,
+    frameHeight: 64,
+    frames: 1,
+  })),
+);
+
 export const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'effects/boss_dash_impact_sheet.png', key: 'art_effects_boss_dash_impact_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
   { path: 'effects/boss_dash_warning.png', key: 'art_effects_boss_dash_warning', type: 'image', frameWidth: 256, frameHeight: 64, frames: 1 },
@@ -15,8 +110,16 @@ export const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'enemies/bat_fly_sheet.png', key: 'art_enemies_bat_fly_sheet', type: 'spritesheet', frameWidth: 48, frameHeight: 48, frames: 4 },
   { path: 'enemies/boss_lava_beast_idle_sheet.png', key: 'art_enemies_boss_lava_beast_idle_sheet', type: 'spritesheet', frameWidth: 192, frameHeight: 192, frames: 4 },
   { path: 'enemies/golem_boss_placeholder.png', key: 'art_enemies_golem_boss_placeholder', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
+  { path: 'enemies/golem_boss_idle_sheet.png', key: 'art_enemies_golem_boss_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
   { path: 'enemies/golem_walk_sheet.png', key: 'art_enemies_golem_walk_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
   { path: 'enemies/slime_boss_placeholder.png', key: 'art_enemies_slime_boss_placeholder', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
+  { path: 'enemies/slime_boss_idle_sheet.png', key: 'art_enemies_slime_boss_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
+  { path: 'enemies/bat_boss_idle_sheet.png', key: 'art_enemies_bat_boss_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
+  { path: 'enemies/endless_berserker_idle_sheet.png', key: 'art_enemies_endless_berserker_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
+  { path: 'enemies/endless_summoner_idle_sheet.png', key: 'art_enemies_endless_summoner_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
+  { path: 'enemies/endless_freezer_idle_sheet.png', key: 'art_enemies_endless_freezer_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
+  { path: 'enemies/endless_sniper_idle_sheet.png', key: 'art_enemies_endless_sniper_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
+  { path: 'enemies/endless_tanker_idle_sheet.png', key: 'art_enemies_endless_tanker_idle_sheet', type: 'spritesheet', frameWidth: 128, frameHeight: 128, frames: 4 },
   { path: 'enemies/slime_walk_sheet.png', key: 'art_enemies_slime_walk_sheet', type: 'spritesheet', frameWidth: 48, frameHeight: 48, frames: 4 },
   { path: 'passives/bracer_icon.png', key: 'art_passives_bracer_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'passives/clover_icon.png', key: 'art_passives_clover_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
@@ -56,6 +159,8 @@ export const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'weapons/thousand_edge_projectile_sheet.png', key: 'art_weapons_thousand_edge_projectile_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
   { path: 'weapons/unholy_vespers_icon.png', key: 'art_weapons_unholy_vespers_icon', type: 'image', frameWidth: 64, frameHeight: 64, frames: 1 },
   { path: 'weapons/unholy_vespers_orbit_book_sheet.png', key: 'art_weapons_unholy_vespers_orbit_book_sheet', type: 'spritesheet', frameWidth: 64, frameHeight: 64, frames: 4 },
+  ...TIERED_WEAPON_ART_ASSETS,
+  ...TIERED_PASSIVE_ART_ASSETS,
   { path: 'world/grass_tile.png', key: 'art_world_grass_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/graveyard_ground_tile.png', key: 'art_world_graveyard_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/grave_landmark.png', key: 'art_world_grave_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
@@ -63,6 +168,13 @@ export const ART_MANIFEST_ASSETS: ArtManifestAsset[] = [
   { path: 'world/rock_landmark.png', key: 'art_world_rock_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
   { path: 'world/swamp_ground_tile.png', key: 'art_world_swamp_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/ruins_ground_tile.png', key: 'art_world_ruins_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/cathedral_ground_tile.png', key: 'art_world_cathedral_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/library_ground_tile.png', key: 'art_world_library_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/desert_ground_tile.png', key: 'art_world_desert_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/coast_ground_tile.png', key: 'art_world_coast_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/bastion_ground_tile.png', key: 'art_world_bastion_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/fungal_ground_tile.png', key: 'art_world_fungal_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
+  { path: 'world/mirror_ground_tile.png', key: 'art_world_mirror_ground_tile', type: 'image', frameWidth: 128, frameHeight: 128, frames: 1 },
   { path: 'world/tree_landmark.png', key: 'art_world_tree_landmark', type: 'image', frameWidth: 96, frameHeight: 96, frames: 1 },
 ];
 
@@ -70,6 +182,13 @@ export const CRITICAL_ART_ASSET_KEYS = [
   'art_world_graveyard_ground_tile',
   'art_world_swamp_ground_tile',
   'art_world_ruins_ground_tile',
+  'art_world_cathedral_ground_tile',
+  'art_world_library_ground_tile',
+  'art_world_desert_ground_tile',
+  'art_world_coast_ground_tile',
+  'art_world_bastion_ground_tile',
+  'art_world_fungal_ground_tile',
+  'art_world_mirror_ground_tile',
   ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_idle_down`),
   ...PLAYER_ART_SKIN_IDS.map((skinId) => `art_player_${skinId}_walk_sheet`),
 ];

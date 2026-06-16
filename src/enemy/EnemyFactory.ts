@@ -3,10 +3,11 @@ import Phaser from 'phaser';
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
+import type { EnemyStats } from '../core/domain/EnemyTypes';
 import { RunRuleSet } from '../rules/RunRuleSet';
 import { VisualScale } from '../visual/VisualScale';
 
-import { Enemy, EnemyStats } from './Enemy';
+import { Enemy } from './Enemy';
 import { EnemyModifierConfig } from './modifiers/EnemyModifierConfig';
 import { EnemyModifierFactory } from './modifiers/EnemyModifierFactory';
 import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';

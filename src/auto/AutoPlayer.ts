@@ -1,5 +1,6 @@
-import Phaser from 'phaser';
-
+import { Math2D } from '../core/domain/Math2D';
+import { Rect } from '../core/domain/Rect';
+import { Vector2 } from '../core/domain/Vector2';
 import type { PlayerIntent } from '../input/PlayerIntent';
 import { AutoStrategyEngine } from '../strategy/engine/AutoStrategyEngine';
 import type {
@@ -66,21 +67,21 @@ export type {
 
 export class AutoPlayer {
   private stickyTargetId?: string;
-  private stickyWaypoint?: Phaser.Math.Vector2;
+  private stickyWaypoint?: Vector2;
   private stickyWaypointTargetId?: string;
   private suppressedTargetId?: string;
   private suppressedTargetFrames = 0;
-  private lastPosition?: Phaser.Math.Vector2;
-  private stallAnchor?: Phaser.Math.Vector2;
+  private lastPosition?: Vector2;
+  private stallAnchor?: Vector2;
   private stallMs = 0;
-  private stickyBreakoutDirection?: Phaser.Math.Vector2;
+  private stickyBreakoutDirection?: Vector2;
   private stickyBreakoutFrames = 0;
-  private stickyKiteDirection?: Phaser.Math.Vector2;
+  private stickyKiteDirection?: Vector2;
   private stickyKiteFrames = 0;
   private strategicIntent?: StrategicMoveIntent;
   private strategicIntentRemainingMs = 0;
-  private lastMoveDirection?: Phaser.Math.Vector2;
-  private strategicDetourDirection?: Phaser.Math.Vector2;
+  private lastMoveDirection?: Vector2;
+  private strategicDetourDirection?: Vector2;
   private tacticalBacktrackMs = 0;
   private tacticalRoute?: TacticalRoute;
   private tacticalRouteRemainingMs = 0;
@@ -140,10 +141,10 @@ export class AutoPlayer {
     };
   }
 
-  getMoveDirection(context: AutoPlayerContext): Phaser.Math.Vector2 {
+  getMoveDirection(context: AutoPlayerContext): Vector2 {
     this.tickSuppression();
     this.updateEnemyMotionSnapshots(context);
-    this.autoMoveElapsedMs += Phaser.Math.Clamp(context.deltaMs ?? 16, 0, 120);
+    this.autoMoveElapsedMs += Math2D.clamp(context.deltaMs ?? 16, 0, 120);
 
     const player = this.getPlayerVector(context);
     const movement = this.updateMovementMemory(context, player);
@@ -305,7 +306,7 @@ export class AutoPlayer {
     const microMove = decision.microMove;
 
     if (!intent || !microMove) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     if (
@@ -317,12 +318,12 @@ export class AutoPlayer {
       && this.getTotalBossWarningRisk(context, player) <= 0
     ) {
       this.updateTargetStability(intent.target, 'collected');
-      this.lastMoveDirection = new Phaser.Math.Vector2(0, 0);
-      return new Phaser.Math.Vector2(0, 0);
+      this.lastMoveDirection = new Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     if (microMove.direction.lengthSq() === 0) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     this.updateTargetStability(intent.target, microMove.reason);
@@ -341,7 +342,7 @@ export class AutoPlayer {
 
   private evaluateTacticalRoute(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     intent: StrategicMoveIntent,
     cornerTrap: CornerTrapInfo,
@@ -349,9 +350,9 @@ export class AutoPlayer {
     movement: MovementMemoryInfo,
     kite: KiteInfo,
     terrainEscape: TerrainEscapeInfo,
-    warningEscapeDirection: Phaser.Math.Vector2,
-    portalEscapeDirection: Phaser.Math.Vector2,
-    breakoutDirection: Phaser.Math.Vector2,
+    warningEscapeDirection: Vector2,
+    portalEscapeDirection: Vector2,
+    breakoutDirection: Vector2,
   ): TacticalRoute {
     const routeCandidates = this.generateCandidateRoutes(context, player, intent, kite, portalEscapeDirection, breakoutDirection);
     const scoredRoutes = routeCandidates.map((route) => {
@@ -439,7 +440,7 @@ export class AutoPlayer {
       routeScore: selected.routeScore,
       createdAt: this.autoMoveElapsedMs,
       validUntil: this.autoMoveElapsedMs + AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_VALID_MS,
-      commitment: Phaser.Math.Clamp(22 - selected.threatRank * 3 + intent.urgency * 8, 8, 30),
+      commitment: Math2D.clamp(22 - selected.threatRank * 3 + intent.urgency * 8, 8, 30),
     };
   }
 
@@ -485,7 +486,7 @@ export class AutoPlayer {
 
   private shouldForceTacticalRouteRefresh(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     intent: StrategicMoveIntent,
   ): boolean {
     const hpRatio = this.getHpRatio(context);
@@ -505,11 +506,11 @@ export class AutoPlayer {
 
   private generateCandidateRoutes(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     intent: StrategicMoveIntent,
     kite: KiteInfo,
-    portalEscapeDirection: Phaser.Math.Vector2,
-    breakoutDirection: Phaser.Math.Vector2,
+    portalEscapeDirection: Vector2,
+    breakoutDirection: Vector2,
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
     const target = this.getStrategicTargetPoint(context, player, intent);
     const forward = target.clone().subtract(player);
@@ -519,8 +520,8 @@ export class AutoPlayer {
     }
 
     const normalized = forward.clone().normalize();
-    const left = new Phaser.Math.Vector2(-normalized.y, normalized.x);
-    const right = new Phaser.Math.Vector2(normalized.y, -normalized.x);
+    const left = new Vector2(-normalized.y, normalized.x);
+    const right = new Vector2(normalized.y, -normalized.x);
     const distance = Math.min(forward.length(), AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE);
     const midDistance = Math.max(120, distance * 0.52);
     const narrowOffset = Math.max(90, distance * 0.28);
@@ -593,9 +594,9 @@ export class AutoPlayer {
 
   private getStrategicTargetPoint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     intent: StrategicMoveIntent,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     if (intent.targetPosition) {
       return this.clampToWorld(context, intent.targetPosition);
     }
@@ -612,8 +613,8 @@ export class AutoPlayer {
 
   private evaluateRouteThreat(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    player: Vector2,
+    waypoints: readonly Vector2[],
     intent: StrategicMoveIntent,
   ): number {
     const hpRatio = this.getHpRatio(context);
@@ -638,8 +639,8 @@ export class AutoPlayer {
 
   private isRouteHardInvalid(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    player: Vector2,
+    waypoints: readonly Vector2[],
     intent: StrategicMoveIntent,
     rawThreat: number,
   ): boolean {
@@ -668,8 +669,8 @@ export class AutoPlayer {
 
   private evaluateRouteRewardScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    player: Vector2,
+    waypoints: readonly Vector2[],
     intent: StrategicMoveIntent,
     threatRank: number,
   ): number {
@@ -695,8 +696,8 @@ export class AutoPlayer {
 
   private evaluateRouteCombatFit(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    player: Vector2,
+    waypoints: readonly Vector2[],
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     intent: StrategicMoveIntent,
   ): number {
@@ -729,8 +730,8 @@ export class AutoPlayer {
 
   private evaluateXpRouteScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    player: Vector2,
+    waypoints: readonly Vector2[],
     intent: StrategicMoveIntent,
     threatRank: number,
   ): number {
@@ -743,7 +744,7 @@ export class AutoPlayer {
     let score = 0;
 
     for (const pickup of context.pickupPositions) {
-      const pickupPoint = new Phaser.Math.Vector2(pickup.x, pickup.y);
+      const pickupPoint = new Vector2(pickup.x, pickup.y);
       const routeDistance = this.getDistanceToRoute(pickupPoint, waypoints);
 
       if (routeDistance > AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.25) {
@@ -774,8 +775,8 @@ export class AutoPlayer {
 
   private evaluateKillRouteScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    player: Vector2,
+    waypoints: readonly Vector2[],
     intent: StrategicMoveIntent,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     threatRank: number,
@@ -830,8 +831,8 @@ export class AutoPlayer {
 
   private evaluateOverKitePenalty(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    player: Vector2,
+    waypoints: readonly Vector2[],
     intent: StrategicMoveIntent,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): number {
@@ -845,8 +846,8 @@ export class AutoPlayer {
     }
 
     const endpoint = waypoints[waypoints.length - 1] ?? player;
-    const currentDistance = Phaser.Math.Distance.Between(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y);
-    const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y);
+    const currentDistance = Math2D.distanceBetween(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y);
+    const endpointDistance = Math2D.distanceBetween(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y);
     const range = this.getWeaponEffectiveRange(context);
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
 
@@ -864,8 +865,8 @@ export class AutoPlayer {
   }
 
   private areRoutesSimilar(
-    currentWaypoints: readonly Phaser.Math.Vector2[],
-    nextWaypoints: readonly Phaser.Math.Vector2[],
+    currentWaypoints: readonly Vector2[],
+    nextWaypoints: readonly Vector2[],
   ): boolean {
     if (currentWaypoints.length < 2 || nextWaypoints.length < 2) {
       return false;
@@ -874,17 +875,17 @@ export class AutoPlayer {
     const current = currentWaypoints[Math.min(1, currentWaypoints.length - 1)];
     const next = nextWaypoints[Math.min(1, nextWaypoints.length - 1)];
 
-    return Phaser.Math.Distance.Between(current.x, current.y, next.x, next.y) < 130;
+    return Math2D.distanceBetween(current.x, current.y, next.x, next.y) < 130;
   }
 
-  private advanceRouteWaypoint(route: TacticalRoute, player: Phaser.Math.Vector2): void {
-    const index = Phaser.Math.Clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1));
+  private advanceRouteWaypoint(route: TacticalRoute, player: Vector2): void {
+    const index = Math2D.clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1));
     const waypoint = route.waypoints[index];
 
     if (
       waypoint
       && index < route.waypoints.length - 1
-      && Phaser.Math.Distance.Between(player.x, player.y, waypoint.x, waypoint.y) < AUTO_PLAYER_CONSTANTS.ROUTE_WAYPOINT_REACHED_DISTANCE
+      && Math2D.distanceBetween(player.x, player.y, waypoint.x, waypoint.y) < AUTO_PLAYER_CONSTANTS.ROUTE_WAYPOINT_REACHED_DISTANCE
     ) {
       route.currentWaypointIndex = index + 1;
     }
@@ -892,11 +893,11 @@ export class AutoPlayer {
 
   private getRouteDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     route: TacticalRoute,
     intent: StrategicMoveIntent,
-  ): Phaser.Math.Vector2 {
-    const waypoint = route.waypoints[Phaser.Math.Clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1))]
+  ): Vector2 {
+    const waypoint = route.waypoints[Math2D.clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1))]
       ?? this.getStrategicTargetPoint(context, player, intent);
     const direction = waypoint.clone().subtract(player);
 
@@ -904,14 +905,14 @@ export class AutoPlayer {
   }
 
   private getRouteReturnDirection(
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     route: TacticalRoute,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const closest = this.getClosestPointOnRoute(player, route.waypoints);
-    const distance = Phaser.Math.Distance.Between(player.x, player.y, closest.x, closest.y);
+    const distance = Math2D.distanceBetween(player.x, player.y, closest.x, closest.y);
 
     if (distance < AUTO_PLAYER_CONSTANTS.MICRO_ROUTE_DEVIATION_LIMIT) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     return closest.subtract(player).normalize();
@@ -919,10 +920,10 @@ export class AutoPlayer {
 
   private scoreMicroDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
-    routeDirection: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
+    routeDirection: Vector2,
     route: TacticalRoute,
     intent: StrategicMoveIntent,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
@@ -996,15 +997,15 @@ export class AutoPlayer {
 
   private getTacticalCandidates(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     intent: StrategicMoveIntent,
     cornerTrap: CornerTrapInfo,
-    warningEscapeDirection: Phaser.Math.Vector2,
-    portalEscapeDirection: Phaser.Math.Vector2,
-    breakoutDirection: Phaser.Math.Vector2,
-    kiteDirection: Phaser.Math.Vector2,
-    terrainEscapeDirection: Phaser.Math.Vector2,
+    warningEscapeDirection: Vector2,
+    portalEscapeDirection: Vector2,
+    breakoutDirection: Vector2,
+    kiteDirection: Vector2,
+    terrainEscapeDirection: Vector2,
   ): Candidate[] {
     const candidates: Candidate[] = [
       ...this.getBaseDirections(),
@@ -1027,8 +1028,8 @@ export class AutoPlayer {
       const strategic = intent.targetDirection.clone().normalize();
 
       candidates.push({ direction: strategic, reason: 'strategic' });
-      candidates.push({ direction: new Phaser.Math.Vector2(strategic.y, -strategic.x), reason: 'strategicSlide' });
-      candidates.push({ direction: new Phaser.Math.Vector2(-strategic.y, strategic.x), reason: 'strategicSlide' });
+      candidates.push({ direction: new Vector2(strategic.y, -strategic.x), reason: 'strategicSlide' });
+      candidates.push({ direction: new Vector2(-strategic.y, strategic.x), reason: 'strategicSlide' });
 
       if (this.strategicDetourDirection && this.strategicDetourDirection.lengthSq() > 0) {
         candidates.push({ direction: this.strategicDetourDirection, reason: 'strategicDetour' });
@@ -1041,11 +1042,11 @@ export class AutoPlayer {
       candidates.push({ direction: inward, reason: 'cornerEscape' });
 
       if (Math.abs(inward.x) > 0) {
-        candidates.push({ direction: new Phaser.Math.Vector2(inward.x, 0), reason: 'cornerSlide' });
+        candidates.push({ direction: new Vector2(inward.x, 0), reason: 'cornerSlide' });
       }
 
       if (Math.abs(inward.y) > 0) {
-        candidates.push({ direction: new Phaser.Math.Vector2(0, inward.y), reason: 'cornerSlide' });
+        candidates.push({ direction: new Vector2(0, inward.y), reason: 'cornerSlide' });
       }
     }
 
@@ -1087,7 +1088,7 @@ export class AutoPlayer {
       candidates.push({ direction: weaponDirection, reason: 'weaponMicro' });
     }
 
-    const centerDirection = new Phaser.Math.Vector2(
+    const centerDirection = new Vector2(
       context.worldBounds.width / 2 - player.x,
       context.worldBounds.height / 2 - player.y,
     );
@@ -1111,7 +1112,7 @@ export class AutoPlayer {
 
   private getNearestEnemyEscapeCandidates(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
   ): Candidate[] {
     let nearestEnemy: AutoPosition | AutoEnemySnapshot | undefined;
     let nearestDistance = Number.POSITIVE_INFINITY;
@@ -1129,7 +1130,7 @@ export class AutoPlayer {
       return [];
     }
 
-    const away = player.clone().subtract(new Phaser.Math.Vector2(nearestEnemy.x, nearestEnemy.y));
+    const away = player.clone().subtract(new Vector2(nearestEnemy.x, nearestEnemy.y));
 
     if (away.lengthSq() === 0) {
       return [];
@@ -1139,17 +1140,17 @@ export class AutoPlayer {
 
     return [
       { direction: escape, reason: 'contactDodge' },
-      { direction: new Phaser.Math.Vector2(escape.y, -escape.x), reason: 'contactSlide' },
-      { direction: new Phaser.Math.Vector2(-escape.y, escape.x), reason: 'contactSlide' },
+      { direction: new Vector2(escape.y, -escape.x), reason: 'contactSlide' },
+      { direction: new Vector2(-escape.y, escape.x), reason: 'contactSlide' },
     ];
   }
 
   private updateStrategicDetourState(
     context: AutoPlayerContext,
     intent: StrategicMoveIntent,
-    finalDirection: Phaser.Math.Vector2,
+    finalDirection: Vector2,
   ): void {
-    const deltaMs = Phaser.Math.Clamp(context.deltaMs ?? 16, 0, 120);
+    const deltaMs = Math2D.clamp(context.deltaMs ?? 16, 0, 120);
 
     if (intent.targetDirection.lengthSq() === 0 || finalDirection.lengthSq() === 0) {
       this.tacticalBacktrackMs = Math.max(0, this.tacticalBacktrackMs - deltaMs * 2);
@@ -1184,22 +1185,22 @@ export class AutoPlayer {
     }
   }
 
-  private getBaseDirections(): Phaser.Math.Vector2[] {
+  private getBaseDirections(): Vector2[] {
     return [
-      new Phaser.Math.Vector2(1, 0),
-      new Phaser.Math.Vector2(1, 1),
-      new Phaser.Math.Vector2(0, 1),
-      new Phaser.Math.Vector2(-1, 1),
-      new Phaser.Math.Vector2(-1, 0),
-      new Phaser.Math.Vector2(-1, -1),
-      new Phaser.Math.Vector2(0, -1),
-      new Phaser.Math.Vector2(1, -1),
+      new Vector2(1, 0),
+      new Vector2(1, 1),
+      new Vector2(0, 1),
+      new Vector2(-1, 1),
+      new Vector2(-1, 0),
+      new Vector2(-1, -1),
+      new Vector2(0, -1),
+      new Vector2(1, -1),
     ];
   }
 
   private evaluateStrategicIntent(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     cornerTrap: CornerTrapInfo,
     surround: SurroundInfo,
@@ -1207,9 +1208,9 @@ export class AutoPlayer {
     terrainEscape: TerrainEscapeInfo,
     kite: KiteInfo,
     target: AutoTarget | undefined,
-    warningEscapeDirection: Phaser.Math.Vector2,
-    portalEscapeDirection: Phaser.Math.Vector2,
-    breakoutDirection: Phaser.Math.Vector2,
+    warningEscapeDirection: Vector2,
+    portalEscapeDirection: Vector2,
+    breakoutDirection: Vector2,
   ): StrategicMoveIntent {
     const mode = this.decideStrategicMode(
       context,
@@ -1224,7 +1225,7 @@ export class AutoPlayer {
       warningEscapeDirection,
       portalEscapeDirection,
     );
-    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestDirection = new Vector2(0, 0);
     let bestScore = Number.NEGATIVE_INFINITY;
     let bestAnalysis: StrategicDirectionAnalysis | undefined;
 
@@ -1262,7 +1263,7 @@ export class AutoPlayer {
     if (bestDirection.lengthSq() === 0) {
       bestDirection = danger.fleeDirection.lengthSq() > 0
         ? danger.fleeDirection.clone()
-        : new Phaser.Math.Vector2(1, 0);
+        : new Vector2(1, 0);
       bestAnalysis = this.analyzeStrategicDirection(
         context,
         player,
@@ -1351,7 +1352,7 @@ export class AutoPlayer {
 
   private decideStrategicMode(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     cornerTrap: CornerTrapInfo,
     surround: SurroundInfo,
@@ -1359,8 +1360,8 @@ export class AutoPlayer {
     terrainEscape: TerrainEscapeInfo,
     kite: KiteInfo,
     target: AutoTarget | undefined,
-    warningEscapeDirection: Phaser.Math.Vector2,
-    portalEscapeDirection: Phaser.Math.Vector2,
+    warningEscapeDirection: Vector2,
+    portalEscapeDirection: Vector2,
   ): MoveMode {
     const hpRatio = this.getHpRatio(context);
     const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
@@ -1420,7 +1421,7 @@ export class AutoPlayer {
     return 'KITE';
   }
 
-  private isFarmSafeForGrowth(context: AutoPlayerContext, player: Phaser.Math.Vector2): boolean {
+  private isFarmSafeForGrowth(context: AutoPlayerContext, player: Vector2): boolean {
     const hpRatio = this.getHpRatio(context);
 
     if (hpRatio <= 0.45 || this.getTotalBossWarningRisk(context, player) > 0) {
@@ -1438,7 +1439,7 @@ export class AutoPlayer {
 
   private isCombatWindow(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     intent: StrategicMoveIntent,
   ): boolean {
@@ -1447,7 +1448,7 @@ export class AutoPlayer {
 
   private isCombatWindowForMode(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     mode: MoveMode,
   ): boolean {
@@ -1464,22 +1465,22 @@ export class AutoPlayer {
 
   private evaluateFarmGrowthUrgency(context: AutoPlayerContext): number {
     const level = Math.max(1, context.player?.level ?? 1);
-    const minute = Phaser.Math.Clamp(Math.floor(this.autoMoveElapsedMs / 60000), 0, 5);
+    const minute = Math2D.clamp(Math.floor(this.autoMoveElapsedMs / 60000), 0, 5);
     const expectedLevelByMinute = [1, 3, 5, 7, 9, 11];
     const expectedLevel = expectedLevelByMinute[minute] ?? 11;
     const baseUrgency = level < expectedLevel
-      ? Phaser.Math.Clamp((expectedLevel - level) / Math.max(1, expectedLevel), 0, 1)
+      ? Math2D.clamp((expectedLevel - level) / Math.max(1, expectedLevel), 0, 1)
       : 0;
     const priestMultiplier = context.player?.characterId === 'priest' ? 1.5 : 1;
 
-    return Phaser.Math.Clamp(baseUrgency * priestMultiplier, 0, 1.5);
+    return Math2D.clamp(baseUrgency * priestMultiplier, 0, 1.5);
   }
 
   private evaluateCombatOpportunityScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     mode: MoveMode,
   ): number {
@@ -1490,10 +1491,10 @@ export class AutoPlayer {
     const range = this.getWeaponEffectiveRange(context);
     const endpointScore = this.evaluateWeaponEffectivePosition(context, endpoint, danger);
     const currentDistance = danger.enemyCenter.lengthSq() > 0
-      ? Phaser.Math.Distance.Between(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y)
+      ? Math2D.distanceBetween(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y)
       : Number.POSITIVE_INFINITY;
     const endpointDistance = danger.enemyCenter.lengthSq() > 0
-      ? Phaser.Math.Distance.Between(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y)
+      ? Math2D.distanceBetween(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y)
       : Number.POSITIVE_INFINITY;
     const tooFarCorrection = currentDistance > range.max && endpointDistance < currentDistance ? 8 : 0;
     const overFleePenalty = endpointDistance > range.max && endpointDistance > currentDistance
@@ -1509,9 +1510,9 @@ export class AutoPlayer {
 
   private evaluateStrategicXpAccessScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     mode: MoveMode,
   ): number {
     if (mode === 'SURVIVE' || mode === 'REPOSITION' || !this.isFarmSafeForGrowth(context, player)) {
@@ -1523,8 +1524,8 @@ export class AutoPlayer {
     let score = 0;
 
     for (const pickup of context.pickupPositions) {
-      const pickupPoint = new Phaser.Math.Vector2(pickup.x, pickup.y);
-      const distanceToEndpoint = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, pickupPoint.x, pickupPoint.y);
+      const pickupPoint = new Vector2(pickup.x, pickup.y);
+      const distanceToEndpoint = Math2D.distanceBetween(endpoint.x, endpoint.y, pickupPoint.x, pickupPoint.y);
 
       if (distanceToEndpoint > AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.6) {
         continue;
@@ -1554,8 +1555,8 @@ export class AutoPlayer {
 
   private evaluateStrategicKillZoneScore(
     context: AutoPlayerContext,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     mode: MoveMode,
   ): number {
@@ -1585,9 +1586,9 @@ export class AutoPlayer {
   }
 
   private getStrategicLateralCombatScore(
-    origin: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
-    enemyCenter: Phaser.Math.Vector2,
+    origin: Vector2,
+    direction: Vector2,
+    enemyCenter: Vector2,
   ): number {
     const toEnemy = enemyCenter.clone().subtract(origin);
 
@@ -1604,14 +1605,14 @@ export class AutoPlayer {
   }
 
   private getStrategicDirections(
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     kite: KiteInfo,
     terrainEscape: TerrainEscapeInfo,
     target: AutoTarget | undefined,
-    portalEscapeDirection: Phaser.Math.Vector2,
-    breakoutDirection: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2[] {
+    portalEscapeDirection: Vector2,
+    breakoutDirection: Vector2,
+  ): Vector2[] {
     const directions = [
       ...this.getBaseDirections(),
       ...this.getDiagonalMidDirections(),
@@ -1619,8 +1620,8 @@ export class AutoPlayer {
 
     if (danger.fleeDirection.lengthSq() > 0) {
       directions.push(danger.fleeDirection);
-      directions.push(new Phaser.Math.Vector2(danger.fleeDirection.y, -danger.fleeDirection.x));
-      directions.push(new Phaser.Math.Vector2(-danger.fleeDirection.y, danger.fleeDirection.x));
+      directions.push(new Vector2(danger.fleeDirection.y, -danger.fleeDirection.x));
+      directions.push(new Vector2(-danger.fleeDirection.y, danger.fleeDirection.x));
     }
 
     if (kite.direction.lengthSq() > 0) {
@@ -1646,23 +1647,23 @@ export class AutoPlayer {
     return directions;
   }
 
-  private getDiagonalMidDirections(): Phaser.Math.Vector2[] {
+  private getDiagonalMidDirections(): Vector2[] {
     return [
-      new Phaser.Math.Vector2(2, 1),
-      new Phaser.Math.Vector2(1, 2),
-      new Phaser.Math.Vector2(-1, 2),
-      new Phaser.Math.Vector2(-2, 1),
-      new Phaser.Math.Vector2(-2, -1),
-      new Phaser.Math.Vector2(-1, -2),
-      new Phaser.Math.Vector2(1, -2),
-      new Phaser.Math.Vector2(2, -1),
+      new Vector2(2, 1),
+      new Vector2(1, 2),
+      new Vector2(-1, 2),
+      new Vector2(-2, 1),
+      new Vector2(-2, -1),
+      new Vector2(-1, -2),
+      new Vector2(1, -2),
+      new Vector2(2, -1),
     ];
   }
 
   private scoreStrategicDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    direction: Vector2,
     mode: MoveMode,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     cornerTrap: CornerTrapInfo,
@@ -1671,9 +1672,9 @@ export class AutoPlayer {
     terrainEscape: TerrainEscapeInfo,
     kite: KiteInfo,
     target: AutoTarget | undefined,
-    warningEscapeDirection: Phaser.Math.Vector2,
-    portalEscapeDirection: Phaser.Math.Vector2,
-    breakoutDirection: Phaser.Math.Vector2,
+    warningEscapeDirection: Vector2,
+    portalEscapeDirection: Vector2,
+    breakoutDirection: Vector2,
   ): number {
     return this.analyzeStrategicDirection(
       context,
@@ -1695,8 +1696,8 @@ export class AutoPlayer {
 
   private analyzeStrategicDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    direction: Vector2,
     mode: MoveMode,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     cornerTrap: CornerTrapInfo,
@@ -1705,9 +1706,9 @@ export class AutoPlayer {
     terrainEscape: TerrainEscapeInfo,
     kite: KiteInfo,
     target: AutoTarget | undefined,
-    warningEscapeDirection: Phaser.Math.Vector2,
-    portalEscapeDirection: Phaser.Math.Vector2,
-    breakoutDirection: Phaser.Math.Vector2,
+    warningEscapeDirection: Vector2,
+    portalEscapeDirection: Vector2,
+    breakoutDirection: Vector2,
   ): StrategicDirectionAnalysis {
     const hpRatio = this.getHpRatio(context);
     const endpoint = this.clampToWorld(
@@ -1864,9 +1865,9 @@ export class AutoPlayer {
 
   private evaluateStrategicLookahead(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    targetZoneCenter: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    targetZoneCenter: Vector2,
+    direction: Vector2,
     mode: MoveMode,
     target: AutoTarget | undefined,
     currentPressure: number,
@@ -1983,10 +1984,10 @@ export class AutoPlayer {
 
   private predictPlayerPosition(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    direction: Vector2,
     seconds: number,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
     const distance = Math.min(AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE * 1.45, moveSpeed * seconds * 0.78);
 
@@ -1995,15 +1996,15 @@ export class AutoPlayer {
 
   private predictEnemyPositionTowardPlayerPath(
     enemy: AutoPosition | AutoEnemySnapshot,
-    predictedPlayerPos: Phaser.Math.Vector2,
+    predictedPlayerPos: Vector2,
     seconds: number,
-  ): Phaser.Math.Vector2 {
-    const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
+  ): Vector2 {
+    const enemyPosition = new Vector2(enemy.x, enemy.y);
     const towardPlayer = predictedPlayerPos.clone().subtract(enemyPosition);
     const speed = this.getEnemyStrategicSpeed(enemy);
     const chaseVelocity = towardPlayer.lengthSq() > 0
       ? towardPlayer.normalize().scale(speed)
-      : new Phaser.Math.Vector2(0, 0);
+      : new Vector2(0, 0);
     const currentVelocity = this.getEnemyStrategicVelocity(enemy);
     const predictedVelocity = currentVelocity.scale(0.4).add(chaseVelocity.scale(0.6));
 
@@ -2011,22 +2012,22 @@ export class AutoPlayer {
   }
 
   private evaluateFuturePlayerDensityRisk(
-    playerPos: Phaser.Math.Vector2,
-    futureEnemies: readonly Phaser.Math.Vector2[],
+    playerPos: Vector2,
+    futureEnemies: readonly Vector2[],
   ): number {
     return this.evaluateFutureDensityAt(playerPos, futureEnemies, AUTO_PLAYER_CONSTANTS.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS);
   }
 
   private evaluateFutureTargetZoneDensityRisk(
-    targetZoneCenter: Phaser.Math.Vector2,
-    futureEnemies: readonly Phaser.Math.Vector2[],
+    targetZoneCenter: Vector2,
+    futureEnemies: readonly Vector2[],
   ): number {
     return this.evaluateFutureDensityAt(targetZoneCenter, futureEnemies, AUTO_PLAYER_CONSTANTS.STRATEGIC_LOOKAHEAD_SAMPLE_RADIUS * 1.08);
   }
 
   private evaluateFuturePathInterceptionRisk(
-    routeOrLineSamples: readonly Phaser.Math.Vector2[],
-    futureEnemiesByTime: readonly (readonly Phaser.Math.Vector2[])[],
+    routeOrLineSamples: readonly Vector2[],
+    futureEnemiesByTime: readonly (readonly Vector2[])[],
   ): number {
     let risk = 0;
 
@@ -2040,9 +2041,9 @@ export class AutoPlayer {
   }
 
   private evaluateLureQuality(
-    candidateDirection: Phaser.Math.Vector2,
-    predictedPlayerPos: Phaser.Math.Vector2,
-    futureEnemies: readonly Phaser.Math.Vector2[],
+    candidateDirection: Vector2,
+    predictedPlayerPos: Vector2,
+    futureEnemies: readonly Vector2[],
   ): number {
     if (candidateDirection.lengthSq() === 0 || futureEnemies.length === 0) {
       return 0;
@@ -2076,13 +2077,13 @@ export class AutoPlayer {
 
   private evaluateEscapeCorridorScore(
     context: AutoPlayerContext,
-    candidateDirection: Phaser.Math.Vector2,
-    pathSamples: readonly Phaser.Math.Vector2[],
-    futureEnemiesByTime: readonly (readonly Phaser.Math.Vector2[])[],
+    candidateDirection: Vector2,
+    pathSamples: readonly Vector2[],
+    futureEnemiesByTime: readonly (readonly Vector2[])[],
   ): number {
     let score = 18;
-    const left = new Phaser.Math.Vector2(-candidateDirection.y, candidateDirection.x);
-    const right = new Phaser.Math.Vector2(candidateDirection.y, -candidateDirection.x);
+    const left = new Vector2(-candidateDirection.y, candidateDirection.x);
+    const right = new Vector2(candidateDirection.y, -candidateDirection.x);
 
     for (const sample of pathSamples) {
       score -= this.getBorderPenalty(context, sample, undefined) * 0.08;
@@ -2102,8 +2103,8 @@ export class AutoPlayer {
 
   private evaluateLoopSustainability(
     context: AutoPlayerContext,
-    targetZoneCenter: Phaser.Math.Vector2,
-    futureEnemiesByTime: readonly (readonly Phaser.Math.Vector2[])[],
+    targetZoneCenter: Vector2,
+    futureEnemiesByTime: readonly (readonly Vector2[])[],
   ): number {
     const ringDirections = this.getBaseDirections();
     let openDirections = 0;
@@ -2135,7 +2136,7 @@ export class AutoPlayer {
 
   private evaluateFutureBoundaryRisk(
     context: AutoPlayerContext,
-    predictedPlayerPositions: readonly Phaser.Math.Vector2[],
+    predictedPlayerPositions: readonly Vector2[],
   ): number {
     let risk = 0;
 
@@ -2156,8 +2157,8 @@ export class AutoPlayer {
   }
 
   private evaluateLinearEscapePenalty(
-    candidateDirection: Phaser.Math.Vector2,
-    currentMoveDirection: Phaser.Math.Vector2,
+    candidateDirection: Vector2,
+    currentMoveDirection: Vector2,
     pressureLevel: number,
     futureBoundaryRisk: number,
     loopSustainability: number,
@@ -2176,9 +2177,9 @@ export class AutoPlayer {
 
   private evaluateSecondStepLookahead(
     context: AutoPlayerContext,
-    firstZone: Phaser.Math.Vector2,
-    firstDirection: Phaser.Math.Vector2,
-    futureEnemiesAtArrival: readonly Phaser.Math.Vector2[],
+    firstZone: Vector2,
+    firstDirection: Vector2,
+    futureEnemiesAtArrival: readonly Vector2[],
     mode: MoveMode,
   ): { continuationScore: number; deadEndAfterArrivalRisk: number } {
     let safeExitCount = 0;
@@ -2227,8 +2228,8 @@ export class AutoPlayer {
 
   private chooseStrategicPathStyle(
     context: AutoPlayerContext,
-    direction: Phaser.Math.Vector2,
-    targetZoneCenter: Phaser.Math.Vector2,
+    direction: Vector2,
+    targetZoneCenter: Vector2,
     futurePathInterceptionRisk: number,
     loopSustainability: number,
     futureBoundaryRisk: number,
@@ -2241,8 +2242,8 @@ export class AutoPlayer {
       || mode === 'SURVIVE'
       || mode === 'REPOSITION'
       || mode === 'BOSS_POSITIONING';
-    const left = new Phaser.Math.Vector2(-direction.y, direction.x);
-    const right = new Phaser.Math.Vector2(direction.y, -direction.x);
+    const left = new Vector2(-direction.y, direction.x);
+    const right = new Vector2(direction.y, -direction.x);
     const leftScore = this.scoreStrategicSideStyle(context, targetZoneCenter, left);
     const rightScore = this.scoreStrategicSideStyle(context, targetZoneCenter, right);
     const clockwise = rightScore >= leftScore;
@@ -2272,8 +2273,8 @@ export class AutoPlayer {
 
   private scoreStrategicSideStyle(
     context: AutoPlayerContext,
-    targetZoneCenter: Phaser.Math.Vector2,
-    sideDirection: Phaser.Math.Vector2,
+    targetZoneCenter: Vector2,
+    sideDirection: Vector2,
   ): number {
     const sidePoint = this.clampToWorld(
       context,
@@ -2334,10 +2335,10 @@ export class AutoPlayer {
     const velocity = this.getEnemyStrategicVelocity(enemy);
     const velocitySpeed = velocity.length();
 
-    return velocitySpeed > 0 ? Phaser.Math.Clamp(velocitySpeed, 45, 180) : 85;
+    return velocitySpeed > 0 ? Math2D.clamp(velocitySpeed, 45, 180) : 85;
   }
 
-  private getEnemyStrategicVelocity(enemy: AutoPosition | AutoEnemySnapshot): Phaser.Math.Vector2 {
+  private getEnemyStrategicVelocity(enemy: AutoPosition | AutoEnemySnapshot): Vector2 {
     const explicitVx = 'vx' in enemy ? enemy.vx : undefined;
     const explicitVy = 'vy' in enemy ? enemy.vy : undefined;
 
@@ -2346,26 +2347,26 @@ export class AutoPlayer {
       && explicitVy !== undefined
       && (explicitVx !== 0 || explicitVy !== 0)
     ) {
-      return new Phaser.Math.Vector2(explicitVx, explicitVy);
+      return new Vector2(explicitVx, explicitVy);
     }
 
     const id = 'id' in enemy ? enemy.id : undefined;
     const snapshot = id ? this.enemyMotionSnapshots.get(id) : undefined;
 
     return snapshot
-      ? new Phaser.Math.Vector2(snapshot.vx, snapshot.vy)
-      : new Phaser.Math.Vector2(0, 0);
+      ? new Vector2(snapshot.vx, snapshot.vy)
+      : new Vector2(0, 0);
   }
 
   private evaluateFutureDensityAt(
-    point: Phaser.Math.Vector2,
-    futureEnemies: readonly Phaser.Math.Vector2[],
+    point: Vector2,
+    futureEnemies: readonly Vector2[],
     radius: number,
   ): number {
     let density = 0;
 
     for (const enemy of futureEnemies) {
-      const distance = Phaser.Math.Distance.Between(point.x, point.y, enemy.x, enemy.y);
+      const distance = Math2D.distanceBetween(point.x, point.y, enemy.x, enemy.y);
 
       if (distance > radius) {
         continue;
@@ -2379,11 +2380,11 @@ export class AutoPlayer {
   }
 
   private getLineSamplePoints(
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
     count: number,
-  ): Phaser.Math.Vector2[] {
-    const samples: Phaser.Math.Vector2[] = [];
+  ): Vector2[] {
+    const samples: Vector2[] = [];
     const steps = Math.max(2, count);
 
     for (let index = 1; index <= steps; index += 1) {
@@ -2393,16 +2394,16 @@ export class AutoPlayer {
     return samples;
   }
 
-  private getNearestCornerDistance(context: AutoPlayerContext, point: Phaser.Math.Vector2): number {
+  private getNearestCornerDistance(context: AutoPlayerContext, point: Vector2): number {
     return Math.min(
-      Phaser.Math.Distance.Between(point.x, point.y, 0, 0),
-      Phaser.Math.Distance.Between(point.x, point.y, context.worldBounds.width, 0),
-      Phaser.Math.Distance.Between(point.x, point.y, 0, context.worldBounds.height),
-      Phaser.Math.Distance.Between(point.x, point.y, context.worldBounds.width, context.worldBounds.height),
+      Math2D.distanceBetween(point.x, point.y, 0, 0),
+      Math2D.distanceBetween(point.x, point.y, context.worldBounds.width, 0),
+      Math2D.distanceBetween(point.x, point.y, 0, context.worldBounds.height),
+      Math2D.distanceBetween(point.x, point.y, context.worldBounds.width, context.worldBounds.height),
     );
   }
 
-  private getStrategicDirectionsFrom(seedDirection: Phaser.Math.Vector2): Phaser.Math.Vector2[] {
+  private getStrategicDirectionsFrom(seedDirection: Vector2): Vector2[] {
     const directions = [
       ...this.getBaseDirections(),
       ...this.getDiagonalMidDirections(),
@@ -2412,8 +2413,8 @@ export class AutoPlayer {
       const seed = seedDirection.clone().normalize();
 
       directions.push(seed);
-      directions.push(new Phaser.Math.Vector2(-seed.y, seed.x));
-      directions.push(new Phaser.Math.Vector2(seed.y, -seed.x));
+      directions.push(new Vector2(-seed.y, seed.x));
+      directions.push(new Vector2(seed.y, -seed.x));
     }
 
     return directions;
@@ -2422,7 +2423,7 @@ export class AutoPlayer {
 
   private needsForcedStrategicRefresh(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     intent: StrategicMoveIntent,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     movement: MovementMemoryInfo,
@@ -2437,7 +2438,7 @@ export class AutoPlayer {
 
   private getStrategicUrgency(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     mode: MoveMode,
   ): number {
@@ -2445,7 +2446,7 @@ export class AutoPlayer {
     const warningRisk = this.getTotalBossWarningRisk(context, player);
 
     if (mode === 'SURVIVE') {
-      return Phaser.Math.Clamp(0.75 + warningRisk * 0.1 + (0.35 - hpRatio), 0.75, 1);
+      return Math2D.clamp(0.75 + warningRisk * 0.1 + (0.35 - hpRatio), 0.75, 1);
     }
 
     if (mode === 'REPOSITION') {
@@ -2477,7 +2478,7 @@ export class AutoPlayer {
 
   private isStrategicTargetAllowed(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     target: AutoTarget | undefined,
     mode: MoveMode,
   ): target is AutoTarget {
@@ -2497,7 +2498,7 @@ export class AutoPlayer {
   }
 
   private isTacticalTargetAllowed(
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     target: AutoTarget,
     intent: StrategicMoveIntent,
   ): boolean {
@@ -2523,8 +2524,8 @@ export class AutoPlayer {
 
   private getEnemyDensityInDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    direction: Vector2,
     radius: number,
   ): number {
     if (direction.lengthSq() === 0) {
@@ -2535,7 +2536,7 @@ export class AutoPlayer {
     let density = 0;
 
     for (const enemy of context.enemyPositions) {
-      const offset = new Phaser.Math.Vector2(enemy.x - player.x, enemy.y - player.y);
+      const offset = new Vector2(enemy.x - player.x, enemy.y - player.y);
       const distance = offset.length();
 
       if (distance <= 0 || distance > radius) {
@@ -2557,8 +2558,8 @@ export class AutoPlayer {
 
   private getFinalBossDashPositioningScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
     mode: MoveMode,
     strategic: boolean,
   ): number {
@@ -2571,9 +2572,9 @@ export class AutoPlayer {
 
   private getFinalBossPreferredPositioningScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction?: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction?: Vector2,
   ): number {
     const boss = this.getFinalBossAnchor(context);
 
@@ -2583,7 +2584,7 @@ export class AutoPlayer {
 
     const currentDistance = this.getFinalBossEffectiveDistance(context, player);
     const endpointDistance = this.getFinalBossEffectiveDistance(context, endpoint);
-    const radial = new Phaser.Math.Vector2(endpoint.x - boss.x, endpoint.y - boss.y);
+    const radial = new Vector2(endpoint.x - boss.x, endpoint.y - boss.y);
     let score = 0;
 
     if (endpointDistance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE) {
@@ -2671,7 +2672,7 @@ export class AutoPlayer {
       : { x: warning.start.x, y: warning.start.y };
   }
 
-  private getFinalBossEffectiveDistance(context: AutoPlayerContext, point: Phaser.Math.Vector2): number {
+  private getFinalBossEffectiveDistance(context: AutoPlayerContext, point: Vector2): number {
     const boss = this.getFinalBossAnchor(context);
 
     if (!boss) {
@@ -2691,8 +2692,8 @@ export class AutoPlayer {
 
   private getFinalBossDistanceConstraint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
   ): FinalBossDistanceConstraintResult {
     if (!this.isFinalBossCloseCombatActive(context)) {
       return {
@@ -2779,8 +2780,8 @@ export class AutoPlayer {
 
   private isFinalBossImmediateWarningEscape(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
   ): boolean {
     const currentRisk = this.getTotalBossWarningRisk(context, player);
     const endpointRisk = this.getTotalBossWarningRisk(context, endpoint);
@@ -2790,7 +2791,7 @@ export class AutoPlayer {
 
   private getFinalBossWarningCandidates(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
   ): Candidate[] {
     if (!this.isFinalBossCloseCombatActive(context)) {
       return [];
@@ -2803,33 +2804,33 @@ export class AutoPlayer {
     }
 
     const candidates: Candidate[] = [];
-    const radial = new Phaser.Math.Vector2(player.x - boss.x, player.y - boss.y);
+    const radial = new Vector2(player.x - boss.x, player.y - boss.y);
 
     if (radial.lengthSq() === 0) {
       radial.set(1, 0);
     }
 
     const normalizedRadial = radial.clone().normalize();
-    const orbitClockwise = new Phaser.Math.Vector2(normalizedRadial.y, -normalizedRadial.x);
-    const orbitCounterClockwise = new Phaser.Math.Vector2(-normalizedRadial.y, normalizedRadial.x);
+    const orbitClockwise = new Vector2(normalizedRadial.y, -normalizedRadial.x);
+    const orbitCounterClockwise = new Vector2(-normalizedRadial.y, normalizedRadial.x);
     const distance = this.getFinalBossEffectiveDistance(context, player);
     let closeCutInAdded = false;
 
     for (const warning of context.bossWarnings ?? []) {
       if (this.isFinalBossDashWarning(context, warning) && warning.shape === 'line') {
-        const line = new Phaser.Math.Vector2(warning.end.x - warning.start.x, warning.end.y - warning.start.y);
+        const line = new Vector2(warning.end.x - warning.start.x, warning.end.y - warning.start.y);
 
         if (line.lengthSq() > 0) {
           const lineDirection = line.normalize();
-          candidates.push({ direction: new Phaser.Math.Vector2(-lineDirection.y, lineDirection.x), reason: 'finalBossDashSideStep' });
-          candidates.push({ direction: new Phaser.Math.Vector2(lineDirection.y, -lineDirection.x), reason: 'finalBossDashSideStep' });
+          candidates.push({ direction: new Vector2(-lineDirection.y, lineDirection.x), reason: 'finalBossDashSideStep' });
+          candidates.push({ direction: new Vector2(lineDirection.y, -lineDirection.x), reason: 'finalBossDashSideStep' });
         }
 
         candidates.push({ direction: orbitClockwise, reason: 'finalBossOrbitClockwise' });
         candidates.push({ direction: orbitCounterClockwise, reason: 'finalBossOrbitCounterClockwise' });
 
         if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
-          const cutIn = new Phaser.Math.Vector2(boss.x - player.x, boss.y - player.y);
+          const cutIn = new Vector2(boss.x - player.x, boss.y - player.y);
 
           if (cutIn.lengthSq() > 0) {
             const normalizedCutIn = cutIn.normalize();
@@ -2847,7 +2848,7 @@ export class AutoPlayer {
     }
 
     if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT && !closeCutInAdded) {
-      const cutIn = new Phaser.Math.Vector2(boss.x - player.x, boss.y - player.y);
+      const cutIn = new Vector2(boss.x - player.x, boss.y - player.y);
 
       if (cutIn.lengthSq() > 0) {
         const normalizedCutIn = cutIn.normalize();
@@ -2861,18 +2862,18 @@ export class AutoPlayer {
   }
 
   private getFinalBossRingGapCandidates(
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     warning: AutoBossWarningSnapshot & { shape: 'circle' },
   ): Candidate[] {
     const bulletCount = this.getFinalBossRingBulletCount(warning);
-    const center = new Phaser.Math.Vector2(warning.x, warning.y);
+    const center = new Vector2(warning.x, warning.y);
     const toPlayer = player.clone().subtract(center);
 
     if (toPlayer.lengthSq() === 0) {
       toPlayer.set(1, 0);
     }
 
-    const currentRadius = Phaser.Math.Clamp(
+    const currentRadius = Math2D.clamp(
       toPlayer.length(),
       AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE + 22,
       AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE,
@@ -2888,7 +2889,7 @@ export class AutoPlayer {
 
     return gapAngles
       .map((gapAngle) => {
-        const target = new Phaser.Math.Vector2(
+        const target = new Vector2(
           center.x + Math.cos(gapAngle) * currentRadius,
           center.y + Math.sin(gapAngle) * currentRadius,
         );
@@ -2913,10 +2914,10 @@ export class AutoPlayer {
     }
 
     const warningPoint = warning.shape === 'circle'
-      ? new Phaser.Math.Vector2(warning.x, warning.y)
-      : new Phaser.Math.Vector2(warning.start.x, warning.start.y);
+      ? new Vector2(warning.x, warning.y)
+      : new Vector2(warning.start.x, warning.start.y);
 
-    return Phaser.Math.Distance.Between(warningPoint.x, warningPoint.y, boss.x, boss.y) <= 180;
+    return Math2D.distanceBetween(warningPoint.x, warningPoint.y, boss.x, boss.y) <= 180;
   }
 
   private isFinalBossDashWarning(context: AutoPlayerContext, warning: AutoBossWarningSnapshot): boolean {
@@ -2939,9 +2940,9 @@ export class AutoPlayer {
 
   private getFinalBossWarningCombatScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
   ): number {
     if (!this.hasFinalBossCombatWarning(context)) {
       return 0;
@@ -2956,7 +2957,7 @@ export class AutoPlayer {
         score -= risk * 96;
 
         if (warning.shape === 'line' && direction.lengthSq() > 0) {
-          const lineDirection = new Phaser.Math.Vector2(
+          const lineDirection = new Vector2(
             warning.end.x - warning.start.x,
             warning.end.y - warning.start.y,
           );
@@ -2983,15 +2984,15 @@ export class AutoPlayer {
 
   private getFinalBossDashRisk(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     warning: AutoBossWarningSnapshot,
   ): number {
     if (warning.shape !== 'line') {
       return 0;
     }
 
-    const start = new Phaser.Math.Vector2(warning.start.x, warning.start.y);
-    const end = new Phaser.Math.Vector2(warning.end.x, warning.end.y);
+    const start = new Vector2(warning.start.x, warning.start.y);
+    const end = new Vector2(warning.end.x, warning.end.y);
     const lineDistance = this.getDistanceSegmentToPoint(start, end, point);
     const halfWidth = Math.max(1, warning.width / 2);
     const dangerWidth = halfWidth + 34;
@@ -3014,14 +3015,14 @@ export class AutoPlayer {
 
   private getFinalBossRingBulletLaneRisk(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     warning: AutoBossWarningSnapshot,
   ): number {
     if (warning.shape !== 'circle') {
       return 0;
     }
 
-    const center = new Phaser.Math.Vector2(warning.x, warning.y);
+    const center = new Vector2(warning.x, warning.y);
     const offset = point.clone().subtract(center);
 
     if (offset.lengthSq() === 0) {
@@ -3046,14 +3047,14 @@ export class AutoPlayer {
 
   private getFinalBossRingBulletGapScore(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     warning: AutoBossWarningSnapshot,
   ): number {
     if (warning.shape !== 'circle') {
       return 0;
     }
 
-    const center = new Phaser.Math.Vector2(warning.x, warning.y);
+    const center = new Vector2(warning.x, warning.y);
     const offset = point.clone().subtract(center);
 
     if (offset.lengthSq() === 0) {
@@ -3064,7 +3065,7 @@ export class AutoPlayer {
     const step = Math.PI * 2 / bulletCount;
     const laneDistance = this.getFinalBossRingLaneAngularDistance(warning, Math.atan2(offset.y, offset.x));
     const gapCenterDistance = Math.abs((step / 2) - laneDistance);
-    const gapScore = Phaser.Math.Clamp(1 - gapCenterDistance / (step / 2), 0, 1);
+    const gapScore = Math2D.clamp(1 - gapCenterDistance / (step / 2), 0, 1);
     const distanceToBoss = this.getFinalBossEffectiveDistance(context, point);
     const distancePenalty = Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) / 180;
 
@@ -3095,9 +3096,9 @@ export class AutoPlayer {
 
   private evaluateTacticalDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     intent: StrategicMoveIntent,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     target: AutoTarget | undefined,
@@ -3165,13 +3166,13 @@ export class AutoPlayer {
     }
 
     if (intent.targetPosition) {
-      const currentIntentDistance = Phaser.Math.Distance.Between(
+      const currentIntentDistance = Math2D.distanceBetween(
         player.x,
         player.y,
         intent.targetPosition.x,
         intent.targetPosition.y,
       );
-      const endpointIntentDistance = Phaser.Math.Distance.Between(
+      const endpointIntentDistance = Math2D.distanceBetween(
         endpoint.x,
         endpoint.y,
         intent.targetPosition.x,
@@ -3207,13 +3208,13 @@ export class AutoPlayer {
     }
 
     if (target && this.isTacticalTargetAllowed(player, target, intent)) {
-      const targetDistance = Phaser.Math.Distance.Between(
+      const targetDistance = Math2D.distanceBetween(
         endpoint.x,
         endpoint.y,
         target.approachPosition.x,
         target.approachPosition.y,
       );
-      const progress = Phaser.Math.Distance.Between(
+      const progress = Math2D.distanceBetween(
         player.x,
         player.y,
         target.approachPosition.x,
@@ -3262,9 +3263,9 @@ export class AutoPlayer {
 
   private getStrategicBacktrackPenalty(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     intent: StrategicMoveIntent,
     localDanger: number,
     hpRatio: number,
@@ -3283,12 +3284,12 @@ export class AutoPlayer {
     const currentWarningRisk = this.getTotalBossWarningRisk(context, player);
     const endpointWarningRisk = this.getTotalBossWarningRisk(context, endpoint);
     const warningEscape = currentWarningRisk > 0 && endpointWarningRisk < currentWarningRisk;
-    const graceRatio = Phaser.Math.Clamp(
+    const graceRatio = Math2D.clamp(
       this.tacticalBacktrackMs / AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_GRACE_MS,
       0,
       1,
     );
-    const overrunRatio = Phaser.Math.Clamp(
+    const overrunRatio = Math2D.clamp(
       (this.tacticalBacktrackMs - AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_GRACE_MS)
         / Math.max(1, AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_LIMIT_MS - AUTO_PLAYER_CONSTANTS.TACTICAL_BACKTRACK_GRACE_MS),
       0,
@@ -3322,7 +3323,7 @@ export class AutoPlayer {
 
   private selectTarget(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     targets: readonly AutoTarget[],
     nearestEnemyDistance: number,
   ): AutoTarget | undefined {
@@ -3374,15 +3375,15 @@ export class AutoPlayer {
 
   private getTargets(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     nearestEnemyDistance: number,
   ): AutoTarget[] {
     const targets: AutoTarget[] = [];
     const pickupRange = this.getPickupRange(context);
 
     for (const pickup of context.pickupPositions) {
-      const position = new Phaser.Math.Vector2(pickup.x, pickup.y);
-      const rawDistance = Phaser.Math.Distance.Between(player.x, player.y, position.x, position.y);
+      const position = new Vector2(pickup.x, pickup.y);
+      const rawDistance = Math2D.distanceBetween(player.x, player.y, position.x, position.y);
       const effectiveDistance = 'effectiveDistance' in pickup && pickup.effectiveDistance !== undefined
         ? pickup.effectiveDistance
         : Math.max(0, rawDistance - pickupRange);
@@ -3417,8 +3418,8 @@ export class AutoPlayer {
     }
 
     for (const treasure of context.treasurePositions ?? []) {
-      const position = new Phaser.Math.Vector2(treasure.x, treasure.y);
-      const rawDistance = Phaser.Math.Distance.Between(player.x, player.y, position.x, position.y);
+      const position = new Vector2(treasure.x, treasure.y);
+      const rawDistance = Math2D.distanceBetween(player.x, player.y, position.x, position.y);
       const effectiveDistance = 'effectiveDistance' in treasure && treasure.effectiveDistance !== undefined
         ? treasure.effectiveDistance
         : Math.max(0, rawDistance - pickupRange);
@@ -3457,17 +3458,17 @@ export class AutoPlayer {
 
   private getApproachPosition(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    target: Phaser.Math.Vector2,
+    player: Vector2,
+    target: Vector2,
     pickupRange: number,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const safeTarget = this.getBorderSafePoint(context, target, pickupRange);
 
     if (!safeTarget) {
       return target.clone();
     }
 
-    const rawDistance = Phaser.Math.Distance.Between(player.x, player.y, target.x, target.y);
+    const rawDistance = Math2D.distanceBetween(player.x, player.y, target.x, target.y);
 
     if (Math.max(0, rawDistance - pickupRange) <= 8) {
       return player.clone();
@@ -3478,9 +3479,9 @@ export class AutoPlayer {
 
   private getBorderSafePoint(
     context: AutoPlayerContext,
-    target: Phaser.Math.Vector2,
+    target: Vector2,
     pickupRange: number,
-  ): Phaser.Math.Vector2 | undefined {
+  ): Vector2 | undefined {
     const margin = AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
     const isNearBorder = target.x < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN
       || target.y < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN
@@ -3491,11 +3492,11 @@ export class AutoPlayer {
       return undefined;
     }
 
-    const safePoint = new Phaser.Math.Vector2(
-      Phaser.Math.Clamp(target.x, margin, context.worldBounds.width - margin),
-      Phaser.Math.Clamp(target.y, margin, context.worldBounds.height - margin),
+    const safePoint = new Vector2(
+      Math2D.clamp(target.x, margin, context.worldBounds.width - margin),
+      Math2D.clamp(target.y, margin, context.worldBounds.height - margin),
     );
-    const distanceToTarget = Phaser.Math.Distance.Between(safePoint.x, safePoint.y, target.x, target.y);
+    const distanceToTarget = Math2D.distanceBetween(safePoint.x, safePoint.y, target.x, target.y);
 
     if (pickupRange > 0 && distanceToTarget > pickupRange) {
       const towardTarget = target.clone().subtract(safePoint);
@@ -3511,10 +3512,10 @@ export class AutoPlayer {
 
   private getNavigationWaypoint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    target: Phaser.Math.Vector2,
+    player: Vector2,
+    target: Vector2,
     targetId: string,
-  ): Phaser.Math.Vector2 | undefined {
+  ): Vector2 | undefined {
     const blocker = this.getBlockingObstacle(context, player, target);
 
     if (!blocker) {
@@ -3529,7 +3530,7 @@ export class AutoPlayer {
       return this.stickyWaypoint.clone();
     }
 
-    let bestWaypoint: Phaser.Math.Vector2 | undefined;
+    let bestWaypoint: Vector2 | undefined;
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const waypoint of this.getObstacleWaypoints(blocker, context)) {
@@ -3537,7 +3538,7 @@ export class AutoPlayer {
         continue;
       }
 
-      const targetDistance = Phaser.Math.Distance.Between(waypoint.x, waypoint.y, target.x, target.y);
+      const targetDistance = Math2D.distanceBetween(waypoint.x, waypoint.y, target.x, target.y);
       const pressure = this.getEnemyPressureAt(context, waypoint, this.getHpRatio(context));
       const borderPenalty = this.getBorderPenalty(context, waypoint);
       const score = -targetDistance * 0.02 - pressure * 2 - borderPenalty;
@@ -3556,17 +3557,17 @@ export class AutoPlayer {
   private getObstacleWaypoints(
     obstacle: AutoObstacleSnapshot,
     context: AutoPlayerContext,
-  ): Phaser.Math.Vector2[] {
+  ): Vector2[] {
     const margin = AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
 
     if (obstacle.shape === 'circle') {
       const radius = Math.max(obstacle.width, obstacle.height) / 2 + margin;
 
       return [
-        new Phaser.Math.Vector2(obstacle.x - radius, obstacle.y),
-        new Phaser.Math.Vector2(obstacle.x + radius, obstacle.y),
-        new Phaser.Math.Vector2(obstacle.x, obstacle.y - radius),
-        new Phaser.Math.Vector2(obstacle.x, obstacle.y + radius),
+        new Vector2(obstacle.x - radius, obstacle.y),
+        new Vector2(obstacle.x + radius, obstacle.y),
+        new Vector2(obstacle.x, obstacle.y - radius),
+        new Vector2(obstacle.x, obstacle.y + radius),
       ].map((point) => this.clampToSafeWorld(context, point));
     }
 
@@ -3574,28 +3575,28 @@ export class AutoPlayer {
     const halfHeight = obstacle.height / 2 + margin;
 
     return [
-      new Phaser.Math.Vector2(obstacle.x - halfWidth, obstacle.y - halfHeight),
-      new Phaser.Math.Vector2(obstacle.x + halfWidth, obstacle.y - halfHeight),
-      new Phaser.Math.Vector2(obstacle.x - halfWidth, obstacle.y + halfHeight),
-      new Phaser.Math.Vector2(obstacle.x + halfWidth, obstacle.y + halfHeight),
+      new Vector2(obstacle.x - halfWidth, obstacle.y - halfHeight),
+      new Vector2(obstacle.x + halfWidth, obstacle.y - halfHeight),
+      new Vector2(obstacle.x - halfWidth, obstacle.y + halfHeight),
+      new Vector2(obstacle.x + halfWidth, obstacle.y + halfHeight),
     ].map((point) => this.clampToSafeWorld(context, point));
   }
 
-  private getDangerInfo(context: AutoPlayerContext, player: Phaser.Math.Vector2): {
-    fleeDirection: Phaser.Math.Vector2;
+  private getDangerInfo(context: AutoPlayerContext, player: Vector2): {
+    fleeDirection: Vector2;
     nearestDistance: number;
-    enemyCenter: Phaser.Math.Vector2;
+    enemyCenter: Vector2;
     pressureCount: number;
   } {
-    const fleeDirection = new Phaser.Math.Vector2(0, 0);
-    const enemyCenter = new Phaser.Math.Vector2(0, 0);
+    const fleeDirection = new Vector2(0, 0);
+    const enemyCenter = new Vector2(0, 0);
     let nearestDistance = Number.POSITIVE_INFINITY;
     let pressureCount = 0;
     let centerWeight = 0;
 
     for (const enemy of context.enemyPositions) {
-      const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
-      const centerDistance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+      const enemyPosition = new Vector2(enemy.x, enemy.y);
+      const centerDistance = Math2D.distanceBetween(player.x, player.y, enemy.x, enemy.y);
       const distance = this.getEnemyEffectiveDistance(context, player, enemy);
       const threat = this.getEnemyThreatWeight(enemy);
 
@@ -3624,11 +3625,11 @@ export class AutoPlayer {
 
   private updateMovementMemory(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
   ): MovementMemoryInfo {
-    const deltaMs = Phaser.Math.Clamp(context.deltaMs ?? 16, 0, 120);
+    const deltaMs = Math2D.clamp(context.deltaMs ?? 16, 0, 120);
     const lastPosition = this.lastPosition?.clone() ?? player.clone();
-    const recentDisplacement = Phaser.Math.Distance.Between(
+    const recentDisplacement = Math2D.distanceBetween(
       player.x,
       player.y,
       lastPosition.x,
@@ -3640,7 +3641,7 @@ export class AutoPlayer {
       this.stallMs = 0;
     }
 
-    const anchorDistance = Phaser.Math.Distance.Between(
+    const anchorDistance = Math2D.distanceBetween(
       player.x,
       player.y,
       this.stallAnchor.x,
@@ -3666,7 +3667,7 @@ export class AutoPlayer {
   }
 
   private updateEnemyMotionSnapshots(context: AutoPlayerContext): void {
-    const deltaSeconds = Math.max(0.001, Phaser.Math.Clamp(context.deltaMs ?? 16, 1, 120) / 1000);
+    const deltaSeconds = Math.max(0.001, Math2D.clamp(context.deltaMs ?? 16, 1, 120) / 1000);
     const nextSnapshots = new Map<string, EnemyMotionSnapshot>();
 
     context.enemyPositions.forEach((enemy, index) => {
@@ -3696,20 +3697,20 @@ export class AutoPlayer {
 
   private getSurroundInfo(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     movement: MovementMemoryInfo,
   ): SurroundInfo {
     const directions = this.getBaseDirections();
     const hpRatio = this.getHpRatio(context);
     let blockedSectors = 0;
-    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestDirection = new Vector2(0, 0);
     let bestScore = Number.POSITIVE_INFINITY;
 
     for (const direction of directions) {
       const normalized = direction.clone().normalize();
       const endpoint = this.getCandidateEndpoint(context, player, normalized);
-      const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
+      const actualMove = Math2D.distanceBetween(player.x, player.y, endpoint.x, endpoint.y);
       const pressure = this.getEnemyPressureAt(context, endpoint, hpRatio);
       const borderPenalty = this.getBorderPenalty(context, endpoint);
       const obstaclePenalty = this.getObstaclePenalty(context, endpoint);
@@ -3753,7 +3754,7 @@ export class AutoPlayer {
 
   private getTerrainEscapeInfo(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
   ): TerrainEscapeInfo {
     const enemySectors = this.getEnemySectorCount(context, player, AUTO_PLAYER_CONSTANTS.PRE_ENCIRCLE_RADIUS);
     const nearBorder = this.getNearestBorderDistance(context, player) < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
@@ -3762,7 +3763,7 @@ export class AutoPlayer {
     const active = enemySectors >= 4 && (nearBorder || nearObstacle || inSlowZone);
     const info: TerrainEscapeInfo = {
       active,
-      direction: new Phaser.Math.Vector2(0, 0),
+      direction: new Vector2(0, 0),
       enemySectors,
       nearBorder,
       nearObstacle,
@@ -3781,13 +3782,13 @@ export class AutoPlayer {
 
   private getEnemySectorCount(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     radius: number,
   ): number {
     const sectors = new Set<number>();
 
     for (const enemy of context.enemyPositions) {
-      const distance = Phaser.Math.Distance.Between(player.x, player.y, enemy.x, enemy.y);
+      const distance = Math2D.distanceBetween(player.x, player.y, enemy.x, enemy.y);
 
       if (distance > radius) {
         continue;
@@ -3803,15 +3804,15 @@ export class AutoPlayer {
 
   private getTerrainEscapeDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     terrain: TerrainEscapeInfo,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const candidates = [
       ...this.getBaseDirections(),
       this.getSoftBorderDirection(context, player),
       this.getNearestObstacleEscapeDirection(context, player),
     ];
-    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestDirection = new Vector2(0, 0);
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const candidate of candidates) {
@@ -3836,9 +3837,9 @@ export class AutoPlayer {
 
   private getTerrainEscapeCandidateScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     terrain: TerrainEscapeInfo,
   ): number {
     if (!terrain.active) {
@@ -3860,9 +3861,9 @@ export class AutoPlayer {
 
   private scoreTerrainEscapeEndpoint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     terrain: TerrainEscapeInfo,
   ): number {
     const currentBorderDistance = this.getNearestBorderDistance(context, player);
@@ -3909,8 +3910,8 @@ export class AutoPlayer {
 
   private getNearestObstacleEscapeDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
+    player: Vector2,
+  ): Vector2 {
     let nearestObstacle: AutoObstacleSnapshot | undefined;
     let nearestClearance = Number.POSITIVE_INFINITY;
 
@@ -3928,22 +3929,22 @@ export class AutoPlayer {
     }
 
     if (!nearestObstacle || nearestClearance >= AUTO_PLAYER_CONSTANTS.TERRAIN_ESCAPE_MARGIN) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
-    const direction = player.clone().subtract(new Phaser.Math.Vector2(nearestObstacle.x, nearestObstacle.y));
+    const direction = player.clone().subtract(new Vector2(nearestObstacle.x, nearestObstacle.y));
 
     if (direction.lengthSq() === 0) {
-      return new Phaser.Math.Vector2(1, 0);
+      return new Vector2(1, 0);
     }
 
     return direction.normalize();
   }
 
-  private getObstacleClearanceAt(point: Phaser.Math.Vector2, obstacle: AutoObstacleSnapshot): number {
+  private getObstacleClearanceAt(point: Vector2, obstacle: AutoObstacleSnapshot): number {
     if (obstacle.shape === 'circle') {
       const radius = Math.max(obstacle.width, obstacle.height) / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
-      return Math.max(0, Phaser.Math.Distance.Between(point.x, point.y, obstacle.x, obstacle.y) - radius);
+      return Math.max(0, Math2D.distanceBetween(point.x, point.y, obstacle.x, obstacle.y) - radius);
     }
 
     const dx = Math.max(Math.abs(point.x - obstacle.x) - obstacle.width / 2 - AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN, 0);
@@ -3952,7 +3953,7 @@ export class AutoPlayer {
     return Math.hypot(dx, dy);
   }
 
-  private isInPlayerSlowZone(context: AutoPlayerContext, point: Phaser.Math.Vector2): boolean {
+  private isInPlayerSlowZone(context: AutoPlayerContext, point: Vector2): boolean {
     return (context.map?.slowZones ?? []).some((zone) => (
       zone.playerSpeedMultiplier < 1 && this.isPointInZone(point, zone)
     ));
@@ -3960,18 +3961,18 @@ export class AutoPlayer {
 
   private getBreakoutDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     surround: SurroundInfo,
     movement: MovementMemoryInfo,
     kite: KiteInfo,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const shouldBreakout = surround.surrounded
       || (movement.stalled && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.DANGER_RADIUS)
       || movement.prolonged;
 
     if (!shouldBreakout) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     if (kite.active && this.isKiteDirectionViable(context, player, kite.direction, kite)) {
@@ -3993,7 +3994,7 @@ export class AutoPlayer {
 
   private getKiteInfo(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     surround: SurroundInfo,
     movement: MovementMemoryInfo,
@@ -4019,7 +4020,7 @@ export class AutoPlayer {
     if (!highPressure) {
       return {
         active: false,
-        direction: new Phaser.Math.Vector2(0, 0),
+        direction: new Vector2(0, 0),
         inwardDirection,
         currentPressure,
         nearBorder,
@@ -4041,12 +4042,12 @@ export class AutoPlayer {
 
   private getKiteDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
-    inwardDirection: Phaser.Math.Vector2,
+    inwardDirection: Vector2,
     nearBorder: boolean,
     nearCorner: boolean,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const seed = danger.enemyCenter.lengthSq() > 0
       ? player.clone().subtract(danger.enemyCenter)
       : danger.fleeDirection.clone();
@@ -4054,15 +4055,15 @@ export class AutoPlayer {
     if (seed.lengthSq() === 0) {
       return inwardDirection.lengthSq() > 0
         ? inwardDirection.clone()
-        : new Phaser.Math.Vector2(0, 0);
+        : new Vector2(0, 0);
     }
 
     const radial = seed.normalize();
     const tangents = [
-      new Phaser.Math.Vector2(-radial.y, radial.x),
-      new Phaser.Math.Vector2(radial.y, -radial.x),
+      new Vector2(-radial.y, radial.x),
+      new Vector2(radial.y, -radial.x),
     ];
-    const options: Phaser.Math.Vector2[] = [];
+    const options: Vector2[] = [];
 
     if (
       this.stickyKiteDirection
@@ -4083,7 +4084,7 @@ export class AutoPlayer {
       options.push(inwardDirection.clone());
     }
 
-    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestDirection = new Vector2(0, 0);
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const option of options) {
@@ -4113,8 +4114,8 @@ export class AutoPlayer {
 
   private scoreKiteDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    direction: Vector2,
     kite: KiteInfo,
   ): number {
     const hpRatio = this.getHpRatio(context);
@@ -4123,7 +4124,7 @@ export class AutoPlayer {
     const currentBorderDistance = this.getNearestBorderDistance(context, player);
     const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
     const borderProgress = endpointBorderDistance - currentBorderDistance;
-    const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
+    const actualMove = Math2D.distanceBetween(player.x, player.y, endpoint.x, endpoint.y);
     let score = 0;
 
     score -= endpointPressure * 4.4;
@@ -4158,8 +4159,8 @@ export class AutoPlayer {
 
   private isKiteDirectionViable(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    direction: Vector2,
     kite: KiteInfo,
   ): boolean {
     if (direction.lengthSq() === 0) {
@@ -4167,7 +4168,7 @@ export class AutoPlayer {
     }
 
     const endpoint = this.getCandidateEndpoint(context, player, direction);
-    const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
+    const actualMove = Math2D.distanceBetween(player.x, player.y, endpoint.x, endpoint.y);
     const currentBorderDistance = this.getNearestBorderDistance(context, player);
     const endpointBorderDistance = this.getNearestBorderDistance(context, endpoint);
 
@@ -4192,24 +4193,24 @@ export class AutoPlayer {
 
   private isBreakoutDirectionViable(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    direction: Vector2,
   ): boolean {
     const endpoint = this.getCandidateEndpoint(context, player, direction);
 
     return this.getObstaclePenalty(context, endpoint) < 20
       && this.getBorderPenalty(context, endpoint) < 30
-      && Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y)
+      && Math2D.distanceBetween(player.x, player.y, endpoint.x, endpoint.y)
         >= AUTO_PLAYER_CONSTANTS.STEP_DISTANCE * 0.35;
   }
 
   private getWeaponDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const weapons = this.getWeaponSnapshots(context);
-    const direction = new Phaser.Math.Vector2(0, 0);
+    const direction = new Vector2(0, 0);
     const towardEnemies = danger.enemyCenter.clone().subtract(player);
 
     for (const weapon of weapons) {
@@ -4225,7 +4226,7 @@ export class AutoPlayer {
         direction.add(this.getOrbitDirection(towardEnemies, danger.nearestDistance, 220).scale(weight));
       } else if (weapon.tags.includes('projectile') || weapon.baseWeaponId === 'knife') {
         direction.add(danger.fleeDirection.clone().scale(0.75 * weight));
-        direction.add(new Phaser.Math.Vector2(-towardEnemies.y, towardEnemies.x).normalize().scale(0.35 * weight));
+        direction.add(new Vector2(-towardEnemies.y, towardEnemies.x).normalize().scale(0.35 * weight));
       }
     }
 
@@ -4234,9 +4235,9 @@ export class AutoPlayer {
 
   private getWeaponCandidateScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): number {
     const weapons = this.getWeaponSnapshots(context);
@@ -4245,7 +4246,7 @@ export class AutoPlayer {
     for (const weapon of weapons) {
       const weight = this.getWeaponLevelWeight(weapon);
       const distance = danger.enemyCenter.lengthSq() > 0
-        ? Phaser.Math.Distance.Between(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y)
+        ? Math2D.distanceBetween(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y)
         : Number.POSITIVE_INFINITY;
 
       if (weapon.tags.includes('aura')) {
@@ -4262,7 +4263,7 @@ export class AutoPlayer {
     if (context.player?.damageReactionType === 'slowTrail' && danger.enemyCenter.lengthSq() > 0) {
       const towardEnemies = danger.enemyCenter.clone().subtract(player);
       if (towardEnemies.lengthSq() > 0) {
-        const tangent = new Phaser.Math.Vector2(-towardEnemies.y, towardEnemies.x).normalize();
+        const tangent = new Vector2(-towardEnemies.y, towardEnemies.x).normalize();
         score += Math.abs(direction.dot(tangent)) * 2.2;
       }
     }
@@ -4272,7 +4273,7 @@ export class AutoPlayer {
 
   private evaluateWeaponEffectivePosition(
     context: AutoPlayerContext,
-    position: Phaser.Math.Vector2,
+    position: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): number {
     const weapons = this.getWeaponSnapshots(context);
@@ -4303,7 +4304,7 @@ export class AutoPlayer {
       }
 
       const centerDistance = danger.enemyCenter.lengthSq() > 0
-        ? Phaser.Math.Distance.Between(position.x, position.y, danger.enemyCenter.x, danger.enemyCenter.y)
+        ? Math2D.distanceBetween(position.x, position.y, danger.enemyCenter.x, danger.enemyCenter.y)
         : Number.POSITIVE_INFINITY;
       const bandScore = this.scoreDistanceBand(centerDistance, range.ideal, range.min / range.ideal, range.max / range.ideal);
       const weaponTypeBonus = weapon.tags.includes('homing') || weapon.tags.includes('magic')
@@ -4380,16 +4381,16 @@ export class AutoPlayer {
   }
 
   private getDistanceBandDirection(
-    towardEnemies: Phaser.Math.Vector2,
+    towardEnemies: Vector2,
     nearestEnemyDistance: number,
     idealDistance: number,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     if (towardEnemies.lengthSq() === 0 || nearestEnemyDistance === Number.POSITIVE_INFINITY) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     const normalized = towardEnemies.clone().normalize();
-    const tangent = new Phaser.Math.Vector2(-normalized.y, normalized.x);
+    const tangent = new Vector2(-normalized.y, normalized.x);
 
     if (nearestEnemyDistance < idealDistance * 0.6) {
       return normalized.scale(-1);
@@ -4403,10 +4404,10 @@ export class AutoPlayer {
   }
 
   private getOrbitDirection(
-    towardEnemies: Phaser.Math.Vector2,
+    towardEnemies: Vector2,
     nearestEnemyDistance: number,
     idealDistance: number,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     return this.getDistanceBandDirection(towardEnemies, nearestEnemyDistance, idealDistance);
   }
 
@@ -4466,14 +4467,14 @@ export class AutoPlayer {
 
   private getWeaponLevelWeight(weapon: AutoWeaponSnapshot): number {
     const maxLevel = Math.max(1, weapon.maxLevel);
-    const ratio = Phaser.Math.Clamp(weapon.level / maxLevel, 0, 1);
+    const ratio = Math2D.clamp(weapon.level / maxLevel, 0, 1);
 
     return 0.55 + ratio * 0.85 + (weapon.tags.includes('evolved') ? 0.35 : 0);
   }
 
   private getEnemyPressureAt(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     hpRatio: number,
   ): number {
     let pressure = 0;
@@ -4510,7 +4511,7 @@ export class AutoPlayer {
 
   private getEnemyContactRiskAt(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     hpRatio: number,
   ): number {
     let risk = 0;
@@ -4539,7 +4540,7 @@ export class AutoPlayer {
 
   private getEnemyFutureContactRiskAt(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     hpRatio: number,
   ): number {
     let risk = 0;
@@ -4579,14 +4580,14 @@ export class AutoPlayer {
 
   private getEnemyPathContactRisk(
     context: AutoPlayerContext,
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
     hpRatio: number,
   ): number {
     let risk = 0;
 
     for (const enemy of context.enemyPositions) {
-      const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
+      const enemyPosition = new Vector2(enemy.x, enemy.y);
       const currentDistance = this.getEnemyEffectiveDistance(context, start, enemy);
       const endpointDistance = this.getEnemyEffectiveDistance(context, end, enemy);
       const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
@@ -4623,8 +4624,8 @@ export class AutoPlayer {
 
   private getEnemyPathClearanceScore(
     context: AutoPlayerContext,
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
     hpRatio: number,
   ): number {
     let nearestPathDistance = Number.POSITIVE_INFINITY;
@@ -4632,7 +4633,7 @@ export class AutoPlayer {
     let dangerCrossings = 0;
 
     for (const enemy of context.enemyPositions) {
-      const enemyPosition = new Phaser.Math.Vector2(enemy.x, enemy.y);
+      const enemyPosition = new Vector2(enemy.x, enemy.y);
       const startDistance = this.getEnemyEffectiveDistance(context, start, enemy);
       const endDistance = this.getEnemyEffectiveDistance(context, end, enemy);
 
@@ -4672,7 +4673,7 @@ export class AutoPlayer {
       return -18 * narrowness * pressureMultiplier;
     }
 
-    const openRatio = Phaser.Math.Clamp(
+    const openRatio = Math2D.clamp(
       (nearestPathDistance - AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS)
         / Math.max(1, AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS),
       0,
@@ -4684,8 +4685,8 @@ export class AutoPlayer {
 
   private getEnemyApproachPenalty(
     context: AutoPlayerContext,
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
     hpRatio: number,
   ): number {
     const currentDistance = this.getNearestEnemyDistanceAt(context, start);
@@ -4716,8 +4717,8 @@ export class AutoPlayer {
 
   private getSafeEnemyDistanceScore(
     context: AutoPlayerContext,
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
   ): number {
     const currentDistance = this.getNearestEnemyDistanceAt(context, start);
     const endpointDistance = this.getNearestEnemyDistanceAt(context, end);
@@ -4747,7 +4748,7 @@ export class AutoPlayer {
     return score;
   }
 
-  private getNearestEnemyDistanceAt(context: AutoPlayerContext, point: Phaser.Math.Vector2): number {
+  private getNearestEnemyDistanceAt(context: AutoPlayerContext, point: Vector2): number {
     let nearest = Number.POSITIVE_INFINITY;
 
     for (const enemy of context.enemyPositions) {
@@ -4788,12 +4789,12 @@ export class AutoPlayer {
 
   private getEnemyEffectiveDistance(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     enemy: AutoPosition | AutoEnemySnapshot,
     enemyX = enemy.x,
     enemyY = enemy.y,
   ): number {
-    const centerDistance = Phaser.Math.Distance.Between(point.x, point.y, enemyX, enemyY);
+    const centerDistance = Math2D.distanceBetween(point.x, point.y, enemyX, enemyY);
 
     return Math.max(0, centerDistance - this.getEnemyCombinedCollisionRadius(context, enemy));
   }
@@ -4830,7 +4831,7 @@ export class AutoPlayer {
 
   private getSlowZoneScore(
     context: AutoPlayerContext,
-    endpoint: Phaser.Math.Vector2,
+    endpoint: Vector2,
     hpRatio: number,
   ): number {
     let score = 0;
@@ -4854,7 +4855,7 @@ export class AutoPlayer {
 
   private getPortalScore(
     context: AutoPlayerContext,
-    endpoint: Phaser.Math.Vector2,
+    endpoint: Vector2,
     hpRatio: number,
   ): number {
     let score = 0;
@@ -4864,11 +4865,11 @@ export class AutoPlayer {
         continue;
       }
 
-      if (Phaser.Math.Distance.Between(endpoint.x, endpoint.y, portal.x, portal.y) > portal.radius) {
+      if (Math2D.distanceBetween(endpoint.x, endpoint.y, portal.x, portal.y) > portal.radius) {
         continue;
       }
 
-      const targetPoint = new Phaser.Math.Vector2(portal.target.x, portal.target.y);
+      const targetPoint = new Vector2(portal.target.x, portal.target.y);
       const exitPressure = this.getEnemyPressureAt(context, targetPoint, hpRatio);
       const currentPressure = this.getEnemyPressureAt(context, endpoint, hpRatio);
 
@@ -4883,16 +4884,16 @@ export class AutoPlayer {
 
   private getPortalEscapeDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
-  ): Phaser.Math.Vector2 {
+  ): Vector2 {
     const hpRatio = this.getHpRatio(context);
 
     if (!this.isPortalEscapeState(context, player, danger, hpRatio)) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
-    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestDirection = new Vector2(0, 0);
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const portal of context.map?.portals ?? []) {
@@ -4900,8 +4901,8 @@ export class AutoPlayer {
         continue;
       }
 
-      const portalPoint = new Phaser.Math.Vector2(portal.x, portal.y);
-      const distance = Phaser.Math.Distance.Between(player.x, player.y, portal.x, portal.y);
+      const portalPoint = new Vector2(portal.x, portal.y);
+      const distance = Math2D.distanceBetween(player.x, player.y, portal.x, portal.y);
 
       if (distance <= portal.radius) {
         continue;
@@ -4911,7 +4912,7 @@ export class AutoPlayer {
         continue;
       }
 
-      const exitPoint = new Phaser.Math.Vector2(portal.target.x, portal.target.y);
+      const exitPoint = new Vector2(portal.target.x, portal.target.y);
       const currentRisk = this.getPortalEscapeRiskAt(context, player, hpRatio);
       const exitRisk = this.getPortalEscapeRiskAt(context, exitPoint, hpRatio);
 
@@ -4940,8 +4941,8 @@ export class AutoPlayer {
 
   private getPortalEscapeCandidateScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     hpRatio: number,
   ): number {
@@ -4957,20 +4958,20 @@ export class AutoPlayer {
         continue;
       }
 
-      const playerDistance = Phaser.Math.Distance.Between(player.x, player.y, portal.x, portal.y);
+      const playerDistance = Math2D.distanceBetween(player.x, player.y, portal.x, portal.y);
 
       if (playerDistance > portal.radius + AUTO_PLAYER_CONSTANTS.PORTAL_ESCAPE_SEEK_RADIUS) {
         continue;
       }
 
-      const exitPoint = new Phaser.Math.Vector2(portal.target.x, portal.target.y);
+      const exitPoint = new Vector2(portal.target.x, portal.target.y);
       const exitRisk = this.getPortalEscapeRiskAt(context, exitPoint, hpRatio);
 
       if (!this.isPortalExitUseful(currentRisk, exitRisk, hpRatio)) {
         continue;
       }
 
-      const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, portal.x, portal.y);
+      const endpointDistance = Math2D.distanceBetween(endpoint.x, endpoint.y, portal.x, portal.y);
       const progress = playerDistance - endpointDistance;
 
       if (endpointDistance <= portal.radius) {
@@ -4989,8 +4990,8 @@ export class AutoPlayer {
 
   private isUsefulPortalEndpoint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     hpRatio: number,
   ): boolean {
@@ -5005,8 +5006,8 @@ export class AutoPlayer {
         continue;
       }
 
-      const playerDistance = Phaser.Math.Distance.Between(player.x, player.y, portal.x, portal.y);
-      const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, portal.x, portal.y);
+      const playerDistance = Math2D.distanceBetween(player.x, player.y, portal.x, portal.y);
+      const endpointDistance = Math2D.distanceBetween(endpoint.x, endpoint.y, portal.x, portal.y);
 
       if (
         endpointDistance > portal.radius
@@ -5015,7 +5016,7 @@ export class AutoPlayer {
         continue;
       }
 
-      const exitPoint = new Phaser.Math.Vector2(portal.target.x, portal.target.y);
+      const exitPoint = new Vector2(portal.target.x, portal.target.y);
       const exitRisk = this.getPortalEscapeRiskAt(context, exitPoint, hpRatio);
 
       if (this.isPortalExitUseful(currentRisk, exitRisk, hpRatio)) {
@@ -5028,7 +5029,7 @@ export class AutoPlayer {
 
   private isPortalEscapeState(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     hpRatio: number,
   ): boolean {
@@ -5051,7 +5052,7 @@ export class AutoPlayer {
 
   private getPortalEscapeRiskAt(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     hpRatio: number,
   ): number {
     return this.getEnemyPressureAt(context, point, hpRatio)
@@ -5066,8 +5067,8 @@ export class AutoPlayer {
 
   private getBossWarningCandidateScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
   ): number {
     const warnings = context.bossWarnings ?? [];
 
@@ -5101,9 +5102,9 @@ export class AutoPlayer {
 
   private getBreakoutCandidateScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     surround: SurroundInfo,
     movement: MovementMemoryInfo,
@@ -5123,8 +5124,8 @@ export class AutoPlayer {
     const currentObstacleClearance = this.getNearestObstacleClearance(context, player);
     const endpointObstacleClearance = this.getNearestObstacleClearance(context, endpoint);
     const obstacleProgress = endpointObstacleClearance - currentObstacleClearance;
-    const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
-    const anchorDistance = Phaser.Math.Distance.Between(
+    const actualMove = Math2D.distanceBetween(player.x, player.y, endpoint.x, endpoint.y);
+    const anchorDistance = Math2D.distanceBetween(
       endpoint.x,
       endpoint.y,
       movement.anchor.x,
@@ -5178,9 +5179,9 @@ export class AutoPlayer {
 
   private getKiteCandidateScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     kite: KiteInfo,
   ): number {
@@ -5230,7 +5231,7 @@ export class AutoPlayer {
 
   private getTotalBossWarningRisk(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
   ): number {
     return (context.bossWarnings ?? []).reduce(
       (total, warning) => total + this.getSemanticBossWarningRisk(context, warning, point),
@@ -5240,9 +5241,9 @@ export class AutoPlayer {
 
   private getBossWarningEscapeDirection(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
-    const direction = new Phaser.Math.Vector2(0, 0);
+    player: Vector2,
+  ): Vector2 {
+    const direction = new Vector2(0, 0);
 
     for (const warning of context.bossWarnings ?? []) {
       const risk = this.getSemanticBossWarningRisk(context, warning, player);
@@ -5264,7 +5265,7 @@ export class AutoPlayer {
   private getSemanticBossWarningRisk(
     context: AutoPlayerContext,
     warning: AutoBossWarningSnapshot,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
   ): number {
     if (this.isFinalBossDashWarning(context, warning)) {
       return this.getFinalBossDashRisk(context, point, warning);
@@ -5280,8 +5281,8 @@ export class AutoPlayer {
   private getSemanticBossWarningEscapeDirection(
     context: AutoPlayerContext,
     warning: AutoBossWarningSnapshot,
-    point: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
+    point: Vector2,
+  ): Vector2 {
     if (this.isFinalBossDashWarning(context, warning)) {
       return this.getFinalBossDashEscapeDirection(context, warning, point);
     }
@@ -5296,31 +5297,31 @@ export class AutoPlayer {
   private getFinalBossDashEscapeDirection(
     context: AutoPlayerContext,
     warning: AutoBossWarningSnapshot,
-    point: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
+    point: Vector2,
+  ): Vector2 {
     const boss = this.getFinalBossAnchor(context);
 
     if (!boss || warning.shape !== 'line') {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
-    const start = new Phaser.Math.Vector2(warning.start.x, warning.start.y);
-    const end = new Phaser.Math.Vector2(warning.end.x, warning.end.y);
+    const start = new Vector2(warning.start.x, warning.start.y);
+    const end = new Vector2(warning.end.x, warning.end.y);
     const line = end.subtract(start);
 
     if (line.lengthSq() === 0) {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     const lineDirection = line.normalize();
-    const sideA = new Phaser.Math.Vector2(-lineDirection.y, lineDirection.x);
-    const sideB = new Phaser.Math.Vector2(lineDirection.y, -lineDirection.x);
+    const sideA = new Vector2(-lineDirection.y, lineDirection.x);
+    const sideB = new Vector2(lineDirection.y, -lineDirection.x);
     const currentSide = Math.sign((point.x - warning.start.x) * lineDirection.y - (point.y - warning.start.y) * lineDirection.x);
     const side = currentSide >= 0 ? sideA : sideB;
     const distanceToBoss = this.getFinalBossEffectiveDistance(context, point);
 
     if (distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
-      const towardBoss = new Phaser.Math.Vector2(boss.x - point.x, boss.y - point.y);
+      const towardBoss = new Vector2(boss.x - point.x, boss.y - point.y);
 
       if (towardBoss.lengthSq() > 0) {
         return side.scale(0.75).add(towardBoss.normalize().scale(0.55));
@@ -5333,14 +5334,14 @@ export class AutoPlayer {
   private getFinalBossRingBulletEscapeDirection(
     context: AutoPlayerContext,
     warning: AutoBossWarningSnapshot,
-    point: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
+    point: Vector2,
+  ): Vector2 {
     if (warning.shape !== 'circle') {
-      return new Phaser.Math.Vector2(0, 0);
+      return new Vector2(0, 0);
     }
 
     const gapCandidates = this.getFinalBossRingGapCandidates(point, warning);
-    let bestDirection = new Phaser.Math.Vector2(0, 0);
+    let bestDirection = new Vector2(0, 0);
     let bestScore = Number.NEGATIVE_INFINITY;
 
     for (const candidate of gapCandidates) {
@@ -5361,7 +5362,7 @@ export class AutoPlayer {
 
   private updateFinalBossWarningDebugMetrics(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
   ): void {
     const snapshot = this.autoMoveDebugSnapshot ?? this.getEmptyAutoMoveDebugSnapshot();
 
@@ -5462,10 +5463,10 @@ export class AutoPlayer {
 
   private getSingleWarningEscapeDirection(
     warning: AutoBossWarningSnapshot,
-    point: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
+    point: Vector2,
+  ): Vector2 {
     if (warning.shape === 'circle') {
-      const direction = new Phaser.Math.Vector2(point.x - warning.x, point.y - warning.y);
+      const direction = new Vector2(point.x - warning.x, point.y - warning.y);
 
       if (direction.lengthSq() === 0) {
         direction.set(1, 0);
@@ -5474,8 +5475,8 @@ export class AutoPlayer {
       return direction;
     }
 
-    const start = new Phaser.Math.Vector2(warning.start.x, warning.start.y);
-    const end = new Phaser.Math.Vector2(warning.end.x, warning.end.y);
+    const start = new Vector2(warning.start.x, warning.start.y);
+    const end = new Vector2(warning.end.x, warning.end.y);
     const segment = end.clone().subtract(start);
 
     if (segment.lengthSq() === 0) {
@@ -5489,15 +5490,15 @@ export class AutoPlayer {
       return away;
     }
 
-    return new Phaser.Math.Vector2(-segment.y, segment.x);
+    return new Vector2(-segment.y, segment.x);
   }
 
   private getBossWarningRisk(
     warning: AutoBossWarningSnapshot,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
   ): number {
     if (warning.shape === 'circle') {
-      const distance = Phaser.Math.Distance.Between(point.x, point.y, warning.x, warning.y);
+      const distance = Math2D.distanceBetween(point.x, point.y, warning.x, warning.y);
       const margin = warning.danger === 'damage' ? 36 : 20;
       const riskRadius = Math.max(1, warning.radius + margin);
 
@@ -5508,8 +5509,8 @@ export class AutoPlayer {
       return 1 + (riskRadius - distance) / riskRadius;
     }
 
-    const start = new Phaser.Math.Vector2(warning.start.x, warning.start.y);
-    const end = new Phaser.Math.Vector2(warning.end.x, warning.end.y);
+    const start = new Vector2(warning.start.x, warning.start.y);
+    const end = new Vector2(warning.end.x, warning.end.y);
     const distance = this.getDistanceSegmentToPoint(start, end, point);
     const halfWidth = Math.max(1, warning.width / 2);
     const margin = warning.danger === 'damage' ? 28 : 16;
@@ -5540,7 +5541,7 @@ export class AutoPlayer {
     }
   }
 
-  private getObstaclePenalty(context: AutoPlayerContext, endpoint: Phaser.Math.Vector2): number {
+  private getObstaclePenalty(context: AutoPlayerContext, endpoint: Vector2): number {
     let penalty = 0;
 
     for (const obstacle of context.map?.obstacles ?? []) {
@@ -5560,7 +5561,7 @@ export class AutoPlayer {
 
   private getNearestObstacleClearance(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
   ): number {
     let clearance = Number.POSITIVE_INFINITY;
 
@@ -5573,7 +5574,7 @@ export class AutoPlayer {
         const radius = Math.max(obstacle.width, obstacle.height) / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
         clearance = Math.min(
           clearance,
-          Phaser.Math.Distance.Between(point.x, point.y, obstacle.x, obstacle.y) - radius,
+          Math2D.distanceBetween(point.x, point.y, obstacle.x, obstacle.y) - radius,
         );
         continue;
       }
@@ -5599,7 +5600,7 @@ export class AutoPlayer {
 
   private getBorderPenalty(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     target?: AutoTarget,
   ): number {
     const hard = AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN;
@@ -5631,9 +5632,9 @@ export class AutoPlayer {
 
   private getHighPressureBorderPenalty(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     kite: KiteInfo,
   ): number {
     if (!kite.active) {
@@ -5676,10 +5677,10 @@ export class AutoPlayer {
 
   private getCornerTrapInfo(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
+    player: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): CornerTrapInfo {
-    const inwardDirection = new Phaser.Math.Vector2(0, 0);
+    const inwardDirection = new Vector2(0, 0);
     const nearLeft = player.x < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
     const nearRight = player.x > context.worldBounds.width - AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
     const nearTop = player.y < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN;
@@ -5711,9 +5712,9 @@ export class AutoPlayer {
 
   private getCornerEscapeScore(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     cornerTrap: CornerTrapInfo,
   ): number {
@@ -5755,9 +5756,9 @@ export class AutoPlayer {
 
   private getNoProgressBorderPenalty(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
+    direction: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): number {
     if (danger.nearestDistance >= AUTO_PLAYER_CONSTANTS.DANGER_RADIUS) {
@@ -5767,13 +5768,13 @@ export class AutoPlayer {
     const intendedEndpoint = player.clone().add(
       direction.clone().normalize().scale(AUTO_PLAYER_CONSTANTS.STEP_DISTANCE),
     );
-    const intendedMove = Phaser.Math.Distance.Between(
+    const intendedMove = Math2D.distanceBetween(
       player.x,
       player.y,
       intendedEndpoint.x,
       intendedEndpoint.y,
     );
-    const actualMove = Phaser.Math.Distance.Between(player.x, player.y, endpoint.x, endpoint.y);
+    const actualMove = Math2D.distanceBetween(player.x, player.y, endpoint.x, endpoint.y);
 
     if (actualMove >= intendedMove * 0.55) {
       return 0;
@@ -5787,7 +5788,7 @@ export class AutoPlayer {
 
   private getNearestBorderDistance(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
   ): number {
     return Math.min(
       point.x,
@@ -5799,7 +5800,7 @@ export class AutoPlayer {
 
   private isNearCorner(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     margin: number,
   ): boolean {
     const nearHorizontalBorder = point.x < margin || point.x > context.worldBounds.width - margin;
@@ -5808,8 +5809,8 @@ export class AutoPlayer {
     return nearHorizontalBorder && nearVerticalBorder;
   }
 
-  private getSoftBorderDirection(context: AutoPlayerContext, player: Phaser.Math.Vector2): Phaser.Math.Vector2 {
-    const direction = new Phaser.Math.Vector2(0, 0);
+  private getSoftBorderDirection(context: AutoPlayerContext, player: Vector2): Vector2 {
+    const direction = new Vector2(0, 0);
 
     if (player.x < AUTO_PLAYER_CONSTANTS.BORDER_WARNING_MARGIN) {
       direction.x += 1;
@@ -5828,8 +5829,8 @@ export class AutoPlayer {
 
   private getBlockingObstacle(
     context: AutoPlayerContext,
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
   ): AutoObstacleSnapshot | undefined {
     return (context.map?.obstacles ?? []).find((obstacle) => (
       obstacle.blocksPlayer && this.segmentIntersectsObstacle(start, end, obstacle)
@@ -5838,8 +5839,8 @@ export class AutoPlayer {
 
   private segmentIntersectsBlockingObstacle(
     context: AutoPlayerContext,
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
   ): boolean {
     return (context.map?.obstacles ?? []).some((obstacle) => (
       obstacle.blocksPlayer && this.segmentIntersectsObstacle(start, end, obstacle)
@@ -5847,23 +5848,23 @@ export class AutoPlayer {
   }
 
   private segmentIntersectsObstacle(
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
     obstacle: AutoObstacleSnapshot,
   ): boolean {
     if (obstacle.shape === 'circle') {
       const radius = Math.max(obstacle.width, obstacle.height) / 2 + AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
-      const center = new Phaser.Math.Vector2(obstacle.x, obstacle.y);
+      const center = new Vector2(obstacle.x, obstacle.y);
       const segment = end.clone().subtract(start);
       const lengthSq = segment.lengthSq();
 
       if (lengthSq === 0) {
-        return Phaser.Math.Distance.Between(start.x, start.y, center.x, center.y) <= radius;
+        return Math2D.distanceBetween(start.x, start.y, center.x, center.y) <= radius;
       }
 
-      const t = Phaser.Math.Clamp(center.clone().subtract(start).dot(segment) / lengthSq, 0, 1);
+      const t = Math2D.clamp(center.clone().subtract(start).dot(segment) / lengthSq, 0, 1);
       const closest = start.clone().add(segment.scale(t));
-      return Phaser.Math.Distance.Between(closest.x, closest.y, center.x, center.y) <= radius;
+      return Math2D.distanceBetween(closest.x, closest.y, center.x, center.y) <= radius;
     }
 
     const margin = AUTO_PLAYER_CONSTANTS.NAVIGATION_MARGIN;
@@ -5872,34 +5873,35 @@ export class AutoPlayer {
     const top = obstacle.y - obstacle.height / 2 - margin;
     const bottom = obstacle.y + obstacle.height / 2 + margin;
 
-    return Phaser.Geom.Intersects.LineToRectangle(
-      new Phaser.Geom.Line(start.x, start.y, end.x, end.y),
-      new Phaser.Geom.Rectangle(left, top, right - left, bottom - top),
+    return Math2D.lineIntersectsRect(
+      start,
+      end,
+      new Rect(left, top, right - left, bottom - top),
     );
   }
 
   private getDistanceSegmentToPoint(
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
-    point: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
+    point: Vector2,
   ): number {
     return this.getSegmentPointInfo(start, end, point).distance;
   }
 
   private routeSegmentIntersectsObstacle(
     context: AutoPlayerContext,
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
   ): boolean {
     return (context.map?.obstacles ?? [])
       .some((obstacle) => obstacle.blocksPlayer && this.segmentIntersectsObstacle(start, end, obstacle));
   }
 
   private getRouteSamplePoints(
-    player: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
-  ): Phaser.Math.Vector2[] {
-    const points: Phaser.Math.Vector2[] = [player.clone()];
+    player: Vector2,
+    waypoints: readonly Vector2[],
+  ): Vector2[] {
+    const points: Vector2[] = [player.clone()];
 
     for (let index = 0; index < waypoints.length - 1; index += 1) {
       const start = waypoints[index];
@@ -5914,8 +5916,8 @@ export class AutoPlayer {
   }
 
   private getDistanceToRoute(
-    point: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
+    point: Vector2,
+    waypoints: readonly Vector2[],
   ): number {
     let nearest = Number.POSITIVE_INFINITY;
 
@@ -5927,15 +5929,15 @@ export class AutoPlayer {
   }
 
   private getClosestPointOnRoute(
-    point: Phaser.Math.Vector2,
-    waypoints: readonly Phaser.Math.Vector2[],
-  ): Phaser.Math.Vector2 {
+    point: Vector2,
+    waypoints: readonly Vector2[],
+  ): Vector2 {
     let nearestDistance = Number.POSITIVE_INFINITY;
     let nearestPoint = waypoints[0]?.clone() ?? point.clone();
 
     for (let index = 0; index < waypoints.length - 1; index += 1) {
       const closest = this.getClosestPointOnSegment(waypoints[index], waypoints[index + 1], point);
-      const distance = Phaser.Math.Distance.Between(point.x, point.y, closest.x, closest.y);
+      const distance = Math2D.distanceBetween(point.x, point.y, closest.x, closest.y);
 
       if (distance < nearestDistance) {
         nearestDistance = distance;
@@ -5947,34 +5949,34 @@ export class AutoPlayer {
   }
 
   private getRouteProgressScore(
-    player: Phaser.Math.Vector2,
-    endpoint: Phaser.Math.Vector2,
+    player: Vector2,
+    endpoint: Vector2,
     route: TacticalRoute,
   ): number {
-    const waypoint = route.waypoints[Phaser.Math.Clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1))];
+    const waypoint = route.waypoints[Math2D.clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1))];
 
     if (!waypoint) {
       return 0;
     }
 
-    const currentDistance = Phaser.Math.Distance.Between(player.x, player.y, waypoint.x, waypoint.y);
-    const endpointDistance = Phaser.Math.Distance.Between(endpoint.x, endpoint.y, waypoint.x, waypoint.y);
+    const currentDistance = Math2D.distanceBetween(player.x, player.y, waypoint.x, waypoint.y);
+    const endpointDistance = Math2D.distanceBetween(endpoint.x, endpoint.y, waypoint.x, waypoint.y);
 
     return currentDistance - endpointDistance;
   }
 
   private getClosestPointOnSegment(
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
-    point: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
+    start: Vector2,
+    end: Vector2,
+    point: Vector2,
+  ): Vector2 {
     return this.getSegmentPointInfo(start, end, point).point;
   }
 
   private getSegmentPointInfo(
-    start: Phaser.Math.Vector2,
-    end: Phaser.Math.Vector2,
-    point: Phaser.Math.Vector2,
+    start: Vector2,
+    end: Vector2,
+    point: Vector2,
   ): SegmentPointInfo {
     const segment = end.clone().subtract(start);
     const lengthSq = segment.lengthSq();
@@ -5983,30 +5985,30 @@ export class AutoPlayer {
       const closest = start.clone();
 
       return {
-        distance: Phaser.Math.Distance.Between(point.x, point.y, closest.x, closest.y),
+        distance: Math2D.distanceBetween(point.x, point.y, closest.x, closest.y),
         t: 0,
         point: closest,
       };
     }
 
-    const t = Phaser.Math.Clamp(point.clone().subtract(start).dot(segment) / lengthSq, 0, 1);
+    const t = Math2D.clamp(point.clone().subtract(start).dot(segment) / lengthSq, 0, 1);
     const closest = start.clone().add(segment.scale(t));
 
     return {
-      distance: Phaser.Math.Distance.Between(point.x, point.y, closest.x, closest.y),
+      distance: Math2D.distanceBetween(point.x, point.y, closest.x, closest.y),
       t,
       point: closest,
     };
   }
 
   private pointIntersectsObstacle(
-    point: Phaser.Math.Vector2,
+    point: Vector2,
     obstacle: AutoObstacleSnapshot,
     margin: number,
   ): boolean {
     if (obstacle.shape === 'circle') {
       const radius = Math.max(obstacle.width, obstacle.height) / 2 + margin;
-      return Phaser.Math.Distance.Between(point.x, point.y, obstacle.x, obstacle.y) <= radius;
+      return Math2D.distanceBetween(point.x, point.y, obstacle.x, obstacle.y) <= radius;
     }
 
     return point.x >= obstacle.x - obstacle.width / 2 - margin
@@ -6015,9 +6017,9 @@ export class AutoPlayer {
       && point.y <= obstacle.y + obstacle.height / 2 + margin;
   }
 
-  private isPointInZone(point: Phaser.Math.Vector2, zone: AutoSlowZoneSnapshot): boolean {
+  private isPointInZone(point: Vector2, zone: AutoSlowZoneSnapshot): boolean {
     if (zone.shape === 'circle') {
-      return Phaser.Math.Distance.Between(point.x, point.y, zone.x, zone.y) <= zone.radius;
+      return Math2D.distanceBetween(point.x, point.y, zone.x, zone.y) <= zone.radius;
     }
 
     return point.x >= zone.x - zone.width / 2
@@ -6028,37 +6030,37 @@ export class AutoPlayer {
 
   private getCandidateEndpoint(
     context: AutoPlayerContext,
-    player: Phaser.Math.Vector2,
-    direction: Phaser.Math.Vector2,
-  ): Phaser.Math.Vector2 {
+    player: Vector2,
+    direction: Vector2,
+  ): Vector2 {
     const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
     const stepDistance = Math.min(AUTO_PLAYER_CONSTANTS.STEP_DISTANCE, Math.max(70, moveSpeed * 0.65));
 
     return this.clampToWorld(context, player.clone().add(direction.clone().normalize().scale(stepDistance)));
   }
 
-  private clampToWorld(context: AutoPlayerContext, point: Phaser.Math.Vector2): Phaser.Math.Vector2 {
-    return new Phaser.Math.Vector2(
-      Phaser.Math.Clamp(point.x, 0, context.worldBounds.width),
-      Phaser.Math.Clamp(point.y, 0, context.worldBounds.height),
+  private clampToWorld(context: AutoPlayerContext, point: Vector2): Vector2 {
+    return new Vector2(
+      Math2D.clamp(point.x, 0, context.worldBounds.width),
+      Math2D.clamp(point.y, 0, context.worldBounds.height),
     );
   }
 
-  private clampToSafeWorld(context: AutoPlayerContext, point: Phaser.Math.Vector2): Phaser.Math.Vector2 {
+  private clampToSafeWorld(context: AutoPlayerContext, point: Vector2): Vector2 {
     const margin = AUTO_PLAYER_CONSTANTS.HARD_BORDER_MARGIN + 4;
 
-    return new Phaser.Math.Vector2(
-      Phaser.Math.Clamp(point.x, margin, context.worldBounds.width - margin),
-      Phaser.Math.Clamp(point.y, margin, context.worldBounds.height - margin),
+    return new Vector2(
+      Math2D.clamp(point.x, margin, context.worldBounds.width - margin),
+      Math2D.clamp(point.y, margin, context.worldBounds.height - margin),
     );
   }
 
   private canPickupFrom(
     context: AutoPlayerContext,
-    point: Phaser.Math.Vector2,
-    target: Phaser.Math.Vector2,
+    point: Vector2,
+    target: Vector2,
   ): boolean {
-    return Phaser.Math.Distance.Between(point.x, point.y, target.x, target.y) <= this.getPickupRange(context);
+    return Math2D.distanceBetween(point.x, point.y, target.x, target.y) <= this.getPickupRange(context);
   }
 
   private getPickupClusterScore(
@@ -6069,7 +6071,7 @@ export class AutoPlayer {
 
     for (const otherPickup of context.pickupPositions) {
       if (
-        Phaser.Math.Distance.Between(pickup.x, pickup.y, otherPickup.x, otherPickup.y)
+        Math2D.distanceBetween(pickup.x, pickup.y, otherPickup.x, otherPickup.y)
         <= AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS
       ) {
         clusterScore += this.getPickupExpValue(otherPickup);
@@ -6099,11 +6101,11 @@ export class AutoPlayer {
       return 1;
     }
 
-    return Phaser.Math.Clamp(currentHp / maxHp, 0, 1);
+    return Math2D.clamp(currentHp / maxHp, 0, 1);
   }
 
-  private getPlayerVector(context: AutoPlayerContext): Phaser.Math.Vector2 {
-    return new Phaser.Math.Vector2(context.playerPosition.x, context.playerPosition.y);
+  private getPlayerVector(context: AutoPlayerContext): Vector2 {
+    return new Vector2(context.playerPosition.x, context.playerPosition.y);
   }
 
   private updateTargetStability(target: AutoTarget | undefined, reason: string): void {
@@ -6134,7 +6136,7 @@ export class AutoPlayer {
     }
   }
 
-  private updateBreakoutStability(reason: string, direction: Phaser.Math.Vector2): void {
+  private updateBreakoutStability(reason: string, direction: Vector2): void {
     if (reason !== 'breakout') {
       return;
     }
@@ -6143,7 +6145,7 @@ export class AutoPlayer {
     this.stickyBreakoutFrames = AUTO_PLAYER_CONSTANTS.BREAKOUT_STICKY_FRAMES;
   }
 
-  private updateKiteStability(kite: KiteInfo, reason: string, direction: Phaser.Math.Vector2): void {
+  private updateKiteStability(kite: KiteInfo, reason: string, direction: Vector2): void {
     if (!kite.active) {
       return;
     }

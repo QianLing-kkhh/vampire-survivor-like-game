@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 
 import { HitResult } from '../../combat/HitResult';
-import { Enemy, EnemyStats } from '../Enemy';
+import type { EnemyStats } from '../../core/domain/EnemyTypes';
+import { Enemy } from '../Enemy';
 
 import { EnemyModifierType } from './EnemyModifierConfig';
 

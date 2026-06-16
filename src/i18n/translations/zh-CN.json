@@ -142,9 +142,17 @@
       "name": "遗迹之门",
       "description": "断墙与传送门构成的遗迹关卡。"
     },
+    "cursedCathedral": {
+      "name": "诅咒大教堂",
+      "description": "拥有墙体、烛光、传送门和回血祭坛的高精细大教堂关卡。"
+    },
     "builtIn": "Built-In",
     "custom": "Custom",
-    "warningsCount": "{count} warnings"
+    "warningsCount": "{count} warnings",
+    "sunkenLibrary": {
+      "name": "沉没图书馆",
+      "description": "被水淹没的档案馆关卡，包含书架、墨池、奥术灯、传送门和治疗祭坛。"
+    }
   },
   "map": {
     "graveyard": {
@@ -155,6 +163,12 @@
     },
     "ruinedGate": {
       "name": "遗迹之门"
+    },
+    "cursedCathedral": {
+      "name": "诅咒大教堂"
+    },
+    "sunkenLibrary": {
+      "name": "沉没图书馆"
     }
   },
   "stageSelection": {
@@ -187,7 +201,13 @@
     "invalid": "自定义关卡无效",
     "errors": "错误",
     "warnings": "警告",
-    "storedStages": "已保存的自定义关卡"
+    "storedStages": "已保存的自定义关卡",
+    "id": "ID",
+    "name": "名称",
+    "finalBoss": "最终 Boss",
+    "endless": "无尽",
+    "status": "状态",
+    "notValidated": "未校验"
   },
   "pause": {
     "title": "已暂停",
@@ -265,8 +285,31 @@
     "relics": "Relics",
     "seed": "Seed",
     "settings": "Settings",
-    "skills": "Skills",
-    "stage": "Stage"
+    "skills": "技能",
+    "stage": "关卡",
+    "mode": "模式",
+    "edits": "编辑",
+    "final": "最终",
+    "base": "基础",
+    "strategy": "策略",
+    "pace": "节奏",
+    "choices": "选择",
+    "kpm": "击杀/分钟",
+    "expPerMinute": "经验/分钟",
+    "damagePerMinute": "伤害/分钟",
+    "upgrades": "升级",
+    "evolutions": "进化",
+    "chestsPerMinute": "宝箱/分钟",
+    "localLeaderboard": "本地排行榜",
+    "thisRunRank": "本局排名",
+    "kills": "击杀",
+    "control": {
+      "manual": "手动",
+      "liveAuto": "实时自动",
+      "fixedAuto": "固定自动",
+      "liveAutoStrategy": "实时自动策略",
+      "fixedAutoStrategy": "固定自动策略"
+    }
   },
   "help": {
     "tab": {
@@ -443,7 +486,7 @@
         },
         "altar": {
           "_label": "祭坛",
-          "description": "关卡配置可使用的特殊地标。"
+          "description": "站在范围内蓄力，可触发配置好的祭坛效果，例如恢复生命。"
         },
         "spawner": {
           "_label": "生成点",
@@ -636,6 +679,63 @@
       "loop": "绕圈"
     }
   },
+  "strategyEditor": {
+    "subtitle": "编辑自动策略配置",
+    "activeProfile": "当前策略：{name}（{id}，{type}）",
+    "route": "路线",
+    "action": {
+      "save": "保存",
+      "copy": "复制",
+      "delete": "删除",
+      "export": "导出",
+      "import": "导入",
+      "reset": "重置"
+    },
+    "section": {
+      "movement": "移动",
+      "upgrade": "升级",
+      "treasure": "宝箱",
+      "relic": "遗物"
+    },
+    "slider": {
+      "survival": "生存",
+      "farm": "经验",
+      "treasure": "宝箱",
+      "boss": "Boss",
+      "risk": "风险",
+      "loop": "绕圈",
+      "evolution": "进化",
+      "mainWeapon": "主武器",
+      "survivalUp": "生存升级",
+      "damageUp": "伤害升级",
+      "chestRisk": "宝箱风险",
+      "evoChest": "进化宝箱",
+      "relicSynergy": "遗物联动",
+      "damageRelic": "伤害遗物",
+      "survivalRelic": "生存遗物",
+      "economyRelic": "经济遗物"
+    },
+    "readonly": {
+      "builtin": "内置",
+      "custom": "自定义"
+    },
+    "prompt": {
+      "importJson": "粘贴自动策略 JSON"
+    },
+    "status": {
+      "saved": "已保存 {name}。",
+      "copied": "已复制为 {name}。",
+      "builtinDeleteBlocked": "内置策略不能删除。",
+      "deleted": "已删除 {name}。",
+      "clipboardCopied": "策略 JSON 已复制到剪贴板。",
+      "clipboardFailed": "剪贴板失败；JSON 已输出到控制台。",
+      "jsonLogged": "策略 JSON 已输出到控制台。",
+      "imported": "已导入 {name}。",
+      "importFailed": "导入失败：策略 JSON 无效。",
+      "editBuiltin": "编辑内置策略时会保存为自定义副本。",
+      "editCustom": "编辑自定义策略时，保存会覆盖当前策略。"
+    }
+  },
   "records": {
     "title": "记录",
     "achievements": "成就",
@@ -656,7 +756,20 @@
     "empty": "暂无回放",
     "compatible": "兼容",
     "warning": "警告",
-    "invalid": "无效"
+    "invalid": "无效",
+    "status": "状态",
+    "version": "回放",
+    "game": "游戏",
+    "content": "内容",
+    "seed": "种子",
+    "character": "角色",
+    "stage": "关卡",
+    "map": "地图",
+    "result": "结果",
+    "survival": "生存",
+    "events": "事件",
+    "inputs": "输入",
+    "compatibility": "兼容性"
   },
   "dailyChallenge": {
     "title": "每日挑战",
@@ -667,7 +780,19 @@
     "copySeed": "复制种子",
     "rules": "规则",
     "mode": "模式",
-    "noChallenge": "暂无挑战"
+    "date": "日期",
+    "character": "角色",
+    "stage": "关卡",
+    "map": "地图",
+    "difficulty": "难度",
+    "normal": "普通",
+    "endless": "无尽",
+    "none": "无",
+    "noChallenge": "暂无挑战",
+    "challengeId": "挑战",
+    "ruleset": "规则集",
+    "leaderboard": "榜单",
+    "status": "状态"
   },
   "developer": {
     "title": "开发者菜单",
@@ -888,5 +1013,85 @@
   "game": {
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."
-  }
+  },
+  "character.arcanist.name": "秘法师",
+  "character.arcanist.description": "以独特的秘法武器路线开局。",
+  "unlock.character.arcanist.name": "秘法师",
+  "character.ranger.name": "游侠",
+  "character.ranger.description": "以独特的游侠武器路线开局。",
+  "unlock.character.ranger.name": "游侠",
+  "character.engineer.name": "工程师",
+  "character.engineer.description": "以独特的工程武器路线开局。",
+  "unlock.character.engineer.name": "工程师",
+  "character.necromancer.name": "死灵法师",
+  "character.necromancer.description": "以独特的死灵武器路线开局。",
+  "unlock.character.necromancer.name": "死灵法师",
+  "character.monk.name": "武僧",
+  "character.monk.description": "以独特的武僧武器路线开局。",
+  "unlock.character.monk.name": "武僧",
+  "character.alchemist.name": "炼金术士",
+  "character.alchemist.description": "以独特的炼金武器路线开局。",
+  "unlock.character.alchemist.name": "炼金术士",
+  "character.duelist.name": "决斗者",
+  "character.duelist.description": "以独特的决斗武器路线开局。",
+  "unlock.character.duelist.name": "决斗者",
+  "character.geomancer.name": "地脉术士",
+  "character.geomancer.description": "以独特的地脉武器路线开局。",
+  "unlock.character.geomancer.name": "地脉术士",
+  "character.stormcaller.name": "风暴召唤者",
+  "character.stormcaller.description": "以独特的风暴武器路线开局。",
+  "unlock.character.stormcaller.name": "风暴召唤者",
+  "character.sentinel.name": "哨卫",
+  "character.sentinel.description": "以独特的守卫武器路线开局。",
+  "unlock.character.sentinel.name": "哨卫",
+  "stage.crystalCaverns.name": "水晶洞窟",
+  "stage.crystalCaverns.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.crystal_caverns_stage.name": "水晶洞窟",
+  "stage.ashFoundry.name": "灰烬铸炉",
+  "stage.ashFoundry.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.ash_foundry_stage.name": "灰烬铸炉",
+  "stage.moonlitRooftops.name": "月光屋顶",
+  "stage.moonlitRooftops.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.moonlit_rooftops_stage.name": "月光屋顶",
+  "stage.frostMonastery.name": "霜寒修道院",
+  "stage.frostMonastery.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.frost_monastery_stage.name": "霜寒修道院",
+  "stage.bloodGarden.name": "血色花园",
+  "stage.bloodGarden.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.blood_garden_stage.name": "血色花园",
+  "stage.desertObelisk.name": "沙漠方尖碑",
+  "stage.desertObelisk.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.desert_obelisk_stage.name": "沙漠方尖碑",
+  "stage.stormCoast.name": "风暴海岸",
+  "stage.stormCoast.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.storm_coast_stage.name": "风暴海岸",
+  "stage.clockworkBastion.name": "发条堡垒",
+  "stage.clockworkBastion.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.clockwork_bastion_stage.name": "发条堡垒",
+  "stage.fungalDepths.name": "真菌深处",
+  "stage.fungalDepths.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.fungal_depths_stage.name": "真菌深处",
+  "stage.mirrorLabyrinth.name": "镜像迷宫",
+  "stage.mirrorLabyrinth.description": "具有独特地形和地图机制的进阶关卡。",
+  "unlock.stage.mirror_labyrinth_stage.name": "镜像迷宫",
+  "map.crystalCaverns.name": "水晶洞窟",
+  "unlock.map.crystal_caverns_map.name": "水晶洞窟",
+  "map.ashFoundry.name": "灰烬铸炉",
+  "unlock.map.ash_foundry_map.name": "灰烬铸炉",
+  "map.moonlitRooftops.name": "月光屋顶",
+  "unlock.map.moonlit_rooftops_map.name": "月光屋顶",
+  "map.frostMonastery.name": "霜寒修道院",
+  "unlock.map.frost_monastery_map.name": "霜寒修道院",
+  "map.bloodGarden.name": "血色花园",
+  "unlock.map.blood_garden_map.name": "血色花园",
+  "map.desertObelisk.name": "沙漠方尖碑",
+  "unlock.map.desert_obelisk_map.name": "沙漠方尖碑",
+  "map.stormCoast.name": "风暴海岸",
+  "unlock.map.storm_coast_map.name": "风暴海岸",
+  "map.clockworkBastion.name": "发条堡垒",
+  "unlock.map.clockwork_bastion_map.name": "发条堡垒",
+  "map.fungalDepths.name": "真菌深处",
+  "unlock.map.fungal_depths_map.name": "真菌深处",
+  "map.mirrorLabyrinth.name": "镜像迷宫",
+  "unlock.map.mirror_labyrinth_map.name": "镜像迷宫"
 }

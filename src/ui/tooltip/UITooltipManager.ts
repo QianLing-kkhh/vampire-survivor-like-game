@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 
 import { UITheme } from '../UITheme';
+import { PanelFrame } from '../components/PanelFrame';
+import { UITextBlock } from '../components/UITextBlock';
 import { IconTooltipContentResolver } from './IconTooltipContentResolver';
 import { IconTooltipData, ResolvedIconTooltip } from './IconTooltipTypes';
 
@@ -116,33 +118,53 @@ export class UITooltipManager {
   }
 
   private createTooltip(content: ResolvedIconTooltip): Phaser.GameObjects.Container {
-    const maxWidth = Math.min(320, Math.max(220, this.scene.scale.width - 32));
-    const title = this.scene.add.text(0, 0, content.title, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '15px',
+    const compact = this.scene.scale.width <= 900 || this.scene.scale.height <= 560;
+    const tiny = this.scene.scale.width <= 430 || this.scene.scale.height <= 390;
+    const paddingX = tiny ? 9 : compact ? 10 : 12;
+    const paddingY = tiny ? 8 : compact ? 9 : 10;
+    const gap = tiny ? 4 : compact ? 5 : 7;
+    const maxWidth = Math.min(
+      tiny ? 210 : compact ? 250 : 300,
+      Math.max(tiny ? 150 : compact ? 180 : 210, this.scene.scale.width - 24),
+    );
+    const wrapWidth = maxWidth - paddingX * 2;
+    const title = new UITextBlock(this.scene, {
+      x: 0,
+      y: 0,
+      text: content.title,
+      width: wrapWidth,
+      fontSize: tiny ? '12px' : compact ? '13px' : '14px',
       fontStyle: 'bold',
-      wordWrap: { width: maxWidth - 28 },
-    });
-    const description = this.scene.add.text(0, title.height + 8, content.description, {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '13px',
-      lineSpacing: 3,
-      wordWrap: { width: maxWidth - 28 },
-    });
-    const width = Math.min(maxWidth, Math.max(title.width, description.width) + 28);
-    const height = title.height + description.height + 30;
+      align: 'left',
+    }).text;
+    title.setMaxLines(tiny ? 1 : 2);
+    const description = new UITextBlock(this.scene, {
+      x: 0,
+      y: title.height + gap,
+      text: content.description,
+      width: wrapWidth,
+      fontSize: tiny ? '10px' : compact ? '11px' : '12px',
+      tone: 'muted',
+      lineSpacing: tiny ? 1 : 2,
+      align: 'left',
+    }).text;
+    description.setMaxLines(tiny ? 3 : compact ? 4 : 5);
+    const width = Math.min(maxWidth, Math.max(title.width, description.width) + paddingX * 2);
+    const maxHeight = Math.max(72, this.scene.scale.height * (tiny ? 0.28 : compact ? 0.32 : 0.38));
+    const height = Math.min(maxHeight, title.height + description.height + paddingY * 2 + gap);
     const container = this.scene.add.container(0, 0);
-    const bg = this.scene.add.graphics();
+    const frame = PanelFrame.create(this.scene, {
+      x: width / 2,
+      y: height / 2,
+      width,
+      height,
+      variant: 'tooltip',
+      alpha: UITheme.alpha.tooltip,
+    });
 
-    bg.fillStyle(UITheme.panelBgColor, UITheme.alpha.tooltip);
-    bg.fillRoundedRect(0, 0, width, height, UITheme.radius.panel);
-    bg.lineStyle(1, UITheme.colors.borderBright, 0.9);
-    bg.strokeRoundedRect(0, 0, width, height, UITheme.radius.panel);
-    title.setPosition(14, 12);
-    description.setPosition(14, title.height + 20);
-    container.add([bg, title, description]);
+    title.setPosition(paddingX, paddingY);
+    description.setPosition(paddingX, paddingY + title.height + gap);
+    container.add([frame, title, description]);
     container.setDepth(UITheme.depth.top + 20);
     container.setScrollFactor(0);
     return container;
@@ -154,18 +176,20 @@ export class UITooltipManager {
     }
 
     const bounds = this.container.getBounds();
-    const margin = 12;
+    const compact = this.scene.scale.width <= 900 || this.scene.scale.height <= 560;
+    const margin = compact ? 8 : 12;
+    const offset = compact ? 10 : 16;
     const width = bounds.width;
     const height = bounds.height;
-    let x = pointerX + 18;
-    let y = pointerY + 18;
+    let x = pointerX + offset;
+    let y = pointerY + offset;
 
     if (x + width + margin > this.scene.scale.width) {
-      x = pointerX - width - 18;
+      x = pointerX - width - offset;
     }
 
     if (y + height + margin > this.scene.scale.height) {
-      y = pointerY - height - 18;
+      y = pointerY - height - offset;
     }
 
     this.container.setPosition(

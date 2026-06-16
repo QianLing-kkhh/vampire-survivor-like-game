@@ -1,17 +1,17 @@
-import Phaser from 'phaser';
+import type { Vector2 } from '../core/domain/Vector2';
 
 export interface AutoTarget {
   id: string;
   type: 'pickup' | 'treasure';
-  position: Phaser.Math.Vector2;
-  approachPosition: Phaser.Math.Vector2;
+  position: Vector2;
+  approachPosition: Vector2;
   value: number;
   effectiveDistance: number;
   blocked: boolean;
 }
 
 export interface Candidate {
-  direction: Phaser.Math.Vector2;
+  direction: Vector2;
   reason: string;
 }
 
@@ -33,8 +33,8 @@ export type StrategicPathStyle =
 
 export interface StrategicMoveIntent {
   mode: MoveMode;
-  targetDirection: Phaser.Math.Vector2;
-  targetPosition?: Phaser.Math.Vector2;
+  targetDirection: Vector2;
+  targetPosition?: Vector2;
   preferredPathStyle: StrategicPathStyle;
   strategicLookaheadSeconds: number;
   desiredOrbitRadius: number;
@@ -46,7 +46,7 @@ export interface StrategicMoveIntent {
 
 export interface TacticalRoute {
   id: string;
-  waypoints: Phaser.Math.Vector2[];
+  waypoints: Vector2[];
   currentWaypointIndex: number;
   threatRank: number;
   rawThreat: number;
@@ -63,7 +63,7 @@ export interface TacticalRoute {
 
 export interface CandidateRoute {
   id: string;
-  waypoints: Phaser.Math.Vector2[];
+  waypoints: Vector2[];
   rawThreat: number;
   threatRank: number;
   rewardScore: number;
@@ -76,7 +76,7 @@ export interface CandidateRoute {
 }
 
 export interface MicroMoveResult {
-  direction: Phaser.Math.Vector2;
+  direction: Vector2;
   reason:
     | 'FOLLOW_ROUTE'
     | 'AVOID_CLOSE_ENEMY'

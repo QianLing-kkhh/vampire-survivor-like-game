@@ -1,5 +1,4 @@
-import Phaser from 'phaser';
-
+import { Math2D } from '../../core/domain/Math2D';
 import type { MovementStrategyConfig } from '../profile/AutoStrategyProfile';
 import type { StrategyScoreWeights } from '../engine/AutoStrategyDecision';
 import type { StrategicMoveIntent } from '../../auto/AutoPlayerMovementTypes';
@@ -9,7 +8,7 @@ import type { StrategicLayerInput } from './AutoMoveLayerTypes';
 
 export class StrategicLayer {
   evaluate(input: StrategicLayerInput): StrategicMoveIntent {
-    const remainingMs = input.intentRemainingMs - Phaser.Math.Clamp(input.context.deltaMs ?? 16, 0, 120);
+    const remainingMs = input.intentRemainingMs - Math2D.clamp(input.context.deltaMs ?? 16, 0, 120);
 
     if (
       input.currentIntent

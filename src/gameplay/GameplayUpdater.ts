@@ -41,9 +41,10 @@ export class GameplayUpdater {
     context.passiveManager.update(effectiveDelta, context.playerHealth);
     context.relicManager.update(effectiveDelta);
     context.mapMechanicRuntime.update(effectiveDelta);
+    const playerPosition = context.player.getPositionLike();
     const playerSlowState = context.mapMechanicRuntime.getPlayerSlowState(
-      context.player.body.x,
-      context.player.body.y,
+      playerPosition.x,
+      playerPosition.y,
     );
     const mapMoveSpeedMultiplier = playerSlowState.multiplier;
     context.player.setMapMoveSpeedMultiplier(
@@ -59,8 +60,8 @@ export class GameplayUpdater {
 
     if (playerSlowAcquired) {
       context.floatingTextManager.showMoveSpeedDown(
-        context.player.body.x,
-        context.player.body.y,
+        playerPosition.x,
+        playerPosition.y,
       );
     }
 
@@ -123,8 +124,16 @@ export class GameplayUpdater {
     const effectivePickupRange = context.playerPickupRange
       * context.characterRuntime.getPickupRangeMultiplier();
 
-    context.pickupManager.update(context.player.body, effectivePickupRange, effectiveDelta);
-    context.treasureManager.update(context.player.body, effectivePickupRange, effectiveDelta);
+    context.pickupManager.update({
+      player: context.player,
+      pickupRange: effectivePickupRange,
+      deltaMs: effectiveDelta,
+    });
+    context.treasureManager.update({
+      player: context.player,
+      pickupRange: effectivePickupRange,
+      deltaMs: effectiveDelta,
+    });
     context.floatingTextManager.update(effectiveDelta);
     this.runtimeDiagnosticsCollector.updatePerformanceCounts(context, options.deltaMs, configuredTimeScale);
     callbacks.emitHUDState();

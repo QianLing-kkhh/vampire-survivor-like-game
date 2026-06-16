@@ -5,6 +5,7 @@ import { Enemy } from '../enemy/Enemy';
 import { VisualScale } from '../visual/VisualScale';
 
 import { Weapon, WeaponConfig, WeaponUpdateContext } from './Weapon';
+import { OrbitPositionCalculator } from './OrbitPositionCalculator';
 import { OrbitBehaviorConfig } from './behavior/WeaponBehaviorConfig';
 
 type OrbitProjectileBody = Phaser.GameObjects.GameObject & {
@@ -32,6 +33,7 @@ export class OrbitWeapon extends Weapon {
   private orbitSpeedDegreesPerSecond: number;
   private orbitProjectileCount: number;
   private readonly hitRadius: number;
+  private readonly positionCalculator = new OrbitPositionCalculator();
   private orbitRadiusElapsedMs = 0;
 
   constructor(scene: Phaser.Scene, id: string, config: WeaponConfig) {
@@ -98,15 +100,20 @@ export class OrbitWeapon extends Weapon {
     }
 
     const currentRadiusPixels = this.currentRadiusPixels;
+    const playerPosition = context.player.getPositionLike();
 
     for (let index = 0; index < this.orbitCount; index += 1) {
       const angleDeg = (360 / this.orbitCount) * index;
-      const angleRad = Phaser.Math.DegToRad(angleDeg);
+      const projectilePosition = this.positionCalculator.getPosition({
+        center: playerPosition,
+        angleDeg,
+        radiusPixels: currentRadiusPixels,
+      });
 
       this.projectiles.push({
         body: this.createProjectileBody(
-          context.player.x + Math.cos(angleRad) * currentRadiusPixels,
-          context.player.y + Math.sin(angleRad) * currentRadiusPixels,
+          projectilePosition.x,
+          projectilePosition.y,
         ),
         angleDeg,
       });
@@ -131,19 +138,26 @@ export class OrbitWeapon extends Weapon {
 
     this.orbitRadiusElapsedMs += Math.max(0, context.deltaMs);
     const currentRadiusPixels = this.currentRadiusPixels;
+    const playerPosition = context.player.getPositionLike();
 
     for (const projectile of this.projectiles) {
       projectile.angleDeg += this.orbitSpeedDegreesPerSecond * deltaSeconds;
 
-      const angleRad = Phaser.Math.DegToRad(projectile.angleDeg);
-      projectile.body.x = context.player.x + Math.cos(angleRad) * currentRadiusPixels;
-      projectile.body.y = context.player.y + Math.sin(angleRad) * currentRadiusPixels;
+      const projectilePosition = this.positionCalculator.getPosition({
+        center: playerPosition,
+        angleDeg: projectile.angleDeg,
+        radiusPixels: currentRadiusPixels,
+      });
+      projectile.body.x = projectilePosition.x;
+      projectile.body.y = projectilePosition.y;
       projectile.body.rotation = (projectile.body.rotation ?? 0)
         + deltaSeconds * OrbitWeapon.PROJECTILE_ROTATION_RADIANS_PER_SECOND;
     }
   }
 
   private checkHits(context: WeaponUpdateContext): void {
+    const playerPosition = context.player.getPositionLike();
+
     for (const enemy of context.enemies) {
       if (enemy.isDead || this.hitCooldowns.has(enemy)) {
         continue;
@@ -159,8 +173,8 @@ export class OrbitWeapon extends Weapon {
       this.applyWeaponKnockback(
         enemy,
         new Phaser.Math.Vector2(
-          enemy.body.x - context.player.x,
-          enemy.body.y - context.player.y,
+          enemy.body.x - playerPosition.x,
+          enemy.body.y - playerPosition.y,
         ),
         Phaser.Math.DegToRad(this.orbitSpeedDegreesPerSecond) * this.currentRadiusPixels,
       );
@@ -219,21 +233,10 @@ export class OrbitWeapon extends Weapon {
   }
 
   private getCurrentRadiusScale(): number {
-    const behavior = this.getOrbitBehavior();
-    const minScale = Math.max(0, behavior?.radiusScaleMin ?? 1);
-    const maxScale = Math.max(minScale, behavior?.radiusScaleMax ?? minScale);
-    const cycleMs = Math.max(0, behavior?.radiusCycleMs ?? 0);
-
-    if (cycleMs <= 0 || maxScale === minScale) {
-      return minScale;
-    }
-
-    const cycleProgress = (this.orbitRadiusElapsedMs % cycleMs) / cycleMs;
-    const triangleProgress = cycleProgress < 0.5
-      ? cycleProgress * 2
-      : (1 - cycleProgress) * 2;
-
-    return minScale + (maxScale - minScale) * triangleProgress;
+    return this.positionCalculator.getRadiusScale({
+      elapsedMs: this.orbitRadiusElapsedMs,
+      behavior: this.getOrbitBehavior(),
+    });
   }
 
   private getOrbitBehavior(): OrbitBehaviorConfig | undefined {
@@ -243,8 +246,9 @@ export class OrbitWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): OrbitProjectileBody {
-    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
-    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const visualTier = this.getVisualTierInput();
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id, visualTier);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id, visualTier);
     const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
     if (textureKey && animationKey) {

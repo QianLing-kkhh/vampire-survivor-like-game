@@ -26,22 +26,30 @@ const ENEMY_TEXTURE_KEYS: Record<string, readonly string[]> = {
   slime: ['art_enemies_slime_walk_sheet', 'slime'],
   bat: ['art_enemies_bat_fly_sheet', 'bat'],
   golem: ['art_enemies_golem_walk_sheet', 'golem'],
-  slime_boss: ['slime_boss', 'art_enemies_slime_boss_placeholder'],
-  bat_boss: ['bat_boss', 'art_enemies_bat_boss_placeholder'],
-  golem_boss: ['golem_boss', 'art_enemies_golem_boss_placeholder'],
+  slime_boss: ['art_enemies_slime_boss_idle_sheet', 'art_enemies_slime_boss_placeholder'],
+  bat_boss: ['art_enemies_bat_boss_idle_sheet', 'art_enemies_bat_boss_placeholder'],
+  golem_boss: ['art_enemies_golem_boss_idle_sheet', 'art_enemies_golem_boss_placeholder'],
   boss: ['art_enemies_boss_lava_beast_idle_sheet', 'boss_lava_beast', 'boss'],
-  endless_berserker: ['bat_boss', 'art_enemies_bat_boss_placeholder'],
-  endless_summoner: ['slime_boss', 'art_enemies_slime_boss_placeholder'],
-  endless_freezer: ['golem_boss', 'art_enemies_golem_boss_placeholder'],
-  endless_sniper: ['bat_boss', 'art_enemies_bat_boss_placeholder'],
-  endless_tanker: ['golem_boss', 'art_enemies_golem_boss_placeholder'],
+  endless_berserker: ['art_enemies_endless_berserker_idle_sheet', 'art_enemies_bat_boss_idle_sheet', 'art_enemies_bat_boss_placeholder'],
+  endless_summoner: ['art_enemies_endless_summoner_idle_sheet', 'art_enemies_slime_boss_idle_sheet', 'art_enemies_slime_boss_placeholder'],
+  endless_freezer: ['art_enemies_endless_freezer_idle_sheet', 'art_enemies_golem_boss_idle_sheet', 'art_enemies_golem_boss_placeholder'],
+  endless_sniper: ['art_enemies_endless_sniper_idle_sheet', 'art_enemies_bat_boss_idle_sheet', 'art_enemies_bat_boss_placeholder'],
+  endless_tanker: ['art_enemies_endless_tanker_idle_sheet', 'art_enemies_golem_boss_idle_sheet', 'art_enemies_golem_boss_placeholder'],
 };
 
 const ENEMY_ANIMATION_KEYS: Record<string, readonly string[]> = {
   slime: ['art_slime_walk'],
   bat: ['art_bat_fly'],
   golem: ['art_golem_walk'],
+  slime_boss: ['art_enemies_slime_boss_idle_sheet_anim'],
+  bat_boss: ['art_enemies_bat_boss_idle_sheet_anim'],
+  golem_boss: ['art_enemies_golem_boss_idle_sheet_anim'],
   boss: ['art_boss_lava_beast_idle'],
+  endless_berserker: ['art_enemies_endless_berserker_idle_sheet_anim'],
+  endless_summoner: ['art_enemies_endless_summoner_idle_sheet_anim'],
+  endless_freezer: ['art_enemies_endless_freezer_idle_sheet_anim'],
+  endless_sniper: ['art_enemies_endless_sniper_idle_sheet_anim'],
+  endless_tanker: ['art_enemies_endless_tanker_idle_sheet_anim'],
 };
 
 const WEAPON_TEXTURE_KEYS: Record<string, readonly string[]> = {
@@ -87,20 +95,30 @@ const MAP_MECHANIC_VISUAL_TEXTURE_KEYS: Record<MapMechanicVisualKind, readonly s
   river: ['art_map_mechanics_river_tile', 'art_map_mechanics_river_bank', 'art_map_mechanics_river_ripple'],
   swamp: ['art_map_mechanics_swamp_pool', 'art_map_mechanics_swamp_bubble'],
   mud: ['art_map_mechanics_mud_patch', 'art_map_mechanics_mud_spot'],
+  ink: ['art_map_mechanics_ink_pool', 'art_map_mechanics_ink_spot', 'art_map_mechanics_mud_patch'],
   portalBlue: ['art_map_mechanics_portal_blue'],
   portalPurple: ['art_map_mechanics_portal_purple'],
   portalGreen: ['art_map_mechanics_portal_green'],
+  portalGold: ['art_map_mechanics_portal_gold'],
   lightLamp: ['art_map_mechanics_light_lamp'],
   lightTorch: ['art_map_mechanics_light_torch'],
   lightCrystal: ['art_map_mechanics_light_crystal'],
+  lightCandle: ['art_map_mechanics_light_cathedral_candle'],
+  lightArcaneLamp: ['art_map_mechanics_light_arcane_lamp', 'art_map_mechanics_light_crystal'],
   obstacleTree: ['art_map_mechanics_obstacle_tree'],
   obstacleRock: ['art_map_mechanics_obstacle_rock'],
   obstacleGrave: ['art_map_mechanics_obstacle_grave'],
   obstacleWall: ['art_map_mechanics_obstacle_wall'],
+  obstacleCathedralWall: ['art_map_mechanics_obstacle_cathedral_wall'],
+  obstacleCathedralPillar: ['art_map_mechanics_obstacle_cathedral_pillar'],
+  obstacleBookshelf: ['art_map_mechanics_obstacle_bookshelf', 'art_map_mechanics_obstacle_wall'],
+  obstacleArchivePillar: ['art_map_mechanics_obstacle_archive_pillar', 'art_map_mechanics_obstacle_wall'],
   hazardSpike: ['art_map_mechanics_hazard_spike'],
   hazardFire: ['art_map_mechanics_hazard_fire'],
   hazardPoison: ['art_map_mechanics_hazard_poison'],
   altar: ['art_map_mechanics_altar_basic'],
+  altarCathedral: ['art_map_mechanics_altar_cathedral'],
+  altarLibrary: ['art_map_mechanics_altar_library', 'art_map_mechanics_altar_cathedral', 'art_map_mechanics_altar_basic'],
   spawner: ['art_map_mechanics_spawner_nest'],
 };
 
@@ -108,13 +126,16 @@ const MAP_MECHANIC_MINIMAP_TEXTURE_KEYS: Record<MapMechanicIconKind, readonly st
   river: ['art_map_mechanics_river_minimap'],
   swamp: ['art_map_mechanics_swamp_minimap'],
   mud: ['art_map_mechanics_mud_minimap'],
+  ink: ['art_map_mechanics_ink_minimap', 'art_map_mechanics_mud_minimap'],
   portalBlue: ['art_map_mechanics_portal_minimap_blue'],
   portalPurple: ['art_map_mechanics_portal_minimap_purple'],
   portalGreen: ['art_map_mechanics_portal_minimap_green'],
+  portalGold: ['art_map_mechanics_portal_minimap_gold'],
   light: ['art_map_mechanics_light_minimap'],
   obstacle: ['art_map_mechanics_obstacle_minimap'],
   hazard: ['art_map_mechanics_hazard_minimap'],
-  altar: ['art_map_mechanics_altar_minimap'],
+  altar: ['art_map_mechanics_altar_cathedral_minimap', 'art_map_mechanics_altar_minimap'],
+  altarLibrary: ['art_map_mechanics_altar_library_minimap', 'art_map_mechanics_altar_minimap'],
   spawner: ['art_map_mechanics_spawner_minimap'],
 };
 
@@ -123,6 +144,19 @@ const LANDMARK_TEXTURE_KEYS: Record<string, string> = {
   rock: 'art_world_rock_landmark',
   grave: 'art_world_grave_landmark',
 };
+
+const RELIC_TEXTURE_KEYS = [
+  'art_relics_blood_pact_icon',
+  'art_relics_void_compass_icon',
+  'art_relics_golden_scarab_icon',
+  'art_relics_thorn_crown_icon',
+  'art_relics_frozen_hourglass_icon',
+  'art_relics_berserker_charm_icon',
+  'art_relics_magnet_pearl_icon',
+  'art_relics_iron_shell_icon',
+  'art_relics_scholar_candle_icon',
+  'art_relics_rift_coin_icon',
+] as const;
 
 export function buildRunRequiredAssetKeys(input: RunRequiredAssetKeyInput): RunRequiredAssetKeys {
   const result: RunRequiredAssetKeys = {
@@ -148,6 +182,7 @@ export function buildRunRequiredAssetKeys(input: RunRequiredAssetKeyInput): RunR
     'art_pickups_treasure_chest',
     'art_effects_hit_flash_sheet',
     'art_effects_level_up_glow_sheet',
+    ...RELIC_TEXTURE_KEYS,
   ]);
   add(result.animations, [
     'art_player_walk',
@@ -173,7 +208,9 @@ export function buildRunRequiredAssetKeys(input: RunRequiredAssetKeyInput): RunR
 
   if (input.startingWeaponId) {
     add(result.textures, WEAPON_TEXTURE_KEYS[input.startingWeaponId] ?? []);
+    add(result.textures, getTieredWeaponTextureKeys(input.startingWeaponId));
     add(result.animations, WEAPON_ANIMATION_KEYS[input.startingWeaponId] ?? []);
+    add(result.animations, getTieredWeaponAnimationKeys(input.startingWeaponId));
   }
 
   if (input.groundTileKey) {
@@ -271,4 +308,17 @@ function getPlayerSkillTextureKeys(skinId: string): string[] {
     default:
       return [];
   }
+}
+
+function getTieredWeaponTextureKeys(weaponId: string): string[] {
+  return [1, 2, 3].flatMap((tier) => [
+    `art_weapons_${weaponId}_icon_tier${tier}`,
+    `art_weapons_${weaponId}_projectile_tier${tier}_sheet`,
+  ]);
+}
+
+function getTieredWeaponAnimationKeys(weaponId: string): string[] {
+  return [1, 2, 3].map((tier) => (
+    `art_weapons_${weaponId}_projectile_tier${tier}_sheet_anim`
+  ));
 }

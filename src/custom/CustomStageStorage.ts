@@ -1,9 +1,13 @@
+import { LocalStorageAdapter } from '../save/storage/LocalStorageAdapter';
+import { MemoryStorageAdapter } from '../save/storage/MemoryStorageAdapter';
+
 import { CustomStagePackage } from './CustomStageSchema';
 import { CustomStageSerializer } from './CustomStageSerializer';
 import { CustomStageValidator } from './CustomStageValidator';
 
 export class CustomStageStorage {
   private static readonly STORAGE_KEY = 'vampire_survivor_like_custom_stages_v1';
+  private readonly storage = new LocalStorageAdapter(new MemoryStorageAdapter());
   private memoryPackages: CustomStagePackage[] = [];
 
   list(): CustomStagePackage[] {
@@ -41,17 +45,12 @@ export class CustomStageStorage {
 
   clear(): void {
     this.memoryPackages = [];
-
-    try {
-      globalThis.localStorage?.removeItem(CustomStageStorage.STORAGE_KEY);
-    } catch {
-      // Memory fallback already cleared.
-    }
+    this.storage.removeItem(CustomStageStorage.STORAGE_KEY);
   }
 
   private loadPackages(): CustomStagePackage[] {
     try {
-      const rawValue = globalThis.localStorage?.getItem(CustomStageStorage.STORAGE_KEY);
+      const rawValue = this.storage.getItem(CustomStageStorage.STORAGE_KEY);
 
       if (!rawValue) {
         return this.memoryPackages;
@@ -76,14 +75,10 @@ export class CustomStageStorage {
       CustomStageSerializer.clone(stagePackage)
     ));
 
-    try {
-      globalThis.localStorage?.setItem(
-        CustomStageStorage.STORAGE_KEY,
-        JSON.stringify(this.memoryPackages),
-      );
-    } catch {
-      // Keep memory fallback when localStorage is unavailable.
-    }
+    this.storage.setItem(
+      CustomStageStorage.STORAGE_KEY,
+      JSON.stringify(this.memoryPackages),
+    );
   }
 
   private safeClone(stagePackage: CustomStagePackage): CustomStagePackage | null {

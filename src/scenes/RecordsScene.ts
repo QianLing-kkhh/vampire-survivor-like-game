@@ -4,21 +4,22 @@ import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { AchievementListPanel } from '../ui/AchievementListPanel';
+import { UIActionBar } from '../ui/components/UIActionBar';
+import { SceneHeader } from '../ui/components/SceneHeader';
+import { UITabBar } from '../ui/components/UITabBar';
 import { LeaderboardPanel } from '../ui/LeaderboardPanel';
 import { RecordsPanel } from '../ui/RecordsPanel';
-import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
 import { UnlocksPanel } from '../ui/UnlocksPanel';
 
 type RecordsTab = 'achievements' | 'leaderboards' | 'unlocks';
+type RecordsActionId = 'back';
 
 export class RecordsScene extends Phaser.Scene {
   private screenManager?: ScreenManager;
   private recordsPanel?: RecordsPanel;
-  private titleText?: Phaser.GameObjects.Text;
-  private achievementsButton?: Phaser.GameObjects.Text;
-  private leaderboardsButton?: Phaser.GameObjects.Text;
-  private unlocksButton?: Phaser.GameObjects.Text;
-  private backButton?: Phaser.GameObjects.Text;
+  private titleHeader?: SceneHeader;
+  private tabBar?: UITabBar<RecordsTab>;
+  private actionBar?: UIActionBar<RecordsActionId>;
   private activeTab: RecordsTab = 'achievements';
   private unsubscribeResize?: () => void;
 
@@ -30,31 +31,12 @@ export class RecordsScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#020617');
     this.screenManager = new ScreenManager(this);
 
-    this.titleText = this.add.text(
-      this.screenManager.centerX,
-      42,
-      I18n.t('records.title'),
-      {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.titleFontSize,
-        fontStyle: 'bold',
-      },
-    );
-    this.titleText.setOrigin(0.5);
-
-    this.achievementsButton = this.createButton(I18n.t('records.achievements'), () => {
-      this.setActiveTab('achievements');
+    this.titleHeader = new SceneHeader(this, {
+      title: I18n.t('records.title'),
     });
-    this.leaderboardsButton = this.createButton(I18n.t('records.leaderboards'), () => {
-      this.setActiveTab('leaderboards');
-    });
-    this.unlocksButton = this.createButton(I18n.t('records.unlocks'), () => {
-      this.setActiveTab('unlocks');
-    });
-    this.backButton = this.createButton(I18n.t('records.back'), () => {
-      this.scene.start('TitleScene');
-    });
+    this.actionBar = new UIActionBar<RecordsActionId>(this, [
+      { id: 'back', label: I18n.t('records.back'), onClick: () => this.scene.start('TitleScene') },
+    ]);
 
     this.createOrUpdatePanel();
     this.applyLayout();
@@ -67,71 +49,83 @@ export class RecordsScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
   }
 
-  private createButton(
-    label: string,
-    onClick: () => void,
-  ): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.scale.width, this.scale.height);
-    const button = this.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
-      },
-    });
-
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(toCssColor(
-        this.isActiveButton(button) ? UITheme.buttonHoverColor : UITheme.buttonBgColor,
-      ));
-    });
-    button.on('pointerdown', onClick);
-
-    return button;
-  }
-
   private applyLayout(): void {
     if (!this.screenManager) {
       return;
     }
 
     const fonts = LayoutConfig.getResponsiveFontSizes(this.screenManager);
-    this.titleText?.setPosition(this.screenManager.centerX, 38);
-    this.titleText?.setFontSize(fonts.title);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const safeMargin = tiny ? 10 : compact ? 14 : 18;
+    this.titleHeader?.setLayout(
+      this.screenManager.centerX,
+      tiny ? 24 : compact ? 30 : 38,
+      Math.min(this.screenManager.width - 24, 760),
+      { titleFontSize: fonts.title },
+    );
 
-    const buttons = [
-      this.achievementsButton,
-      this.leaderboardsButton,
-      this.unlocksButton,
-      this.backButton,
-    ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
-    const tabLayout = LayoutConfig.getButtonListLayout({
-      screen: this.screenManager,
-      count: buttons.length,
-      startY: this.screenManager.isPortrait() ? 98 : 92,
-      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
-      gap: this.screenManager.isPortrait() ? 42 : 44,
-    });
-
-    buttons.forEach((button, index) => {
-      const position = tabLayout.positions[index];
-      button.setFontSize(tabLayout.fontSize);
-      button.setFixedSize(tabLayout.width, tabLayout.height);
-      button.setPosition(position.x, position.y);
-    });
+    this.layoutTabs(compact, tiny, safeMargin);
+    this.layoutActionBar(compact, tiny, safeMargin);
 
     this.createOrUpdatePanel();
+  }
+
+  private layoutTabs(compact: boolean, tiny: boolean, safeMargin: number): void {
+    if (!this.screenManager) {
+      return;
+    }
+
+    this.tabBar?.destroy();
+    const tabWidth = Math.min(
+      tiny ? 104 : compact ? 126 : 148,
+      Math.max(82, (this.screenManager.width - safeMargin * 2 - 16) / (this.screenManager.isPortrait() ? 2 : 3)),
+    );
+    const tabHeight = tiny ? 28 : compact ? 30 : 34;
+    const tabAreaWidth = Math.min(this.screenManager.width - safeMargin * 2, this.screenManager.isPortrait() ? 330 : 520);
+    const tabY = this.screenManager.isPortrait() ? tiny ? 56 : compact ? 66 : 80 : compact ? 62 : 76;
+
+    this.tabBar = new UITabBar(this, {
+      x: this.screenManager.centerX,
+      y: tabY,
+      width: tabAreaWidth,
+      items: [
+        { id: 'achievements', label: I18n.t('records.achievements') },
+        { id: 'leaderboards', label: I18n.t('records.leaderboards') },
+        { id: 'unlocks', label: I18n.t('records.unlocks') },
+      ],
+      selectedId: this.activeTab,
+      tabWidth,
+      tabHeight,
+      gap: tiny ? 5 : 7,
+      onSelect: (id) => this.setActiveTab(id),
+    });
+  }
+
+  private layoutActionBar(compact: boolean, tiny: boolean, safeMargin: number): void {
+    if (!this.screenManager || !this.actionBar) {
+      return;
+    }
+
+    this.actionBar.layout(
+      this.screenManager,
+      {
+        x: safeMargin,
+        y: this.getActionAreaTop(tiny, compact, safeMargin),
+        width: this.screenManager.width - safeMargin * 2,
+        height: this.getActionAreaHeight(tiny, compact),
+      },
+      {
+        columns: 1,
+        compact,
+        minWidth: tiny ? 120 : 150,
+        maxWidth: tiny ? 150 : compact ? 180 : 220,
+        minHeight: tiny ? 26 : 30,
+        maxHeight: tiny ? 28 : compact ? 32 : 38,
+        fontSize: tiny ? '11px' : compact ? '12px' : '14px',
+      },
+    );
   }
 
   private createOrUpdatePanel(): void {
@@ -139,10 +133,19 @@ export class RecordsScene extends Phaser.Scene {
       return;
     }
 
-    const topOffset = this.screenManager.isPortrait() ? 282 : 170;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const tabBottom = (this.tabBar?.container.y ?? (compact ? 66 : 82)) + (this.tabBar?.height ?? 34);
+    const actionTop = this.getActionAreaTop(tiny, compact, tiny ? 10 : compact ? 14 : 18);
+    const topOffset = tabBottom + (tiny ? 10 : compact ? 12 : 16);
+    const maxPanelHeight = Math.min(
+      Math.max(160, actionTop - topOffset - (tiny ? 8 : 12)),
+      this.screenManager.height * (this.screenManager.isPortrait() ? tiny ? 0.66 : 0.68 : 0.72),
+    );
     const panelLayout = LayoutConfig.getPanelLayout(this.screenManager, {
       maxWidth: 760,
-      maxHeight: Math.max(220, this.screenManager.height - topOffset - 28),
+      maxHeight: maxPanelHeight,
       padding: 0,
     });
     const y = Math.max(topOffset, panelLayout.y);
@@ -189,28 +192,34 @@ export class RecordsScene extends Phaser.Scene {
   }
 
   private refreshButtonStyles(): void {
-    const pairs: Array<[RecordsTab, Phaser.GameObjects.Text | undefined]> = [
-      ['achievements', this.achievementsButton],
-      ['leaderboards', this.leaderboardsButton],
-      ['unlocks', this.unlocksButton],
-    ];
-
-    for (const [tab, button] of pairs) {
-      button?.setBackgroundColor(toCssColor(
-        tab === this.activeTab ? UITheme.buttonHoverColor : UITheme.buttonBgColor,
-      ));
-    }
+    this.tabBar?.setSelected(this.activeTab);
   }
 
-  private isActiveButton(button: Phaser.GameObjects.Text): boolean {
-    return (this.activeTab === 'achievements' && button === this.achievementsButton)
-      || (this.activeTab === 'leaderboards' && button === this.leaderboardsButton)
-      || (this.activeTab === 'unlocks' && button === this.unlocksButton);
+  private getActionAreaTop(tiny: boolean, compact: boolean, margin: number): number {
+    if (!this.screenManager) {
+      return 0;
+    }
+
+    return this.screenManager.height - margin - this.getActionAreaHeight(tiny, compact);
+  }
+
+  private getActionAreaHeight(tiny: boolean, compact: boolean): number {
+    if (this.screenManager?.isPortrait()) {
+      return tiny ? 34 : compact ? 38 : 44;
+    }
+
+    return tiny ? 30 : compact ? 36 : 42;
   }
 
   private cleanup(): void {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
+    this.titleHeader?.destroy();
+    this.titleHeader = undefined;
+    this.tabBar?.destroy();
+    this.tabBar = undefined;
+    this.actionBar?.destroy();
+    this.actionBar = undefined;
     this.recordsPanel?.destroy();
     this.recordsPanel = undefined;
     this.screenManager?.dispose();

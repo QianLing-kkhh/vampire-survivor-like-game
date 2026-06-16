@@ -16,6 +16,12 @@ import {
 import { ExternalArtRegistry } from './ExternalArtRegistry';
 import { getDefaultSkinId, resolvePlayerSkinId } from './AssetManifest';
 
+export type AssetVisualTierInput = {
+  level?: number;
+  maxLevel?: number;
+  evolved?: boolean;
+};
+
 export class AssetKeyResolver {
   static getTextureStatusKeys(): readonly string[] {
     return Array.from(new Set(TEXTURE_STATUS_KEYS));
@@ -200,8 +206,22 @@ export class AssetKeyResolver {
     return AssetKeyResolver.resolveAnimation(scene, entry.animation, `enemy.${enemyId}.animation`);
   }
 
-  static getWeaponProjectileTextureKey(scene: Phaser.Scene, weaponId: string): string | null {
+  static getWeaponProjectileTextureKey(
+    scene: Phaser.Scene,
+    weaponId: string,
+    visualTier?: AssetVisualTierInput,
+  ): string | null {
     const entry = AssetKeyResolver.getWeaponEntry(weaponId);
+    const tierTextureKey = AssetKeyResolver.getTieredKey(
+      scene,
+      `art_weapons_${weaponId}_projectile_tier`,
+      '_sheet',
+      visualTier,
+    );
+
+    if (tierTextureKey) {
+      return tierTextureKey;
+    }
 
     return entry?.projectileTexture
       ? AssetKeyResolver.resolveTexture(
@@ -212,8 +232,23 @@ export class AssetKeyResolver {
       : null;
   }
 
-  static getWeaponProjectileAnimationKey(scene: Phaser.Scene, weaponId: string): string | null {
+  static getWeaponProjectileAnimationKey(
+    scene: Phaser.Scene,
+    weaponId: string,
+    visualTier?: AssetVisualTierInput,
+  ): string | null {
     const entry = AssetKeyResolver.getWeaponEntry(weaponId);
+    const tierTextureKey = AssetKeyResolver.getTieredKey(
+      scene,
+      `art_weapons_${weaponId}_projectile_tier`,
+      '_sheet',
+      visualTier,
+    );
+    const tierAnimationKey = tierTextureKey ? `${tierTextureKey}_anim` : null;
+
+    if (AssetFallbacks.hasAnimation(scene, tierAnimationKey)) {
+      return tierAnimationKey;
+    }
 
     return entry?.projectileAnimation
       ? AssetKeyResolver.resolveAnimation(
@@ -224,7 +259,11 @@ export class AssetKeyResolver {
       : null;
   }
 
-  static getWeaponIconKey(scene: Phaser.Scene, weaponId: string): string | null {
+  static getWeaponIconKey(
+    scene: Phaser.Scene,
+    weaponId: string,
+    visualTier?: AssetVisualTierInput,
+  ): string | null {
     const entry = AssetKeyResolver.getWeaponEntry(weaponId);
     const externalIcon = ExternalArtRegistry.getWeaponIcon(weaponId);
 
@@ -232,15 +271,40 @@ export class AssetKeyResolver {
       return externalIcon.textureKey;
     }
 
+    const tierIconKey = AssetKeyResolver.getTieredKey(
+      scene,
+      `art_weapons_${weaponId}_icon_tier`,
+      '',
+      visualTier,
+    );
+
+    if (tierIconKey) {
+      return tierIconKey;
+    }
+
     return entry?.icon
       ? AssetKeyResolver.resolveTexture(scene, entry.icon, `weapon.${weaponId}.icon`, 'icons')
       : null;
   }
 
-  static getPassiveIconKey(scene: Phaser.Scene, passiveId: string): string | null {
+  static getPassiveIconKey(
+    scene: Phaser.Scene,
+    passiveId: string,
+    visualTier?: AssetVisualTierInput,
+  ): string | null {
     const entry = DEFAULT_ASSET_KEY_MAP.passives[
       passiveId as keyof typeof DEFAULT_ASSET_KEY_MAP.passives
     ];
+    const tierIconKey = AssetKeyResolver.getTieredKey(
+      scene,
+      `art_passives_${passiveId}_icon_tier`,
+      '',
+      visualTier,
+    );
+
+    if (tierIconKey) {
+      return tierIconKey;
+    }
 
     return entry
       ? AssetKeyResolver.resolveTexture(scene, entry, `passive.${passiveId}.icon`, 'icons')
@@ -335,6 +399,52 @@ export class AssetKeyResolver {
     return DEFAULT_ASSET_KEY_MAP.weapons[
       weaponId as keyof typeof DEFAULT_ASSET_KEY_MAP.weapons
     ];
+  }
+
+  private static getTieredKey(
+    scene: Phaser.Scene,
+    prefix: string,
+    suffix: string,
+    visualTier: AssetVisualTierInput | undefined,
+  ): string | null {
+    const tier = AssetKeyResolver.getVisualTier(visualTier);
+
+    if (tier === undefined) {
+      return null;
+    }
+
+    const key = `${prefix}${tier}${suffix}`;
+
+    return AssetFallbacks.hasTexture(scene, key) ? key : null;
+  }
+
+  private static getVisualTier(visualTier: AssetVisualTierInput | undefined): 1 | 2 | 3 | undefined {
+    if (!visualTier) {
+      return undefined;
+    }
+
+    if (visualTier.evolved) {
+      return 3;
+    }
+
+    const level = Math.max(0, Math.floor(visualTier.level ?? 0));
+    const maxLevel = Math.max(1, Math.floor(visualTier.maxLevel ?? 0));
+
+    if (level <= 0) {
+      return 1;
+    }
+
+    const ratio = level / maxLevel;
+
+    if (ratio >= 0.8 || level >= maxLevel) {
+      return 3;
+    }
+
+    if (ratio >= 0.4) {
+      return 2;
+    }
+
+    return 1;
   }
 
   private static getPlayerSkinCandidates(

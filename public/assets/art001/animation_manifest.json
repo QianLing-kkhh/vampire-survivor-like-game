@@ -1383,6 +1383,3566 @@
       "frameWidth": 64,
       "frameHeight": 64,
       "frames": 4
+    },
+    {
+      "path": "world/cathedral_ground_tile.png",
+      "key": "art_world_cathedral_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/obstacle/cathedral_wall.png",
+      "key": "art_map_mechanics_obstacle_cathedral_wall",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/obstacle/cathedral_pillar.png",
+      "key": "art_map_mechanics_obstacle_cathedral_pillar",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/altar/cathedral_altar.png",
+      "key": "art_map_mechanics_altar_cathedral",
+      "type": "image",
+      "frameWidth": 160,
+      "frameHeight": 160,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/altar/cathedral_altar_minimap.png",
+      "key": "art_map_mechanics_altar_cathedral_minimap",
+      "type": "image",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/light/cathedral_candle.png",
+      "key": "art_map_mechanics_light_cathedral_candle",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/portal/portal_gold.png",
+      "key": "art_map_mechanics_portal_gold",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/portal/portal_minimap_gold.png",
+      "key": "art_map_mechanics_portal_minimap_gold",
+      "type": "image",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 1
+    },
+    {
+      "path": "world/library_ground_tile.png",
+      "key": "art_world_library_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/obstacle/bookshelf.png",
+      "key": "art_map_mechanics_obstacle_bookshelf",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/obstacle/archive_pillar.png",
+      "key": "art_map_mechanics_obstacle_archive_pillar",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/ink/ink_pool.png",
+      "key": "art_map_mechanics_ink_pool",
+      "type": "image",
+      "frameWidth": 256,
+      "frameHeight": 256,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/ink/ink_spot.png",
+      "key": "art_map_mechanics_ink_spot",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/ink/ink_minimap.png",
+      "key": "art_map_mechanics_ink_minimap",
+      "type": "image",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/light/arcane_lamp.png",
+      "key": "art_map_mechanics_light_arcane_lamp",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/altar/library_altar.png",
+      "key": "art_map_mechanics_altar_library",
+      "type": "image",
+      "frameWidth": 160,
+      "frameHeight": 160,
+      "frames": 1
+    },
+    {
+      "path": "map-mechanics/altar/library_altar_minimap.png",
+      "key": "art_map_mechanics_altar_library_minimap",
+      "type": "image",
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frames": 1
+    },
+    {
+      "path": "weapons/runic_orb_icon_tier1.png",
+      "key": "art_weapons_runic_orb_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/runic_orb_projectile_tier1_sheet.png",
+      "key": "art_weapons_runic_orb_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/runic_orb_icon_tier2.png",
+      "key": "art_weapons_runic_orb_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/runic_orb_projectile_tier2_sheet.png",
+      "key": "art_weapons_runic_orb_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/runic_orb_icon_tier3.png",
+      "key": "art_weapons_runic_orb_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/runic_orb_projectile_tier3_sheet.png",
+      "key": "art_weapons_runic_orb_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/astral_core_icon_tier1.png",
+      "key": "art_weapons_astral_core_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/astral_core_projectile_tier1_sheet.png",
+      "key": "art_weapons_astral_core_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/astral_core_icon_tier2.png",
+      "key": "art_weapons_astral_core_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/astral_core_projectile_tier2_sheet.png",
+      "key": "art_weapons_astral_core_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/astral_core_icon_tier3.png",
+      "key": "art_weapons_astral_core_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/astral_core_projectile_tier3_sheet.png",
+      "key": "art_weapons_astral_core_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/moon_bow_icon_tier1.png",
+      "key": "art_weapons_moon_bow_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/moon_bow_projectile_tier1_sheet.png",
+      "key": "art_weapons_moon_bow_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/moon_bow_icon_tier2.png",
+      "key": "art_weapons_moon_bow_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/moon_bow_projectile_tier2_sheet.png",
+      "key": "art_weapons_moon_bow_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/moon_bow_icon_tier3.png",
+      "key": "art_weapons_moon_bow_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/moon_bow_projectile_tier3_sheet.png",
+      "key": "art_weapons_moon_bow_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/eclipse_barrage_icon_tier1.png",
+      "key": "art_weapons_eclipse_barrage_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/eclipse_barrage_projectile_tier1_sheet.png",
+      "key": "art_weapons_eclipse_barrage_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/eclipse_barrage_icon_tier2.png",
+      "key": "art_weapons_eclipse_barrage_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/eclipse_barrage_projectile_tier2_sheet.png",
+      "key": "art_weapons_eclipse_barrage_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/eclipse_barrage_icon_tier3.png",
+      "key": "art_weapons_eclipse_barrage_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/eclipse_barrage_projectile_tier3_sheet.png",
+      "key": "art_weapons_eclipse_barrage_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/clockwork_saw_icon_tier1.png",
+      "key": "art_weapons_clockwork_saw_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/clockwork_saw_projectile_tier1_sheet.png",
+      "key": "art_weapons_clockwork_saw_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/clockwork_saw_icon_tier2.png",
+      "key": "art_weapons_clockwork_saw_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/clockwork_saw_projectile_tier2_sheet.png",
+      "key": "art_weapons_clockwork_saw_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/clockwork_saw_icon_tier3.png",
+      "key": "art_weapons_clockwork_saw_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/clockwork_saw_projectile_tier3_sheet.png",
+      "key": "art_weapons_clockwork_saw_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/gearstorm_icon_tier1.png",
+      "key": "art_weapons_gearstorm_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/gearstorm_projectile_tier1_sheet.png",
+      "key": "art_weapons_gearstorm_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/gearstorm_icon_tier2.png",
+      "key": "art_weapons_gearstorm_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/gearstorm_projectile_tier2_sheet.png",
+      "key": "art_weapons_gearstorm_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/gearstorm_icon_tier3.png",
+      "key": "art_weapons_gearstorm_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/gearstorm_projectile_tier3_sheet.png",
+      "key": "art_weapons_gearstorm_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/bone_spear_icon_tier1.png",
+      "key": "art_weapons_bone_spear_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/bone_spear_projectile_tier1_sheet.png",
+      "key": "art_weapons_bone_spear_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/bone_spear_icon_tier2.png",
+      "key": "art_weapons_bone_spear_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/bone_spear_projectile_tier2_sheet.png",
+      "key": "art_weapons_bone_spear_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/bone_spear_icon_tier3.png",
+      "key": "art_weapons_bone_spear_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/bone_spear_projectile_tier3_sheet.png",
+      "key": "art_weapons_bone_spear_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/ossuary_lance_icon_tier1.png",
+      "key": "art_weapons_ossuary_lance_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/ossuary_lance_projectile_tier1_sheet.png",
+      "key": "art_weapons_ossuary_lance_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/ossuary_lance_icon_tier2.png",
+      "key": "art_weapons_ossuary_lance_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/ossuary_lance_projectile_tier2_sheet.png",
+      "key": "art_weapons_ossuary_lance_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/ossuary_lance_icon_tier3.png",
+      "key": "art_weapons_ossuary_lance_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/ossuary_lance_projectile_tier3_sheet.png",
+      "key": "art_weapons_ossuary_lance_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/spirit_fist_icon_tier1.png",
+      "key": "art_weapons_spirit_fist_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/spirit_fist_projectile_tier1_sheet.png",
+      "key": "art_weapons_spirit_fist_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/spirit_fist_icon_tier2.png",
+      "key": "art_weapons_spirit_fist_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/spirit_fist_projectile_tier2_sheet.png",
+      "key": "art_weapons_spirit_fist_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/spirit_fist_icon_tier3.png",
+      "key": "art_weapons_spirit_fist_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/spirit_fist_projectile_tier3_sheet.png",
+      "key": "art_weapons_spirit_fist_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/enlightened_palm_icon_tier1.png",
+      "key": "art_weapons_enlightened_palm_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/enlightened_palm_projectile_tier1_sheet.png",
+      "key": "art_weapons_enlightened_palm_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/enlightened_palm_icon_tier2.png",
+      "key": "art_weapons_enlightened_palm_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/enlightened_palm_projectile_tier2_sheet.png",
+      "key": "art_weapons_enlightened_palm_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/enlightened_palm_icon_tier3.png",
+      "key": "art_weapons_enlightened_palm_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/enlightened_palm_projectile_tier3_sheet.png",
+      "key": "art_weapons_enlightened_palm_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/acid_vial_icon_tier1.png",
+      "key": "art_weapons_acid_vial_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/acid_vial_projectile_tier1_sheet.png",
+      "key": "art_weapons_acid_vial_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/acid_vial_icon_tier2.png",
+      "key": "art_weapons_acid_vial_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/acid_vial_projectile_tier2_sheet.png",
+      "key": "art_weapons_acid_vial_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/acid_vial_icon_tier3.png",
+      "key": "art_weapons_acid_vial_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/acid_vial_projectile_tier3_sheet.png",
+      "key": "art_weapons_acid_vial_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/plague_crucible_icon_tier1.png",
+      "key": "art_weapons_plague_crucible_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/plague_crucible_projectile_tier1_sheet.png",
+      "key": "art_weapons_plague_crucible_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/plague_crucible_icon_tier2.png",
+      "key": "art_weapons_plague_crucible_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/plague_crucible_projectile_tier2_sheet.png",
+      "key": "art_weapons_plague_crucible_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/plague_crucible_icon_tier3.png",
+      "key": "art_weapons_plague_crucible_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/plague_crucible_projectile_tier3_sheet.png",
+      "key": "art_weapons_plague_crucible_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/rapier_flurry_icon_tier1.png",
+      "key": "art_weapons_rapier_flurry_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/rapier_flurry_projectile_tier1_sheet.png",
+      "key": "art_weapons_rapier_flurry_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/rapier_flurry_icon_tier2.png",
+      "key": "art_weapons_rapier_flurry_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/rapier_flurry_projectile_tier2_sheet.png",
+      "key": "art_weapons_rapier_flurry_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/rapier_flurry_icon_tier3.png",
+      "key": "art_weapons_rapier_flurry_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/rapier_flurry_projectile_tier3_sheet.png",
+      "key": "art_weapons_rapier_flurry_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/crimson_flurry_icon_tier1.png",
+      "key": "art_weapons_crimson_flurry_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/crimson_flurry_projectile_tier1_sheet.png",
+      "key": "art_weapons_crimson_flurry_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/crimson_flurry_icon_tier2.png",
+      "key": "art_weapons_crimson_flurry_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/crimson_flurry_projectile_tier2_sheet.png",
+      "key": "art_weapons_crimson_flurry_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/crimson_flurry_icon_tier3.png",
+      "key": "art_weapons_crimson_flurry_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/crimson_flurry_projectile_tier3_sheet.png",
+      "key": "art_weapons_crimson_flurry_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/stone_ring_icon_tier1.png",
+      "key": "art_weapons_stone_ring_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/stone_ring_projectile_tier1_sheet.png",
+      "key": "art_weapons_stone_ring_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/stone_ring_icon_tier2.png",
+      "key": "art_weapons_stone_ring_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/stone_ring_projectile_tier2_sheet.png",
+      "key": "art_weapons_stone_ring_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/stone_ring_icon_tier3.png",
+      "key": "art_weapons_stone_ring_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/stone_ring_projectile_tier3_sheet.png",
+      "key": "art_weapons_stone_ring_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/tectonic_crown_icon_tier1.png",
+      "key": "art_weapons_tectonic_crown_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/tectonic_crown_projectile_tier1_sheet.png",
+      "key": "art_weapons_tectonic_crown_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/tectonic_crown_icon_tier2.png",
+      "key": "art_weapons_tectonic_crown_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/tectonic_crown_projectile_tier2_sheet.png",
+      "key": "art_weapons_tectonic_crown_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/tectonic_crown_icon_tier3.png",
+      "key": "art_weapons_tectonic_crown_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/tectonic_crown_projectile_tier3_sheet.png",
+      "key": "art_weapons_tectonic_crown_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/thunder_javelin_icon_tier1.png",
+      "key": "art_weapons_thunder_javelin_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/thunder_javelin_projectile_tier1_sheet.png",
+      "key": "art_weapons_thunder_javelin_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/thunder_javelin_icon_tier2.png",
+      "key": "art_weapons_thunder_javelin_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/thunder_javelin_projectile_tier2_sheet.png",
+      "key": "art_weapons_thunder_javelin_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/thunder_javelin_icon_tier3.png",
+      "key": "art_weapons_thunder_javelin_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/thunder_javelin_projectile_tier3_sheet.png",
+      "key": "art_weapons_thunder_javelin_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/tempest_lance_icon_tier1.png",
+      "key": "art_weapons_tempest_lance_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/tempest_lance_projectile_tier1_sheet.png",
+      "key": "art_weapons_tempest_lance_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/tempest_lance_icon_tier2.png",
+      "key": "art_weapons_tempest_lance_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/tempest_lance_projectile_tier2_sheet.png",
+      "key": "art_weapons_tempest_lance_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/tempest_lance_icon_tier3.png",
+      "key": "art_weapons_tempest_lance_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/tempest_lance_projectile_tier3_sheet.png",
+      "key": "art_weapons_tempest_lance_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/shield_disc_icon_tier1.png",
+      "key": "art_weapons_shield_disc_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/shield_disc_projectile_tier1_sheet.png",
+      "key": "art_weapons_shield_disc_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/shield_disc_icon_tier2.png",
+      "key": "art_weapons_shield_disc_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/shield_disc_projectile_tier2_sheet.png",
+      "key": "art_weapons_shield_disc_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/shield_disc_icon_tier3.png",
+      "key": "art_weapons_shield_disc_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/shield_disc_projectile_tier3_sheet.png",
+      "key": "art_weapons_shield_disc_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/aegis_maelstrom_icon_tier1.png",
+      "key": "art_weapons_aegis_maelstrom_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/aegis_maelstrom_projectile_tier1_sheet.png",
+      "key": "art_weapons_aegis_maelstrom_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/aegis_maelstrom_icon_tier2.png",
+      "key": "art_weapons_aegis_maelstrom_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/aegis_maelstrom_projectile_tier2_sheet.png",
+      "key": "art_weapons_aegis_maelstrom_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/aegis_maelstrom_icon_tier3.png",
+      "key": "art_weapons_aegis_maelstrom_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/aegis_maelstrom_projectile_tier3_sheet.png",
+      "key": "art_weapons_aegis_maelstrom_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "passives/focus_lens_icon_tier1.png",
+      "key": "art_passives_focus_lens_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/focus_lens_icon_tier2.png",
+      "key": "art_passives_focus_lens_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/focus_lens_icon_tier3.png",
+      "key": "art_passives_focus_lens_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/hunter_quiver_icon_tier1.png",
+      "key": "art_passives_hunter_quiver_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/hunter_quiver_icon_tier2.png",
+      "key": "art_passives_hunter_quiver_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/hunter_quiver_icon_tier3.png",
+      "key": "art_passives_hunter_quiver_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/cogwheel_icon_tier1.png",
+      "key": "art_passives_cogwheel_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/cogwheel_icon_tier2.png",
+      "key": "art_passives_cogwheel_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/cogwheel_icon_tier3.png",
+      "key": "art_passives_cogwheel_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/grave_charm_icon_tier1.png",
+      "key": "art_passives_grave_charm_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/grave_charm_icon_tier2.png",
+      "key": "art_passives_grave_charm_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/grave_charm_icon_tier3.png",
+      "key": "art_passives_grave_charm_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/prayer_beads_icon_tier1.png",
+      "key": "art_passives_prayer_beads_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/prayer_beads_icon_tier2.png",
+      "key": "art_passives_prayer_beads_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/prayer_beads_icon_tier3.png",
+      "key": "art_passives_prayer_beads_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/glass_flask_icon_tier1.png",
+      "key": "art_passives_glass_flask_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/glass_flask_icon_tier2.png",
+      "key": "art_passives_glass_flask_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/glass_flask_icon_tier3.png",
+      "key": "art_passives_glass_flask_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/duelist_glove_icon_tier1.png",
+      "key": "art_passives_duelist_glove_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/duelist_glove_icon_tier2.png",
+      "key": "art_passives_duelist_glove_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/duelist_glove_icon_tier3.png",
+      "key": "art_passives_duelist_glove_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/granite_core_icon_tier1.png",
+      "key": "art_passives_granite_core_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/granite_core_icon_tier2.png",
+      "key": "art_passives_granite_core_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/granite_core_icon_tier3.png",
+      "key": "art_passives_granite_core_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/storm_battery_icon_tier1.png",
+      "key": "art_passives_storm_battery_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/storm_battery_icon_tier2.png",
+      "key": "art_passives_storm_battery_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/storm_battery_icon_tier3.png",
+      "key": "art_passives_storm_battery_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/iron_sigil_icon_tier1.png",
+      "key": "art_passives_iron_sigil_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/iron_sigil_icon_tier2.png",
+      "key": "art_passives_iron_sigil_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/iron_sigil_icon_tier3.png",
+      "key": "art_passives_iron_sigil_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "player/arcanist_default/walk_up.png",
+      "key": "art_player_arcanist_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/walk_up_right.png",
+      "key": "art_player_arcanist_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/walk_right.png",
+      "key": "art_player_arcanist_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/walk_down_right.png",
+      "key": "art_player_arcanist_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/walk_down.png",
+      "key": "art_player_arcanist_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/walk_down_left.png",
+      "key": "art_player_arcanist_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/walk_left.png",
+      "key": "art_player_arcanist_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/walk_up_left.png",
+      "key": "art_player_arcanist_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_up.png",
+      "key": "art_player_arcanist_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_up_right.png",
+      "key": "art_player_arcanist_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_right.png",
+      "key": "art_player_arcanist_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_down_right.png",
+      "key": "art_player_arcanist_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_down.png",
+      "key": "art_player_arcanist_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_down_left.png",
+      "key": "art_player_arcanist_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_left.png",
+      "key": "art_player_arcanist_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/idle_up_left.png",
+      "key": "art_player_arcanist_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/arcanist_default/portrait.png",
+      "key": "art_player_arcanist_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/arcanist_default/hit_fx.png",
+      "key": "art_player_arcanist_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/ranger_default/walk_up.png",
+      "key": "art_player_ranger_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/walk_up_right.png",
+      "key": "art_player_ranger_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/walk_right.png",
+      "key": "art_player_ranger_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/walk_down_right.png",
+      "key": "art_player_ranger_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/walk_down.png",
+      "key": "art_player_ranger_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/walk_down_left.png",
+      "key": "art_player_ranger_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/walk_left.png",
+      "key": "art_player_ranger_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/walk_up_left.png",
+      "key": "art_player_ranger_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_up.png",
+      "key": "art_player_ranger_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_up_right.png",
+      "key": "art_player_ranger_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_right.png",
+      "key": "art_player_ranger_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_down_right.png",
+      "key": "art_player_ranger_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_down.png",
+      "key": "art_player_ranger_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_down_left.png",
+      "key": "art_player_ranger_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_left.png",
+      "key": "art_player_ranger_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/idle_up_left.png",
+      "key": "art_player_ranger_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/ranger_default/portrait.png",
+      "key": "art_player_ranger_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/ranger_default/hit_fx.png",
+      "key": "art_player_ranger_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/engineer_default/walk_up.png",
+      "key": "art_player_engineer_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/walk_up_right.png",
+      "key": "art_player_engineer_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/walk_right.png",
+      "key": "art_player_engineer_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/walk_down_right.png",
+      "key": "art_player_engineer_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/walk_down.png",
+      "key": "art_player_engineer_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/walk_down_left.png",
+      "key": "art_player_engineer_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/walk_left.png",
+      "key": "art_player_engineer_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/walk_up_left.png",
+      "key": "art_player_engineer_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_up.png",
+      "key": "art_player_engineer_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_up_right.png",
+      "key": "art_player_engineer_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_right.png",
+      "key": "art_player_engineer_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_down_right.png",
+      "key": "art_player_engineer_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_down.png",
+      "key": "art_player_engineer_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_down_left.png",
+      "key": "art_player_engineer_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_left.png",
+      "key": "art_player_engineer_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/idle_up_left.png",
+      "key": "art_player_engineer_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/engineer_default/portrait.png",
+      "key": "art_player_engineer_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/engineer_default/hit_fx.png",
+      "key": "art_player_engineer_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/necromancer_default/walk_up.png",
+      "key": "art_player_necromancer_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/walk_up_right.png",
+      "key": "art_player_necromancer_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/walk_right.png",
+      "key": "art_player_necromancer_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/walk_down_right.png",
+      "key": "art_player_necromancer_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/walk_down.png",
+      "key": "art_player_necromancer_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/walk_down_left.png",
+      "key": "art_player_necromancer_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/walk_left.png",
+      "key": "art_player_necromancer_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/walk_up_left.png",
+      "key": "art_player_necromancer_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_up.png",
+      "key": "art_player_necromancer_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_up_right.png",
+      "key": "art_player_necromancer_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_right.png",
+      "key": "art_player_necromancer_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_down_right.png",
+      "key": "art_player_necromancer_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_down.png",
+      "key": "art_player_necromancer_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_down_left.png",
+      "key": "art_player_necromancer_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_left.png",
+      "key": "art_player_necromancer_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/idle_up_left.png",
+      "key": "art_player_necromancer_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/necromancer_default/portrait.png",
+      "key": "art_player_necromancer_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/necromancer_default/hit_fx.png",
+      "key": "art_player_necromancer_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/monk_default/walk_up.png",
+      "key": "art_player_monk_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/walk_up_right.png",
+      "key": "art_player_monk_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/walk_right.png",
+      "key": "art_player_monk_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/walk_down_right.png",
+      "key": "art_player_monk_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/walk_down.png",
+      "key": "art_player_monk_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/walk_down_left.png",
+      "key": "art_player_monk_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/walk_left.png",
+      "key": "art_player_monk_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/walk_up_left.png",
+      "key": "art_player_monk_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_up.png",
+      "key": "art_player_monk_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_up_right.png",
+      "key": "art_player_monk_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_right.png",
+      "key": "art_player_monk_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_down_right.png",
+      "key": "art_player_monk_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_down.png",
+      "key": "art_player_monk_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_down_left.png",
+      "key": "art_player_monk_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_left.png",
+      "key": "art_player_monk_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/idle_up_left.png",
+      "key": "art_player_monk_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/monk_default/portrait.png",
+      "key": "art_player_monk_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/monk_default/hit_fx.png",
+      "key": "art_player_monk_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/alchemist_default/walk_up.png",
+      "key": "art_player_alchemist_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/walk_up_right.png",
+      "key": "art_player_alchemist_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/walk_right.png",
+      "key": "art_player_alchemist_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/walk_down_right.png",
+      "key": "art_player_alchemist_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/walk_down.png",
+      "key": "art_player_alchemist_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/walk_down_left.png",
+      "key": "art_player_alchemist_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/walk_left.png",
+      "key": "art_player_alchemist_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/walk_up_left.png",
+      "key": "art_player_alchemist_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_up.png",
+      "key": "art_player_alchemist_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_up_right.png",
+      "key": "art_player_alchemist_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_right.png",
+      "key": "art_player_alchemist_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_down_right.png",
+      "key": "art_player_alchemist_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_down.png",
+      "key": "art_player_alchemist_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_down_left.png",
+      "key": "art_player_alchemist_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_left.png",
+      "key": "art_player_alchemist_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/idle_up_left.png",
+      "key": "art_player_alchemist_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/alchemist_default/portrait.png",
+      "key": "art_player_alchemist_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/alchemist_default/hit_fx.png",
+      "key": "art_player_alchemist_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/duelist_default/walk_up.png",
+      "key": "art_player_duelist_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/walk_up_right.png",
+      "key": "art_player_duelist_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/walk_right.png",
+      "key": "art_player_duelist_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/walk_down_right.png",
+      "key": "art_player_duelist_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/walk_down.png",
+      "key": "art_player_duelist_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/walk_down_left.png",
+      "key": "art_player_duelist_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/walk_left.png",
+      "key": "art_player_duelist_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/walk_up_left.png",
+      "key": "art_player_duelist_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_up.png",
+      "key": "art_player_duelist_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_up_right.png",
+      "key": "art_player_duelist_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_right.png",
+      "key": "art_player_duelist_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_down_right.png",
+      "key": "art_player_duelist_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_down.png",
+      "key": "art_player_duelist_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_down_left.png",
+      "key": "art_player_duelist_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_left.png",
+      "key": "art_player_duelist_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/idle_up_left.png",
+      "key": "art_player_duelist_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/duelist_default/portrait.png",
+      "key": "art_player_duelist_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/duelist_default/hit_fx.png",
+      "key": "art_player_duelist_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/geomancer_default/walk_up.png",
+      "key": "art_player_geomancer_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/walk_up_right.png",
+      "key": "art_player_geomancer_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/walk_right.png",
+      "key": "art_player_geomancer_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/walk_down_right.png",
+      "key": "art_player_geomancer_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/walk_down.png",
+      "key": "art_player_geomancer_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/walk_down_left.png",
+      "key": "art_player_geomancer_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/walk_left.png",
+      "key": "art_player_geomancer_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/walk_up_left.png",
+      "key": "art_player_geomancer_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_up.png",
+      "key": "art_player_geomancer_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_up_right.png",
+      "key": "art_player_geomancer_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_right.png",
+      "key": "art_player_geomancer_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_down_right.png",
+      "key": "art_player_geomancer_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_down.png",
+      "key": "art_player_geomancer_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_down_left.png",
+      "key": "art_player_geomancer_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_left.png",
+      "key": "art_player_geomancer_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/idle_up_left.png",
+      "key": "art_player_geomancer_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/geomancer_default/portrait.png",
+      "key": "art_player_geomancer_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/geomancer_default/hit_fx.png",
+      "key": "art_player_geomancer_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/stormcaller_default/walk_up.png",
+      "key": "art_player_stormcaller_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/walk_up_right.png",
+      "key": "art_player_stormcaller_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/walk_right.png",
+      "key": "art_player_stormcaller_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/walk_down_right.png",
+      "key": "art_player_stormcaller_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/walk_down.png",
+      "key": "art_player_stormcaller_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/walk_down_left.png",
+      "key": "art_player_stormcaller_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/walk_left.png",
+      "key": "art_player_stormcaller_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/walk_up_left.png",
+      "key": "art_player_stormcaller_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_up.png",
+      "key": "art_player_stormcaller_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_up_right.png",
+      "key": "art_player_stormcaller_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_right.png",
+      "key": "art_player_stormcaller_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_down_right.png",
+      "key": "art_player_stormcaller_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_down.png",
+      "key": "art_player_stormcaller_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_down_left.png",
+      "key": "art_player_stormcaller_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_left.png",
+      "key": "art_player_stormcaller_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/idle_up_left.png",
+      "key": "art_player_stormcaller_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/stormcaller_default/portrait.png",
+      "key": "art_player_stormcaller_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/stormcaller_default/hit_fx.png",
+      "key": "art_player_stormcaller_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "player/sentinel_default/walk_up.png",
+      "key": "art_player_sentinel_default_walk_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/walk_up_right.png",
+      "key": "art_player_sentinel_default_walk_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/walk_right.png",
+      "key": "art_player_sentinel_default_walk_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/walk_down_right.png",
+      "key": "art_player_sentinel_default_walk_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/walk_down.png",
+      "key": "art_player_sentinel_default_walk_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/walk_down_left.png",
+      "key": "art_player_sentinel_default_walk_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/walk_left.png",
+      "key": "art_player_sentinel_default_walk_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/walk_up_left.png",
+      "key": "art_player_sentinel_default_walk_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_up.png",
+      "key": "art_player_sentinel_default_idle_up",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_up_right.png",
+      "key": "art_player_sentinel_default_idle_up_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_right.png",
+      "key": "art_player_sentinel_default_idle_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_down_right.png",
+      "key": "art_player_sentinel_default_idle_down_right",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_down.png",
+      "key": "art_player_sentinel_default_idle_down",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_down_left.png",
+      "key": "art_player_sentinel_default_idle_down_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_left.png",
+      "key": "art_player_sentinel_default_idle_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/idle_up_left.png",
+      "key": "art_player_sentinel_default_idle_up_left",
+      "type": "spritesheet",
+      "frameWidth": 80,
+      "frameHeight": 80,
+      "frames": 4
+    },
+    {
+      "path": "player/sentinel_default/portrait.png",
+      "key": "art_player_sentinel_default_portrait",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "player/sentinel_default/hit_fx.png",
+      "key": "art_player_sentinel_default_hit_fx",
+      "type": "image",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "frames": 1
+    },
+    {
+      "path": "world/desert_ground_tile.png",
+      "key": "art_world_desert_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "world/coast_ground_tile.png",
+      "key": "art_world_coast_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "world/bastion_ground_tile.png",
+      "key": "art_world_bastion_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "world/fungal_ground_tile.png",
+      "key": "art_world_fungal_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "world/mirror_ground_tile.png",
+      "key": "art_world_mirror_ground_tile",
+      "type": "image",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 1
+    },
+    {
+      "path": "enemies/slime_boss_idle_sheet.png",
+      "key": "art_enemies_slime_boss_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "enemies/bat_boss_idle_sheet.png",
+      "key": "art_enemies_bat_boss_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "enemies/golem_boss_idle_sheet.png",
+      "key": "art_enemies_golem_boss_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "enemies/endless_berserker_idle_sheet.png",
+      "key": "art_enemies_endless_berserker_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "enemies/endless_summoner_idle_sheet.png",
+      "key": "art_enemies_endless_summoner_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "enemies/endless_freezer_idle_sheet.png",
+      "key": "art_enemies_endless_freezer_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "enemies/endless_sniper_idle_sheet.png",
+      "key": "art_enemies_endless_sniper_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "enemies/endless_tanker_idle_sheet.png",
+      "key": "art_enemies_endless_tanker_idle_sheet",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "frames": 4
+    },
+    {
+      "path": "weapons/knife_icon_tier1.png",
+      "key": "art_weapons_knife_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/knife_projectile_tier1_sheet.png",
+      "key": "art_weapons_knife_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/knife_icon_tier2.png",
+      "key": "art_weapons_knife_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/knife_projectile_tier2_sheet.png",
+      "key": "art_weapons_knife_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/knife_icon_tier3.png",
+      "key": "art_weapons_knife_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/knife_projectile_tier3_sheet.png",
+      "key": "art_weapons_knife_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/garlic_icon_tier1.png",
+      "key": "art_weapons_garlic_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/garlic_projectile_tier1_sheet.png",
+      "key": "art_weapons_garlic_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/garlic_icon_tier2.png",
+      "key": "art_weapons_garlic_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/garlic_projectile_tier2_sheet.png",
+      "key": "art_weapons_garlic_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/garlic_icon_tier3.png",
+      "key": "art_weapons_garlic_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/garlic_projectile_tier3_sheet.png",
+      "key": "art_weapons_garlic_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/bible_icon_tier1.png",
+      "key": "art_weapons_bible_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/bible_projectile_tier1_sheet.png",
+      "key": "art_weapons_bible_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/bible_icon_tier2.png",
+      "key": "art_weapons_bible_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/bible_projectile_tier2_sheet.png",
+      "key": "art_weapons_bible_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/bible_icon_tier3.png",
+      "key": "art_weapons_bible_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/bible_projectile_tier3_sheet.png",
+      "key": "art_weapons_bible_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/magic_wand_icon_tier1.png",
+      "key": "art_weapons_magic_wand_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/magic_wand_projectile_tier1_sheet.png",
+      "key": "art_weapons_magic_wand_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/magic_wand_icon_tier2.png",
+      "key": "art_weapons_magic_wand_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/magic_wand_projectile_tier2_sheet.png",
+      "key": "art_weapons_magic_wand_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/magic_wand_icon_tier3.png",
+      "key": "art_weapons_magic_wand_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/magic_wand_projectile_tier3_sheet.png",
+      "key": "art_weapons_magic_wand_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/axe_icon_tier1.png",
+      "key": "art_weapons_axe_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/axe_projectile_tier1_sheet.png",
+      "key": "art_weapons_axe_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/axe_icon_tier2.png",
+      "key": "art_weapons_axe_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/axe_projectile_tier2_sheet.png",
+      "key": "art_weapons_axe_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/axe_icon_tier3.png",
+      "key": "art_weapons_axe_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/axe_projectile_tier3_sheet.png",
+      "key": "art_weapons_axe_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/thousand_edge_icon_tier1.png",
+      "key": "art_weapons_thousand_edge_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/thousand_edge_projectile_tier1_sheet.png",
+      "key": "art_weapons_thousand_edge_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/thousand_edge_icon_tier2.png",
+      "key": "art_weapons_thousand_edge_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/thousand_edge_projectile_tier2_sheet.png",
+      "key": "art_weapons_thousand_edge_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/thousand_edge_icon_tier3.png",
+      "key": "art_weapons_thousand_edge_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/thousand_edge_projectile_tier3_sheet.png",
+      "key": "art_weapons_thousand_edge_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/unholy_vespers_icon_tier1.png",
+      "key": "art_weapons_unholy_vespers_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/unholy_vespers_projectile_tier1_sheet.png",
+      "key": "art_weapons_unholy_vespers_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/unholy_vespers_icon_tier2.png",
+      "key": "art_weapons_unholy_vespers_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/unholy_vespers_projectile_tier2_sheet.png",
+      "key": "art_weapons_unholy_vespers_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/unholy_vespers_icon_tier3.png",
+      "key": "art_weapons_unholy_vespers_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/unholy_vespers_projectile_tier3_sheet.png",
+      "key": "art_weapons_unholy_vespers_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/holy_wand_icon_tier1.png",
+      "key": "art_weapons_holy_wand_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/holy_wand_projectile_tier1_sheet.png",
+      "key": "art_weapons_holy_wand_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/holy_wand_icon_tier2.png",
+      "key": "art_weapons_holy_wand_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/holy_wand_projectile_tier2_sheet.png",
+      "key": "art_weapons_holy_wand_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/holy_wand_icon_tier3.png",
+      "key": "art_weapons_holy_wand_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/holy_wand_projectile_tier3_sheet.png",
+      "key": "art_weapons_holy_wand_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/death_spiral_icon_tier1.png",
+      "key": "art_weapons_death_spiral_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/death_spiral_projectile_tier1_sheet.png",
+      "key": "art_weapons_death_spiral_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/death_spiral_icon_tier2.png",
+      "key": "art_weapons_death_spiral_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/death_spiral_projectile_tier2_sheet.png",
+      "key": "art_weapons_death_spiral_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/death_spiral_icon_tier3.png",
+      "key": "art_weapons_death_spiral_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/death_spiral_projectile_tier3_sheet.png",
+      "key": "art_weapons_death_spiral_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/soul_eater_icon_tier1.png",
+      "key": "art_weapons_soul_eater_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/soul_eater_projectile_tier1_sheet.png",
+      "key": "art_weapons_soul_eater_projectile_tier1_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/soul_eater_icon_tier2.png",
+      "key": "art_weapons_soul_eater_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/soul_eater_projectile_tier2_sheet.png",
+      "key": "art_weapons_soul_eater_projectile_tier2_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "weapons/soul_eater_icon_tier3.png",
+      "key": "art_weapons_soul_eater_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "weapons/soul_eater_projectile_tier3_sheet.png",
+      "key": "art_weapons_soul_eater_projectile_tier3_sheet",
+      "type": "spritesheet",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 4
+    },
+    {
+      "path": "passives/spinach_icon_tier1.png",
+      "key": "art_passives_spinach_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/spinach_icon_tier2.png",
+      "key": "art_passives_spinach_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/spinach_icon_tier3.png",
+      "key": "art_passives_spinach_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/empty_tome_icon_tier1.png",
+      "key": "art_passives_empty_tome_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/empty_tome_icon_tier2.png",
+      "key": "art_passives_empty_tome_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/empty_tome_icon_tier3.png",
+      "key": "art_passives_empty_tome_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/bracer_icon_tier1.png",
+      "key": "art_passives_bracer_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/bracer_icon_tier2.png",
+      "key": "art_passives_bracer_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/bracer_icon_tier3.png",
+      "key": "art_passives_bracer_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/clover_icon_tier1.png",
+      "key": "art_passives_clover_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/clover_icon_tier2.png",
+      "key": "art_passives_clover_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/clover_icon_tier3.png",
+      "key": "art_passives_clover_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/pummarola_icon_tier1.png",
+      "key": "art_passives_pummarola_icon_tier1",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/pummarola_icon_tier2.png",
+      "key": "art_passives_pummarola_icon_tier2",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "passives/pummarola_icon_tier3.png",
+      "key": "art_passives_pummarola_icon_tier3",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/blood_pact_icon.png",
+      "key": "art_relics_blood_pact_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/void_compass_icon.png",
+      "key": "art_relics_void_compass_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/golden_scarab_icon.png",
+      "key": "art_relics_golden_scarab_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/thorn_crown_icon.png",
+      "key": "art_relics_thorn_crown_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/frozen_hourglass_icon.png",
+      "key": "art_relics_frozen_hourglass_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/berserker_charm_icon.png",
+      "key": "art_relics_berserker_charm_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/magnet_pearl_icon.png",
+      "key": "art_relics_magnet_pearl_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/iron_shell_icon.png",
+      "key": "art_relics_iron_shell_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/scholar_candle_icon.png",
+      "key": "art_relics_scholar_candle_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
+    },
+    {
+      "path": "relics/rift_coin_icon.png",
+      "key": "art_relics_rift_coin_icon",
+      "type": "image",
+      "frameWidth": 64,
+      "frameHeight": 64,
+      "frames": 1
     }
   ]
 }

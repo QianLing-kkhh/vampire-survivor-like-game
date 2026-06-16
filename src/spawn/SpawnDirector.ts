@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { DEFAULT_CONTENT_IDS } from '../content/ContentId';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { Math2D } from '../core/domain/Math2D';
+import { Rect } from '../core/domain/Rect';
 import { Enemy } from '../enemy/Enemy';
 import { EnemyFactory } from '../enemy/EnemyFactory';
 import { Position } from '../enemy/EnemyMovement';
@@ -304,8 +306,8 @@ export class SpawnDirector {
   }
 
   private getCameraEdgeSpawnPosition(
-    cameraView: Phaser.Geom.Rectangle,
-    worldBounds: Phaser.Geom.Rectangle,
+    cameraView: Rect,
+    worldBounds: Rect,
     attempt: number,
   ): Position {
     const side = (this.spawnCount + attempt) % 4;
@@ -336,9 +338,9 @@ export class SpawnDirector {
   }
 
   private getPlayerRingSpawnPosition(
-    worldBounds: Phaser.Geom.Rectangle,
+    worldBounds: Rect,
     playerPosition: Position,
-    cameraView: Phaser.Geom.Rectangle | undefined,
+    cameraView: Rect | undefined,
     attempt: number,
   ): Position {
     const cameraDiagonal = cameraView
@@ -360,7 +362,7 @@ export class SpawnDirector {
   }
 
   private getBoundarySpawnPosition(
-    worldBounds: Phaser.Geom.Rectangle,
+    worldBounds: Rect,
     attempt: number,
   ): Position {
     const side = (this.spawnCount + attempt) % 4;
@@ -390,7 +392,7 @@ export class SpawnDirector {
   }
 
   private isSafeSpawnPosition(position: Position, playerPosition: Position): boolean {
-    return Phaser.Math.Distance.Between(
+    return Math2D.distanceBetween(
       position.x,
       position.y,
       playerPosition.x,
@@ -400,7 +402,7 @@ export class SpawnDirector {
 
   private isOutsideCameraView(
     position: Position,
-    cameraView: Phaser.Geom.Rectangle | undefined,
+    cameraView: Rect | undefined,
   ): boolean {
     if (!cameraView) {
       return true;
@@ -418,7 +420,7 @@ export class SpawnDirector {
 
   private isNearWorldCorner(
     position: Position,
-    worldBounds: Phaser.Geom.Rectangle,
+    worldBounds: Rect,
   ): boolean {
     const padding = SpawnDirector.WORLD_CORNER_PADDING;
     const nearHorizontalEdge = (
@@ -434,7 +436,7 @@ export class SpawnDirector {
   }
 
   private getFarthestBoundaryPosition(
-    worldBounds: Phaser.Geom.Rectangle,
+    worldBounds: Rect,
     playerPosition: Position,
   ): Position {
     const candidates: Position[] = [
@@ -451,7 +453,7 @@ export class SpawnDirector {
     let farthestDistance = -1;
 
     for (const candidate of candidates) {
-      const distance = Phaser.Math.Distance.Between(
+      const distance = Math2D.distanceBetween(
         candidate.x,
         candidate.y,
         playerPosition.x,
@@ -471,20 +473,20 @@ export class SpawnDirector {
 
   private clampToWorldBounds(
     position: Position,
-    worldBounds: Phaser.Geom.Rectangle,
+    worldBounds: Rect,
   ): Position {
     return {
-      x: Phaser.Math.Clamp(position.x, worldBounds.left, worldBounds.right),
-      y: Phaser.Math.Clamp(position.y, worldBounds.top, worldBounds.bottom),
+      x: Math2D.clamp(position.x, worldBounds.left, worldBounds.right),
+      y: Math2D.clamp(position.y, worldBounds.top, worldBounds.bottom),
     };
   }
 
-  private getWorldBounds(): Phaser.Geom.Rectangle {
+  private getWorldBounds(): Rect {
     const scene = this.getScene();
     const physicsBounds = scene?.physics.world.bounds;
 
     if (physicsBounds) {
-      return new Phaser.Geom.Rectangle(
+      return new Rect(
         physicsBounds.x,
         physicsBounds.y,
         physicsBounds.width,
@@ -494,17 +496,17 @@ export class SpawnDirector {
 
     const worldSize = this.getWorldSize();
 
-    return new Phaser.Geom.Rectangle(0, 0, worldSize.width, worldSize.height);
+    return new Rect(0, 0, worldSize.width, worldSize.height);
   }
 
-  private getCameraWorldView(): Phaser.Geom.Rectangle | undefined {
+  private getCameraWorldView(): Rect | undefined {
     const worldView = this.getScene()?.cameras.main.worldView;
 
     if (!worldView) {
       return undefined;
     }
 
-    return new Phaser.Geom.Rectangle(
+    return new Rect(
       worldView.x,
       worldView.y,
       worldView.width,

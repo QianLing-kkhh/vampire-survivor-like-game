@@ -1,4 +1,4 @@
-import { EnemyStats } from '../../enemy/Enemy';
+import type { EnemyStats } from '../../core/domain/EnemyTypes';
 import { Mutator } from '../Mutator';
 import { EnemyStatMutatorConfig } from '../MutatorConfig';
 import { MutatorContext } from '../MutatorContext';

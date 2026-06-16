@@ -1,5 +1,5 @@
 import { ContentRegistry } from '../../content/ContentRegistry';
-import { WeaponTag } from '../../weapon/tags/WeaponTag';
+import type { WeaponTag } from '../../core/domain/WeaponTypes';
 import { WeaponTagQuery } from '../../weapon/tags/WeaponTagQuery';
 import { Mutator } from '../Mutator';
 import { WeaponPoolMutatorConfig } from '../MutatorConfig';

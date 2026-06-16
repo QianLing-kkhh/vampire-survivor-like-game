@@ -1,6 +1,6 @@
 import { EventBus } from '../../core/EventBus';
+import type { GameEventMap } from '../../core/domain/GameEvents';
 import { TimeManager } from '../../core/TimeManager';
-import { GameEventMap } from '../../enemy/Enemy';
 import { GameEventBridge } from '../../events/GameEventBridge';
 import { GameEventBus } from '../../events/GameEventBus';
 import { GameEventRecorder } from '../../events/GameEventRecorder';

@@ -1,5 +1,8 @@
 import { EventBus } from '../core/EventBus';
-import { GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
+import {
+  isEnemyKilledEvent,
+  type GameEventMap,
+} from '../core/domain/GameEvents';
 
 import { GameEventBus } from './GameEventBus';
 

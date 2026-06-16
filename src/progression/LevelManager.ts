@@ -1,5 +1,8 @@
 import { EventBus } from '../core/EventBus';
-import { GameEventMap, isExpGainedEvent } from '../enemy/Enemy';
+import {
+  isExpGainedEvent,
+  type GameEventMap,
+} from '../core/domain/GameEvents';
 import { ExpManager } from './ExpManager';
 
 export class LevelManager {

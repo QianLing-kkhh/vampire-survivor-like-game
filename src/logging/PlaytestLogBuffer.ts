@@ -1,5 +1,6 @@
 import { PlaytestLog } from './PlaytestLog';
 import { getCurrentVersionInfo } from '../version/VersionInfo';
+import { LocalStorageAdapter } from '../save/storage/LocalStorageAdapter';
 
 interface BufferedPlaytestLog {
   row: string;
@@ -15,6 +16,7 @@ type StoredPlaytestLog = string | Partial<BufferedPlaytestLog>;
 export class PlaytestLogBuffer {
   private static readonly MAX_ROWS = 1000;
   private static readonly STORAGE_KEY = 'vampire_survivor_like_playtest_logs';
+  private static readonly storage = new LocalStorageAdapter();
   private static sessionId = PlaytestLogBuffer.createSessionId();
   private static rows: BufferedPlaytestLog[] = PlaytestLogBuffer.loadStoredRows();
 
@@ -74,12 +76,7 @@ export class PlaytestLogBuffer {
   static clear(): void {
     this.rows = [];
     this.sessionId = PlaytestLogBuffer.createSessionId();
-
-    try {
-      globalThis.localStorage?.removeItem(PlaytestLogBuffer.STORAGE_KEY);
-    } catch {
-      // Memory clear above is enough when localStorage is unavailable.
-    }
+    PlaytestLogBuffer.storage.removeItem(PlaytestLogBuffer.STORAGE_KEY);
   }
 
   private static getHeader(): string {
@@ -127,7 +124,7 @@ export class PlaytestLogBuffer {
 
   private static loadStoredRows(): BufferedPlaytestLog[] {
     try {
-      const rawRows = globalThis.localStorage?.getItem(PlaytestLogBuffer.STORAGE_KEY);
+      const rawRows = PlaytestLogBuffer.storage.getItem(PlaytestLogBuffer.STORAGE_KEY);
 
       if (!rawRows) {
         return [];
@@ -187,14 +184,10 @@ export class PlaytestLogBuffer {
   }
 
   private static saveRows(): void {
-    try {
-      globalThis.localStorage?.setItem(
-        PlaytestLogBuffer.STORAGE_KEY,
-        JSON.stringify(this.rows),
-      );
-    } catch {
-      // Keep the in-memory buffer when localStorage is unavailable or full.
-    }
+    PlaytestLogBuffer.storage.setItem(
+      PlaytestLogBuffer.STORAGE_KEY,
+      JSON.stringify(this.rows),
+    );
   }
 
   private static extractTimestamp(csvRow: string): string {

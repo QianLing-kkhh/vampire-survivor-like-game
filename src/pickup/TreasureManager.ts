@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 
-import { AudioManager } from '../audio/AudioManager';
 import { EventBus } from '../core/EventBus';
+import { Math2D } from '../core/domain/Math2D';
+import type { AudioPort } from '../core/ports/AudioPort';
 import { GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
 import { GameEventBus } from '../events/GameEventBus';
 import { UpgradeFlow } from '../progression/UpgradeFlow';
@@ -10,6 +11,7 @@ import { SeededRandom } from '../random/SeededRandom';
 import { RunRuleSet } from '../rules/RunRuleSet';
 
 import { TreasureChest } from './TreasureChest';
+import type { TreasureUpdateContext } from './TreasureUpdateContext';
 
 interface Position {
   x: number;
@@ -40,6 +42,7 @@ export class TreasureManager {
     private readonly getGameTimeSeconds?: () => number,
     private readonly getRunId?: () => string | undefined,
     private readonly onTreasureRewardRequested?: () => void,
+    private readonly audioPort?: AudioPort,
   ) {
     this.unsubscribeEnemyKilled = eventBus.subscribe('EnemyKilled', (event) => {
       if (!isEnemyKilledEvent(event)) {
@@ -66,7 +69,9 @@ export class TreasureManager {
     };
   }
 
-  update(playerPosition: Position, pickupRange: number, deltaMs = 16): void {
+  update(context: TreasureUpdateContext): void {
+    const playerPosition = context.player.getPositionLike();
+    const deltaMs = context.deltaMs;
     for (let index = this.chests.length - 1; index >= 0; index -= 1) {
       const chest = this.chests[index];
 
@@ -90,7 +95,7 @@ export class TreasureManager {
         continue;
       }
 
-      if (this.isChestInRange(chest, playerPosition, pickupRange)) {
+      if (this.isChestInRange(chest, playerPosition, context.pickupRange)) {
         chest.startMagnet();
       }
     }
@@ -177,7 +182,7 @@ export class TreasureManager {
     pickupRange: number,
   ): boolean {
     return !chest.isOpened
-      && Phaser.Math.Distance.Between(
+      && Math2D.distanceBetween(
         playerPosition.x,
         playerPosition.y,
         chest.body.x,
@@ -187,7 +192,7 @@ export class TreasureManager {
 
   private applyRandomUpgrade(): void {
     this.onChestOpened?.();
-    AudioManager.playSfx(this.scene, 'treasure_open');
+    this.audioPort?.playSound('treasure_open');
     if (this.onTreasureRewardRequested) {
       this.onTreasureRewardRequested();
       return;

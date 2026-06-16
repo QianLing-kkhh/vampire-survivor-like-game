@@ -4,6 +4,8 @@ import { DebugPanelData } from '../debug/DebugPanelData';
 import { DebugPanelManager } from '../debug/DebugPanelManager';
 import { I18n } from '../i18n/I18n';
 import { UpgradeOption } from '../progression/UpgradeOption';
+import { LayoutConfig } from '../responsive/LayoutConfig';
+import { ScreenManager } from '../responsive/ScreenManager';
 import { HUD, HUDState } from '../ui/HUD';
 import { HelpOverlay } from '../ui/HelpOverlay';
 import { LevelUpPanel, LevelUpPanelConfig } from '../ui/LevelUpPanel';
@@ -11,6 +13,7 @@ import { LiveStrategyControlPanel } from '../ui/LiveStrategyControlPanel';
 import type { LiveStrategyPatchPayload } from '../ui/LiveStrategyControlPanel';
 import { PauseMenu } from '../ui/PauseMenu';
 import { RelicAcquiredPanel } from '../ui/RelicAcquiredPanel';
+import { UITemporaryMessage } from '../ui/components/UITemporaryMessage';
 import { StatsBuildSnapshot } from '../ui/stats/StatsBuildSnapshot';
 import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
 
@@ -34,6 +37,7 @@ export class UIScene extends Phaser.Scene {
   private relicAcquiredPanel?: RelicAcquiredPanel;
   private liveStrategyControlPanel?: LiveStrategyControlPanel;
   private debugPanelManager?: DebugPanelManager;
+  private screenManager?: ScreenManager;
   private temporaryMessage?: Phaser.GameObjects.Text;
 
   constructor() {
@@ -41,6 +45,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.screenManager = new ScreenManager(this);
     this.hud = new HUD(this, () => {
       this.events.emit('HudPausePressed');
     });
@@ -170,33 +175,38 @@ export class UIScene extends Phaser.Scene {
   private showTemporaryMessage(payload: TemporaryMessagePayload): void {
     const message = typeof payload === 'string' ? payload : payload.text;
     const kind = typeof payload === 'string' ? 'normal' : payload.kind ?? 'normal';
-    const isBoss = kind === 'boss';
+    const screen = this.screenManager;
+    if (!screen) {
+      return;
+    }
+    const layout = LayoutConfig.getHudLayout(screen);
+    const zone = layout.hudZones.centerMessage;
+    const tiny = layout.density === 'tiny';
+    const compact = layout.density === 'compact' || layout.density === 'tiny';
+    const wrapRatio = kind === 'boss'
+      ? tiny ? 0.36 : compact ? 0.5 : 0.42
+      : tiny ? 0.38 : compact ? 0.56 : 0.38;
 
     this.temporaryMessage?.destroy();
-    this.temporaryMessage = this.add.text(
-      this.scale.width / 2,
-      this.scale.height * (isBoss ? 0.32 : 0.28),
-      message,
-      {
-        color: isBoss ? '#facc15' : '#f8fafc',
-        fontFamily: 'Arial, sans-serif',
-        fontSize: isBoss ? '40px' : '22px',
-        fontStyle: 'bold',
-        stroke: isBoss ? '#7f1d1d' : '#111827',
-        strokeThickness: isBoss ? 6 : 4,
-      },
-    );
-    this.temporaryMessage.setOrigin(0.5);
-    this.temporaryMessage.setDepth(3000);
-
-    this.tweens.add({
-      targets: this.temporaryMessage,
-      alpha: 0,
-      y: this.temporaryMessage.y - 24,
-      duration: typeof payload === 'string' ? 1400 : payload.durationMs ?? (isBoss ? 2200 : 1400),
-      onComplete: () => {
-        this.temporaryMessage?.destroy();
-        this.temporaryMessage = undefined;
+    this.temporaryMessage = UITemporaryMessage.show(this, {
+      x: zone.x + zone.width / 2,
+      y: zone.y + zone.height / 2,
+      text: message,
+      kind,
+      compact,
+      durationMs: typeof payload === 'string' ? 1400 : payload.durationMs,
+      wordWrapWidth: Math.max(180, Math.min(
+        zone.width,
+        screen.width * wrapRatio,
+      )),
+      fontSize: tiny ? kind === 'boss' ? '24px' : '16px' : undefined,
+      strokeThickness: tiny ? kind === 'boss' ? 4 : 3 : undefined,
+      depth: 3000,
+      scrollFactor: 0,
+      onComplete: (text) => {
+        if (this.temporaryMessage === text) {
+          this.temporaryMessage = undefined;
+        }
       },
     });
   }
@@ -242,5 +252,7 @@ export class UIScene extends Phaser.Scene {
     this.liveStrategyControlPanel = undefined;
     this.hud?.destroy();
     this.hud = undefined;
+    this.screenManager?.dispose();
+    this.screenManager = undefined;
   }
 }
