@@ -1,4 +1,4 @@
-import { WeaponConfig } from '../Weapon';
+import type { WeaponConfig } from '../../core/domain/WeaponTypes';
 import { WeaponTag } from './WeaponTag';
 
 export class WeaponTagQuery {

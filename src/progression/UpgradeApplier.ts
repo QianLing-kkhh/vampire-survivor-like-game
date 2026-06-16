@@ -9,6 +9,7 @@ import { UpgradeOption } from './UpgradeOption';
 
 export interface UpgradeDisplayRow {
   iconKey?: string;
+  iconFallbackKeys?: string[];
   fallback: string;
   text: string;
 }
@@ -28,6 +29,16 @@ export class UpgradeApplier {
   ) {}
 
   apply(option: UpgradeOption): boolean {
+    const genericApplied = this.applyGenericOption(option);
+
+    if (genericApplied !== undefined) {
+      if (genericApplied) {
+        this.runStats?.recordUpgrade(option.id);
+      }
+
+      return genericApplied;
+    }
+
     let applied = false;
     switch (option.id) {
       case 'speed_up':
@@ -86,6 +97,12 @@ export class UpgradeApplier {
   }
 
   getUpgradePreview(option: UpgradeOption): string | undefined {
+    const genericPreview = this.getGenericUpgradePreview(option);
+
+    if (genericPreview !== undefined) {
+      return genericPreview;
+    }
+
     switch (option.id) {
       case 'speed_up':
         return this.formatChange(
@@ -190,14 +207,16 @@ export class UpgradeApplier {
     option: UpgradeOption,
     evolutionManager?: EvolutionManager,
   ): UpgradeDisplayInfo | undefined {
-    const weaponId = this.getWeaponIdForUpgradeId(option.id);
+    const weaponId = option.kind === 'weaponStat'
+      ? option.weaponId
+      : this.getWeaponIdForUpgradeId(option.id);
 
     if (weaponId) {
       return this.getWeaponUpgradeDisplayInfo(weaponId, evolutionManager);
     }
 
-    if (this.isPassiveUpgrade(option.id)) {
-      return this.getPassiveUpgradeDisplayInfo(option.id, evolutionManager);
+    if (option.kind === 'passive' || this.isPassiveUpgrade(option.id)) {
+      return this.getPassiveUpgradeDisplayInfo(option.passiveId ?? option.id, evolutionManager);
     }
 
     return undefined;
@@ -311,6 +330,36 @@ export class UpgradeApplier {
     return true;
   }
 
+  private applyGenericOption(option: UpgradeOption): boolean | undefined {
+    switch (option.kind) {
+      case 'addWeapon':
+        return option.weaponId ? this.addWeaponById(option.weaponId) : false;
+      case 'passive':
+        return this.applyPassiveUpgrade(option.passiveId ?? option.id);
+      case 'weaponStat':
+        return this.applyWeaponUpgrade(option.id);
+      case 'playerStat':
+        return undefined;
+      default:
+        return undefined;
+    }
+  }
+
+  private addWeaponById(weaponId: string): boolean {
+    if (!this.weaponManager || !this.weaponFactory) {
+      console.warn(`Cannot add ${weaponId} without weapon systems`);
+      return false;
+    }
+
+    if (this.weaponManager.hasWeaponOrEvolution(weaponId)) {
+      console.warn(`${weaponId} already added`);
+      return false;
+    }
+
+    this.weaponManager.addWeapon(this.weaponFactory.create(weaponId));
+    return true;
+  }
+
   private applyWeaponUpgrade(upgradeId: string): boolean {
     if (!this.weaponManager) {
       console.warn(`Cannot apply weapon upgrade without weapon manager: ${upgradeId}`);
@@ -343,6 +392,35 @@ export class UpgradeApplier {
     return this.passiveManager?.getPreview(passiveId);
   }
 
+  private getGenericUpgradePreview(option: UpgradeOption): string | undefined {
+    if (option.kind === 'passive') {
+      return this.getPassiveUpgradePreview(option.passiveId ?? option.id);
+    }
+
+    if (option.kind === 'addWeapon') {
+      return `Add ${this.formatName(option.weaponId ?? option.id)}`;
+    }
+
+    if (option.kind !== 'weaponStat' || !option.weaponId || !this.isWeaponStat(option.stat)) {
+      return undefined;
+    }
+
+    const label = this.formatStatLabel(option.stat);
+    const multiplier = option.operation === 'add'
+      ? option.value ?? 1
+      : option.value ?? this.getDefaultWeaponUpgradeMultiplier(option.stat);
+
+    return this.formatWeaponChange(
+      option.weaponId,
+      option.stat,
+      label,
+      multiplier,
+      option.cap,
+      option.stat === 'cooldown',
+      option.operation === 'add',
+    );
+  }
+
   private getWeaponUpgradeDisplayInfo(
     weaponId: string,
     evolutionManager?: EvolutionManager,
@@ -352,18 +430,27 @@ export class UpgradeApplier {
     }
 
     const displayWeaponId = this.weaponManager.getUpgradeTargetWeaponId(weaponId);
+    const level = this.weaponManager.getWeaponUpgradeTotal(weaponId);
+    const maxLevel = this.weaponManager.getWeaponUpgradeLimit(weaponId);
+    const displayLevel = Math.min(maxLevel, level + 1);
     const rows: UpgradeDisplayRow[] = [
       {
-        iconKey: this.getWeaponIconKey(displayWeaponId),
+        iconKey: this.getTieredWeaponIconKey(displayWeaponId, displayLevel, maxLevel),
+        iconFallbackKeys: [this.getWeaponIconKey(displayWeaponId)],
         fallback: this.getInitials(displayWeaponId),
-        text: `${this.formatName(displayWeaponId)} Lv.${this.weaponManager.getWeaponUpgradeTotal(weaponId)} / ${this.weaponManager.getWeaponUpgradeLimit(weaponId)}`,
+        text: `${this.formatName(displayWeaponId)} Lv.${displayLevel} / ${maxLevel}`,
       },
     ];
     const rule = evolutionManager?.getRequiredPassiveForWeapon(weaponId);
 
     if (rule) {
       rows.push({
-        iconKey: this.getPassiveIconKey(rule.requiredPassiveId),
+        iconKey: this.getTieredPassiveIconKey(
+          rule.requiredPassiveId,
+          this.passiveManager?.getPassiveLevel(rule.requiredPassiveId) ?? 0,
+          this.passiveManager?.getPassiveMaxLevel(rule.requiredPassiveId) ?? rule.requiredPassiveLevel,
+        ),
+        iconFallbackKeys: [this.getPassiveIconKey(rule.requiredPassiveId)],
         fallback: this.getInitials(rule.requiredPassiveId),
         text: `${this.passiveManager?.getPassiveName(rule.requiredPassiveId) ?? this.formatName(rule.requiredPassiveId)} Lv.${this.passiveManager?.getPassiveLevel(rule.requiredPassiveId) ?? 0} / ${this.passiveManager?.getPassiveMaxLevel(rule.requiredPassiveId) ?? rule.requiredPassiveLevel}`,
       });
@@ -376,11 +463,15 @@ export class UpgradeApplier {
     passiveId: string,
     evolutionManager?: EvolutionManager,
   ): UpgradeDisplayInfo {
+    const level = this.passiveManager?.getPassiveLevel(passiveId) ?? 0;
+    const maxLevel = this.passiveManager?.getPassiveMaxLevel(passiveId) ?? 5;
+    const displayLevel = Math.min(maxLevel, level + 1);
     const rows: UpgradeDisplayRow[] = [
       {
-        iconKey: this.getPassiveIconKey(passiveId),
+        iconKey: this.getTieredPassiveIconKey(passiveId, displayLevel, maxLevel),
+        iconFallbackKeys: [this.getPassiveIconKey(passiveId)],
         fallback: this.getInitials(passiveId),
-        text: `${this.passiveManager?.getPassiveName(passiveId) ?? this.formatName(passiveId)} Lv.${this.passiveManager?.getPassiveLevel(passiveId) ?? 0} / ${this.passiveManager?.getPassiveMaxLevel(passiveId) ?? 5}`,
+        text: `${this.passiveManager?.getPassiveName(passiveId) ?? this.formatName(passiveId)} Lv.${displayLevel} / ${maxLevel}`,
       },
     ];
     const ownedWeaponRules = evolutionManager
@@ -399,7 +490,12 @@ export class UpgradeApplier {
       const displayWeaponId = this.weaponManager?.getUpgradeTargetWeaponId(rule.baseWeaponId)
         ?? rule.baseWeaponId;
       rows.push({
-        iconKey: this.getWeaponIconKey(displayWeaponId),
+        iconKey: this.getTieredWeaponIconKey(
+          displayWeaponId,
+          this.weaponManager?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0,
+          this.weaponManager?.getWeaponUpgradeLimit(rule.baseWeaponId) ?? rule.requiredWeaponUpgradeTotal,
+        ),
+        iconFallbackKeys: [this.getWeaponIconKey(displayWeaponId)],
         fallback: this.getInitials(displayWeaponId),
         text: `${this.formatName(displayWeaponId)} Lv.${this.weaponManager?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0} / ${this.weaponManager?.getWeaponUpgradeLimit(rule.baseWeaponId) ?? rule.requiredWeaponUpgradeTotal}`,
       });
@@ -497,6 +593,48 @@ export class UpgradeApplier {
     );
   }
 
+  private formatStatLabel(stat: NonNullable<UpgradeOption['stat']>): string {
+    switch (stat) {
+      case 'moveSpeed':
+        return 'Move Speed';
+      case 'pickupRange':
+        return 'Pickup Range';
+      case 'maxHp':
+        return 'Max HP';
+      case 'orbitCount':
+      case 'projectileCount':
+        return 'Count';
+      case 'orbitSpeed':
+        return 'Orbit Speed';
+      case 'projectileSpeed':
+        return 'Projectile Speed';
+      default:
+        return `${stat.charAt(0).toUpperCase()}${stat.slice(1)}`;
+    }
+  }
+
+  private getDefaultWeaponUpgradeMultiplier(stat: NonNullable<UpgradeOption['stat']>): number {
+    return stat === 'cooldown' ? 0.9 : 1.1;
+  }
+
+  private isWeaponStat(
+    stat: UpgradeOption['stat'],
+  ): stat is 'damage'
+    | 'cooldown'
+    | 'radius'
+    | 'orbitCount'
+    | 'orbitSpeed'
+    | 'projectileSpeed'
+    | 'projectileCount' {
+    return stat === 'damage'
+      || stat === 'cooldown'
+      || stat === 'radius'
+      || stat === 'orbitCount'
+      || stat === 'orbitSpeed'
+      || stat === 'projectileSpeed'
+      || stat === 'projectileCount';
+  }
+
   private getWeaponIconKey(weaponId: string): string {
     switch (weaponId) {
       case 'knife':
@@ -539,6 +677,30 @@ export class UpgradeApplier {
       default:
         return passiveId;
     }
+  }
+
+  private getTieredWeaponIconKey(weaponId: string, level: number, maxLevel: number): string {
+    return `art_weapons_${weaponId}_icon_tier${this.getVisualTier(level, maxLevel)}`;
+  }
+
+  private getTieredPassiveIconKey(passiveId: string, level: number, maxLevel: number): string {
+    return `art_passives_${passiveId}_icon_tier${this.getVisualTier(level, maxLevel)}`;
+  }
+
+  private getVisualTier(level: number, maxLevel: number): 1 | 2 | 3 {
+    const safeLevel = Math.max(0, Math.floor(level));
+    const safeMax = Math.max(1, Math.floor(maxLevel));
+    const ratio = safeLevel / safeMax;
+
+    if (ratio >= 0.8 || safeLevel >= safeMax) {
+      return 3;
+    }
+
+    if (ratio >= 0.4) {
+      return 2;
+    }
+
+    return 1;
   }
 
   private getInitials(value: string): string {

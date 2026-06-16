@@ -7,6 +7,7 @@ import { ScreenManager } from '../responsive/ScreenManager';
 type PauseHandler = () => void;
 
 export class VirtualJoystick {
+  // TODO(godot-port): route touch joystick snapshots through InputPort after PlayerController consumes touch intent.
   private static readonly BASE_RADIUS = 64;
   private static readonly KNOB_RADIUS = 28;
   private static readonly ACTIVE_AREA_RADIUS = 110;

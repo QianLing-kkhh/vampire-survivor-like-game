@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
-import { Enemy, EnemyStats } from '../enemy/Enemy';
+import type { EnemyStats } from '../core/domain/EnemyTypes';
+import { Enemy } from '../enemy/Enemy';
 import { RunRuleSet } from '../rules/RunRuleSet';
 
 type EnemyConfigMap = Record<string, EnemyStats>;

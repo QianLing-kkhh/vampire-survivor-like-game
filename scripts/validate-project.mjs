@@ -5,6 +5,7 @@ const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const steps = [
   { label: 'TypeScript', args: ['exec', 'tsc'] },
   { label: 'Build', args: ['run', 'build'] },
+  { label: 'UI shell audit', args: ['run', 'validate:ui'] },
   { label: 'Content audit', args: ['run', 'validate:content'] },
   { label: 'Asset audit', args: ['run', 'validate:assets'] },
   { label: 'External art audit', args: ['run', 'validate:external-art'] },

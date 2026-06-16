@@ -1,6 +1,5 @@
-import Phaser from 'phaser';
-
 import { Enemy } from './Enemy';
+import { EnemyMovementSystem } from './EnemyMovementSystem';
 
 export interface Position {
   x: number;
@@ -14,6 +13,7 @@ export class EnemyMovement {
 
   private readonly trackedEnemies = new Set<Enemy>();
   private readonly spatialBuckets = new Map<string, Enemy[]>();
+  private readonly movementSystem = new EnemyMovementSystem();
   private separationCandidateChecks = 0;
   private spatialEnemyCount = 0;
 
@@ -47,21 +47,22 @@ export class EnemyMovement {
       this.trackEnemy(enemy);
     }
 
-    const direction = new Phaser.Math.Vector2(
-      target.x - enemy.body.x,
-      target.y - enemy.body.y,
-    );
+    const currentPosition = enemy.getPositionLike();
+    const nextPosition = this.movementSystem.moveToward({
+      position: currentPosition,
+      target,
+      moveSpeed: enemy.moveSpeed,
+      deltaMs,
+      speedMultiplier,
+    });
 
-    if (direction.lengthSq() === 0) {
+    if (nextPosition.x === currentPosition.x && nextPosition.y === currentPosition.y) {
       return;
     }
 
-    direction.normalize();
-
     const effectiveSpeedMultiplier = Math.max(0, speedMultiplier);
-    const distance = enemy.moveSpeed * effectiveSpeedMultiplier * (deltaMs / 1000);
-    enemy.body.x += direction.x * distance;
-    enemy.body.y += direction.y * distance;
+    enemy.body.x = nextPosition.x;
+    enemy.body.y = nextPosition.y;
     this.applySeparation(enemy, deltaMs * effectiveSpeedMultiplier);
   }
 

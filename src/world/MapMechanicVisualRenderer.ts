@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import {
+  MapAltarDefinition,
   MapLightSourceDefinition,
   MapObstacleDefinition,
   MapPortalDefinition,
@@ -22,6 +23,8 @@ export class MapMechanicVisualRenderer {
     switch (definition.visualType) {
       case 'river':
         return this.renderRiver(context, definition, shape, width, height, radius);
+      case 'ink':
+        return this.renderInk(context, definition, shape, width, height, radius);
       case 'mud':
         return this.renderMud(context, definition, shape, width, height, radius);
       case 'swamp':
@@ -34,7 +37,9 @@ export class MapMechanicVisualRenderer {
     context: MapMechanicContext,
     definition: MapPortalDefinition,
   ): Phaser.GameObjects.GameObject[] {
-    const kind = definition.visualType === 'green'
+    const kind = definition.visualType === 'gold'
+      ? 'portalGold'
+      : definition.visualType === 'green'
       ? 'portalGreen'
       : definition.visualType === 'purple'
         ? 'portalPurple'
@@ -82,6 +87,10 @@ export class MapMechanicVisualRenderer {
       ? 'lightTorch'
       : definition.visualType === 'crystal'
         ? 'lightCrystal'
+        : definition.visualType === 'candle'
+          ? 'lightCandle'
+          : definition.visualType === 'arcaneLamp'
+            ? 'lightArcaneLamp'
         : 'lightLamp';
     const textureKey = AssetKeyResolver.getMapMechanicTextureKey(context.scene, kind);
 
@@ -123,14 +132,20 @@ export class MapMechanicVisualRenderer {
         ? 'obstacleGrave'
         : visualType === 'wall'
           ? 'obstacleWall'
+          : visualType === 'cathedralWall'
+            ? 'obstacleCathedralWall'
+            : visualType === 'cathedralPillar'
+              ? 'obstacleCathedralPillar'
+              : visualType === 'bookshelf'
+                ? 'obstacleBookshelf'
+                : visualType === 'archivePillar'
+                  ? 'obstacleArchivePillar'
           : 'obstacleRock';
     const textureKey = AssetKeyResolver.getMapMechanicTextureKey(context.scene, kind);
 
     if (textureKey) {
       const image = context.scene.add.image(definition.x, definition.y, textureKey);
-      const displaySize = visualType === 'wall'
-        ? 96
-        : VisualScale.getLandmarkDisplaySize(visualType);
+      const displaySize = this.getObstacleDisplaySize(visualType);
 
       image.setDisplaySize(
         Math.max(width, displaySize),
@@ -146,7 +161,44 @@ export class MapMechanicVisualRenderer {
 
     object.setDepth(-72);
     object.setStrokeStyle(2, 0x94a3b8, 0.45);
-    return [object];
+      return [object];
+  }
+
+  static renderAltar(
+    context: MapMechanicContext,
+    definition: MapAltarDefinition,
+  ): {
+    objects: Phaser.GameObjects.GameObject[];
+    range: Phaser.GameObjects.Arc;
+    progress: Phaser.GameObjects.Arc;
+    core?: Phaser.GameObjects.Image | Phaser.GameObjects.Arc;
+  } {
+    const objects: Phaser.GameObjects.GameObject[] = [];
+    const altarKind = definition.visualType === 'library' ? 'altarLibrary' : 'altarCathedral';
+    const textureKey = AssetKeyResolver.getMapMechanicTextureKey(context.scene, altarKind)
+      ?? AssetKeyResolver.getMapMechanicTextureKey(context.scene, 'altar');
+    const range = context.scene.add.circle(definition.x, definition.y, definition.radius, 0xc4b5fd, 0.08);
+    const progress = context.scene.add.circle(definition.x, definition.y, definition.radius + 8, 0xc4b5fd, 0);
+
+    range.setStrokeStyle(2, 0xc4b5fd, 0.24);
+    range.setDepth(-64);
+    progress.setStrokeStyle(4, 0xfacc15, 0);
+    progress.setDepth(-61);
+    objects.push(range, progress);
+
+    if (textureKey) {
+      const image = context.scene.add.image(definition.x, definition.y, textureKey);
+      image.setDisplaySize(132, 132);
+      image.setDepth(-62);
+      objects.push(image);
+      return { objects, range, progress, core: image };
+    }
+
+    const base = context.scene.add.circle(definition.x, definition.y, 42, 0x4c1d95, 0.92);
+    base.setStrokeStyle(3, 0xfacc15, 0.72);
+    base.setDepth(-62);
+    objects.push(base);
+    return { objects, range, progress, core: base };
   }
 
   private static renderRiver(
@@ -255,6 +307,31 @@ export class MapMechanicVisualRenderer {
     return [image];
   }
 
+  private static renderInk(
+    context: MapMechanicContext,
+    definition: MapSlowZoneDefinition,
+    shape: 'circle' | 'rect',
+    width: number,
+    height: number,
+    radius: number,
+  ): Phaser.GameObjects.GameObject[] {
+    const textureKey = AssetKeyResolver.getMapMechanicTextureKey(context.scene, 'ink');
+
+    if (!textureKey) {
+      return [this.renderSoftTerrainFallback(context, definition, shape, width, height, radius, {
+        bankColor: 0x0f172a,
+        fillColor: 0x312e81,
+        accentColor: 0xa78bfa,
+      })];
+    }
+
+    const image = context.scene.add.image(definition.x, definition.y, textureKey);
+    image.setDisplaySize(shape === 'circle' ? radius * 2 : width, shape === 'circle' ? radius * 2 : height);
+    image.setDepth(-86);
+    image.setAlpha(0.78);
+    return [image];
+  }
+
   private static renderRiverFallback(
     context: MapMechanicContext,
     definition: MapSlowZoneDefinition,
@@ -354,8 +431,27 @@ export class MapMechanicVisualRenderer {
     return context.scene.textures.exists(key) ? key : undefined;
   }
 
+  private static getObstacleDisplaySize(visualType: MapObstacleDefinition['visualType']): number {
+    switch (visualType) {
+      case 'wall':
+      case 'cathedralWall':
+      case 'bookshelf':
+        return 96;
+      case 'cathedralPillar':
+      case 'archivePillar':
+        return 118;
+      case 'tree':
+      case 'grave':
+      case 'rock':
+      default:
+        return VisualScale.getLandmarkDisplaySize(visualType ?? 'rock');
+    }
+  }
+
   private static getPortalColor(visualType: MapPortalDefinition['visualType']): number {
     switch (visualType) {
+      case 'gold':
+        return 0xfacc15;
       case 'green':
         return 0x22c55e;
       case 'purple':
@@ -368,6 +464,10 @@ export class MapMechanicVisualRenderer {
 
   private static getLightColor(visualType: MapLightSourceDefinition['visualType']): number {
     switch (visualType) {
+      case 'candle':
+        return 0xfacc15;
+      case 'arcaneLamp':
+        return 0x818cf8;
       case 'crystal':
         return 0x93c5fd;
       case 'torch':

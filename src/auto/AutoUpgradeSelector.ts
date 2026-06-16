@@ -1,6 +1,8 @@
 import type { CharacterDamageReactionType } from '../character/CharacterDamageReactionSkill';
 import type { CharacterBaseStats } from '../character/CharacterDefinition';
-import { EVOLUTION_RULES, EvolutionRule } from '../evolution/EvolutionRule';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
+import { EvolutionRule } from '../evolution/EvolutionRule';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import type { RandomSource } from '../random/RandomSource';
 import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
@@ -136,7 +138,7 @@ export class AutoUpgradeSelector {
     let score = 0;
     const upgradedWeaponId = this.getWeaponIdForUpgrade(upgradeId);
 
-    for (const rule of EVOLUTION_RULES) {
+    for (const rule of this.getEvolutionRules()) {
       if (
         !context.weaponIds.includes(rule.baseWeaponId)
         || context.weaponIds.includes(rule.evolvedWeaponId)
@@ -403,7 +405,9 @@ export class AutoUpgradeSelector {
   }
 
   private isNewWeaponUpgrade(upgradeId: string): boolean {
-    return (
+    const option = this.getUpgradeOption(upgradeId);
+
+    return option?.kind === 'addWeapon' || (
       upgradeId === 'add_garlic'
       || upgradeId === 'add_bible'
       || upgradeId === 'add_magic_wand'
@@ -412,7 +416,9 @@ export class AutoUpgradeSelector {
   }
 
   private isPassiveUpgrade(upgradeId: string): boolean {
-    return (
+    const option = this.getUpgradeOption(upgradeId);
+
+    return option?.kind === 'passive' || (
       upgradeId === 'spinach'
       || upgradeId === 'empty_tome'
       || upgradeId === 'bracer'
@@ -435,6 +441,12 @@ export class AutoUpgradeSelector {
   }
 
   private getWeaponIdForUpgrade(upgradeId: string): string | undefined {
+    const option = this.getUpgradeOption(upgradeId);
+
+    if (option?.kind === 'weaponStat' || option?.kind === 'addWeapon') {
+      return option.weaponId;
+    }
+
     if (upgradeId === 'knife_damage_up' || upgradeId === 'knife_cooldown_up') {
       return 'knife';
     }
@@ -468,6 +480,18 @@ export class AutoUpgradeSelector {
     }
 
     return undefined;
+  }
+
+  private getUpgradeOption(upgradeId: string): UpgradeOption | undefined {
+    ContentBootstrap.ensureInitialized();
+
+    return ContentRegistry.getUpgradeOptions().find((option) => option.id === upgradeId);
+  }
+
+  private getEvolutionRules(): readonly EvolutionRule[] {
+    ContentBootstrap.ensureInitialized();
+
+    return ContentRegistry.listEvolutionRules();
   }
 
   private priorityMultiplier(key: keyof AutoStrategyProfile['upgrade']): number {

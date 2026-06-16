@@ -122,9 +122,10 @@ export class AxeWeapon extends Weapon {
       return;
     }
 
+    const playerPosition = context.player.getPositionLike();
     const baseDirection = new Phaser.Math.Vector2(
-      groupCenter.x - context.player.x,
-      groupCenter.y - context.player.y,
+      groupCenter.x - playerPosition.x,
+      groupCenter.y - playerPosition.y,
     );
 
     if (baseDirection.lengthSq() === 0) {
@@ -143,7 +144,7 @@ export class AxeWeapon extends Weapon {
     }
 
     for (const direction of projectileDirections) {
-      const body = this.createProjectileBody(context.player.x, context.player.y);
+      const body = this.createProjectileBody(playerPosition.x, playerPosition.y);
       const shadow = ShadowFactory.createShadow(
         this.scene,
         body,
@@ -153,8 +154,8 @@ export class AxeWeapon extends Weapon {
       this.projectiles.push({
         body,
         shadow,
-        startX: context.player.x,
-        startY: context.player.y,
+        startX: playerPosition.x,
+        startY: playerPosition.y,
         direction,
         baseDisplaySize: VisualScale.getProjectileDisplaySize(this.id),
         previousX: body.x,
@@ -333,13 +334,14 @@ export class AxeWeapon extends Weapon {
   }
 
   private findEnemyGroupCenter(context: WeaponUpdateContext): { x: number; y: number } | undefined {
+    const playerPosition = context.player.getPositionLike();
     const nearbyEnemies = context.enemies
       .filter((enemy) => !enemy.isDead)
       .map((enemy) => ({
         enemy,
         distanceSq: Phaser.Math.Distance.Squared(
-          context.player.x,
-          context.player.y,
+          playerPosition.x,
+          playerPosition.y,
           enemy.body.x,
           enemy.body.y,
         ),
@@ -384,8 +386,9 @@ export class AxeWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): AxeProjectileBody {
-    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
-    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const visualTier = this.getVisualTierInput();
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id, visualTier);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id, visualTier);
     const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
     if (textureKey && animationKey) {

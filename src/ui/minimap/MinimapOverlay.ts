@@ -2,12 +2,14 @@ import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../../assets/AssetKeyResolver';
 import {
+  MapAltarDefinition,
   MapLightSourceDefinition,
   MapMechanicDefinition,
   MapObstacleDefinition,
   MapPortalDefinition,
   MapSlowZoneDefinition,
 } from '../../map/mechanics/MapMechanicDefinition';
+import { UIBackplate } from '../components/UIBackplate';
 import { UITheme } from '../UITheme';
 import { MINIMAP_STYLE } from './MinimapStyle';
 import { MinimapEnemyPosition, MinimapOverlayState, WorldPosition } from './MinimapTypes';
@@ -15,7 +17,7 @@ import { MinimapEnemyPosition, MinimapOverlayState, WorldPosition } from './Mini
 export class MinimapOverlay {
   private static readonly MAX_ENEMIES = 50;
 
-  private readonly background: Phaser.GameObjects.Rectangle;
+  private readonly background: UIBackplate;
   private readonly mechanicsGraphics: Phaser.GameObjects.Graphics;
   private readonly mechanicIcons: Phaser.GameObjects.Image[] = [];
   private readonly markerGraphics: Phaser.GameObjects.Graphics;
@@ -28,11 +30,15 @@ export class MinimapOverlay {
   private visible = true;
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.background = scene.add.rectangle(0, 0, this.width, this.height, UITheme.panelBgColor, 0.72);
-    this.background.setOrigin(0, 0);
-    this.background.setStrokeStyle(1, UITheme.panelBorderColor, 0.65);
-    this.background.setDepth(900);
-    this.background.setScrollFactor(0);
+    this.background = new UIBackplate(scene, {
+      x: 0,
+      y: 0,
+      width: this.width,
+      height: this.height,
+      fillAlpha: 0.72,
+      borderAlpha: 0.65,
+      depth: 900,
+    });
 
     this.mechanicsGraphics = scene.add.graphics();
     this.mechanicsGraphics.setDepth(901);
@@ -150,7 +156,9 @@ export class MinimapOverlay {
           const portal = mechanic as MapPortalDefinition;
           iconIndex = this.placeIcon(
             iconIndex,
-            portal.visualType === 'green'
+            portal.visualType === 'gold'
+              ? 'portalGold'
+              : portal.visualType === 'green'
               ? 'portalGreen'
               : portal.visualType === 'purple'
                 ? 'portalPurple'
@@ -204,9 +212,10 @@ export class MinimapOverlay {
           );
           break;
         case 'altar':
+          const altar = mechanic as MapAltarDefinition;
           iconIndex = this.placeIcon(
             iconIndex,
-            'altar',
+            altar.visualType === 'library' ? 'altarLibrary' : 'altar',
             mechanic.x,
             mechanic.y,
             state,
@@ -240,16 +249,22 @@ export class MinimapOverlay {
     const terrainStyle = MINIMAP_STYLE.terrain;
     const color = visualType === 'river'
       ? terrainStyle.riverColor
+      : visualType === 'ink'
+        ? 0x4c1d95
       : visualType === 'mud'
         ? terrainStyle.mudColor
         : terrainStyle.swampColor;
     const alpha = visualType === 'river'
       ? terrainStyle.riverAlpha
+      : visualType === 'ink'
+        ? 0.22
       : visualType === 'mud'
         ? terrainStyle.mudAlpha
         : terrainStyle.swampAlpha;
     const strokeAlpha = visualType === 'river'
       ? terrainStyle.riverStrokeAlpha
+      : visualType === 'ink'
+        ? 0.34
       : visualType === 'mud'
         ? terrainStyle.mudStrokeAlpha
         : terrainStyle.swampStrokeAlpha;
@@ -429,8 +444,8 @@ export class MinimapOverlay {
     this.markerGraphics.fillCircle(x, y, style.playerCenterRadius);
   }
 
-  private getSlowZoneIconKind(visualType: string | undefined): 'river' | 'swamp' | 'mud' {
-    if (visualType === 'river' || visualType === 'mud') {
+  private getSlowZoneIconKind(visualType: string | undefined): 'river' | 'swamp' | 'mud' | 'ink' {
+    if (visualType === 'river' || visualType === 'mud' || visualType === 'ink') {
       return visualType;
     }
 

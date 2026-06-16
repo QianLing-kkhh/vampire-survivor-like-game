@@ -5,6 +5,11 @@ import { AudioManager } from '../audio/AudioManager';
 import { CharacterRuntime } from '../character/CharacterRuntime';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
+import {
+  isEnemyKilledEvent,
+  type GameEventMap,
+} from '../core/domain/GameEvents';
+import { Math2D } from '../core/domain/Math2D';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
 import { GameEventBus } from '../events/GameEventBus';
 import { MapMechanicRuntime } from '../map/mechanics/MapMechanicRuntime';
@@ -17,7 +22,7 @@ import { PlaytestSettingsState } from '../settings/PlaytestSettings';
 import { RunStats } from '../stats/RunStats';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 
-import { Enemy, GameEventMap, isEnemyKilledEvent } from './Enemy';
+import { Enemy } from './Enemy';
 import { ENEMY_POPULATION_CONFIG } from './EnemyPopulationConfig';
 import { EnemyMovement } from './EnemyMovement';
 
@@ -77,9 +82,10 @@ export class EnemyFlow {
   private aliveEnemySampleTotal = 0;
 
   constructor(private readonly config: EnemyFlowConfig) {
+    const playerPosition = config.player.getPositionLike();
     this.previousPlayerPosition = new Phaser.Math.Vector2(
-      config.player.body.x,
-      config.player.body.y,
+      playerPosition.x,
+      playerPosition.y,
     );
     this.unsubscribeEnemyKilled = config.eventBus.subscribe('EnemyKilled', (event) => {
       if (!isEnemyKilledEvent(event)) {
@@ -117,9 +123,10 @@ export class EnemyFlow {
     this.updateEnemyMerges();
     this.updateContactDamage(deltaMs);
     this.updateAliveEnemyStats();
+    const playerPosition = this.config.player.getPositionLike();
     this.previousPlayerPosition.set(
-      this.config.player.body.x,
-      this.config.player.body.y,
+      playerPosition.x,
+      playerPosition.y,
     );
   }
 
@@ -129,10 +136,11 @@ export class EnemyFlow {
 
   recordPlayerDamage(actualDamage: number): void {
     AudioManager.playSfx(this.config.scene, 'player_hit');
+    const playerPosition = this.config.player.getPositionLike();
     if (this.config.shouldShowDamageNumbers()) {
       this.config.floatingTextManager.showPlayerDamage(
-        this.config.player.body.x,
-        this.config.player.body.y,
+        playerPosition.x,
+        playerPosition.y,
         actualDamage,
       );
     }
@@ -161,17 +169,23 @@ export class EnemyFlow {
 
     knockbackDirection.normalize().scale(distance);
 
-    const radius = this.config.player.body.radius;
-    this.config.player.body.x = Phaser.Math.Clamp(
-      this.config.player.body.x + knockbackDirection.x,
+    const playerPosition = this.config.player.getPositionLike();
+    const radius = this.config.player.getCollisionRadius();
+    const nextX = Math2D.clamp(
+      playerPosition.x + knockbackDirection.x,
       radius,
       this.config.worldWidth - radius,
     );
-    this.config.player.body.y = Phaser.Math.Clamp(
-      this.config.player.body.y + knockbackDirection.y,
+    const nextY = Math2D.clamp(
+      playerPosition.y + knockbackDirection.y,
       radius,
       this.config.worldHeight - radius,
     );
+
+    this.config.player.applyExternalDisplacementLike({
+      x: nextX - playerPosition.x,
+      y: nextY - playerPosition.y,
+    });
   }
 
   setContactCooldown(enemy: Enemy): void {
@@ -345,7 +359,7 @@ export class EnemyFlow {
       const mapSlowState = this.getMapEnemySlowState(enemy);
       this.config.enemyMovement.moveToward(
         enemy,
-        this.config.player.body,
+        this.config.player.getPositionLike(),
         deltaMs,
         enemySpeedMultiplier
           * this.getZoneEnemySpeedMultiplier(enemy)
@@ -427,9 +441,10 @@ export class EnemyFlow {
   private isPlayerHitByEnemy(enemy: Enemy): boolean {
     const enemyRadius = this.getEnemyRadius(enemy);
     const contactRadius = this.config.playerHitRadius + enemyRadius;
+    const playerPosition = this.config.player.getPositionLike();
     const currentDistance = Phaser.Math.Distance.Between(
-      this.config.player.body.x,
-      this.config.player.body.y,
+      playerPosition.x,
+      playerPosition.y,
       enemy.body.x,
       enemy.body.y,
     );
@@ -443,8 +458,8 @@ export class EnemyFlow {
       enemy.body.y,
       this.previousPlayerPosition.x,
       this.previousPlayerPosition.y,
-      this.config.player.body.x,
-      this.config.player.body.y,
+      playerPosition.x,
+      playerPosition.y,
     ) <= contactRadius;
   }
 
@@ -488,9 +503,10 @@ export class EnemyFlow {
       characterId: this.config.characterRuntime?.getCharacterId(),
       skinId: this.config.characterRuntime?.getSkinId(),
       showPlayerHeal: (healAmount) => {
+        const playerPosition = this.config.player.getPositionLike();
         this.config.floatingTextManager.showPlayerHeal(
-          this.config.player.body.x,
-          this.config.player.body.y,
+          playerPosition.x,
+          playerPosition.y,
           healAmount,
         );
       },
@@ -618,8 +634,9 @@ export class EnemyFlow {
   }
 
   private getMergeSurvivor(pendingMerge: PendingEnemyMerge): Enemy {
-    const playerX = this.config.player.body.x;
-    const playerY = this.config.player.body.y;
+    const playerPosition = this.config.player.getPositionLike();
+    const playerX = playerPosition.x;
+    const playerY = playerPosition.y;
     const leftDistanceSq = Phaser.Math.Distance.Squared(
       pendingMerge.left.body.x,
       pendingMerge.left.body.y,
@@ -722,9 +739,10 @@ export class EnemyFlow {
       return;
     }
 
+    const playerPosition = this.config.player.getPositionLike();
     const hitFx = this.config.scene.add.image(
-      this.config.player.body.x,
-      this.config.player.body.y,
+      playerPosition.x,
+      playerPosition.y,
       textureKey,
     );
 

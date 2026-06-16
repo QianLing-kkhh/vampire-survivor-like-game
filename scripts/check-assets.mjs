@@ -21,6 +21,25 @@ const requiredManifestKeys = [
   'art_world_ruins_ground_tile',
   'art_world_ground_tile',
 ];
+const tieredWeaponIds = [
+  'knife',
+  'garlic',
+  'bible',
+  'magic_wand',
+  'axe',
+  'thousand_edge',
+  'holy_wand',
+  'death_spiral',
+  'unholy_vespers',
+  'soul_eater',
+];
+const tieredPassiveIds = [
+  'spinach',
+  'empty_tome',
+  'bracer',
+  'clover',
+  'pummarola',
+];
 const excludedPathParts = [
   'debug/',
   'player_direction_fix_preview',
@@ -229,6 +248,10 @@ function validateArtRoot({ label, dir }) {
       }
     }
 
+    if (label === 'art') {
+      validateTierManifestKeys(label, manifestKeys);
+    }
+
     for (const pngPath of collectPngFiles(dir).map(normalizePath)) {
       if (!manifestPaths.has(pngPath)) {
         addError(`${label}: PNG is not listed in animation manifest: ${pngPath}`);
@@ -238,6 +261,31 @@ function validateArtRoot({ label, dir }) {
     console.info(`[assets] Parsed ${label} animation manifest with ${entries.length} file references.`);
   } catch (error) {
     addError(`${label}: invalid animation_manifest.json: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function validateTierManifestKeys(label, manifestKeys) {
+  for (const weaponId of tieredWeaponIds) {
+    for (const tier of [1, 2, 3]) {
+      for (const key of [
+        `art_weapons_${weaponId}_icon_tier${tier}`,
+        `art_weapons_${weaponId}_projectile_tier${tier}_sheet`,
+      ]) {
+        if (!manifestKeys.has(key)) {
+          addError(`${label}: animation manifest is missing tier key: ${key}`);
+        }
+      }
+    }
+  }
+
+  for (const passiveId of tieredPassiveIds) {
+    for (const tier of [1, 2, 3]) {
+      const key = `art_passives_${passiveId}_icon_tier${tier}`;
+
+      if (!manifestKeys.has(key)) {
+        addError(`${label}: animation manifest is missing tier key: ${key}`);
+      }
+    }
   }
 }
 

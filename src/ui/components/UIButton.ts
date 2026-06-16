@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { AudioManager } from '../../audio/AudioManager';
 import { setContainerHitArea, stopPointerEvent } from '../input/UIInteraction';
 import { UITheme } from '../UITheme';
+import { estimateTextWidth, truncateTextToWidth } from './UITextUtils';
 
 export type UIButtonState = 'normal' | 'hover' | 'pressed' | 'disabled' | 'selected';
 export type UIButtonSize = 'small' | 'medium' | 'large';
@@ -28,16 +29,20 @@ export class UIButton {
   private state: UIButtonState;
   private selected: boolean;
   private pressedInside = false;
+  private baseFontSizePx: number;
+  private fullLabel: string;
 
   constructor(private readonly scene: Phaser.Scene, config: UIButtonConfig) {
     const metrics = UITheme.sizes.button[config.size ?? 'medium'];
     this.width = config.width ?? metrics.width;
     this.height = config.height ?? metrics.height;
+    this.baseFontSizePx = this.parseFontSize(metrics.fontSize);
+    this.fullLabel = config.label;
     this.selected = config.selected === true;
     this.state = config.disabled ? 'disabled' : this.selected ? 'selected' : 'normal';
     this.container = scene.add.container(config.x, config.y);
     this.background = scene.add.graphics();
-    this.label = scene.add.text(0, 0, config.label, {
+    this.label = scene.add.text(0, 0, '', {
       color: UITheme.textColor,
       fontFamily: UITheme.fontFamily,
       fontSize: metrics.fontSize,
@@ -47,7 +52,7 @@ export class UIButton {
       fixedHeight: this.height,
     });
     this.label.setOrigin(0.5);
-    this.label.setPadding(0, Math.max(0, Math.floor((this.height - 22) / 2)), 0, 0);
+    this.applyLabelLayout();
     this.container.add([this.background, this.label]);
     setContainerHitArea(this.container, this.width, this.height);
     this.container.on('pointerover', () => this.setState(this.state === 'disabled' ? 'disabled' : 'hover'));
@@ -101,25 +106,33 @@ export class UIButton {
     this.width = width;
     this.height = height;
     this.label.setFixedSize(width, height);
-    this.label.setPadding(0, Math.max(0, Math.floor((height - 22) / 2)), 0, 0);
+    this.applyLabelLayout();
     setContainerHitArea(this.container, width, height);
     this.render();
     return this;
   }
 
   setText(label: string): this {
-    this.label.setText(label);
+    this.fullLabel = label;
+    this.applyLabelLayout();
     return this;
   }
 
   setFontSize(fontSize: string): this {
-    this.label.setFontSize(fontSize);
+    this.baseFontSizePx = this.parseFontSize(fontSize);
+    this.applyLabelLayout();
     return this;
   }
 
   setSelected(selected: boolean): this {
     this.selected = selected;
     this.setState(selected ? 'selected' : 'normal');
+    return this;
+  }
+
+  setDisabled(disabled: boolean): this {
+    this.pressedInside = false;
+    this.setState(disabled ? 'disabled' : this.selected ? 'selected' : 'normal');
     return this;
   }
 
@@ -152,6 +165,25 @@ export class UIButton {
       this.background.lineBetween(-this.width / 2 + 10, this.height / 2 - 4, this.width / 2 - 10, this.height / 2 - 4);
     }
     this.label.setAlpha(this.state === 'disabled' ? 0.55 : 1);
+  }
+
+  private applyLabelLayout(): void {
+    const availableWidth = Math.max(24, this.width - 12);
+    const estimatedWidth = estimateTextWidth(this.fullLabel, this.baseFontSizePx);
+    const scale = estimatedWidth > availableWidth ? availableWidth / estimatedWidth : 1;
+    const effectiveFontSize = Math.max(9, Math.floor(this.baseFontSizePx * Math.min(1, scale)));
+
+    this.label.setFontSize(`${effectiveFontSize}px`);
+    this.label.setText(truncateTextToWidth(this.fullLabel, availableWidth, effectiveFontSize));
+    this.label.setMaxLines(1);
+    this.label.setWordWrapWidth(availableWidth, true);
+    this.label.setPadding(0, Math.max(0, Math.floor((this.height - effectiveFontSize - 4) / 2)), 0, 0);
+  }
+
+  private parseFontSize(fontSize: string): number {
+    const parsed = Number.parseFloat(fontSize);
+
+    return Number.isFinite(parsed) ? parsed : 14;
   }
 
   private getFillColor(): number {

@@ -3,103 +3,38 @@ import Phaser from 'phaser';
 import { DamageTargetContext } from '../combat/DamageCalculator';
 import { HitResult } from '../combat/HitResult';
 import { EventBus } from '../core/EventBus';
+import type { EnemyStats } from '../core/domain/EnemyTypes';
+import type { GameEventMap } from '../core/domain/GameEvents';
+import type { Vector2Like } from '../core/domain/Vector2';
 import { ShadowConfig, ShadowType } from '../visual/ShadowConfig';
 import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualScale } from '../visual/VisualScale';
+import { createEnemyDeathResult } from './EnemyDeathTypes';
 import { ENEMY_POPULATION_CONFIG } from './EnemyPopulationConfig';
+import { EnemyModel } from './EnemyModel';
+import type { EnemyQuery } from './EnemyQuery';
 import { EnemyModifierDeathContext } from './modifiers/EnemyModifier';
 import { EnemyModifierRuntime } from './modifiers/EnemyModifierRuntime';
 import type { AutoBossWarningSnapshot } from '../auto/AutoPlayerTypes';
 
-export interface EnemyStats {
-  hp: number;
-  moveSpeed: number;
-  damage: number;
-  exp: number;
-  scale?: number;
-  bossLike?: boolean;
-  mergeable?: boolean;
-  dashEnabled?: boolean;
-  dashCooldown?: number;
-  dashWarningDuration?: number;
-  dashDuration?: number;
-  dashSpeed?: number;
-  dashDamageMultiplier?: number;
-}
-
 type BossDashState = 'idle' | 'warning' | 'dashing';
 
-export interface EnemyKilledEvent {
-  x: number;
-  y: number;
-  exp: number;
-  mergeLevel?: number;
-  enemyId?: string;
-  isBoss?: boolean;
-  isBossLike?: boolean;
-}
+export type {
+  EnemyKilledEvent,
+  EnemyStats,
+} from '../core/domain/EnemyTypes';
+export {
+  isEnemyKilledEvent,
+  isExpGainedEvent,
+  isLevelUpEvent,
+} from '../core/domain/GameEvents';
+export type {
+  ExpGainedEvent,
+  GameEventMap,
+  LevelUpEvent,
+} from '../core/domain/GameEvents';
 
-export interface ExpGainedEvent {
-  amount: number;
-  currentExp: number;
-  totalExp: number;
-}
-
-export interface LevelUpEvent {
-  previousLevel: number;
-  currentLevel: number;
-  requiredExp: number;
-}
-
-export type GameEventMap = Record<string, unknown> & {
-  EnemyKilled: EnemyKilledEvent;
-  ExpGained: ExpGainedEvent;
-  LevelUp: LevelUpEvent;
-};
-
-export function isEnemyKilledEvent(value: unknown): value is EnemyKilledEvent {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const event = value as Partial<EnemyKilledEvent>;
-
-  return (
-    typeof event.x === 'number'
-    && typeof event.y === 'number'
-    && typeof event.exp === 'number'
-  );
-}
-
-export function isExpGainedEvent(value: unknown): value is ExpGainedEvent {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const event = value as Partial<ExpGainedEvent>;
-
-  return (
-    typeof event.amount === 'number'
-    && typeof event.currentExp === 'number'
-    && typeof event.totalExp === 'number'
-  );
-}
-
-export function isLevelUpEvent(value: unknown): value is LevelUpEvent {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const event = value as Partial<LevelUpEvent>;
-
-  return (
-    typeof event.previousLevel === 'number'
-    && typeof event.currentLevel === 'number'
-    && typeof event.requiredExp === 'number'
-  );
-}
-
-export class Enemy {
+export class Enemy implements EnemyQuery {
   private static nextAutoMoveId = 1;
   private static readonly DASH_WARNING_DURATION_MULTIPLIER = 0.8;
   private static readonly BOSS_DASH_DISTANCE_MULTIPLIER = 1.35;
@@ -111,7 +46,6 @@ export class Enemy {
   private static readonly MAP_SLOW_VISUAL_MIN_MULTIPLIER = 0.25;
 
   readonly body: Phaser.GameObjects.Arc;
-  maxHp: number;
   readonly moveSpeed: number;
   damage: number;
   exp: number;
@@ -125,9 +59,7 @@ export class Enemy {
   readonly dashDamageMultiplier: number;
   private readonly autoMoveId: string;
 
-  currentHp: number;
-  isDead = false;
-  mergeLevel = 1;
+  private readonly model: EnemyModel;
   private eventBus?: EventBus<GameEventMap>;
   private readonly baseScale: number;
   private readonly mergeable: boolean;
@@ -173,8 +105,6 @@ export class Enemy {
   ) {
     this.autoMoveId = `enemy-${Enemy.nextAutoMoveId}`;
     Enemy.nextAutoMoveId += 1;
-    this.maxHp = stats.hp;
-    this.currentHp = stats.hp;
     this.moveSpeed = stats.moveSpeed;
     this.damage = stats.damage;
     this.exp = stats.exp;
@@ -193,6 +123,16 @@ export class Enemy {
     this.dashDuration = stats.dashDuration ?? 0;
     this.dashSpeed = stats.dashSpeed ?? 0;
     this.dashDamageMultiplier = stats.dashDamageMultiplier ?? 1;
+    this.model = new EnemyModel({
+      id,
+      position: { x, y },
+      collisionRadius: 12 * this.scale,
+      maxHp: stats.hp,
+      currentHp: stats.hp,
+      alive: true,
+      bossLike: this.bossLike,
+      mergeLevel: 1,
+    });
     this.dashTimerMs = this.dashCooldown * 1000;
     this.body = this.createFallbackBody(scene, x, y);
     this.shadowType = this.resolveShadowType();
@@ -202,6 +142,96 @@ export class Enemy {
 
   getAutoMoveId(): string {
     return this.autoMoveId;
+  }
+
+  get maxHp(): number {
+    return this.model.maxHp;
+  }
+
+  set maxHp(value: number) {
+    this.model.maxHp = Math.max(0, value);
+  }
+
+  get currentHp(): number {
+    return this.model.currentHp;
+  }
+
+  set currentHp(value: number) {
+    this.model.currentHp = Math.max(0, value);
+    this.model.alive = this.model.currentHp > 0 && this.model.alive;
+  }
+
+  get isDead(): boolean {
+    return !this.model.alive;
+  }
+
+  set isDead(value: boolean) {
+    this.model.alive = !value;
+  }
+
+  get mergeLevel(): number {
+    return this.model.mergeLevel;
+  }
+
+  set mergeLevel(value: number) {
+    this.model.mergeLevel = Math.max(1, Math.floor(value));
+  }
+
+  getPositionLike(): Vector2Like {
+    this.model.syncPosition(this.body);
+    return {
+      x: this.model.position.x,
+      y: this.model.position.y,
+    };
+  }
+
+  getCollisionRadius(): number {
+    this.model.syncCollisionRadius(this.getBodyRadius());
+    return this.model.collisionRadius;
+  }
+
+  getHealthSnapshot(): { currentHp: number; maxHp: number } {
+    return {
+      currentHp: this.currentHp,
+      maxHp: this.maxHp,
+    };
+  }
+
+  getEnemySnapshot(): ReturnType<EnemyQuery['getEnemySnapshot']> {
+    const targetContext = this.getDamageTargetContext();
+
+    return {
+      id: this.id,
+      autoMoveId: this.getAutoMoveId(),
+      position: this.getPositionLike(),
+      collisionRadius: this.getCollisionRadius(),
+      health: this.getHealthSnapshot(),
+      moveSpeed: this.moveSpeed,
+      damage: this.damage,
+      alive: this.isAlive(),
+      bossLike: this.bossLike,
+      boss: targetContext.isBoss,
+      elite: targetContext.isElite,
+      miniBoss: targetContext.isMiniBoss,
+      endlessBoss: targetContext.isEndlessBoss,
+      mergeLevel: this.mergeLevel,
+    };
+  }
+
+  isBossLike(): boolean {
+    return this.bossLike;
+  }
+
+  isBoss(): boolean {
+    return this.getDamageTargetContext().isBoss;
+  }
+
+  isElite(): boolean {
+    return this.getDamageTargetContext().isElite;
+  }
+
+  isAlive(): boolean {
+    return !this.isDead;
   }
 
   setEventBus(eventBus: EventBus<GameEventMap>): void {
@@ -1006,14 +1036,15 @@ export class Enemy {
   }
 
   private publishKilled(): void {
-    this.eventBus?.publish('EnemyKilled', {
-      x: this.body.x,
-      y: this.body.y,
+    const deathResult = createEnemyDeathResult({
+      position: this.getPositionLike(),
       exp: this.exp,
       mergeLevel: this.mergeLevel,
       enemyId: this.id,
       isBoss: this.id.endsWith('_boss') || this.id === 'boss',
       isBossLike: this.bossLike,
     });
+
+    this.eventBus?.publish('EnemyKilled', deathResult.enemyKilledEvent);
   }
 }

@@ -98,5 +98,428 @@
     "id": "axe_projectile_count_up",
     "name": "Axe Projectile Count Up",
     "description": "Add one more axe projectile per attack"
+  },
+  {
+    "id": "add_runic_orb",
+    "name": "Add Runic Orb",
+    "description": "Unlock Runic Orb as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "runic_orb"
+  },
+  {
+    "id": "runic_orb_damage_up",
+    "name": "Runic Orb Damage",
+    "description": "Increase Runic Orb damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "runic_orb",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "runic_orb_cooldown_up",
+    "name": "Runic Orb Focus",
+    "description": "Reduce Runic Orb cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "runic_orb",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "add_moon_bow",
+    "name": "Add Moon Bow",
+    "description": "Unlock Moon Bow as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "moon_bow"
+  },
+  {
+    "id": "moon_bow_damage_up",
+    "name": "Moon Bow Damage",
+    "description": "Increase Moon Bow damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "moon_bow",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "moon_bow_cooldown_up",
+    "name": "Moon Bow Focus",
+    "description": "Reduce Moon Bow cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "moon_bow",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "moon_bow_projectile_count_up",
+    "name": "Moon Bow Count",
+    "description": "Add one projectile or active hit object to Moon Bow.",
+    "kind": "weaponStat",
+    "weaponId": "moon_bow",
+    "stat": "projectileCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "add_clockwork_saw",
+    "name": "Add Clockwork Saw",
+    "description": "Unlock Clockwork Saw as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "clockwork_saw"
+  },
+  {
+    "id": "clockwork_saw_damage_up",
+    "name": "Clockwork Saw Damage",
+    "description": "Increase Clockwork Saw damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "clockwork_saw",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "clockwork_saw_cooldown_up",
+    "name": "Clockwork Saw Focus",
+    "description": "Reduce Clockwork Saw cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "clockwork_saw",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "clockwork_saw_projectile_count_up",
+    "name": "Clockwork Saw Count",
+    "description": "Add one projectile or active hit object to Clockwork Saw.",
+    "kind": "weaponStat",
+    "weaponId": "clockwork_saw",
+    "stat": "projectileCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "add_bone_spear",
+    "name": "Add Bone Spear",
+    "description": "Unlock Bone Spear as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "bone_spear"
+  },
+  {
+    "id": "bone_spear_damage_up",
+    "name": "Bone Spear Damage",
+    "description": "Increase Bone Spear damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "bone_spear",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "bone_spear_cooldown_up",
+    "name": "Bone Spear Focus",
+    "description": "Reduce Bone Spear cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "bone_spear",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "bone_spear_projectile_count_up",
+    "name": "Bone Spear Count",
+    "description": "Add one projectile or active hit object to Bone Spear.",
+    "kind": "weaponStat",
+    "weaponId": "bone_spear",
+    "stat": "projectileCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "add_spirit_fist",
+    "name": "Add Spirit Fist",
+    "description": "Unlock Spirit Fist as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "spirit_fist"
+  },
+  {
+    "id": "spirit_fist_damage_up",
+    "name": "Spirit Fist Damage",
+    "description": "Increase Spirit Fist damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "spirit_fist",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "spirit_fist_cooldown_up",
+    "name": "Spirit Fist Focus",
+    "description": "Reduce Spirit Fist cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "spirit_fist",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "add_acid_vial",
+    "name": "Add Acid Vial",
+    "description": "Unlock Acid Vial as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "acid_vial"
+  },
+  {
+    "id": "acid_vial_damage_up",
+    "name": "Acid Vial Damage",
+    "description": "Increase Acid Vial damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "acid_vial",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "acid_vial_cooldown_up",
+    "name": "Acid Vial Focus",
+    "description": "Reduce Acid Vial cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "acid_vial",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "acid_vial_projectile_count_up",
+    "name": "Acid Vial Count",
+    "description": "Add one projectile or active hit object to Acid Vial.",
+    "kind": "weaponStat",
+    "weaponId": "acid_vial",
+    "stat": "projectileCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "add_rapier_flurry",
+    "name": "Add Rapier Flurry",
+    "description": "Unlock Rapier Flurry as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "rapier_flurry"
+  },
+  {
+    "id": "rapier_flurry_damage_up",
+    "name": "Rapier Flurry Damage",
+    "description": "Increase Rapier Flurry damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "rapier_flurry",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "rapier_flurry_cooldown_up",
+    "name": "Rapier Flurry Focus",
+    "description": "Reduce Rapier Flurry cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "rapier_flurry",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "rapier_flurry_projectile_count_up",
+    "name": "Rapier Flurry Count",
+    "description": "Add one projectile or active hit object to Rapier Flurry.",
+    "kind": "weaponStat",
+    "weaponId": "rapier_flurry",
+    "stat": "projectileCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "add_stone_ring",
+    "name": "Add Stone Ring",
+    "description": "Unlock Stone Ring as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "stone_ring"
+  },
+  {
+    "id": "stone_ring_damage_up",
+    "name": "Stone Ring Damage",
+    "description": "Increase Stone Ring damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "stone_ring",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "stone_ring_cooldown_up",
+    "name": "Stone Ring Focus",
+    "description": "Reduce Stone Ring cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "stone_ring",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "add_thunder_javelin",
+    "name": "Add Thunder Javelin",
+    "description": "Unlock Thunder Javelin as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "thunder_javelin"
+  },
+  {
+    "id": "thunder_javelin_damage_up",
+    "name": "Thunder Javelin Damage",
+    "description": "Increase Thunder Javelin damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "thunder_javelin",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "thunder_javelin_cooldown_up",
+    "name": "Thunder Javelin Focus",
+    "description": "Reduce Thunder Javelin cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "thunder_javelin",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "thunder_javelin_projectile_count_up",
+    "name": "Thunder Javelin Count",
+    "description": "Add one projectile or active hit object to Thunder Javelin.",
+    "kind": "weaponStat",
+    "weaponId": "thunder_javelin",
+    "stat": "projectileCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "add_shield_disc",
+    "name": "Add Shield Disc",
+    "description": "Unlock Shield Disc as a new weapon.",
+    "kind": "addWeapon",
+    "weaponId": "shield_disc"
+  },
+  {
+    "id": "shield_disc_damage_up",
+    "name": "Shield Disc Damage",
+    "description": "Increase Shield Disc damage by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "shield_disc",
+    "stat": "damage",
+    "operation": "multiply",
+    "value": 1.1
+  },
+  {
+    "id": "shield_disc_cooldown_up",
+    "name": "Shield Disc Focus",
+    "description": "Reduce Shield Disc cooldown by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "shield_disc",
+    "stat": "cooldown",
+    "operation": "multiply",
+    "value": 0.9,
+    "cap": 0.25
+  },
+  {
+    "id": "runic_orb_orbit_count_up",
+    "name": "Runic Orb Orbit Count",
+    "description": "Add one orbiting hit object to Runic Orb.",
+    "kind": "weaponStat",
+    "weaponId": "runic_orb",
+    "stat": "orbitCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "runic_orb_orbit_speed_up",
+    "name": "Runic Orb Orbit Speed",
+    "description": "Increase Runic Orb orbit speed by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "runic_orb",
+    "stat": "orbitSpeed",
+    "operation": "multiply",
+    "value": 1.1,
+    "cap": 420
+  },
+  {
+    "id": "spirit_fist_radius_up",
+    "name": "Spirit Fist Radius",
+    "description": "Increase Spirit Fist radius by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "spirit_fist",
+    "stat": "radius",
+    "operation": "multiply",
+    "value": 1.1,
+    "cap": 6.2
+  },
+  {
+    "id": "stone_ring_orbit_count_up",
+    "name": "Stone Ring Orbit Count",
+    "description": "Add one orbiting hit object to Stone Ring.",
+    "kind": "weaponStat",
+    "weaponId": "stone_ring",
+    "stat": "orbitCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "stone_ring_orbit_speed_up",
+    "name": "Stone Ring Orbit Speed",
+    "description": "Increase Stone Ring orbit speed by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "stone_ring",
+    "stat": "orbitSpeed",
+    "operation": "multiply",
+    "value": 1.1,
+    "cap": 420
+  },
+  {
+    "id": "shield_disc_orbit_count_up",
+    "name": "Shield Disc Orbit Count",
+    "description": "Add one orbiting hit object to Shield Disc.",
+    "kind": "weaponStat",
+    "weaponId": "shield_disc",
+    "stat": "orbitCount",
+    "operation": "add",
+    "value": 1,
+    "cap": 6
+  },
+  {
+    "id": "shield_disc_orbit_speed_up",
+    "name": "Shield Disc Orbit Speed",
+    "description": "Increase Shield Disc orbit speed by 10%.",
+    "kind": "weaponStat",
+    "weaponId": "shield_disc",
+    "stat": "orbitSpeed",
+    "operation": "multiply",
+    "value": 1.1,
+    "cap": 420
   }
 ]

@@ -3,47 +3,22 @@ import Phaser from 'phaser';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { DamageType } from '../combat/DamageType';
 import { HitResult } from '../combat/HitResult';
-import { CharacterRuntime } from '../character/CharacterRuntime';
 import { Enemy } from '../enemy/Enemy';
+import type { EnemyQuery } from '../enemy/EnemyQuery';
 import { RunStats } from '../stats/RunStats';
-import { WeaponBehaviorConfig } from './behavior/WeaponBehaviorConfig';
-import { WeaponTag } from './tags/WeaponTag';
+import type { WeaponConfig } from '../core/domain/WeaponTypes';
+import type { WeaponRuntimeContext } from './WeaponRuntimeContext';
+import type { WeaponTarget } from './WeaponTarget';
 
-export type WeaponType = 'projectile' | 'aura' | 'orbit' | 'magic_wand' | 'axe';
+export type { WeaponConfig, WeaponType } from '../core/domain/WeaponTypes';
+export type {
+  ProjectilePathQuery,
+  WeaponCharacterRuntimeView,
+  WeaponRuntimeContext,
+} from './WeaponRuntimeContext';
 
-export interface WeaponConfig {
-  type: WeaponType | string;
-  tags?: WeaponTag[];
-  behavior?: WeaponBehaviorConfig;
-  damage: number;
-  cooldown: number;
-  projectileSpeed?: number;
-  projectileCount?: number;
-  spreadAngle?: number;
-  pierce?: number;
-  radius?: number;
-  orbitSpeed?: number;
-  orbitCount?: number;
-  hitRadius?: number;
-  lifetime?: number;
-  arcHeight?: number;
-  knockbackPower?: number;
-  knockbackSpeedFactor?: number;
-  knockbackDurationMs?: number;
-}
-
-export interface WeaponUpdateContext {
-  player: Phaser.GameObjects.GameObject & { x: number; y: number };
+export interface WeaponUpdateContext extends WeaponRuntimeContext {
   enemies: readonly Enemy[];
-  deltaMs: number;
-  characterRuntime?: CharacterRuntime;
-  isProjectilePathBlocked?: (
-    startX: number,
-    startY: number,
-    endX: number,
-    endY: number,
-    projectileRadius?: number,
-  ) => boolean;
 }
 
 export interface WeaponCooldownStatus {
@@ -67,6 +42,11 @@ export abstract class Weapon {
   private passiveProjectileSpeedMultiplier = 1;
   private passiveKnockbackPowerMultiplier = 1;
   private runtimeDamageMultiplierProvider?: (weaponId: string) => number;
+  private visualTierProvider?: (weaponId: string) => {
+    level?: number;
+    maxLevel?: number;
+    evolved?: boolean;
+  };
 
   protected constructor(
     protected readonly scene: Phaser.Scene,
@@ -119,6 +99,14 @@ export abstract class Weapon {
     this.runtimeDamageMultiplierProvider = provider;
   }
 
+  setVisualTierProvider(provider: ((weaponId: string) => {
+    level?: number;
+    maxLevel?: number;
+    evolved?: boolean;
+  }) | undefined): void {
+    this.visualTierProvider = provider;
+  }
+
   get totalDamageDealt(): number {
     return this.totalDamage;
   }
@@ -143,21 +131,21 @@ export abstract class Weapon {
       && behaviorType !== 'orbit';
   }
 
-  protected createHitResult(enemy?: Enemy): HitResult {
+  protected createHitResult(enemy?: WeaponTarget): HitResult {
     return this.damageCalculator.calculateDamage(
       this.getTargetModifiedDamage(this.modifiedDamage, enemy),
       DamageType.Normal,
     );
   }
 
-  protected createHitResultWithMultiplier(multiplier: number, enemy?: Enemy): HitResult {
+  protected createHitResultWithMultiplier(multiplier: number, enemy?: WeaponTarget): HitResult {
     return this.damageCalculator.calculateDamage(
       this.getTargetModifiedDamage(this.modifiedDamage * multiplier, enemy),
       DamageType.Normal,
     );
   }
 
-  protected createHitResultFromDamage(damage: number, enemy?: Enemy): HitResult {
+  protected createHitResultFromDamage(damage: number, enemy?: WeaponTarget): HitResult {
     return this.damageCalculator.calculateDamage(
       this.getTargetModifiedDamage(damage, enemy),
       DamageType.Normal,
@@ -178,7 +166,11 @@ export abstract class Weapon {
     return this.projectileSpeed * this.passiveProjectileSpeedMultiplier;
   }
 
-  private getTargetModifiedDamage(damage: number, enemy: Enemy | undefined): number {
+  protected getVisualTierInput(): { level?: number; maxLevel?: number; evolved?: boolean } | undefined {
+    return this.visualTierProvider?.(this.id);
+  }
+
+  private getTargetModifiedDamage(damage: number, enemy: WeaponTarget | undefined): number {
     return damage * this.damageCalculator.getTargetDamageMultiplier(
       enemy?.getDamageTargetContext(),
       {
@@ -208,7 +200,7 @@ export abstract class Weapon {
     this.runStats?.recordWeaponDamage(this.id, damage);
   }
 
-  protected recordEnemyHit(enemy: Enemy, damage: number): void {
+  protected recordEnemyHit(enemy: EnemyQuery, damage: number): void {
     if (damage <= 0) {
       return;
     }

@@ -36,13 +36,13 @@ export function setContainerHitArea(
 
   const hitArea = container.input?.hitArea as Phaser.Geom.Rectangle | undefined;
   if (hitArea) {
-    hitArea.setTo(0, 0, width, height);
+    hitArea.setTo(-width / 2, -height / 2, width, height);
     attachHitAreaDebug(container);
     return;
   }
 
   container.setInteractive(
-    new Phaser.Geom.Rectangle(0, 0, width, height),
+    new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
     Phaser.Geom.Rectangle.Contains,
   );
   attachHitAreaDebug(container);

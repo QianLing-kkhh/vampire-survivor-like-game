@@ -1,3 +1,6 @@
+import { LocalStorageAdapter } from '../save/storage/LocalStorageAdapter';
+import { MemoryStorageAdapter } from '../save/storage/MemoryStorageAdapter';
+
 import { ReplayData } from './ReplayData';
 import { ReplaySerializer } from './ReplaySerializer';
 import { REPLAY_STORAGE_KEY } from './ReplayVersion';
@@ -5,6 +8,7 @@ import { REPLAY_STORAGE_KEY } from './ReplayVersion';
 export class ReplayStorage {
   private static readonly MAX_REPLAYS = 10;
   private static memoryReplays: ReplayData[] = [];
+  private static readonly storage = new LocalStorageAdapter(new MemoryStorageAdapter());
 
   save(replay: ReplayData): void {
     const replays = this.list()
@@ -50,28 +54,16 @@ export class ReplayStorage {
 
   clear(): void {
     ReplayStorage.memoryReplays = [];
-    try {
-      globalThis.localStorage?.removeItem(REPLAY_STORAGE_KEY);
-    } catch {
-      // Memory fallback already cleared.
-    }
+    ReplayStorage.storage.removeItem(REPLAY_STORAGE_KEY);
   }
 
   private saveAll(replays: ReplayData[]): void {
     ReplayStorage.memoryReplays = [...replays];
 
-    try {
-      globalThis.localStorage?.setItem(REPLAY_STORAGE_KEY, JSON.stringify(replays));
-    } catch {
-      // Keep memory fallback if localStorage is unavailable.
-    }
+    ReplayStorage.storage.setItem(REPLAY_STORAGE_KEY, JSON.stringify(replays));
   }
 
   private loadRaw(): string | null {
-    try {
-      return globalThis.localStorage?.getItem(REPLAY_STORAGE_KEY) ?? null;
-    } catch {
-      return null;
-    }
+    return ReplayStorage.storage.getItem(REPLAY_STORAGE_KEY);
   }
 }

@@ -1,23 +1,25 @@
 import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
+import { PhaserInputAdapter } from '../input/PhaserInputAdapter';
 import { SettingsManager } from '../settings/SettingsManager';
 import { ShadowFactory } from '../visual/ShadowFactory';
 import { VisualSettings } from '../visual/VisualSettings';
 import { VisualScale } from '../visual/VisualScale';
 
+import { PlayerModel } from './PlayerModel';
+import { PlayerMovementSystem } from './PlayerMovementSystem';
+import { PlayerHealth } from './PlayerHealth';
+import type { PlayerQuery } from './PlayerQuery';
+import { PlayerState } from './PlayerState';
 import { PlayerStats } from './PlayerStats';
-
-type MovementKeys = {
-  up: Phaser.Input.Keyboard.Key;
-  down: Phaser.Input.Keyboard.Key;
-  left: Phaser.Input.Keyboard.Key;
-  right: Phaser.Input.Keyboard.Key;
-  w: Phaser.Input.Keyboard.Key;
-  a: Phaser.Input.Keyboard.Key;
-  s: Phaser.Input.Keyboard.Key;
-  d: Phaser.Input.Keyboard.Key;
-};
+import type { Vector2Like } from '../core/domain/Vector2';
+import type {
+  PlayerFacingDirection8,
+  PlayerMovementAnomaly,
+  PlayerMovementSource,
+  PlayerWorldBounds,
+} from './PlayerTypes';
 
 type PlayerBody = Phaser.GameObjects.GameObject & {
   x: number;
@@ -25,7 +27,6 @@ type PlayerBody = Phaser.GameObjects.GameObject & {
   radius: number;
 };
 
-type MovementSource = 'manual' | 'auto' | 'virtualJoystick' | 'external';
 type FacingDirection8 =
   | 'right'
   | 'down_right'
@@ -51,7 +52,7 @@ type PlayerAssetDebugGlobal = typeof globalThis & {
   __vsgPlayerAssetDebug?: PlayerAssetDebug;
 };
 
-export class PlayerController {
+export class PlayerController implements PlayerQuery {
   private static readonly MAX_MOVEMENT_STEP = 24;
   private static readonly IDLE_SPEED_THRESHOLD = 6;
   private static readonly PLAYER_DEPTH = 20;
@@ -62,18 +63,14 @@ export class PlayerController {
 
   readonly body: PlayerBody;
 
-  private readonly keys: MovementKeys;
-  private readonly previousPosition: Phaser.Math.Vector2;
-  private readonly lastFramePosition: Phaser.Math.Vector2;
-  private readonly velocity = new Phaser.Math.Vector2(0, 0);
+  private readonly inputAdapter: PhaserInputAdapter;
+  private readonly model: PlayerModel;
+  private readonly movementSystem = new PlayerMovementSystem();
+  private playerState?: PlayerState;
   private externalMoveDirection?: Phaser.Math.Vector2;
-  private lastFacingDirection: FacingDirection8 = 'right';
   private currentAnimationKey?: string;
   private currentTextureKey: string | null = null;
   private shadow?: Phaser.GameObjects.Ellipse;
-  private temporaryMoveSpeedMultiplier = 1;
-  private mapMoveSpeedMultiplier = 1;
-  private temporaryMoveSpeedRemainingMs = 0;
   private unsubscribeSettings?: () => void;
   private mapSlowVisual?: Phaser.GameObjects.Text;
   private isMapSlowVisualActive = false;
@@ -87,9 +84,20 @@ export class PlayerController {
     private readonly skinId?: string,
   ) {
     this.body = this.createBody(x, y);
+    this.model = new PlayerModel({
+      x,
+      y,
+      collisionRadius: this.body.radius,
+      moveSpeed: stats.moveSpeed,
+      acceleration: stats.acceleration,
+      deceleration: stats.deceleration,
+      facingDirection: 'right',
+    });
+    this.inputAdapter = new PhaserInputAdapter(scene, () => ({
+      x: this.body.x,
+      y: this.body.y,
+    }));
     this.shadow = ShadowFactory.createShadow(scene, this.body, 'player');
-    this.previousPosition = new Phaser.Math.Vector2(x, y);
-    this.lastFramePosition = new Phaser.Math.Vector2(x, y);
     this.unsubscribeSettings = SettingsManager.subscribe((domain, settingName) => {
       if (
         domain === 'display'
@@ -102,85 +110,108 @@ export class PlayerController {
         this.refreshVisualScale();
       }
     });
-
-    this.keys = scene.input.keyboard!.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.UP,
-      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
-      left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-      right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-      w: Phaser.Input.Keyboard.KeyCodes.W,
-      a: Phaser.Input.Keyboard.KeyCodes.A,
-      s: Phaser.Input.Keyboard.KeyCodes.S,
-      d: Phaser.Input.Keyboard.KeyCodes.D,
-    }) as MovementKeys;
   }
 
   update(deltaMs: number): void {
-    const direction = this.externalMoveDirection?.clone() ?? new Phaser.Math.Vector2(
-      this.getHorizontalDirection(),
-      this.getVerticalDirection(),
-    );
-
-    if (!this.externalMoveDirection) {
-      direction.add(this.getMouseDirection());
-    }
+    this.syncHealthState();
+    const direction = this.externalMoveDirection?.clone()
+      ?? this.inputAdapter.getManualMoveDirection();
 
     this.moveWithDirection(direction, deltaMs, 'manual');
+  }
+
+  bindHealth(health: PlayerHealth): PlayerState {
+    this.playerState = new PlayerState(this.model, health);
+    return this.playerState;
+  }
+
+  getPlayerState(): PlayerState | undefined {
+    return this.playerState;
+  }
+
+  isAlive(): boolean {
+    this.syncHealthState();
+    return this.playerState?.isAlive ?? this.model.alive;
+  }
+
+  syncHealthState(): void {
+    this.playerState?.syncLifecycleFromHealth();
   }
 
   moveWithDirection(
     direction: Phaser.Math.Vector2,
     deltaMs: number,
-    source: MovementSource = 'external',
+    source: PlayerMovementSource = 'external',
   ): void {
-    const deltaSeconds = Math.max(0, deltaMs / 1000);
+    this.moveWithDirectionLike(direction, deltaMs, source);
+  }
 
-    this.updateTemporaryMoveSpeed(deltaMs);
-    this.rollbackAbnormalExternalJump(deltaSeconds, direction, source);
-    this.previousPosition.set(this.body.x, this.body.y);
-    this.updateFacingFromInput(direction);
-    this.updateVelocity(direction, deltaSeconds);
-    this.moveByVelocity(deltaSeconds);
-    this.rollbackAbnormalMovement(deltaSeconds, direction, source);
+  moveWithDirectionLike(
+    direction: Vector2Like,
+    deltaMs: number,
+    source: PlayerMovementSource = 'external',
+  ): void {
+    this.syncModelFromBody();
+    this.syncHealthState();
+    this.syncMovementStats();
+    const anomalies = this.movementSystem.moveWithDirection(this.model, {
+      direction,
+      deltaMs,
+      source,
+      worldBounds: this.getWorldBounds(),
+      maxMovementStep: PlayerController.MAX_MOVEMENT_STEP,
+    });
+
+    anomalies.forEach((anomaly) => this.warnAbnormalJump(anomaly));
+    this.syncBodyFromModel();
     this.updateAnimation();
     this.updateShadow();
-    this.lastFramePosition.set(this.body.x, this.body.y);
   }
 
   applyExternalDisplacement(displacement: Phaser.Math.Vector2): void {
-    if (displacement.lengthSq() === 0) {
+    this.applyExternalDisplacementLike(displacement);
+  }
+
+  applyExternalDisplacementLike(displacement: Vector2Like): void {
+    if ((displacement.x * displacement.x + displacement.y * displacement.y) === 0) {
       return;
     }
 
-    this.previousPosition.set(this.body.x, this.body.y);
-    this.body.x += displacement.x;
-    this.body.y += displacement.y;
-    this.clampToWorldBounds();
+    this.syncModelFromBody();
+    this.movementSystem.applyExternalDisplacement(
+      this.model,
+      displacement,
+      this.getWorldBounds(),
+    );
+    this.syncBodyFromModel();
     this.updateAnimation();
     this.updateShadow();
-    this.lastFramePosition.set(this.body.x, this.body.y);
   }
 
   setPosition(x: number, y: number): void {
-    this.previousPosition.set(this.body.x, this.body.y);
-    this.body.x = x;
-    this.body.y = y;
-    this.clampToWorldBounds();
+    this.syncModelFromBody();
+    this.movementSystem.setPosition(this.model, x, y, this.getWorldBounds());
+    this.syncBodyFromModel();
     this.updateAnimation();
     this.updateShadow();
-    this.lastFramePosition.set(this.body.x, this.body.y);
   }
 
   stopMovement(): void {
-    this.velocity.set(0, 0);
+    this.model.stopMovement();
   }
 
   setMapMoveSpeedMultiplier(multiplier: number): void {
-    this.mapMoveSpeedMultiplier = Math.max(0.1, multiplier);
+    this.movementSystem.setMapMoveSpeedMultiplier(this.model, multiplier);
   }
 
   setExternalMoveDirection(direction?: Phaser.Math.Vector2): void {
     this.externalMoveDirection = direction?.clone();
+  }
+
+  setExternalMoveDirectionLike(direction: Vector2Like | null | undefined): void {
+    this.externalMoveDirection = direction
+      ? new Phaser.Math.Vector2(direction.x, direction.y)
+      : undefined;
   }
 
   clearExternalMoveDirection(): void {
@@ -270,25 +301,60 @@ export class PlayerController {
     return this.isMapSlowVisualActive;
   }
 
+  getPositionLike(): Vector2Like {
+    this.syncModelFromBody();
+    return {
+      x: this.model.position.x,
+      y: this.model.position.y,
+    };
+  }
+
+  getVelocityLike(): Vector2Like {
+    return {
+      x: this.model.velocity.x,
+      y: this.model.velocity.y,
+    };
+  }
+
+  getAimDirectionLike(): Vector2Like {
+    return {
+      x: this.model.aimDirection.x,
+      y: this.model.aimDirection.y,
+    };
+  }
+
+  getFacingDirectionLike(): Vector2Like {
+    return this.movementSystem.getVectorFromDirection8(this.model.facingDirection);
+  }
+
+  getFacingDirectionName(): PlayerFacingDirection8 {
+    return this.model.facingDirection;
+  }
+
+  getPreviousPositionLike(): Vector2Like {
+    return {
+      x: this.model.previousPosition.x,
+      y: this.model.previousPosition.y,
+    };
+  }
+
+  getCollisionRadius(): number {
+    this.model.collisionRadius = this.body.radius;
+    return this.model.collisionRadius;
+  }
+
   getPreviousPosition(): Phaser.Math.Vector2 {
-    return this.previousPosition.clone();
+    return this.toPhaserVector(this.model.previousPosition);
   }
 
   getLastFacingDirection(): Phaser.Math.Vector2 {
-    return this.getVectorFromDirection8(this.lastFacingDirection);
+    return this.toPhaserVector(
+      this.movementSystem.getVectorFromDirection8(this.model.facingDirection),
+    );
   }
 
   setTemporaryMoveSpeedMultiplier(multiplier: number, durationMs: number): void {
-    const nextDurationMs = Math.max(0, durationMs);
-
-    if (nextDurationMs <= 0) {
-      this.temporaryMoveSpeedMultiplier = 1;
-      this.temporaryMoveSpeedRemainingMs = 0;
-      return;
-    }
-
-    this.temporaryMoveSpeedMultiplier = Math.max(0.1, multiplier);
-    this.temporaryMoveSpeedRemainingMs = nextDurationMs;
+    this.movementSystem.setTemporaryMoveSpeedMultiplier(this.model, multiplier, durationMs);
   }
 
   refreshVisualScale(): void {
@@ -321,196 +387,46 @@ export class PlayerController {
       : ShadowFactory.createShadow(this.scene, this.body, 'player');
   }
 
-  private moveBy(direction: Phaser.Math.Vector2, distance: number): void {
-    const steps = Math.max(1, Math.ceil(distance / PlayerController.MAX_MOVEMENT_STEP));
-    const stepDistance = distance / steps;
-
-    for (let step = 0; step < steps; step += 1) {
-      this.body.x += direction.x * stepDistance;
-      this.body.y += direction.y * stepDistance;
-      this.clampToWorldBounds();
-    }
-  }
-
-  private updateVelocity(direction: Phaser.Math.Vector2, deltaSeconds: number): void {
-    const hasInput = direction.lengthSq() > 0;
-    const moveSpeed = this.getEffectiveMoveSpeed();
-    const desiredVelocity = hasInput
-      ? direction.clone().normalize().scale(moveSpeed)
-      : new Phaser.Math.Vector2(0, 0);
-    const maxVelocityDelta = (hasInput ? this.stats.acceleration : this.stats.deceleration)
-      * deltaSeconds;
-
-    this.moveVelocityToward(desiredVelocity, maxVelocityDelta);
-
-    if (this.velocity.length() > moveSpeed) {
-      this.velocity.normalize().scale(moveSpeed);
-    }
-  }
-
-  private moveVelocityToward(targetVelocity: Phaser.Math.Vector2, maxDelta: number): void {
-    const deltaVelocity = targetVelocity.clone().subtract(this.velocity);
-
-    if (deltaVelocity.lengthSq() === 0) {
-      return;
-    }
-
-    if (deltaVelocity.length() <= maxDelta) {
-      this.velocity.copy(targetVelocity);
-      return;
-    }
-
-    this.velocity.add(deltaVelocity.normalize().scale(maxDelta));
-  }
-
-  private moveByVelocity(deltaSeconds: number): void {
-    const distance = this.velocity.length() * deltaSeconds;
-
-    if (distance <= 0) {
-      return;
-    }
-
-    this.moveBy(this.velocity.clone().normalize(), distance);
-  }
-
-  private rollbackAbnormalExternalJump(
-    deltaSeconds: number,
-    inputDirection: Phaser.Math.Vector2,
-    source: MovementSource,
-  ): void {
-    const currentPosition = new Phaser.Math.Vector2(this.body.x, this.body.y);
-    const distance = currentPosition.distance(this.lastFramePosition);
-
-    if (distance <= this.getMaxExpectedMove(deltaSeconds)) {
-      return;
-    }
-
-    this.warnAbnormalJump('before-move', this.lastFramePosition, currentPosition, inputDirection, source);
-    this.body.x = this.lastFramePosition.x;
-    this.body.y = this.lastFramePosition.y;
-    this.velocity.set(0, 0);
-  }
-
-  private rollbackAbnormalMovement(
-    deltaSeconds: number,
-    inputDirection: Phaser.Math.Vector2,
-    source: MovementSource,
-  ): void {
-    const currentPosition = new Phaser.Math.Vector2(this.body.x, this.body.y);
-    const distance = currentPosition.distance(this.previousPosition);
-
-    if (distance <= this.getMaxExpectedMove(deltaSeconds)) {
-      return;
-    }
-
-    this.warnAbnormalJump('after-move', this.previousPosition, currentPosition, inputDirection, source);
-    this.body.x = this.previousPosition.x;
-    this.body.y = this.previousPosition.y;
-    this.velocity.set(0, 0);
-  }
-
-  private getMaxExpectedMove(deltaSeconds: number): number {
-    return Math.max(300, this.getEffectiveMoveSpeed() * deltaSeconds + 50);
-  }
-
-  private getEffectiveMoveSpeed(): number {
-    return this.stats.moveSpeed
-      * this.temporaryMoveSpeedMultiplier
-      * this.mapMoveSpeedMultiplier;
-  }
-
-  private updateTemporaryMoveSpeed(deltaMs: number): void {
-    if (this.temporaryMoveSpeedRemainingMs <= 0) {
-      return;
-    }
-
-    this.temporaryMoveSpeedRemainingMs = Math.max(
-      0,
-      this.temporaryMoveSpeedRemainingMs - Math.max(0, deltaMs),
-    );
-
-    if (this.temporaryMoveSpeedRemainingMs === 0) {
-      this.temporaryMoveSpeedMultiplier = 1;
-    }
-  }
-
-  private warnAbnormalJump(
-    phase: string,
-    previousPosition: Phaser.Math.Vector2,
-    currentPosition: Phaser.Math.Vector2,
-    inputDirection: Phaser.Math.Vector2,
-    source: MovementSource,
-  ): void {
+  private warnAbnormalJump(anomaly: PlayerMovementAnomaly): void {
     console.warn('Abnormal player jump prevented', {
-      phase,
-      previous: { x: previousPosition.x, y: previousPosition.y },
-      current: { x: currentPosition.x, y: currentPosition.y },
-      delta: {
-        x: currentPosition.x - previousPosition.x,
-        y: currentPosition.y - previousPosition.y,
-        distance: currentPosition.distance(previousPosition),
+      phase: anomaly.phase,
+      previous: {
+        x: anomaly.previousPosition.x,
+        y: anomaly.previousPosition.y,
       },
-      velocity: { x: this.velocity.x, y: this.velocity.y },
-      inputDirection: { x: inputDirection.x, y: inputDirection.y },
-      source,
-      autoMode: source === 'auto',
+      current: {
+        x: anomaly.currentPosition.x,
+        y: anomaly.currentPosition.y,
+      },
+      delta: {
+        x: anomaly.currentPosition.x - anomaly.previousPosition.x,
+        y: anomaly.currentPosition.y - anomaly.previousPosition.y,
+        distance: Phaser.Math.Distance.Between(
+          anomaly.currentPosition.x,
+          anomaly.currentPosition.y,
+          anomaly.previousPosition.x,
+          anomaly.previousPosition.y,
+        ),
+      },
+      velocity: { x: this.model.velocity.x, y: this.model.velocity.y },
+      inputDirection: {
+        x: anomaly.inputDirection.x,
+        y: anomaly.inputDirection.y,
+      },
+      source: anomaly.source,
+      autoMode: anomaly.source === 'auto',
     });
   }
 
-  private clampToWorldBounds(): void {
+  private getWorldBounds(): PlayerWorldBounds {
     const bounds = this.scene.physics.world.bounds;
-    const radius = this.body.radius;
-    const minX = bounds.x + radius;
-    const maxX = bounds.right - radius;
-    const minY = bounds.y + radius;
-    const maxY = bounds.bottom - radius;
-    const clampedX = Phaser.Math.Clamp(this.body.x, minX, maxX);
-    const clampedY = Phaser.Math.Clamp(this.body.y, minY, maxY);
 
-    if ((clampedX <= minX && this.velocity.x < 0) || (clampedX >= maxX && this.velocity.x > 0)) {
-      this.velocity.x = 0;
-    }
-
-    if ((clampedY <= minY && this.velocity.y < 0) || (clampedY >= maxY && this.velocity.y > 0)) {
-      this.velocity.y = 0;
-    }
-
-    this.body.x = clampedX;
-    this.body.y = clampedY;
-  }
-
-  private getHorizontalDirection(): number {
-    const movingLeft = this.keys.left.isDown || this.keys.a.isDown;
-    const movingRight = this.keys.right.isDown || this.keys.d.isDown;
-
-    return Number(movingRight) - Number(movingLeft);
-  }
-
-  private getVerticalDirection(): number {
-    const movingUp = this.keys.up.isDown || this.keys.w.isDown;
-    const movingDown = this.keys.down.isDown || this.keys.s.isDown;
-
-    return Number(movingDown) - Number(movingUp);
-  }
-
-  private getMouseDirection(): Phaser.Math.Vector2 {
-    const pointer = this.scene.input.activePointer;
-
-    if (!pointer.isDown || !pointer.leftButtonDown()) {
-      return new Phaser.Math.Vector2(0, 0);
-    }
-
-    const worldPoint = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    const direction = new Phaser.Math.Vector2(
-      worldPoint.x - this.body.x,
-      worldPoint.y - this.body.y,
-    );
-
-    if (direction.lengthSq() < 1) {
-      return new Phaser.Math.Vector2(0, 0);
-    }
-
-    return direction.normalize();
+    return {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+    };
   }
 
   private createBody(x: number, y: number): PlayerBody {
@@ -563,13 +479,13 @@ export class PlayerController {
       setFlipX?: (value: boolean) => Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
       frame?: Phaser.Textures.Frame;
     };
-    const isMoving = this.velocity.length() > PlayerController.IDLE_SPEED_THRESHOLD;
+    const isMoving = this.model.velocity.length() > PlayerController.IDLE_SPEED_THRESHOLD;
     const direction = isMoving
-      ? this.getDirection8FromVector(this.velocity.x, this.velocity.y)
-      : this.lastFacingDirection;
+      ? this.movementSystem.getDirection8FromVector(this.model.velocity.x, this.model.velocity.y)
+      : this.model.facingDirection;
 
     if (isMoving) {
-      this.lastFacingDirection = direction;
+      this.model.facingDirection = direction;
     }
 
     const animationKey = AssetKeyResolver.getPlayerAnimationKey(
@@ -679,68 +595,25 @@ export class PlayerController {
     );
   }
 
-  private updateFacingFromInput(direction: Phaser.Math.Vector2): void {
-    if (direction.lengthSq() === 0) {
-      return;
-    }
-
-    this.lastFacingDirection = this.getDirection8FromVector(direction.x, direction.y);
+  private syncModelFromBody(): void {
+    this.model.collisionRadius = this.body.radius;
+    this.model.syncPosition(this.body);
   }
 
-  private getVectorFromDirection8(direction: FacingDirection8): Phaser.Math.Vector2 {
-    switch (direction) {
-      case 'down_right':
-        return new Phaser.Math.Vector2(1, 1).normalize();
-      case 'down':
-        return new Phaser.Math.Vector2(0, 1);
-      case 'down_left':
-        return new Phaser.Math.Vector2(-1, 1).normalize();
-      case 'left':
-        return new Phaser.Math.Vector2(-1, 0);
-      case 'up_left':
-        return new Phaser.Math.Vector2(-1, -1).normalize();
-      case 'up':
-        return new Phaser.Math.Vector2(0, -1);
-      case 'up_right':
-        return new Phaser.Math.Vector2(1, -1).normalize();
-      case 'right':
-      default:
-        return new Phaser.Math.Vector2(1, 0);
-    }
+  private syncBodyFromModel(): void {
+    this.body.x = this.model.position.x;
+    this.body.y = this.model.position.y;
   }
 
-  private getDirection8FromVector(vx: number, vy: number): FacingDirection8 {
-    const angle = Phaser.Math.Angle.Normalize(Math.atan2(vy, vx));
-    const degrees = Phaser.Math.RadToDeg(angle);
+  private syncMovementStats(): void {
+    this.model.syncMovementStats({
+      moveSpeed: this.stats.moveSpeed,
+      acceleration: this.stats.acceleration,
+      deceleration: this.stats.deceleration,
+    });
+  }
 
-    if (degrees < 22.5 || degrees >= 337.5) {
-      return 'right';
-    }
-
-    if (degrees < 67.5) {
-      return 'down_right';
-    }
-
-    if (degrees < 112.5) {
-      return 'down';
-    }
-
-    if (degrees < 157.5) {
-      return 'down_left';
-    }
-
-    if (degrees < 202.5) {
-      return 'left';
-    }
-
-    if (degrees < 247.5) {
-      return 'up_left';
-    }
-
-    if (degrees < 292.5) {
-      return 'up';
-    }
-
-    return 'up_right';
+  private toPhaserVector(value: { x: number; y: number }): Phaser.Math.Vector2 {
+    return new Phaser.Math.Vector2(value.x, value.y);
   }
 }

@@ -5,6 +5,16 @@ export const PLAYER_ART_SKIN_IDS = [
   'witch_default',
   'priest_default',
   'warrior_default',
+  'arcanist_default',
+  'ranger_default',
+  'engineer_default',
+  'necromancer_default',
+  'monk_default',
+  'alchemist_default',
+  'duelist_default',
+  'geomancer_default',
+  'stormcaller_default',
+  'sentinel_default',
 ] as const;
 
 export const PLAYER_ART_DIRECTIONS = [

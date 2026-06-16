@@ -1,7 +1,7 @@
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
-import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import { I18n } from '../i18n/I18n';
 import { TreasureManager } from '../pickup/TreasureManager';
+import evolutionsData from '../data/evolutions.json';
 import passivesData from '../data/passives.json';
 import upgradesData from '../data/upgrades.json';
 import weaponsData from '../data/weapons.json';
@@ -21,6 +21,13 @@ type UpgradeConfig = {
   id: string;
   name: string;
   description: string;
+};
+type EvolutionConfig = {
+  baseWeaponId: string;
+  requiredPassiveId: string;
+  requiredPassiveLevel: number;
+  requiredWeaponUpgradeTotal: number;
+  evolvedWeaponId: string;
 };
 
 const BASE_WEAPON_IDS = ['knife', 'garlic', 'bible', 'magic_wand', 'axe'];
@@ -75,7 +82,7 @@ export class HelpContentBuilder {
   }
 
   buildEvolutionHelp(): HelpSection {
-    const lines = EVOLUTION_RULES.map((rule) => this.line(
+    const lines = (evolutionsData as EvolutionConfig[]).map((rule) => this.line(
       `${this.formatName(rule.baseWeaponId)} Lv.${rule.requiredWeaponUpgradeTotal}`
         + ` + ${this.formatName(rule.requiredPassiveId)} Lv.${rule.requiredPassiveLevel}`
         + ` -> ${this.formatName(rule.evolvedWeaponId)} via treasure`,
@@ -89,7 +96,7 @@ export class HelpContentBuilder {
   buildPassivesHelp(): HelpSection {
     const relatedWeaponsByPassive = new Map<string, string[]>();
 
-    for (const rule of EVOLUTION_RULES) {
+    for (const rule of evolutionsData as EvolutionConfig[]) {
       const related = relatedWeaponsByPassive.get(rule.requiredPassiveId) ?? [];
       related.push(rule.baseWeaponId);
       relatedWeaponsByPassive.set(rule.requiredPassiveId, related);

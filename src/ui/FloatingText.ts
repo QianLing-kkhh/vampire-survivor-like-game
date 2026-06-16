@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { Poolable } from '../performance/Poolable';
+import { UITextBlock } from './components/UITextBlock';
 
 export interface FloatingTextConfig {
   color: string;
@@ -27,14 +28,15 @@ export class FloatingText implements Poolable {
     value: string,
     config: FloatingTextConfig,
   ) {
-    this.text = scene.add.text(x, y, value, {
-      color: config.color,
+    this.text = new UITextBlock(scene, {
+      x,
+      y,
+      text: value,
       fontSize: config.fontSize,
       fontStyle: 'bold',
-      stroke: config.stroke ?? '#111827',
-      strokeThickness: config.strokeThickness ?? 3,
-    });
-    this.text.setOrigin(0.5);
+    }).text;
+    this.text.setColor(config.color);
+    this.text.setStroke(config.stroke ?? '#111827', config.strokeThickness ?? 3);
     this.text.setDepth(1300);
     this.reset(x, y, value, config);
   }

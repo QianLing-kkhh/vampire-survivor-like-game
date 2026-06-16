@@ -7,16 +7,25 @@ import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { MINIMAP_SCALE_STEPS } from '../settings/DisplaySettings';
 import { SettingsManager } from '../settings/SettingsManager';
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIButton } from './components/UIButton';
+import { UIDivider } from './components/UIDivider';
+import { UIPager } from './components/UIPager';
+import { UISettingRowShell } from './components/UISettingRowShell';
+import { UISlider } from './components/UISlider';
+import { UITabBar } from './components/UITabBar';
+import { UIToggleSwitch } from './components/UIToggleSwitch';
+import { truncateTextToWidth } from './components/UITextUtils';
 import { UIStyle } from './theme/UIStyle';
 import { UIThemeRegistry } from './theme/UIThemeRegistry';
 import { ASSET_STYLES, AssetStyle, DISPLAY_QUALITIES, DisplayQuality } from '../visual/DisplayQuality';
 import {
   createModalBlocker,
   setRectangleHitArea,
-  setTextHitArea,
   stopPointerEvent,
 } from './input/UIInteraction';
-import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
+import { UITheme } from './UITheme';
 
 type SettingsMenuHandler = () => void;
 type SettingsTabId = 'gameplay' | 'audio' | 'display' | 'input';
@@ -40,27 +49,17 @@ interface SettingRowDefinition {
   onToggle?: () => void;
   options?: Array<SettingRowOption>;
   sliderSteps?: number[];
-}
-
-interface TabButton {
-  id: SettingsTabId;
-  container: Phaser.GameObjects.Container;
-  background: Phaser.GameObjects.Rectangle;
-  label: Phaser.GameObjects.Text;
+  sliderLabel?: string;
+  sliderValueText?: (value: number) => string;
 }
 
 interface RowControl {
+  shell: UISettingRowShell;
   container: Phaser.GameObjects.Container;
-  background: Phaser.GameObjects.Rectangle;
-  label: Phaser.GameObjects.Text;
-  value?: Phaser.GameObjects.Text;
-  leftArrow?: Phaser.GameObjects.Text;
-  rightArrow?: Phaser.GameObjects.Text;
-  track?: Phaser.GameObjects.Rectangle;
-  knob?: Phaser.GameObjects.Arc;
+  selectButton?: UIButton;
+  toggle?: UIToggleSwitch;
+  slider?: UISlider;
   definition: SettingRowDefinition;
-  sliderTrackLeft?: number;
-  sliderTrackRight?: number;
 }
 
 interface OpenDropdown {
@@ -74,14 +73,10 @@ export class SettingsMenu {
   private readonly screenManager: ScreenManager;
   private readonly container: Phaser.GameObjects.Container;
   private readonly blocker: Phaser.GameObjects.Rectangle;
-  private readonly background: Phaser.GameObjects.Rectangle;
-  private readonly panelImage?: Phaser.GameObjects.Image;
-  private readonly title: Phaser.GameObjects.Text;
-  private readonly closeButton: Phaser.GameObjects.Text;
-  private readonly prevPageButton: Phaser.GameObjects.Text;
-  private readonly nextPageButton: Phaser.GameObjects.Text;
-  private readonly pageText: Phaser.GameObjects.Text;
-  private readonly tabButtons: TabButton[] = [];
+  private frame?: Phaser.GameObjects.Container;
+  private header?: Phaser.GameObjects.Container;
+  private readonly pager: UIPager;
+  private tabBar?: UITabBar<SettingsTabId>;
   private readonly rowControls: RowControl[] = [];
   private readonly pageByTab: Record<SettingsTabId, number> = {
     gameplay: 0,
@@ -94,7 +89,6 @@ export class SettingsMenu {
   private strategyPanelNextRunNotice = false;
   private unsubscribeResize?: () => void;
   private openDropdown?: OpenDropdown;
-  private activeDraggedSlider?: RowControl;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -105,50 +99,20 @@ export class SettingsMenu {
     this.blocker = createModalBlocker(scene, 2199, () => this.closeDropdown());
     this.container = scene.add.container(0, 0);
     this.container.setDepth(2200);
-    this.background = scene.add.rectangle(
-      this.screenManager.centerX,
-      this.screenManager.centerY,
-      520,
-      520,
-      UITheme.panelBgColor,
-      UITheme.panelBgAlpha,
-    );
-    this.background.setStrokeStyle(2, UITheme.panelBorderColor, 0.85);
-    this.panelImage = scene.textures.exists('art_ui_pause_panel_bg')
-      ? scene.add.image(this.screenManager.centerX, this.screenManager.centerY, 'art_ui_pause_panel_bg')
-      : undefined;
-    this.panelImage?.setAlpha(UITheme.pausePanelAlpha);
-    this.title = scene.add.text(0, 0, this.t('settings.title', 'Settings'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
+    this.pager = new UIPager(scene, {
+      x: 0,
+      y: 0,
+      width: 420,
+      closeLabel: this.t('settings.back', I18n.t('common.close')),
+      onPageChanged: (page) => {
+        this.pageByTab[this.selectedTab] = page;
+        this.applyLayout();
+      },
+      onClose: () => this.onClose(),
     });
-    this.title.setOrigin(0.5);
-    this.closeButton = this.createCloseButton();
-    this.prevPageButton = this.createPageButton(this.t('settings.previousPage', 'Prev'), () => {
-      this.setCurrentPage(this.getCurrentPage() - 1);
-    });
-    this.nextPageButton = this.createPageButton(this.t('settings.nextPage', 'Next'), () => {
-      this.setCurrentPage(this.getCurrentPage() + 1);
-    });
-    this.pageText = scene.add.text(0, 0, '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'center',
-    });
-    this.pageText.setOrigin(0.5);
     this.container.add([
-      this.background,
-      ...(this.panelImage ? [this.panelImage] : []),
-      this.title,
-      this.prevPageButton,
-      this.nextPageButton,
-      this.pageText,
-      this.closeButton,
+      this.pager.container,
     ]);
-    this.createTabs();
     this.renderRows();
     this.applyLayout();
     this.unsubscribeResize = this.screenManager.onResize(() => {
@@ -162,48 +126,16 @@ export class SettingsMenu {
     this.unsubscribeResize = undefined;
     this.closeDropdown();
     this.clearRows();
+    this.tabBar?.destroy();
+    this.tabBar = undefined;
     this.screenManager.dispose();
     this.blocker.destroy();
     this.container.destroy(true);
   }
 
-  private createTabs(): void {
-    for (const tabId of SETTINGS_TABS) {
-      const tab = this.scene.add.container(0, 0);
-      const background = this.scene.add.rectangle(0, 0, 96, 34, UITheme.buttonBgColor, 0.94);
-      background.setStrokeStyle(1, UITheme.panelBorderColor, 0.72);
-      background.setInteractive({ useHandCursor: true });
-      const label = this.scene.add.text(0, 0, this.getTabLabel(tabId), {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.smallFontSize,
-        align: 'center',
-      });
-      label.setOrigin(0.5);
-      tab.add([background, label]);
-      background.on('pointerdown', (
-        _pointer: Phaser.Input.Pointer,
-        _localX: number,
-        _localY: number,
-        event: Phaser.Types.Input.EventData,
-      ) => {
-        stopPointerEvent(event);
-        AudioManager.playUi(this.scene, 'ui_click');
-        this.closeDropdown();
-        this.selectedTab = tabId;
-        this.pageByTab[tabId] = 0;
-        this.renderRows();
-        this.applyLayout();
-      });
-      this.tabButtons.push({ id: tabId, container: tab, background, label });
-      this.container.add(tab);
-    }
-  }
-
   private renderRows(): void {
     this.closeDropdown();
     this.clearRows();
-    this.title.setText(this.t('settings.title', 'Settings'));
 
     for (const definition of this.getRowsForTab(this.selectedTab)) {
       const control = this.createRowControl(definition);
@@ -221,30 +153,26 @@ export class SettingsMenu {
   }
 
   private createRowControl(definition: SettingRowDefinition): RowControl {
-    const row = this.scene.add.container(0, 0);
-    const background = this.scene.add.rectangle(0, 0, 460, 42, UITheme.iconBgColor, 0.58);
-    background.setStrokeStyle(1, UITheme.panelBorderColor, 0.28);
-    if (definition.type !== 'info') {
-      background.setInteractive({ useHandCursor: true });
-    }
-    const label = this.scene.add.text(0, 0, definition.label, {
-      color: definition.type === 'info' ? UITheme.successTextColor : UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
+    const shell = new UISettingRowShell(this.scene, {
+      x: 0,
+      y: 0,
+      width: 460,
+      height: 42,
+      label: definition.label,
+      tone: definition.type === 'info' ? 'info' : 'normal',
+      interactive: definition.type !== 'info',
     });
-    label.setOrigin(0, 0.5);
-    row.add([background, label]);
+    const row = shell.container;
 
     const control: RowControl = {
+      shell,
       container: row,
-      background,
-      label,
       definition,
     };
 
     if (definition.type === 'toggle') {
       this.addToggleControl(row, control);
-      background.on('pointerdown', (
+      shell.on('pointerdown', (
         _pointer: Phaser.Input.Pointer,
         _localX: number,
         _localY: number,
@@ -258,7 +186,7 @@ export class SettingsMenu {
 
     if (definition.type === 'select') {
       this.addSelectControl(row, control);
-      background.on('pointerdown', (
+      shell.on('pointerdown', (
         _pointer: Phaser.Input.Pointer,
         _localX: number,
         _localY: number,
@@ -279,116 +207,58 @@ export class SettingsMenu {
   }
 
   private addToggleControl(row: Phaser.GameObjects.Container, control: RowControl): void {
-    const enabled = control.definition.getToggleValue?.() === true;
-    const track = this.scene.add.rectangle(0, 0, 54, 28, this.getToggleTrackColor(enabled), 1);
-    const knob = this.scene.add.circle(enabled ? 13 : -13, 0, 11, UITheme.toggleKnobColor, 1);
-
-    track.setStrokeStyle(1, UITheme.panelBorderColor, 0.5);
-    track.setInteractive({ useHandCursor: true });
-    knob.setInteractive({ useHandCursor: true });
-    track.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.activateToggle(control.definition);
+    const toggle = new UIToggleSwitch(this.scene, {
+      x: 0,
+      y: 0,
+      value: control.definition.getToggleValue?.() === true,
+      onToggle: () => this.activateToggle(control.definition),
     });
-    knob.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.activateToggle(control.definition);
-    });
-    row.add([track, knob]);
-    control.track = track;
-    control.knob = knob;
+    row.add(toggle.container);
+    control.toggle = toggle;
   }
 
   private addSelectControl(row: Phaser.GameObjects.Container, control: RowControl): void {
-    const valueText = this.scene.add.text(0, 0, this.getDisplayValue(control.definition), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'right',
+    const selectButton = new UIButton(this.scene, {
+      x: 0,
+      y: 0,
+      width: 148,
+      height: 30,
+      size: 'small',
+      label: this.getSelectButtonLabel(control.definition),
+      onClick: () => this.openSelect(control),
     });
-    const arrow = this.scene.add.text(0, 0, 'v', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      fontStyle: 'bold',
-    });
-
-    valueText.setOrigin(1, 0.5);
-    arrow.setOrigin(0, 0.5);
-    valueText.setInteractive({ useHandCursor: true });
-    arrow.setInteractive({ useHandCursor: true });
-    valueText.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.openSelect(control);
-    });
-    arrow.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.openSelect(control);
-    });
-    row.add([valueText, arrow]);
-    control.value = valueText;
-    control.rightArrow = arrow;
+    row.add(selectButton.container);
+    control.selectButton = selectButton;
   }
 
   private addSliderControl(row: Phaser.GameObjects.Container, control: RowControl): void {
-    const track = this.scene.add.rectangle(0, 0, 160, 12, UITheme.panelBorderColor, 0.42);
-    const knob = this.scene.add.circle(0, 0, 10, UITheme.toggleKnobColor, 1);
-    const valueText = this.scene.add.text(0, 0, this.getDisplayValue(control.definition), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'right',
-    });
+    const steps = control.definition.sliderSteps ?? [];
+    const initialValue = this.getNumericRowValue(control.definition);
+    const slider = new UISlider(this.scene, {
+      x: 0,
+      y: 0,
+      label: control.definition.sliderLabel ?? '',
+      value: this.getSliderStepIndex(control.definition, initialValue, steps),
+      min: 0,
+      max: Math.max(0, steps.length - 1),
+      step: 1,
+      width: 180,
+      labelWidth: 0,
+      trackWidth: 120,
+      compact: true,
+      onChange: (stepIndex, commit) => {
+        this.setSliderFromStepIndex(control, stepIndex, commit);
+      },
+      formatValue: (stepIndex) => {
+        const index = Phaser.Math.Clamp(Math.round(stepIndex), 0, Math.max(0, steps.length - 1));
+        const value = steps[index] ?? initialValue;
 
-    track.setStrokeStyle(1, UITheme.panelBorderColor, 0.6);
-    track.setInteractive({ useHandCursor: true });
-    knob.setInteractive({ draggable: true, useHandCursor: true });
-    track.on('pointerdown', (
-      pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.setSliderFromWorldX(control, pointer.x, true);
+        return control.definition.sliderValueText?.(value)
+          ?? this.getDisplayValue(control.definition, value);
+      },
     });
-    knob.on('dragstart', () => {
-      this.activeDraggedSlider = control;
-    });
-    knob.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number) => {
-      this.setSliderFromWorldX(control, dragX, false);
-    });
-    knob.on('dragend', (_pointer: Phaser.Input.Pointer, dragX: number) => {
-      if (this.activeDraggedSlider === control) {
-        this.setSliderFromWorldX(control, dragX, true);
-      }
-
-      this.activeDraggedSlider = undefined;
-    });
-    row.add([valueText, track, knob]);
-    control.value = valueText;
-    control.track = track;
-    control.knob = knob;
+    row.add(slider.container);
+    control.slider = slider;
   }
 
   private openSelect(control: RowControl): void {
@@ -407,92 +277,68 @@ export class SettingsMenu {
     layer.setDepth(this.container.depth + 10);
     layer.setScrollFactor(0);
 
-    const panelWidth = Math.min(220, Math.max(130, control.background.displayWidth * 0.62));
-    const panelHeight = options.length * 34 + 8;
-    const rowWidth = control.background.displayWidth;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const optionStride = tiny ? 28 : compact ? 30 : 34;
+    const optionHeight = tiny ? 24 : compact ? 26 : 28;
+    const panelWidth = Math.min(compact ? 200 : 220, Math.max(130, control.shell.getWidth() * 0.62));
+    const panelHeight = options.length * optionStride + 8;
+    const rowWidth = control.shell.getWidth();
+    const rowHeight = control.shell.getHeight();
     const rowWorld = this.getRowWorldPosition(control);
     const rowWorldLeft = rowWorld.x - rowWidth / 2;
-    const rowTop = rowWorld.y - control.background.height / 2;
-    const rowBottom = rowWorld.y + control.background.height / 2;
+    const rowTop = rowWorld.y - rowHeight / 2;
+    const rowBottom = rowWorld.y + rowHeight / 2;
     const preferredY = rowBottom + 2;
     const belowFits = preferredY + panelHeight <= this.screenManager.height - 10;
     const dropdownY = belowFits ? preferredY : rowTop - panelHeight - 2;
     const dropdownLeft = Phaser.Math.Clamp(rowWorldLeft, 12, this.screenManager.width - panelWidth - 12);
 
-    const overlayBg = this.scene.add.rectangle(0, 0, this.screenManager.width, this.screenManager.height, 0x000000, 0);
-    overlayBg.setOrigin(0, 0);
-    overlayBg.setScrollFactor(0);
-    overlayBg.setInteractive({ useHandCursor: true });
-    overlayBg.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      this.closeDropdown();
-    });
+    const overlayBg = createModalBlocker(this.scene, layer.depth - 1, () => this.closeDropdown());
     layer.add(overlayBg);
 
-    const panel = this.scene.add.rectangle(
-      dropdownLeft + panelWidth / 2,
-      dropdownY + panelHeight / 2,
-      panelWidth,
-      panelHeight,
-      UITheme.panelBgColor,
-      0.98,
-    );
-    panel.setStrokeStyle(1, UITheme.panelBorderColor, 0.9);
-    panel.setScrollFactor(0);
-    layer.add(panel);
+    const panelFrame = PanelFrame.create(this.scene, {
+      x: dropdownLeft + panelWidth / 2,
+      y: dropdownY + panelHeight / 2,
+      width: panelWidth,
+      height: panelHeight,
+      variant: 'tooltip',
+      alpha: 0.98,
+    });
+    panelFrame.setScrollFactor(0);
+    layer.add(panelFrame);
 
-    const divider = this.scene.add.rectangle(
-      dropdownLeft + panelWidth / 2,
+    const divider = UIDivider.create(
+      this.scene,
+      dropdownLeft + 8,
       dropdownY + 6,
-      panelWidth - 16,
-      1,
-      UITheme.panelBorderColor,
-      0.4,
+      { width: panelWidth - 16, alpha: 0.4 },
     );
-    divider.setOrigin(0.5, 0.5);
     divider.setScrollFactor(0);
     layer.add(divider);
 
-    const rowValueHeight = 34;
-    const optionLeft = dropdownLeft + 12;
-
+    const rowValueHeight = optionStride;
     options.forEach((option, index) => {
-      const optionY = dropdownY + 12 + index * rowValueHeight + 13;
-      const optionBg = this.scene.add.rectangle(dropdownLeft + panelWidth / 2, optionY, panelWidth - 8, 28, UITheme.iconBgColor, 0.96);
-      optionBg.setStrokeStyle(1, UITheme.panelBorderColor, 0.34);
-      optionBg.setScrollFactor(0);
-      optionBg.setInteractive({ useHandCursor: true });
-      const optionText = this.scene.add.text(optionLeft, optionY, option.label, {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.smallFontSize,
+      const optionY = dropdownY + 12 + index * rowValueHeight + optionHeight / 2;
+      const optionFontSize = tiny ? '10px' : UITheme.smallFontSize;
+      const optionButton = new UIButton(this.scene, {
+        x: dropdownLeft + panelWidth / 2,
+        y: optionY,
+        width: panelWidth - 10,
+        height: optionHeight,
+        size: 'small',
+        label: truncateTextToWidth(option.label, panelWidth - 24, Number.parseFloat(optionFontSize)),
+        selected: option.value === control.definition.getValue?.(),
+        onClick: () => {
+          control.definition.setValue?.(option.value);
+          this.closeDropdown();
+          this.afterSettingChanged();
+        },
       });
-      optionText.setOrigin(0, 0.5);
-      optionText.setScrollFactor(0);
-      optionText.setInteractive({ useHandCursor: true });
-      if (option.value === control.definition.getValue?.()) {
-        optionText.setColor(UITheme.successTextColor);
-      }
-
-      const selectOption = (
-        _pointer: Phaser.Input.Pointer,
-        _localX: number,
-        _localY: number,
-        event: Phaser.Types.Input.EventData,
-      ) => {
-        stopPointerEvent(event);
-        control.definition.setValue?.(option.value);
-        this.closeDropdown();
-        this.afterSettingChanged();
-      };
-      optionBg.on('pointerdown', selectOption);
-      optionText.on('pointerdown', selectOption);
-      layer.add([optionBg, optionText]);
+      optionButton.setFontSize(optionFontSize);
+      optionButton.container.setScrollFactor(0);
+      layer.add(optionButton.container);
     });
 
     this.openDropdown = {
@@ -523,28 +369,36 @@ export class SettingsMenu {
   }
 
   private applyLayout(): void {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const portrait = this.screenManager.isPortrait();
     const panel = LayoutConfig.getPanelLayout(this.screenManager, {
-      maxWidth: this.screenManager.isPortrait() ? 380 : 640,
-      maxHeight: this.screenManager.isPortrait() ? 720 : 560,
-      padding: 26,
+      maxWidth: portrait ? (tiny ? 300 : 330) : tiny ? 480 : compact ? 520 : 560,
+      maxHeight: portrait ? (tiny ? 520 : 570) : compact ? 430 : 460,
+      padding: tiny ? 14 : compact ? 16 : 20,
     });
     const centerX = this.screenManager.centerX;
     const centerY = this.screenManager.centerY;
     const fonts = LayoutConfig.getResponsiveFontSizes(this.screenManager);
-    const compact = this.screenManager.width <= 430 || this.screenManager.height <= 620;
-    const tabWidth = compact ? 94 : 108;
-    const tabHeight = compact ? 30 : 34;
-    const tabGap = compact ? 6 : 8;
-    const tabColumns = this.getTabColumns(panel.content.width, tabWidth, tabGap);
-    const tabRows = Math.ceil(this.tabButtons.length / tabColumns);
-    const tabTop = panel.content.y + 54;
-    const tabAreaBottom = tabTop + tabRows * tabHeight + Math.max(0, tabRows - 1) * tabGap;
-    const closeY = panel.y + panel.height - (compact ? 28 : 34);
-    const contentTop = tabAreaBottom + (compact ? 12 : 18);
-    const pagingAreaHeight = compact ? 28 : 32;
-    const contentBottom = closeY - (compact ? 64 : 74);
-    const rowGap = compact ? 7 : 9;
-    const rowHeight = compact ? 38 : 42;
+    const tabWidth = tiny ? 70 : compact ? 78 : 92;
+    const tabHeight = tiny ? 24 : compact ? 26 : 30;
+    const tabGap = tiny ? 4 : compact ? 5 : 6;
+    const tabTop = panel.content.y + (tiny ? 36 : compact ? 40 : 46);
+    const tabAreaHeight = this.renderTabBar(
+      panel.content.x + panel.content.width / 2,
+      tabTop,
+      panel.content.width,
+      tabWidth,
+      tabHeight,
+      tabGap,
+    );
+    const tabAreaBottom = tabTop + tabAreaHeight;
+    const closeY = panel.y + panel.height - (tiny ? 20 : compact ? 22 : 26);
+    const contentTop = tabAreaBottom + (tiny ? 6 : compact ? 8 : 12);
+    const contentBottom = closeY - (tiny ? 44 : compact ? 48 : 56);
+    const rowGap = tiny ? 4 : compact ? 5 : 6;
+    const rowHeight = tiny ? 38 : compact ? 40 : 38;
     const rowsPerPage = Math.max(1, Math.floor((contentBottom - contentTop + rowGap) / (rowHeight + rowGap)));
     const pageCount = Math.max(1, Math.ceil(this.rowControls.length / rowsPerPage));
     const currentPage = Math.min(this.getCurrentPage(), pageCount - 1);
@@ -554,17 +408,23 @@ export class SettingsMenu {
     const rowWidth = panel.content.width;
 
     setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
-    this.background.setPosition(centerX, centerY);
-    this.background.setSize(panel.width, panel.height);
-    this.background.setFillStyle(UITheme.panelBgColor, UITheme.panelBgAlpha);
-    this.background.setStrokeStyle(UITheme.panel.borderWidth, UITheme.panelBorderColor, 0.85);
-    this.panelImage?.setPosition(centerX, centerY);
-    this.panelImage?.setAlpha(UITheme.pausePanelAlpha);
-    this.coverImage(this.panelImage, panel.width, panel.height);
-    this.title.setPosition(centerX, panel.content.y + 24);
-    this.title.setFontSize(fonts.header);
-    this.title.setColor(UITheme.textColor);
-    this.layoutTabs(panel.content.x, tabTop, tabColumns, tabWidth, tabHeight, tabGap);
+    this.frame?.destroy(true);
+    this.header?.destroy();
+    this.frame = PanelFrame.create(this.scene, {
+      x: centerX,
+      y: centerY,
+      width: panel.width,
+      height: panel.height,
+      variant: 'modal',
+    });
+    this.container.addAt(this.frame, 0);
+    this.header = PanelHeader.create(this.scene, {
+      x: centerX,
+      y: panel.content.y + (tiny ? 17 : compact ? 20 : 26),
+      width: Math.max(220, panel.width - 64),
+      title: this.t('settings.title', 'Settings'),
+    });
+    this.container.add(this.header);
 
     this.rowControls.forEach((row, index) => {
       if (index < pageStart || index >= pageEnd) {
@@ -574,18 +434,22 @@ export class SettingsMenu {
 
       const visibleIndex = index - pageStart;
       row.container.setVisible(true);
-      row.label.setText(row.definition.label);
-      row.container.setPosition(panel.content.x + rowWidth / 2, contentTop + visibleIndex * (rowHeight + rowGap));
-      setRectangleHitArea(row.background, rowWidth, rowHeight);
-      row.label.setPosition(-rowWidth / 2 + 14, rowHeight / 2);
-      row.label.setFontSize(row.definition.type === 'info' ? fonts.small : fonts.body);
-      row.label.setWordWrapWidth(rowWidth - (row.definition.type === 'toggle' ? 110 : 250));
+      row.container.setPosition(
+        panel.content.x + rowWidth / 2,
+        contentTop + rowHeight / 2 + visibleIndex * (rowHeight + rowGap),
+      );
+      const labelFontSize = row.definition.type === 'info' ? fonts.small : fonts.body;
+      const labelWidth = this.getRowLabelWidth(row, rowWidth);
+      row.shell.layout(rowWidth, rowHeight, {
+        label: row.definition.label,
+        tone: row.definition.type === 'info' ? 'info' : 'normal',
+        fontSize: labelFontSize,
+        labelWidth,
+      });
 
-      row.value?.setVisible(row.definition.type === 'select' || row.definition.type === 'slider');
-      row.leftArrow?.setVisible(false);
-      row.rightArrow?.setVisible(row.definition.type === 'select');
-      row.track?.setVisible(row.definition.type === 'toggle' || row.definition.type === 'slider');
-      row.knob?.setVisible(row.definition.type === 'toggle' || row.definition.type === 'slider');
+      row.selectButton?.setVisible(row.definition.type === 'select');
+      row.toggle?.setVisible(row.definition.type === 'toggle');
+      row.slider?.setVisible(row.definition.type === 'slider');
 
       if (row.definition.type === 'toggle') {
         this.layoutToggleRow(row, rowWidth, rowHeight);
@@ -596,14 +460,14 @@ export class SettingsMenu {
       }
     });
 
-    this.layoutPagingControls(panel.content.x, closeY - pagingAreaHeight - 4, rowWidth, pageCount, currentPage, compact);
-
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
-    this.closeButton.setPosition(centerX, closeY);
-    this.closeButton.setFontSize(metrics.fontSize);
-    setTextHitArea(this.closeButton, metrics.width, metrics.height);
-    this.closeButton.setColor(UITheme.textColor);
-    this.closeButton.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
+    this.layoutPagingControls(
+      panel.content.x,
+      closeY - (compact ? 36 : 40),
+      rowWidth,
+      pageCount,
+      currentPage,
+      compact,
+    );
   }
 
   private getRowWorldPosition(row: RowControl): { x: number; y: number } {
@@ -622,154 +486,164 @@ export class SettingsMenu {
     currentPage: number,
     compact: boolean,
   ): void {
-    const visible = pageCount > 1;
-    const buttonWidth = compact ? 74 : 86;
-    const buttonHeight = compact ? 24 : 28;
-    const fontSize = compact ? '10px' : UITheme.smallFontSize;
+    this.pager.setPosition(left + width / 2, y);
+    this.pager.setSize(width, compact);
+    this.pager.setPage(currentPage, pageCount);
 
-    this.prevPageButton.setVisible(visible);
-    this.nextPageButton.setVisible(visible);
-    this.pageText.setVisible(visible);
-
-    if (!visible) {
-      return;
-    }
-
-    this.prevPageButton.setText(this.t('settings.previousPage', 'Prev'));
-    this.nextPageButton.setText(this.t('settings.nextPage', 'Next'));
-    this.pageText.setText(`${this.t('settings.page', 'Page')} ${currentPage + 1}/${pageCount}`);
-    this.pageText.setPosition(left + width / 2, y);
-    this.pageText.setFontSize(fontSize);
-    this.pageText.setColor(UITheme.mutedTextColor);
-
-    this.layoutPageButton(this.prevPageButton, left + buttonWidth / 2, y, buttonWidth, buttonHeight, fontSize, currentPage > 0);
-    this.layoutPageButton(this.nextPageButton, left + width - buttonWidth / 2, y, buttonWidth, buttonHeight, fontSize, currentPage < pageCount - 1);
+    const pageControlsVisible = pageCount > 1;
+    this.pager.prevButton.setVisible(pageControlsVisible);
+    this.pager.nextButton.setVisible(pageControlsVisible);
+    this.pager.pageText.setVisible(pageControlsVisible);
   }
 
-  private layoutPageButton(
-    button: Phaser.GameObjects.Text,
+  private renderTabBar(
     x: number,
     y: number,
     width: number,
-    height: number,
-    fontSize: string,
-    enabled: boolean,
-  ): void {
-    button.setPosition(x, y);
-    button.setFontSize(fontSize);
-    setTextHitArea(button, width, height);
-    button.setColor(enabled ? UITheme.textColor : UITheme.mutedTextColor);
-    button.setAlpha(enabled ? 1 : 0.45);
-    button.setBackgroundColor(toCssColor(enabled ? UITheme.buttonBgColor : UITheme.iconBgColor));
-  }
-
-  private layoutTabs(
-    left: number,
-    top: number,
-    columns: number,
     tabWidth: number,
     tabHeight: number,
     gap: number,
-  ): void {
-    this.tabButtons.forEach((tab, index) => {
-      const row = Math.floor(index / columns);
-      const column = index % columns;
-      const selected = tab.id === this.selectedTab;
-      setRectangleHitArea(tab.background, tabWidth, tabHeight);
-      tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
-      tab.background.setStrokeStyle(2, selected ? UITheme.successAccentColor : UITheme.panelBorderColor, selected ? 1 : 0.75);
-      tab.container.setPosition(
-        left + tabWidth / 2 + column * (tabWidth + gap),
-        top + tabHeight / 2 + row * (tabHeight + gap),
-      );
-      tab.label.setText(this.getTabLabel(tab.id));
-      tab.label.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
-      tab.label.setWordWrapWidth(tabWidth - 8);
+  ): number {
+    this.tabBar?.destroy();
+    this.tabBar = new UITabBar(this.scene, {
+      x,
+      y,
+      width,
+      items: SETTINGS_TABS.map((id) => ({
+        id,
+        label: this.getTabLabel(id),
+      })),
+      selectedId: this.selectedTab,
+      tabWidth,
+      tabHeight,
+      gap,
+      onSelect: (tabId) => {
+        this.closeDropdown();
+        this.selectedTab = tabId;
+        this.pageByTab[tabId] = 0;
+        this.renderRows();
+        this.applyLayout();
+      },
     });
+    this.container.add(this.tabBar.container);
+    return this.tabBar.height;
   }
 
   private layoutToggleRow(row: RowControl, rowWidth: number, rowHeight: number): void {
     const enabled = row.definition.getToggleValue?.() === true;
-
-    row.track?.setVisible(true);
-    row.knob?.setVisible(true);
-    row.track?.setPosition(rowWidth / 2 - 48, rowHeight / 2);
-    if (row.track) {
-      setRectangleHitArea(row.track, 54, 28);
-    }
-    row.track?.setFillStyle(this.getToggleTrackColor(enabled), 1);
-    row.knob?.setPosition(rowWidth / 2 - 48 + (enabled ? 13 : -13), rowHeight / 2);
+    row.toggle?.setVisible(true);
+    row.toggle?.setPosition(rowWidth / 2 - 48, 0);
+    row.toggle?.setSize(54, 28);
+    row.toggle?.setValue(enabled);
+    row.toggle?.setDisabled(false);
   }
 
   private layoutSelectRow(row: RowControl, rowWidth: number, rowHeight: number): void {
-    row.value?.setVisible(true);
-    row.rightArrow?.setVisible(true);
-    row.value?.setText(this.getDisplayValue(row.definition));
-    row.value?.setPosition(rowWidth / 2 - 28, rowHeight / 2);
-    row.rightArrow?.setPosition(rowWidth / 2 - 12, rowHeight / 2);
-    row.value?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
-    row.rightArrow?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
+    const valueWidth = this.getSelectValueWidth(rowWidth);
+    const fontSize = LayoutConfig.getResponsiveFontSizes(this.screenManager).small;
+    const buttonWidth = valueWidth + 30;
+    row.selectButton?.setVisible(true);
+    row.selectButton?.setPosition(rowWidth / 2 - 16 - buttonWidth / 2, 0);
+    row.selectButton?.setSize(buttonWidth, Math.max(26, rowHeight - 12));
+    row.selectButton?.setFontSize(fontSize);
+    row.selectButton?.setText(this.getSelectButtonLabel(row.definition));
   }
 
   private layoutSliderRow(row: RowControl, rowWidth: number, rowHeight: number): void {
-    const valueText = row.value;
     const steps = row.definition.sliderSteps ?? [];
-    const trackWidth = Math.min(170, Math.max(120, rowWidth - 210));
-    const trackRightLocal = rowWidth / 2 - 16;
-    const trackLeftLocal = trackRightLocal - trackWidth;
-    const trackCenterX = trackLeftLocal + trackWidth / 2;
-
-    if (row.track) {
-      setRectangleHitArea(row.track, trackWidth, 10);
-    }
-    row.track?.setPosition(trackCenterX, rowHeight / 2);
-    row.value?.setText(this.getDisplayValue(row.definition));
-    row.value?.setPosition(trackLeftLocal - 8, rowHeight / 2);
-    row.value?.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).small);
-    row.value?.setAlign('right');
-    row.value?.setOrigin(1, 0.5);
-
+    const trackWidth = this.getSliderTrackWidth(rowWidth);
+    const valueWidth = this.getSliderValueWidth();
+    const labelWidth = this.getSliderLabelWidth(rowWidth);
+    const sliderWidth = Math.max(120, labelWidth + trackWidth + valueWidth + 16);
+    const sliderX = rowWidth / 2 - 16 - sliderWidth;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
     const numericValue = this.getNumericRowValue(row.definition);
     const currentIndex = this.getSliderStepIndex(row.definition, numericValue, steps);
-    const knobX = trackLeftLocal + (currentIndex / Math.max(1, steps.length - 1)) * trackWidth;
-    row.knob?.setPosition(knobX, rowHeight / 2);
 
-    row.sliderTrackLeft = row.container.x + trackLeftLocal;
-    row.sliderTrackRight = row.container.x + trackLeftLocal + trackWidth;
-
-    row.track?.setInteractive({ useHandCursor: true });
+    row.slider?.setVisible(true);
+    row.slider?.setPosition(sliderX, -(tiny ? 8 : 10));
+    row.slider?.setLayout({
+      width: sliderWidth,
+      labelWidth,
+      trackWidth,
+      valueWidth,
+      compact: compact || tiny,
+    });
+    row.slider?.setValue(currentIndex);
   }
 
-  private setSliderFromWorldX(
-    row: RowControl,
-    worldX: number,
-    commit: boolean,
-  ): void {
+  private getRowLabelWidth(row: RowControl, rowWidth: number): number {
+    if (row.definition.type === 'info') {
+      return Math.max(120, rowWidth - 24);
+    }
+
+    if (row.definition.type === 'toggle') {
+      return Math.max(110, rowWidth - 108);
+    }
+
+    if (row.definition.type === 'select') {
+      return Math.max(92, rowWidth - this.getSelectValueWidth(rowWidth) - 54);
+    }
+
+    if (row.definition.type === 'slider') {
+      return Math.max(82, rowWidth - this.getSliderTrackWidth(rowWidth) - this.getSliderValueWidth() - 54);
+    }
+
+    return Math.max(100, rowWidth - 24);
+  }
+
+  private getSelectValueWidth(rowWidth: number): number {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+
+    return Math.min(
+      tiny ? 92 : compact ? 112 : 136,
+      Math.max(72, rowWidth * (tiny ? 0.3 : compact ? 0.34 : 0.38)),
+    );
+  }
+
+  private getSliderTrackWidth(rowWidth: number): number {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+
+    return Math.min(
+      tiny ? 86 : compact ? 108 : 150,
+      Math.max(70, rowWidth * (tiny ? 0.25 : compact ? 0.3 : 0.34)),
+    );
+  }
+
+  private getSliderValueWidth(): number {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+
+    return density === 'tiny' ? 34 : density === 'compact' ? 42 : 50;
+  }
+
+  private getSliderLabelWidth(rowWidth: number): number {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+
+    if (tiny) {
+      return 0;
+    }
+
+    return Math.min(compact ? 48 : 64, Math.max(0, rowWidth * 0.16));
+  }
+
+  private setSliderFromStepIndex(row: RowControl, stepIndex: number, commit: boolean): void {
     const steps = row.definition.sliderSteps ?? [];
+
     if (steps.length === 0) {
       return;
     }
 
-    const minX = row.sliderTrackLeft;
-    const maxX = row.sliderTrackRight;
-    if (minX === undefined || maxX === undefined) {
-      return;
-    }
-
-    const clampedX = Phaser.Math.Clamp(worldX, minX, maxX);
-    const trackWidth = Math.max(1, maxX - minX);
-    const normalized = (clampedX - minX) / trackWidth;
-    const raw = normalized * (steps.length - 1);
-    const nearest = Phaser.Math.Clamp(Math.round(raw), 0, steps.length - 1);
+    const nearest = Phaser.Math.Clamp(Math.round(stepIndex), 0, steps.length - 1);
     const value = steps[nearest]!;
-    const knobX = minX + ((nearest / (steps.length - 1)) * trackWidth);
-    if (row.knob) {
-      row.knob.setX(knobX - row.container.x);
-    }
-
-    if (row.value) {
-      row.value.setText(this.getDisplayValue(row.definition, value));
-    }
+    row.slider?.setValue(nearest);
 
     if (!commit) {
       return;
@@ -801,6 +675,10 @@ export class SettingsMenu {
     return String(current);
   }
 
+  private getSelectButtonLabel(definition: SettingRowDefinition): string {
+    return `${this.getDisplayValue(definition)} v`;
+  }
+
   private getNumericRowValue(definition: SettingRowDefinition): number {
     const value = definition.getValue?.();
 
@@ -811,100 +689,8 @@ export class SettingsMenu {
     return 0;
   }
 
-  private getTabColumns(panelWidth: number, tabWidth: number, gap: number): number {
-    if (this.screenManager.isLandscape() && panelWidth >= SETTINGS_TABS.length * tabWidth) {
-      return SETTINGS_TABS.length;
-    }
-
-    return Math.max(2, Math.min(3, Math.floor((panelWidth + gap) / (tabWidth + gap))));
-  }
-
-  private createCloseButton(): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.scene.scale.width, this.scene.scale.height);
-    const button = this.scene.add.text(0, 0, this.t('settings.back', I18n.t('common.close')), {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
-      },
-    });
-
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this.scene, 'ui_click');
-      this.onClose();
-    });
-
-    return button;
-  }
-
-  private createPageButton(label: string, onClick: () => void): Phaser.GameObjects.Text {
-    const button = this.scene.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'center',
-      fixedWidth: 86,
-      fixedHeight: 28,
-      padding: { x: 0, y: 5 },
-    });
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      if (button.alpha >= 1) {
-        button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-      }
-    });
-    button.on('pointerout', () => {
-      if (button.alpha >= 1) {
-        button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-      }
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      if (button.alpha < 1) {
-        return;
-      }
-
-      AudioManager.playUi(this.scene, 'ui_click');
-      onClick();
-    });
-    button.setVisible(false);
-    return button;
-  }
-
   private getCurrentPage(): number {
     return this.pageByTab[this.selectedTab] ?? 0;
-  }
-
-  private setCurrentPage(page: number): void {
-    this.pageByTab[this.selectedTab] = Math.max(0, page);
-    this.applyLayout();
   }
 
   private getRowsForTab(tabId: SettingsTabId): SettingRowDefinition[] {
@@ -1202,16 +988,6 @@ export class SettingsMenu {
     };
   }
 
-  private getToggleTrackColor(enabled: boolean): number {
-    return enabled ? UITheme.toggleOnColor : UITheme.toggleOffColor;
-  }
-
-  private cycleDisplayQuality(_current: DisplayQuality, _direction: 1 | -1): void {
-    const current = SettingsManager.getDisplay().displayQuality;
-    const next = this.getNextValue(DISPLAY_QUALITIES, current);
-    SettingsManager.updateDisplay({ displayQuality: next });
-  }
-
   private formatDisplayQuality(quality: DisplayQuality): string {
     switch (quality) {
       case 'medium':
@@ -1236,13 +1012,6 @@ export class SettingsMenu {
       default:
         return this.t('settings.assetStyleNew', 'New');
     }
-  }
-
-  private getNextValue<T extends string>(values: readonly T[], current: T): T {
-    const currentIndex = values.indexOf(current);
-    const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % values.length;
-
-    return values[nextIndex] ?? values[0];
   }
 
   private getTabLabel(tabId: SettingsTabId): string {
@@ -1300,19 +1069,6 @@ export class SettingsMenu {
     }
 
     return best;
-  }
-
-  private coverImage(
-    image: Phaser.GameObjects.Image | undefined,
-    width: number,
-    height: number,
-  ): void {
-    if (!image) {
-      return;
-    }
-
-    const frame = image.texture.get();
-    image.setScale(Math.max(width / frame.width, height / frame.height));
   }
 
   private t(key: string, fallback: string): string {

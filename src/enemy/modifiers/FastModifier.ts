@@ -1,4 +1,4 @@
-import { EnemyStats } from '../Enemy';
+import type { EnemyStats } from '../../core/domain/EnemyTypes';
 
 import { EnemyModifier } from './EnemyModifier';
 import { FastModifierConfig } from './EnemyModifierConfig';

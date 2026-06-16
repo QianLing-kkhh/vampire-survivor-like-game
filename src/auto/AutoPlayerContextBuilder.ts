@@ -1,18 +1,16 @@
 import type { BossAttackController } from '../boss/BossAttackController';
-import type { Enemy } from '../enemy/Enemy';
+import type { EnemyQuery } from '../enemy/EnemyQuery';
 import type { GameplayContext } from '../gameplay/GameplayContext';
 import type { LevelManager } from '../progression/LevelManager';
 import type { PlayerHealth } from '../player/PlayerHealth';
+import type { PlayerQuery } from '../player/PlayerQuery';
 import type { PlayerStats } from '../player/PlayerStats';
 import type { WeaponManager } from '../weapon/WeaponManager';
 import type { AutoPlayerContext, AutoPickupSnapshot, AutoTreasureSnapshot } from './AutoPlayerTypes';
 
 export interface AutoPlayerContextBuilderConfig {
-  playerBody: {
-    x: number;
-    y: number;
-  };
-  enemies: readonly Enemy[];
+  player: PlayerQuery;
+  enemies: readonly EnemyQuery[];
   pickupPositions: readonly AutoPickupSnapshot[];
   treasurePositions: readonly AutoTreasureSnapshot[];
   playerPickupRange: number;
@@ -35,25 +33,33 @@ export class AutoPlayerContextBuilder {
     const pickupRangePx = config.playerPickupRange
       * (config.gameplayContext?.characterRuntime.getPickupRangeMultiplier() ?? 1);
     const characterSnapshot = config.gameplayContext?.characterRuntime.getAutoPlayerSnapshot();
+    const playerPosition = config.player.getPositionLike();
+    const playerVelocity = config.player.getVelocityLike();
+    const playerAimDirection = config.player.getAimDirectionLike();
+    const playerFacingDirection = config.player.getFacingDirectionLike();
 
     return {
-      playerPosition: config.playerBody,
+      playerPosition: {
+        x: playerPosition.x,
+        y: playerPosition.y,
+      },
       enemyPositions: config.enemies
-        .filter((enemy) => !enemy.isDead)
+        .filter((enemy) => enemy.isAlive())
         .map((enemy) => {
-          const targetContext = enemy.getDamageTargetContext();
+          const snapshot = enemy.getEnemySnapshot();
+          const health = snapshot.health;
 
           return {
-            id: enemy.getAutoMoveId(),
-            x: enemy.body.x,
-            y: enemy.body.y,
-            radiusPx: enemy.body.radius,
-            moveSpeed: enemy.moveSpeed,
-            damage: enemy.damage,
-            hpRatio: enemy.maxHp > 0 ? enemy.currentHp / enemy.maxHp : 0,
-            isBoss: targetContext.isBoss,
-            isElite: targetContext.isElite,
-            isMiniBoss: enemy.id.endsWith('_boss'),
+            id: snapshot.autoMoveId,
+            x: snapshot.position.x,
+            y: snapshot.position.y,
+            radiusPx: snapshot.collisionRadius,
+            moveSpeed: snapshot.moveSpeed,
+            damage: snapshot.damage,
+            hpRatio: health.maxHp > 0 ? health.currentHp / health.maxHp : 0,
+            isBoss: snapshot.boss,
+            isElite: snapshot.elite,
+            isMiniBoss: snapshot.miniBoss,
           };
         }),
       pickupPositions: config.pickupPositions,
@@ -64,6 +70,20 @@ export class AutoPlayerContextBuilder {
         maxHp: config.playerHealth?.maxHp ?? config.playerStats.maxHp,
         level: config.levelManager?.currentLevel ?? 1,
         hitRadiusPx: config.playerHitRadiusPx,
+        radiusPx: config.player.getCollisionRadius(),
+        velocity: {
+          x: playerVelocity.x,
+          y: playerVelocity.y,
+        },
+        aimDirection: {
+          x: playerAimDirection.x,
+          y: playerAimDirection.y,
+        },
+        facingDirection: {
+          x: playerFacingDirection.x,
+          y: playerFacingDirection.y,
+        },
+        isAlive: config.player.isAlive(),
         moveSpeed: config.playerStats.moveSpeed,
         pickupRangePx,
         characterId: characterSnapshot?.characterId,

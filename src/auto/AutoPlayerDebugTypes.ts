@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import type { Vector2 } from '../core/domain/Vector2';
 
 import type { StrategicPathStyle } from './AutoPlayerMovementTypes';
 
@@ -41,8 +41,8 @@ export interface StrategicLookaheadDebugSnapshot {
 }
 
 export interface StrategicDirectionAnalysis extends StrategicLookaheadDebugSnapshot {
-  direction: Phaser.Math.Vector2;
-  targetZoneCenter: Phaser.Math.Vector2;
+  direction: Vector2;
+  targetZoneCenter: Vector2;
   desiredOrbitRadius: number;
   avoidLinearEscape: boolean;
   score: number;

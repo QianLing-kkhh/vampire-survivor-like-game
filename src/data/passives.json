@@ -23,6 +23,192 @@
     "id": "pummarola",
     "name": "Pummarola",
     "description": "Recover 1 HP every 5 seconds"
+  },
+  {
+    "id": "focus_lens",
+    "name": "Focus Lens",
+    "description": "Arcane and magic weapons deal more damage.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "damageMultiplier",
+        "valuePerLevel": 0.07,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "magic",
+            "arcane"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "hunter_quiver",
+    "name": "Hunter Quiver",
+    "description": "Projectile weapons fly faster.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "projectileSpeedMultiplier",
+        "valuePerLevel": 0.12,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "projectile"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "cogwheel",
+    "name": "Cogwheel",
+    "description": "Mechanical and arcing weapons cool down faster.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "cooldownMultiplier",
+        "valuePerLevel": -0.05,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "mechanical",
+            "arcing"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "grave_charm",
+    "name": "Grave Charm",
+    "description": "Piercing and necrotic weapons hit harder.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "damageMultiplier",
+        "valuePerLevel": 0.06,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "pierce",
+            "necrotic"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "prayer_beads",
+    "name": "Prayer Beads",
+    "description": "Aura and defensive weapons gain knockback.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "knockbackPowerMultiplier",
+        "valuePerLevel": 0.1,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "aura",
+            "defensive"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "glass_flask",
+    "name": "Glass Flask",
+    "description": "Explosive and poison weapons cool down faster.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "cooldownMultiplier",
+        "valuePerLevel": -0.045,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "explosive",
+            "poison"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "duelist_glove",
+    "name": "Duelist Glove",
+    "description": "Physical projectile weapons deal more damage.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "damageMultiplier",
+        "valuePerLevel": 0.055,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "physical",
+            "projectile"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "granite_core",
+    "name": "Granite Core",
+    "description": "Area weapons gain damage.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "damageMultiplier",
+        "valuePerLevel": 0.05,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "area"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "storm_battery",
+    "name": "Storm Battery",
+    "description": "Lightning and magic weapons fly faster.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "projectileSpeedMultiplier",
+        "valuePerLevel": 0.1,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "lightning",
+            "magic"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "iron_sigil",
+    "name": "Iron Sigil",
+    "description": "Defensive weapons cool down faster.",
+    "maxLevel": 5,
+    "effects": [
+      {
+        "stat": "cooldownMultiplier",
+        "valuePerLevel": -0.05,
+        "operation": "add",
+        "scope": {
+          "tags": [
+            "defensive"
+          ]
+        }
+      }
+    ]
   }
 ]
-

@@ -338,7 +338,7 @@ export class BlinkForwardDamageReactionSkill extends BaseCharacterDamageReaction
   }
 
   protected activate(context: CharacterDamageReactionContext): boolean {
-    const direction = context.player.getLastFacingDirection();
+    const direction = context.player.getFacingDirectionLike();
     const blinkDistance = Math.max(0, this.config.blinkDistance ?? 0);
     const invulnerableMs = Math.max(0, this.config.invulnerableMs ?? 0);
     const speedMultiplier = Math.max(0.1, this.config.moveSpeedMultiplier ?? 1);
@@ -346,7 +346,10 @@ export class BlinkForwardDamageReactionSkill extends BaseCharacterDamageReaction
     const startX = context.player.body.x;
     const startY = context.player.body.y;
 
-    context.player.applyExternalDisplacement(direction.scale(blinkDistance));
+    context.player.applyExternalDisplacementLike({
+      x: direction.x * blinkDistance,
+      y: direction.y * blinkDistance,
+    });
     context.playerHealth.setInvulnerable(invulnerableMs);
     context.player.setTemporaryMoveSpeedMultiplier(speedMultiplier, speedBuffMs);
     this.recoveryRemainingMs = Math.max(0, this.config.recoveryMs ?? 900);

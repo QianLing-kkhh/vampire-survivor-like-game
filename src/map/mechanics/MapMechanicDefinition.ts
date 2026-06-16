@@ -28,7 +28,15 @@ export interface MapObstacleDefinition extends BaseMapMechanicDefinition {
   shape?: MapMechanicShape;
   blocksPlayer?: boolean;
   blocksEnemies?: boolean;
-  visualType?: 'grave' | 'rock' | 'tree' | 'wall';
+  visualType?:
+    | 'grave'
+    | 'rock'
+    | 'tree'
+    | 'wall'
+    | 'cathedralWall'
+    | 'cathedralPillar'
+    | 'bookshelf'
+    | 'archivePillar';
 }
 
 export interface MapSlowZoneDefinition extends BaseMapMechanicDefinition {
@@ -40,7 +48,7 @@ export interface MapSlowZoneDefinition extends BaseMapMechanicDefinition {
   playerSpeedMultiplier: number;
   enemySpeedMultiplier: number;
   affectsBossLike?: boolean;
-  visualType?: 'river' | 'swamp' | 'mud';
+  visualType?: 'river' | 'swamp' | 'mud' | 'ink';
 }
 
 export interface MapPortalDefinition extends BaseMapMechanicDefinition {
@@ -48,14 +56,23 @@ export interface MapPortalDefinition extends BaseMapMechanicDefinition {
   radius: number;
   targetPortalId: string;
   cooldownMs: number;
-  visualType?: 'blue' | 'purple' | 'green';
+  visualType?: 'blue' | 'purple' | 'green' | 'gold';
 }
 
 export interface MapLightSourceDefinition extends BaseMapMechanicDefinition {
   type: 'lightSource';
   radius: number;
   intensity?: number;
-  visualType?: 'lamp' | 'torch' | 'crystal';
+  visualType?: 'lamp' | 'torch' | 'crystal' | 'candle' | 'arcaneLamp';
+}
+
+export interface MapAltarDefinition extends BaseMapMechanicDefinition {
+  type: 'altar';
+  radius: number;
+  chargeMs: number;
+  cooldownMs: number;
+  healLostHpRatio: number;
+  visualType?: 'cathedral' | 'library';
 }
 
 export type MapMechanicDefinition =
@@ -63,4 +80,5 @@ export type MapMechanicDefinition =
   | MapSlowZoneDefinition
   | MapPortalDefinition
   | MapLightSourceDefinition
+  | MapAltarDefinition
   | BaseMapMechanicDefinition;

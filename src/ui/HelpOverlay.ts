@@ -2,22 +2,22 @@ import Phaser from 'phaser';
 
 import { AssetKeyResolver } from '../assets/AssetKeyResolver';
 import { MapMechanicIconKind } from '../assets/AssetKeyMap';
-import { AudioManager } from '../audio/AudioManager';
 import { I18n } from '../i18n/I18n';
 import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIDivider } from './components/UIDivider';
+import { UIIconFrame } from './components/UIIconFrame';
+import { UITabBar } from './components/UITabBar';
+import { UIPager } from './components/UIPager';
+import { UITextBlock } from './components/UITextBlock';
 import { HelpContentBuilder } from './help/HelpContentBuilder';
 import { HelpIconRef, HelpLine } from './help/HelpSection';
 import { HelpTabDefinition } from './help/HelpTabDefinition';
-import { setRectangleHitArea, setTextHitArea, stopPointerEvent } from './input/UIInteraction';
-import { attachIconTooltip } from './tooltip/UITooltipManager';
-import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
-
-type TabButton = {
-  container: Phaser.GameObjects.Container;
-  background: Phaser.GameObjects.Rectangle;
-  tab: HelpTabDefinition;
-};
+import { createModalBlocker, setRectangleHitArea } from './input/UIInteraction';
+import { IconTooltipData } from './tooltip/IconTooltipTypes';
+import { UITheme } from './UITheme';
 
 type PageRange = {
   start: number;
@@ -25,22 +25,17 @@ type PageRange = {
 };
 
 export class HelpOverlay {
-  private static readonly TAB_SIZE = 42;
-  private static readonly CONTENT_ICON_SIZE = 30;
-  private static readonly CONTENT_ICON_GAP = 14;
+  private static readonly CONTENT_ICON_SIZE = 24;
+  private static readonly CONTENT_ICON_GAP = 10;
 
   private readonly container: Phaser.GameObjects.Container;
   private readonly screenManager: ScreenManager;
-  private readonly dimmer: Phaser.GameObjects.Rectangle;
-  private readonly panel: Phaser.GameObjects.Rectangle;
-  private readonly panelImage?: Phaser.GameObjects.Image;
-  private readonly title: Phaser.GameObjects.Text;
-  private readonly closeButton: Phaser.GameObjects.Text;
-  private readonly prevPageButton: Phaser.GameObjects.Text;
-  private readonly nextPageButton: Phaser.GameObjects.Text;
-  private readonly pageText: Phaser.GameObjects.Text;
+  private readonly blocker: Phaser.GameObjects.Rectangle;
+  private frame?: Phaser.GameObjects.Container;
+  private header?: Phaser.GameObjects.Container;
+  private readonly pager: UIPager;
   private readonly tabs: HelpTabDefinition[];
-  private readonly tabButtons: TabButton[] = [];
+  private tabBar?: UITabBar<string>;
   private readonly contentItems: Phaser.GameObjects.Container[] = [];
   private selectedTabIndex = 0;
   private pageByTab: Record<string, number> = {};
@@ -52,75 +47,27 @@ export class HelpOverlay {
     this.container = scene.add.container(0, 0);
     this.container.setDepth(1400);
 
-    this.dimmer = scene.add.rectangle(
-      this.screenManager.centerX,
-      this.screenManager.centerY,
-      scene.scale.width,
-      scene.scale.height,
-      0x000000,
-      0.48,
-    );
-    this.dimmer.setInteractive();
-    this.dimmer.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => stopPointerEvent(event));
+    this.blocker = createModalBlocker(scene, 1399);
+    this.blocker.setFillStyle(0x000000, 0.48);
 
-    this.panel = scene.add.rectangle(
-      this.screenManager.centerX,
-      this.screenManager.centerY,
-      720,
-      500,
-      UITheme.panelBgColor,
-      0.96,
-    );
-    this.panel.setStrokeStyle(2, UITheme.panelBorderColor, 0.9);
-    this.panel.setAlpha(scene.textures.exists('art_ui_help_panel_bg') ? 0.25 : 0.96);
-    this.panelImage = scene.textures.exists('art_ui_help_panel_bg')
-      ? scene.add.image(this.screenManager.centerX, this.screenManager.centerY, 'art_ui_help_panel_bg')
-      : undefined;
-    this.panelImage?.setAlpha(UITheme.helpPanelAlpha);
+    this.pager = new UIPager(scene, {
+      x: 0,
+      y: 0,
+      width: 520,
+      closeLabel: I18n.t('common.close'),
+      onPageChanged: (page) => {
+        const tab = this.tabs[this.selectedTabIndex];
+        this.pageByTab[tab.id] = page;
+        this.applyLayout();
+      },
+      onClose: () => {
+        this.destroy();
+        onClose?.();
+      },
+    });
 
-    this.title = scene.add.text(0, 0, '', {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
-    });
-    this.title.setOrigin(0.5);
+    this.container.add(this.pager.container);
 
-    this.closeButton = this.createTextButton(scene, I18n.t('common.close'), () => {
-      this.destroy();
-      onClose?.();
-    });
-    this.prevPageButton = this.createTextButton(scene, I18n.t('settings.previousPage'), () => {
-      this.changePage(scene, -1);
-    });
-    this.nextPageButton = this.createTextButton(scene, I18n.t('settings.nextPage'), () => {
-      this.changePage(scene, 1);
-    });
-    this.pageText = scene.add.text(0, 0, '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.smallFontSize,
-      align: 'center',
-    });
-    this.pageText.setOrigin(0.5);
-
-    this.container.add([
-      this.dimmer,
-      this.panel,
-      ...(this.panelImage ? [this.panelImage] : []),
-      this.title,
-      this.closeButton,
-      this.prevPageButton,
-      this.nextPageButton,
-      this.pageText,
-    ]);
-
-    this.createTabs(scene);
     this.renderContent(scene);
     this.applyLayout();
     this.unsubscribeResize = this.screenManager.onResize(() => {
@@ -132,111 +79,10 @@ export class HelpOverlay {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
     this.screenManager.dispose();
+    this.blocker.destroy();
+    this.tabBar?.destroy();
+    this.tabBar = undefined;
     this.container.destroy(true);
-  }
-
-  private createTextButton(
-    scene: Phaser.Scene,
-    label: string,
-    onClick: () => void,
-  ): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(scene.scale.width, scene.scale.height);
-    const button = scene.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
-      },
-    });
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => {
-      if (button.alpha >= 1) {
-        button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor));
-      }
-    });
-    button.on('pointerout', () => {
-      button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-    });
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      if (button.alpha < 1) {
-        return;
-      }
-
-      AudioManager.playUi(scene, 'ui_click');
-      onClick();
-    });
-
-    return button;
-  }
-
-  private createTabs(scene: Phaser.Scene): void {
-    for (const tabDefinition of this.tabs) {
-      const tab = scene.add.container(0, 0);
-      const background = scene.add.rectangle(
-        0,
-        0,
-        HelpOverlay.TAB_SIZE,
-        HelpOverlay.TAB_SIZE,
-        UITheme.buttonBgColor,
-        0.95,
-      );
-      background.setStrokeStyle(1, UITheme.panelBorderColor, 0.75);
-      background.setInteractive({ useHandCursor: true });
-      tab.add(background);
-
-      if (tabDefinition.iconKey && scene.textures.exists(tabDefinition.iconKey)) {
-        const icon = scene.add.image(0, -3, tabDefinition.iconKey);
-        icon.setDisplaySize(28, 28);
-        tab.add(icon);
-      } else {
-        const fallback = scene.add.text(0, -5, tabDefinition.fallback, {
-          color: UITheme.textColor,
-          fontFamily: UITheme.fontFamily,
-          fontSize: '12px',
-          fontStyle: 'bold',
-        });
-        fallback.setOrigin(0.5);
-        tab.add(fallback);
-      }
-
-      const shortLabel = scene.add.text(0, 13, tabDefinition.fallback, {
-        color: UITheme.mutedTextColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '9px',
-      });
-      shortLabel.setOrigin(0.5);
-      tab.add(shortLabel);
-
-      background.on('pointerdown', (
-        _pointer: Phaser.Input.Pointer,
-        _localX: number,
-        _localY: number,
-        event: Phaser.Types.Input.EventData,
-      ) => {
-        stopPointerEvent(event);
-        AudioManager.playUi(scene, 'ui_click');
-        this.selectedTabIndex = this.tabs.indexOf(tabDefinition);
-        this.pageByTab[tabDefinition.id] = 0;
-        this.renderContent(scene);
-        this.applyLayout();
-      });
-
-      this.tabButtons.push({ container: tab, background, tab: tabDefinition });
-      this.container.add(tab);
-    }
   }
 
   private renderContent(scene: Phaser.Scene): void {
@@ -246,7 +92,6 @@ export class HelpOverlay {
 
     this.contentItems.length = 0;
     const tab = this.tabs[this.selectedTabIndex];
-    this.title.setText(tab.title);
 
     for (const section of tab.sections) {
       this.addContentItem(scene, { type: 'subtitle', text: section.title });
@@ -264,8 +109,7 @@ export class HelpOverlay {
     row.setData('height', height);
 
     if (line.type === 'divider') {
-      const divider = scene.add.rectangle(0, 0, 1, 1, UITheme.panelBorderColor, 0.45);
-      divider.setOrigin(0, 0.5);
+      const divider = UIDivider.create(scene, 0, 0);
       row.add(divider);
       this.contentItems.push(row);
       this.container.add(row);
@@ -273,12 +117,14 @@ export class HelpOverlay {
     }
 
     if (line.type === 'subtitle') {
-      const label = scene.add.text(0, 0, line.text ?? '', {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
+      const label = new UITextBlock(scene, {
+        x: 0,
+        y: 0,
+        text: line.text ?? '',
         fontSize: UITheme.bodyFontSize,
         fontStyle: 'bold',
-      });
+        align: 'left',
+      }).text;
       row.add(label);
       this.contentItems.push(row);
       this.container.add(row);
@@ -286,19 +132,24 @@ export class HelpOverlay {
     }
 
     if (line.type === 'statRow') {
-      const label = scene.add.text(0, 0, line.label ?? '', {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
+      const label = new UITextBlock(scene, {
+        x: 0,
+        y: 0,
+        text: line.label ?? '',
         fontSize: UITheme.smallFontSize,
         fontStyle: 'bold',
-      });
+        align: 'left',
+      }).text;
       label.setData('helpRole', 'label');
-      const value = scene.add.text(150, 0, line.value ?? '', {
-        color: UITheme.mutedTextColor,
-        fontFamily: UITheme.fontFamily,
+      const value = new UITextBlock(scene, {
+        x: 150,
+        y: 0,
+        text: line.value ?? '',
+        tone: 'muted',
         fontSize: UITheme.smallFontSize,
-        wordWrap: { width: 360 },
-      });
+        align: 'left',
+        width: 360,
+      }).text;
       value.setData('helpRole', 'value');
       row.add([label, value]);
       this.contentItems.push(row);
@@ -307,12 +158,15 @@ export class HelpOverlay {
     }
 
     if (line.type === 'paragraph' || line.type === 'bullet') {
-      const text = scene.add.text(0, 0, line.type === 'bullet' ? `- ${line.text ?? ''}` : line.text ?? '', {
-        color: line.type === 'bullet' ? UITheme.textColor : UITheme.mutedTextColor,
-        fontFamily: UITheme.fontFamily,
+      const text = new UITextBlock(scene, {
+        x: 0,
+        y: 0,
+        text: line.type === 'bullet' ? `- ${line.text ?? ''}` : line.text ?? '',
+        tone: line.type === 'bullet' ? 'primary' : 'muted',
         fontSize: UITheme.smallFontSize,
-        wordWrap: { width: 520 },
-      });
+        align: 'left',
+        width: 520,
+      }).text;
       text.setMaxLines(line.type === 'bullet' ? 2 : 3);
       row.add(text);
       this.contentItems.push(row);
@@ -321,12 +175,14 @@ export class HelpOverlay {
     }
 
     if (line.type === 'iconChain') {
-      const label = scene.add.text(0, 0, line.text ?? '', {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
+      const label = new UITextBlock(scene, {
+        x: 0,
+        y: 0,
+        text: line.text ?? '',
         fontSize: UITheme.smallFontSize,
         fontStyle: 'bold',
-      });
+        align: 'left',
+      }).text;
       label.setData('helpRole', 'chainLabel');
       row.add(label);
 
@@ -337,13 +193,14 @@ export class HelpOverlay {
         row.add(iconSlot);
 
         if (index < icons.length - 1) {
-          const arrow = scene.add.text(0, 0, '→', {
-            color: UITheme.textColor,
-            fontFamily: UITheme.fontFamily,
+          const arrow = new UITextBlock(scene, {
+            x: 0,
+            y: 0,
+            text: '->',
             fontSize: UITheme.smallFontSize,
             fontStyle: 'bold',
-          });
-          arrow.setOrigin(0.5);
+            align: 'center',
+          }).text;
           arrow.setData('helpRole', 'chainArrow');
           arrow.setData('chainIndex', index);
           row.add(arrow);
@@ -355,25 +212,23 @@ export class HelpOverlay {
       return;
     }
 
-    const bg = scene.add.rectangle(
+    const frame = this.createHelpIconFrame(
+      scene,
+      line,
       HelpOverlay.CONTENT_ICON_SIZE / 2,
       HelpOverlay.CONTENT_ICON_SIZE / 2,
-      HelpOverlay.CONTENT_ICON_SIZE,
-      HelpOverlay.CONTENT_ICON_SIZE,
-      UITheme.iconBgColor,
-      0.78,
     );
-    bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
-    row.add(bg);
+    row.add(frame);
 
-    this.addIconContent(scene, row, line, HelpOverlay.CONTENT_ICON_SIZE / 2, HelpOverlay.CONTENT_ICON_SIZE / 2);
-
-    const text = scene.add.text(HelpOverlay.CONTENT_ICON_SIZE + HelpOverlay.CONTENT_ICON_GAP, 0, line.text ?? '', {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
+    const text = new UITextBlock(scene, {
+      x: HelpOverlay.CONTENT_ICON_SIZE + HelpOverlay.CONTENT_ICON_GAP,
+      y: 0,
+      text: line.text ?? '',
+      tone: 'muted',
       fontSize: UITheme.smallFontSize,
-      wordWrap: { width: 520 },
-    });
+      align: 'left',
+      width: 520,
+    }).text;
     text.setMaxLines(3);
     text.setData('helpRole', 'body');
     row.add(text);
@@ -386,36 +241,52 @@ export class HelpOverlay {
     const center = layout.panelCenter;
     const top = center.y - layout.panelHeight / 2;
     const left = center.x - layout.panelWidth / 2;
-    const tabGap = 8;
-    const verticalTabs = this.usesVerticalTabs(layout.panelHeight);
-    const tabRows = verticalTabs
-      ? this.tabButtons.length
-      : this.getTabRows(layout.panelWidth, tabGap);
-    const tabAreaTop = top + (verticalTabs ? 90 : 78);
-    const tabAreaHeight = tabRows * HelpOverlay.TAB_SIZE + Math.max(0, tabRows - 1) * tabGap;
-    const contentLeft = verticalTabs
-      ? left + 96
-      : left + 34;
-    const contentTop = verticalTabs
-      ? top + 92
-      : tabAreaTop + tabAreaHeight + 18;
-    const bodyWidth = verticalTabs
-      ? layout.panelWidth - 132
-      : layout.panelWidth - 68;
-    const closeY = center.y + layout.panelHeight / 2 - 44;
-    const pageControlY = closeY - 44;
-    const contentBottom = pageControlY - 22;
-    const availableHeight = Math.max(80, contentBottom - contentTop);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny || this.screenManager.isPortrait();
+    const tabGap = tiny ? 2 : compact ? 3 : 5;
+    const tabWidth = Math.max(
+      tiny ? 52 : compact ? 60 : 78,
+      Math.min(tiny ? 76 : compact ? 86 : 102, Math.floor((layout.panelWidth - 44) / (compact ? 3 : 5))),
+    );
+    const tabHeight = tiny ? 22 : compact ? 24 : 28;
+    const tabAreaTop = top + (tiny ? 42 : compact ? 48 : 58);
+    const closeY = center.y + layout.panelHeight / 2 - (tiny ? 22 : compact ? 28 : 34);
+    const pageControlY = closeY - (tiny ? 26 : compact ? 30 : 36);
 
-    this.dimmer.setPosition(center.x, center.y);
-    setRectangleHitArea(this.dimmer, this.screenManager.width, this.screenManager.height);
-    this.panel.setPosition(center.x, center.y);
-    this.panel.setSize(layout.panelWidth, layout.panelHeight);
-    this.panelImage?.setPosition(center.x, center.y);
-    this.coverImage(this.panelImage, layout.panelWidth, layout.panelHeight);
-    this.title.setPosition(center.x, top + 42);
-    this.title.setFontSize(LayoutConfig.getResponsiveFontSizes(this.screenManager).header);
-    this.layoutTabs(left, top, layout.panelWidth, layout.panelHeight, tabGap);
+    this.blocker.setPosition(0, 0);
+    setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
+    this.frame?.destroy();
+    this.header?.destroy();
+    this.frame = PanelFrame.create(this.container.scene, {
+      x: center.x,
+      y: center.y,
+      width: layout.panelWidth,
+      height: layout.panelHeight,
+      variant: 'modal',
+    });
+    this.container.addAt(this.frame, 1);
+    this.header = PanelHeader.create(this.container.scene, {
+      x: center.x,
+      y: top + (tiny ? 20 : compact ? 24 : 30),
+      width: Math.max(200, layout.panelWidth - 56),
+      title: this.tabs[this.selectedTabIndex]?.title ?? '',
+      titleFontSize: tiny ? '16px' : compact ? '18px' : '22px',
+    });
+    this.container.add(this.header);
+    const tabAreaHeight = this.renderTabBar(
+      center.x,
+      tabAreaTop,
+      layout.panelWidth - 44,
+      tabWidth,
+      tabHeight,
+      tabGap,
+    );
+    const contentLeft = left + (tiny ? 20 : compact ? 24 : 28);
+    const contentTop = tabAreaTop + tabAreaHeight + (tiny ? 5 : compact ? 6 : 10);
+    const bodyWidth = layout.bodyWidth;
+    const contentBottom = pageControlY - (tiny ? 8 : compact ? 10 : 14);
+    const availableHeight = Math.max(80, contentBottom - contentTop);
     this.layoutContent(contentLeft, contentTop, bodyWidth, availableHeight, layout.fontSize);
     this.layoutPageControls(center.x, pageControlY, closeY);
   }
@@ -437,6 +308,7 @@ export class HelpOverlay {
     this.pageByTab[tab.id] = pageIndex;
     const page = pages[pageIndex] ?? { start: 0, end: this.contentItems.length };
     let y = contentTop;
+    const rowGap = this.getRowGap();
 
     this.contentItems.forEach((item, index) => {
       const visible = index >= page.start && index < page.end;
@@ -448,13 +320,11 @@ export class HelpOverlay {
 
       const type = item.getData('lineType') as HelpLine['type'];
       item.setPosition(contentLeft, y);
-      y += (item.getData('height') as number) + 7;
+      y += (item.getData('height') as number) + rowGap;
     });
 
     const pageCount = Math.max(1, pages.length);
-    this.pageText.setText(`${I18n.t('settings.page')} ${pageIndex + 1}/${pageCount}`);
-    this.setPagingButtonEnabled(this.prevPageButton, pageIndex > 0);
-    this.setPagingButtonEnabled(this.nextPageButton, pageIndex < pageCount - 1);
+    this.pager.setPage(pageIndex, pageCount);
   }
 
   private updateContentItemMetrics(
@@ -532,9 +402,10 @@ export class HelpOverlay {
     const pages: PageRange[] = [];
     let start = 0;
     let usedHeight = 0;
+    const rowGap = this.getRowGap();
 
     this.contentItems.forEach((item, index) => {
-      const height = (item.getData('height') as number) + 7;
+      const height = (item.getData('height') as number) + rowGap;
       if (index > start && usedHeight + height > availableHeight) {
         pages.push({ start, end: index });
         start = index;
@@ -549,145 +420,134 @@ export class HelpOverlay {
   }
 
   private layoutPageControls(centerX: number, pageControlY: number, closeY: number): void {
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
-    const pageButtonWidth = Math.max(72, Math.floor(metrics.width * 0.58));
-    this.prevPageButton.setPosition(centerX - pageButtonWidth - 54, pageControlY);
-    this.nextPageButton.setPosition(centerX + pageButtonWidth + 54, pageControlY);
-    this.pageText.setPosition(centerX, pageControlY);
-
-    for (const button of [this.prevPageButton, this.nextPageButton]) {
-      button.setFontSize(Math.max(11, Number.parseInt(`${metrics.fontSize}`, 10) - 1));
-      setTextHitArea(button, pageButtonWidth, Math.max(30, metrics.height - 8));
-      button.setPadding(0, Math.max(0, Math.floor((Math.max(30, metrics.height - 8) - 22) / 2)), 0, 0);
-    }
-
-    this.closeButton.setPosition(centerX, closeY);
-    this.closeButton.setFontSize(metrics.fontSize);
-    setTextHitArea(this.closeButton, metrics.width, metrics.height);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = tiny || this.screenManager.isPortrait() || this.screenManager.width <= 700;
+    this.pager.setPosition(centerX, pageControlY);
+    this.pager.setSize(Math.min(this.screenManager.width - (tiny ? 48 : 80), tiny ? 280 : compact ? 330 : 520), compact);
+    this.pager.closeButton?.setPosition(0, closeY - pageControlY);
   }
 
-  private setPagingButtonEnabled(button: Phaser.GameObjects.Text, enabled: boolean): void {
-    button.setAlpha(enabled ? 1 : 0.35);
-    button.setBackgroundColor(toCssColor(UITheme.buttonBgColor));
-  }
-
-  private changePage(scene: Phaser.Scene, delta: number): void {
-    const tab = this.tabs[this.selectedTabIndex];
-    this.pageByTab[tab.id] = Math.max(0, (this.pageByTab[tab.id] ?? 0) + delta);
-    this.applyLayout();
-  }
-
-  private layoutTabs(
-    left: number,
-    top: number,
-    panelWidth: number,
-    panelHeight: number,
+  private renderTabBar(
+    x: number,
+    y: number,
+    width: number,
+    tabWidth: number,
+    tabHeight: number,
     gap: number,
-  ): void {
-    const verticalTabs = this.usesVerticalTabs(panelHeight);
+  ): number {
+    this.tabBar?.destroy();
+    const selectedTab = this.tabs[this.selectedTabIndex];
+    this.tabBar = new UITabBar(this.container.scene, {
+      x,
+      y,
+      width,
+      items: this.tabs.map((tab) => ({
+        id: tab.id,
+        label: tab.title,
+      })),
+      selectedId: selectedTab.id,
+      tabWidth,
+      tabHeight,
+      gap,
+      onSelect: (id) => {
+        const nextIndex = this.tabs.findIndex((tab) => tab.id === id);
+        if (nextIndex < 0 || nextIndex === this.selectedTabIndex) {
+          return;
+        }
 
-    this.tabButtons.forEach((tab, index) => {
-      const selected = index === this.selectedTabIndex;
-      setRectangleHitArea(tab.background, HelpOverlay.TAB_SIZE, HelpOverlay.TAB_SIZE);
-      tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
-      tab.background.setStrokeStyle(2, selected ? UITheme.colors.accentBlue : UITheme.panelBorderColor, selected ? 1 : 0.75);
-
-      if (verticalTabs) {
-        tab.container.setPosition(left + 46, top + 90 + index * (HelpOverlay.TAB_SIZE + gap));
-        return;
-      }
-
-      const columns = Math.max(1, Math.floor((panelWidth - 56) / (HelpOverlay.TAB_SIZE + gap)));
-      const row = Math.floor(index / columns);
-      const column = index % columns;
-      tab.container.setPosition(
-        left + 32 + column * (HelpOverlay.TAB_SIZE + gap) + HelpOverlay.TAB_SIZE / 2,
-        top + 82 + row * (HelpOverlay.TAB_SIZE + gap),
-      );
+        this.selectedTabIndex = nextIndex;
+        this.pageByTab[id] = 0;
+        this.renderContent(this.container.scene);
+        this.applyLayout();
+      },
     });
-  }
-
-  private usesVerticalTabs(panelHeight: number): boolean {
-    return this.screenManager.isLandscape()
-      && panelHeight >= 560
-      && this.tabButtons.length * (HelpOverlay.TAB_SIZE + 8) <= panelHeight - 110;
-  }
-
-  private getTabRows(panelWidth: number, gap: number): number {
-    const columns = Math.max(1, Math.floor((panelWidth - 56) / (HelpOverlay.TAB_SIZE + gap)));
-
-    return Math.ceil(this.tabButtons.length / columns);
+    this.container.add(this.tabBar.container);
+    return this.tabBar.height;
   }
 
   private getLineHeight(type: HelpLine['type']): number {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = tiny || density === 'compact' || this.screenManager.isPortrait();
+
     switch (type) {
       case 'subtitle':
-        return 28;
+        return tiny ? 18 : compact ? 21 : 25;
       case 'paragraph':
-        return 48;
+        return tiny ? 32 : compact ? 36 : 42;
       case 'bullet':
       case 'iconRow':
       case 'iconChain':
-        return 40;
+        return tiny ? 26 : compact ? 30 : 36;
       case 'statRow':
-        return 36;
+        return tiny ? 24 : compact ? 28 : 32;
       case 'divider':
-        return 10;
+        return tiny ? 4 : compact ? 6 : 8;
       case 'title':
       default:
-        return 32;
+        return tiny ? 22 : compact ? 25 : 30;
     }
+  }
+
+  private getRowGap(): number {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+
+    if (density === 'tiny') {
+      return 3;
+    }
+
+    if (density === 'compact' || this.screenManager.isPortrait()) {
+      return 4;
+    }
+
+    return 6;
   }
 
   private createHelpIconSlot(scene: Phaser.Scene, icon: HelpIconRef): Phaser.GameObjects.Container {
     const slot = scene.add.container(0, 0);
-    const bg = scene.add.rectangle(
+    const frame = this.createHelpIconFrame(
+      scene,
+      icon,
       HelpOverlay.CONTENT_ICON_SIZE / 2,
       HelpOverlay.CONTENT_ICON_SIZE / 2,
-      HelpOverlay.CONTENT_ICON_SIZE,
-      HelpOverlay.CONTENT_ICON_SIZE,
-      UITheme.iconBgColor,
-      0.78,
     );
-    bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.4);
-    if (icon.iconKind && icon.iconId) {
-      bg.setInteractive({ useHandCursor: true });
-      attachIconTooltip(scene, bg, {
-        kind: icon.iconKind === 'mapMechanic' ? 'mapMechanic' : icon.iconKind,
-        id: icon.iconId,
-        fallback: icon.fallback,
-      });
-    }
-    slot.add(bg);
-    this.addIconContent(scene, slot, icon, HelpOverlay.CONTENT_ICON_SIZE / 2, HelpOverlay.CONTENT_ICON_SIZE / 2);
+    slot.add(frame);
 
     return slot;
   }
 
-  private addIconContent(
+  private createHelpIconFrame(
     scene: Phaser.Scene,
-    container: Phaser.GameObjects.Container,
     icon: HelpIconRef,
     x: number,
     y: number,
-  ): void {
+  ): Phaser.GameObjects.Container {
     const iconKey = this.resolveHelpIconKey(scene, icon);
-    if (iconKey && scene.textures.exists(iconKey)) {
-      const image = scene.add.image(x, y, iconKey);
-      image.setDisplaySize(HelpOverlay.CONTENT_ICON_SIZE - 6, HelpOverlay.CONTENT_ICON_SIZE - 6);
-      container.add(image);
-      return;
+
+    return UIIconFrame.create(scene, {
+      x,
+      y,
+      size: HelpOverlay.CONTENT_ICON_SIZE,
+      textureKey: iconKey,
+      fallback: icon.fallback ?? '?',
+      tooltip: this.getHelpIconTooltip(icon),
+      tooltipLockOnClick: false,
+      fillAlpha: 0.78,
+      borderAlpha: 0.48,
+    });
+  }
+
+  private getHelpIconTooltip(icon: HelpIconRef): IconTooltipData | undefined {
+    if (!icon.iconKind || !icon.iconId) {
+      return undefined;
     }
 
-    const fallback = scene.add.text(x, y, icon.fallback ?? '?', {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: '10px',
-      fontStyle: 'bold',
-    });
-    fallback.setOrigin(0.5);
-    fallback.setData('helpRole', 'iconFallback');
-    container.add(fallback);
+    return {
+      kind: icon.iconKind === 'mapMechanic' ? 'mapMechanic' : icon.iconKind,
+      id: icon.iconId,
+      fallback: icon.fallback,
+    };
   }
 
   private resolveHelpIconKey(scene: Phaser.Scene, icon: HelpIconRef): string | undefined {
@@ -765,29 +625,20 @@ export class HelpOverlay {
       river: 'art_map_mechanics_river_minimap',
       swamp: 'art_map_mechanics_swamp_minimap',
       mud: 'art_map_mechanics_mud_minimap',
+      ink: 'art_map_mechanics_ink_minimap',
       portalBlue: 'art_map_mechanics_portal_minimap_blue',
       portalPurple: 'art_map_mechanics_portal_minimap_purple',
       portalGreen: 'art_map_mechanics_portal_minimap_green',
+      portalGold: 'art_map_mechanics_portal_minimap_gold',
       light: 'art_map_mechanics_light_minimap',
       obstacle: 'art_map_mechanics_obstacle_minimap',
       hazard: 'art_map_mechanics_hazard_minimap',
       altar: 'art_map_mechanics_altar_minimap',
+      altarLibrary: 'art_map_mechanics_altar_library_minimap',
       spawner: 'art_map_mechanics_spawner_minimap',
     };
 
     return keys[kind];
   }
 
-  private coverImage(
-    image: Phaser.GameObjects.Image | undefined,
-    width: number,
-    height: number,
-  ): void {
-    if (!image) {
-      return;
-    }
-
-    const frame = image.texture.get();
-    image.setScale(Math.max(width / frame.width, height / frame.height));
-  }
 }

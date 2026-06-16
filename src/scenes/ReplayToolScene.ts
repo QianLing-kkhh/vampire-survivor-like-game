@@ -6,19 +6,19 @@ import { ScreenManager } from '../responsive/ScreenManager';
 import { ReplayData } from '../replay/ReplayData';
 import { ReplaySerializer } from '../replay/ReplaySerializer';
 import { ReplayStorage } from '../replay/ReplayStorage';
+import { UIActionBar } from '../ui/components/UIActionBar';
+import { SceneHeader } from '../ui/components/SceneHeader';
 import { ReplayDetailPanel } from '../ui/ReplayDetailPanel';
 import { ReplayImportPanel } from '../ui/ReplayImportPanel';
 import { ReplayListPanel } from '../ui/ReplayListPanel';
-import { UITheme, getButtonMetrics, toCssColor } from '../ui/UITheme';
+
+type ReplayActionId = 'import' | 'export' | 'delete' | 'back';
 
 export class ReplayToolScene extends Phaser.Scene {
   private readonly replayStorage = new ReplayStorage();
   private screenManager?: ScreenManager;
-  private titleText?: Phaser.GameObjects.Text;
-  private importButton?: Phaser.GameObjects.Text;
-  private exportButton?: Phaser.GameObjects.Text;
-  private deleteButton?: Phaser.GameObjects.Text;
-  private backButton?: Phaser.GameObjects.Text;
+  private titleHeader?: SceneHeader;
+  private actionBar?: UIActionBar<ReplayActionId>;
   private listPanel?: ReplayListPanel;
   private detailPanel?: ReplayDetailPanel;
   private importPanel?: ReplayImportPanel;
@@ -36,20 +36,16 @@ export class ReplayToolScene extends Phaser.Scene {
     this.replays = this.replayStorage.list();
     this.selectedRunId = this.replays[0]?.runId;
 
-    this.titleText = this.add.text(this.screenManager.centerX, 38, I18n.t('replay.title'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.titleFontSize,
-      fontStyle: 'bold',
+    this.titleHeader = new SceneHeader(this, {
+      title: I18n.t('replay.title'),
     });
-    this.titleText.setOrigin(0.5);
 
-    this.importButton = this.createButton(I18n.t('replay.import'), () => this.importReplay());
-    this.exportButton = this.createButton(I18n.t('replay.export'), () => {
-      void this.exportSelectedReplay();
-    });
-    this.deleteButton = this.createButton(I18n.t('replay.delete'), () => this.deleteSelectedReplay());
-    this.backButton = this.createButton(I18n.t('replay.back'), () => this.scene.start('TitleScene'));
+    this.actionBar = new UIActionBar<ReplayActionId>(this, [
+      { id: 'import', label: I18n.t('replay.import'), onClick: () => this.importReplay() },
+      { id: 'export', label: I18n.t('replay.export'), onClick: () => { void this.exportSelectedReplay(); } },
+      { id: 'delete', label: I18n.t('replay.delete'), onClick: () => this.deleteSelectedReplay() },
+      { id: 'back', label: I18n.t('replay.back'), onClick: () => this.scene.start('TitleScene') },
+    ]);
 
     this.createOrUpdatePanels();
     this.applyLayout();
@@ -62,66 +58,51 @@ export class ReplayToolScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.DESTROY, this.cleanup, this);
   }
 
-  private createButton(
-    label: string,
-    onClick: () => void,
-  ): Phaser.GameObjects.Text {
-    const metrics = getButtonMetrics(this.scale.width, this.scale.height);
-    const button = this.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: metrics.fontSize,
-      align: 'center',
-      fixedWidth: metrics.width,
-      fixedHeight: metrics.height,
-      padding: {
-        x: 0,
-        y: Math.max(0, Math.floor((metrics.height - 22) / 2)),
-      },
-    });
-
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor)));
-    button.on('pointerout', () => button.setBackgroundColor(toCssColor(UITheme.buttonBgColor)));
-    button.on('pointerdown', onClick);
-
-    return button;
-  }
-
   private applyLayout(): void {
     if (!this.screenManager) {
       return;
     }
 
     const fonts = LayoutConfig.getResponsiveFontSizes(this.screenManager);
-    this.titleText?.setPosition(this.screenManager.centerX, 38);
-    this.titleText?.setFontSize(fonts.title);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const safeMargin = tiny ? 10 : compact ? 12 : 16;
+    this.titleHeader?.setLayout(
+      this.screenManager.centerX,
+      tiny ? 24 : compact ? 30 : 38,
+      Math.min(this.screenManager.width - 24, 760),
+      { titleFontSize: fonts.title },
+    );
 
-    const buttons = [
-      this.importButton,
-      this.exportButton,
-      this.deleteButton,
-      this.backButton,
-    ].filter((button): button is Phaser.GameObjects.Text => button !== undefined);
-    const buttonLayout = LayoutConfig.getButtonListLayout({
-      screen: this.screenManager,
-      count: buttons.length,
-      startY: this.screenManager.isPortrait() ? 92 : 86,
-      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
-      gap: this.screenManager.isPortrait() ? 42 : 44,
-    });
-
-    buttons.forEach((button, index) => {
-      const position = buttonLayout.positions[index];
-      button.setFontSize(buttonLayout.fontSize);
-      button.setFixedSize(buttonLayout.width, buttonLayout.height);
-      button.setPosition(position.x, position.y);
-    });
-
+    this.layoutActionButtons(compact, tiny, safeMargin);
     this.createOrUpdatePanels();
     this.render();
+  }
+
+  private layoutActionButtons(compact: boolean, tiny: boolean, safeMargin: number): void {
+    if (!this.screenManager || !this.actionBar) {
+      return;
+    }
+
+    this.actionBar.layout(
+      this.screenManager,
+      {
+        x: safeMargin,
+        y: this.getActionAreaTop(tiny, compact, safeMargin),
+        width: this.screenManager.width - safeMargin * 2,
+        height: this.getActionAreaHeight(tiny, compact),
+      },
+      {
+        columns: this.screenManager.isPortrait() ? 2 : 4,
+        compact,
+        minWidth: tiny ? 78 : 98,
+        maxWidth: tiny ? 120 : compact ? 150 : 176,
+        minHeight: tiny ? 24 : 28,
+        maxHeight: tiny ? 28 : compact ? 32 : 36,
+        fontSize: tiny ? '9px' : compact ? '10px' : '12px',
+      },
+    );
   }
 
   private createOrUpdatePanels(): void {
@@ -129,12 +110,15 @@ export class ReplayToolScene extends Phaser.Scene {
       return;
     }
 
-    const top = this.screenManager.isPortrait() ? 260 : 164;
-    const margin = 16;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const margin = tiny ? 10 : compact ? 12 : 16;
+    const top = tiny ? 58 : compact ? 68 : 82;
     const width = this.screenManager.width - margin * 2;
-    const bottom = this.screenManager.height - 18;
-    const importHeight = this.screenManager.isPortrait() ? 92 : 74;
-    const contentHeight = Math.max(220, bottom - top - importHeight - 12);
+    const bottom = this.getActionAreaTop(tiny, compact, margin) - (tiny ? 8 : 12);
+    const importHeight = this.screenManager.isPortrait() ? tiny ? 72 : compact ? 82 : 92 : compact ? 60 : 74;
+    const contentHeight = Math.max(tiny ? 150 : 190, bottom - top - importHeight - (tiny ? 8 : 12));
     const listWidth = this.screenManager.isPortrait()
       ? width
       : Math.min(410, width * 0.42);
@@ -170,6 +154,26 @@ export class ReplayToolScene extends Phaser.Scene {
     this.listPanel.updateLayout(margin, top, listWidth, listHeight);
     this.detailPanel?.updateLayout(detailX, detailY, detailWidth, detailHeight);
     this.importPanel?.updateLayout(margin, top + contentHeight + 12, width, importHeight);
+  }
+
+  private getActionAreaTop(tiny: boolean, compact: boolean, margin: number): number {
+    if (!this.screenManager) {
+      return 0;
+    }
+
+    return this.screenManager.height - margin - this.getActionAreaHeight(tiny, compact);
+  }
+
+  private getActionAreaHeight(tiny: boolean, compact: boolean): number {
+    if (!this.screenManager) {
+      return 0;
+    }
+
+    if (this.screenManager.isPortrait()) {
+      return tiny ? 64 : compact ? 72 : 84;
+    }
+
+    return tiny ? 30 : compact ? 36 : 42;
   }
 
   private render(): void {
@@ -262,6 +266,10 @@ export class ReplayToolScene extends Phaser.Scene {
   private cleanup(): void {
     this.unsubscribeResize?.();
     this.unsubscribeResize = undefined;
+    this.titleHeader?.destroy();
+    this.titleHeader = undefined;
+    this.actionBar?.destroy();
+    this.actionBar = undefined;
     this.listPanel?.destroy();
     this.listPanel = undefined;
     this.detailPanel?.destroy();

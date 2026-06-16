@@ -9,6 +9,7 @@ import { LeaderboardRecord } from '../leaderboard/LeaderboardRecord';
 import { MapManager } from '../map/MapManager';
 import { PassiveLevel } from '../passive/PassiveItem';
 import { RunMetadata } from '../run/RunMetadata';
+import { LocalStorageAdapter } from '../save/storage/LocalStorageAdapter';
 import { StageManager } from '../stage/StageManager';
 
 export interface EndlessLeaderboardEntry {
@@ -28,6 +29,7 @@ export interface EndlessLeaderboardEntry {
 
 export class EndlessLeaderboard {
   private static readonly LEGACY_STORAGE_KEY = 'vampire_survivor_like_endless_leaderboard_v1';
+  private static readonly legacyStorage = new LocalStorageAdapter();
   private static legacyMigrationAttempted = false;
 
   static add(entry: EndlessLeaderboardEntry, metadata?: RunMetadata): number | null {
@@ -76,12 +78,7 @@ export class EndlessLeaderboard {
 
   static clearLegacyStorage(): void {
     EndlessLeaderboard.legacyMigrationAttempted = true;
-
-    try {
-      globalThis.localStorage?.removeItem(EndlessLeaderboard.LEGACY_STORAGE_KEY);
-    } catch {
-      // SaveManager provides the active leaderboard storage fallback.
-    }
+    EndlessLeaderboard.legacyStorage.removeItem(EndlessLeaderboard.LEGACY_STORAGE_KEY);
   }
 
   private static toRecord(
@@ -159,7 +156,7 @@ export class EndlessLeaderboard {
     EndlessLeaderboard.legacyMigrationAttempted = true;
 
     try {
-      const rawEntries = globalThis.localStorage?.getItem(EndlessLeaderboard.LEGACY_STORAGE_KEY);
+      const rawEntries = EndlessLeaderboard.legacyStorage.getItem(EndlessLeaderboard.LEGACY_STORAGE_KEY);
 
       if (!rawEntries) {
         return;
@@ -184,7 +181,7 @@ export class EndlessLeaderboard {
           LeaderboardManager.addRecord(key, EndlessLeaderboard.toRecord(entry, key));
         });
 
-      globalThis.localStorage?.removeItem(EndlessLeaderboard.LEGACY_STORAGE_KEY);
+      EndlessLeaderboard.legacyStorage.removeItem(EndlessLeaderboard.LEGACY_STORAGE_KEY);
     } catch {
       // SaveManager provides the active leaderboard storage fallback.
     }

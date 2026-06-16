@@ -1,5 +1,6 @@
 import characters from '../data/characters.json';
 import enemies from '../data/enemies.json';
+import evolutions from '../data/evolutions.json';
 import maps from '../data/maps.json';
 import passives from '../data/passives.json';
 import relics from '../data/relics.json';
@@ -9,11 +10,13 @@ import waves from '../data/waves.json';
 import weapons from '../data/weapons.json';
 
 import { CharacterDefinition } from '../character/CharacterDefinition';
+import type { WeaponConfig } from '../core/domain/WeaponTypes';
+import { EvolutionRule } from '../evolution/EvolutionRule';
 import { MapDefinition } from '../map/MapDefinition';
 import { PassiveItem } from '../passive/PassiveItem';
 import { RelicDefinition } from '../relic/RelicDefinition';
 import { RelicRegistry } from '../relic/RelicRegistry';
-import { WeaponConfig } from '../weapon/Weapon';
+import { UpgradeOption } from '../progression/UpgradeOption';
 
 import { ContentPack } from './ContentPack';
 import { ContentRegistry } from './ContentRegistry';
@@ -59,12 +62,13 @@ export class ContentBootstrap {
       source: 'builtin',
       weapons: weapons as Record<string, WeaponConfig>,
       enemies,
-      passives: this.passivesToRecord(passives),
-      upgrades,
+      passives: this.passivesToRecord(passives as readonly PassiveItem[]),
+      upgrades: upgrades as UpgradeOption[],
       waves: this.toWaveSetRecord(waves),
       characters: this.charactersToRecord(characters as CharacterJson),
       stages,
       maps: maps as Record<string, MapDefinition>,
+      evolutions: evolutions as readonly EvolutionRule[],
     };
   }
 

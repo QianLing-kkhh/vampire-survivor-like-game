@@ -7,10 +7,13 @@ import { ScreenManager } from '../responsive/ScreenManager';
 import { PanelFrame } from './components/PanelFrame';
 import { PanelHeader } from './components/PanelHeader';
 import { UIBadge } from './components/UIBadge';
-import { UIButton } from './components/UIButton';
+import { UIActionBar, UIActionBarAction } from './components/UIActionBar';
 import { UICard } from './components/UICard';
 import { UIIconFrame } from './components/UIIconFrame';
+import { UIPager } from './components/UIPager';
 import { UIStatRow } from './components/UIStatRow';
+import { UITextBlock } from './components/UITextBlock';
+import { truncateTextToWidth } from './components/UITextUtils';
 import { createModalBlocker, setRectangleHitArea } from './input/UIInteraction';
 import { attachIconTooltip } from './tooltip/UITooltipManager';
 import { UITheme } from './UITheme';
@@ -19,11 +22,14 @@ export interface SelectionListItem {
   id: string;
   name: string;
   description?: string;
+  kind?: 'character' | 'stage' | 'generic';
   portraitKey?: string | null;
   startingWeaponId?: string;
   startingWeaponIconKey?: string;
   damageReactionSkill?: string;
   roleLabels?: string[];
+  badges?: string[];
+  detailRows?: Array<{ label: string; value: string }>;
 }
 
 export interface SelectionListPanelConfig {
@@ -41,6 +47,7 @@ export class SelectionListPanel {
   private readonly pageItems: Phaser.GameObjects.GameObject[] = [];
   private unsubscribeResize?: () => void;
   private selectedIndex: number;
+  private listPage = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -77,17 +84,29 @@ export class SelectionListPanel {
   private render(): void {
     this.container.removeAll(true);
     this.pageItems.length = 0;
+    this.syncPageToSelection();
     setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
 
     const safe = SafeArea.getInsets(this.screenManager);
     const portrait = this.screenManager.isPortrait();
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const availableWidth = this.screenManager.width - safe.left - safe.right;
+    const availableHeight = this.screenManager.height - safe.top - safe.bottom;
     const panelWidth = Math.min(
-      portrait ? this.screenManager.width - safe.left - safe.right - 8 : 940,
-      this.screenManager.width - safe.left - safe.right,
+      portrait
+        ? availableWidth * (tiny ? 0.84 : 0.82)
+        : availableWidth * (compact ? 0.64 : 0.56),
+      portrait ? (tiny ? 316 : 370) : compact ? 680 : 720,
+      availableWidth,
     );
     const panelHeight = Math.min(
-      portrait ? this.screenManager.height - safe.top - safe.bottom : 620,
-      this.screenManager.height - safe.top - safe.bottom,
+      portrait
+        ? availableHeight * (tiny ? 0.72 : 0.7)
+        : availableHeight * (compact ? 0.62 : 0.56),
+      portrait ? (tiny ? 540 : 600) : compact ? 420 : 450,
+      availableHeight,
     );
     const centerX = this.screenManager.centerX;
     const centerY = this.screenManager.centerY;
@@ -103,61 +122,80 @@ export class SelectionListPanel {
     });
     const header = PanelHeader.create(this.scene, {
       x: centerX,
-      y: top + 40,
+      y: top + (compact ? 30 : 34),
       width: panelWidth,
       title: this.config.title,
-      subtitle: this.getSelectedItem()?.description,
     });
     this.container.add([frame, header]);
 
-    const contentTop = top + (portrait ? 92 : 96);
+    const contentTop = top + (compact ? 60 : portrait ? 66 : 76);
     const buttonHeight = LayoutConfig.getButtonLayout(this.screenManager, 1).height;
-    const buttonY = top + panelHeight - buttonHeight / 2 - 24;
-    const contentBottom = buttonY - buttonHeight / 2 - 18;
+    const buttonY = top + panelHeight - buttonHeight / 2 - (compact ? 10 : 14);
+    const contentBottom = buttonY - buttonHeight / 2 - (compact ? 8 : 12);
 
     if (portrait) {
-      const listHeight = Math.max(150, Math.floor((contentBottom - contentTop) * 0.52));
-      this.renderList(left + 18, contentTop, panelWidth - 36, listHeight);
-      this.renderDetail(left + 18, contentTop + listHeight + 14, panelWidth - 36, contentBottom - contentTop - listHeight - 14);
+      const sideInset = compact ? 14 : 18;
+      const listHeight = Math.max(104, Math.floor((contentBottom - contentTop) * (compact ? 0.42 : 0.46)));
+      this.renderList(left + sideInset, contentTop, panelWidth - sideInset * 2, listHeight);
+      this.renderDetail(
+        left + sideInset,
+        contentTop + listHeight + (compact ? 8 : 12),
+        panelWidth - sideInset * 2,
+        contentBottom - contentTop - listHeight - (compact ? 8 : 12),
+      );
     } else {
-      const listWidth = Math.min(360, panelWidth * 0.38);
-      this.renderList(left + 24, contentTop, listWidth, contentBottom - contentTop);
-      this.renderDetail(left + listWidth + 40, contentTop, panelWidth - listWidth - 64, contentBottom - contentTop);
+      const sideInset = compact ? 18 : 24;
+      const columnGap = compact ? 22 : 32;
+      const listWidth = Math.min(compact ? 260 : 300, panelWidth * 0.38);
+      this.renderList(left + sideInset, contentTop, listWidth, contentBottom - contentTop);
+      this.renderDetail(left + listWidth + sideInset + columnGap, contentTop, panelWidth - listWidth - sideInset * 2 - columnGap, contentBottom - contentTop);
     }
 
     this.renderButtons(centerX, buttonY, panelWidth);
   }
 
   private renderList(x: number, y: number, width: number, height: number): void {
-    const visibleItems = this.getVisibleItems();
-    const rowGap = 10;
-    const rowHeight = Math.min(72, Math.max(48, (height - rowGap * (visibleItems.length - 1)) / Math.max(1, visibleItems.length)));
+    const pageInfo = this.getVisiblePageInfo(this.getListPageSize(height));
+    const visibleItems = pageInfo.items;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
+    const pagerHeight = pageInfo.totalPages > 1 ? compact ? 32 : 36 : 0;
+    const listHeight = Math.max(72, height - pagerHeight);
+    const rowGap = compact ? 6 : 8;
+    const rowHeight = Math.min(
+      this.screenManager.isPortrait() ? (compact ? 50 : 56) : (compact ? 52 : 60),
+      Math.max(
+        this.screenManager.isPortrait() ? 36 : 40,
+        (listHeight - rowGap * (visibleItems.length - 1)) / Math.max(1, visibleItems.length),
+      ),
+    );
+    const iconSize = Math.min(compact ? 32 : 38, rowHeight - 8);
+    const iconX = x + iconSize / 2 + (compact ? 8 : 10);
+    const textX = iconX + iconSize / 2 + (compact ? 10 : 12);
 
     visibleItems.forEach((item, index) => {
       const rowY = y + rowHeight / 2 + index * (rowHeight + rowGap);
-      const selected = index === this.selectedIndex;
+      const itemIndex = pageInfo.startIndex + index;
+      const selected = itemIndex === this.selectedIndex;
       const card = new UICard(this.scene, {
         x: x + width / 2,
         y: rowY,
         width,
         height: rowHeight,
         selected,
-        disabled: item.id === 'more',
         onClick: () => {
-          if (item.id !== 'more') {
-            this.selectedIndex = index;
-            this.render();
-          }
+          this.selectedIndex = itemIndex;
+          this.render();
         },
       });
       const icon = UIIconFrame.create(this.scene, {
-        x: x + 32,
+        x: iconX,
         y: rowY,
-        size: Math.min(48, rowHeight - 12),
+        size: iconSize,
         textureKey: item.portraitKey,
         fallback: item.id === 'random_unlocked' ? '?' : this.getInitials(item.name),
         tooltip: {
-          kind: 'character',
+          kind: item.kind === 'stage' ? 'generic' : 'character',
           id: item.id,
           title: item.name,
           description: item.description,
@@ -165,28 +203,63 @@ export class SelectionListPanel {
         tooltipEnabled: false,
       });
       attachIconTooltip(this.scene, card.container, {
-        kind: 'character',
+        kind: item.kind === 'stage' ? 'generic' : 'character',
         id: item.id,
         title: item.name,
         description: item.description,
       }, { lockOnClick: false });
-      const name = this.scene.add.text(x + 66, rowY - 13, item.name, {
-        color: selected ? UITheme.colors.accentGoldCss : UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).body,
+      const textWidth = Math.max(60, x + width - textX - 8);
+      const nameFontSize = compact
+        ? LayoutConfig.getResponsiveFontSizes(this.screenManager).small
+        : LayoutConfig.getResponsiveFontSizes(this.screenManager).body;
+      const descFontSize = LayoutConfig.getResponsiveFontSizes(this.screenManager).small;
+      const name = new UITextBlock(this.scene, {
+        x: textX,
+        y: rowY - (compact ? 12 : 13),
+        text: truncateTextToWidth(item.name, textWidth, nameFontSize),
+        tone: selected ? 'accent' : 'primary',
+        fontSize: nameFontSize,
         fontStyle: 'bold',
-        wordWrap: { width: width - 84 },
-      });
-      const desc = this.scene.add.text(x + 66, rowY + 8, item.description ?? item.id, {
-        color: UITheme.mutedTextColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).small,
-        wordWrap: { width: width - 84 },
-      });
+        align: 'left',
+        width: textWidth,
+      }).text;
+      const descSource = item.description ?? item.id;
+      const desc = new UITextBlock(this.scene, {
+        x: textX,
+        y: rowY + (compact ? 5 : 8),
+        text: truncateTextToWidth(descSource, textWidth, descFontSize),
+        tone: 'muted',
+        fontSize: descFontSize,
+        align: 'left',
+        width: textWidth,
+      }).text;
       desc.setMaxLines(1);
       this.container.add([card.container, icon, name, desc]);
       this.pageItems.push(card.container, icon, name, desc);
     });
+
+    if (pageInfo.totalPages > 1) {
+      const pager = new UIPager(this.scene, {
+        x: x + width / 2,
+        y: y + height - (compact ? 14 : 16),
+        width: Math.min(width, this.screenManager.isPortrait() ? 230 : 280),
+        currentPage: pageInfo.pageIndex,
+        totalPages: pageInfo.totalPages,
+        compact: true,
+        onPageChanged: (page) => {
+          this.listPage = page;
+          const pageSize = pageInfo.pageSize;
+          this.selectedIndex = Phaser.Math.Clamp(
+            page * pageSize,
+            0,
+            Math.max(0, this.config.items.length - 1),
+          );
+          this.render();
+        },
+      });
+      this.container.add(pager.container);
+      this.pageItems.push(pager.container);
+    }
   }
 
   private renderDetail(x: number, y: number, width: number, height: number): void {
@@ -203,9 +276,15 @@ export class SelectionListPanel {
       height,
       selected: true,
     });
-    const portraitSize = Math.min(this.screenManager.isPortrait() ? 86 : 140, height - 64, width * 0.32);
-    const portraitX = this.screenManager.isPortrait() ? x + portraitSize / 2 + 18 : x + portraitSize / 2 + 26;
-    const portraitY = y + portraitSize / 2 + 24;
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
+    const portraitSize = Math.min(
+      this.screenManager.isPortrait() ? compact ? 58 : 68 : compact ? 82 : 104,
+      height - (compact ? 48 : 58),
+      width * (this.screenManager.isPortrait() ? 0.24 : 0.28),
+    );
+    const portraitX = this.screenManager.isPortrait() ? x + portraitSize / 2 + 14 : x + portraitSize / 2 + (compact ? 18 : 22);
+    const portraitY = y + portraitSize / 2 + (compact ? 16 : 20);
     const portrait = UIIconFrame.create(this.scene, {
       x: portraitX,
       y: portraitY,
@@ -213,52 +292,84 @@ export class SelectionListPanel {
       textureKey: item.portraitKey,
       fallback: item.id === 'random_unlocked' ? '?' : this.getInitials(item.name),
       tooltip: {
-        kind: 'character',
+        kind: item.kind === 'stage' ? 'generic' : 'character',
         id: item.id,
         title: item.name,
         description: item.description,
       },
     });
-    const textX = portraitX + portraitSize / 2 + 22;
-    const title = this.scene.add.text(textX, y + 26, item.name, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).header,
+    const textX = portraitX + portraitSize / 2 + (compact ? 14 : 18);
+    const detailTextWidth = Math.max(80, x + width - textX - 16);
+    const titleFontSize = compact
+      ? LayoutConfig.getResponsiveFontSizes(this.screenManager).body
+      : LayoutConfig.getResponsiveFontSizes(this.screenManager).header;
+    const title = new UITextBlock(this.scene, {
+      x: textX,
+      y: y + (compact ? 18 : 22),
+      text: truncateTextToWidth(item.name, detailTextWidth, titleFontSize),
+      fontSize: titleFontSize,
       fontStyle: 'bold',
-      wordWrap: { width: Math.max(80, x + width - textX - 16) },
-    });
+      align: 'left',
+      width: detailTextWidth,
+    }).text;
     const random = item.id === 'random_unlocked';
-    const badges = this.getRoleBadges(item.id);
-    const badgeY = y + (this.screenManager.isPortrait() ? 76 : 82);
+    const badges = this.getDetailBadges(item);
+    const badgeY = y + (compact ? 52 : this.screenManager.isPortrait() ? 62 : 70);
+    const badgeScale = compact ? 0.68 : 0.78;
     badges.forEach((label, index) => {
-      const badge = UIBadge.create(this.scene, textX + 44 + index * 88, badgeY, label, random ? UITheme.colors.accentGold : UITheme.colors.accentBlue);
+      const badge = UIBadge.create(
+        this.scene,
+        textX + (compact ? 28 : 34) + index * (compact ? 54 : 66),
+        badgeY,
+        label,
+        random ? UITheme.colors.accentGold : UITheme.colors.accentBlue,
+      );
+      badge.setScale(badgeScale);
       this.container.add(badge);
       this.pageItems.push(badge);
     });
-    const description = this.scene.add.text(textX, badgeY + 22, random ? I18n.t('ui.randomUnlockedEachRun') : item.description ?? item.id, {
-      color: UITheme.mutedTextColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).body,
-      lineSpacing: 4,
-      wordWrap: { width: Math.max(100, x + width - textX - 18) },
-    });
-    description.setMaxLines(this.screenManager.isPortrait() ? 2 : 3);
+    const descriptionY = badges.length > 0
+      ? badgeY + (compact ? 14 : 18)
+      : y + (compact ? 48 : 56);
+    const descriptionText = random ? I18n.t('ui.randomUnlockedEachRun') : item.description ?? item.id;
+    const descriptionWidth = Math.max(100, x + width - textX - 18);
+    const descriptionFontSize = compact
+      ? LayoutConfig.getResponsiveFontSizes(this.screenManager).small
+      : LayoutConfig.getResponsiveFontSizes(this.screenManager).body;
+    const description = new UITextBlock(this.scene, {
+      x: textX,
+      y: descriptionY,
+      text: descriptionText,
+      tone: 'muted',
+      fontSize: descriptionFontSize,
+      lineSpacing: compact ? 2 : 4,
+      align: 'left',
+      width: descriptionWidth,
+    }).text;
+    description.setMaxLines(compact ? 2 : this.screenManager.isPortrait() ? 2 : 3);
 
-    const statsTop = y + height - (this.screenManager.isPortrait() ? 74 : 104);
+    const statsTop = y + height - (this.screenManager.isPortrait() ? (compact ? 52 : 62) : (compact ? 70 : 86));
     const rowWidth = Math.min(width - 32, 440);
     const statRows = this.getDetailRows(item);
+    const rowHeight = compact ? 20 : 24;
     statRows.slice(0, this.screenManager.isPortrait() ? 2 : 3).forEach((row, index) => {
-      const stat = UIStatRow.create(this.scene, x + width / 2, statsTop + index * 30, rowWidth, row.label, row.value);
+      const stat = UIStatRow.create(this.scene, x + width / 2, statsTop + index * rowHeight, rowWidth, row.label, row.value, {
+        height: rowHeight - 2,
+        fontSize: compact ? '10px' : '11px',
+        backgroundAlpha: 0.28,
+        borderAlpha: 0.12,
+        labelRatio: 0.38,
+      });
       this.container.add(stat);
       this.pageItems.push(stat);
       stat.setScale(Math.min(1, rowWidth / 440), 1);
     });
 
     if (!random && item.startingWeaponIconKey) {
-      const rowIndex = 3;
+      const rowIndex = this.screenManager.isPortrait() ? 2 : 3;
       this.renderWeaponStatLine(
         x + 14,
-        statsTop + rowIndex * 30,
+        statsTop + rowIndex * rowHeight,
         item,
         I18n.t('selection.shortLabelAvailable'),
         I18n.t('selection.startingWeapon'),
@@ -281,31 +392,31 @@ export class SelectionListPanel {
     iconKey?: string,
   ): void {
     const group = this.scene.add.container(0, 0);
-    const bg = this.scene.add.rectangle(textX - 8, rowY, 18, 18, UITheme.iconBgColor, 0.82);
-    bg.setStrokeStyle(1, UITheme.panelBorderColor, 0.45);
-    bg.setOrigin(0.5);
-    group.add(bg);
-
-    if (iconKey && this.scene.textures.exists(iconKey)) {
-      const icon = this.scene.add.image(textX - 8, rowY, iconKey);
-      icon.setDisplaySize(14, 14);
-      group.add(icon);
-    } else {
-      const fallbackText = this.scene.add.text(textX - 8, rowY, fallback, {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: '8px',
-        fontStyle: 'bold',
-      });
-      fallbackText.setOrigin(0.5);
-      group.add(fallbackText);
-    }
-
-    const labelText = this.scene.add.text(textX + 14, rowY - 5, `${label}: ${value}`, {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: LayoutConfig.getResponsiveFontSizes(this.screenManager).body,
+    const iconFrame = UIIconFrame.create(this.scene, {
+      x: textX - 8,
+      y: rowY,
+      size: 20,
+      textureKey: iconKey,
+      fallback,
+      tooltip: {
+        kind: 'generic',
+        id: item.startingWeaponId ?? item.id,
+        title: label,
+      },
+      tooltipEnabled: false,
     });
+    group.add(iconFrame);
+
+    const availableWidth = Math.max(72, this.screenManager.width - (textX + 28));
+    const fontSize = LayoutConfig.getResponsiveFontSizes(this.screenManager).body;
+    const labelText = new UITextBlock(this.scene, {
+      x: textX + 14,
+      y: rowY - 5,
+      text: truncateTextToWidth(`${label}: ${value}`, availableWidth, fontSize),
+      fontSize,
+      align: 'left',
+      width: availableWidth,
+    }).text;
     labelText.setMaxLines(1);
     group.add(labelText);
 
@@ -314,40 +425,51 @@ export class SelectionListPanel {
   }
 
   private renderButtons(centerX: number, y: number, panelWidth: number): void {
-    const buttonLayout = LayoutConfig.getButtonListLayout({
-      screen: this.screenManager,
-      count: 2,
-      centerX,
-      startY: y,
-      mode: this.screenManager.isPortrait() ? 'vertical' : 'twoColumn',
-      gap: LayoutConfig.getButtonLayout(this.screenManager, 1).height + 8,
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const buttonHeight = tiny ? 26 : compact ? 30 : 34;
+    const horizontalInset = tiny ? 12 : compact ? 16 : 22;
+    const buttonArea = {
+      x: centerX - panelWidth / 2 + horizontalInset,
+      y: y - buttonHeight / 2,
+      width: panelWidth - horizontalInset * 2,
+      height: buttonHeight,
+    };
+    const actions: UIActionBarAction<'confirm' | 'back'>[] = [
+      {
+        id: 'confirm',
+        label: I18n.t('selection.confirm'),
+        onClick: () => this.confirmSelected(),
+      },
+      {
+        id: 'back',
+        label: I18n.t('selection.back'),
+        onClick: this.config.onBack,
+      },
+    ];
+    const actionBar = new UIActionBar(this.scene, actions);
+    actionBar.layout(this.screenManager, buttonArea, {
+      columns: 2,
+      compact,
+      minWidth: tiny ? 82 : 98,
+      maxWidth: Math.min(tiny ? 126 : compact ? 148 : 172, panelWidth / 2 - horizontalInset - 4),
+      minHeight: tiny ? 24 : 28,
+      maxHeight: buttonHeight,
+      fontSize: tiny ? '10px' : compact ? '11px' : '13px',
     });
-    const confirm = new UIButton(this.scene, {
-      x: buttonLayout.positions[0].x,
-      y: buttonLayout.positions[0].y,
-      label: I18n.t('selection.confirm'),
-      width: Math.min(buttonLayout.width, panelWidth / (this.screenManager.isPortrait() ? 1.4 : 2.4)),
-      height: buttonLayout.height,
-      onClick: () => this.confirmSelected(),
-    });
-    const back = new UIButton(this.scene, {
-      x: buttonLayout.positions[1].x,
-      y: buttonLayout.positions[1].y,
-      label: I18n.t('selection.back'),
-      width: Math.min(buttonLayout.width, panelWidth / (this.screenManager.isPortrait() ? 1.4 : 2.4)),
-      height: buttonLayout.height,
-      onClick: this.config.onBack,
-    });
-    this.container.add([confirm.container, back.container]);
+    this.container.add(actionBar.container);
   }
 
   private selectPrevious(): void {
     this.selectedIndex = Math.max(0, this.selectedIndex - 1);
+    this.syncPageToSelection();
     this.render();
   }
 
   private selectNext(): void {
     this.selectedIndex = Math.min(this.getSelectableItemCount() - 1, this.selectedIndex + 1);
+    this.syncPageToSelection();
     this.render();
   }
 
@@ -363,28 +485,71 @@ export class SelectionListPanel {
     return this.config.items[this.selectedIndex];
   }
 
-  private getVisibleItems(): SelectionListItem[] {
-    const maxItems = this.screenManager.isPortrait() ? 5 : 7;
+  private getVisiblePageInfo(pageSize = this.getListPageSize()): {
+    items: SelectionListItem[];
+    startIndex: number;
+    pageIndex: number;
+    pageSize: number;
+    totalPages: number;
+  } {
+    const totalPages = Math.max(1, Math.ceil(this.config.items.length / pageSize));
+    const selectedPage = Math.floor(this.selectedIndex / pageSize);
+    const currentPageStart = this.listPage * pageSize;
+    const selectedVisible = this.selectedIndex >= currentPageStart
+      && this.selectedIndex < currentPageStart + pageSize;
+    const pageIndex = Phaser.Math.Clamp(
+      selectedVisible ? this.listPage : selectedPage,
+      0,
+      totalPages - 1,
+    );
+    this.listPage = pageIndex;
+    const startIndex = pageIndex * pageSize;
 
-    if (this.config.items.length <= maxItems) {
-      return this.config.items;
-    }
-
-    return [
-      ...this.config.items.slice(0, maxItems - 1),
-      {
-        id: 'more',
-        name: `+${this.config.items.length - maxItems + 1} ${I18n.t('selection.more')}`,
-      },
-    ];
+    return {
+      items: this.config.items.slice(startIndex, startIndex + pageSize),
+      startIndex,
+      pageIndex,
+      pageSize,
+      totalPages,
+    };
   }
 
   private getSelectableItemCount(): number {
-    const maxItems = this.screenManager.isPortrait() ? 5 : 7;
+    return this.config.items.length;
+  }
 
-    return this.config.items.length > maxItems
-      ? maxItems - 1
-      : this.config.items.length;
+  private getListPageSize(availableHeight?: number): number {
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const compact = density === 'compact' || density === 'tiny';
+    const base = this.screenManager.isPortrait() ? compact ? 4 : 5 : compact ? 5 : 6;
+
+    if (availableHeight === undefined) {
+      return base;
+    }
+
+    const pagerReserve = 42;
+    const rowBudget = Math.max(1, availableHeight - pagerReserve);
+    const targetRowHeight = this.screenManager.isPortrait() ? compact ? 44 : 50 : compact ? 48 : 54;
+    const heightBased = Math.max(1, Math.floor(rowBudget / targetRowHeight));
+
+    return Math.max(1, Math.min(base, heightBased));
+  }
+
+  private syncPageToSelection(): void {
+    const pageSize = this.getListPageSize();
+    this.listPage = Math.floor(this.selectedIndex / pageSize);
+  }
+
+  private getDetailBadges(item: SelectionListItem): string[] {
+    if (item.badges) {
+      return item.badges;
+    }
+
+    if (item.kind === 'stage') {
+      return [];
+    }
+
+    return this.getRoleBadges(item.id);
   }
 
   private getRoleBadges(id: string): string[] {
@@ -421,11 +586,22 @@ export class SelectionListPanel {
   }
 
   private getDetailRows(item: SelectionListItem): Array<{ label: string; value: string }> {
+    if (item.detailRows && item.detailRows.length > 0) {
+      return item.detailRows;
+    }
+
+    if (item.kind === 'stage') {
+      return [
+        { label: I18n.t('selection.stage'), value: item.name },
+        { label: I18n.t('selection.map'), value: item.description ?? item.id },
+      ];
+    }
+
     if (item.id === 'random_unlocked') {
-    return [
-      { label: I18n.t('ui.random'), value: I18n.t('ui.unlocked') },
-      { label: I18n.t('ui.build'), value: I18n.t('ui.randomUnlockedEachRun') },
-    ];
+      return [
+        { label: I18n.t('ui.random'), value: I18n.t('ui.unlocked') },
+        { label: I18n.t('ui.build'), value: I18n.t('ui.randomUnlockedEachRun') },
+      ];
     }
 
     return [

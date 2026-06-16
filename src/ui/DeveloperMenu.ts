@@ -1,20 +1,23 @@
 import Phaser from 'phaser';
 
-import { AudioManager } from '../audio/AudioManager';
 import { DeveloperLocalResetService } from '../developer/DeveloperLocalResetService';
 import { I18n } from '../i18n/I18n';
 import { PlaytestLogBuffer } from '../logging/PlaytestLogBuffer';
+import { LayoutConfig } from '../responsive/LayoutConfig';
 import { ScreenManager } from '../responsive/ScreenManager';
 import { SaveManager } from '../save/SaveManager';
 import { SettingsManager } from '../settings/SettingsManager';
 
+import { PanelFrame } from './components/PanelFrame';
+import { PanelHeader } from './components/PanelHeader';
+import { UIButton } from './components/UIButton';
+import { UIPager } from './components/UIPager';
+import { UITabBar } from './components/UITabBar';
 import {
   createModalBlocker,
   setRectangleHitArea,
-  setTextHitArea,
-  stopPointerEvent,
 } from './input/UIInteraction';
-import { UITheme, getButtonMetrics, toCssColor } from './UITheme';
+import { UITheme } from './UITheme';
 
 type DeveloperTabId = 'automation' | 'tools' | 'data' | 'debug';
 type DeveloperRow = {
@@ -38,16 +41,18 @@ export class DeveloperMenu {
   private readonly screenManager: ScreenManager;
   private readonly container: Phaser.GameObjects.Container;
   private readonly blocker: Phaser.GameObjects.Rectangle;
-  private readonly background: Phaser.GameObjects.Rectangle;
-  private readonly title: Phaser.GameObjects.Text;
-  private readonly closeButton: Phaser.GameObjects.Text;
-  private readonly tabButtons: Array<{
-    id: DeveloperTabId;
-    background: Phaser.GameObjects.Rectangle;
-    label: Phaser.GameObjects.Text;
-  }> = [];
-  private readonly rows: Phaser.GameObjects.Text[] = [];
+  private frame?: Phaser.GameObjects.Container;
+  private header?: Phaser.GameObjects.Container;
+  private readonly pager: UIPager;
+  private tabBar?: UITabBar<DeveloperTabId>;
+  private readonly rows: UIButton[] = [];
   private selectedTab: DeveloperTabId = 'automation';
+  private readonly pageByTab: Record<DeveloperTabId, number> = {
+    automation: 0,
+    tools: 0,
+    data: 0,
+    debug: 0,
+  };
   private unsubscribeResize?: () => void;
   private destroyed = false;
   private resetAllLocalDataConfirm = false;
@@ -59,23 +64,20 @@ export class DeveloperMenu {
   ) {
     this.screenManager = new ScreenManager(scene);
     this.blocker = createModalBlocker(scene, 1599);
-    this.background = scene.add.rectangle(0, 0, 720, 460, UITheme.panelBgColor, 0.94);
-    this.background.setStrokeStyle(2, UITheme.panelBorderColor, 0.86);
-    this.title = scene.add.text(0, 0, I18n.t('developer.title'), {
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.headerFontSize,
-      fontStyle: 'bold',
+    this.pager = new UIPager(scene, {
+      x: 0,
+      y: 0,
+      width: 420,
+      compact: true,
+      closeLabel: I18n.t('common.close'),
+      onPageChanged: (page) => {
+        this.pageByTab[this.selectedTab] = page;
+        this.applyLayout();
+      },
+      onClose: () => this.destroy(),
     });
-    this.title.setOrigin(0.5);
-    this.closeButton = this.createTextButton(I18n.t('common.close'), () => this.destroy());
-    this.container = scene.add.container(0, 0, [
-      this.background,
-      this.title,
-      this.closeButton,
-    ]);
+    this.container = scene.add.container(0, 0, [this.pager.container]);
     this.container.setDepth(1600);
-    this.createTabs();
     this.renderRows();
     this.applyLayout();
     this.unsubscribeResize = this.screenManager.onResize(() => this.applyLayout());
@@ -91,41 +93,12 @@ export class DeveloperMenu {
     this.unsubscribeResize = undefined;
     this.screenManager.dispose();
     this.blocker.destroy();
+    this.tabBar?.destroy();
+    this.tabBar = undefined;
     if (options.notifyClose !== false) {
       this.config.onClose?.();
     }
     this.container.destroy(true);
-  }
-
-  private createTabs(): void {
-    for (const tabId of TABS) {
-      const background = this.scene.add.rectangle(0, 0, 126, 34, UITheme.buttonBgColor, 0.94);
-      background.setStrokeStyle(1, UITheme.panelBorderColor, 0.75);
-      background.setInteractive({ useHandCursor: true });
-      const label = this.scene.add.text(0, 0, I18n.t(`developer.tab.${tabId}`), {
-        color: UITheme.textColor,
-        fontFamily: UITheme.fontFamily,
-        fontSize: UITheme.smallFontSize,
-        align: 'center',
-      });
-      label.setOrigin(0.5);
-      background.on('pointerdown', (
-        _pointer: Phaser.Input.Pointer,
-        _localX: number,
-        _localY: number,
-        event: Phaser.Types.Input.EventData,
-      ) => {
-        stopPointerEvent(event);
-        AudioManager.playUi(this.scene, 'ui_click');
-        this.selectedTab = tabId;
-        this.resetAllLocalDataConfirm = false;
-        this.resetAllLocalDataDone = false;
-        this.renderRows();
-        this.applyLayout();
-      });
-      this.tabButtons.push({ id: tabId, background, label });
-      this.container.add([background, label]);
-    }
   }
 
   private renderRows(): void {
@@ -144,9 +117,9 @@ export class DeveloperMenu {
         }
         this.renderRows();
         this.applyLayout();
-      });
+      }, row.kind === 'toggle' && row.value?.() === true);
       this.rows.push(text);
-      this.container.add(text);
+      this.container.add(text.container);
     }
   }
 
@@ -154,6 +127,7 @@ export class DeveloperMenu {
     switch (this.selectedTab) {
       case 'tools':
         return [
+          this.sceneRow('strategyEditor', 'strategyPanel.title', 'StrategyEditorScene'),
           this.sceneRow('customStageTool', 'title.customStageTool', 'CustomStageToolScene'),
           this.sceneRow('customStageEditor', 'customStage.editorTitle', 'CustomStageEditorLiteScene'),
           this.sceneRow('records', 'title.records', 'RecordsScene'),
@@ -276,73 +250,145 @@ export class DeveloperMenu {
     return `${row.label}: ${row.value?.() ? I18n.t('common.on') : I18n.t('common.off')}`;
   }
 
-  private createTextButton(label: string, onClick: () => void): Phaser.GameObjects.Text {
-    const button = this.scene.add.text(0, 0, label, {
-      backgroundColor: toCssColor(UITheme.buttonBgColor),
-      color: UITheme.textColor,
-      fontFamily: UITheme.fontFamily,
-      fontSize: UITheme.bodyFontSize,
-      align: 'center',
-      padding: { x: 12, y: 8 },
+  private createTextButton(label: string, onClick: () => void, selected = false): UIButton {
+    return new UIButton(this.scene, {
+      x: 0,
+      y: 0,
+      label,
+      size: 'medium',
+      selected,
+      onClick,
     });
-    button.setOrigin(0.5);
-    button.setInteractive({ useHandCursor: true });
-    button.on('pointerover', () => button.setBackgroundColor(toCssColor(UITheme.buttonHoverColor)));
-    button.on('pointerout', () => button.setBackgroundColor(toCssColor(UITheme.buttonBgColor)));
-    button.on('pointerdown', (
-      _pointer: Phaser.Input.Pointer,
-      _localX: number,
-      _localY: number,
-      event: Phaser.Types.Input.EventData,
-    ) => {
-      stopPointerEvent(event);
-      AudioManager.playUi(this.scene, 'ui_click');
-      onClick();
-    });
-    return button;
   }
 
   private applyLayout(): void {
-    const safeMargin = Math.max(16, Math.min(this.screenManager.width, this.screenManager.height) * 0.04);
-    const width = Math.min(760, this.screenManager.width - safeMargin * 2);
-    const height = Math.min(520, this.screenManager.height - safeMargin * 2);
+    const density = LayoutConfig.getContentDensity(this.screenManager);
+    const tiny = density === 'tiny';
+    const compact = density === 'compact' || tiny;
+    const portrait = this.screenManager.isPortrait();
+    const panel = LayoutConfig.getPanelLayout(this.screenManager, {
+      maxWidth: portrait
+        ? tiny ? 300 : 340
+        : tiny ? 460 : compact ? 560 : 640,
+      maxHeight: portrait
+        ? tiny ? 500 : compact ? 540 : 580
+        : tiny ? 340 : compact ? 390 : 440,
+      padding: tiny ? 14 : compact ? 18 : 22,
+    });
+    const width = panel.width;
+    const height = panel.height;
     const centerX = this.screenManager.centerX;
     const centerY = this.screenManager.centerY;
-    const metrics = getButtonMetrics(this.screenManager.width, this.screenManager.height);
+    const buttonHeight = tiny ? 30 : compact ? 34 : 38;
+    const rowWidth = Math.min(tiny ? 194 : compact ? 218 : 246, width - 64);
+    const fontSize = tiny ? '10px' : compact ? UITheme.smallButtonFontSize : '13px';
 
     setRectangleHitArea(this.blocker, this.screenManager.width, this.screenManager.height);
-    this.background.setPosition(centerX, centerY);
-    this.background.setSize(width, height);
-    this.title.setPosition(centerX, centerY - height / 2 + 34);
-    this.closeButton.setPosition(centerX, centerY + height / 2 - 36);
-    setTextHitArea(this.closeButton, metrics.width, metrics.height);
-
-    const tabWidth = Math.min(132, Math.max(92, (width - 72) / TABS.length));
-    const tabY = centerY - height / 2 + 82;
-    const tabStartX = centerX - ((tabWidth + 8) * TABS.length - 8) / 2 + tabWidth / 2;
-
-    this.tabButtons.forEach((tab, index) => {
-      const selected = tab.id === this.selectedTab;
-      const x = tabStartX + index * (tabWidth + 8);
-
-      tab.background.setPosition(x, tabY);
-      setRectangleHitArea(tab.background, tabWidth, 34);
-      tab.background.setFillStyle(selected ? UITheme.buttonHoverColor : UITheme.buttonBgColor, 0.95);
-      tab.background.setStrokeStyle(2, selected ? UITheme.successAccentColor : UITheme.panelBorderColor, 0.9);
-      tab.label.setText(I18n.t(`developer.tab.${tab.id}`));
-      tab.label.setPosition(x, tabY);
-      tab.label.setWordWrapWidth(tabWidth - 8);
+    this.frame?.destroy(true);
+    this.header?.destroy();
+    this.frame = PanelFrame.create(this.scene, {
+      x: centerX,
+      y: centerY,
+      width,
+      height,
+      variant: 'modal',
     });
+    this.container.addAt(this.frame, 0);
+    this.header = PanelHeader.create(this.scene, {
+      x: centerX,
+      y: centerY - height / 2 + (tiny ? 24 : compact ? 28 : 32),
+      width: Math.max(tiny ? 190 : 220, width - 60),
+      title: I18n.t('developer.title'),
+    });
+    this.container.add(this.header);
+    const tabWidth = Math.min(tiny ? 70 : compact ? 92 : 110, Math.max(64, (width - 52) / TABS.length));
+    const tabHeight = tiny ? 24 : compact ? 27 : 30;
+    const tabY = centerY - height / 2 + (tiny ? 58 : compact ? 68 : 74);
+    this.renderTabBar(centerX, tabY, width - (tiny ? 38 : 54), tabWidth, tabHeight, tiny ? 4 : compact ? 5 : 6);
 
-    const rowStartY = tabY + 58;
-    const rowGap = this.screenManager.isPortrait() ? 44 : 48;
-    const rowWidth = Math.min(metrics.width, width - 90);
+    const rowStartY = tabY + (tiny ? 38 : compact ? 44 : 50);
+    const closeY = centerY + height / 2 - (tiny ? 24 : compact ? 28 : 32);
+    const pagerY = closeY - (tiny || compact ? 36 : 40);
+    const rowAreaBottom = pagerY - (tiny ? 18 : compact ? 20 : 24);
+    const rowGap = tiny ? 4 : compact ? 5 : 6;
+    const columns = portrait ? 1 : 2;
+    const availableRows = Math.max(1, Math.floor((rowAreaBottom - rowStartY + rowGap) / (buttonHeight + rowGap)));
+    const rowsPerPage = Math.max(1, availableRows * columns);
+    const pageCount = Math.max(1, Math.ceil(this.rows.length / rowsPerPage));
+    const currentPage = Phaser.Math.Clamp(this.pageByTab[this.selectedTab] ?? 0, 0, pageCount - 1);
+    this.pageByTab[this.selectedTab] = currentPage;
+    const pageStart = currentPage * rowsPerPage;
+    const visibleRows = this.rows.slice(pageStart, pageStart + rowsPerPage);
+    const pagerVisible = pageCount > 1;
+    const rowAreaHeight = Math.max(buttonHeight, rowAreaBottom - rowStartY - (pagerVisible ? 38 : 0));
+    const rowLayout = LayoutConfig.getActionGridLayout(this.screenManager, visibleRows.length, {
+      area: {
+        x: panel.content.x,
+        y: rowStartY,
+        width: panel.content.width,
+        height: rowAreaHeight,
+      },
+      maxColumns: portrait ? 1 : 2,
+      compact,
+    });
 
     this.rows.forEach((row, index) => {
-      row.setPosition(centerX, rowStartY + index * rowGap);
-      row.setFontSize(metrics.fontSize);
-      setTextHitArea(row, rowWidth, metrics.height);
+      const visibleIndex = index - pageStart;
+      const visible = visibleIndex >= 0 && visibleIndex < visibleRows.length;
+      row.setVisible(visible);
+
+      if (!visible) {
+        return;
+      }
+
+      const position = rowLayout.positions[visibleIndex];
+      row.setPosition(position.x, position.y);
+      row.setFontSize(fontSize);
+      row.setSize(
+        Math.min(rowWidth, rowLayout.width),
+        Math.min(buttonHeight, rowLayout.height),
+      );
     });
+    this.pager.container.setVisible(true);
+    this.pager.prevButton.container.setVisible(pagerVisible);
+    this.pager.nextButton.container.setVisible(pagerVisible);
+    this.pager.pageText.setVisible(pagerVisible);
+    this.pager.setPosition(centerX, pagerY);
+    this.pager.setSize(Math.min(panel.content.width, tiny ? 240 : compact ? 300 : 360), compact);
+    this.pager.setPage(currentPage, pageCount);
+  }
+
+  private renderTabBar(
+    x: number,
+    y: number,
+    width: number,
+    tabWidth: number,
+    tabHeight: number,
+    gap: number,
+  ): void {
+    this.tabBar?.destroy();
+    this.tabBar = new UITabBar(this.scene, {
+      x,
+      y,
+      width,
+      items: TABS.map((id) => ({
+        id,
+        label: I18n.t(`developer.tab.${id}`),
+      })),
+      selectedId: this.selectedTab,
+      tabWidth,
+      tabHeight,
+      gap,
+      onSelect: (tabId) => {
+        this.selectedTab = tabId;
+        this.pageByTab[tabId] = 0;
+        this.resetAllLocalDataConfirm = false;
+        this.resetAllLocalDataDone = false;
+        this.renderRows();
+        this.applyLayout();
+      },
+    });
+    this.container.add(this.tabBar.container);
   }
 
   private cycleDebugOpacity(): void {

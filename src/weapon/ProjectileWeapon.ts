@@ -85,9 +85,10 @@ export class ProjectileWeapon extends Weapon {
 
     const baseDirection = this.getDirection(context, target);
     const speed = this.modifiedProjectileSpeed || this.config.projectileSpeed || 6;
+    const playerPosition = context.player.getPositionLike();
 
     for (const direction of this.getProjectileDirections(baseDirection)) {
-      const projectile = this.createProjectileBody(context.player.x, context.player.y);
+      const projectile = this.createProjectileBody(playerPosition.x, playerPosition.y);
       const velocity = direction.scale(speed);
       const projectileState: Projectile = {
         body: projectile,
@@ -114,9 +115,10 @@ export class ProjectileWeapon extends Weapon {
     context: WeaponUpdateContext,
     target: Enemy,
   ): Phaser.Math.Vector2 {
+    const playerPosition = context.player.getPositionLike();
     const direction = new Phaser.Math.Vector2(
-      target.body.x - context.player.x,
-      target.body.y - context.player.y,
+      target.body.x - playerPosition.x,
+      target.body.y - playerPosition.y,
     );
 
     if (direction.lengthSq() === 0) {
@@ -129,6 +131,7 @@ export class ProjectileWeapon extends Weapon {
   private findNearestEnemy(context: WeaponUpdateContext): Enemy | undefined {
     let nearestEnemy: Enemy | undefined;
     let nearestDistanceSq = Number.POSITIVE_INFINITY;
+    const playerPosition = context.player.getPositionLike();
 
     for (const enemy of context.enemies) {
       if (enemy.isDead) {
@@ -136,8 +139,8 @@ export class ProjectileWeapon extends Weapon {
       }
 
       const distanceSq = Phaser.Math.Distance.Squared(
-        context.player.x,
-        context.player.y,
+        playerPosition.x,
+        playerPosition.y,
         enemy.body.x,
         enemy.body.y,
       );
@@ -364,8 +367,9 @@ export class ProjectileWeapon extends Weapon {
   }
 
   private createProjectileBody(x: number, y: number): ProjectileBody {
-    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
-    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const visualTier = this.getVisualTierInput();
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id, visualTier);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id, visualTier);
     const displaySize = VisualScale.getProjectileDisplaySize(this.id);
 
     if (

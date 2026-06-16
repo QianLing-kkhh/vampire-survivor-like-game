@@ -80,6 +80,16 @@ export const PLAYER_ART_SKIN_IDS = [
   'witch_default',
   'priest_default',
   'warrior_default',
+  'arcanist_default',
+  'ranger_default',
+  'engineer_default',
+  'necromancer_default',
+  'monk_default',
+  'alchemist_default',
+  'duelist_default',
+  'geomancer_default',
+  'stormcaller_default',
+  'sentinel_default',
 ] as const;
 
 export const PLAYER_ART_DIRECTIONS = [
@@ -141,6 +151,7 @@ const TITLE_ICON_ASSETS: AssetRequest[] = [
   image('art_passives_bracer_icon', 'assets/art/passives/bracer_icon.png'),
   image('art_passives_clover_icon', 'assets/art/passives/clover_icon.png'),
   image('art_passives_pummarola_icon', 'assets/art/passives/pummarola_icon.png'),
+  ...createAdditionalTitleIconAssets(),
 ];
 
 const TITLE_AUDIO_ASSETS: AssetRequest[] = [
@@ -200,6 +211,106 @@ const GAMEPLAY_AUDIO_ASSETS: AssetRequest[] = [
   audio('soul_eater_tick', 'assets/audio/weapon/soul_eater_tick.wav'),
 ];
 
+const TIERED_WEAPON_ART_IDS = [
+  'knife',
+  'garlic',
+  'bible',
+  'magic_wand',
+  'axe',
+  'thousand_edge',
+  'unholy_vespers',
+  'holy_wand',
+  'death_spiral',
+  'soul_eater',
+  'runic_orb',
+  'astral_core',
+  'moon_bow',
+  'eclipse_barrage',
+  'clockwork_saw',
+  'gearstorm',
+  'bone_spear',
+  'ossuary_lance',
+  'spirit_fist',
+  'enlightened_palm',
+  'acid_vial',
+  'plague_crucible',
+  'rapier_flurry',
+  'crimson_flurry',
+  'stone_ring',
+  'tectonic_crown',
+  'thunder_javelin',
+  'tempest_lance',
+  'shield_disc',
+  'aegis_maelstrom',
+] as const;
+
+const TIERED_PASSIVE_ART_IDS = [
+  'spinach',
+  'empty_tome',
+  'bracer',
+  'clover',
+  'pummarola',
+  'focus_lens',
+  'hunter_quiver',
+  'cogwheel',
+  'grave_charm',
+  'prayer_beads',
+  'glass_flask',
+  'duelist_glove',
+  'granite_core',
+  'storm_battery',
+  'iron_sigil',
+] as const;
+
+const TIERED_WEAPON_ART_ASSETS: ArtManifestAsset[] = TIERED_WEAPON_ART_IDS.flatMap(
+  (weaponId) => [1, 2, 3].flatMap((tier) => [
+    artImage(`weapons/${weaponId}_icon_tier${tier}.png`, `art_weapons_${weaponId}_icon_tier${tier}`, 64, 64),
+    artSheet(
+      `weapons/${weaponId}_projectile_tier${tier}_sheet.png`,
+      `art_weapons_${weaponId}_projectile_tier${tier}_sheet`,
+      64,
+      64,
+      4,
+    ),
+  ]),
+);
+
+const TIERED_PASSIVE_ART_ASSETS: ArtManifestAsset[] = TIERED_PASSIVE_ART_IDS.flatMap(
+  (passiveId) => [1, 2, 3].map((tier) => (
+    artImage(`passives/${passiveId}_icon_tier${tier}.png`, `art_passives_${passiveId}_icon_tier${tier}`, 64, 64)
+  )),
+);
+
+const RELIC_ART_IDS = [
+  'blood_pact',
+  'void_compass',
+  'golden_scarab',
+  'thorn_crown',
+  'frozen_hourglass',
+  'berserker_charm',
+  'magnet_pearl',
+  'iron_shell',
+  'scholar_candle',
+  'rift_coin',
+] as const;
+
+const RELIC_ART_ASSETS: ArtManifestAsset[] = RELIC_ART_IDS.map((relicId) => (
+  artImage(`relics/${relicId}_icon.png`, `art_relics_${relicId}_icon`, 64, 64)
+));
+
+function createAdditionalTitleIconAssets(): AssetRequest[] {
+  return [
+    ...TIERED_WEAPON_ART_IDS.map((weaponId) => image(
+      `art_weapons_${weaponId}_icon_tier1`,
+      `assets/art/weapons/${weaponId}_icon_tier1.png`,
+    )),
+    ...TIERED_PASSIVE_ART_IDS.map((passiveId) => image(
+      `art_passives_${passiveId}_icon_tier1`,
+      `assets/art/passives/${passiveId}_icon_tier1.png`,
+    )),
+  ];
+}
+
 export const PLAYER_CHARACTER_IMAGE_ASSETS: ArtManifestAsset[] = [
   ...PLAYER_ART_SKIN_IDS.flatMap((skinId) => [
     artImage(`player/${skinId}/portrait.png`, `art_player_${skinId}_portrait`, 128, 128),
@@ -220,20 +331,31 @@ export const MAP_MECHANIC_WORLD_ART_ASSETS: ArtManifestAsset[] = [
   artImage('map-mechanics/swamp/swamp_bubble.png', 'art_map_mechanics_swamp_bubble', 64, 64),
   artImage('map-mechanics/mud/mud_patch.png', 'art_map_mechanics_mud_patch', 256, 256),
   artImage('map-mechanics/mud/mud_spot.png', 'art_map_mechanics_mud_spot', 64, 64),
+  artImage('map-mechanics/ink/ink_pool.png', 'art_map_mechanics_ink_pool', 256, 256),
+  artImage('map-mechanics/ink/ink_spot.png', 'art_map_mechanics_ink_spot', 64, 64),
   artImage('map-mechanics/portal/portal_blue.png', 'art_map_mechanics_portal_blue', 128, 128),
   artImage('map-mechanics/portal/portal_purple.png', 'art_map_mechanics_portal_purple', 128, 128),
   artImage('map-mechanics/portal/portal_green.png', 'art_map_mechanics_portal_green', 128, 128),
+  artImage('map-mechanics/portal/portal_gold.png', 'art_map_mechanics_portal_gold', 128, 128),
   artImage('map-mechanics/light/lamp.png', 'art_map_mechanics_light_lamp', 128, 128),
   artImage('map-mechanics/light/torch.png', 'art_map_mechanics_light_torch', 128, 128),
   artImage('map-mechanics/light/crystal.png', 'art_map_mechanics_light_crystal', 128, 128),
+  artImage('map-mechanics/light/cathedral_candle.png', 'art_map_mechanics_light_cathedral_candle', 128, 128),
+  artImage('map-mechanics/light/arcane_lamp.png', 'art_map_mechanics_light_arcane_lamp', 128, 128),
   artImage('map-mechanics/obstacle/obstacle_tree.png', 'art_map_mechanics_obstacle_tree', 128, 128),
   artImage('map-mechanics/obstacle/obstacle_rock.png', 'art_map_mechanics_obstacle_rock', 128, 128),
   artImage('map-mechanics/obstacle/obstacle_grave.png', 'art_map_mechanics_obstacle_grave', 128, 128),
   artImage('map-mechanics/obstacle/obstacle_wall.png', 'art_map_mechanics_obstacle_wall', 128, 128),
+  artImage('map-mechanics/obstacle/cathedral_wall.png', 'art_map_mechanics_obstacle_cathedral_wall', 128, 128),
+  artImage('map-mechanics/obstacle/cathedral_pillar.png', 'art_map_mechanics_obstacle_cathedral_pillar', 128, 128),
+  artImage('map-mechanics/obstacle/bookshelf.png', 'art_map_mechanics_obstacle_bookshelf', 128, 128),
+  artImage('map-mechanics/obstacle/archive_pillar.png', 'art_map_mechanics_obstacle_archive_pillar', 128, 128),
   artImage('map-mechanics/hazard/hazard_spike.png', 'art_map_mechanics_hazard_spike', 128, 128),
   artImage('map-mechanics/hazard/hazard_fire.png', 'art_map_mechanics_hazard_fire', 128, 128),
   artImage('map-mechanics/hazard/hazard_poison.png', 'art_map_mechanics_hazard_poison', 128, 128),
   artImage('map-mechanics/altar/altar_basic.png', 'art_map_mechanics_altar_basic', 128, 128),
+  artImage('map-mechanics/altar/cathedral_altar.png', 'art_map_mechanics_altar_cathedral', 160, 160),
+  artImage('map-mechanics/altar/library_altar.png', 'art_map_mechanics_altar_library', 160, 160),
   artImage('map-mechanics/spawner/spawner_nest.png', 'art_map_mechanics_spawner_nest', 128, 128),
 ];
 
@@ -241,13 +363,17 @@ export const MAP_MECHANIC_MINIMAP_ICON_ASSETS: ArtManifestAsset[] = [
   artImage('map-mechanics/river/river_minimap.png', 'art_map_mechanics_river_minimap', 32, 32),
   artImage('map-mechanics/swamp/swamp_minimap.png', 'art_map_mechanics_swamp_minimap', 32, 32),
   artImage('map-mechanics/mud/mud_minimap.png', 'art_map_mechanics_mud_minimap', 32, 32),
+  artImage('map-mechanics/ink/ink_minimap.png', 'art_map_mechanics_ink_minimap', 32, 32),
   artImage('map-mechanics/portal/portal_minimap_blue.png', 'art_map_mechanics_portal_minimap_blue', 32, 32),
   artImage('map-mechanics/portal/portal_minimap_purple.png', 'art_map_mechanics_portal_minimap_purple', 32, 32),
   artImage('map-mechanics/portal/portal_minimap_green.png', 'art_map_mechanics_portal_minimap_green', 32, 32),
+  artImage('map-mechanics/portal/portal_minimap_gold.png', 'art_map_mechanics_portal_minimap_gold', 32, 32),
   artImage('map-mechanics/light/light_minimap.png', 'art_map_mechanics_light_minimap', 24, 24),
   artImage('map-mechanics/obstacle/obstacle_minimap.png', 'art_map_mechanics_obstacle_minimap', 24, 24),
   artImage('map-mechanics/hazard/hazard_minimap.png', 'art_map_mechanics_hazard_minimap', 24, 24),
   artImage('map-mechanics/altar/altar_minimap.png', 'art_map_mechanics_altar_minimap', 24, 24),
+  artImage('map-mechanics/altar/cathedral_altar_minimap.png', 'art_map_mechanics_altar_cathedral_minimap', 32, 32),
+  artImage('map-mechanics/altar/library_altar_minimap.png', 'art_map_mechanics_altar_library_minimap', 32, 32),
   artImage('map-mechanics/spawner/spawner_minimap.png', 'art_map_mechanics_spawner_minimap', 24, 24),
 ];
 
@@ -265,8 +391,16 @@ export const GAMEPLAY_ART_ASSETS: ArtManifestAsset[] = [
   artSheet('enemies/bat_fly_sheet.png', 'art_enemies_bat_fly_sheet', 48, 48, 4),
   artSheet('enemies/boss_lava_beast_idle_sheet.png', 'art_enemies_boss_lava_beast_idle_sheet', 192, 192, 4),
   artImage('enemies/golem_boss_placeholder.png', 'art_enemies_golem_boss_placeholder', 96, 96),
+  artSheet('enemies/golem_boss_idle_sheet.png', 'art_enemies_golem_boss_idle_sheet', 128, 128, 4),
   artSheet('enemies/golem_walk_sheet.png', 'art_enemies_golem_walk_sheet', 64, 64, 4),
   artImage('enemies/slime_boss_placeholder.png', 'art_enemies_slime_boss_placeholder', 96, 96),
+  artSheet('enemies/slime_boss_idle_sheet.png', 'art_enemies_slime_boss_idle_sheet', 128, 128, 4),
+  artSheet('enemies/bat_boss_idle_sheet.png', 'art_enemies_bat_boss_idle_sheet', 128, 128, 4),
+  artSheet('enemies/endless_berserker_idle_sheet.png', 'art_enemies_endless_berserker_idle_sheet', 128, 128, 4),
+  artSheet('enemies/endless_summoner_idle_sheet.png', 'art_enemies_endless_summoner_idle_sheet', 128, 128, 4),
+  artSheet('enemies/endless_freezer_idle_sheet.png', 'art_enemies_endless_freezer_idle_sheet', 128, 128, 4),
+  artSheet('enemies/endless_sniper_idle_sheet.png', 'art_enemies_endless_sniper_idle_sheet', 128, 128, 4),
+  artSheet('enemies/endless_tanker_idle_sheet.png', 'art_enemies_endless_tanker_idle_sheet', 128, 128, 4),
   artSheet('enemies/slime_walk_sheet.png', 'art_enemies_slime_walk_sheet', 48, 48, 4),
   artImage('pickups/exp_gem.png', 'art_pickups_exp_gem', 32, 32),
   artImage('pickups/treasure_chest.png', 'art_pickups_treasure_chest', 64, 56),
@@ -280,12 +414,22 @@ export const GAMEPLAY_ART_ASSETS: ArtManifestAsset[] = [
   artSheet('weapons/soul_eater_core_sheet.png', 'art_weapons_soul_eater_core_sheet', 64, 64, 4),
   artSheet('weapons/thousand_edge_projectile_sheet.png', 'art_weapons_thousand_edge_projectile_sheet', 64, 64, 4),
   artSheet('weapons/unholy_vespers_orbit_book_sheet.png', 'art_weapons_unholy_vespers_orbit_book_sheet', 64, 64, 4),
+  ...TIERED_WEAPON_ART_ASSETS,
+  ...TIERED_PASSIVE_ART_ASSETS,
+  ...RELIC_ART_ASSETS,
   artImage('world/grass_tile.png', 'art_world_grass_tile', 128, 128),
   artImage('world/grave_landmark.png', 'art_world_grave_landmark', 96, 96),
   artImage('world/graveyard_ground_tile.png', 'art_world_graveyard_ground_tile', 128, 128),
   artImage('world/ground_tile.png', 'art_world_ground_tile', 128, 128),
   artImage('world/swamp_ground_tile.png', 'art_world_swamp_ground_tile', 128, 128),
   artImage('world/ruins_ground_tile.png', 'art_world_ruins_ground_tile', 128, 128),
+  artImage('world/cathedral_ground_tile.png', 'art_world_cathedral_ground_tile', 128, 128),
+  artImage('world/library_ground_tile.png', 'art_world_library_ground_tile', 128, 128),
+  artImage('world/desert_ground_tile.png', 'art_world_desert_ground_tile', 128, 128),
+  artImage('world/coast_ground_tile.png', 'art_world_coast_ground_tile', 128, 128),
+  artImage('world/bastion_ground_tile.png', 'art_world_bastion_ground_tile', 128, 128),
+  artImage('world/fungal_ground_tile.png', 'art_world_fungal_ground_tile', 128, 128),
+  artImage('world/mirror_ground_tile.png', 'art_world_mirror_ground_tile', 128, 128),
   artImage('world/rock_landmark.png', 'art_world_rock_landmark', 96, 96),
   artImage('world/tree_landmark.png', 'art_world_tree_landmark', 96, 96),
   ...MAP_MECHANIC_ART_ASSETS,
@@ -421,6 +565,10 @@ function getRequiredRunArtAssets(
   manifestAssets: readonly ArtManifestAsset[] | undefined,
   manifestVersion: string | undefined,
 ): AssetRequest[] {
+  if (manifestAssets && manifestAssets.length > 0) {
+    return manifestAssets.map((asset) => artToRequest(asset, context.assetStyle, manifestVersion));
+  }
+
   const requiredArtKeys = getRequiredArtTextureKeys(context, requiredKeys);
   const manifestAssetMap = createManifestAssetMap(manifestAssets);
   const builtInAssetMap = createManifestAssetMap(getBuiltInRuntimeArtAssets(context));
@@ -637,6 +785,26 @@ export function getPlayerSkillArtAssets(skinId: string): ArtManifestAsset[] {
 
 export function getDefaultSkinId(characterId: string): PlayerArtSkinId {
   switch (characterId) {
+    case 'arcanist':
+      return 'arcanist_default';
+    case 'ranger':
+      return 'ranger_default';
+    case 'engineer':
+      return 'engineer_default';
+    case 'necromancer':
+      return 'necromancer_default';
+    case 'monk':
+      return 'monk_default';
+    case 'alchemist':
+      return 'alchemist_default';
+    case 'duelist':
+      return 'duelist_default';
+    case 'geomancer':
+      return 'geomancer_default';
+    case 'stormcaller':
+      return 'stormcaller_default';
+    case 'sentinel':
+      return 'sentinel_default';
     case 'witch':
       return 'witch_default';
     case 'priest':

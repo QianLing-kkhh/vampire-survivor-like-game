@@ -1,29 +1,29 @@
-import Phaser from 'phaser';
+import type { Vector2 } from '../core/domain/Vector2';
 
 export interface CornerTrapInfo {
   active: boolean;
-  inwardDirection: Phaser.Math.Vector2;
+  inwardDirection: Vector2;
 }
 
 export interface MovementMemoryInfo {
   stalled: boolean;
   prolonged: boolean;
   stallMs: number;
-  anchor: Phaser.Math.Vector2;
+  anchor: Vector2;
   recentDisplacement: number;
 }
 
 export interface SurroundInfo {
   surrounded: boolean;
   blockedSectors: number;
-  safestDirection: Phaser.Math.Vector2;
+  safestDirection: Vector2;
   safestScore: number;
 }
 
 export interface KiteInfo {
   active: boolean;
-  direction: Phaser.Math.Vector2;
-  inwardDirection: Phaser.Math.Vector2;
+  direction: Vector2;
+  inwardDirection: Vector2;
   currentPressure: number;
   nearBorder: boolean;
   nearCorner: boolean;
@@ -31,7 +31,7 @@ export interface KiteInfo {
 
 export interface TerrainEscapeInfo {
   active: boolean;
-  direction: Phaser.Math.Vector2;
+  direction: Vector2;
   enemySectors: number;
   nearBorder: boolean;
   nearObstacle: boolean;
@@ -41,7 +41,7 @@ export interface TerrainEscapeInfo {
 export interface SegmentPointInfo {
   distance: number;
   t: number;
-  point: Phaser.Math.Vector2;
+  point: Vector2;
 }
 
 export interface EnemyMotionSnapshot {

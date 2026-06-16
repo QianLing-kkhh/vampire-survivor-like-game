@@ -1,11 +1,14 @@
 import { Enemy } from '../enemy/Enemy';
 import { CharacterRuntime } from '../character/CharacterRuntime';
 import type { AutoWeaponSnapshot, WeaponAutoContext } from '../auto/AutoPlayerTypes';
-import { PlayerController } from '../player/PlayerController';
+import type { PlayerQuery } from '../player/PlayerQuery';
 import { PlayerCombatModifierSnapshot } from '../player/PlayerStats';
 import { RunStats } from '../stats/RunStats';
+import type { WeaponTarget } from './WeaponTarget';
 
 import { DamageCalculator } from '../combat/DamageCalculator';
+import { EvolutionRule } from '../evolution/EvolutionRule';
+import { PassiveWeaponModifier } from '../passive/PassiveItem';
 import { Weapon, WeaponConfig, WeaponCooldownStatus, WeaponUpdateContext } from './Weapon';
 import { WeaponFactory } from './WeaponFactory';
 import { WeaponTag } from './tags/WeaponTag';
@@ -15,6 +18,11 @@ type ManagedWeapon = Weapon & {
   clearProjectiles?: () => void;
   getActiveProjectileCount?: () => number;
   setRuntimeDamageMultiplierProvider?: (provider: ((weaponId: string) => number) | undefined) => void;
+  setVisualTierProvider?: (provider: ((weaponId: string) => {
+    level?: number;
+    maxLevel?: number;
+    evolved?: boolean;
+  }) | undefined) => void;
 };
 
 type WeaponStat = 'damage'
@@ -94,22 +102,11 @@ export interface WeaponCharacterStatModifiers {
 export class WeaponManager {
   private static readonly DEFAULT_WEAPON_UPGRADE_LIMIT = 6;
   private static readonly EVOLVED_WEAPON_UPGRADE_LIMIT = 10;
-  private static readonly BASE_TO_EVOLVED_WEAPON_IDS = new Map([
-    ['knife', 'thousand_edge'],
-    ['bible', 'unholy_vespers'],
-    ['magic_wand', 'holy_wand'],
-    ['axe', 'death_spiral'],
-    ['garlic', 'soul_eater'],
-  ]);
-  private static readonly EVOLVED_TO_BASE_WEAPON_IDS = new Map(
-    Array.from(WeaponManager.BASE_TO_EVOLVED_WEAPON_IDS.entries())
-      .map(([baseWeaponId, evolvedWeaponId]) => [evolvedWeaponId, baseWeaponId]),
-  );
-  private static readonly EVOLVED_WEAPON_IDS = new Set(
-    WeaponManager.BASE_TO_EVOLVED_WEAPON_IDS.values(),
-  );
 
   private readonly weapons: ManagedWeapon[] = [];
+  private readonly baseToEvolvedWeaponIds: Map<string, string>;
+  private readonly evolvedToBaseWeaponIds: Map<string, string>;
+  private readonly evolvedWeaponIds: Set<string>;
   private readonly retiredWeaponDamageStats = new Map<string, number>();
   private readonly weaponUpgradeCounts = new Map<string, Map<string, number>>();
   private readonly evolvedBaseWeapons = new Map<string, string>();
@@ -117,6 +114,8 @@ export class WeaponManager {
     damageMultiplier: 1,
     cooldownMultiplier: 1,
     projectileSpeedMultiplier: 1,
+    knockbackPowerMultiplier: 1,
+    scopedWeaponModifiers: [] as PassiveWeaponModifier[],
   };
   private characterStatModifiers: WeaponCharacterStatModifiers = {
     damageMultiplier: 1,
@@ -141,7 +140,16 @@ export class WeaponManager {
   constructor(
     private readonly runStats?: RunStats,
     private readonly weaponFactory?: WeaponFactory,
-  ) {}
+    evolutionRules: readonly EvolutionRule[] = [],
+  ) {
+    this.baseToEvolvedWeaponIds = new Map(
+      evolutionRules.map((rule) => [rule.baseWeaponId, rule.evolvedWeaponId]),
+    );
+    this.evolvedToBaseWeaponIds = new Map(
+      evolutionRules.map((rule) => [rule.evolvedWeaponId, rule.baseWeaponId]),
+    );
+    this.evolvedWeaponIds = new Set(evolutionRules.map((rule) => rule.evolvedWeaponId));
+  }
 
   addWeapon(weapon: Weapon): void {
     if (this.runStats) {
@@ -149,6 +157,7 @@ export class WeaponManager {
     }
 
     weapon.setRuntimeDamageMultiplierProvider?.(this.relicDamageMultiplierProvider);
+    weapon.setVisualTierProvider?.(this.getVisualTierInput);
     weapon.setPassiveModifiers(this.getCombinedPassiveModifiers(weapon));
     this.weapons.push(weapon);
   }
@@ -167,8 +176,16 @@ export class WeaponManager {
     eliteDamageMultiplier?: number;
     cooldownMultiplier: number;
     projectileSpeedMultiplier: number;
+    knockbackPowerMultiplier?: number;
+    scopedWeaponModifiers?: PassiveWeaponModifier[];
   }): void {
-    this.passiveModifiers = modifiers;
+    this.passiveModifiers = {
+      damageMultiplier: modifiers.damageMultiplier,
+      cooldownMultiplier: modifiers.cooldownMultiplier,
+      projectileSpeedMultiplier: modifiers.projectileSpeedMultiplier,
+      knockbackPowerMultiplier: modifiers.knockbackPowerMultiplier ?? 1,
+      scopedWeaponModifiers: modifiers.scopedWeaponModifiers ?? [],
+    };
 
     this.applyCurrentPassiveModifiers();
   }
@@ -205,7 +222,7 @@ export class WeaponManager {
   }
 
   hasWeaponOrEvolution(baseWeaponId: string): boolean {
-    const evolvedWeaponId = WeaponManager.BASE_TO_EVOLVED_WEAPON_IDS.get(baseWeaponId);
+    const evolvedWeaponId = this.baseToEvolvedWeaponIds.get(baseWeaponId);
 
     return this.hasWeapon(baseWeaponId)
       || this.isBaseWeaponEvolved(baseWeaponId)
@@ -265,7 +282,7 @@ export class WeaponManager {
     return this.weapons.map((weapon) => {
       const baseWeaponId = this.getBaseWeaponId(weapon.id);
       const evolutionRule = params.getRequiredPassiveForWeapon(baseWeaponId);
-      const evolved = WeaponManager.EVOLVED_WEAPON_IDS.has(weapon.id);
+      const evolved = this.evolvedWeaponIds.has(weapon.id);
       const weaponLevel = this.getWeaponUpgradeTotal(baseWeaponId);
       const passiveLevel = evolutionRule
         ? params.getPassiveLevel(evolutionRule.requiredPassiveId)
@@ -330,7 +347,7 @@ export class WeaponManager {
         displayWeaponId: weapon.id,
         displayName: this.formatWeaponName(weapon.id),
         iconKey: this.getWeaponIconKey(weapon.id),
-        evolved: WeaponManager.EVOLVED_WEAPON_IDS.has(weapon.id),
+        evolved: this.evolvedWeaponIds.has(weapon.id),
         level: this.getWeaponUpgradeTotal(baseWeaponId),
         maxLevel: this.getWeaponUpgradeLimit(baseWeaponId),
         requiredPassiveId: rule?.requiredPassiveId,
@@ -577,19 +594,21 @@ export class WeaponManager {
   }
 
   update(
-    player: PlayerController,
+    player: PlayerQuery,
     enemies: readonly Enemy[],
     deltaMs: number,
     characterRuntime?: CharacterRuntime,
     isProjectilePathBlocked?: WeaponUpdateContext['isProjectilePathBlocked'],
   ): void {
     this.refreshEndlessDamageMultiplier();
-    const activeEnemies = enemies.filter((enemy) => !enemy.isDead);
+    const activeEnemies = enemies.filter((enemy) => enemy.isAlive());
+    const enemyTargets: readonly WeaponTarget[] = activeEnemies;
 
     for (const weapon of this.weapons) {
       weapon.update({
-        player: player.body,
+        player,
         enemies: activeEnemies,
+        enemyTargets,
         deltaMs,
         characterRuntime,
         isProjectilePathBlocked,
@@ -643,15 +662,58 @@ export class WeaponManager {
     return {
       damageMultiplier: this.passiveModifiers.damageMultiplier
         * this.currentEndlessDamageMultiplier
-        * this.getCharacterTagDamageMultiplier(weapon),
+        * this.getCharacterTagDamageMultiplier(weapon)
+        * this.getScopedPassiveMultiplier(weapon, 'damageMultiplier'),
       bossDamageMultiplier: this.characterStatModifiers.bossDamageMultiplier,
       eliteDamageMultiplier: this.characterStatModifiers.eliteDamageMultiplier,
       cooldownMultiplier: this.passiveModifiers.cooldownMultiplier
-        * this.characterStatModifiers.cooldownMultiplier,
+        * this.characterStatModifiers.cooldownMultiplier
+        * this.getScopedPassiveMultiplier(weapon, 'cooldownMultiplier'),
       projectileSpeedMultiplier: this.passiveModifiers.projectileSpeedMultiplier
-        * this.characterStatModifiers.projectileSpeedMultiplier,
-      knockbackPowerMultiplier: this.characterStatModifiers.knockbackPowerMultiplier,
+        * this.characterStatModifiers.projectileSpeedMultiplier
+        * this.getScopedPassiveMultiplier(weapon, 'projectileSpeedMultiplier'),
+      knockbackPowerMultiplier: this.characterStatModifiers.knockbackPowerMultiplier
+        * this.passiveModifiers.knockbackPowerMultiplier
+        * this.getScopedPassiveMultiplier(weapon, 'knockbackPowerMultiplier'),
     };
+  }
+
+  private getScopedPassiveMultiplier(
+    weapon: ManagedWeapon,
+    field: 'damageMultiplier'
+      | 'cooldownMultiplier'
+      | 'projectileSpeedMultiplier'
+      | 'knockbackPowerMultiplier',
+  ): number {
+    const config = (weapon as unknown as { config?: WeaponConfig } | undefined)?.config;
+    const baseWeaponId = this.getBaseWeaponId(weapon.id);
+    let multiplier = 1;
+
+    for (const modifier of this.passiveModifiers.scopedWeaponModifiers) {
+      if (!this.isPassiveScopeMatch(modifier, baseWeaponId, config?.tags ?? [])) {
+        continue;
+      }
+
+      multiplier *= modifier[field] ?? 1;
+    }
+
+    return multiplier;
+  }
+
+  private isPassiveScopeMatch(
+    modifier: PassiveWeaponModifier,
+    baseWeaponId: string,
+    tags: readonly WeaponTag[],
+  ): boolean {
+    if (modifier.scope.all) {
+      return true;
+    }
+
+    if (modifier.scope.weaponIds?.includes(baseWeaponId)) {
+      return true;
+    }
+
+    return modifier.scope.tags?.some((tag) => tags.includes(tag as WeaponTag)) ?? false;
   }
 
   private getCharacterTagDamageMultiplier(weapon: ManagedWeapon): number {
@@ -662,6 +724,18 @@ export class WeaponManager {
       this.characterStatModifiers,
     );
   }
+
+  private getVisualTierInput = (
+    weaponId: string,
+  ): { level?: number; maxLevel?: number; evolved?: boolean } => {
+    const baseWeaponId = this.getBaseWeaponId(weaponId);
+
+    return {
+      level: this.getWeaponUpgradeTotal(baseWeaponId),
+      maxLevel: this.getWeaponUpgradeLimit(baseWeaponId),
+      evolved: this.evolvedWeaponIds.has(weaponId),
+    };
+  };
 
   private recordWeaponUpgrade(weaponId: string, upgradeId: string): void {
     const baseWeaponId = this.getBaseWeaponId(weaponId);
@@ -681,7 +755,7 @@ export class WeaponManager {
     const weaponCounts = this.weaponUpgradeCounts.get(baseWeaponId);
     const total = this.getWeaponUpgradeTotal(baseWeaponId);
     const limit = this.getWeaponUpgradeLimit(baseWeaponId);
-    const state = WeaponManager.EVOLVED_WEAPON_IDS.has(weaponId) ? 'Evolved' : 'Base';
+    const state = this.evolvedWeaponIds.has(weaponId) ? 'Evolved' : 'Base';
 
     if (!weaponCounts || weaponCounts.size === 0) {
       return `Total Lv.${total} / ${limit} / ${state}`;
@@ -746,13 +820,13 @@ export class WeaponManager {
   }
 
   getBaseWeaponIdForUpgrade(upgradeId: string): string | undefined {
-    return Array.from(WeaponManager.BASE_TO_EVOLVED_WEAPON_IDS.keys()).find((weaponId) => (
+    return this.getKnownBaseWeaponIds().find((weaponId) => (
       this.getUpgradeCategory(weaponId, upgradeId) !== undefined
     ));
   }
 
   getBaseWeaponId(weaponId: string): string {
-    return WeaponManager.EVOLVED_TO_BASE_WEAPON_IDS.get(weaponId) ?? weaponId;
+    return this.evolvedToBaseWeaponIds.get(weaponId) ?? weaponId;
   }
 
   private applyUpgradeToTarget(
@@ -792,6 +866,13 @@ export class WeaponManager {
     const mutableWeapon = weapon as unknown as {
       increaseDamage?: (percent: number) => void;
       reduceCooldown?: (percent: number, minimumCooldown: number) => void;
+      increaseRadius?: (percent: number) => void;
+      radius?: number;
+      auraBody?: { setRadius: (radius: number) => void };
+      radiusPixels?: number;
+      orbitProjectileCount?: number;
+      orbitSpeedDegreesPerSecond?: number;
+      rebuildProjectiles?: () => void;
       config?: {
         projectileCount?: number;
       };
@@ -810,6 +891,45 @@ export class WeaponManager {
       }
 
       mutableWeapon.reduceCooldown(0.1, minimumCooldown);
+      return true;
+    }
+
+    if (upgradeId === `${baseWeaponId}_radius_up` && mutableWeapon.increaseRadius) {
+      mutableWeapon.increaseRadius(0.1);
+      mutableWeapon.radius = Math.min(mutableWeapon.radius ?? 0, 6.2);
+      if (mutableWeapon.radiusPixels) {
+        mutableWeapon.auraBody?.setRadius(mutableWeapon.radiusPixels);
+      }
+      return true;
+    }
+
+    if (
+      upgradeId === `${baseWeaponId}_orbit_speed_up`
+      && typeof mutableWeapon.orbitSpeedDegreesPerSecond === 'number'
+    ) {
+      mutableWeapon.orbitSpeedDegreesPerSecond = Math.min(
+        mutableWeapon.orbitSpeedDegreesPerSecond * 1.1,
+        420,
+      );
+      return true;
+    }
+
+    if (
+      upgradeId === `${baseWeaponId}_orbit_count_up`
+      && typeof mutableWeapon.orbitProjectileCount === 'number'
+    ) {
+      const maximumOrbitCount = this.getMaximumProjectileCountForWeapon(baseWeaponId) ?? 6;
+
+      if (mutableWeapon.orbitProjectileCount >= maximumOrbitCount) {
+        console.warn(`${this.formatWeaponName(baseWeaponId)} orbit count is already at the maximum`);
+        return false;
+      }
+
+      mutableWeapon.orbitProjectileCount = Math.min(
+        mutableWeapon.orbitProjectileCount + 1,
+        maximumOrbitCount,
+      );
+      mutableWeapon.rebuildProjectiles?.();
       return true;
     }
 
@@ -848,7 +968,7 @@ export class WeaponManager {
       case 'axe':
         return 0.6;
       default:
-        return undefined;
+        return 0.25;
     }
   }
 
@@ -858,7 +978,7 @@ export class WeaponManager {
       case 'axe':
         return 4;
       default:
-        return undefined;
+        return 6;
     }
   }
 
@@ -930,6 +1050,20 @@ export class WeaponManager {
       default:
         return undefined;
     }
+  }
+
+  private getKnownBaseWeaponIds(): string[] {
+    const weaponIds = new Set<string>();
+
+    for (const weapon of this.weapons) {
+      weaponIds.add(this.getBaseWeaponId(weapon.id));
+    }
+
+    for (const baseWeaponId of this.baseToEvolvedWeaponIds.keys()) {
+      weaponIds.add(baseWeaponId);
+    }
+
+    return [...weaponIds];
   }
 
   private hasOrbitCount(

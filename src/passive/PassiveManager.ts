@@ -2,7 +2,13 @@ import { PlayerHealth } from '../player/PlayerHealth';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
 
-import { PassiveEffects, PassiveItem, PassiveLevel } from './PassiveItem';
+import {
+  PassiveEffectDefinition,
+  PassiveEffects,
+  PassiveItem,
+  PassiveLevel,
+  PassiveWeaponModifier,
+} from './PassiveItem';
 
 export interface PassiveDetailInfo {
   passiveId: string;
@@ -13,12 +19,6 @@ export interface PassiveDetailInfo {
   effectLabel: string;
   effectValue: string;
   relatedWeaponIds: string[];
-}
-
-export interface PassiveEffectScope {
-  all?: boolean;
-  tags?: string[];
-  weaponIds?: string[];
 }
 
 export class PassiveManager {
@@ -136,12 +136,28 @@ export class PassiveManager {
   }
 
   getEffects(): PassiveEffects {
-    return {
+    const effects: PassiveEffects = {
       damageMultiplier: 1 + this.getLevel('spinach') * 0.10,
       cooldownMultiplier: Math.max(0.1, 1 - this.getLevel('empty_tome') * 0.08),
       projectileSpeedMultiplier: 1 + this.getLevel('bracer') * 0.15,
+      knockbackPowerMultiplier: 1,
       treasureDropBonus: this.getLevel('clover') * 0.01,
+      scopedWeaponModifiers: [],
     };
+
+    for (const passive of this.passives) {
+      const level = this.getLevel(passive.id);
+
+      if (level <= 0 || !passive.effects) {
+        continue;
+      }
+
+      for (const effect of passive.effects) {
+        this.applyDataDrivenEffect(effects, effect, level);
+      }
+    }
+
+    return effects;
   }
 
   getPreview(passiveId: string): string | undefined {
@@ -185,7 +201,7 @@ export class PassiveManager {
       case 'pummarola':
         return `Heal ${currentLevel} \u2192 ${nextLevel} HP / 5s`;
       default:
-        return '';
+        return this.getDataDrivenEffectPreview(passiveId, currentLevel, nextLevel);
     }
   }
 
@@ -220,11 +236,138 @@ export class PassiveManager {
           effectValue: `${level} HP / 5s`,
         };
       default:
-        return {
-          effectLabel: 'Effect',
-          effectValue: '',
-        };
+        return this.getDataDrivenEffectDetail(passiveId, level);
     }
+  }
+
+  private applyDataDrivenEffect(
+    effects: PassiveEffects,
+    effect: PassiveEffectDefinition,
+    level: number,
+  ): void {
+    const effectValue = this.getEffectValue(effect, level);
+    const scope = effect.scope;
+
+    if (scope && !scope.all && ((scope.tags?.length ?? 0) > 0 || (scope.weaponIds?.length ?? 0) > 0)) {
+      const scopedModifier: PassiveWeaponModifier = {
+        scope,
+      };
+
+      this.assignMultiplier(scopedModifier, effect.stat, effectValue);
+      effects.scopedWeaponModifiers.push(scopedModifier);
+      return;
+    }
+
+    switch (effect.stat) {
+      case 'damageMultiplier':
+        effects.damageMultiplier *= effectValue;
+        break;
+      case 'cooldownMultiplier':
+        effects.cooldownMultiplier = Math.max(0.1, effects.cooldownMultiplier * effectValue);
+        break;
+      case 'projectileSpeedMultiplier':
+        effects.projectileSpeedMultiplier *= effectValue;
+        break;
+      case 'knockbackPowerMultiplier':
+        effects.knockbackPowerMultiplier *= effectValue;
+        break;
+      case 'treasureDropBonus':
+        effects.treasureDropBonus += effect.valuePerLevel * level;
+        break;
+      default:
+        break;
+    }
+  }
+
+  private assignMultiplier(
+    target: PassiveWeaponModifier,
+    stat: PassiveEffectDefinition['stat'],
+    value: number,
+  ): void {
+    switch (stat) {
+      case 'damageMultiplier':
+        target.damageMultiplier = value;
+        break;
+      case 'cooldownMultiplier':
+        target.cooldownMultiplier = value;
+        break;
+      case 'projectileSpeedMultiplier':
+        target.projectileSpeedMultiplier = value;
+        break;
+      case 'knockbackPowerMultiplier':
+        target.knockbackPowerMultiplier = value;
+        break;
+      default:
+        break;
+    }
+  }
+
+  private getEffectValue(effect: PassiveEffectDefinition, level: number): number {
+    if (effect.operation === 'multiply') {
+      return Math.pow(1 + effect.valuePerLevel, level);
+    }
+
+    return 1 + effect.valuePerLevel * level;
+  }
+
+  private getDataDrivenEffectPreview(
+    passiveId: string,
+    currentLevel: number,
+    nextLevel: number,
+  ): string {
+    const passive = this.getPassive(passiveId);
+    const effect = passive?.effects?.[0];
+
+    if (!effect) {
+      return '';
+    }
+
+    return `${this.formatEffectStat(effect.stat)} ${this.formatEffectForLevel(effect, currentLevel)} \u2192 ${this.formatEffectForLevel(effect, nextLevel)}`;
+  }
+
+  private getDataDrivenEffectDetail(
+    passiveId: string,
+    level: number,
+  ): { effectLabel: string; effectValue: string } {
+    const passive = this.getPassive(passiveId);
+    const effect = passive?.effects?.[0];
+
+    if (!effect) {
+      return {
+        effectLabel: 'Effect',
+        effectValue: '',
+      };
+    }
+
+    return {
+      effectLabel: this.formatEffectStat(effect.stat),
+      effectValue: this.formatEffectForLevel(effect, level),
+    };
+  }
+
+  private formatEffectStat(stat: PassiveEffectDefinition['stat']): string {
+    switch (stat) {
+      case 'damageMultiplier':
+        return 'Damage Multiplier';
+      case 'cooldownMultiplier':
+        return 'Cooldown Multiplier';
+      case 'projectileSpeedMultiplier':
+        return 'Projectile Speed';
+      case 'knockbackPowerMultiplier':
+        return 'Knockback Power';
+      case 'treasureDropBonus':
+        return 'Chest Drop Bonus';
+      default:
+        return 'Effect';
+    }
+  }
+
+  private formatEffectForLevel(effect: PassiveEffectDefinition, level: number): string {
+    if (effect.stat === 'treasureDropBonus') {
+      return this.formatPercent(effect.valuePerLevel * level);
+    }
+
+    return this.formatMultiplier(this.getEffectValue(effect, level));
   }
 
   private getPassiveIconKey(passiveId: string): string {

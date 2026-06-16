@@ -25,33 +25,46 @@ export type MapMechanicVisualKind =
   | 'river'
   | 'swamp'
   | 'mud'
+  | 'ink'
   | 'portalBlue'
   | 'portalPurple'
   | 'portalGreen'
+  | 'portalGold'
   | 'lightLamp'
   | 'lightTorch'
   | 'lightCrystal'
+  | 'lightCandle'
+  | 'lightArcaneLamp'
   | 'obstacleTree'
   | 'obstacleRock'
   | 'obstacleGrave'
   | 'obstacleWall'
+  | 'obstacleCathedralWall'
+  | 'obstacleCathedralPillar'
+  | 'obstacleBookshelf'
+  | 'obstacleArchivePillar'
   | 'hazardSpike'
   | 'hazardFire'
   | 'hazardPoison'
   | 'altar'
+  | 'altarCathedral'
+  | 'altarLibrary'
   | 'spawner';
 
 export type MapMechanicIconKind =
   | 'river'
   | 'swamp'
   | 'mud'
+  | 'ink'
   | 'portalBlue'
   | 'portalPurple'
   | 'portalGreen'
+  | 'portalGold'
   | 'light'
   | 'obstacle'
   | 'hazard'
   | 'altar'
+  | 'altarLibrary'
   | 'spawner';
 
 export const PLAYER_DIRECTIONS_8: readonly PlayerDirection8[] = [
@@ -70,6 +83,16 @@ export const PLAYER_SKIN_IDS = [
   'witch_default',
   'priest_default',
   'warrior_default',
+  'arcanist_default',
+  'ranger_default',
+  'engineer_default',
+  'necromancer_default',
+  'monk_default',
+  'alchemist_default',
+  'duelist_default',
+  'geomancer_default',
+  'stormcaller_default',
+  'sentinel_default',
 ] as const;
 
 export type PlayerSkinId = typeof PLAYER_SKIN_IDS[number];
@@ -102,6 +125,72 @@ export const PLAYER_SKIN_IMAGE_KEYS: readonly string[] = [
   'art_player_priest_default_sanctuary_circle',
   'art_player_warrior_default_counter_wave',
 ];
+
+const ADDITIONAL_WEAPON_IDS = [
+  'runic_orb',
+  'astral_core',
+  'moon_bow',
+  'eclipse_barrage',
+  'clockwork_saw',
+  'gearstorm',
+  'bone_spear',
+  'ossuary_lance',
+  'spirit_fist',
+  'enlightened_palm',
+  'acid_vial',
+  'plague_crucible',
+  'rapier_flurry',
+  'crimson_flurry',
+  'stone_ring',
+  'tectonic_crown',
+  'thunder_javelin',
+  'tempest_lance',
+  'shield_disc',
+  'aegis_maelstrom',
+] as const;
+
+const ADDITIONAL_PASSIVE_IDS = [
+  'focus_lens',
+  'hunter_quiver',
+  'cogwheel',
+  'grave_charm',
+  'prayer_beads',
+  'glass_flask',
+  'duelist_glove',
+  'granite_core',
+  'storm_battery',
+  'iron_sigil',
+] as const;
+
+const createTieredWeaponEntry = (weaponId: string): WeaponAssetEntry => ({
+  projectileTexture: {
+    primary: `art_weapons_${weaponId}_projectile_tier1_sheet`,
+    fallbacks: ['art_weapons_knife_projectile_sheet', 'knife_projectile'],
+  },
+  projectileAnimation: {
+    primary: `art_weapons_${weaponId}_projectile_tier1_sheet_anim`,
+    fallbacks: ['art_knife_projectile_spin'],
+  },
+  icon: {
+    primary: `art_weapons_${weaponId}_icon_tier1`,
+    fallbacks: ['art_weapons_knife_projectile_sheet', 'knife_icon'],
+  },
+});
+
+const ADDITIONAL_WEAPON_ASSET_ENTRIES = Object.fromEntries(
+  ADDITIONAL_WEAPON_IDS.map((weaponId) => [weaponId, createTieredWeaponEntry(weaponId)]),
+) as Record<typeof ADDITIONAL_WEAPON_IDS[number], WeaponAssetEntry>;
+
+const ADDITIONAL_PASSIVE_ASSET_ENTRIES = ADDITIONAL_PASSIVE_IDS.reduce(
+  (entries, passiveId) => {
+    entries[passiveId] = {
+      primary: `art_passives_${passiveId}_icon_tier1`,
+      fallbacks: ['art_passives_spinach_icon', 'spinach_icon'],
+    };
+    return entries;
+  },
+  {} as Record<typeof ADDITIONAL_PASSIVE_IDS[number], AssetKeyEntry>,
+);
 
 const createPlayerAnimationMap = (
   state: PlayerAnimationState,
@@ -141,28 +230,36 @@ export const DEFAULT_ASSET_KEY_MAP = {
       animation: { primary: 'art_golem_walk' },
     },
     slime_boss: {
-      texture: { primary: 'slime_boss', fallbacks: ['art_enemies_slime_boss_placeholder'] },
+      texture: { primary: 'art_enemies_slime_boss_idle_sheet', fallbacks: ['art_enemies_slime_boss_placeholder'] },
+      animation: { primary: 'art_enemies_slime_boss_idle_sheet_anim' },
     },
     bat_boss: {
-      texture: { primary: 'bat_boss', fallbacks: ['art_enemies_bat_boss_placeholder'] },
+      texture: { primary: 'art_enemies_bat_boss_idle_sheet', fallbacks: ['art_enemies_bat_boss_placeholder'] },
+      animation: { primary: 'art_enemies_bat_boss_idle_sheet_anim' },
     },
     golem_boss: {
-      texture: { primary: 'golem_boss', fallbacks: ['art_enemies_golem_boss_placeholder'] },
+      texture: { primary: 'art_enemies_golem_boss_idle_sheet', fallbacks: ['art_enemies_golem_boss_placeholder'] },
+      animation: { primary: 'art_enemies_golem_boss_idle_sheet_anim' },
     },
     endless_berserker: {
-      texture: { primary: 'bat_boss', fallbacks: ['art_enemies_bat_boss_placeholder'] },
+      texture: { primary: 'art_enemies_endless_berserker_idle_sheet', fallbacks: ['art_enemies_bat_boss_idle_sheet', 'art_enemies_bat_boss_placeholder'] },
+      animation: { primary: 'art_enemies_endless_berserker_idle_sheet_anim' },
     },
     endless_summoner: {
-      texture: { primary: 'slime_boss', fallbacks: ['art_enemies_slime_boss_placeholder'] },
+      texture: { primary: 'art_enemies_endless_summoner_idle_sheet', fallbacks: ['art_enemies_slime_boss_idle_sheet', 'art_enemies_slime_boss_placeholder'] },
+      animation: { primary: 'art_enemies_endless_summoner_idle_sheet_anim' },
     },
     endless_freezer: {
-      texture: { primary: 'golem_boss', fallbacks: ['art_enemies_golem_boss_placeholder'] },
+      texture: { primary: 'art_enemies_endless_freezer_idle_sheet', fallbacks: ['art_enemies_golem_boss_idle_sheet', 'art_enemies_golem_boss_placeholder'] },
+      animation: { primary: 'art_enemies_endless_freezer_idle_sheet_anim' },
     },
     endless_sniper: {
-      texture: { primary: 'bat_boss', fallbacks: ['art_enemies_bat_boss_placeholder'] },
+      texture: { primary: 'art_enemies_endless_sniper_idle_sheet', fallbacks: ['art_enemies_bat_boss_idle_sheet', 'art_enemies_bat_boss_placeholder'] },
+      animation: { primary: 'art_enemies_endless_sniper_idle_sheet_anim' },
     },
     endless_tanker: {
-      texture: { primary: 'golem_boss', fallbacks: ['art_enemies_golem_boss_placeholder'] },
+      texture: { primary: 'art_enemies_endless_tanker_idle_sheet', fallbacks: ['art_enemies_golem_boss_idle_sheet', 'art_enemies_golem_boss_placeholder'] },
+      animation: { primary: 'art_enemies_endless_tanker_idle_sheet_anim' },
     },
     boss: {
       texture: {
@@ -174,89 +271,106 @@ export const DEFAULT_ASSET_KEY_MAP = {
   },
   weapons: {
     knife: {
-      projectileTexture: { primary: 'art_weapons_knife_projectile_sheet', fallbacks: ['knife_projectile'] },
-      projectileAnimation: { primary: 'art_knife_projectile_spin' },
-      icon: { primary: 'art_weapons_knife_projectile_sheet', fallbacks: ['knife_icon', 'knife_projectile'] },
+      projectileTexture: {
+        primary: 'art_weapons_knife_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_knife_projectile_sheet', 'knife_projectile'],
+      },
+      projectileAnimation: { primary: 'art_weapons_knife_projectile_tier1_sheet_anim', fallbacks: ['art_knife_projectile_spin'] },
+      icon: { primary: 'art_weapons_knife_icon_tier1', fallbacks: ['art_weapons_knife_projectile_sheet', 'knife_icon', 'knife_projectile'] },
     },
     garlic: {
-      projectileTexture: { primary: 'art_weapons_garlic_core_sheet', fallbacks: ['garlic_icon'] },
-      projectileAnimation: { primary: 'art_garlic_core' },
-      icon: { primary: 'art_weapons_garlic_core_sheet', fallbacks: ['garlic_icon'] },
+      projectileTexture: {
+        primary: 'art_weapons_garlic_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_garlic_core_sheet', 'garlic_icon'],
+      },
+      projectileAnimation: { primary: 'art_weapons_garlic_projectile_tier1_sheet_anim', fallbacks: ['art_garlic_core'] },
+      icon: { primary: 'art_weapons_garlic_icon_tier1', fallbacks: ['art_weapons_garlic_core_sheet', 'garlic_icon'] },
     },
     bible: {
       projectileTexture: {
-        primary: 'art_weapons_bible_orbit_book_sheet',
-        fallbacks: ['bible_orbit_projectile'],
+        primary: 'art_weapons_bible_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_bible_orbit_book_sheet', 'bible_orbit_projectile'],
       },
-      projectileAnimation: { primary: 'art_bible_orbit_book_spin' },
-      icon: { primary: 'art_weapons_bible_orbit_book_sheet', fallbacks: ['bible_icon', 'bible_orbit_projectile'] },
+      projectileAnimation: { primary: 'art_weapons_bible_projectile_tier1_sheet_anim', fallbacks: ['art_bible_orbit_book_spin'] },
+      icon: { primary: 'art_weapons_bible_icon_tier1', fallbacks: ['art_weapons_bible_orbit_book_sheet', 'bible_icon', 'bible_orbit_projectile'] },
     },
     magic_wand: {
       projectileTexture: {
-        primary: 'art_weapons_magic_wand_projectile_sheet',
-        fallbacks: ['magic_wand_projectile'],
+        primary: 'art_weapons_magic_wand_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_magic_wand_projectile_sheet', 'magic_wand_projectile'],
       },
-      projectileAnimation: { primary: 'art_magic_wand_projectile' },
-      icon: { primary: 'art_weapons_magic_wand_icon', fallbacks: ['magic_wand_icon', 'magic_wand_projectile'] },
+      projectileAnimation: { primary: 'art_weapons_magic_wand_projectile_tier1_sheet_anim', fallbacks: ['art_magic_wand_projectile'] },
+      icon: { primary: 'art_weapons_magic_wand_icon_tier1', fallbacks: ['art_weapons_magic_wand_icon', 'magic_wand_icon', 'magic_wand_projectile'] },
     },
     axe: {
-      projectileTexture: { primary: 'art_weapons_axe_projectile_sheet', fallbacks: ['axe_projectile'] },
-      projectileAnimation: { primary: 'art_axe_projectile_spin' },
-      icon: { primary: 'art_weapons_axe_icon', fallbacks: ['axe_icon', 'axe_projectile'] },
+      projectileTexture: {
+        primary: 'art_weapons_axe_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_axe_projectile_sheet', 'axe_projectile'],
+      },
+      projectileAnimation: { primary: 'art_weapons_axe_projectile_tier1_sheet_anim', fallbacks: ['art_axe_projectile_spin'] },
+      icon: { primary: 'art_weapons_axe_icon_tier1', fallbacks: ['art_weapons_axe_icon', 'axe_icon', 'axe_projectile'] },
     },
     thousand_edge: {
       projectileTexture: {
-        primary: 'art_weapons_thousand_edge_projectile_sheet',
-        fallbacks: ['thousand_edge_projectile'],
+        primary: 'art_weapons_thousand_edge_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_thousand_edge_projectile_sheet', 'thousand_edge_projectile'],
       },
-      projectileAnimation: { primary: 'art_thousand_edge_projectile_spin', fallbacks: ['art_knife_projectile_spin'] },
+      projectileAnimation: {
+        primary: 'art_weapons_thousand_edge_projectile_tier1_sheet_anim',
+        fallbacks: ['art_thousand_edge_projectile_spin', 'art_knife_projectile_spin'],
+      },
       icon: {
-        primary: 'art_weapons_thousand_edge_icon',
-        fallbacks: ['thousand_edge_icon', 'thousand_edge_projectile'],
+        primary: 'art_weapons_thousand_edge_icon_tier1',
+        fallbacks: ['art_weapons_thousand_edge_icon', 'thousand_edge_icon', 'thousand_edge_projectile'],
       },
     },
     holy_wand: {
       projectileTexture: {
-        primary: 'art_weapons_holy_wand_projectile_sheet',
-        fallbacks: ['holy_wand_projectile'],
+        primary: 'art_weapons_holy_wand_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_holy_wand_projectile_sheet', 'holy_wand_projectile'],
       },
-      projectileAnimation: { primary: 'art_holy_wand_projectile' },
-      icon: { primary: 'art_weapons_holy_wand_icon', fallbacks: ['holy_wand_icon', 'holy_wand_projectile'] },
+      projectileAnimation: { primary: 'art_weapons_holy_wand_projectile_tier1_sheet_anim', fallbacks: ['art_holy_wand_projectile'] },
+      icon: { primary: 'art_weapons_holy_wand_icon_tier1', fallbacks: ['art_weapons_holy_wand_icon', 'holy_wand_icon', 'holy_wand_projectile'] },
     },
     death_spiral: {
       projectileTexture: {
-        primary: 'art_weapons_death_spiral_projectile_sheet',
-        fallbacks: ['death_spiral_projectile'],
+        primary: 'art_weapons_death_spiral_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_death_spiral_projectile_sheet', 'death_spiral_projectile'],
       },
-      projectileAnimation: { primary: 'art_death_spiral_projectile_spin' },
+      projectileAnimation: { primary: 'art_weapons_death_spiral_projectile_tier1_sheet_anim', fallbacks: ['art_death_spiral_projectile_spin'] },
       icon: {
-        primary: 'art_weapons_death_spiral_icon',
-        fallbacks: ['death_spiral_icon', 'death_spiral_projectile'],
+        primary: 'art_weapons_death_spiral_icon_tier1',
+        fallbacks: ['art_weapons_death_spiral_icon', 'death_spiral_icon', 'death_spiral_projectile'],
       },
     },
     unholy_vespers: {
       projectileTexture: {
-        primary: 'art_weapons_unholy_vespers_orbit_book_sheet',
-        fallbacks: ['unholy_vespers_orbit_book'],
+        primary: 'art_weapons_unholy_vespers_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_unholy_vespers_orbit_book_sheet', 'unholy_vespers_orbit_book'],
       },
-      projectileAnimation: { primary: 'art_unholy_vespers_orbit_book_spin' },
+      projectileAnimation: { primary: 'art_weapons_unholy_vespers_projectile_tier1_sheet_anim', fallbacks: ['art_unholy_vespers_orbit_book_spin'] },
       icon: {
-        primary: 'art_weapons_unholy_vespers_icon',
-        fallbacks: ['unholy_vespers_icon', 'unholy_vespers_orbit_book'],
+        primary: 'art_weapons_unholy_vespers_icon_tier1',
+        fallbacks: ['art_weapons_unholy_vespers_icon', 'unholy_vespers_icon', 'unholy_vespers_orbit_book'],
       },
     },
     soul_eater: {
-      projectileTexture: { primary: 'art_weapons_soul_eater_core_sheet', fallbacks: ['soul_eater_core'] },
-      projectileAnimation: { primary: 'art_soul_eater_core' },
-      icon: { primary: 'art_weapons_soul_eater_icon', fallbacks: ['soul_eater_icon', 'soul_eater_core'] },
+      projectileTexture: {
+        primary: 'art_weapons_soul_eater_projectile_tier1_sheet',
+        fallbacks: ['art_weapons_soul_eater_core_sheet', 'soul_eater_core'],
+      },
+      projectileAnimation: { primary: 'art_weapons_soul_eater_projectile_tier1_sheet_anim', fallbacks: ['art_soul_eater_core'] },
+      icon: { primary: 'art_weapons_soul_eater_icon_tier1', fallbacks: ['art_weapons_soul_eater_icon', 'soul_eater_icon', 'soul_eater_core'] },
     },
+    ...ADDITIONAL_WEAPON_ASSET_ENTRIES,
   } satisfies Record<string, WeaponAssetEntry>,
   passives: {
-    spinach: { primary: 'art_passives_spinach_icon', fallbacks: ['spinach_icon'] },
-    empty_tome: { primary: 'art_passives_empty_tome_icon', fallbacks: ['empty_tome_icon'] },
-    bracer: { primary: 'art_passives_bracer_icon', fallbacks: ['bracer_icon'] },
-    clover: { primary: 'art_passives_clover_icon', fallbacks: ['clover_icon'] },
-    pummarola: { primary: 'art_passives_pummarola_icon', fallbacks: ['pummarola_icon'] },
+    spinach: { primary: 'art_passives_spinach_icon_tier1', fallbacks: ['art_passives_spinach_icon', 'spinach_icon'] },
+    empty_tome: { primary: 'art_passives_empty_tome_icon_tier1', fallbacks: ['art_passives_empty_tome_icon', 'empty_tome_icon'] },
+    bracer: { primary: 'art_passives_bracer_icon_tier1', fallbacks: ['art_passives_bracer_icon', 'bracer_icon'] },
+    clover: { primary: 'art_passives_clover_icon_tier1', fallbacks: ['art_passives_clover_icon', 'clover_icon'] },
+    pummarola: { primary: 'art_passives_pummarola_icon_tier1', fallbacks: ['art_passives_pummarola_icon', 'pummarola_icon'] },
+    ...ADDITIONAL_PASSIVE_ASSET_ENTRIES,
   },
   pickups: {
     exp_gem: { primary: 'art_pickups_exp_gem', fallbacks: ['exp_gem'] },
@@ -279,6 +393,34 @@ export const DEFAULT_ASSET_KEY_MAP = {
     ruins_ground_tile: {
       primary: 'art_world_ruins_ground_tile',
       fallbacks: ['art_world_ground_tile'],
+    },
+    cathedral_ground_tile: {
+      primary: 'art_world_cathedral_ground_tile',
+      fallbacks: ['art_world_ruins_ground_tile', 'art_world_ground_tile'],
+    },
+    library_ground_tile: {
+      primary: 'art_world_library_ground_tile',
+      fallbacks: ['art_world_cathedral_ground_tile', 'art_world_ruins_ground_tile', 'art_world_ground_tile'],
+    },
+    desert_ground_tile: {
+      primary: 'art_world_desert_ground_tile',
+      fallbacks: ['art_world_ground_tile'],
+    },
+    coast_ground_tile: {
+      primary: 'art_world_coast_ground_tile',
+      fallbacks: ['art_world_swamp_ground_tile', 'art_world_ground_tile'],
+    },
+    bastion_ground_tile: {
+      primary: 'art_world_bastion_ground_tile',
+      fallbacks: ['art_world_ruins_ground_tile', 'art_world_ground_tile'],
+    },
+    fungal_ground_tile: {
+      primary: 'art_world_fungal_ground_tile',
+      fallbacks: ['art_world_swamp_ground_tile', 'art_world_ground_tile'],
+    },
+    mirror_ground_tile: {
+      primary: 'art_world_mirror_ground_tile',
+      fallbacks: ['art_world_library_ground_tile', 'art_world_ruins_ground_tile', 'art_world_ground_tile'],
     },
   },
   effects: {
@@ -303,33 +445,46 @@ export const DEFAULT_ASSET_KEY_MAP = {
       river: { primary: 'art_map_mechanics_river_tile' },
       swamp: { primary: 'art_map_mechanics_swamp_pool' },
       mud: { primary: 'art_map_mechanics_mud_patch' },
+      ink: { primary: 'art_map_mechanics_ink_pool', fallbacks: ['art_map_mechanics_mud_patch'] },
       portalBlue: { primary: 'art_map_mechanics_portal_blue' },
       portalPurple: { primary: 'art_map_mechanics_portal_purple' },
       portalGreen: { primary: 'art_map_mechanics_portal_green' },
+      portalGold: { primary: 'art_map_mechanics_portal_gold', fallbacks: ['art_map_mechanics_portal_purple'] },
       lightLamp: { primary: 'art_map_mechanics_light_lamp' },
       lightTorch: { primary: 'art_map_mechanics_light_torch' },
       lightCrystal: { primary: 'art_map_mechanics_light_crystal' },
+      lightCandle: { primary: 'art_map_mechanics_light_cathedral_candle', fallbacks: ['art_map_mechanics_light_torch'] },
+      lightArcaneLamp: { primary: 'art_map_mechanics_light_arcane_lamp', fallbacks: ['art_map_mechanics_light_crystal'] },
       obstacleTree: { primary: 'art_map_mechanics_obstacle_tree' },
       obstacleRock: { primary: 'art_map_mechanics_obstacle_rock' },
       obstacleGrave: { primary: 'art_map_mechanics_obstacle_grave' },
       obstacleWall: { primary: 'art_map_mechanics_obstacle_wall' },
+      obstacleCathedralWall: { primary: 'art_map_mechanics_obstacle_cathedral_wall', fallbacks: ['art_map_mechanics_obstacle_wall'] },
+      obstacleCathedralPillar: { primary: 'art_map_mechanics_obstacle_cathedral_pillar', fallbacks: ['art_map_mechanics_obstacle_wall'] },
+      obstacleBookshelf: { primary: 'art_map_mechanics_obstacle_bookshelf', fallbacks: ['art_map_mechanics_obstacle_wall'] },
+      obstacleArchivePillar: { primary: 'art_map_mechanics_obstacle_archive_pillar', fallbacks: ['art_map_mechanics_obstacle_wall'] },
       hazardSpike: { primary: 'art_map_mechanics_hazard_spike' },
       hazardFire: { primary: 'art_map_mechanics_hazard_fire' },
       hazardPoison: { primary: 'art_map_mechanics_hazard_poison' },
       altar: { primary: 'art_map_mechanics_altar_basic' },
+      altarCathedral: { primary: 'art_map_mechanics_altar_cathedral', fallbacks: ['art_map_mechanics_altar_basic'] },
+      altarLibrary: { primary: 'art_map_mechanics_altar_library', fallbacks: ['art_map_mechanics_altar_cathedral', 'art_map_mechanics_altar_basic'] },
       spawner: { primary: 'art_map_mechanics_spawner_nest' },
     } satisfies Record<MapMechanicVisualKind, AssetKeyEntry>,
     minimapIcons: {
       river: { primary: 'art_map_mechanics_river_minimap' },
       swamp: { primary: 'art_map_mechanics_swamp_minimap' },
       mud: { primary: 'art_map_mechanics_mud_minimap' },
+      ink: { primary: 'art_map_mechanics_ink_minimap', fallbacks: ['art_map_mechanics_mud_minimap'] },
       portalBlue: { primary: 'art_map_mechanics_portal_minimap_blue' },
       portalPurple: { primary: 'art_map_mechanics_portal_minimap_purple' },
       portalGreen: { primary: 'art_map_mechanics_portal_minimap_green' },
+      portalGold: { primary: 'art_map_mechanics_portal_minimap_gold', fallbacks: ['art_map_mechanics_portal_minimap_purple'] },
       light: { primary: 'art_map_mechanics_light_minimap' },
       obstacle: { primary: 'art_map_mechanics_obstacle_minimap' },
       hazard: { primary: 'art_map_mechanics_hazard_minimap' },
-      altar: { primary: 'art_map_mechanics_altar_minimap' },
+      altar: { primary: 'art_map_mechanics_altar_cathedral_minimap', fallbacks: ['art_map_mechanics_altar_minimap'] },
+      altarLibrary: { primary: 'art_map_mechanics_altar_library_minimap', fallbacks: ['art_map_mechanics_altar_minimap'] },
       spawner: { primary: 'art_map_mechanics_spawner_minimap' },
     } satisfies Record<MapMechanicIconKind, AssetKeyEntry>,
   },

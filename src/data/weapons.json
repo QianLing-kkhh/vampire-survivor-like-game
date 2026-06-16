@@ -1,7 +1,13 @@
 {
   "knife": {
     "type": "projectile",
-    "tags": ["base", "projectile", "physical", "pierce", "knockback"],
+    "tags": [
+      "base",
+      "projectile",
+      "physical",
+      "pierce",
+      "knockback"
+    ],
     "behavior": {
       "type": "projectile",
       "targeting": "nearest",
@@ -9,7 +15,7 @@
       "alignToVelocity": true
     },
     "damage": 10,
-    "cooldown": 1.0,
+    "cooldown": 1,
     "projectileSpeed": 6.8,
     "pierce": 2,
     "projectileCount": 3,
@@ -20,7 +26,12 @@
   },
   "garlic": {
     "type": "aura",
-    "tags": ["base", "aura", "area", "defensive"],
+    "tags": [
+      "base",
+      "aura",
+      "area",
+      "defensive"
+    ],
     "behavior": {
       "type": "aura",
       "knockback": true,
@@ -29,14 +40,21 @@
       "elitePercentDamageMultiplier": 0.5,
       "bossPercentDamageMultiplier": 0.1
     },
-    "damage": 3.0,
+    "damage": 3,
     "cooldown": 0.35,
     "radius": 4.4,
     "knockbackPower": 18
   },
   "bible": {
     "type": "orbit",
-    "tags": ["base", "orbit", "magic", "area", "knockback", "control"],
+    "tags": [
+      "base",
+      "orbit",
+      "magic",
+      "area",
+      "knockback",
+      "control"
+    ],
     "behavior": {
       "type": "orbit",
       "radiusScaleMin": 1,
@@ -54,7 +72,14 @@
   },
   "magic_wand": {
     "type": "magic_wand",
-    "tags": ["base", "projectile", "magic", "homing", "explosive", "knockback"],
+    "tags": [
+      "base",
+      "projectile",
+      "magic",
+      "homing",
+      "explosive",
+      "knockback"
+    ],
     "behavior": {
       "type": "homing",
       "explosionRadius": 90,
@@ -70,7 +95,15 @@
   },
   "axe": {
     "type": "axe",
-    "tags": ["base", "projectile", "physical", "arcing", "spiral", "area", "knockback"],
+    "tags": [
+      "base",
+      "projectile",
+      "physical",
+      "arcing",
+      "spiral",
+      "area",
+      "knockback"
+    ],
     "behavior": {
       "type": "arcing",
       "trajectory": "spiralAccelerating",
@@ -83,7 +116,7 @@
       "spiralSpeedMultiplier": 0.45,
       "scaleOverLifetime": {
         "enabled": true,
-        "startScale": 1.0,
+        "startScale": 1,
         "endScale": 1.9,
         "curve": "easeOut"
       },
@@ -107,7 +140,13 @@
   },
   "thousand_edge": {
     "type": "projectile",
-    "tags": ["evolved", "projectile", "physical", "pierce", "knockback"],
+    "tags": [
+      "evolved",
+      "projectile",
+      "physical",
+      "pierce",
+      "knockback"
+    ],
     "behavior": {
       "type": "projectile",
       "targeting": "nearest",
@@ -126,7 +165,14 @@
   },
   "unholy_vespers": {
     "type": "orbit",
-    "tags": ["evolved", "orbit", "magic", "area", "knockback", "control"],
+    "tags": [
+      "evolved",
+      "orbit",
+      "magic",
+      "area",
+      "knockback",
+      "control"
+    ],
     "behavior": {
       "type": "orbit",
       "radiusScaleMin": 1,
@@ -145,7 +191,14 @@
   },
   "holy_wand": {
     "type": "projectile",
-    "tags": ["evolved", "projectile", "magic", "homing", "explosive", "knockback"],
+    "tags": [
+      "evolved",
+      "projectile",
+      "magic",
+      "homing",
+      "explosive",
+      "knockback"
+    ],
     "behavior": {
       "type": "homing",
       "explosionRadius": 60,
@@ -163,7 +216,14 @@
   },
   "death_spiral": {
     "type": "axe",
-    "tags": ["evolved", "projectile", "physical", "spiral", "area", "knockback"],
+    "tags": [
+      "evolved",
+      "projectile",
+      "physical",
+      "spiral",
+      "area",
+      "knockback"
+    ],
     "behavior": {
       "type": "arcing",
       "trajectory": "spiralAccelerating",
@@ -204,7 +264,13 @@
   },
   "soul_eater": {
     "type": "aura",
-    "tags": ["evolved", "aura", "area", "sustain", "defensive"],
+    "tags": [
+      "evolved",
+      "aura",
+      "area",
+      "sustain",
+      "defensive"
+    ],
     "behavior": {
       "type": "aura",
       "knockback": false,
@@ -213,9 +279,546 @@
       "elitePercentDamageMultiplier": 0.5,
       "bossPercentDamageMultiplier": 0.1
     },
-    "damage": 6.0,
+    "damage": 6,
     "cooldown": 0.3,
     "radius": 4.7,
     "knockbackPower": 0
+  },
+  "runic_orb": {
+    "type": "orbit",
+    "tags": [
+      "base",
+      "orbit",
+      "magic",
+      "area",
+      "arcane",
+      "control"
+    ],
+    "behavior": {
+      "type": "orbit",
+      "radiusScaleMin": 0.9,
+      "radiusScaleMax": 1.75,
+      "radiusCycleMs": 9600
+    },
+    "damage": 11,
+    "cooldown": 0.72,
+    "radius": 3,
+    "orbitSpeed": 190,
+    "orbitCount": 2,
+    "knockbackPower": 55,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "astral_core": {
+    "type": "orbit",
+    "tags": [
+      "evolved",
+      "orbit",
+      "magic",
+      "area",
+      "arcane",
+      "control"
+    ],
+    "behavior": {
+      "type": "orbit",
+      "radiusScaleMin": 0.9,
+      "radiusScaleMax": 2.15,
+      "radiusCycleMs": 8200
+    },
+    "damage": 16,
+    "cooldown": 0.45,
+    "radius": 4.1,
+    "orbitSpeed": 245,
+    "orbitCount": 5,
+    "hitRadius": 52,
+    "knockbackPower": 76,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "moon_bow": {
+    "type": "projectile",
+    "tags": [
+      "base",
+      "projectile",
+      "physical",
+      "pierce",
+      "ranged"
+    ],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.55,
+      "alignToVelocity": true
+    },
+    "damage": 13,
+    "cooldown": 0.88,
+    "projectileSpeed": 7.6,
+    "pierce": 2,
+    "projectileCount": 2,
+    "spreadAngle": 12,
+    "knockbackPower": 42,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "eclipse_barrage": {
+    "type": "projectile",
+    "tags": [
+      "evolved",
+      "projectile",
+      "physical",
+      "pierce",
+      "ranged"
+    ],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.55,
+      "alignToVelocity": true
+    },
+    "damage": 18,
+    "cooldown": 0.42,
+    "projectileSpeed": 9.2,
+    "pierce": 5,
+    "projectileCount": 5,
+    "spreadAngle": 28,
+    "knockbackPower": 58,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "clockwork_saw": {
+    "type": "axe",
+    "tags": [
+      "base",
+      "projectile",
+      "physical",
+      "arcing",
+      "area",
+      "mechanical"
+    ],
+    "behavior": {
+      "type": "arcing",
+      "trajectory": "spiralAccelerating",
+      "launchProgress": 0.1,
+      "spiralTurns": 3.2,
+      "maxSpiralRadius": 125,
+      "acceleration": 130,
+      "radialEasePower": 1.3,
+      "spiralTravelRange": 640,
+      "spiralSpeedMultiplier": 0.42,
+      "scaleOverLifetime": {
+        "enabled": true,
+        "startScale": 1,
+        "endScale": 1.45,
+        "curve": "easeOut"
+      },
+      "hitRadiusOverLifetime": {
+        "enabled": true,
+        "startRadius": 28,
+        "endRadius": 48,
+        "curve": "easeOut"
+      }
+    },
+    "damage": 20,
+    "cooldown": 1.95,
+    "projectileSpeed": 145,
+    "projectileCount": 1,
+    "hitRadius": 34,
+    "lifetime": 3.2,
+    "arcHeight": 160,
+    "knockbackPower": 88,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "gearstorm": {
+    "type": "axe",
+    "tags": [
+      "evolved",
+      "projectile",
+      "physical",
+      "arcing",
+      "area",
+      "mechanical"
+    ],
+    "behavior": {
+      "type": "arcing",
+      "trajectory": "spiralAccelerating",
+      "launchProgress": 0.1,
+      "spiralTurns": 4.2,
+      "maxSpiralRadius": 155,
+      "acceleration": 165,
+      "radialEasePower": 1.3,
+      "spiralTravelRange": 760,
+      "spiralSpeedMultiplier": 0.25,
+      "scaleOverLifetime": {
+        "enabled": true,
+        "startScale": 1,
+        "endScale": 1.8,
+        "curve": "easeOut"
+      },
+      "hitRadiusOverLifetime": {
+        "enabled": true,
+        "startRadius": 34,
+        "endRadius": 66,
+        "curve": "easeOut"
+      }
+    },
+    "damage": 24,
+    "cooldown": 1.35,
+    "projectileSpeed": 210,
+    "projectileCount": 4,
+    "maxActiveProjectiles": 8,
+    "spreadAngle": 120,
+    "hitRadius": 48,
+    "lifetime": 3.8,
+    "arcHeight": 180,
+    "knockbackPower": 115,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "bone_spear": {
+    "type": "projectile",
+    "tags": [
+      "base",
+      "projectile",
+      "physical",
+      "pierce",
+      "necrotic",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.55,
+      "alignToVelocity": true
+    },
+    "damage": 18,
+    "cooldown": 1.1,
+    "projectileSpeed": 6.9,
+    "pierce": 3,
+    "projectileCount": 1,
+    "spreadAngle": 6,
+    "knockbackPower": 78,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "ossuary_lance": {
+    "type": "projectile",
+    "tags": [
+      "evolved",
+      "projectile",
+      "physical",
+      "pierce",
+      "necrotic",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.55,
+      "alignToVelocity": true
+    },
+    "damage": 25,
+    "cooldown": 0.7,
+    "projectileSpeed": 8.4,
+    "pierce": 6,
+    "projectileCount": 3,
+    "spreadAngle": 18,
+    "knockbackPower": 105,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "spirit_fist": {
+    "type": "aura",
+    "tags": [
+      "base",
+      "aura",
+      "area",
+      "magic",
+      "defensive",
+      "control"
+    ],
+    "behavior": {
+      "type": "aura",
+      "knockback": true,
+      "percentMaxHpDamage": 0.003,
+      "percentDamageCap": 7,
+      "elitePercentDamageMultiplier": 0.5,
+      "bossPercentDamageMultiplier": 0.1
+    },
+    "damage": 5,
+    "cooldown": 0.42,
+    "radius": 3.1,
+    "knockbackPower": 34,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "enlightened_palm": {
+    "type": "aura",
+    "tags": [
+      "evolved",
+      "aura",
+      "area",
+      "magic",
+      "defensive",
+      "control"
+    ],
+    "behavior": {
+      "type": "aura",
+      "knockback": true,
+      "percentMaxHpDamage": 0.005,
+      "percentDamageCap": 14,
+      "elitePercentDamageMultiplier": 0.5,
+      "bossPercentDamageMultiplier": 0.1
+    },
+    "damage": 9,
+    "cooldown": 0.32,
+    "radius": 4.8,
+    "knockbackPower": 70,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "acid_vial": {
+    "type": "magic_wand",
+    "tags": [
+      "base",
+      "projectile",
+      "magic",
+      "homing",
+      "explosive",
+      "poison"
+    ],
+    "behavior": {
+      "type": "homing",
+      "explosionRadius": 70,
+      "explosionDamageMultiplier": 0.35
+    },
+    "damage": 13,
+    "cooldown": 1.18,
+    "projectileSpeed": 215,
+    "projectileCount": 1,
+    "knockbackPower": 50,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "plague_crucible": {
+    "type": "magic_wand",
+    "tags": [
+      "evolved",
+      "projectile",
+      "magic",
+      "homing",
+      "explosive",
+      "poison"
+    ],
+    "behavior": {
+      "type": "homing",
+      "explosionRadius": 86,
+      "explosionDamageMultiplier": 0.5
+    },
+    "damage": 17,
+    "cooldown": 0.55,
+    "projectileSpeed": 300,
+    "projectileCount": 3,
+    "spreadAngle": 18,
+    "knockbackPower": 72,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "rapier_flurry": {
+    "type": "projectile",
+    "tags": [
+      "base",
+      "projectile",
+      "physical",
+      "pierce",
+      "duelist"
+    ],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.55,
+      "alignToVelocity": true
+    },
+    "damage": 9,
+    "cooldown": 0.48,
+    "projectileSpeed": 8.8,
+    "pierce": 1,
+    "projectileCount": 3,
+    "spreadAngle": 18,
+    "knockbackPower": 36,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "crimson_flurry": {
+    "type": "projectile",
+    "tags": [
+      "evolved",
+      "projectile",
+      "physical",
+      "pierce",
+      "duelist"
+    ],
+    "behavior": {
+      "type": "projectile",
+      "targeting": "nearest",
+      "pierceDamageFalloff": 0.55,
+      "alignToVelocity": true
+    },
+    "damage": 12,
+    "cooldown": 0.25,
+    "projectileSpeed": 10.2,
+    "pierce": 3,
+    "projectileCount": 6,
+    "spreadAngle": 34,
+    "knockbackPower": 46,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "stone_ring": {
+    "type": "orbit",
+    "tags": [
+      "base",
+      "orbit",
+      "area",
+      "physical",
+      "earth",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "orbit",
+      "radiusScaleMin": 0.9,
+      "radiusScaleMax": 1.75,
+      "radiusCycleMs": 9600
+    },
+    "damage": 14,
+    "cooldown": 0.8,
+    "radius": 2.8,
+    "orbitSpeed": 150,
+    "orbitCount": 2,
+    "knockbackPower": 95,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "tectonic_crown": {
+    "type": "orbit",
+    "tags": [
+      "evolved",
+      "orbit",
+      "area",
+      "physical",
+      "earth",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "orbit",
+      "radiusScaleMin": 0.9,
+      "radiusScaleMax": 2.15,
+      "radiusCycleMs": 8200
+    },
+    "damage": 22,
+    "cooldown": 0.52,
+    "radius": 4,
+    "orbitSpeed": 170,
+    "orbitCount": 4,
+    "hitRadius": 62,
+    "knockbackPower": 145,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "thunder_javelin": {
+    "type": "magic_wand",
+    "tags": [
+      "base",
+      "projectile",
+      "magic",
+      "homing",
+      "lightning",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "homing",
+      "explosionRadius": 70,
+      "explosionDamageMultiplier": 0.35
+    },
+    "damage": 19,
+    "cooldown": 1.35,
+    "projectileSpeed": 260,
+    "projectileCount": 1,
+    "knockbackPower": 82,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "tempest_lance": {
+    "type": "magic_wand",
+    "tags": [
+      "evolved",
+      "projectile",
+      "magic",
+      "homing",
+      "lightning",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "homing",
+      "explosionRadius": 86,
+      "explosionDamageMultiplier": 0.5
+    },
+    "damage": 28,
+    "cooldown": 0.72,
+    "projectileSpeed": 390,
+    "projectileCount": 3,
+    "spreadAngle": 20,
+    "knockbackPower": 118,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "shield_disc": {
+    "type": "orbit",
+    "tags": [
+      "base",
+      "orbit",
+      "physical",
+      "defensive",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "orbit",
+      "radiusScaleMin": 0.9,
+      "radiusScaleMax": 1.75,
+      "radiusCycleMs": 9600
+    },
+    "damage": 10,
+    "cooldown": 0.68,
+    "radius": 2.6,
+    "orbitSpeed": 220,
+    "orbitCount": 2,
+    "knockbackPower": 90,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
+  },
+  "aegis_maelstrom": {
+    "type": "orbit",
+    "tags": [
+      "evolved",
+      "orbit",
+      "physical",
+      "defensive",
+      "knockback"
+    ],
+    "behavior": {
+      "type": "orbit",
+      "radiusScaleMin": 0.9,
+      "radiusScaleMax": 2.15,
+      "radiusCycleMs": 8200
+    },
+    "damage": 15,
+    "cooldown": 0.44,
+    "radius": 3.9,
+    "orbitSpeed": 270,
+    "orbitCount": 6,
+    "hitRadius": 56,
+    "knockbackPower": 130,
+    "knockbackSpeedFactor": 0.018,
+    "knockbackDurationMs": 120
   }
 }

@@ -1,41 +1,63 @@
 import Phaser from 'phaser';
 
 import { DeveloperSettingsData } from '../settings/DeveloperSettings';
+import { PanelFrame } from '../ui/components/PanelFrame';
+import { UITextBlock } from '../ui/components/UITextBlock';
 
 import { DebugPanelData } from './DebugPanelData';
 
 export class DebugPanel {
   private readonly container: Phaser.GameObjects.Container;
-  private readonly background: Phaser.GameObjects.Rectangle;
+  private frame?: Phaser.GameObjects.Container;
+  private width = 260;
+  private height = 160;
+  private frameAlpha = 0.72;
   private readonly text: Phaser.GameObjects.Text;
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.background = scene.add.rectangle(0, 0, 320, 220, 0x020617, 0.75);
-    this.background.setOrigin(0, 0);
-    this.background.setStrokeStyle(1, 0x38bdf8, 0.55);
-
-    this.text = scene.add.text(12, 10, '', {
-      color: '#dbeafe',
-      fontFamily: 'Consolas, monospace',
-      fontSize: '12px',
-      lineSpacing: 2,
-    });
-
-    this.container = scene.add.container(0, 0, [this.background, this.text]);
+    this.container = scene.add.container(0, 0);
     this.container.setDepth(2500);
     this.container.setScrollFactor(0);
     this.container.setVisible(false);
+    this.rebuildFrame(this.width, this.height, 0.72);
+    this.text = new UITextBlock(scene, {
+      x: 12,
+      y: 10,
+      text: '',
+      fontFamily: 'Consolas, monospace',
+      fontSize: '11px',
+      lineSpacing: 1,
+      align: 'left',
+      width: this.width - 18,
+    }).text;
+    this.container.add(this.text);
     this.layout();
   }
 
   update(data: DebugPanelData, settings: DeveloperSettingsData): void {
-    const lines = this.formatLines(data, settings.debugPanelCompact);
-    const width = settings.debugPanelCompact ? 300 : 360;
-    const height = Math.max(110, lines.length * 16 + 20);
+    const screenCompact = this.scene.scale.width <= 900 || this.scene.scale.height <= 560;
+    const compact = settings.debugPanelCompact || screenCompact;
+    const rawLines = this.formatLines(data, compact);
+    const width = Math.min(
+      compact ? 240 : 310,
+      Math.max(190, this.scene.scale.width * (compact ? 0.28 : 0.24)),
+    );
+    const lineHeight = compact ? 13 : 15;
+    const maxHeight = Math.max(82, this.scene.scale.height * (compact ? 0.26 : 0.34));
+    const maxLines = Math.max(4, Math.floor((maxHeight - 18) / lineHeight));
+    const lines = rawLines.length > maxLines
+      ? [
+        ...rawLines.slice(0, Math.max(1, maxLines - 1)),
+        `... +${rawLines.length - maxLines + 1}`,
+      ]
+      : rawLines;
+    const height = Math.max(compact ? 74 : 90, Math.min(maxHeight, lines.length * lineHeight + 18));
 
     this.text.setText(lines.join('\n'));
-    this.background.setSize(width, height);
-    this.background.setFillStyle(0x020617, settings.debugPanelOpacity);
+    this.text.setFontSize(compact ? '10px' : '11px');
+    this.text.setWordWrapWidth(width - 18);
+    this.text.setPosition(compact ? 8 : 10, compact ? 7 : 9);
+    this.rebuildFrame(width, height, settings.debugPanelOpacity);
     this.layout();
   }
 
@@ -48,11 +70,31 @@ export class DebugPanel {
   }
 
   private layout(): void {
-    const margin = 12;
-    const x = Math.max(margin, this.scene.scale.width - this.background.width - margin);
-    const y = Math.max(margin, this.scene.scale.height - this.background.height - margin);
+    const margin = this.scene.scale.width <= 900 || this.scene.scale.height <= 560 ? 8 : 12;
+    const x = Math.max(margin, this.scene.scale.width - this.width - margin);
+    const y = Math.max(margin, this.scene.scale.height - this.height - margin);
 
     this.container.setPosition(x, y);
+  }
+
+  private rebuildFrame(width: number, height: number, alpha: number): void {
+    if (this.frame && this.width === width && this.height === height && this.frameAlpha === alpha) {
+      return;
+    }
+
+    this.frame?.destroy(true);
+    this.width = width;
+    this.height = height;
+    this.frameAlpha = alpha;
+    this.frame = PanelFrame.create(this.scene, {
+      x: width / 2,
+      y: height / 2,
+      width,
+      height,
+      alpha,
+      variant: 'hud',
+    });
+    this.container.addAt(this.frame, 0);
   }
 
   private formatLines(data: DebugPanelData, compact: boolean): string[] {

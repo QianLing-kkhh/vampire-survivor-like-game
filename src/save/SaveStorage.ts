@@ -1,39 +1,19 @@
+import { LocalStorageAdapter } from './storage/LocalStorageAdapter';
+import { MemoryStorageAdapter } from './storage/MemoryStorageAdapter';
+
 export class SaveStorage {
   private static readonly STORAGE_KEY = 'vampire_survivor_like_save_v1';
-  private memoryRaw: string | null = null;
+  private readonly storage = new LocalStorageAdapter(new MemoryStorageAdapter());
 
   loadRaw(): string | null {
-    try {
-      const rawSave = globalThis.localStorage?.getItem(SaveStorage.STORAGE_KEY);
-
-      if (rawSave !== undefined && rawSave !== null) {
-        this.memoryRaw = rawSave;
-        return rawSave;
-      }
-    } catch {
-      // Memory fallback is enough for environments without localStorage.
-    }
-
-    return this.memoryRaw;
+    return this.storage.getItem(SaveStorage.STORAGE_KEY);
   }
 
   saveRaw(rawSave: string): void {
-    this.memoryRaw = rawSave;
-
-    try {
-      globalThis.localStorage?.setItem(SaveStorage.STORAGE_KEY, rawSave);
-    } catch {
-      // Memory fallback is enough for environments without localStorage.
-    }
+    this.storage.setItem(SaveStorage.STORAGE_KEY, rawSave);
   }
 
   clear(): void {
-    this.memoryRaw = null;
-
-    try {
-      globalThis.localStorage?.removeItem(SaveStorage.STORAGE_KEY);
-    } catch {
-      // Memory fallback is enough for environments without localStorage.
-    }
+    this.storage.removeItem(SaveStorage.STORAGE_KEY);
   }
 }

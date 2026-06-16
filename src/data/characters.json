@@ -7,7 +7,7 @@
     "initialStats": {
       "maxHp": 90,
       "moveSpeed": 230,
-      "pickupRange": 2.0,
+      "pickupRange": 2,
       "expMultiplier": 1,
       "damageMultiplier": 1,
       "physicalDamageMultiplier": 1.02,
@@ -198,6 +198,186 @@
         "highArmorDurationMs": 1000
       }
     },
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "arcanist": {
+    "id": "arcanist",
+    "name": "Arcanist",
+    "nameKey": "character.arcanist.name",
+    "descriptionKey": "character.arcanist.description",
+    "startingWeaponId": "runic_orb",
+    "skinId": "arcanist_default",
+    "initialStats": {
+      "maxHp": 88,
+      "moveSpeed": 122,
+      "pickupRange": 2.35,
+      "expMultiplier": 1.08
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "ranger": {
+    "id": "ranger",
+    "name": "Ranger",
+    "nameKey": "character.ranger.name",
+    "descriptionKey": "character.ranger.description",
+    "startingWeaponId": "moon_bow",
+    "skinId": "ranger_default",
+    "initialStats": {
+      "maxHp": 96,
+      "moveSpeed": 132,
+      "pickupRange": 2.2,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "engineer": {
+    "id": "engineer",
+    "name": "Engineer",
+    "nameKey": "character.engineer.name",
+    "descriptionKey": "character.engineer.description",
+    "startingWeaponId": "clockwork_saw",
+    "skinId": "engineer_default",
+    "initialStats": {
+      "maxHp": 104,
+      "moveSpeed": 116,
+      "pickupRange": 2.15,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "necromancer": {
+    "id": "necromancer",
+    "name": "Necromancer",
+    "nameKey": "character.necromancer.name",
+    "descriptionKey": "character.necromancer.description",
+    "startingWeaponId": "bone_spear",
+    "skinId": "necromancer_default",
+    "initialStats": {
+      "maxHp": 82,
+      "moveSpeed": 118,
+      "pickupRange": 2.45,
+      "expMultiplier": 1.1
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "monk": {
+    "id": "monk",
+    "name": "Monk",
+    "nameKey": "character.monk.name",
+    "descriptionKey": "character.monk.description",
+    "startingWeaponId": "spirit_fist",
+    "skinId": "monk_default",
+    "initialStats": {
+      "maxHp": 118,
+      "moveSpeed": 124,
+      "pickupRange": 2.25,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "alchemist": {
+    "id": "alchemist",
+    "name": "Alchemist",
+    "nameKey": "character.alchemist.name",
+    "descriptionKey": "character.alchemist.description",
+    "startingWeaponId": "acid_vial",
+    "skinId": "alchemist_default",
+    "initialStats": {
+      "maxHp": 92,
+      "moveSpeed": 120,
+      "pickupRange": 2.35,
+      "expMultiplier": 1.04
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "duelist": {
+    "id": "duelist",
+    "name": "Duelist",
+    "nameKey": "character.duelist.name",
+    "descriptionKey": "character.duelist.description",
+    "startingWeaponId": "rapier_flurry",
+    "skinId": "duelist_default",
+    "initialStats": {
+      "maxHp": 90,
+      "moveSpeed": 138,
+      "pickupRange": 2.1,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "geomancer": {
+    "id": "geomancer",
+    "name": "Geomancer",
+    "nameKey": "character.geomancer.name",
+    "descriptionKey": "character.geomancer.description",
+    "startingWeaponId": "stone_ring",
+    "skinId": "geomancer_default",
+    "initialStats": {
+      "maxHp": 112,
+      "moveSpeed": 112,
+      "pickupRange": 2.25,
+      "expMultiplier": 1.02
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "stormcaller": {
+    "id": "stormcaller",
+    "name": "Stormcaller",
+    "nameKey": "character.stormcaller.name",
+    "descriptionKey": "character.stormcaller.description",
+    "startingWeaponId": "thunder_javelin",
+    "skinId": "stormcaller_default",
+    "initialStats": {
+      "maxHp": 88,
+      "moveSpeed": 128,
+      "pickupRange": 2.3,
+      "expMultiplier": 1.06
+    },
+    "growthPerLevel": {},
+    "exclusiveUpgradeIds": [],
+    "exclusivePassiveIds": [],
+    "exclusiveEvolutionRouteIds": []
+  },
+  "sentinel": {
+    "id": "sentinel",
+    "name": "Sentinel",
+    "nameKey": "character.sentinel.name",
+    "descriptionKey": "character.sentinel.description",
+    "startingWeaponId": "shield_disc",
+    "skinId": "sentinel_default",
+    "initialStats": {
+      "maxHp": 126,
+      "moveSpeed": 110,
+      "pickupRange": 2.2,
+      "expMultiplier": 1
+    },
+    "growthPerLevel": {},
     "exclusiveUpgradeIds": [],
     "exclusivePassiveIds": [],
     "exclusiveEvolutionRouteIds": []

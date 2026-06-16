@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 
 import { EventBus } from '../core/EventBus';
+import { Math2D } from '../core/domain/Math2D';
 import { GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
 import { ExpManager } from '../progression/ExpManager';
 
 import { Pickup } from './Pickup';
+import type { PickupUpdateContext } from './PickupUpdateContext';
 
 interface Position {
   x: number;
@@ -63,7 +65,9 @@ export class PickupManager {
     };
   }
 
-  update(playerPosition: Position, pickupRange: number, deltaMs = 16): void {
+  update(context: PickupUpdateContext): void {
+    const playerPosition = context.player.getPositionLike();
+    const deltaMs = context.deltaMs;
     this.lastMergedPickupCount = 0;
 
     for (let index = this.pickups.length - 1; index >= 0; index -= 1) {
@@ -90,7 +94,7 @@ export class PickupManager {
         continue;
       }
 
-      if (this.isPickupInRange(pickup, playerPosition, pickupRange)) {
+      if (this.isPickupInRange(pickup, playerPosition, context.pickupRange)) {
         pickup.startMagnet();
       }
     }
@@ -136,7 +140,7 @@ export class PickupManager {
     const candidates = this.pickups.filter((pickup) => (
       !pickup.isCollected
       && !pickup.isMagnetizing
-      && Phaser.Math.Distance.Squared(
+      && Math2D.distanceSquaredBetween(
         playerPosition.x,
         playerPosition.y,
         pickup.body.x,
@@ -167,7 +171,7 @@ export class PickupManager {
           continue;
         }
 
-        const distanceSq = Phaser.Math.Distance.Squared(
+        const distanceSq = Math2D.distanceSquaredBetween(
           anchor.body.x,
           anchor.body.y,
           candidate.body.x,
@@ -246,7 +250,7 @@ export class PickupManager {
     const candidates = activePickups
       .map((pickup) => ({
         pickup,
-        distanceSq: Phaser.Math.Distance.Squared(
+        distanceSq: Math2D.distanceSquaredBetween(
           playerPosition.x,
           playerPosition.y,
           pickup.body.x,
@@ -305,7 +309,7 @@ export class PickupManager {
     playerPosition: Position,
     pickupRange: number,
   ): boolean {
-    return Phaser.Math.Distance.Between(
+    return Math2D.distanceBetween(
       playerPosition.x,
       playerPosition.y,
       pickup.body.x,

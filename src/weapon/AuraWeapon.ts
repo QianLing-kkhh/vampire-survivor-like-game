@@ -73,10 +73,12 @@ export class AuraWeapon extends Weapon {
   }
 
   private updateAuraBody(context: WeaponUpdateContext): void {
+    const playerPosition = context.player.getPositionLike();
+
     if (!this.auraBody) {
       this.auraBody = this.scene.add.circle(
-        context.player.x,
-        context.player.y,
+        playerPosition.x,
+        playerPosition.y,
         this.radiusPixels,
         0x22c55e,
         AuraWeapon.AURA_FILL_ALPHA,
@@ -87,9 +89,9 @@ export class AuraWeapon extends Weapon {
 
     this.ensureAuraIcon(context);
 
-    this.auraBody.setPosition(context.player.x, context.player.y);
+    this.auraBody.setPosition(playerPosition.x, playerPosition.y);
     this.auraBody.setRadius(this.radiusPixels);
-    this.auraIcon?.setPosition(context.player.x, context.player.y);
+    this.auraIcon?.setPosition(playerPosition.x, playerPosition.y);
     this.auraIcon?.setDisplaySize(
       VisualScale.getAuraCoreDisplaySize(this.id),
       VisualScale.getAuraCoreDisplaySize(this.id),
@@ -113,12 +115,14 @@ export class AuraWeapon extends Weapon {
       return;
     }
 
-    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id);
-    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id);
+    const visualTier = this.getVisualTierInput();
+    const textureKey = AssetKeyResolver.getWeaponProjectileTextureKey(this.scene, this.id, visualTier);
+    const animationKey = AssetKeyResolver.getWeaponProjectileAnimationKey(this.scene, this.id, visualTier);
     const iconDisplaySize = VisualScale.getAuraCoreDisplaySize(this.id);
+    const playerPosition = context.player.getPositionLike();
 
     if (textureKey && animationKey) {
-      const icon = this.scene.add.sprite(context.player.x, context.player.y, textureKey);
+      const icon = this.scene.add.sprite(playerPosition.x, playerPosition.y, textureKey);
       icon.setDisplaySize(iconDisplaySize, iconDisplaySize);
       icon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
       icon.setAlpha(0.9);
@@ -131,7 +135,7 @@ export class AuraWeapon extends Weapon {
       return;
     }
 
-    this.auraIcon = this.scene.add.image(context.player.x, context.player.y, textureKey);
+    this.auraIcon = this.scene.add.image(playerPosition.x, playerPosition.y, textureKey);
     this.auraIcon.setDisplaySize(iconDisplaySize, iconDisplaySize);
     this.auraIcon.setDepth(AuraWeapon.AURA_ICON_DEPTH);
     this.auraIcon.setAlpha(0.9);
@@ -142,9 +146,10 @@ export class AuraWeapon extends Weapon {
     enemy: Enemy,
     radius: number,
   ): boolean {
+    const playerPosition = context.player.getPositionLike();
     return Phaser.Math.Distance.Between(
-      context.player.x,
-      context.player.y,
+      playerPosition.x,
+      playerPosition.y,
       enemy.body.x,
       enemy.body.y,
     ) <= radius;
@@ -200,9 +205,10 @@ export class AuraWeapon extends Weapon {
       return;
     }
 
+    const playerPosition = context.player.getPositionLike();
     const direction = new Phaser.Math.Vector2(
-      enemy.body.x - context.player.x,
-      enemy.body.y - context.player.y,
+      enemy.body.x - playerPosition.x,
+      enemy.body.y - playerPosition.y,
     );
 
     if (direction.lengthSq() === 0) {

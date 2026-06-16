@@ -1,6 +1,14 @@
 import Phaser from 'phaser';
 
 import { I18n } from '../i18n/I18n';
+import { PanelFrame } from './components/PanelFrame';
+import { UIBadge } from './components/UIBadge';
+import { UIBackplate } from './components/UIBackplate';
+import { UILoadingBackdrop } from './components/UILoadingBackdrop';
+import { UIProgressBar } from './components/UIProgressBar';
+import { UIStatRow } from './components/UIStatRow';
+import { UITextBlock } from './components/UITextBlock';
+import { UITheme } from './UITheme';
 
 export interface LoadingOverlayRunInfo {
   map: {
@@ -45,25 +53,29 @@ type LoadingCardData = {
   accentColor: number;
   name: string;
   id: string;
-  rows: string[];
+  rows: LoadingStatRow[];
   badges: string[];
+};
+
+type LoadingStatRow = {
+  label: string;
+  value: string;
 };
 
 type LoadingCardView = {
   data: LoadingCardData;
+  frame?: Phaser.GameObjects.Container;
   titleText: Phaser.GameObjects.Text;
   nameText: Phaser.GameObjects.Text;
   idText: Phaser.GameObjects.Text;
-  rowTexts: Phaser.GameObjects.Text[];
-  badgeTexts: Phaser.GameObjects.Text[];
+  dynamicObjects: Phaser.GameObjects.GameObject[];
 };
 
 export class LoadingOverlay {
   private readonly container: Phaser.GameObjects.Container;
-  private readonly background: Phaser.GameObjects.Graphics;
-  private readonly panel: Phaser.GameObjects.Graphics;
-  private readonly progressTrack: Phaser.GameObjects.Graphics;
-  private readonly progressFill: Phaser.GameObjects.Graphics;
+  private readonly backdrop: UILoadingBackdrop;
+  private legacyFrame?: Phaser.GameObjects.Container;
+  private readonly progressBar: UIProgressBar;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly messageText: Phaser.GameObjects.Text;
   private readonly percentText: Phaser.GameObjects.Text;
@@ -76,20 +88,23 @@ export class LoadingOverlay {
   constructor(private readonly scene: Phaser.Scene, private readonly config: LoadingOverlayConfig) {
     this.container = scene.add.container(0, 0);
     this.container.setDepth(10000);
-    this.background = scene.add.graphics();
-    this.panel = scene.add.graphics();
-    this.progressTrack = scene.add.graphics();
-    this.progressFill = scene.add.graphics();
+    this.backdrop = new UILoadingBackdrop(scene);
+    this.progressBar = new UIProgressBar(scene, {
+      x: 0,
+      y: 0,
+      width: 320,
+      height: 14,
+      variant: 'loading',
+      compact: false,
+    });
     this.titleText = this.createText(config.title, '30px', '#f8fafc', true);
     this.messageText = this.createText(config.message, '16px', '#cbd5e1');
     this.percentText = this.createText('0%', '18px', '#facc15', true);
     this.currentFileText = this.createText('', '12px', '#94a3b8');
     this.currentFileText.setMaxLines(1);
     this.container.add([
-      this.background,
-      this.panel,
-      this.progressTrack,
-      this.progressFill,
+      this.backdrop.graphics,
+      this.progressBar.container,
       this.titleText,
       this.messageText,
       this.percentText,
@@ -108,7 +123,7 @@ export class LoadingOverlay {
   setProgress(value: number): void {
     this.progress = Phaser.Math.Clamp(value, 0, 1);
     this.percentText.setText(`${Math.round(this.progress * 100)}%`);
-    this.render();
+    this.progressBar.setProgress(this.progress);
   }
 
   setCurrentFile(label: string): void {
@@ -136,8 +151,7 @@ export class LoadingOverlay {
         titleText: this.createText(data.title, '14px', '#f8fafc', true),
         nameText: this.createText(data.name, '20px', '#f8fafc', true),
         idText: this.createText(data.id, '11px', '#94a3b8'),
-        rowTexts: data.rows.map((row) => this.createText(row, '12px', '#cbd5e1')),
-        badgeTexts: data.badges.slice(0, 4).map((badge) => this.createText(badge, '10px', '#dbeafe', true)),
+        dynamicObjects: [],
       };
 
       this.cardViews.push(view);
@@ -145,8 +159,6 @@ export class LoadingOverlay {
         view.titleText,
         view.nameText,
         view.idText,
-        ...view.rowTexts,
-        ...view.badgeTexts,
       ]);
     }
   }
@@ -154,31 +166,34 @@ export class LoadingOverlay {
   private buildCardData(runInfo: LoadingOverlayRunInfo): LoadingCardData[] {
     const mechanics = runInfo.map.mechanics?.slice(0, 3) ?? [];
     const mapRows = [
-      this.statLine(I18n.t('loading.mapSize'), this.formatSize(runInfo.map.worldWidth, runInfo.map.worldHeight)),
-      this.statLine(I18n.t('loading.grid'), runInfo.map.gridSize),
-      this.statLine(I18n.t('loading.landmarkSpacing'), runInfo.map.landmarkSpacing),
-      this.statLine(I18n.t('loading.mechanics'), runInfo.map.mechanics?.length ?? 0),
-      mechanics.length > 0
-        ? mechanics.map((mechanic) => this.toTitleCase(mechanic)).join(' / ')
-        : I18n.t('loading.noSpecialMechanics'),
-    ].filter((row): row is string => Boolean(row));
+      this.statRow(I18n.t('loading.mapSize'), this.formatSize(runInfo.map.worldWidth, runInfo.map.worldHeight)),
+      this.statRow(I18n.t('loading.grid'), runInfo.map.gridSize),
+      this.statRow(I18n.t('loading.landmarkSpacing'), runInfo.map.landmarkSpacing),
+      this.statRow(I18n.t('loading.mechanics'), runInfo.map.mechanics?.length ?? 0),
+      this.statRow(
+        I18n.t('loading.mechanics'),
+        mechanics.length > 0
+          ? mechanics.map((mechanic) => this.toTitleCase(mechanic)).join(' / ')
+          : I18n.t('loading.noSpecialMechanics'),
+      ),
+    ].filter((row): row is LoadingStatRow => Boolean(row));
     const characterRows = [
-      this.statLine(I18n.t('loading.startingWeapon'), runInfo.character.startingWeaponId),
-      this.statLine(I18n.t('loading.maxHp'), runInfo.character.maxHp),
-      this.statLine(I18n.t('loading.moveSpeed'), runInfo.character.moveSpeed),
-      this.statLine(I18n.t('loading.pickupRange'), runInfo.character.pickupRange),
-      this.statLine(I18n.t('loading.expMultiplier'), runInfo.character.expMultiplier),
-      runInfo.character.growthSummary ? this.statLine(I18n.t('loading.growth'), runInfo.character.growthSummary) : undefined,
-      runInfo.character.reactionSummary ? this.statLine(I18n.t('loading.reaction'), runInfo.character.reactionSummary) : undefined,
-      runInfo.character.levelUpSummary ? this.statLine(I18n.t('loading.levelUp'), runInfo.character.levelUpSummary) : undefined,
-    ].filter((row): row is string => Boolean(row));
+      this.statRow(I18n.t('loading.startingWeapon'), runInfo.character.startingWeaponId),
+      this.statRow(I18n.t('loading.maxHp'), runInfo.character.maxHp),
+      this.statRow(I18n.t('loading.moveSpeed'), runInfo.character.moveSpeed),
+      this.statRow(I18n.t('loading.pickupRange'), runInfo.character.pickupRange),
+      this.statRow(I18n.t('loading.expMultiplier'), runInfo.character.expMultiplier),
+      runInfo.character.growthSummary ? this.statRow(I18n.t('loading.growth'), runInfo.character.growthSummary) : undefined,
+      runInfo.character.reactionSummary ? this.statRow(I18n.t('loading.reaction'), runInfo.character.reactionSummary) : undefined,
+      runInfo.character.levelUpSummary ? this.statRow(I18n.t('loading.levelUp'), runInfo.character.levelUpSummary) : undefined,
+    ].filter((row): row is LoadingStatRow => Boolean(row));
     const weaponRows = [
-      this.statLine(I18n.t('loading.weaponType'), runInfo.startingWeapon.type),
-      this.statLine(I18n.t('loading.behavior'), runInfo.startingWeapon.behaviorType),
+      this.statRow(I18n.t('loading.weaponType'), runInfo.startingWeapon.type),
+      this.statRow(I18n.t('loading.behavior'), runInfo.startingWeapon.behaviorType),
       ...Object.entries(runInfo.startingWeapon.stats ?? {})
-        .map(([key, value]) => this.statLine(this.toTitleCase(key), value))
-        .filter((row): row is string => Boolean(row)),
-    ].filter((row): row is string => Boolean(row));
+        .map(([key, value]) => this.statRow(this.toTitleCase(key), value))
+        .filter((row): row is LoadingStatRow => Boolean(row)),
+    ].filter((row): row is LoadingStatRow => Boolean(row));
 
     return [
       {
@@ -228,7 +243,9 @@ export class LoadingOverlay {
     const progressX = centerX - progressWidth / 2;
     const progressY = height - bottomPadding - (compact ? 42 : 52);
 
-    this.drawBackground(width, height);
+    this.backdrop.render(width, height);
+    this.legacyFrame?.destroy();
+    this.legacyFrame = undefined;
     this.renderRunInfo(width, height, topPadding, bottomAreaHeight, portrait, compact);
     this.renderProgress(progressX, progressY, progressWidth, progressHeight, compact);
 
@@ -243,18 +260,6 @@ export class LoadingOverlay {
     this.currentFileText.setWordWrapWidth(progressWidth);
   }
 
-  private drawBackground(width: number, height: number): void {
-    this.background.clear();
-    this.background.fillStyle(0x020617, 1);
-    this.background.fillRect(0, 0, width, height);
-    this.background.fillStyle(0x0b1220, 0.86);
-    this.background.fillRect(0, 0, width, height);
-    this.background.fillStyle(0x1e3a8a, 0.1);
-    this.background.fillCircle(width * 0.22, height * 0.22, Math.min(width, height) * 0.34);
-    this.background.fillStyle(0xfacc15, 0.06);
-    this.background.fillCircle(width * 0.82, height * 0.18, Math.min(width, height) * 0.22);
-  }
-
   private renderRunInfo(
     width: number,
     height: number,
@@ -263,8 +268,6 @@ export class LoadingOverlay {
     portrait: boolean,
     compact: boolean,
   ): void {
-    this.panel.clear();
-
     if (this.cardViews.length === 0) {
       this.renderLegacyPanel(width, height, compact);
       return;
@@ -278,18 +281,25 @@ export class LoadingOverlay {
     const sidePadding = portrait ? 14 : Math.max(24, width * 0.055);
 
     if (portrait) {
-      const cardWidth = width - sidePadding * 2;
-      const cardHeight = Math.max(104, Math.min(174, (availableHeight - gap * 2) / 3));
+      const cardWidth = Math.min(width - sidePadding * 2, compact ? 340 : 380);
+      const cardHeight = Math.max(104, Math.min(compact ? 148 : 168, (availableHeight - gap * 2) / 3));
+      const totalHeight = cardHeight * this.cardViews.length + gap * Math.max(0, this.cardViews.length - 1);
+      const startX = width / 2 - cardWidth / 2;
+      const startY = contentTop + Math.max(0, (availableHeight - totalHeight) / 2);
       this.cardViews.forEach((card, index) => {
-        this.renderCard(card, sidePadding, contentTop + index * (cardHeight + gap), cardWidth, cardHeight, compact, portrait);
+        this.renderCard(card, startX, startY + index * (cardHeight + gap), cardWidth, cardHeight, compact, portrait);
       });
       return;
     }
 
-    const cardWidth = (width - sidePadding * 2 - gap * 2) / 3;
-    const cardHeight = Math.max(130, availableHeight);
+    const rawCardWidth = (width - sidePadding * 2 - gap * 2) / 3;
+    const cardWidth = Math.min(rawCardWidth, compact ? 260 : 420);
+    const totalWidth = cardWidth * this.cardViews.length + gap * Math.max(0, this.cardViews.length - 1);
+    const cardHeight = Math.max(compact ? 130 : 168, Math.min(compact ? 190 : 260, availableHeight));
+    const startX = width / 2 - totalWidth / 2;
+    const startY = contentTop + Math.max(0, (availableHeight - cardHeight) / 2);
     this.cardViews.forEach((card, index) => {
-      this.renderCard(card, sidePadding + index * (cardWidth + gap), contentTop, cardWidth, cardHeight, compact, portrait);
+      this.renderCard(card, startX + index * (cardWidth + gap), startY, cardWidth, cardHeight, compact, portrait);
     });
   }
 
@@ -299,10 +309,15 @@ export class LoadingOverlay {
     const centerX = width / 2;
     const centerY = height / 2 - 28;
 
-    this.panel.fillStyle(0x0f172a, 0.92);
-    this.panel.fillRoundedRect(centerX - panelWidth / 2, centerY - panelHeight / 2, panelWidth, panelHeight, 10);
-    this.panel.lineStyle(2, 0x5b7fa8, 0.74);
-    this.panel.strokeRoundedRect(centerX - panelWidth / 2, centerY - panelHeight / 2, panelWidth, panelHeight, 10);
+    this.legacyFrame = PanelFrame.create(this.scene, {
+      x: centerX,
+      y: centerY,
+      width: panelWidth,
+      height: panelHeight,
+      variant: 'modal',
+      alpha: UITheme.alpha.modal,
+    });
+    this.container.addAt(this.legacyFrame, 1);
   }
 
   private renderCard(
@@ -314,24 +329,44 @@ export class LoadingOverlay {
     compact: boolean,
     portrait: boolean,
   ): void {
+    card.dynamicObjects.forEach((object) => object.destroy());
+    card.dynamicObjects = [];
+
     const padding = compact ? 10 : 14;
     const titleSize = compact ? '11px' : '13px';
     const nameSize = compact ? '15px' : '20px';
     const rowSize = compact ? '10px' : '12px';
     const idSize = compact ? '9px' : '11px';
-    const lineHeight = compact ? 15 : 18;
+    const rowHeight = compact ? 18 : 22;
+    const lineHeight = rowHeight + (compact ? 3 : 4);
     const maxRows = Math.max(2, Math.floor((height - (portrait ? 58 : 78)) / lineHeight));
     const shownRows = portrait
       ? Math.min(maxRows, compact ? 4 : 5)
       : Math.min(maxRows, compact ? 5 : 8);
     const badgeLimit = compact ? 2 : 4;
 
-    this.panel.fillStyle(0x0f172a, 0.82);
-    this.panel.fillRoundedRect(x, y, width, height, 8);
-    this.panel.lineStyle(1, 0x5b7fa8, 0.72);
-    this.panel.strokeRoundedRect(x, y, width, height, 8);
-    this.panel.lineStyle(2, card.data.accentColor, 0.72);
-    this.panel.lineBetween(x + padding, y + padding, x + width - padding, y + padding);
+    card.frame?.destroy();
+    card.frame = PanelFrame.create(this.scene, {
+      x: x + width / 2,
+      y: y + height / 2,
+      width,
+      height,
+      variant: 'card',
+      alpha: UITheme.alpha.card,
+    });
+    this.container.addAt(card.frame, 1);
+
+    const accentLine = new UIBackplate(this.scene, {
+      x: x + padding,
+      y: y + padding,
+      width: width - padding * 2,
+      height: 2,
+      fillColor: card.data.accentColor,
+      fillAlpha: 0.72,
+      borderWidth: 0,
+    }).rectangle;
+    this.container.add(accentLine);
+    card.dynamicObjects.push(accentLine);
 
     card.titleText.setText(card.data.title);
     card.titleText.setPosition(x + padding, y + padding + 8);
@@ -349,70 +384,69 @@ export class LoadingOverlay {
     card.idText.setWordWrapWidth(width - padding * 2);
 
     const rowStartY = y + padding + (compact ? 58 : 76);
-    card.rowTexts.forEach((text, index) => {
-      const visible = index < shownRows;
-      text.setVisible(visible);
-      if (!visible) {
-        return;
-      }
-
-      text.setText(this.truncateText(card.data.rows[index], compact ? 44 : 62));
-      text.setPosition(x + padding, rowStartY + index * lineHeight);
-      text.setOrigin(0, 0.5);
-      text.setFontSize(rowSize);
-      text.setWordWrapWidth(width - padding * 2);
+    card.data.rows.slice(0, shownRows).forEach((row, index) => {
+      const statRow = UIStatRow.create(
+        this.scene,
+        x + width / 2,
+        rowStartY + index * lineHeight,
+        width - padding * 2,
+        this.truncateText(row.label, compact ? 18 : 24),
+        this.truncateText(row.value, compact ? 24 : 34),
+        {
+          height: rowHeight,
+          fontSize: rowSize,
+          backgroundAlpha: 0.28,
+          borderAlpha: 0.18,
+        },
+      );
+      this.container.add(statRow);
+      card.dynamicObjects.push(statRow);
     });
 
-    card.badgeTexts.forEach((badge, index) => {
-      const visible = index < badgeLimit && height > 138;
-      badge.setVisible(visible);
-      if (!visible) {
+    card.data.badges.slice(0, badgeLimit).forEach((badgeLabel, index) => {
+      if (height <= 138) {
         return;
       }
 
-      const badgeText = this.truncateText(card.data.badges[index], compact ? 12 : 16);
-      const badgeX = x + padding + index * Math.min(74, (width - padding * 2) / Math.max(1, badgeLimit));
+      const badgeText = this.truncateText(badgeLabel, compact ? 12 : 16);
+      const badgeX = x + padding + 28 + index * Math.min(74, (width - padding * 2) / Math.max(1, badgeLimit));
       const badgeY = y + height - padding - 10;
-      badge.setText(badgeText);
-      badge.setPosition(badgeX, badgeY);
-      badge.setOrigin(0, 0.5);
-      badge.setFontSize(compact ? '9px' : '10px');
-      this.panel.fillStyle(card.data.accentColor, 0.24);
-      this.panel.fillRoundedRect(badgeX - 5, badgeY - 10, Math.min(66, Math.max(32, badgeText.length * 7)), 20, 7);
+      const badge = UIBadge.create(this.scene, badgeX, badgeY, badgeText, card.data.accentColor);
+      badge.setScale(compact ? 0.82 : 0.92);
+      this.container.add(badge);
+      card.dynamicObjects.push(badge);
     });
   }
 
   private renderProgress(x: number, y: number, width: number, height: number, compact: boolean): void {
-    this.progressTrack.clear();
-    this.progressTrack.fillStyle(0x111827, 1);
-    this.progressTrack.fillRoundedRect(x, y, width, height, 8);
-    this.progressTrack.lineStyle(1, 0x93c5fd, 0.55);
-    this.progressTrack.strokeRoundedRect(x, y, width, height, 8);
-
-    this.progressFill.clear();
-    this.progressFill.fillStyle(0x60a5fa, 0.95);
-    this.progressFill.fillRoundedRect(x + 2, y + 2, Math.max(0, (width - 4) * this.progress), height - 4, compact ? 5 : 6);
+    this.progressBar.container.setPosition(x, y);
+    this.progressBar.resize(width, height);
+    this.progressBar.setProgress(this.progress);
+    this.progressBar.setLabel(undefined);
   }
 
   private createText(text: string, fontSize: string, color: string, bold = false): Phaser.GameObjects.Text {
-    const textObject = this.scene.add.text(0, 0, text, {
-      color,
-      fontFamily: 'Noto Sans, Arial, sans-serif',
+    const textObject = new UITextBlock(this.scene, {
+      x: 0,
+      y: 0,
+      text,
       fontSize,
       fontStyle: bold ? 'bold' : '',
       align: 'center',
-    });
-
-    textObject.setOrigin(0.5);
+    }).text;
+    textObject.setColor(color);
     return textObject;
   }
 
-  private statLine(label: string, value: number | string | undefined): string | undefined {
+  private statRow(label: string, value: number | string | undefined): LoadingStatRow | undefined {
     if (value === undefined || value === '') {
       return undefined;
     }
 
-    return `${label}: ${this.formatStatValue(value)}`;
+    return {
+      label,
+      value: this.formatStatValue(value),
+    };
   }
 
   private formatSize(width: number | undefined, height: number | undefined): string | undefined {

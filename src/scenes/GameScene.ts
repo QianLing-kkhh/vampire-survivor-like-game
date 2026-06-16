@@ -11,6 +11,7 @@ import { BossAttackController } from '../boss/BossAttackController';
 import { BossSpawnDirector } from '../boss/BossSpawnDirector';
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EventBus } from '../core/EventBus';
+import type { RenderEventPort } from '../core/ports/RenderEventPort';
 import { TimeManager } from '../core/TimeManager';
 import { DebugDataCollector } from '../debug/DebugDataCollector';
 import { Enemy, GameEventMap, isEnemyKilledEvent } from '../enemy/Enemy';
@@ -19,7 +20,6 @@ import { EnemyMovement } from '../enemy/EnemyMovement';
 import { EndlessBossManager } from '../endless/EndlessBossManager';
 import { EndlessManager } from '../endless/EndlessManager';
 import { EvolutionManager } from '../evolution/EvolutionManager';
-import { EVOLUTION_RULES } from '../evolution/EvolutionRule';
 import { GameplayContext } from '../gameplay/GameplayContext';
 import { GameplayInitializer } from '../gameplay/GameplayInitializer';
 import { GameplayUpdater } from '../gameplay/GameplayUpdater';
@@ -32,6 +32,7 @@ import { MapManager } from '../map/MapManager';
 import { MapLightSourceDefinition } from '../map/mechanics/MapMechanicDefinition';
 import { PickupManager } from '../pickup/PickupManager';
 import { PhaserPlayerIntentAdapter } from '../phaser-adapter/PhaserPlayerIntentAdapter';
+import { PhaserRenderEventAdapter } from '../phaser-adapter/PhaserRenderEventAdapter';
 import { TreasureManager } from '../pickup/TreasureManager';
 import { PassiveManager } from '../passive/PassiveManager';
 import { PlayerController } from '../player/PlayerController';
@@ -76,6 +77,8 @@ import { TreasureRewardCoordinator } from '../treasure/TreasureRewardCoordinator
 import { VictoryUnlockService } from '../unlock/VictoryUnlockService';
 import { FloatingTextManager } from '../ui/FloatingTextManager';
 import { HUDStateBuilder } from '../ui/HUDStateBuilder';
+import { UIBlockingNotice } from '../ui/components/UIBlockingNotice';
+import { UITemporaryMessage } from '../ui/components/UITemporaryMessage';
 import type { LiveStrategyPatchPayload } from '../ui/LiveStrategyControlPanel';
 import { PauseFlowCoordinator, PauseFlowResult } from '../ui/pause/PauseFlowCoordinator';
 import { StatsBuildSnapshotBuilder } from '../ui/stats/StatsBuildSnapshotBuilder';
@@ -147,8 +150,9 @@ export class GameScene extends Phaser.Scene {
   private endlessBossManager?: EndlessBossManager;
   private enemyFactory?: EnemyFactory;
   private floatingTextManager?: FloatingTextManager;
+  private renderEventPort?: RenderEventPort;
   private virtualJoystick?: VirtualJoystick;
-  private orientationOverlay?: Phaser.GameObjects.Container;
+  private orientationOverlay?: UIBlockingNotice;
   private readonly timeManager = new TimeManager();
   private readonly contactDamageCooldowns = new Map<Enemy, number>();
   private readonly centerMessages = new Set<Phaser.GameObjects.Text>();
@@ -253,6 +257,7 @@ export class GameScene extends Phaser.Scene {
     this.endlessBossManager = undefined;
     this.enemyFactory = undefined;
     this.floatingTextManager = undefined;
+    this.renderEventPort = undefined;
     this.virtualJoystick = undefined;
     this.orientationOverlay = undefined;
     this.weaponManager = undefined;
@@ -377,9 +382,10 @@ export class GameScene extends Phaser.Scene {
     context.virtualJoystick.setGameplayActive(this.shouldVirtualJoystickBeActive());
     this.createOrientationOverlay();
     this.scale.on('resize', this.handleResize, this);
+    const playerPosition = context.player.getPositionLike();
     this.playerHitRange = this.add.circle(
-      context.player.body.x,
-      context.player.body.y,
+      playerPosition.x,
+      playerPosition.y,
       GameScene.PLAYER_HIT_RADIUS,
       0xffffff,
       0.08,
@@ -400,9 +406,10 @@ export class GameScene extends Phaser.Scene {
         : 0;
 
       if (healAmount > 0 && this.player) {
+        const playerPosition = this.player.getPositionLike();
         this.floatingTextManager?.showPlayerHeal(
-          this.player.body.x,
-          this.player.body.y,
+          playerPosition.x,
+          playerPosition.y,
           healAmount,
         );
       }
@@ -420,9 +427,10 @@ export class GameScene extends Phaser.Scene {
           characterId: this.gameplayContext.characterRuntime.getCharacterId(),
           skinId: this.gameplayContext.characterRuntime.getSkinId(),
           showPlayerHeal: (amount) => {
+            const playerPosition = this.player!.getPositionLike();
             this.floatingTextManager?.showPlayerHeal(
-              this.player!.body.x,
-              this.player!.body.y,
+              playerPosition.x,
+              playerPosition.y,
               amount,
             );
           },
@@ -590,6 +598,7 @@ export class GameScene extends Phaser.Scene {
     this.endlessBossManager = context.endlessBossManager;
     this.enemyFactory = context.enemyFactory;
     this.floatingTextManager = context.floatingTextManager;
+    this.renderEventPort = new PhaserRenderEventAdapter(this.floatingTextManager);
     this.virtualJoystick = context.virtualJoystick;
     this.playerPickupRange = context.playerPickupRange;
     this.syncRuntimeStrategyProfile(context.runtimeStrategyState?.getProfile());
@@ -1007,9 +1016,10 @@ export class GameScene extends Phaser.Scene {
         continue;
       }
 
+      const playerPosition = this.player.getPositionLike();
       const distance = Phaser.Math.Distance.Between(
-        this.player.body.x,
-        this.player.body.y,
+        playerPosition.x,
+        playerPosition.y,
         impactPosition.x,
         impactPosition.y,
       );
@@ -1044,9 +1054,10 @@ export class GameScene extends Phaser.Scene {
     AudioManager.playSfx(this, 'player_hit');
 
     if (this.player && this.shouldShowDamageNumbers()) {
+      const playerPosition = this.player.getPositionLike();
       this.floatingTextManager?.showPlayerDamage(
-        this.player.body.x,
-        this.player.body.y,
+        playerPosition.x,
+        playerPosition.y,
         actualDamage,
       );
     }
@@ -1071,7 +1082,10 @@ export class GameScene extends Phaser.Scene {
 
     knockbackDirection.normalize().scale(GameScene.BOSS_DASH_KNOCKBACK_DISTANCE);
 
-    this.player.applyExternalDisplacement(knockbackDirection);
+    this.player.applyExternalDisplacementLike({
+      x: knockbackDirection.x,
+      y: knockbackDirection.y,
+    });
   }
 
   private knockPlayerBackFromPoint(point: Phaser.Math.Vector2): void {
@@ -1079,9 +1093,10 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    const playerPosition = this.player.getPositionLike();
     const direction = new Phaser.Math.Vector2(
-      this.player.body.x - point.x,
-      this.player.body.y - point.y,
+      playerPosition.x - point.x,
+      playerPosition.y - point.y,
     );
 
     if (direction.lengthSq() === 0) {
@@ -1097,7 +1112,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const context = this.autoPlayerContextBuilder.build({
-      playerBody: this.player.body,
+      player: this.player,
       enemies: this.enemies,
       pickupPositions: this.getPickupPositions(),
       treasurePositions: this.getTreasurePositions(),
@@ -1159,37 +1174,27 @@ export class GameScene extends Phaser.Scene {
   ): void {
     const camera = this.cameras.main;
     const isBoss = options.kind === 'boss';
-    const text = this.add.text(
-      camera.scrollX + camera.width / 2,
-      camera.scrollY + camera.height * (isBoss ? 0.34 : 0.5),
-      message,
-      {
-        fontFamily: 'Arial',
-        fontSize: isBoss ? '42px' : '36px',
-        fontStyle: isBoss ? 'bold' : undefined,
-        color: isBoss ? '#facc15' : '#ffffff',
-        stroke: isBoss ? '#7f1d1d' : '#111827',
-        strokeThickness: isBoss ? 7 : 6,
-      },
-    );
-
-    text.setOrigin(0.5);
-    text.setDepth(100);
-    this.centerMessages.add(text);
-
-    this.tweens.add({
-      targets: text,
-      alpha: 0,
-      y: text.y - 28,
-      duration: options.durationMs ?? (isBoss ? 2200 : 1600),
-      ease: 'Cubic.easeOut',
-      onComplete: () => {
-        this.centerMessages.delete(text);
-        if (text.active) {
-          text.destroy();
-        }
+    const compact = camera.width < 900 || camera.height < 520;
+    const text = UITemporaryMessage.show(this, {
+      x: camera.scrollX + camera.width / 2,
+      y: camera.scrollY + camera.height * (isBoss ? 0.34 : 0.5),
+      text: message,
+      kind: options.kind ?? 'normal',
+      compact,
+      durationMs: options.durationMs ?? (isBoss ? 2200 : 1600),
+      depth: 100,
+      scrollFactor: 1,
+      wordWrapWidth: Math.max(240, camera.width * 0.72),
+      yOffset: 28,
+      color: isBoss ? '#facc15' : '#ffffff',
+      fontSize: isBoss ? compact ? '34px' : '42px' : compact ? '28px' : '36px',
+      stroke: isBoss ? '#7f1d1d' : '#111827',
+      strokeThickness: isBoss ? 7 : 6,
+      onComplete: (completedText) => {
+        this.centerMessages.delete(completedText);
       },
     });
+    this.centerMessages.add(text);
   }
 
   private updatePlayerHitRange(): void {
@@ -1197,7 +1202,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.playerHitRange.setPosition(this.player.body.x, this.player.body.y);
+    const playerPosition = this.player.getPositionLike();
+    this.playerHitRange.setPosition(playerPosition.x, playerPosition.y);
   }
 
   private endGame(resultType: 'gameOver' | 'victory'): void {
@@ -1323,10 +1329,11 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    const playerPosition = this.player.getPositionLike();
     if (result.appliedUpgrade) {
       this.floatingTextManager.showChestUpgrade(
-        this.player.body.x,
-        this.player.body.y,
+        playerPosition.x,
+        playerPosition.y,
         {
           name: result.appliedUpgrade.targetName,
           iconFallback: result.appliedUpgrade.iconFallback,
@@ -1341,8 +1348,8 @@ export class GameScene extends Phaser.Scene {
 
     if (result.evolutionDetail) {
       this.floatingTextManager.showChestUpgrade(
-        this.player.body.x,
-        this.player.body.y,
+        playerPosition.x,
+        playerPosition.y,
         {
           name: result.evolutionDetail.baseName,
           evolvedName: result.evolutionDetail.evolvedName,
@@ -1385,9 +1392,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private buildStatsBuildSnapshot(): StatsBuildSnapshot {
-    const playerBody = this.player?.body;
-    const playerSlowState = playerBody && this.gameplayContext
-      ? this.gameplayContext.mapMechanicRuntime.getPlayerSlowState(playerBody.x, playerBody.y)
+    const playerPosition = this.player?.getPositionLike();
+    const playerSlowState = playerPosition && this.gameplayContext
+      ? this.gameplayContext.mapMechanicRuntime.getPlayerSlowState(playerPosition.x, playerPosition.y)
       : undefined;
 
     return this.statsBuildSnapshotBuilder.build({
@@ -1413,36 +1420,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createOrientationOverlay(): void {
-    const overlay = this.add.container(0, 0);
-    overlay.setDepth(20000);
-    overlay.setScrollFactor(0);
-    const background = this.add.rectangle(
-      0,
-      0,
-      this.scale.width,
-      this.scale.height,
-      0x020617,
-      0.86,
-    );
-    background.setOrigin(0, 0);
-    background.setScrollFactor(0);
-    const text = this.add.text(
-      this.scale.width / 2,
-      this.scale.height / 2,
-      I18n.t('game.rotateForBetterPlay'),
-      {
-        color: '#f8fafc',
-        fontFamily: 'Arial, Helvetica, sans-serif',
-        fontSize: '30px',
-        align: 'center',
-        wordWrap: { width: 520 },
-      },
-    );
-    text.setOrigin(0.5);
-    text.setScrollFactor(0);
-    overlay.add([background, text]);
-    overlay.setVisible(false);
-    this.orientationOverlay = overlay;
+    this.orientationOverlay = UIBlockingNotice.createRotateNotice(this);
   }
 
   private updateOrientationOverlay(): boolean {
@@ -1453,14 +1431,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleResize(): void {
-    const overlayChildren = this.orientationOverlay?.list ?? [];
-    const background = overlayChildren[0] as Phaser.GameObjects.Rectangle | undefined;
-    const text = overlayChildren[1] as Phaser.GameObjects.Text | undefined;
-
     this.cameras.main.setSize(this.scale.width, this.scale.height);
     this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
-    background?.setSize(this.scale.width, this.scale.height);
-    text?.setPosition(this.scale.width / 2, this.scale.height / 2);
+    this.orientationOverlay?.resize(this.scale.width, this.scale.height);
     this.updateOrientationOverlay();
   }
 
@@ -1481,7 +1454,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.mapVisibilityRenderer.update(this.player.body.x, this.player.body.y);
+    const playerPosition = this.player.getPositionLike();
+    this.mapVisibilityRenderer.update(playerPosition.x, playerPosition.y);
   }
 
   private shouldShowOrientationOverlay(): boolean {
@@ -1592,12 +1566,18 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.shouldShowDamageNumbers()) {
-      this.floatingTextManager?.showEnemyDamage(
-        payload.x,
-        payload.y,
-        payload.damage,
-        payload.isBoss === true,
-      );
+      this.renderEventPort?.showFloatingText({
+        text: Math.ceil(payload.damage).toString(),
+        position: {
+          x: payload.x,
+          y: payload.y,
+        },
+        metadata: {
+          kind: 'enemyDamage',
+          damage: payload.damage,
+          isBoss: payload.isBoss === true,
+        },
+      });
     }
     AudioManager.playSfx(this, 'enemy_hit', {
       autoMode: this.playtestSettings.autoMovement
@@ -1626,7 +1606,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getAutoUpgradeSelectionContext(): AutoUpgradeSelectionContext {
-    const playerBody = this.player?.body;
+    const playerPosition = this.player?.getPositionLike();
 
     return this.upgradeSelectionContextBuilder.buildAutoUpgradeSelectionContext({
       gameplayContext: this.gameplayContext,
@@ -1634,7 +1614,7 @@ export class GameScene extends Phaser.Scene {
       passiveManager: this.passiveManager,
       playerStats: this.playerStats,
       playerHealth: this.playerHealth,
-      playerPosition: playerBody ? { x: playerBody.x, y: playerBody.y } : undefined,
+      playerPosition,
       enemies: this.enemies,
       pickupPositions: this.getPickupPositions(),
       treasureCount: this.treasureManager?.getActiveCount() ?? 0,
@@ -1646,7 +1626,7 @@ export class GameScene extends Phaser.Scene {
       return '';
     }
 
-    return EVOLUTION_RULES.map((rule) => {
+    return (this.evolutionManager?.getEvolutionRules() ?? []).map((rule) => {
       const weaponUpgradeTotal = this.weaponManager?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0;
       const passiveLevel = this.passiveManager?.getLevel(rule.requiredPassiveId) ?? 0;
       const hasBase = this.weaponManager?.hasWeapon(rule.baseWeaponId) ?? false;
@@ -1776,10 +1756,11 @@ export class GameScene extends Phaser.Scene {
     this.enemyFactory = undefined;
     this.virtualJoystick?.destroy();
     this.virtualJoystick = undefined;
-    this.orientationOverlay?.destroy(true);
+    this.orientationOverlay?.destroy();
     this.orientationOverlay = undefined;
     this.floatingTextManager?.destroy();
     this.floatingTextManager = undefined;
+    this.renderEventPort = undefined;
     this.mapVisibilityRenderer?.destroy();
     this.mapVisibilityRenderer = undefined;
     this.gameplayContext?.poolManager.clear();

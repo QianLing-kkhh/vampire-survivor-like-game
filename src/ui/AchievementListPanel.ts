@@ -4,9 +4,7 @@ import { AchievementReward } from '../achievement/AchievementReward';
 import { I18n } from '../i18n/I18n';
 import { SaveManager } from '../save/SaveManager';
 
-import { RecordsPanel } from './RecordsPanel';
-
-const MAX_ACHIEVEMENT_ROWS = 12;
+import { RecordsPanel, RecordsPanelRow } from './RecordsPanel';
 
 export class AchievementListPanel {
   render(panel: RecordsPanel): void {
@@ -22,13 +20,8 @@ export class AchievementListPanel {
       definition,
       progressById[definition.id],
     ));
-    const visibleRows = rows.slice(0, MAX_ACHIEVEMENT_ROWS);
 
-    if (rows.length > visibleRows.length) {
-      visibleRows.push(`+${rows.length - visibleRows.length} more`);
-    }
-
-    panel.setContent(I18n.t('records.achievements'), visibleRows);
+    panel.setRows(I18n.t('records.achievements'), rows);
   }
 
   private formatAchievement(
@@ -39,7 +32,7 @@ export class AchievementListPanel {
       progressValue?: number;
       targetValue?: number;
     } | undefined,
-  ): string {
+  ): RecordsPanelRow {
     const unlocked = progress?.unlocked === true;
     const status = unlocked ? I18n.t('records.unlocked') : I18n.t('records.locked');
     const name = definition.hidden && !unlocked
@@ -51,7 +44,12 @@ export class AchievementListPanel {
       : '';
     const rewardText = this.formatRewards(definition.rewards);
 
-    return `${status}  ${name}${progressText}${dateText}${rewardText}`;
+    return {
+      status,
+      label: name,
+      value: [progressText, dateText, rewardText].filter(Boolean).join('  '),
+      tone: unlocked ? 'success' : 'muted',
+    };
   }
 
   private formatProgress(progress: {
@@ -62,7 +60,7 @@ export class AchievementListPanel {
       return '';
     }
 
-    return ` ${progress.progressValue ?? 0}/${progress.targetValue}`;
+    return `${progress.progressValue ?? 0}/${progress.targetValue}`;
   }
 
   private formatRewards(rewards: readonly AchievementReward[] | undefined): string {
@@ -74,7 +72,7 @@ export class AchievementListPanel {
       .filter((reward) => reward.type !== 'none')
       .map((reward) => reward.targetId ?? reward.type);
 
-    return targets.length > 0 ? ` -> ${targets.slice(0, 2).join(', ')}` : '';
+    return targets.length > 0 ? `-> ${targets.slice(0, 2).join(', ')}` : '';
   }
 
   private formatShortDate(value: string): string {

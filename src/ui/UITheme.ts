@@ -84,13 +84,13 @@ export const UITheme = {
     return UITheme.current().sizes.button.medium.fontSize;
   },
   get compactButtonWidth(): number {
-    return Math.min(220, UITheme.current().sizes.button.medium.width);
+    return Math.min(204, UITheme.current().sizes.button.medium.width);
   },
   get compactButtonHeight(): number {
-    return Math.min(42, UITheme.current().sizes.button.medium.height);
+    return Math.min(38, UITheme.current().sizes.button.medium.height);
   },
   get compactButtonFontSize(): string {
-    return UITheme.current().id === 'minimal' ? '14px' : '15px';
+    return UITheme.current().id === 'minimal' ? '13px' : '14px';
   },
   get smallButtonWidth(): number {
     return UITheme.current().sizes.button.small.width;
@@ -106,9 +106,6 @@ export const UITheme = {
   },
   get hudPanelAlpha(): number {
     return UITheme.current().alpha.hud;
-  },
-  get helpPanelAlpha(): number {
-    return UITheme.current().id === 'classic' ? 0.85 : UITheme.current().alpha.modal;
   },
   get levelUpPanelAlpha(): number {
     return UITheme.current().alpha.modal;
@@ -161,7 +158,7 @@ export function getButtonMetrics(width: number, height: number): {
     return {
       width: UITheme.smallButtonWidth,
       height: UITheme.smallButtonHeight,
-      gap: UITheme.smallButtonHeight + 8,
+      gap: UITheme.smallButtonHeight + 6,
       fontSize: UITheme.smallButtonFontSize,
     };
   }
@@ -170,7 +167,7 @@ export function getButtonMetrics(width: number, height: number): {
     return {
       width: UITheme.compactButtonWidth,
       height: UITheme.compactButtonHeight,
-      gap: UITheme.compactButtonHeight + 10,
+      gap: UITheme.compactButtonHeight + 7,
       fontSize: UITheme.compactButtonFontSize,
     };
   }

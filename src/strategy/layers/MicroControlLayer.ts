@@ -1,5 +1,3 @@
-import Phaser from 'phaser';
-
 import { createMoveIntent } from '../../input/PlayerIntent';
 import type { PlayerIntent } from '../../input/PlayerIntent';
 import { AUTO_PLAYER_CONSTANTS } from '../../auto/AutoPlayerConstants';
@@ -35,8 +33,8 @@ export class MicroControlLayer {
       const normalized = routeDirection.clone().normalize();
 
       candidates.push({ direction: normalized, reason: 'FOLLOW_ROUTE' });
-      candidates.push({ direction: new Phaser.Math.Vector2(normalized.y, -normalized.x), reason: 'FOLLOW_ROUTE' });
-      candidates.push({ direction: new Phaser.Math.Vector2(-normalized.y, normalized.x), reason: 'FOLLOW_ROUTE' });
+      candidates.push({ direction: normalized.clone().set(normalized.y, -normalized.x), reason: 'FOLLOW_ROUTE' });
+      candidates.push({ direction: normalized.clone().set(-normalized.y, normalized.x), reason: 'FOLLOW_ROUTE' });
     }
 
     if (routeReturnDirection.lengthSq() > 0) {
@@ -118,7 +116,7 @@ export class MicroControlLayer {
 
     return bestMove ?? {
       direction: forbiddenCandidateCount > 0 || routeDirection.lengthSq() === 0
-        ? new Phaser.Math.Vector2(0, 0)
+        ? routeDirection.clone().set(0, 0)
         : routeDirection.normalize(),
       reason: 'FOLLOW_ROUTE',
       score: 0,

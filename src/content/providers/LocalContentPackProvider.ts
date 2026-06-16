@@ -4,6 +4,7 @@ import type {
   ContentPackProviderResult,
 } from '../ContentPackProvider';
 import type { ContentPackManifest } from '../ContentPackManifest';
+import { LocalStorageAdapter } from '../../save/storage/LocalStorageAdapter';
 
 interface LocalContentPackEntry {
   manifest: ContentPackManifest;
@@ -12,6 +13,7 @@ interface LocalContentPackEntry {
 
 export class LocalContentPackProvider implements ContentPackProvider {
   private static memoryEntries: LocalContentPackEntry[] = [];
+  private static readonly storage = new LocalStorageAdapter();
 
   readonly id = 'local';
 
@@ -21,12 +23,7 @@ export class LocalContentPackProvider implements ContentPackProvider {
 
   static clearDefaultStorage(): void {
     LocalContentPackProvider.memoryEntries = [];
-
-    try {
-      globalThis.localStorage?.removeItem('vampire_survivor_like_local_content_packs_v1');
-    } catch {
-      // Memory fallback already cleared.
-    }
+    LocalContentPackProvider.storage.removeItem('vampire_survivor_like_local_content_packs_v1');
   }
 
   async listManifests(): Promise<ContentPackManifest[]> {
@@ -81,11 +78,7 @@ export class LocalContentPackProvider implements ContentPackProvider {
   }
 
   private readStorage(): string | null {
-    try {
-      return globalThis.localStorage?.getItem(this.storageKey) ?? null;
-    } catch {
-      return null;
-    }
+    return LocalContentPackProvider.storage.getItem(this.storageKey);
   }
 
   private isEntry(value: unknown): value is LocalContentPackEntry {

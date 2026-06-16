@@ -150,6 +150,63 @@
       "loop": "Loop"
     }
   },
+  "strategyEditor": {
+    "subtitle": "Edit auto strategy profiles",
+    "activeProfile": "Active profile: {name} ({id}, {type})",
+    "route": "Route",
+    "action": {
+      "save": "Save",
+      "copy": "Copy",
+      "delete": "Delete",
+      "export": "Export",
+      "import": "Import",
+      "reset": "Reset"
+    },
+    "section": {
+      "movement": "Movement",
+      "upgrade": "Upgrade",
+      "treasure": "Treasure",
+      "relic": "Relic"
+    },
+    "slider": {
+      "survival": "Survival",
+      "farm": "Farm",
+      "treasure": "Treasure",
+      "boss": "Boss",
+      "risk": "Risk",
+      "loop": "Loop",
+      "evolution": "Evolution",
+      "mainWeapon": "Main Weapon",
+      "survivalUp": "Survival Up",
+      "damageUp": "Damage Up",
+      "chestRisk": "Chest Risk",
+      "evoChest": "Evo Chest",
+      "relicSynergy": "Relic Synergy",
+      "damageRelic": "Damage Relic",
+      "survivalRelic": "Survival Relic",
+      "economyRelic": "Economy Relic"
+    },
+    "readonly": {
+      "builtin": "built-in",
+      "custom": "custom"
+    },
+    "prompt": {
+      "importJson": "Paste Auto Strategy JSON"
+    },
+    "status": {
+      "saved": "Saved {name}.",
+      "copied": "Copied to {name}.",
+      "builtinDeleteBlocked": "Built-in profiles cannot be deleted.",
+      "deleted": "Deleted {name}.",
+      "clipboardCopied": "Strategy JSON copied to clipboard.",
+      "clipboardFailed": "Clipboard failed; JSON logged to console.",
+      "jsonLogged": "Strategy JSON logged to console.",
+      "imported": "Imported {name}.",
+      "importFailed": "Import failed: invalid strategy JSON.",
+      "editBuiltin": "Editing a built-in profile will save as a custom copy.",
+      "editCustom": "Editing a custom profile will overwrite it when saved."
+    }
+  },
   "title": {
     "gameTitle": "Vampire Survivor Prototype",
     "startGame": "Start Game",
@@ -232,9 +289,17 @@
       "name": "Ruined Gate",
       "description": "A ruined stage shaped by broken walls and paired portals."
     },
+    "cursedCathedral": {
+      "name": "Cursed Cathedral",
+      "description": "A polished cathedral stage with walls, candlelight, portals, and a healing altar."
+    },
     "builtIn": "Built-In",
     "custom": "Custom",
-    "warningsCount": "{count} warnings"
+    "warningsCount": "{count} warnings",
+    "sunkenLibrary": {
+      "name": "Sunken Library",
+      "description": "A flooded archive stage with dense shelves, ink pools, arcane lamps, portals, and a healing catalogue altar."
+    }
   },
   "map": {
     "graveyard": {
@@ -245,6 +310,12 @@
     },
     "ruinedGate": {
       "name": "Ruined Gate"
+    },
+    "cursedCathedral": {
+      "name": "Cursed Cathedral"
+    },
+    "sunkenLibrary": {
+      "name": "Sunken Library"
     }
   },
   "stageSelection": {
@@ -277,7 +348,13 @@
     "invalid": "Invalid custom stage",
     "errors": "Errors",
     "warnings": "Warnings",
-    "storedStages": "Stored Custom Stages"
+    "storedStages": "Stored Custom Stages",
+    "id": "ID",
+    "name": "Name",
+    "finalBoss": "Final Boss",
+    "endless": "Endless",
+    "status": "Status",
+    "notValidated": "Not validated"
   },
   "records": {
     "title": "Records",
@@ -299,7 +376,20 @@
     "empty": "No replays yet",
     "compatible": "Compatible",
     "warning": "Warning",
-    "invalid": "Invalid"
+    "invalid": "Invalid",
+    "status": "Status",
+    "version": "Replay",
+    "game": "Game",
+    "content": "Content",
+    "seed": "Seed",
+    "character": "Character",
+    "stage": "Stage",
+    "map": "Map",
+    "result": "Result",
+    "survival": "Survival",
+    "events": "Events",
+    "inputs": "Inputs",
+    "compatibility": "Compatibility"
   },
   "dailyChallenge": {
     "title": "Daily Challenge",
@@ -310,7 +400,19 @@
     "copySeed": "Copy Seed",
     "rules": "Rules",
     "mode": "Mode",
-    "noChallenge": "No challenge available"
+    "date": "Date",
+    "character": "Character",
+    "stage": "Stage",
+    "map": "Map",
+    "difficulty": "Difficulty",
+    "normal": "Normal",
+    "endless": "Endless",
+    "none": "None",
+    "noChallenge": "No challenge available",
+    "challengeId": "Challenge",
+    "ruleset": "Ruleset",
+    "leaderboard": "Board",
+    "status": "Status"
   },
   "pause": {
     "title": "Paused",
@@ -389,7 +491,30 @@
     "seed": "Seed",
     "settings": "Settings",
     "skills": "Skills",
-    "stage": "Stage"
+    "stage": "Stage",
+    "mode": "Mode",
+    "edits": "Edits",
+    "final": "Final",
+    "base": "Base",
+    "strategy": "Strategy",
+    "pace": "Pace",
+    "choices": "Choices",
+    "kpm": "KPM",
+    "expPerMinute": "EXP/min",
+    "damagePerMinute": "damage/min",
+    "upgrades": "upgrades",
+    "evolutions": "evolutions",
+    "chestsPerMinute": "chests/min",
+    "localLeaderboard": "Local Leaderboard",
+    "thisRunRank": "this run",
+    "kills": "kills",
+    "control": {
+      "manual": "Manual",
+      "liveAuto": "Live Auto",
+      "fixedAuto": "Fixed Auto",
+      "liveAutoStrategy": "Live Auto Strategy",
+      "fixedAutoStrategy": "Fixed Auto Strategy"
+    }
   },
   "help": {
     "tab": {
@@ -565,7 +690,7 @@
         },
         "altar": {
           "_label": "Altar",
-          "description": "Special landmark used by stage mechanics when configured."
+          "description": "Stand inside to charge configured altar effects such as healing."
         },
         "spawner": {
           "_label": "Spawner",
@@ -889,5 +1014,85 @@
   "game": {
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."
-  }
+  },
+  "character.arcanist.name": "Arcanist",
+  "character.arcanist.description": "Starts with a distinctive arcanist weapon route.",
+  "unlock.character.arcanist.name": "Arcanist",
+  "character.ranger.name": "Ranger",
+  "character.ranger.description": "Starts with a distinctive ranger weapon route.",
+  "unlock.character.ranger.name": "Ranger",
+  "character.engineer.name": "Engineer",
+  "character.engineer.description": "Starts with a distinctive engineer weapon route.",
+  "unlock.character.engineer.name": "Engineer",
+  "character.necromancer.name": "Necromancer",
+  "character.necromancer.description": "Starts with a distinctive necromancer weapon route.",
+  "unlock.character.necromancer.name": "Necromancer",
+  "character.monk.name": "Monk",
+  "character.monk.description": "Starts with a distinctive monk weapon route.",
+  "unlock.character.monk.name": "Monk",
+  "character.alchemist.name": "Alchemist",
+  "character.alchemist.description": "Starts with a distinctive alchemist weapon route.",
+  "unlock.character.alchemist.name": "Alchemist",
+  "character.duelist.name": "Duelist",
+  "character.duelist.description": "Starts with a distinctive duelist weapon route.",
+  "unlock.character.duelist.name": "Duelist",
+  "character.geomancer.name": "Geomancer",
+  "character.geomancer.description": "Starts with a distinctive geomancer weapon route.",
+  "unlock.character.geomancer.name": "Geomancer",
+  "character.stormcaller.name": "Stormcaller",
+  "character.stormcaller.description": "Starts with a distinctive stormcaller weapon route.",
+  "unlock.character.stormcaller.name": "Stormcaller",
+  "character.sentinel.name": "Sentinel",
+  "character.sentinel.description": "Starts with a distinctive sentinel weapon route.",
+  "unlock.character.sentinel.name": "Sentinel",
+  "stage.crystalCaverns.name": "Crystal Caverns",
+  "stage.crystalCaverns.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.crystal_caverns_stage.name": "Crystal Caverns",
+  "stage.ashFoundry.name": "Ash Foundry",
+  "stage.ashFoundry.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.ash_foundry_stage.name": "Ash Foundry",
+  "stage.moonlitRooftops.name": "Moonlit Rooftops",
+  "stage.moonlitRooftops.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.moonlit_rooftops_stage.name": "Moonlit Rooftops",
+  "stage.frostMonastery.name": "Frost Monastery",
+  "stage.frostMonastery.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.frost_monastery_stage.name": "Frost Monastery",
+  "stage.bloodGarden.name": "Blood Garden",
+  "stage.bloodGarden.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.blood_garden_stage.name": "Blood Garden",
+  "stage.desertObelisk.name": "Desert Obelisk",
+  "stage.desertObelisk.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.desert_obelisk_stage.name": "Desert Obelisk",
+  "stage.stormCoast.name": "Storm Coast",
+  "stage.stormCoast.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.storm_coast_stage.name": "Storm Coast",
+  "stage.clockworkBastion.name": "Clockwork Bastion",
+  "stage.clockworkBastion.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.clockwork_bastion_stage.name": "Clockwork Bastion",
+  "stage.fungalDepths.name": "Fungal Depths",
+  "stage.fungalDepths.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.fungal_depths_stage.name": "Fungal Depths",
+  "stage.mirrorLabyrinth.name": "Mirror Labyrinth",
+  "stage.mirrorLabyrinth.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
+  "unlock.stage.mirror_labyrinth_stage.name": "Mirror Labyrinth",
+  "map.crystalCaverns.name": "Crystal Caverns",
+  "unlock.map.crystal_caverns_map.name": "Crystal Caverns",
+  "map.ashFoundry.name": "Ash Foundry",
+  "unlock.map.ash_foundry_map.name": "Ash Foundry",
+  "map.moonlitRooftops.name": "Moonlit Rooftops",
+  "unlock.map.moonlit_rooftops_map.name": "Moonlit Rooftops",
+  "map.frostMonastery.name": "Frost Monastery",
+  "unlock.map.frost_monastery_map.name": "Frost Monastery",
+  "map.bloodGarden.name": "Blood Garden",
+  "unlock.map.blood_garden_map.name": "Blood Garden",
+  "map.desertObelisk.name": "Desert Obelisk",
+  "unlock.map.desert_obelisk_map.name": "Desert Obelisk",
+  "map.stormCoast.name": "Storm Coast",
+  "unlock.map.storm_coast_map.name": "Storm Coast",
+  "map.clockworkBastion.name": "Clockwork Bastion",
+  "unlock.map.clockwork_bastion_map.name": "Clockwork Bastion",
+  "map.fungalDepths.name": "Fungal Depths",
+  "unlock.map.fungal_depths_map.name": "Fungal Depths",
+  "map.mirrorLabyrinth.name": "Mirror Labyrinth",
+  "unlock.map.mirror_labyrinth_map.name": "Mirror Labyrinth"
 }
