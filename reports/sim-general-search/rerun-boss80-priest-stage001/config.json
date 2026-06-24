@@ -1,0 +1,39 @@
+{
+  "candidates": 200,
+  "characterId": "priest",
+  "difficultyId": "normal",
+  "durationSeconds": 900,
+  "generatedAt": "2026-06-24T23:08:00.349Z",
+  "initialMutationRadius": 12,
+  "mapId": "prototype_field",
+  "minBossKillRate": 0.8,
+  "mutationDecay": 0.7,
+  "mutationMode": "gaussian",
+  "outputDir": "reports/sim-general-search/rerun-boss80-priest-stage001",
+  "phases": [
+    {
+      "endSeconds": 180,
+      "phaseId": "0-180",
+      "startSeconds": 0
+    },
+    {
+      "endSeconds": 300,
+      "phaseId": "180-300",
+      "startSeconds": 180
+    },
+    {
+      "endSeconds": 900,
+      "phaseId": "300-900",
+      "startSeconds": 300
+    }
+  ],
+  "randomSeed": "boss80rerun2",
+  "rounds": 3,
+  "scenarioCount": 1,
+  "schemaVersion": 1,
+  "seedCount": 5,
+  "stageId": "stage_001",
+  "strategyMode": "phased",
+  "tickMs": 100,
+  "topN": 10
+}

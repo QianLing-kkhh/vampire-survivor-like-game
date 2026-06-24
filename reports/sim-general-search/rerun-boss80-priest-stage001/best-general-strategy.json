@@ -1,0 +1,215 @@
+{
+  "createdAt": "2026-06-24T23:08:00.349Z",
+  "generalFitnessScore": 3904.4,
+  "id": "generated_general_strategy_2026_06_24T23_08_00_349Z_ff1f82b6",
+  "name": "Generated General Strategy",
+  "phases": [
+    {
+      "endSeconds": 180,
+      "phaseId": "0-180",
+      "profile": {
+        "id": "generated_general_strategy_2026_06_24T23_08_00_349Z_ff1f82b6_0_180",
+        "movement": {
+          "bossBias": 78,
+          "combatBias": 83,
+          "farmBias": 10,
+          "loopBias": 100,
+          "overKitePenalty": 74,
+          "riskTolerance": 75,
+          "survivalBias": 81,
+          "treasureBias": 14
+        },
+        "name": "Generated General Strategy",
+        "relic": {
+          "damageRelicPriority": 86,
+          "economyRelicPriority": 20,
+          "rarityPriority": 90,
+          "survivalRelicPriority": 60,
+          "synergyPriority": 29
+        },
+        "treasure": {
+          "evolutionChestPriority": 89,
+          "openRiskTolerance": 60,
+          "relicExpectedValuePriority": 38,
+          "routeDeviationTolerance": 43
+        },
+        "upgrade": {
+          "cooldownPriority": 0,
+          "damagePriority": 48,
+          "evolutionPriority": 82,
+          "growthPriority": 32,
+          "mainWeaponPriority": 90,
+          "newWeaponPriority": 89,
+          "passivePriority": 48,
+          "survivalPriority": 0
+        },
+        "version": 1
+      },
+      "startSeconds": 0
+    },
+    {
+      "endSeconds": 300,
+      "phaseId": "180-300",
+      "profile": {
+        "id": "generated_general_strategy_2026_06_24T23_08_00_349Z_ff1f82b6_180_300",
+        "movement": {
+          "bossBias": 73,
+          "combatBias": 84,
+          "farmBias": 5,
+          "loopBias": 98,
+          "overKitePenalty": 79,
+          "riskTolerance": 86,
+          "survivalBias": 79,
+          "treasureBias": 8
+        },
+        "name": "Generated General Strategy",
+        "relic": {
+          "damageRelicPriority": 75,
+          "economyRelicPriority": 0,
+          "rarityPriority": 87,
+          "survivalRelicPriority": 61,
+          "synergyPriority": 13
+        },
+        "treasure": {
+          "evolutionChestPriority": 98,
+          "openRiskTolerance": 53,
+          "relicExpectedValuePriority": 39,
+          "routeDeviationTolerance": 49
+        },
+        "upgrade": {
+          "cooldownPriority": 0,
+          "damagePriority": 45,
+          "evolutionPriority": 93,
+          "growthPriority": 19,
+          "mainWeaponPriority": 86,
+          "newWeaponPriority": 91,
+          "passivePriority": 30,
+          "survivalPriority": 1
+        },
+        "version": 1
+      },
+      "startSeconds": 180
+    },
+    {
+      "endSeconds": 900,
+      "phaseId": "300-900",
+      "profile": {
+        "id": "generated_general_strategy_2026_06_24T23_08_00_349Z_ff1f82b6_300_900",
+        "movement": {
+          "bossBias": 82,
+          "combatBias": 86,
+          "farmBias": 14,
+          "loopBias": 100,
+          "overKitePenalty": 71,
+          "riskTolerance": 80,
+          "survivalBias": 87,
+          "treasureBias": 4
+        },
+        "name": "Generated General Strategy",
+        "relic": {
+          "damageRelicPriority": 74,
+          "economyRelicPriority": 21,
+          "rarityPriority": 90,
+          "survivalRelicPriority": 67,
+          "synergyPriority": 14
+        },
+        "treasure": {
+          "evolutionChestPriority": 100,
+          "openRiskTolerance": 41,
+          "relicExpectedValuePriority": 45,
+          "routeDeviationTolerance": 55
+        },
+        "upgrade": {
+          "cooldownPriority": 2,
+          "damagePriority": 47,
+          "evolutionPriority": 88,
+          "growthPriority": 13,
+          "mainWeaponPriority": 73,
+          "newWeaponPriority": 100,
+          "passivePriority": 48,
+          "survivalPriority": 9
+        },
+        "version": 1
+      },
+      "startSeconds": 300
+    }
+  ],
+  "searchConfig": {
+    "candidates": 200,
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "durationSeconds": 900,
+    "generatedAt": "2026-06-24T23:08:00.349Z",
+    "initialMutationRadius": 12,
+    "mapId": "prototype_field",
+    "minBossKillRate": 0.8,
+    "mutationDecay": 0.7,
+    "mutationMode": "gaussian",
+    "outputDir": "reports/sim-general-search/rerun-boss80-priest-stage001",
+    "phases": [
+      {
+        "endSeconds": 180,
+        "phaseId": "0-180",
+        "startSeconds": 0
+      },
+      {
+        "endSeconds": 300,
+        "phaseId": "180-300",
+        "startSeconds": 180
+      },
+      {
+        "endSeconds": 900,
+        "phaseId": "300-900",
+        "startSeconds": 300
+      }
+    ],
+    "randomSeed": "boss80rerun2",
+    "rounds": 3,
+    "scenarioCount": 1,
+    "schemaVersion": 1,
+    "seedCount": 5,
+    "stageId": "stage_001",
+    "strategyMode": "phased",
+    "tickMs": 100,
+    "topN": 10
+  },
+  "simulationKind": "core-sim-simplified",
+  "source": "headless-general-search",
+  "stats": {
+    "avgDamageDealt": 184251.6,
+    "avgDamageTaken": 355.4,
+    "avgDamageWindowViolationCount": 5.4,
+    "avgExp": 3904.4,
+    "avgKills": 1387.6,
+    "avgLevel": 35.6,
+    "avgMaxDamageWindowRatio": 0.7335,
+    "avgScore": 26480.8,
+    "avgSurvivalTimeSeconds": 486.76,
+    "bossKillRate": 0.8,
+    "candidateId": "centered_candidate_000025_ffa8ee34",
+    "completionRate": 0.8,
+    "consistencyScore": -656.5328,
+    "damageDealtStdDev": 204809.3308,
+    "damageSafetyPenalty": 38910.2,
+    "damageWindowPassRate": 0,
+    "expStdDev": 3170.2655,
+    "generalFitnessScore": 3904.4,
+    "maxScore": 59099,
+    "medianDamageDealt": 59004,
+    "medianExp": 2671,
+    "medianScore": 20134,
+    "minScore": 1417,
+    "p10DamageDealt": 23333,
+    "p10Exp": 928.6,
+    "p10Score": 7813,
+    "p90DamageDealt": 433850.6,
+    "p90Exp": 7690,
+    "p90Score": 49198.2,
+    "runs": 5,
+    "scenarioCount": 5,
+    "scoreStdDev": 19373.3521,
+    "strategyProfileHash": "fnv1a-8f366e86",
+    "strategyVariantId": "centered-gaussian"
+  },
+  "version": 1
+}
