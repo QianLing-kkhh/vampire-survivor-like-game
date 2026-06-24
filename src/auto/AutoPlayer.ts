@@ -4790,7 +4790,8 @@ export class AutoPlayer {
   ): Vector2 {
     const weapons = this.getWeaponSnapshots(context);
     const direction = new Vector2(0, 0);
-    const towardEnemies = danger.enemyCenter.clone().subtract(player);
+    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+    const towardEnemies = combatCenter.clone().subtract(player);
 
     for (const weapon of weapons) {
       const weight = this.getWeaponLevelWeight(weapon);
@@ -4821,12 +4822,13 @@ export class AutoPlayer {
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
   ): number {
     const weapons = this.getWeaponSnapshots(context);
+    const combatCenter = this.getCombatFocusCenter(context, player, danger);
     let score = 0;
 
     for (const weapon of weapons) {
       const weight = this.getWeaponLevelWeight(weapon);
-      const distance = danger.enemyCenter.lengthSq() > 0
-        ? Math2D.distanceBetween(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y)
+      const distance = combatCenter.lengthSq() > 0
+        ? Math2D.distanceBetween(endpoint.x, endpoint.y, combatCenter.x, combatCenter.y)
         : Number.POSITIVE_INFINITY;
 
       if (weapon.tags.includes('aura')) {
@@ -4836,8 +4838,8 @@ export class AutoPlayer {
       } else if (weapon.tags.includes('projectile') || weapon.baseWeaponId === 'knife') {
         const range = this.getSingleWeaponEffectiveRange(weapon);
         const distanceBandScore = this.scoreDistanceBand(distance, range.ideal, range.min / range.ideal, range.max / range.ideal);
-        const lateralScore = danger.enemyCenter.lengthSq() > 0
-          ? this.getStrategicLateralCombatScore(player, direction, danger.enemyCenter) * 0.28
+        const lateralScore = combatCenter.lengthSq() > 0
+          ? this.getStrategicLateralCombatScore(player, direction, combatCenter) * 0.28
           : 0;
         const emergencyFleeScore = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
           ? Math.max(0, direction.dot(danger.fleeDirection)) * 2.2
@@ -4846,8 +4848,8 @@ export class AutoPlayer {
       } else if (weapon.tags.includes('homing') || weapon.tags.includes('magic')) {
         const range = this.getSingleWeaponEffectiveRange(weapon);
         const distanceBandScore = this.scoreDistanceBand(distance, range.ideal, range.min / range.ideal, range.max / range.ideal);
-        const lateralScore = danger.enemyCenter.lengthSq() > 0
-          ? this.getStrategicLateralCombatScore(player, direction, danger.enemyCenter) * 0.22
+        const lateralScore = combatCenter.lengthSq() > 0
+          ? this.getStrategicLateralCombatScore(player, direction, combatCenter) * 0.22
           : 0;
         const emergencyFleeScore = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
           ? Math.max(0, direction.dot(danger.fleeDirection)) * 1.25
@@ -4856,8 +4858,8 @@ export class AutoPlayer {
       }
     }
 
-    if (context.player?.damageReactionType === 'slowTrail' && danger.enemyCenter.lengthSq() > 0) {
-      const towardEnemies = danger.enemyCenter.clone().subtract(player);
+    if (context.player?.damageReactionType === 'slowTrail' && combatCenter.lengthSq() > 0) {
+      const towardEnemies = combatCenter.clone().subtract(player);
       if (towardEnemies.lengthSq() > 0) {
         const tangent = new Vector2(-towardEnemies.y, towardEnemies.x).normalize();
         score += Math.abs(direction.dot(tangent)) * 2.2;
@@ -4879,6 +4881,7 @@ export class AutoPlayer {
     }
 
     let score = 0;
+    const combatCenter = this.getCombatFocusCenter(context, position, danger);
 
     for (const weapon of weapons) {
       const weight = this.getWeaponLevelWeight(weapon);
@@ -4899,8 +4902,8 @@ export class AutoPlayer {
         }
       }
 
-      const centerDistance = danger.enemyCenter.lengthSq() > 0
-        ? Math2D.distanceBetween(position.x, position.y, danger.enemyCenter.x, danger.enemyCenter.y)
+      const centerDistance = combatCenter.lengthSq() > 0
+        ? Math2D.distanceBetween(position.x, position.y, combatCenter.x, combatCenter.y)
         : Number.POSITIVE_INFINITY;
       const bandScore = this.scoreDistanceBand(centerDistance, range.ideal, range.min / range.ideal, range.max / range.ideal);
       const weaponTypeBonus = weapon.tags.includes('homing') || weapon.tags.includes('magic')
