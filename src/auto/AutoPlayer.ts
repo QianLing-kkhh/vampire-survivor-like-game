@@ -999,23 +999,28 @@ export class AutoPlayer {
     intent: StrategicMoveIntent,
   ): number {
     const hpRatio = this.getHpRatio(context);
-    let threat = 0;
+    const samplePoints = this.getRouteSamplePoints(player, waypoints);
+    let pointThreat = 0;
+    let segmentThreat = 0;
 
-    for (const sample of this.getRouteSamplePoints(player, waypoints)) {
-      threat += this.getEnemyPressureAt(context, sample, hpRatio) * 2.6;
-      threat += this.getEnemyContactRiskAt(context, sample, hpRatio) * 1.8;
-      threat += this.getEnemyFutureContactRiskAt(context, sample, hpRatio) * 1.35;
-      threat += this.getTotalBossWarningRisk(context, sample) * 85;
-      threat += this.getObstaclePenalty(context, sample) * 5.5;
-      threat += this.getBorderPenalty(context, sample, this.isResourceMode(intent.mode) ? intent.target : undefined) * 2.2;
+    for (const sample of samplePoints) {
+      pointThreat += this.getEnemyPressureAt(context, sample, hpRatio) * 2.6;
+      pointThreat += this.getEnemyContactRiskAt(context, sample, hpRatio) * 1.8;
+      pointThreat += this.getEnemyFutureContactRiskAt(context, sample, hpRatio) * 1.35;
+      pointThreat += this.getTotalBossWarningRisk(context, sample) * 85;
+      pointThreat += this.getObstaclePenalty(context, sample) * 5.5;
+      pointThreat += this.getBorderPenalty(context, sample, this.isResourceMode(intent.mode) ? intent.target : undefined) * 2.2;
     }
 
     for (let index = 0; index < waypoints.length - 1; index += 1) {
-      threat += this.getEnemyPathContactRisk(context, waypoints[index], waypoints[index + 1], hpRatio) * 1.25;
-      threat += this.routeSegmentIntersectsObstacle(context, waypoints[index], waypoints[index + 1]) ? 180 : 0;
+      segmentThreat += this.getEnemyPathContactRisk(context, waypoints[index], waypoints[index + 1], hpRatio) * 1.25;
+      segmentThreat += this.routeSegmentIntersectsObstacle(context, waypoints[index], waypoints[index + 1]) ? 180 : 0;
     }
 
-    return threat / Math.max(1, waypoints.length);
+    const segmentCount = Math.max(1, waypoints.length - 1);
+
+    return pointThreat / Math.max(1, samplePoints.length)
+      + segmentThreat / segmentCount;
   }
 
   private isRouteHardInvalid(
