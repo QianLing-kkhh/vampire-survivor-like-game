@@ -1411,6 +1411,7 @@ export class AutoPlayer {
   ): number {
     const hpRatio = this.getHpRatio(context);
     const usefulPortalEndpoint = this.isUsefulPortalEndpoint(context, player, endpoint, danger, hpRatio);
+    const contactRiskMultiplier = usefulPortalEndpoint ? 0.08 : 1;
     const finalBossDistanceConstraint = this.getFinalBossDistanceConstraint(context, player, endpoint);
 
     if (finalBossDistanceConstraint.forbidden && !usefulPortalEndpoint) {
@@ -1426,6 +1427,8 @@ export class AutoPlayer {
     const nonFinalBossWarningRisk = this.getNonFinalBossWarningRisk(context, endpoint);
     const obstaclePenalty = this.getObstaclePenalty(context, endpoint);
     const hardContactRisk = endpointContactRisk + endpointFutureRisk + pathContactRisk;
+    const adjustedContactRisk = hardContactRisk * contactRiskMultiplier;
+    const warningRiskForPenalty = usefulPortalEndpoint ? nonFinalBossWarningRisk : bossWarningRisk;
     const hardBossWarningRisk = usefulPortalEndpoint
       ? nonFinalBossWarningRisk > 1.2
       : bossWarningRisk > 1.2;
@@ -1443,7 +1446,7 @@ export class AutoPlayer {
       const alignment = direction.dot(routeDirection);
       const immediateThreat = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS
         || this.getTotalBossWarningRisk(context, player) > 0
-        || hardContactRisk > 120
+        || adjustedContactRisk > 120
         || currentContactRisk > 80
         || currentFutureRisk > 70
         || (hpRatio < 0.35 && localContactWarning);
@@ -1461,13 +1464,18 @@ export class AutoPlayer {
     }
 
     score += this.getRouteProgressScore(player, endpoint, route) * 0.16;
-    score -= hardContactRisk * (hpRatio < 0.5 ? 1.55 : 1.15);
-    score -= bossWarningRisk * 280;
+    score -= adjustedContactRisk * (hpRatio < 0.5 ? 1.55 : 1.15);
+    score -= warningRiskForPenalty * (usefulPortalEndpoint ? 120 : 280);
     score -= obstaclePenalty * 12;
     score -= this.getBorderPenalty(context, endpoint, undefined) * (intent.mode === 'SURVIVE' || intent.mode === 'REPOSITION' ? 1.5 : 0.8);
     score += this.getEnemyPathClearanceScore(context, player, endpoint, hpRatio) * 0.8;
     score += this.getFinalBossDashPositioningScore(context, player, endpoint, intent.mode, false) * 0.6;
     score += this.getFinalBossWarningCombatScore(context, player, endpoint, direction) * 0.85;
+
+    if (usefulPortalEndpoint) {
+      score += hpRatio < 0.35 ? 420 : 260;
+      score += this.getPortalEscapeCandidateScore(context, player, endpoint, danger, hpRatio);
+    }
 
     if (danger.fleeDirection.lengthSq() > 0 && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
       score += direction.dot(danger.fleeDirection) * (intent.mode === 'SURVIVE' ? 18 : 9);
