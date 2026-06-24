@@ -578,6 +578,10 @@ export class AutoPlayer {
     input: TacticalRouteLayerInput,
     route: TacticalRoute,
   ): boolean {
+    if (this.shouldPreserveCommittedRouteEndpoint(route.id)) {
+      return false;
+    }
+
     if (input.intent.targetDirection.lengthSq() === 0 || route.waypoints.length < 2) {
       return false;
     }
