@@ -34,15 +34,18 @@ export function setContainerHitArea(
 ): void {
   container.setSize(width, height);
 
+  // Phaser normalizes input coordinates by adding displayOriginX/Y before
+  // testing hitArea. Containers expose displayOrigin as width/height * 0.5,
+  // so a visually centered container maps to a 0..width, 0..height input box.
   const hitArea = container.input?.hitArea as Phaser.Geom.Rectangle | undefined;
   if (hitArea) {
-    hitArea.setTo(-width / 2, -height / 2, width, height);
+    hitArea.setTo(0, 0, width, height);
     attachHitAreaDebug(container);
     return;
   }
 
   container.setInteractive(
-    new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height),
+    new Phaser.Geom.Rectangle(0, 0, width, height),
     Phaser.Geom.Rectangle.Contains,
   );
   attachHitAreaDebug(container);

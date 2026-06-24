@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 
 const steps = [
   ['UI shell audit', 'scripts/check-ui-shell.mjs'],
+  ['UI hit area audit', 'scripts/check-ui-hitareas.mjs'],
   ['HUD layout audit', 'scripts/check-hud-layout.mjs'],
   ['UI layout budget audit', 'scripts/check-ui-layout-budget.mjs'],
 ];

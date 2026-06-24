@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { IconTooltipData } from '../tooltip/IconTooltipTypes';
 import { attachIconTooltip, IconTooltipAttachOptions } from '../tooltip/UITooltipManager';
+import { setContainerHitArea } from '../input/UIInteraction';
 import { UITheme } from '../UITheme';
 
 export interface UIIconSlotConfig {
@@ -32,21 +33,16 @@ export class UIIconSlot {
     this.borderColor = config.borderColor ?? UITheme.panelBorderColor;
     this.borderAlpha = config.borderAlpha ?? 0.72;
     this.container = scene.add.container(config.x, config.y);
-    this.container.setSize(config.size, config.size);
     this.background = scene.add.graphics();
     this.container.add(this.background);
-    this.container.setInteractive(
-      new Phaser.Geom.Rectangle(-config.size / 2, -config.size / 2, config.size, config.size),
-      Phaser.Geom.Rectangle.Contains,
-    );
+    setContainerHitArea(this.container, config.size, config.size);
     this.renderBackground();
     this.setVisual(config.textureKey, config.fallback);
   }
 
   setSize(size: number): void {
     this.size = size;
-    this.container.setSize(size, size);
-    this.container.input?.hitArea?.setTo?.(-size / 2, -size / 2, size, size);
+    setContainerHitArea(this.container, size, size);
     this.renderBackground();
     this.layoutVisual();
   }
