@@ -1060,7 +1060,10 @@ export class AutoPlayer {
     point: Vector2,
   ): number {
     return (context.bossWarnings ?? []).reduce((total, warning) => {
-      if (this.isFinalBossRingBulletWarning(context, warning)) {
+      if (
+        this.isFinalBossDashWarning(context, warning)
+        || this.isFinalBossRingBulletWarning(context, warning)
+      ) {
         return total;
       }
 
