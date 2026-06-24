@@ -1,0 +1,42 @@
+[
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_001",
+    "seed": "goal-boss80-priest-stage001-20260625-full-general-001-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_002",
+    "seed": "goal-boss80-priest-stage001-20260625-full-general-001-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_003",
+    "seed": "goal-boss80-priest-stage001-20260625-full-general-001-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_004",
+    "seed": "goal-boss80-priest-stage001-20260625-full-general-001-004",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_005",
+    "seed": "goal-boss80-priest-stage001-20260625-full-general-001-005",
+    "stageId": "stage_001"
+  }
+]

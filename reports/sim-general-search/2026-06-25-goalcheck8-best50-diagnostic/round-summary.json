@@ -1,0 +1,42 @@
+[
+  {
+    "bestCandidateId": "general_top1-phased_e0307eca",
+    "bestGeneralFitnessScore": 2190.625,
+    "bestVariantId": "top1-phased",
+    "candidateCount": 360,
+    "evaluatedStrategyCount": 365,
+    "mutationRadius": null,
+    "round": 1,
+    "searchMode": "random"
+  },
+  {
+    "bestCandidateId": "centered_candidate_000111_f13682e2",
+    "bestGeneralFitnessScore": 3432.625,
+    "bestVariantId": "centered-gaussian",
+    "candidateCount": 360,
+    "evaluatedStrategyCount": 365,
+    "mutationRadius": 15,
+    "round": 2,
+    "searchMode": "centered"
+  },
+  {
+    "bestCandidateId": "centered_candidate_000302_be8c06a0",
+    "bestGeneralFitnessScore": 4408.25,
+    "bestVariantId": "centered-gaussian",
+    "candidateCount": 360,
+    "evaluatedStrategyCount": 365,
+    "mutationRadius": 9.75,
+    "round": 3,
+    "searchMode": "centered"
+  },
+  {
+    "bestCandidateId": "centered_candidate_000145_4be1fa86",
+    "bestGeneralFitnessScore": 3490.375,
+    "bestVariantId": "centered-gaussian",
+    "candidateCount": 360,
+    "evaluatedStrategyCount": 365,
+    "mutationRadius": 6.3375,
+    "round": 4,
+    "searchMode": "centered"
+  }
+]

@@ -26,7 +26,7 @@ export const SHADOW_CONFIGS: Record<ShadowType, ShadowConfig> = {
   boss: { enabled: true, width: 120, height: 40, offsetX: 0, offsetY: 60, alpha: 0.28, depthOffset: -1 },
   treasure: { enabled: true, width: 42, height: 12, offsetX: 0, offsetY: 20, alpha: 0.22, depthOffset: -1 },
   pickup: { enabled: true, width: 18, height: 6, offsetX: 0, offsetY: 10, alpha: 0.16, depthOffset: -1 },
-  landmark: { enabled: true, width: 80, height: 28, offsetX: 0, offsetY: 45, alpha: 0.25, depthOffset: -2 },
+  landmark: { enabled: true, width: 62, height: 18, offsetX: 0, offsetY: 38, alpha: 0.08, depthOffset: -2 },
   axeProjectile: { enabled: true, width: 28, height: 8, offsetX: 0, offsetY: 12, alpha: 0.16, depthOffset: -1 },
   largeProjectile: { enabled: true, width: 44, height: 12, offsetX: 0, offsetY: 16, alpha: 0.18, depthOffset: -1 },
 };

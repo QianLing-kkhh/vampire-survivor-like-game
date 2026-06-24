@@ -1,0 +1,39 @@
+{
+  "candidates": 360,
+  "characterId": "priest",
+  "difficultyId": "normal",
+  "durationSeconds": 900,
+  "generatedAt": "2026-06-24T20:24:55.866Z",
+  "initialMutationRadius": 15,
+  "mapId": "prototype_field",
+  "minBossKillRate": 0.5,
+  "mutationDecay": 0.65,
+  "mutationMode": "gaussian",
+  "outputDir": "reports/sim-general-search/2026-06-25-goalcheck8-best50-diagnostic",
+  "phases": [
+    {
+      "endSeconds": 180,
+      "phaseId": "0-180",
+      "startSeconds": 0
+    },
+    {
+      "endSeconds": 300,
+      "phaseId": "180-300",
+      "startSeconds": 180
+    },
+    {
+      "endSeconds": 900,
+      "phaseId": "300-900",
+      "startSeconds": 300
+    }
+  ],
+  "randomSeed": "goal-check-explicit-20260625",
+  "rounds": 4,
+  "scenarioCount": 30,
+  "schemaVersion": 1,
+  "seedCount": 5,
+  "stageId": "stage_001",
+  "strategyMode": "phased",
+  "tickMs": 100,
+  "topN": 10
+}

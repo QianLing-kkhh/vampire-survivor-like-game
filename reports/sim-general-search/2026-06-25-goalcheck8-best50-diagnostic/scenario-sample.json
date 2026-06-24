@@ -1,0 +1,66 @@
+[
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_001",
+    "seed": "goal-check-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_002",
+    "seed": "goal-check-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_003",
+    "seed": "goal-check-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_004",
+    "seed": "goal-check-004",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_005",
+    "seed": "goal-check-005",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_006",
+    "seed": "goal-check-006",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_007",
+    "seed": "goal-check-007",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_008",
+    "seed": "goal-check-008",
+    "stageId": "stage_001"
+  }
+]
