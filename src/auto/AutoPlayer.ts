@@ -1433,7 +1433,7 @@ export class AutoPlayer {
       || currentContactRisk > 45
       || currentFutureRisk > 55;
 
-    if (hardContactRisk > 220 || hardBossWarningRisk) {
+    if ((!usefulPortalEndpoint && hardContactRisk > 220) || hardBossWarningRisk) {
       return -100000 - hardContactRisk - bossWarningRisk * 1000;
     }
 
