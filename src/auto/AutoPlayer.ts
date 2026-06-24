@@ -1571,9 +1571,9 @@ export class AutoPlayer {
     const baseUrgency = level < expectedLevel
       ? Math2D.clamp((expectedLevel - level) / Math.max(1, expectedLevel), 0, 1)
       : 0;
-    const priestMultiplier = context.player?.characterId === 'priest' ? 1.5 : 1;
+    const growthMultiplier = this.getCharacterGrowthUrgencyMultiplier(context);
 
-    return Math2D.clamp(baseUrgency * priestMultiplier, 0, 1.5);
+    return Math2D.clamp(baseUrgency * growthMultiplier, 0, 1.5);
   }
 
   private evaluateCombatOpportunityScore(
@@ -1603,9 +1603,9 @@ export class AutoPlayer {
     const lateralScore = danger.enemyCenter.lengthSq() > 0 && direction.lengthSq() > 0
       ? this.getStrategicLateralCombatScore(player, direction, danger.enemyCenter)
       : 0;
-    const priestMultiplier = context.player?.characterId === 'priest' ? 1.3 : 1;
+    const combatFarmMultiplier = this.getCharacterCombatFarmMultiplier(context);
 
-    return (endpointScore + tooFarCorrection + lateralScore - overFleePenalty) * priestMultiplier;
+    return (endpointScore + tooFarCorrection + lateralScore - overFleePenalty) * combatFarmMultiplier;
   }
 
   private evaluateStrategicXpAccessScore(
@@ -1620,7 +1620,7 @@ export class AutoPlayer {
     }
 
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
-    const priestMultiplier = context.player?.characterId === 'priest' ? 1.3 : 1;
+    const combatFarmMultiplier = this.getCharacterCombatFarmMultiplier(context);
     let score = 0;
 
     for (const pickup of context.pickupPositions) {
@@ -1650,7 +1650,31 @@ export class AutoPlayer {
       score += (expValue * 0.8 + clusterScore * 0.32) * distanceFactor;
     }
 
-    return score * (0.7 + growthUrgency) * priestMultiplier;
+    return score * (0.7 + growthUrgency) * combatFarmMultiplier;
+  }
+
+  private getCharacterGrowthUrgencyMultiplier(context: AutoPlayerContext): number {
+    if (context.player?.characterId === 'priest') {
+      return 1.5;
+    }
+
+    if (context.player?.damageReactionType === 'slowTrail') {
+      return 1.35;
+    }
+
+    return 1;
+  }
+
+  private getCharacterCombatFarmMultiplier(context: AutoPlayerContext): number {
+    if (context.player?.characterId === 'priest') {
+      return 1.3;
+    }
+
+    if (context.player?.damageReactionType === 'slowTrail') {
+      return 1.2;
+    }
+
+    return 1;
   }
 
   private evaluateStrategicKillZoneScore(
@@ -1894,7 +1918,7 @@ export class AutoPlayer {
     const combatOpportunityScore = this.evaluateCombatOpportunityScore(context, player, endpoint, direction, danger, mode);
     const xpAccessScore = this.evaluateStrategicXpAccessScore(context, player, endpoint, direction, mode);
     const killZoneScore = this.evaluateStrategicKillZoneScore(context, endpoint, direction, danger, mode);
-    const growthMultiplier = 1 + farmGrowthUrgency * (context.player?.characterId === 'priest' ? 1.35 : 0.9);
+    const growthMultiplier = 1 + farmGrowthUrgency * this.getCharacterCombatFarmMultiplier(context) * 0.9;
     const growthSuppressed = mode === 'SURVIVE'
       || mode === 'REPOSITION'
       || hpRatio < 0.45
@@ -4348,12 +4372,13 @@ export class AutoPlayer {
       } else if (weapon.tags.includes('orbit')) {
         direction.add(this.getOrbitDirection(towardEnemies, danger.nearestDistance, weapon.radiusPx ?? 155).scale(weight));
       } else if (weapon.tags.includes('homing') || weapon.tags.includes('magic')) {
-        direction.add(danger.fleeDirection.clone().scale(0.45 * weight));
+        const range = this.getSingleWeaponEffectiveRange(weapon);
+        direction.add(this.getDistanceBandDirection(towardEnemies, danger.nearestDistance, range.ideal).scale(0.55 * weight));
       } else if (weapon.tags.includes('arcing')) {
         direction.add(this.getOrbitDirection(towardEnemies, danger.nearestDistance, 220).scale(weight));
       } else if (weapon.tags.includes('projectile') || weapon.baseWeaponId === 'knife') {
-        direction.add(danger.fleeDirection.clone().scale(0.75 * weight));
-        direction.add(new Vector2(-towardEnemies.y, towardEnemies.x).normalize().scale(0.35 * weight));
+        const range = this.getSingleWeaponEffectiveRange(weapon);
+        direction.add(this.getDistanceBandDirection(towardEnemies, danger.nearestDistance, range.ideal).scale(0.78 * weight));
       }
     }
 
@@ -4381,9 +4406,25 @@ export class AutoPlayer {
       } else if (weapon.tags.includes('orbit')) {
         score += this.scoreDistanceBand(distance, weapon.radiusPx ?? 155, 0.7, 1.45) * weight;
       } else if (weapon.tags.includes('projectile') || weapon.baseWeaponId === 'knife') {
-        score += direction.dot(danger.fleeDirection) * 2.4 * weight;
+        const range = this.getSingleWeaponEffectiveRange(weapon);
+        const distanceBandScore = this.scoreDistanceBand(distance, range.ideal, range.min / range.ideal, range.max / range.ideal);
+        const lateralScore = danger.enemyCenter.lengthSq() > 0
+          ? this.getStrategicLateralCombatScore(player, direction, danger.enemyCenter) * 0.28
+          : 0;
+        const emergencyFleeScore = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
+          ? Math.max(0, direction.dot(danger.fleeDirection)) * 2.2
+          : 0;
+        score += (distanceBandScore * 1.4 + lateralScore + emergencyFleeScore) * weight;
       } else if (weapon.tags.includes('homing') || weapon.tags.includes('magic')) {
-        score += direction.dot(danger.fleeDirection) * 1.2 * weight;
+        const range = this.getSingleWeaponEffectiveRange(weapon);
+        const distanceBandScore = this.scoreDistanceBand(distance, range.ideal, range.min / range.ideal, range.max / range.ideal);
+        const lateralScore = danger.enemyCenter.lengthSq() > 0
+          ? this.getStrategicLateralCombatScore(player, direction, danger.enemyCenter) * 0.22
+          : 0;
+        const emergencyFleeScore = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
+          ? Math.max(0, direction.dot(danger.fleeDirection)) * 1.25
+          : 0;
+        score += (distanceBandScore * 1.15 + lateralScore + emergencyFleeScore) * weight;
       }
     }
 
