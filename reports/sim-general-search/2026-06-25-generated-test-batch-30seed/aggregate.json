@@ -1,0 +1,24 @@
+{
+  "groups": [
+    {
+      "averageDamageDealt": 210572.4,
+      "averageDamageTaken": 237.3,
+      "averageKills": 1102.8,
+      "averageLevel": 27.3,
+      "averageScore": 20982.2,
+      "averageSurvivalTimeSeconds": 435.1266666666666,
+      "completedRate": 0.3,
+      "gameOverRate": 0.6666666666666666,
+      "key": "single|generated_test|priest|stage_001|prototype_field|normal|900",
+      "resultCounts": {
+        "completed": 9,
+        "gameOver": 20,
+        "victory": 1
+      },
+      "runCount": 30,
+      "victoryRate": 0.03333333333333333
+    }
+  ],
+  "schemaVersion": 1,
+  "totalRuns": 30
+}

@@ -1,0 +1,39 @@
+{
+  "candidates": 260,
+  "characterId": "priest",
+  "difficultyId": "normal",
+  "durationSeconds": 900,
+  "generatedAt": "2026-06-24T23:17:19.593Z",
+  "initialMutationRadius": 15,
+  "mapId": "prototype_field",
+  "minBossKillRate": 0.8,
+  "mutationDecay": 0.65,
+  "mutationMode": "gaussian",
+  "outputDir": "reports/sim-general-search/2026-06-25-recheck-boss80",
+  "phases": [
+    {
+      "endSeconds": 30,
+      "phaseId": "0-30",
+      "startSeconds": 0
+    },
+    {
+      "endSeconds": 60,
+      "phaseId": "30-60",
+      "startSeconds": 30
+    },
+    {
+      "endSeconds": 120,
+      "phaseId": "60-120",
+      "startSeconds": 60
+    }
+  ],
+  "randomSeed": "goal-recheck-20260625",
+  "rounds": 4,
+  "scenarioCount": 1,
+  "schemaVersion": 1,
+  "seedCount": 5,
+  "stageId": "stage_001",
+  "strategyMode": "phased",
+  "tickMs": 100,
+  "topN": 10
+}

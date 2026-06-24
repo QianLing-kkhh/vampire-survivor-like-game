@@ -1,0 +1,92 @@
+{
+  "commandArgs": [
+    "--",
+    "--strategy",
+    "balanced_default",
+    "--seedCount",
+    "30",
+    "--seedPrefix",
+    "boss80-seedcheck",
+    "--stageId",
+    "stage_001",
+    "--mapId",
+    "prototype_field",
+    "--characterId",
+    "priest",
+    "--difficultyId",
+    "normal",
+    "--duration",
+    "900",
+    "--tickMs",
+    "100",
+    "--out",
+    "reports\\sim-general-search\\2026-06-25-balanced-30seed-batch",
+    "--format",
+    "csv"
+  ],
+  "contentHash": "ch_194047933e9a08",
+  "csvSchemaVersion": 10,
+  "gameVersion": "0.1.0-prototype",
+  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "matrix": {
+    "characters": [
+      "priest"
+    ],
+    "difficulties": [
+      "normal"
+    ],
+    "durationsSeconds": [
+      900
+    ],
+    "presetId": null,
+    "seeds": [
+      "boss80-seedcheck-001",
+      "boss80-seedcheck-002",
+      "boss80-seedcheck-003",
+      "boss80-seedcheck-004",
+      "boss80-seedcheck-005",
+      "boss80-seedcheck-006",
+      "boss80-seedcheck-007",
+      "boss80-seedcheck-008",
+      "boss80-seedcheck-009",
+      "boss80-seedcheck-010",
+      "boss80-seedcheck-011",
+      "boss80-seedcheck-012",
+      "boss80-seedcheck-013",
+      "boss80-seedcheck-014",
+      "boss80-seedcheck-015",
+      "boss80-seedcheck-016",
+      "boss80-seedcheck-017",
+      "boss80-seedcheck-018",
+      "boss80-seedcheck-019",
+      "boss80-seedcheck-020",
+      "boss80-seedcheck-021",
+      "boss80-seedcheck-022",
+      "boss80-seedcheck-023",
+      "boss80-seedcheck-024",
+      "boss80-seedcheck-025",
+      "boss80-seedcheck-026",
+      "boss80-seedcheck-027",
+      "boss80-seedcheck-028",
+      "boss80-seedcheck-029",
+      "boss80-seedcheck-030"
+    ],
+    "stageMaps": [
+      {
+        "mapId": "prototype_field",
+        "stageId": "stage_001"
+      }
+    ],
+    "strategyProfileIds": [
+      "balanced_default"
+    ],
+    "tickMs": [
+      100
+    ]
+  },
+  "matrixConfigHash": "ch_1001f0e0963aaf",
+  "presetId": null,
+  "runCount": 30,
+  "schemaVersion": 1,
+  "tool": "headless-sim"
+}
