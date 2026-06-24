@@ -47,7 +47,7 @@ export class MicroControlLayer {
 
     candidates.push(...ops.getFinalBossWarningCandidates(context, player));
 
-    if (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
+    if (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.MICRO_THREAT_RADIUS) {
       candidates.push(...ops.getNearestEnemyEscapeCandidates(context, player).map((candidate) => ({
         ...candidate,
         reason: 'AVOID_CLOSE_ENEMY',
@@ -112,12 +112,58 @@ export class MicroControlLayer {
 
     if (bestMove) {
       ops.updateFinalBossWarningChoiceDebug(bestCandidateReason);
+      return bestMove;
     }
 
-    return bestMove ?? {
-      direction: forbiddenCandidateCount > 0 || routeDirection.lengthSq() === 0
-        ? routeDirection.clone().set(0, 0)
-        : routeDirection.normalize(),
+    if (forbiddenCandidateCount > 0) {
+      const fallbackDirection = ops.getFinalBossDistanceFallbackDirection(context, player);
+
+      if (fallbackDirection.lengthSq() > 0) {
+        const direction = fallbackDirection.clone().normalize();
+        const endpoint = ops.getCandidateEndpoint(context, player, direction);
+        const distanceConstraint = ops.getFinalBossDistanceConstraint(context, player, endpoint);
+
+        if (!distanceConstraint.forbidden) {
+          ops.updateFinalBossDistanceConstraintDebug({
+            forbiddenCandidateCount,
+            hardLimitTriggered,
+            emergencyEscapeUsed: distanceConstraint.emergencyAllowed,
+            selectedReason: distanceConstraint.reason || 'finalBossDistanceFallback',
+          });
+          ops.updateFinalBossWarningChoiceDebug('finalBossDistanceFallback');
+
+          return {
+            direction,
+            reason: 'AVOID_BOSS_WARNING',
+            score: ops.scoreMicroDirection(input, endpoint, direction, routeDirection),
+          };
+        }
+      }
+    }
+
+    if (routeDirection.lengthSq() > 0) {
+      const direction = routeDirection.clone().normalize();
+      const endpoint = ops.getCandidateEndpoint(context, player, direction);
+      const distanceConstraint = ops.getFinalBossDistanceConstraint(context, player, endpoint);
+
+      if (!distanceConstraint.forbidden) {
+        return {
+          direction,
+          reason: 'FOLLOW_ROUTE',
+          score: 0,
+        };
+      }
+
+      ops.updateFinalBossDistanceConstraintDebug({
+        forbiddenCandidateCount,
+        hardLimitTriggered: true,
+        emergencyEscapeUsed: false,
+        selectedReason: distanceConstraint.reason || 'finalBossNoSafeFallback',
+      });
+    }
+
+    return {
+      direction: routeDirection.clone().set(0, 0),
       reason: 'FOLLOW_ROUTE',
       score: 0,
     };

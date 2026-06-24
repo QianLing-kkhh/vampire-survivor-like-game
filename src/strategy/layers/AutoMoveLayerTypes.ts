@@ -97,6 +97,7 @@ export interface MicroControlLayerOps {
   getBossWarningEscapeDirection(context: AutoPlayerContext, player: Vector2): Vector2;
   getRouteReturnDirection(player: Vector2, route: TacticalRoute): Vector2;
   getFinalBossWarningCandidates(context: AutoPlayerContext, player: Vector2): Candidate[];
+  getFinalBossDistanceFallbackDirection(context: AutoPlayerContext, player: Vector2): Vector2;
   getNearestEnemyEscapeCandidates(context: AutoPlayerContext, player: Vector2): Candidate[];
   getCandidateEndpoint(
     context: AutoPlayerContext,

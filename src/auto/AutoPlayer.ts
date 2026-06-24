@@ -6,6 +6,7 @@ import { AutoStrategyEngine } from '../strategy/engine/AutoStrategyEngine';
 import type {
   FinalBossDistanceConstraintDebugUpdate,
   FinalBossDistanceConstraintResult,
+  TacticalRouteLayerInput,
 } from '../strategy/layers/AutoMoveLayerTypes';
 import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
 import type { WeaponTag } from '../weapon/tags/WeaponTag';
@@ -237,7 +238,7 @@ export class AutoPlayer {
         elapsedMs: this.autoMoveElapsedMs,
         weights: this.strategyEngine.getMovementWeights(),
         ops: {
-          shouldForceRefresh: (input) => this.shouldForceTacticalRouteRefresh(input.context, input.player, input.intent),
+          shouldForceRefresh: (input) => this.shouldForceTacticalRouteRefresh(input),
           evaluateRoute: (input) => this.evaluateTacticalRoute(
             input.context,
             input.player,
@@ -252,7 +253,7 @@ export class AutoPlayer {
             input.portalEscapeDirection,
             input.breakoutDirection,
           ),
-          chooseRouteWithCommitment: (input, currentRoute, nextRoute) => this.chooseRouteWithCommitment(currentRoute, nextRoute, input.intent),
+          chooseRouteWithCommitment: (input, currentRoute, nextRoute) => this.chooseRouteWithCommitment(input, currentRoute, nextRoute),
           getUpdateInterval: (mode) => this.getTacticalRouteUpdateInterval(mode),
           commitRouteState: (route, remainingMs) => {
             this.tacticalRoute = route;
@@ -277,6 +278,9 @@ export class AutoPlayer {
           getBossWarningEscapeDirection: (warningContext, warningPlayer) => this.getBossWarningEscapeDirection(warningContext, warningPlayer),
           getRouteReturnDirection: (routePlayer, route) => this.getRouteReturnDirection(routePlayer, route),
           getFinalBossWarningCandidates: (warningContext, warningPlayer) => this.getFinalBossWarningCandidates(warningContext, warningPlayer),
+          getFinalBossDistanceFallbackDirection: (warningContext, warningPlayer) => (
+            this.getFinalBossDistanceFallbackDirection(warningContext, warningPlayer)
+          ),
           getNearestEnemyEscapeCandidates: (enemyContext, enemyPlayer) => this.getNearestEnemyEscapeCandidates(enemyContext, enemyPlayer),
           getCandidateEndpoint: (endpointContext, endpointPlayer, direction) => this.getCandidateEndpoint(endpointContext, endpointPlayer, direction),
           getFinalBossDistanceConstraint: (constraintContext, constraintPlayer, endpoint) => (
@@ -445,27 +449,140 @@ export class AutoPlayer {
   }
 
   private chooseRouteWithCommitment(
+    input: TacticalRouteLayerInput,
     currentRoute: TacticalRoute | undefined,
     nextRoute: TacticalRoute,
-    intent: StrategicMoveIntent,
   ): TacticalRoute {
     if (!currentRoute || currentRoute.validUntil <= this.autoMoveElapsedMs) {
       return nextRoute;
     }
 
-    const switchRatio = intent.mode === 'SURVIVE'
+    const refreshedCurrent = this.refreshCommittedRouteScore(input, currentRoute, nextRoute);
+
+    if (
+      refreshedCurrent.threatRank >= 4
+      || refreshedCurrent.rawThreat > nextRoute.rawThreat + 260
+      || this.isCommittedRouteMisaligned(input, refreshedCurrent)
+    ) {
+      return nextRoute;
+    }
+
+    const switchRatio = input.intent.mode === 'SURVIVE' || input.intent.mode === 'REPOSITION'
       ? AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_SWITCH_RATIO * 0.5
       : AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_SWITCH_RATIO;
-    const requiredGain = Math.max(6, Math.abs(currentRoute.routeScore) * switchRatio);
+    const requiredGain = Math.max(6, Math.abs(refreshedCurrent.routeScore) * switchRatio);
 
-    if (nextRoute.routeScore < currentRoute.routeScore + requiredGain) {
+    if (nextRoute.routeScore < refreshedCurrent.routeScore + requiredGain) {
       return {
-        ...currentRoute,
-        validUntil: Math.max(currentRoute.validUntil, this.autoMoveElapsedMs + AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_VALID_MS * 0.45),
+        ...refreshedCurrent,
+        validUntil: Math.max(refreshedCurrent.validUntil, this.autoMoveElapsedMs + AUTO_PLAYER_CONSTANTS.TACTICAL_ROUTE_VALID_MS * 0.45),
       };
     }
 
     return nextRoute;
+  }
+
+  private refreshCommittedRouteScore(
+    input: TacticalRouteLayerInput,
+    currentRoute: TacticalRoute,
+    nextRoute: TacticalRoute,
+  ): TacticalRoute {
+    const currentIndex = Math2D.clamp(currentRoute.currentWaypointIndex, 1, Math.max(1, currentRoute.waypoints.length - 1));
+    const remainingWaypoints = currentRoute.waypoints.slice(currentIndex);
+    const target = this.getStrategicTargetPoint(input.context, input.player, input.intent);
+    const refreshedWaypoints = remainingWaypoints.length > 0
+      ? remainingWaypoints.map((waypoint) => waypoint.clone())
+      : [target.clone()];
+
+    refreshedWaypoints[refreshedWaypoints.length - 1] = target.clone();
+
+    const waypoints = [
+      input.player.clone(),
+      ...refreshedWaypoints,
+    ].map((waypoint) => this.clampToWorld(input.context, waypoint));
+    const rawThreat = this.evaluateRouteThreat(input.context, input.player, waypoints, input.intent);
+    const hardInvalid = this.isRouteHardInvalid(input.context, input.player, waypoints, input.intent, rawThreat);
+    const threatRank = hardInvalid
+      ? 4
+      : Math2D.clamp(
+        nextRoute.rawThreat > 0
+          ? nextRoute.threatRank + Math.ceil((rawThreat - nextRoute.rawThreat) / 160)
+          : currentRoute.threatRank,
+        0,
+        4,
+      );
+    const rewardScore = this.evaluateRouteRewardScore(input.context, input.player, waypoints, input.intent, threatRank);
+    const xpRouteScore = this.evaluateXpRouteScore(input.context, input.player, waypoints, input.intent, threatRank);
+    const combatFitScore = this.evaluateRouteCombatFit(
+      input.context,
+      input.player,
+      waypoints,
+      input.danger as ReturnType<AutoPlayer['getDangerInfo']>,
+      input.intent,
+    );
+    const killRouteScore = this.evaluateKillRouteScore(
+      input.context,
+      input.player,
+      waypoints,
+      input.intent,
+      input.danger as ReturnType<AutoPlayer['getDangerInfo']>,
+      threatRank,
+    );
+    const overKitePenalty = this.evaluateOverKitePenalty(
+      input.context,
+      input.player,
+      waypoints,
+      input.intent,
+      input.danger as ReturnType<AutoPlayer['getDangerInfo']>,
+    );
+    const weights = this.strategyEngine.getMovementWeights();
+    const refreshedRouteScore = -threatRank * 48
+      - rawThreat * 0.16 * weights.riskMultiplier
+      + rewardScore
+      + combatFitScore * weights.combatMultiplier
+      + xpRouteScore * weights.farmMultiplier
+      + killRouteScore * weights.combatMultiplier
+      + currentRoute.commitment
+      - overKitePenalty * weights.overKitePenaltyMultiplier
+      - (input.intent.avoidLinearEscape && currentRoute.id.startsWith('direct') ? 34 : 0)
+      - (hardInvalid ? 180 : 0);
+
+    return {
+      ...currentRoute,
+      waypoints,
+      currentWaypointIndex: Math.min(1, Math.max(0, waypoints.length - 1)),
+      rawThreat,
+      threatRank,
+      rewardScore,
+      combatFitScore,
+      xpRouteScore,
+      killRouteScore,
+      overKitePenalty,
+      routeScore: refreshedRouteScore,
+    };
+  }
+
+  private isCommittedRouteMisaligned(
+    input: TacticalRouteLayerInput,
+    route: TacticalRoute,
+  ): boolean {
+    if (input.intent.targetDirection.lengthSq() === 0 || route.waypoints.length < 2) {
+      return false;
+    }
+
+    const routeDirection = route.waypoints[1].clone().subtract(input.player);
+
+    if (routeDirection.lengthSq() === 0) {
+      return false;
+    }
+
+    const alignment = routeDirection.normalize().dot(input.intent.targetDirection.clone().normalize());
+
+    if (input.intent.mode === 'SURVIVE' || input.intent.mode === 'REPOSITION') {
+      return alignment < -0.05;
+    }
+
+    return alignment < -0.35 && route.rawThreat > 120;
   }
 
   private getMicroResultReason(reason: string): MicroMoveResult['reason'] {
@@ -484,18 +601,38 @@ export class AutoPlayer {
     }
   }
 
-  private shouldForceTacticalRouteRefresh(
-    context: AutoPlayerContext,
-    player: Vector2,
-    intent: StrategicMoveIntent,
-  ): boolean {
+  private shouldForceTacticalRouteRefresh(input: TacticalRouteLayerInput): boolean {
+    const { context, player, intent } = input;
+    const currentRoute = input.currentRoute ?? this.tacticalRoute;
     const hpRatio = this.getHpRatio(context);
     const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio)
       + this.getEnemyFutureContactRiskAt(context, player, hpRatio);
 
-    return this.getTotalBossWarningRisk(context, player) > 0
+    if (
+      this.getTotalBossWarningRisk(context, player) > 0
       || contactRisk > 140
-      || (hpRatio < 0.35 && this.tacticalRoute?.threatRank !== undefined && this.tacticalRoute.threatRank > 1);
+      || (hpRatio < 0.35 && currentRoute?.threatRank !== undefined && currentRoute.threatRank > 1)
+    ) {
+      return true;
+    }
+
+    if (!currentRoute) {
+      return false;
+    }
+
+    if (this.isCommittedRouteMisaligned(input, currentRoute)) {
+      return true;
+    }
+
+    if (intent.avoidLinearEscape && currentRoute.id.startsWith('direct')) {
+      return true;
+    }
+
+    if (currentRoute.id.startsWith('portalEscape') && intent.mode !== 'SURVIVE') {
+      return true;
+    }
+
+    return currentRoute.id.startsWith('finalBoss') && intent.mode !== 'BOSS_POSITIONING';
   }
 
   private getTacticalRouteUpdateInterval(mode: MoveMode): number {
@@ -1038,9 +1175,14 @@ export class AutoPlayer {
     const endpointContactRisk = this.getEnemyContactRiskAt(context, endpoint, hpRatio);
     const endpointFutureRisk = this.getEnemyFutureContactRiskAt(context, endpoint, hpRatio);
     const pathContactRisk = this.getEnemyPathContactRisk(context, player, endpoint, hpRatio);
+    const currentContactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
+    const currentFutureRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
     const bossWarningRisk = this.getTotalBossWarningRisk(context, endpoint);
     const obstaclePenalty = this.getObstaclePenalty(context, endpoint);
     const hardContactRisk = endpointContactRisk + endpointFutureRisk + pathContactRisk;
+    const localContactWarning = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
+      || currentContactRisk > 45
+      || currentFutureRisk > 55;
 
     if (hardContactRisk > 220 || bossWarningRisk > 1.2) {
       return -100000 - hardContactRisk - bossWarningRisk * 1000;
@@ -1052,11 +1194,19 @@ export class AutoPlayer {
       const alignment = direction.dot(routeDirection);
       const immediateThreat = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS
         || this.getTotalBossWarningRisk(context, player) > 0
-        || hardContactRisk > 120;
+        || hardContactRisk > 120
+        || currentContactRisk > 80
+        || currentFutureRisk > 70
+        || (hpRatio < 0.35 && localContactWarning);
+      const alignmentWeight = immediateThreat
+        ? 22
+        : localContactWarning
+          ? 38
+          : 62;
 
-      score += alignment * 62;
+      score += alignment * alignmentWeight;
 
-      if (!immediateThreat && alignment < 0.3) {
+      if (!immediateThreat && !localContactWarning && alignment < 0.3) {
         score -= 180;
       }
     }
@@ -2881,6 +3031,21 @@ export class AutoPlayer {
       };
     }
 
+    if (
+      currentDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT
+      && endpointDistance <= currentDistance
+    ) {
+      return {
+        active: true,
+        forbidden: false,
+        emergencyAllowed: endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT,
+        distance: endpointDistance,
+        reason: endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT
+          ? 'finalBossCloseCutIn'
+          : 'finalBossCloseRangeBuffer',
+      };
+    }
+
     if (endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) {
       if (
         currentDistance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
@@ -3006,6 +3171,41 @@ export class AutoPlayer {
     }
 
     return candidates;
+  }
+
+  private getFinalBossDistanceFallbackDirection(
+    context: AutoPlayerContext,
+    player: Vector2,
+  ): Vector2 {
+    if (!this.isFinalBossCloseCombatActive(context)) {
+      return new Vector2(0, 0);
+    }
+
+    const boss = this.getFinalBossAnchor(context);
+
+    if (!boss) {
+      return new Vector2(0, 0);
+    }
+
+    const toBoss = new Vector2(boss.x - player.x, boss.y - player.y);
+
+    if (toBoss.lengthSq() === 0) {
+      return new Vector2(1, 0);
+    }
+
+    const distance = this.getFinalBossEffectiveDistance(context, player);
+    const cutIn = toBoss.clone().normalize();
+    const orbit = new Vector2(cutIn.y, -cutIn.x);
+
+    if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) {
+      return cutIn;
+    }
+
+    if (distance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE) {
+      return cutIn.scale(-1).add(orbit.scale(0.55)).normalize();
+    }
+
+    return orbit.normalize();
   }
 
   private getFinalBossRingGapCandidates(
