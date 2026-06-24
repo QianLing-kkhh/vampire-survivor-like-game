@@ -623,9 +623,10 @@ export class AutoPlayer {
     const hpRatio = this.getHpRatio(context);
     const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio)
       + this.getEnemyFutureContactRiskAt(context, player, hpRatio);
+    const nonFinalBossWarningRisk = this.getNonFinalBossWarningRisk(context, player);
 
     if (
-      this.getTotalBossWarningRisk(context, player) > 0
+      nonFinalBossWarningRisk > 0
       || contactRisk > 140
       || (hpRatio < 0.35 && currentRoute?.threatRank !== undefined && currentRoute.threatRank > 1)
     ) {
