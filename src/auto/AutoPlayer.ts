@@ -636,6 +636,10 @@ export class AutoPlayer {
       return false;
     }
 
+    if (this.isCommittedLocalRouteEndpointReached(currentRoute, player)) {
+      return true;
+    }
+
     if (this.isCommittedRouteMisaligned(input, currentRoute)) {
       return true;
     }
@@ -649,6 +653,19 @@ export class AutoPlayer {
     }
 
     return currentRoute.id.startsWith('finalBoss') && intent.mode !== 'BOSS_POSITIONING';
+  }
+
+  private isCommittedLocalRouteEndpointReached(route: TacticalRoute, player: Vector2): boolean {
+    if (!this.shouldPreserveCommittedRouteEndpoint(route.id) || route.waypoints.length < 2) {
+      return false;
+    }
+
+    const finalIndex = route.waypoints.length - 1;
+    const finalWaypoint = route.waypoints[finalIndex];
+
+    return route.currentWaypointIndex >= finalIndex
+      && Math2D.distanceBetween(player.x, player.y, finalWaypoint.x, finalWaypoint.y)
+        < AUTO_PLAYER_CONSTANTS.ROUTE_WAYPOINT_REACHED_DISTANCE;
   }
 
   private getTacticalRouteUpdateInterval(mode: MoveMode): number {
