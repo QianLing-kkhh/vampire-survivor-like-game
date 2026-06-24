@@ -10,6 +10,7 @@ type LandmarkType = 'tree' | 'rock' | 'grave';
 
 export class WorldRenderer {
   private static readonly GRID_COLOR = 0x1f2937;
+  private static readonly MAX_GRID_ALPHA = 0.08;
   private static readonly LANDMARK_TYPES: LandmarkType[] = ['tree', 'rock', 'grave'];
 
   constructor(
@@ -56,10 +57,15 @@ export class WorldRenderer {
   private renderGrid(): void {
     const graphics = this.scene.add.graphics();
     graphics.setDepth(-90);
+    const gridAlpha = Math.min(
+      this.config.gridAlpha ?? WorldRenderer.MAX_GRID_ALPHA,
+      WorldRenderer.MAX_GRID_ALPHA,
+    );
+
     graphics.lineStyle(
       1,
       this.config.gridColor ?? WorldRenderer.GRID_COLOR,
-      this.config.gridAlpha ?? 0.35,
+      gridAlpha,
     );
 
     for (let x = 0; x <= this.config.width; x += this.config.gridSize) {
