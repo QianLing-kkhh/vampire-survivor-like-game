@@ -764,7 +764,7 @@ export class AutoPlayer {
     midDistance: number,
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
     if (
-      (intent.mode !== 'COMBAT_FARM' && intent.mode !== 'KITE')
+      (intent.mode !== 'COMBAT_FARM' && intent.mode !== 'KITE' && intent.mode !== 'BOSS_POSITIONING')
       || context.enemyPositions.length === 0
       || danger.enemyCenter.lengthSq() === 0
       || this.getTotalBossWarningRisk(context, player) > 0
