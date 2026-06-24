@@ -902,7 +902,10 @@ export class AutoPlayer {
     player: Vector2,
     intent: StrategicMoveIntent,
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
-    if (intent.mode !== 'BOSS_POSITIONING' || !this.isFinalBossCloseCombatActive(context)) {
+    if (
+      (intent.mode !== 'BOSS_POSITIONING' && intent.mode !== 'REPOSITION')
+      || !this.isFinalBossCloseCombatActive(context)
+    ) {
       return [];
     }
 
