@@ -787,7 +787,6 @@ export class AutoPlayer {
     if (
       (intent.mode !== 'COMBAT_FARM' && intent.mode !== 'KITE' && intent.mode !== 'BOSS_POSITIONING')
       || context.enemyPositions.length === 0
-      || danger.enemyCenter.lengthSq() === 0
       || this.getTotalBossWarningRisk(context, player) > 0
     ) {
       return [];
@@ -802,7 +801,8 @@ export class AutoPlayer {
       return [];
     }
 
-    const toCenter = danger.enemyCenter.clone().subtract(player);
+    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+    const toCenter = combatCenter.clone().subtract(player);
 
     if (toCenter.lengthSq() === 0) {
       return [];
@@ -1239,15 +1239,20 @@ export class AutoPlayer {
     if (
       intent.mode === 'SURVIVE'
       || intent.mode === 'REPOSITION'
-      || danger.enemyCenter.lengthSq() === 0
       || !this.isFarmSafeForGrowth(context, player)
     ) {
       return 0;
     }
 
     const endpoint = waypoints[waypoints.length - 1] ?? player;
-    const currentDistance = Math2D.distanceBetween(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y);
-    const endpointDistance = Math2D.distanceBetween(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y);
+    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+
+    if (combatCenter.lengthSq() === 0) {
+      return 0;
+    }
+
+    const currentDistance = Math2D.distanceBetween(player.x, player.y, combatCenter.x, combatCenter.y);
+    const endpointDistance = Math2D.distanceBetween(endpoint.x, endpoint.y, combatCenter.x, combatCenter.y);
     const range = this.getWeaponEffectiveRange(context);
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
 
@@ -4153,6 +4158,44 @@ export class AutoPlayer {
     }
 
     return { fleeDirection, nearestDistance, enemyCenter, pressureCount };
+  }
+
+  private getCombatFocusCenter(
+    context: AutoPlayerContext,
+    player: Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): Vector2 {
+    if (danger.enemyCenter.lengthSq() > 0) {
+      return danger.enemyCenter.clone();
+    }
+
+    const range = this.getWeaponEffectiveRange(context);
+    const focusRadius = Math.max(AUTO_PLAYER_CONSTANTS.DANGER_RADIUS, range.max * 1.12);
+    const center = new Vector2(0, 0);
+    let totalWeight = 0;
+
+    for (const enemy of context.enemyPositions) {
+      const distance = this.getEnemyEffectiveDistance(context, player, enemy);
+
+      if (distance > focusRadius || this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)) {
+        continue;
+      }
+
+      const bandWeight = distance <= range.max
+        ? 1
+        : Math.max(0, 1 - (distance - range.max) / Math.max(1, focusRadius - range.max));
+      const proximityWeight = Math.max(0.12, (focusRadius - Math.max(0, distance)) / focusRadius);
+      const weight = this.getEnemyThreatWeight(enemy) * (0.35 + bandWeight) * proximityWeight;
+
+      center.add(new Vector2(enemy.x, enemy.y).scale(weight));
+      totalWeight += weight;
+    }
+
+    if (totalWeight > 0) {
+      center.scale(1 / totalWeight);
+    }
+
+    return center;
   }
 
   private updateMovementMemory(
