@@ -571,7 +571,8 @@ export class AutoPlayer {
   private shouldPreserveCommittedRouteEndpoint(routeId: string): boolean {
     return routeId.startsWith('combatBand')
       || routeId.startsWith('finalBossCloseCutIn')
-      || routeId.startsWith('finalBossOrbit');
+      || routeId.startsWith('finalBossOrbit')
+      || routeId.startsWith('portalEscape');
   }
 
   private isCommittedRouteMisaligned(
@@ -689,14 +690,15 @@ export class AutoPlayer {
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
     const target = this.getStrategicTargetPoint(context, player, intent);
     const finalBossRoutes = this.generateFinalBossCloseCombatRoutes(context, player, intent);
+    const portalEscapeWaypoint = this.getPortalEscapeWaypoint(context, player, danger);
 
     if (finalBossRoutes.length > 0) {
       const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [...finalBossRoutes];
 
-      if (portalEscapeDirection.lengthSq() > 0 && intent.mode === 'SURVIVE') {
+      if (portalEscapeDirection.lengthSq() > 0 && portalEscapeWaypoint && intent.mode === 'SURVIVE') {
         const portalDistance = Math.min(
           AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE,
-          Math2D.distanceBetween(player.x, player.y, target.x, target.y),
+          Math2D.distanceBetween(player.x, player.y, portalEscapeWaypoint.x, portalEscapeWaypoint.y),
         );
         const portalMidDistance = Math.max(120, portalDistance * 0.52);
 
@@ -705,7 +707,7 @@ export class AutoPlayer {
           waypoints: [
             player.clone(),
             player.clone().add(portalEscapeDirection.clone().normalize().scale(portalMidDistance)),
-            target,
+            portalEscapeWaypoint,
           ],
         });
       }
@@ -800,10 +802,10 @@ export class AutoPlayer {
       });
     }
 
-    if (portalEscapeDirection.lengthSq() > 0 && intent.mode === 'SURVIVE') {
+    if (portalEscapeDirection.lengthSq() > 0 && portalEscapeWaypoint && intent.mode === 'SURVIVE') {
       routes.push({
         id: 'portalEscape',
-        waypoints: [player.clone(), player.clone().add(portalEscapeDirection.clone().normalize().scale(midDistance)), target],
+        waypoints: [player.clone(), player.clone().add(portalEscapeDirection.clone().normalize().scale(midDistance)), portalEscapeWaypoint],
       });
     }
 
@@ -5638,6 +5640,56 @@ export class AutoPlayer {
     }
 
     return bestDirection;
+  }
+
+  private getPortalEscapeWaypoint(
+    context: AutoPlayerContext,
+    player: Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): Vector2 | undefined {
+    const hpRatio = this.getHpRatio(context);
+
+    if (!this.isPortalEscapeState(context, player, danger, hpRatio)) {
+      return undefined;
+    }
+
+    let bestWaypoint: Vector2 | undefined;
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    for (const portal of context.map?.portals ?? []) {
+      if (!this.isPortalUsable(portal)) {
+        continue;
+      }
+
+      const portalPoint = new Vector2(portal.x, portal.y);
+      const distance = Math2D.distanceBetween(player.x, player.y, portal.x, portal.y);
+
+      if (
+        distance <= portal.radius
+        || distance > portal.radius + AUTO_PLAYER_CONSTANTS.PORTAL_ESCAPE_SEEK_RADIUS
+      ) {
+        continue;
+      }
+
+      const exitPoint = new Vector2(portal.target.x, portal.target.y);
+      const currentRisk = this.getPortalEscapeRiskAt(context, player, hpRatio);
+      const exitRisk = this.getPortalEscapeRiskAt(context, exitPoint, hpRatio);
+
+      if (!this.isPortalExitUseful(currentRisk, exitRisk, hpRatio)) {
+        continue;
+      }
+
+      const score = (currentRisk - exitRisk) * 5
+        + Math.max(0, AUTO_PLAYER_CONSTANTS.PORTAL_ESCAPE_SEEK_RADIUS - Math.max(0, distance - portal.radius)) * 0.035
+        + (hpRatio < 0.35 ? 8 : 0);
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestWaypoint = portalPoint;
+      }
+    }
+
+    return bestWaypoint;
   }
 
   private getPortalEscapeCandidateScore(
