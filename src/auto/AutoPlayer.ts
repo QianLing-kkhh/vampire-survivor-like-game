@@ -1410,9 +1410,10 @@ export class AutoPlayer {
     terrainEscape: TerrainEscapeInfo,
   ): number {
     const hpRatio = this.getHpRatio(context);
+    const usefulPortalEndpoint = this.isUsefulPortalEndpoint(context, player, endpoint, danger, hpRatio);
     const finalBossDistanceConstraint = this.getFinalBossDistanceConstraint(context, player, endpoint);
 
-    if (finalBossDistanceConstraint.forbidden) {
+    if (finalBossDistanceConstraint.forbidden && !usefulPortalEndpoint) {
       return -1000000 - finalBossDistanceConstraint.distance;
     }
 
