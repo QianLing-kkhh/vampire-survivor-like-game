@@ -358,7 +358,7 @@ export class AutoPlayer {
     portalEscapeDirection: Vector2,
     breakoutDirection: Vector2,
   ): TacticalRoute {
-    const routeCandidates = this.generateCandidateRoutes(context, player, intent, kite, portalEscapeDirection, breakoutDirection);
+    const routeCandidates = this.generateCandidateRoutes(context, player, danger, intent, kite, portalEscapeDirection, breakoutDirection);
     const scoredRoutes = routeCandidates.map((route) => {
       const rawThreat = this.evaluateRouteThreat(context, player, route.waypoints, intent);
 
@@ -644,6 +644,7 @@ export class AutoPlayer {
   private generateCandidateRoutes(
     context: AutoPlayerContext,
     player: Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
     intent: StrategicMoveIntent,
     kite: KiteInfo,
     portalEscapeDirection: Vector2,
@@ -706,6 +707,18 @@ export class AutoPlayer {
       routes.push(directRoute, leftArcRoute, rightArcRoute, wideLeftArcRoute, wideRightArcRoute);
     }
 
+    routes.push(...this.generateCombatBandRoutes(
+      context,
+      player,
+      target,
+      danger,
+      intent,
+      left,
+      right,
+      midDistance,
+      narrowOffset,
+    ));
+
     routes.push(directRoute);
 
     if (kite.direction.lengthSq() > 0) {
@@ -733,6 +746,118 @@ export class AutoPlayer {
       id: route.id,
       waypoints: route.waypoints.map((waypoint) => this.clampToWorld(context, waypoint)),
     }));
+  }
+
+  private generateCombatBandRoutes(
+    context: AutoPlayerContext,
+    player: Vector2,
+    target: Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    intent: StrategicMoveIntent,
+    left: Vector2,
+    right: Vector2,
+    midDistance: number,
+    narrowOffset: number,
+  ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
+    if (
+      (intent.mode !== 'COMBAT_FARM' && intent.mode !== 'KITE')
+      || context.enemyPositions.length === 0
+      || danger.enemyCenter.lengthSq() === 0
+      || this.getTotalBossWarningRisk(context, player) > 0
+    ) {
+      return [];
+    }
+
+    const hpRatio = this.getHpRatio(context);
+    const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
+    const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
+    const pressure = this.getEnemyPressureAt(context, player, hpRatio);
+
+    if (hpRatio <= 0.45 || contactRisk > 55 || futureContactRisk > 65 || pressure > 5.2) {
+      return [];
+    }
+
+    const toCenter = danger.enemyCenter.clone().subtract(player);
+
+    if (toCenter.lengthSq() === 0) {
+      return [];
+    }
+
+    const towardCenter = toCenter.clone().normalize();
+    const awayFromCenter = towardCenter.clone().scale(-1);
+    const tangentLeft = new Vector2(-towardCenter.y, towardCenter.x);
+    const tangentRight = new Vector2(towardCenter.y, -towardCenter.x);
+    const currentDistance = toCenter.length();
+    const range = this.getWeaponEffectiveRange(context);
+    const idealDistance = Math2D.clamp(
+      range.ideal,
+      Math.max(AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS + 18, range.min),
+      range.max,
+    );
+    const lateralDistance = Math2D.clamp(midDistance * 0.8, 110, 230);
+    const radialCorrection = Math2D.clamp((currentDistance - idealDistance) * 0.45, -130, 130);
+    const radial = radialCorrection >= 0
+      ? towardCenter.clone().scale(radialCorrection)
+      : awayFromCenter.clone().scale(-radialCorrection);
+    const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [];
+    const makeBandPoint = (tangent: Vector2, scale = 1): Vector2 => (
+      player.clone()
+        .add(tangent.clone().scale(lateralDistance * scale))
+        .add(radial.clone())
+    );
+
+    routes.push(
+      {
+        id: 'combatBandLeft',
+        waypoints: [player.clone(), makeBandPoint(tangentLeft), target],
+      },
+      {
+        id: 'combatBandRight',
+        waypoints: [player.clone(), makeBandPoint(tangentRight), target],
+      },
+    );
+
+    if (currentDistance > range.max * 1.08) {
+      routes.push(
+        {
+          id: 'combatBandCutInLeft',
+          waypoints: [
+            player.clone(),
+            player.clone().add(towardCenter.clone().scale(Math.max(100, midDistance * 0.45))).add(left.clone().scale(narrowOffset * 0.55)),
+            target,
+          ],
+        },
+        {
+          id: 'combatBandCutInRight',
+          waypoints: [
+            player.clone(),
+            player.clone().add(towardCenter.clone().scale(Math.max(100, midDistance * 0.45))).add(right.clone().scale(narrowOffset * 0.55)),
+            target,
+          ],
+        },
+      );
+    } else if (currentDistance < range.min * 0.9) {
+      routes.push(
+        {
+          id: 'combatBandBackLeft',
+          waypoints: [
+            player.clone(),
+            player.clone().add(awayFromCenter.clone().scale(Math.max(90, midDistance * 0.35))).add(tangentLeft.clone().scale(narrowOffset * 0.55)),
+            target,
+          ],
+        },
+        {
+          id: 'combatBandBackRight',
+          waypoints: [
+            player.clone(),
+            player.clone().add(awayFromCenter.clone().scale(Math.max(90, midDistance * 0.35))).add(tangentRight.clone().scale(narrowOffset * 0.55)),
+            target,
+          ],
+        },
+      );
+    }
+
+    return routes;
   }
 
   private generateFinalBossCloseCombatRoutes(
