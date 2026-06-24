@@ -490,11 +490,17 @@ export class AutoPlayer {
     const currentIndex = Math2D.clamp(currentRoute.currentWaypointIndex, 1, Math.max(1, currentRoute.waypoints.length - 1));
     const remainingWaypoints = currentRoute.waypoints.slice(currentIndex);
     const target = this.getStrategicTargetPoint(input.context, input.player, input.intent);
+    const preserveLocalEndpoint = this.shouldPreserveCommittedRouteEndpoint(currentRoute.id);
+    const fallbackWaypoint = preserveLocalEndpoint
+      ? (currentRoute.waypoints[currentRoute.waypoints.length - 1]?.clone() ?? target.clone())
+      : target.clone();
     const refreshedWaypoints = remainingWaypoints.length > 0
       ? remainingWaypoints.map((waypoint) => waypoint.clone())
-      : [target.clone()];
+      : [fallbackWaypoint];
 
-    refreshedWaypoints[refreshedWaypoints.length - 1] = target.clone();
+    if (!preserveLocalEndpoint) {
+      refreshedWaypoints[refreshedWaypoints.length - 1] = target.clone();
+    }
 
     const waypoints = [
       input.player.clone(),
@@ -560,6 +566,12 @@ export class AutoPlayer {
       overKitePenalty,
       routeScore: refreshedRouteScore,
     };
+  }
+
+  private shouldPreserveCommittedRouteEndpoint(routeId: string): boolean {
+    return routeId.startsWith('combatBand')
+      || routeId.startsWith('finalBossCloseCutIn')
+      || routeId.startsWith('finalBossOrbit');
   }
 
   private isCommittedRouteMisaligned(
