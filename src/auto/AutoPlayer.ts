@@ -710,13 +710,9 @@ export class AutoPlayer {
     routes.push(...this.generateCombatBandRoutes(
       context,
       player,
-      target,
       danger,
       intent,
-      left,
-      right,
       midDistance,
-      narrowOffset,
     ));
 
     routes.push(directRoute);
@@ -751,13 +747,9 @@ export class AutoPlayer {
   private generateCombatBandRoutes(
     context: AutoPlayerContext,
     player: Vector2,
-    target: Vector2,
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     intent: StrategicMoveIntent,
-    left: Vector2,
-    right: Vector2,
     midDistance: number,
-    narrowOffset: number,
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
     if (
       (intent.mode !== 'COMBAT_FARM' && intent.mode !== 'KITE')
@@ -805,53 +797,64 @@ export class AutoPlayer {
         .add(tangent.clone().scale(lateralDistance * scale))
         .add(radial.clone())
     );
+    const makeSustainPoint = (tangent: Vector2): Vector2 => (
+      player.clone()
+        .add(tangent.clone().scale(lateralDistance * 1.45))
+        .add(radial.clone().scale(0.82))
+    );
 
     routes.push(
       {
         id: 'combatBandLeft',
-        waypoints: [player.clone(), makeBandPoint(tangentLeft), target],
+        waypoints: [player.clone(), makeBandPoint(tangentLeft), makeSustainPoint(tangentLeft)],
       },
       {
         id: 'combatBandRight',
-        waypoints: [player.clone(), makeBandPoint(tangentRight), target],
+        waypoints: [player.clone(), makeBandPoint(tangentRight), makeSustainPoint(tangentRight)],
       },
     );
 
     if (currentDistance > range.max * 1.08) {
+      const cutInDistance = Math.max(100, midDistance * 0.45);
+      const cutInLateral = Math.max(70, lateralDistance * 0.45);
+
       routes.push(
         {
           id: 'combatBandCutInLeft',
           waypoints: [
             player.clone(),
-            player.clone().add(towardCenter.clone().scale(Math.max(100, midDistance * 0.45))).add(left.clone().scale(narrowOffset * 0.55)),
-            target,
+            player.clone().add(towardCenter.clone().scale(cutInDistance)).add(tangentLeft.clone().scale(cutInLateral)),
+            player.clone().add(towardCenter.clone().scale(cutInDistance * 1.18)).add(tangentLeft.clone().scale(cutInLateral * 1.45)),
           ],
         },
         {
           id: 'combatBandCutInRight',
           waypoints: [
             player.clone(),
-            player.clone().add(towardCenter.clone().scale(Math.max(100, midDistance * 0.45))).add(right.clone().scale(narrowOffset * 0.55)),
-            target,
+            player.clone().add(towardCenter.clone().scale(cutInDistance)).add(tangentRight.clone().scale(cutInLateral)),
+            player.clone().add(towardCenter.clone().scale(cutInDistance * 1.18)).add(tangentRight.clone().scale(cutInLateral * 1.45)),
           ],
         },
       );
     } else if (currentDistance < range.min * 0.9) {
+      const backOffDistance = Math.max(90, midDistance * 0.35);
+      const backOffLateral = Math.max(70, lateralDistance * 0.45);
+
       routes.push(
         {
           id: 'combatBandBackLeft',
           waypoints: [
             player.clone(),
-            player.clone().add(awayFromCenter.clone().scale(Math.max(90, midDistance * 0.35))).add(tangentLeft.clone().scale(narrowOffset * 0.55)),
-            target,
+            player.clone().add(awayFromCenter.clone().scale(backOffDistance)).add(tangentLeft.clone().scale(backOffLateral)),
+            player.clone().add(awayFromCenter.clone().scale(backOffDistance * 0.82)).add(tangentLeft.clone().scale(backOffLateral * 1.45)),
           ],
         },
         {
           id: 'combatBandBackRight',
           waypoints: [
             player.clone(),
-            player.clone().add(awayFromCenter.clone().scale(Math.max(90, midDistance * 0.35))).add(tangentRight.clone().scale(narrowOffset * 0.55)),
-            target,
+            player.clone().add(awayFromCenter.clone().scale(backOffDistance)).add(tangentRight.clone().scale(backOffLateral)),
+            player.clone().add(awayFromCenter.clone().scale(backOffDistance * 0.82)).add(tangentRight.clone().scale(backOffLateral * 1.45)),
           ],
         },
       );
