@@ -1210,10 +1210,12 @@ export class AutoPlayer {
       score += enemiesInBand * 1.9 - enemiesTooClose * 4.2;
     }
 
-    if (danger.enemyCenter.lengthSq() > 0 && waypoints.length >= 2) {
+    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+
+    if (combatCenter.lengthSq() > 0 && waypoints.length >= 2) {
       const firstWaypoint = waypoints[Math.min(1, waypoints.length - 1)];
       const routeDirection = firstWaypoint.clone().subtract(player);
-      const toEnemyCenter = danger.enemyCenter.clone().subtract(player);
+      const toEnemyCenter = combatCenter.clone().subtract(player);
 
       if (routeDirection.lengthSq() > 0 && toEnemyCenter.lengthSq() > 0) {
         const route = routeDirection.normalize();
@@ -1926,18 +1928,19 @@ export class AutoPlayer {
 
     const range = this.getWeaponEffectiveRange(context);
     const endpointScore = this.evaluateWeaponEffectivePosition(context, endpoint, danger);
-    const currentDistance = danger.enemyCenter.lengthSq() > 0
-      ? Math2D.distanceBetween(player.x, player.y, danger.enemyCenter.x, danger.enemyCenter.y)
+    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+    const currentDistance = combatCenter.lengthSq() > 0
+      ? Math2D.distanceBetween(player.x, player.y, combatCenter.x, combatCenter.y)
       : Number.POSITIVE_INFINITY;
-    const endpointDistance = danger.enemyCenter.lengthSq() > 0
-      ? Math2D.distanceBetween(endpoint.x, endpoint.y, danger.enemyCenter.x, danger.enemyCenter.y)
+    const endpointDistance = combatCenter.lengthSq() > 0
+      ? Math2D.distanceBetween(endpoint.x, endpoint.y, combatCenter.x, combatCenter.y)
       : Number.POSITIVE_INFINITY;
     const tooFarCorrection = currentDistance > range.max && endpointDistance < currentDistance ? 8 : 0;
     const overFleePenalty = endpointDistance > range.max && endpointDistance > currentDistance
       ? Math.min(18, (endpointDistance - Math.max(range.max, currentDistance)) * 0.04)
       : 0;
-    const lateralScore = danger.enemyCenter.lengthSq() > 0 && direction.lengthSq() > 0
-      ? this.getStrategicLateralCombatScore(player, direction, danger.enemyCenter)
+    const lateralScore = combatCenter.lengthSq() > 0 && direction.lengthSq() > 0
+      ? this.getStrategicLateralCombatScore(player, direction, combatCenter)
       : 0;
     const combatFarmMultiplier = this.getCharacterCombatFarmMultiplier(context);
 
@@ -2038,8 +2041,9 @@ export class AutoPlayer {
       }
     }
 
-    const lateralScore = danger.enemyCenter.lengthSq() > 0 && direction.lengthSq() > 0
-      ? this.getStrategicLateralCombatScore(endpoint, direction, danger.enemyCenter) * 0.6
+    const combatCenter = this.getCombatFocusCenter(context, endpoint, danger);
+    const lateralScore = combatCenter.lengthSq() > 0 && direction.lengthSq() > 0
+      ? this.getStrategicLateralCombatScore(endpoint, direction, combatCenter) * 0.6
       : 0;
 
     return enemiesInBand * 2.4 + lateralScore - tooClose * 5;
