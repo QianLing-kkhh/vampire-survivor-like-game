@@ -687,13 +687,35 @@ export class AutoPlayer {
     portalEscapeDirection: Vector2,
     breakoutDirection: Vector2,
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
+    const target = this.getStrategicTargetPoint(context, player, intent);
     const finalBossRoutes = this.generateFinalBossCloseCombatRoutes(context, player, intent);
 
     if (finalBossRoutes.length > 0) {
-      return finalBossRoutes;
+      const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [...finalBossRoutes];
+
+      if (portalEscapeDirection.lengthSq() > 0 && intent.mode === 'SURVIVE') {
+        const portalDistance = Math.min(
+          AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE,
+          Math2D.distanceBetween(player.x, player.y, target.x, target.y),
+        );
+        const portalMidDistance = Math.max(120, portalDistance * 0.52);
+
+        routes.unshift({
+          id: 'portalEscape',
+          waypoints: [
+            player.clone(),
+            player.clone().add(portalEscapeDirection.clone().normalize().scale(portalMidDistance)),
+            target,
+          ],
+        });
+      }
+
+      return routes.map((route) => ({
+        id: route.id,
+        waypoints: route.waypoints.map((waypoint) => this.clampToWorld(context, waypoint)),
+      }));
     }
 
-    const target = this.getStrategicTargetPoint(context, player, intent);
     const forward = target.clone().subtract(player);
 
     if (forward.lengthSq() === 0) {
