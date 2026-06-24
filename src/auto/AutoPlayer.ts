@@ -1795,13 +1795,13 @@ export class AutoPlayer {
   ): MoveMode {
     const hpRatio = this.getHpRatio(context);
     const currentPressure = this.getEnemyPressureAt(context, player, hpRatio);
-    const currentWarningRisk = this.getTotalBossWarningRisk(context, player);
+    const currentSurvivalWarningRisk = this.getNonFinalBossWarningRisk(context, player);
     const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
     const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
 
     if (
       hpRatio < 0.35
-      || currentWarningRisk > 0
+      || currentSurvivalWarningRisk > 0
       || danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS
       || contactRisk > 80
       || futureContactRisk > 70
@@ -5817,6 +5817,22 @@ export class AutoPlayer {
       (total, warning) => total + this.getSemanticBossWarningRisk(context, warning, point),
       0,
     );
+  }
+
+  private getNonFinalBossWarningRisk(
+    context: AutoPlayerContext,
+    point: Vector2,
+  ): number {
+    return (context.bossWarnings ?? []).reduce((total, warning) => {
+      if (
+        this.isFinalBossDashWarning(context, warning)
+        || this.isFinalBossRingBulletWarning(context, warning)
+      ) {
+        return total;
+      }
+
+      return total + this.getSemanticBossWarningRisk(context, warning, point);
+    }, 0);
   }
 
   private getBossWarningEscapeDirection(
