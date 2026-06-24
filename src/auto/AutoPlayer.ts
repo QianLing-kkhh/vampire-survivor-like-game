@@ -1031,8 +1031,9 @@ export class AutoPlayer {
     rawThreat: number,
   ): boolean {
     const hpRatio = this.getHpRatio(context);
+    const routeSamples = this.getRouteSamplePoints(player, waypoints);
 
-    for (const sample of this.getRouteSamplePoints(player, waypoints)) {
+    for (const sample of routeSamples.slice(1)) {
       if (this.getRouteHardBossWarningRisk(context, sample) > 0.35) {
         return true;
       }
