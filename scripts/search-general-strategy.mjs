@@ -23,7 +23,7 @@ const runtime = loadHeadlessSimulationRuntime();
 const content = loadSimulationContent();
 const versionInfo = loadSimulationVersionInfo();
 const config = createSearchConfig(args);
-const scenarioSample = runtime.sampleGeneralStrategyScenarios({ config, content });
+const scenarioSample = createScenarioSample(config, content, args);
 const report = executeGeneralSearch(config, scenarioSample);
 const outputDir = path.resolve(rootDir, config.outputDir);
 
@@ -330,6 +330,7 @@ function createSearchConfig(parsedArgs) {
     path.join('reports', 'sim-general-search', formatTimestampForPath(generatedAt)),
   ));
   const mutationMode = String(getArg(parsedArgs, ['mutationMode'], 'gaussian')).toLowerCase();
+  const explicitSeeds = splitCsv(String(getArg(parsedArgs, ['seeds'], '')));
 
   if (mutationMode !== 'uniform' && mutationMode !== 'gaussian') {
     throw new Error('--mutationMode must be uniform or gaussian.');
@@ -338,10 +339,14 @@ function createSearchConfig(parsedArgs) {
   return {
     schemaVersion: 1,
     generatedAt,
-    scenarioCount: positiveIntegerArg(parsedArgs, 'scenarioCount', 30),
+    scenarioCount: explicitSeeds.length > 0
+      ? explicitSeeds.length
+      : positiveIntegerArg(parsedArgs, 'scenarioCount', 30),
     candidates: positiveIntegerArg(parsedArgs, 'candidates', 200),
     rounds: positiveIntegerArg(parsedArgs, 'rounds', 3),
-    seedCount: positiveIntegerArg(parsedArgs, 'seedCount', 5),
+    seedCount: explicitSeeds.length > 0
+      ? 1
+      : positiveIntegerArg(parsedArgs, 'seedCount', 5),
     durationSeconds: positiveNumberArg(parsedArgs, 'durationSeconds', 120),
     tickMs: positiveIntegerArg(parsedArgs, 'tickMs', 50),
     minBossKillRate: rateArg(parsedArgs, 'minBossKillRate', 0),
@@ -358,6 +363,84 @@ function createSearchConfig(parsedArgs) {
     mutationMode,
     outputDir,
   };
+}
+
+function createScenarioSample(searchConfig, contentBundle, parsedArgs) {
+  const explicitSeeds = splitCsv(String(getArg(parsedArgs, ['seeds'], '')));
+
+  if (explicitSeeds.length === 0) {
+    return runtime.sampleGeneralStrategyScenarios({ config: searchConfig, content: contentBundle });
+  }
+
+  const warnings = ['Using explicit --seeds; scenarioCount and seedCount do not generate scenario seeds.'];
+  const characterId = resolveExplicitScenarioId({
+    raw: searchConfig.characterId,
+    available: Object.keys(contentBundle?.characters ?? {}).sort(),
+    fallback: 'default',
+    label: 'characterId',
+    warnings,
+  });
+  const stageId = resolveExplicitScenarioId({
+    raw: searchConfig.stageId,
+    available: Object.keys(contentBundle?.stages ?? {}).sort(),
+    fallback: 'stage_001',
+    label: 'stageId',
+    warnings,
+  });
+  const stageMapId = contentBundle?.stages?.[stageId]?.mapId;
+  const mapId = resolveExplicitScenarioId({
+    raw: searchConfig.mapId === 'random' && stageMapId ? stageMapId : searchConfig.mapId,
+    available: Object.keys(contentBundle?.maps ?? {}).sort(),
+    fallback: stageMapId ?? 'prototype_field',
+    label: 'mapId',
+    warnings,
+  });
+  const difficultyId = resolveExplicitScenarioId({
+    raw: searchConfig.difficultyId,
+    available: Object.keys(contentBundle?.difficulties ?? {}).sort(),
+    fallback: 'normal',
+    label: 'difficultyId',
+    warnings,
+  });
+
+  return {
+    scenarios: explicitSeeds.map((seed, index) => ({
+      scenarioId: `scenario_${String(index + 1).padStart(3, '0')}`,
+      characterId,
+      stageId,
+      mapId,
+      difficultyId,
+      seed,
+    })),
+    warnings,
+    source: {
+      characterIds: [characterId],
+      stageIds: [stageId],
+      mapIds: [mapId],
+      difficultyIds: [difficultyId],
+    },
+  };
+}
+
+function resolveExplicitScenarioId(input) {
+  const requested = splitCsv(input.raw);
+  const firstRequested = requested.find((item) => item !== 'random');
+
+  if (firstRequested) {
+    return firstRequested;
+  }
+
+  const fallback = input.available[0] ?? input.fallback;
+  input.warnings.push(`Explicit --seeds used with random ${input.label}; using ${fallback}.`);
+
+  return fallback;
+}
+
+function splitCsv(value) {
+  return String(value)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function positiveIntegerArg(parsedArgs, name, fallback) {
@@ -448,6 +531,7 @@ Options:
   --minBossKillRate        Required boss kill rate, 0-1
   --topN                   Top candidate count for topN-median variant
   --randomSeed             Deterministic random seed
+  --seeds                  Comma-separated explicit scenario seeds; overrides generated scenario seeds
   --phase                  Phase ranges, e.g. 0-30,30-60,60-120
   --characterId            random or comma-separated ids
   --stageId                random or comma-separated ids
