@@ -512,6 +512,12 @@ export class AutoPlayer {
     portalEscapeDirection: Vector2,
     breakoutDirection: Vector2,
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
+    const finalBossRoutes = this.generateFinalBossCloseCombatRoutes(context, player, intent);
+
+    if (finalBossRoutes.length > 0) {
+      return finalBossRoutes;
+    }
+
     const target = this.getStrategicTargetPoint(context, player, intent);
     const forward = target.clone().subtract(player);
 
@@ -592,6 +598,83 @@ export class AutoPlayer {
     }));
   }
 
+  private generateFinalBossCloseCombatRoutes(
+    context: AutoPlayerContext,
+    player: Vector2,
+    intent: StrategicMoveIntent,
+  ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
+    if (intent.mode !== 'BOSS_POSITIONING' || !this.isFinalBossCloseCombatActive(context)) {
+      return [];
+    }
+
+    const boss = this.getFinalBossAnchor(context);
+
+    if (!boss) {
+      return [];
+    }
+
+    let radial = new Vector2(player.x - boss.x, player.y - boss.y);
+
+    if (radial.lengthSq() === 0) {
+      radial = intent.targetDirection.lengthSq() > 0
+        ? intent.targetDirection.clone().scale(-1)
+        : new Vector2(1, 0);
+    }
+
+    radial.normalize();
+
+    const desiredEffectiveDistance = Math2D.clamp(
+      intent.desiredOrbitRadius,
+      AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE + 12,
+      AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE - 8,
+    );
+    const centerRadius = desiredEffectiveDistance + this.getEnemyCombinedCollisionRadius(context, boss);
+    const rotateRadial = (angle: number): Vector2 => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+
+      return new Vector2(
+        radial.x * cos - radial.y * sin,
+        radial.x * sin + radial.y * cos,
+      ).normalize();
+    };
+    const orbitPoint = (direction: Vector2): Vector2 => this.clampToWorld(
+      context,
+      new Vector2(
+        boss.x + direction.x * centerRadius,
+        boss.y + direction.y * centerRadius,
+      ),
+    );
+    const clockwiseA = rotateRadial(0.46);
+    const clockwiseB = rotateRadial(0.92);
+    const counterA = rotateRadial(-0.46);
+    const counterB = rotateRadial(-0.92);
+    const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [];
+    const cutIn = { id: 'finalBossCloseCutIn', waypoints: [player.clone(), orbitPoint(radial)] };
+    const clockwise = {
+      id: 'finalBossOrbitClockwise',
+      waypoints: [player.clone(), orbitPoint(clockwiseA), orbitPoint(clockwiseB)],
+    };
+    const counterClockwise = {
+      id: 'finalBossOrbitCounterClockwise',
+      waypoints: [player.clone(), orbitPoint(counterA), orbitPoint(counterB)],
+    };
+
+    if (this.getFinalBossEffectiveDistance(context, player) > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
+      routes.push(cutIn);
+    }
+
+    if (intent.preferredPathStyle === 'LOOP_COUNTERCLOCKWISE' || intent.preferredPathStyle === 'ARC_LEFT') {
+      routes.push(counterClockwise, clockwise);
+    } else {
+      routes.push(clockwise, counterClockwise);
+    }
+
+    routes.push(cutIn);
+
+    return routes;
+  }
+
   private getStrategicTargetPoint(
     context: AutoPlayerContext,
     player: Vector2,
@@ -647,7 +730,7 @@ export class AutoPlayer {
     const hpRatio = this.getHpRatio(context);
 
     for (const sample of this.getRouteSamplePoints(player, waypoints)) {
-      if (this.getTotalBossWarningRisk(context, sample) > 0.35) {
+      if (this.getRouteHardBossWarningRisk(context, sample) > 0.35) {
         return true;
       }
 
@@ -665,6 +748,19 @@ export class AutoPlayer {
     }
 
     return hpRatio < 0.35 && rawThreat > 420;
+  }
+
+  private getRouteHardBossWarningRisk(
+    context: AutoPlayerContext,
+    point: Vector2,
+  ): number {
+    return (context.bossWarnings ?? []).reduce((total, warning) => {
+      if (this.isFinalBossRingBulletWarning(context, warning)) {
+        return total;
+      }
+
+      return total + this.getSemanticBossWarningRisk(context, warning, point);
+    }, 0);
   }
 
   private evaluateRouteRewardScore(
@@ -1119,6 +1215,10 @@ export class AutoPlayer {
 
     for (const enemy of context.enemyPositions) {
       const distance = this.getEnemyEffectiveDistance(context, player, enemy);
+
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)) {
+        continue;
+      }
 
       if (distance < nearestDistance) {
         nearestDistance = distance;
@@ -2288,6 +2388,11 @@ export class AutoPlayer {
 
   private getDesiredStrategicOrbitRadius(context: AutoPlayerContext, mode: MoveMode): number {
     if (mode === 'BOSS_POSITIONING') {
+      if (this.isFinalBossCloseCombatActive(context)) {
+        return (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
+          + AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) * 0.5;
+      }
+
       return AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DASH_IDEAL_DISTANCE;
     }
 
@@ -2634,13 +2739,31 @@ export class AutoPlayer {
   }
 
   private getFinalBossEnemy(context: AutoPlayerContext): (AutoPosition | AutoEnemySnapshot) | undefined {
-    return context.enemyPositions.find((enemy) => (
-      'id' in enemy
-      && typeof enemy.id === 'string'
-      && enemy.id.startsWith('boss:')
-      && 'isBoss' in enemy
-      && enemy.isBoss === true
-    ));
+    return context.enemyPositions.find((enemy) => this.isFinalBossEnemy(enemy));
+  }
+
+  private isFinalBossEnemy(enemy: AutoPosition | AutoEnemySnapshot): boolean {
+    if (!('isBoss' in enemy) || enemy.isBoss !== true) {
+      return false;
+    }
+
+    const enemyId = 'enemyId' in enemy && typeof enemy.enemyId === 'string'
+      ? enemy.enemyId
+      : undefined;
+    const stableId = 'id' in enemy && typeof enemy.id === 'string'
+      ? enemy.id
+      : undefined;
+    const rawId = enemyId ?? stableId ?? '';
+
+    if (rawId.startsWith('endless_')) {
+      return false;
+    }
+
+    return rawId === 'boss'
+      || rawId === 'final_boss'
+      || rawId.endsWith('_boss')
+      || rawId.startsWith('boss:')
+      || stableId?.startsWith('boss:') === true;
   }
 
   private hasDashBossWarning(context: AutoPlayerContext): boolean {
@@ -3600,6 +3723,10 @@ export class AutoPlayer {
       const distance = this.getEnemyEffectiveDistance(context, player, enemy);
       const threat = this.getEnemyThreatWeight(enemy);
 
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)) {
+        continue;
+      }
+
       nearestDistance = Math.min(nearestDistance, distance);
 
       if (distance <= AUTO_PLAYER_CONSTANTS.DANGER_RADIUS) {
@@ -4491,6 +4618,11 @@ export class AutoPlayer {
       const farMultiplier = distance > AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE ? 0.32 : 1;
       let enemyPressure = proximity * proximity * threat * farMultiplier;
 
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)) {
+        pressure += enemyPressure * 0.36 * (hpRatio < 0.5 ? 1.25 : 1);
+        continue;
+      }
+
       if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
         const contactProximity = (AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - Math.max(0, distance))
           / AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
@@ -4520,6 +4652,10 @@ export class AutoPlayer {
       const distance = this.getEnemyEffectiveDistance(context, point, enemy);
 
       if (distance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
+        continue;
+      }
+
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)) {
         continue;
       }
 
@@ -4565,6 +4701,10 @@ export class AutoPlayer {
         continue;
       }
 
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)) {
+        continue;
+      }
+
       const threat = this.getEnemyThreatWeight(enemy);
       const proximity = (AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS - Math.max(0, distance))
         / AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
@@ -4597,6 +4737,10 @@ export class AutoPlayer {
         continue;
       }
 
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, pathDistance)) {
+        continue;
+      }
+
       const threat = this.getEnemyThreatWeight(enemy);
       const proximity = (AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS - Math.max(0, pathDistance))
         / AUTO_PLAYER_CONSTANTS.CONTACT_PATH_RADIUS;
@@ -4622,6 +4766,17 @@ export class AutoPlayer {
     return risk * (hpRatio < 0.5 ? 1.3 : 1);
   }
 
+  private shouldUseFinalBossCloseContactSemantics(
+    context: AutoPlayerContext,
+    enemy: AutoPosition | AutoEnemySnapshot,
+    effectiveDistance: number,
+  ): boolean {
+    return this.isFinalBossCloseCombatActive(context)
+      && this.isFinalBossEnemy(enemy)
+      && effectiveDistance >= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
+      && effectiveDistance <= AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE;
+  }
+
   private getEnemyPathClearanceScore(
     context: AutoPlayerContext,
     start: Vector2,
@@ -4643,6 +4798,10 @@ export class AutoPlayer {
 
       const pathInfo = this.getSegmentPointInfo(start, end, enemyPosition);
       const pathDistance = this.getEnemyEffectivePathDistance(context, pathInfo.distance, enemy);
+
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, pathDistance)) {
+        continue;
+      }
 
       if (pathDistance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
         continue;

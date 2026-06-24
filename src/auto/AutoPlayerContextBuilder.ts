@@ -51,6 +51,7 @@ export class AutoPlayerContextBuilder {
 
           return {
             id: snapshot.autoMoveId,
+            enemyId: snapshot.id,
             x: snapshot.position.x,
             y: snapshot.position.y,
             radiusPx: snapshot.collisionRadius,

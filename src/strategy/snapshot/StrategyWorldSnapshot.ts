@@ -37,6 +37,7 @@ export interface StrategyWeaponSnapshot {
 
 export interface StrategyEnemySnapshot extends StrategyPosition {
   id?: string;
+  enemyId?: string;
   vx?: number;
   vy?: number;
   radiusPx?: number;
