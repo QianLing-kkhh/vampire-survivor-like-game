@@ -1270,11 +1270,25 @@ export class AutoPlayer {
     route: TacticalRoute,
     intent: StrategicMoveIntent,
   ): Vector2 {
-    const waypoint = route.waypoints[Math2D.clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1))]
+    const routeIndex = Math2D.clamp(route.currentWaypointIndex, 0, Math.max(0, route.waypoints.length - 1));
+    const waypoint = route.waypoints[routeIndex]
       ?? this.getStrategicTargetPoint(context, player, intent);
     const direction = waypoint.clone().subtract(player);
 
-    return direction.lengthSq() > 0 ? direction.normalize() : intent.targetDirection.clone();
+    if (direction.lengthSq() > 0) {
+      return direction.normalize();
+    }
+
+    if (this.shouldPreserveCommittedRouteEndpoint(route.id) && routeIndex > 0) {
+      const previous = route.waypoints[routeIndex - 1];
+      const localDirection = waypoint.clone().subtract(previous);
+
+      if (localDirection.lengthSq() > 0) {
+        return localDirection.normalize();
+      }
+    }
+
+    return intent.targetDirection.clone();
   }
 
   private getRouteReturnDirection(
