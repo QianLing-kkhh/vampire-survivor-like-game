@@ -653,7 +653,9 @@ export class AutoPlayer {
       return true;
     }
 
-    return currentRoute.id.startsWith('finalBoss') && intent.mode !== 'BOSS_POSITIONING';
+    return currentRoute.id.startsWith('finalBoss')
+      && intent.mode !== 'BOSS_POSITIONING'
+      && intent.mode !== 'REPOSITION';
   }
 
   private isCommittedLocalRouteEndpointReached(route: TacticalRoute, player: Vector2): boolean {
