@@ -1416,7 +1416,7 @@ export class AutoPlayer {
     const contactRiskMultiplier = usefulPortalEndpoint ? 0.08 : 1;
     const finalBossDistanceConstraint = this.getFinalBossDistanceConstraint(context, player, endpoint);
 
-    if (finalBossDistanceConstraint.forbidden && !usefulPortalEndpoint) {
+    if (finalBossDistanceConstraint.forbidden) {
       return -1000000 - finalBossDistanceConstraint.distance;
     }
 
