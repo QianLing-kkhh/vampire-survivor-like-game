@@ -5674,7 +5674,7 @@ export class AutoPlayer {
       || danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE
       || danger.pressureCount >= 4
       || currentPressure >= 5
-      || this.getTotalBossWarningRisk(context, player) > 0;
+      || this.getNonFinalBossWarningRisk(context, player) > 0;
   }
 
   private isPortalExitUseful(currentRisk: number, exitRisk: number, hpRatio: number): boolean {
@@ -5691,7 +5691,7 @@ export class AutoPlayer {
     hpRatio: number,
   ): number {
     return this.getEnemyPressureAt(context, point, hpRatio)
-      + this.getTotalBossWarningRisk(context, point) * 7;
+      + this.getNonFinalBossWarningRisk(context, point) * 7;
   }
 
   private isPortalUsable(portal: AutoPortalSnapshot): portal is AutoPortalSnapshot & { target: AutoPosition } {
