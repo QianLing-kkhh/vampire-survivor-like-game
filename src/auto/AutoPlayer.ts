@@ -2905,8 +2905,9 @@ export class AutoPlayer {
     movement: MovementMemoryInfo,
   ): boolean {
     const hpRatio = this.getHpRatio(context);
+    const nonFinalBossWarningRisk = this.getNonFinalBossWarningRisk(context, player);
 
-    return this.getTotalBossWarningRisk(context, player) > 0
+    return nonFinalBossWarningRisk > 0
       || (hpRatio < 0.35 && intent.mode !== 'SURVIVE')
       || (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE && intent.mode !== 'SURVIVE')
       || (movement.prolonged && intent.mode !== 'REPOSITION');
