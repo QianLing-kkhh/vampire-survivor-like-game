@@ -710,6 +710,23 @@ export class AutoPlayer {
         });
       }
 
+      if (breakoutDirection.lengthSq() > 0) {
+        const breakoutDistance = Math.min(
+          AUTO_PLAYER_CONSTANTS.STRATEGIC_DISTANCE,
+          Math2D.distanceBetween(player.x, player.y, target.x, target.y),
+        );
+        const breakoutMidDistance = Math.max(120, breakoutDistance * 0.52);
+
+        routes.push({
+          id: 'breakout',
+          waypoints: [
+            player.clone(),
+            player.clone().add(breakoutDirection.clone().normalize().scale(breakoutMidDistance)),
+            target,
+          ],
+        });
+      }
+
       return routes.map((route) => ({
         id: route.id,
         waypoints: route.waypoints.map((waypoint) => this.clampToWorld(context, waypoint)),
