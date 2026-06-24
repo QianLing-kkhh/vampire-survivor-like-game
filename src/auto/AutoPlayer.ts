@@ -655,7 +655,8 @@ export class AutoPlayer {
 
     return currentRoute.id.startsWith('finalBoss')
       && intent.mode !== 'BOSS_POSITIONING'
-      && intent.mode !== 'REPOSITION';
+      && intent.mode !== 'REPOSITION'
+      && intent.mode !== 'SURVIVE';
   }
 
   private isCommittedLocalRouteEndpointReached(route: TacticalRoute, player: Vector2): boolean {
@@ -904,8 +905,15 @@ export class AutoPlayer {
     player: Vector2,
     intent: StrategicMoveIntent,
   ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
+    const finalBossRouteMode = intent.mode === 'BOSS_POSITIONING'
+      || intent.mode === 'REPOSITION'
+      || (
+        intent.mode === 'SURVIVE'
+        && this.getNonFinalBossWarningRisk(context, player) <= 0
+      );
+
     if (
-      (intent.mode !== 'BOSS_POSITIONING' && intent.mode !== 'REPOSITION')
+      !finalBossRouteMode
       || !this.isFinalBossCloseCombatActive(context)
     ) {
       return [];
