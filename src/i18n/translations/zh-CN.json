@@ -118,6 +118,46 @@
     "warrior": {
       "name": "战士",
       "description": "高生命值、低机动但能承受压力的近战型角色。"
+    },
+    "arcanist": {
+      "name": "秘法师",
+      "description": "以独特的秘法武器路线开局。"
+    },
+    "ranger": {
+      "name": "游侠",
+      "description": "以独特的游侠武器路线开局。"
+    },
+    "engineer": {
+      "name": "工程师",
+      "description": "以独特的工程武器路线开局。"
+    },
+    "necromancer": {
+      "name": "死灵法师",
+      "description": "以独特的死灵武器路线开局。"
+    },
+    "monk": {
+      "name": "武僧",
+      "description": "以独特的武僧武器路线开局。"
+    },
+    "alchemist": {
+      "name": "炼金术士",
+      "description": "以独特的炼金武器路线开局。"
+    },
+    "duelist": {
+      "name": "决斗者",
+      "description": "以独特的决斗武器路线开局。"
+    },
+    "geomancer": {
+      "name": "地脉术士",
+      "description": "以独特的地脉武器路线开局。"
+    },
+    "stormcaller": {
+      "name": "风暴召唤者",
+      "description": "以独特的风暴武器路线开局。"
+    },
+    "sentinel": {
+      "name": "哨卫",
+      "description": "以独特的守卫武器路线开局。"
     }
   },
   "characterSelection": {
@@ -152,6 +192,46 @@
     "sunkenLibrary": {
       "name": "沉没图书馆",
       "description": "被水淹没的档案馆关卡，包含书架、墨池、奥术灯、传送门和治疗祭坛。"
+    },
+    "crystalCaverns": {
+      "name": "水晶洞窟",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "ashFoundry": {
+      "name": "灰烬铸炉",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "moonlitRooftops": {
+      "name": "月光屋顶",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "frostMonastery": {
+      "name": "霜寒修道院",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "bloodGarden": {
+      "name": "血色花园",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "desertObelisk": {
+      "name": "沙漠方尖碑",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "stormCoast": {
+      "name": "风暴海岸",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "clockworkBastion": {
+      "name": "发条堡垒",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "fungalDepths": {
+      "name": "真菌深处",
+      "description": "具有独特地形和地图机制的进阶关卡。"
+    },
+    "mirrorLabyrinth": {
+      "name": "镜像迷宫",
+      "description": "具有独特地形和地图机制的进阶关卡。"
     }
   },
   "map": {
@@ -169,6 +249,36 @@
     },
     "sunkenLibrary": {
       "name": "沉没图书馆"
+    },
+    "crystalCaverns": {
+      "name": "水晶洞窟"
+    },
+    "ashFoundry": {
+      "name": "灰烬铸炉"
+    },
+    "moonlitRooftops": {
+      "name": "月光屋顶"
+    },
+    "frostMonastery": {
+      "name": "霜寒修道院"
+    },
+    "bloodGarden": {
+      "name": "血色花园"
+    },
+    "desertObelisk": {
+      "name": "沙漠方尖碑"
+    },
+    "stormCoast": {
+      "name": "风暴海岸"
+    },
+    "clockworkBastion": {
+      "name": "发条堡垒"
+    },
+    "fungalDepths": {
+      "name": "真菌深处"
+    },
+    "mirrorLabyrinth": {
+      "name": "镜像迷宫"
     }
   },
   "stageSelection": {
@@ -340,11 +450,23 @@
         "assassin": "高速飞刀使用者，受伤后会向前闪现脱离危险。",
         "witch": "受伤后留下减速区域，用于控制敌人移动。",
         "priest": "创造圣域，提供治疗、护盾并击退敌人。",
-        "warrior": "用冲击波反击伤害，并获得短暂减伤。"
+        "warrior": "用冲击波反击伤害，并获得短暂减伤。",
+        "arcanist": "以独特的秘法武器路线开局。",
+        "ranger": "以独特的游侠武器路线开局。",
+        "engineer": "以独特的工程武器路线开局。",
+        "necromancer": "以独特的死灵武器路线开局。",
+        "monk": "以独特的武僧武器路线开局。",
+        "alchemist": "以独特的炼金武器路线开局。",
+        "duelist": "以独特的决斗武器路线开局。",
+        "geomancer": "以独特的地脉武器路线开局。",
+        "stormcaller": "以独特的风暴武器路线开局。",
+        "sentinel": "以独特的守卫武器路线开局。"
       },
       "levelUp": {
         "default": "特殊成长效果",
-        "unknown": "未知成长效果"
+        "unknown": "未知成长效果",
+        "none": "没有特殊升级效果。",
+        "healLostHpPercent": "升级时恢复一部分已损失生命。"
       },
       "reaction": {
         "none": "无",
@@ -517,7 +639,9 @@
         "aura": "光环武器",
         "orbit": "环绕武器",
         "arcing": "抛物线武器",
-        "homing": "追踪武器"
+        "homing": "追踪武器",
+        "axe": "弧线武器",
+        "magic_wand": "追踪魔法武器"
       },
       "tag": {
         "base": "基础",
@@ -533,7 +657,18 @@
         "knockback": "击退",
         "homing": "追踪",
         "arcing": "抛物线",
-        "defensive": "防御"
+        "defensive": "防御",
+        "arcane": "奥术",
+        "duelist": "决斗",
+        "earth": "大地",
+        "lightning": "闪电",
+        "mechanical": "机械",
+        "necrotic": "死灵",
+        "orbit": "环绕",
+        "pierce": "穿透",
+        "poison": "毒素",
+        "ranged": "远程",
+        "sustain": "续航"
       },
       "stat": {
         "damage": "伤害",
@@ -569,7 +704,8 @@
     "emptyMessage": "No upgrades available",
     "newWeapon": "New Weapon",
     "noUpgrades": "No upgrades available",
-    "upgrade": "Upgrade"
+    "upgrade": "Upgrade",
+    "noMatchingWeaponOwned": "尚未拥有匹配武器"
   },
   "hud": {
     "weapons": "武器",
@@ -640,7 +776,12 @@
     "debugPanelCompact": "紧凑调试面板",
     "debugPanelOpacity": "调试面板透明度",
     "language": "语言",
-    "uiStyle": "UI Style",
+    "uiStyle": {
+      "classic": "经典",
+      "arcaneSlate": "秘法石板",
+      "minimal": "极简",
+      "_label": "UI 风格"
+    },
     "uiStyleReopenNotice": "部分UI风格变化将在重新打开菜单后生效。",
     "scrollHint": "滚动",
     "page": "页",
@@ -652,7 +793,14 @@
     "pauseWhenStrategyPanelOpen": "打开战术面板时暂停",
     "manualHidesStrategyPanel": "手动模式下该面板始终关闭。",
     "strategyTacticsPanelNextRunNotice": "战略 / 战术面板将在下一局载入。",
-    "minimapScale": "小地图大小"
+    "minimapScale": "小地图大小",
+    "assetStyleArt001": "Art001",
+    "autoOpenTreasure": "自动开启宝箱",
+    "strategyControlType": "自动策略控制",
+    "strategyControl": {
+      "fixed": "固定",
+      "live": "实时"
+    }
   },
   "strategyPanel": {
     "title": "战略 / 战术",
@@ -930,7 +1078,47 @@
       "epic": "史诗",
       "legendary": "传说"
     },
-    "acquiredTitle": "获得遗物"
+    "acquiredTitle": "获得遗物",
+    "bloodPact": {
+      "name": "鲜血契约",
+      "description": "在低生命时提升伤害能力。"
+    },
+    "voidCompass": {
+      "name": "虚空罗盘",
+      "description": "提升拾取范围。"
+    },
+    "goldenScarab": {
+      "name": "黄金圣甲虫",
+      "description": "提升宝箱分数奖励。"
+    },
+    "thornCrown": {
+      "name": "荆棘王冠",
+      "description": "受伤后进行反击。"
+    },
+    "frozenHourglass": {
+      "name": "冻结沙漏",
+      "description": "周期性减慢附近敌人。"
+    },
+    "berserkerCharm": {
+      "name": "狂战护符",
+      "description": "击杀 Boss 后获得短暂力量爆发。"
+    },
+    "magnetPearl": {
+      "name": "磁力珍珠",
+      "description": "开启宝箱后提升拾取范围。"
+    },
+    "ironShell": {
+      "name": "铁壳",
+      "description": "受击后降低承受伤害。"
+    },
+    "scholarCandle": {
+      "name": "学者蜡烛",
+      "description": "升级时恢复生命。"
+    },
+    "riftCoin": {
+      "name": "裂隙硬币",
+      "description": "连续开启宝箱后增加额外宝箱分数。"
+    }
   },
   "tooltip": {
     "weapon": {
@@ -942,7 +1130,17 @@
       "empty_tome": "帮助武器更快恢复攻击。",
       "bracer": "提升投射物飞行速度。",
       "clover": "提升宝箱相关运势。",
-      "pummarola": "提供稳定生命恢复。"
+      "pummarola": "提供稳定生命恢复。",
+      "focus_lens": "奥术和魔法武器造成更多伤害。",
+      "hunter_quiver": "投射类武器飞行速度更快。",
+      "cogwheel": "机械和弧线武器冷却更快。",
+      "grave_charm": "穿透和死灵武器伤害更高。",
+      "prayer_beads": "光环和防御武器获得更强击退。",
+      "glass_flask": "爆炸和毒素武器冷却更快。",
+      "duelist_glove": "物理投射武器造成更多伤害。",
+      "granite_core": "范围类武器获得伤害提升。",
+      "storm_battery": "闪电和魔法武器飞行更快。",
+      "iron_sigil": "防御类武器冷却更快。"
     },
     "relic": {
       "default": "遗物效果。详细数值请在 Stats / Build 中查看。",
@@ -980,6 +1178,102 @@
     "message": {
       "character": "解锁角色：{name}",
       "stage": "解锁关卡：{name}"
+    },
+    "character": {
+      "arcanist": {
+        "name": "秘法师"
+      },
+      "ranger": {
+        "name": "游侠"
+      },
+      "engineer": {
+        "name": "工程师"
+      },
+      "necromancer": {
+        "name": "死灵法师"
+      },
+      "monk": {
+        "name": "武僧"
+      },
+      "alchemist": {
+        "name": "炼金术士"
+      },
+      "duelist": {
+        "name": "决斗者"
+      },
+      "geomancer": {
+        "name": "地脉术士"
+      },
+      "stormcaller": {
+        "name": "风暴召唤者"
+      },
+      "sentinel": {
+        "name": "哨卫"
+      }
+    },
+    "stage": {
+      "crystal_caverns_stage": {
+        "name": "水晶洞窟"
+      },
+      "ash_foundry_stage": {
+        "name": "灰烬铸炉"
+      },
+      "moonlit_rooftops_stage": {
+        "name": "月光屋顶"
+      },
+      "frost_monastery_stage": {
+        "name": "霜寒修道院"
+      },
+      "blood_garden_stage": {
+        "name": "血色花园"
+      },
+      "desert_obelisk_stage": {
+        "name": "沙漠方尖碑"
+      },
+      "storm_coast_stage": {
+        "name": "风暴海岸"
+      },
+      "clockwork_bastion_stage": {
+        "name": "发条堡垒"
+      },
+      "fungal_depths_stage": {
+        "name": "真菌深处"
+      },
+      "mirror_labyrinth_stage": {
+        "name": "镜像迷宫"
+      }
+    },
+    "map": {
+      "crystal_caverns_map": {
+        "name": "水晶洞窟"
+      },
+      "ash_foundry_map": {
+        "name": "灰烬铸炉"
+      },
+      "moonlit_rooftops_map": {
+        "name": "月光屋顶"
+      },
+      "frost_monastery_map": {
+        "name": "霜寒修道院"
+      },
+      "blood_garden_map": {
+        "name": "血色花园"
+      },
+      "desert_obelisk_map": {
+        "name": "沙漠方尖碑"
+      },
+      "storm_coast_map": {
+        "name": "风暴海岸"
+      },
+      "clockwork_bastion_map": {
+        "name": "发条堡垒"
+      },
+      "fungal_depths_map": {
+        "name": "真菌深处"
+      },
+      "mirror_labyrinth_map": {
+        "name": "镜像迷宫"
+      }
     }
   },
   "loading": {
@@ -1014,84 +1308,466 @@
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."
   },
-  "character.arcanist.name": "秘法师",
-  "character.arcanist.description": "以独特的秘法武器路线开局。",
-  "unlock.character.arcanist.name": "秘法师",
-  "character.ranger.name": "游侠",
-  "character.ranger.description": "以独特的游侠武器路线开局。",
-  "unlock.character.ranger.name": "游侠",
-  "character.engineer.name": "工程师",
-  "character.engineer.description": "以独特的工程武器路线开局。",
-  "unlock.character.engineer.name": "工程师",
-  "character.necromancer.name": "死灵法师",
-  "character.necromancer.description": "以独特的死灵武器路线开局。",
-  "unlock.character.necromancer.name": "死灵法师",
-  "character.monk.name": "武僧",
-  "character.monk.description": "以独特的武僧武器路线开局。",
-  "unlock.character.monk.name": "武僧",
-  "character.alchemist.name": "炼金术士",
-  "character.alchemist.description": "以独特的炼金武器路线开局。",
-  "unlock.character.alchemist.name": "炼金术士",
-  "character.duelist.name": "决斗者",
-  "character.duelist.description": "以独特的决斗武器路线开局。",
-  "unlock.character.duelist.name": "决斗者",
-  "character.geomancer.name": "地脉术士",
-  "character.geomancer.description": "以独特的地脉武器路线开局。",
-  "unlock.character.geomancer.name": "地脉术士",
-  "character.stormcaller.name": "风暴召唤者",
-  "character.stormcaller.description": "以独特的风暴武器路线开局。",
-  "unlock.character.stormcaller.name": "风暴召唤者",
-  "character.sentinel.name": "哨卫",
-  "character.sentinel.description": "以独特的守卫武器路线开局。",
-  "unlock.character.sentinel.name": "哨卫",
-  "stage.crystalCaverns.name": "水晶洞窟",
-  "stage.crystalCaverns.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.crystal_caverns_stage.name": "水晶洞窟",
-  "stage.ashFoundry.name": "灰烬铸炉",
-  "stage.ashFoundry.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.ash_foundry_stage.name": "灰烬铸炉",
-  "stage.moonlitRooftops.name": "月光屋顶",
-  "stage.moonlitRooftops.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.moonlit_rooftops_stage.name": "月光屋顶",
-  "stage.frostMonastery.name": "霜寒修道院",
-  "stage.frostMonastery.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.frost_monastery_stage.name": "霜寒修道院",
-  "stage.bloodGarden.name": "血色花园",
-  "stage.bloodGarden.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.blood_garden_stage.name": "血色花园",
-  "stage.desertObelisk.name": "沙漠方尖碑",
-  "stage.desertObelisk.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.desert_obelisk_stage.name": "沙漠方尖碑",
-  "stage.stormCoast.name": "风暴海岸",
-  "stage.stormCoast.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.storm_coast_stage.name": "风暴海岸",
-  "stage.clockworkBastion.name": "发条堡垒",
-  "stage.clockworkBastion.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.clockwork_bastion_stage.name": "发条堡垒",
-  "stage.fungalDepths.name": "真菌深处",
-  "stage.fungalDepths.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.fungal_depths_stage.name": "真菌深处",
-  "stage.mirrorLabyrinth.name": "镜像迷宫",
-  "stage.mirrorLabyrinth.description": "具有独特地形和地图机制的进阶关卡。",
-  "unlock.stage.mirror_labyrinth_stage.name": "镜像迷宫",
-  "map.crystalCaverns.name": "水晶洞窟",
-  "unlock.map.crystal_caverns_map.name": "水晶洞窟",
-  "map.ashFoundry.name": "灰烬铸炉",
-  "unlock.map.ash_foundry_map.name": "灰烬铸炉",
-  "map.moonlitRooftops.name": "月光屋顶",
-  "unlock.map.moonlit_rooftops_map.name": "月光屋顶",
-  "map.frostMonastery.name": "霜寒修道院",
-  "unlock.map.frost_monastery_map.name": "霜寒修道院",
-  "map.bloodGarden.name": "血色花园",
-  "unlock.map.blood_garden_map.name": "血色花园",
-  "map.desertObelisk.name": "沙漠方尖碑",
-  "unlock.map.desert_obelisk_map.name": "沙漠方尖碑",
-  "map.stormCoast.name": "风暴海岸",
-  "unlock.map.storm_coast_map.name": "风暴海岸",
-  "map.clockworkBastion.name": "发条堡垒",
-  "unlock.map.clockwork_bastion_map.name": "发条堡垒",
-  "map.fungalDepths.name": "真菌深处",
-  "unlock.map.fungal_depths_map.name": "真菌深处",
-  "map.mirrorLabyrinth.name": "镜像迷宫",
-  "unlock.map.mirror_labyrinth_map.name": "镜像迷宫"
+  "weapon": {
+    "knife": {
+      "name": "飞刀",
+      "description": "飞刀是一件可升级武器，拥有独特攻击方式。"
+    },
+    "garlic": {
+      "name": "大蒜",
+      "description": "大蒜是一件可升级武器，拥有独特攻击方式。"
+    },
+    "bible": {
+      "name": "圣典",
+      "description": "圣典是一件可升级武器，拥有独特攻击方式。"
+    },
+    "magic_wand": {
+      "name": "魔杖",
+      "description": "魔杖是一件可升级武器，拥有独特攻击方式。"
+    },
+    "axe": {
+      "name": "战斧",
+      "description": "战斧是一件可升级武器，拥有独特攻击方式。"
+    },
+    "thousand_edge": {
+      "name": "千刃",
+      "description": "千刃是一件可升级武器，拥有独特攻击方式。"
+    },
+    "unholy_vespers": {
+      "name": "邪祷晚钟",
+      "description": "邪祷晚钟是一件可升级武器，拥有独特攻击方式。"
+    },
+    "holy_wand": {
+      "name": "圣光魔杖",
+      "description": "圣光魔杖是一件可升级武器，拥有独特攻击方式。"
+    },
+    "death_spiral": {
+      "name": "死亡螺旋",
+      "description": "死亡螺旋是一件可升级武器，拥有独特攻击方式。"
+    },
+    "soul_eater": {
+      "name": "噬魂者",
+      "description": "噬魂者是一件可升级武器，拥有独特攻击方式。"
+    },
+    "runic_orb": {
+      "name": "符文法球",
+      "description": "符文法球是一件可升级武器，拥有独特攻击方式。"
+    },
+    "astral_core": {
+      "name": "星界核心",
+      "description": "星界核心是一件可升级武器，拥有独特攻击方式。"
+    },
+    "moon_bow": {
+      "name": "月影弓",
+      "description": "月影弓是一件可升级武器，拥有独特攻击方式。"
+    },
+    "eclipse_barrage": {
+      "name": "蚀月齐射",
+      "description": "蚀月齐射是一件可升级武器，拥有独特攻击方式。"
+    },
+    "clockwork_saw": {
+      "name": "发条锯刃",
+      "description": "发条锯刃是一件可升级武器，拥有独特攻击方式。"
+    },
+    "gearstorm": {
+      "name": "齿轮风暴",
+      "description": "齿轮风暴是一件可升级武器，拥有独特攻击方式。"
+    },
+    "bone_spear": {
+      "name": "白骨长矛",
+      "description": "白骨长矛是一件可升级武器，拥有独特攻击方式。"
+    },
+    "ossuary_lance": {
+      "name": "骸骨枪阵",
+      "description": "骸骨枪阵是一件可升级武器，拥有独特攻击方式。"
+    },
+    "spirit_fist": {
+      "name": "灵魂拳",
+      "description": "灵魂拳是一件可升级武器，拥有独特攻击方式。"
+    },
+    "enlightened_palm": {
+      "name": "悟道掌",
+      "description": "悟道掌是一件可升级武器，拥有独特攻击方式。"
+    },
+    "acid_vial": {
+      "name": "酸蚀药瓶",
+      "description": "酸蚀药瓶是一件可升级武器，拥有独特攻击方式。"
+    },
+    "plague_crucible": {
+      "name": "瘟疫坩埚",
+      "description": "瘟疫坩埚是一件可升级武器，拥有独特攻击方式。"
+    },
+    "rapier_flurry": {
+      "name": "迅剑连刺",
+      "description": "迅剑连刺是一件可升级武器，拥有独特攻击方式。"
+    },
+    "crimson_flurry": {
+      "name": "绯红连刺",
+      "description": "绯红连刺是一件可升级武器，拥有独特攻击方式。"
+    },
+    "stone_ring": {
+      "name": "石环",
+      "description": "石环是一件可升级武器，拥有独特攻击方式。"
+    },
+    "tectonic_crown": {
+      "name": "地脉王冠",
+      "description": "地脉王冠是一件可升级武器，拥有独特攻击方式。"
+    },
+    "thunder_javelin": {
+      "name": "雷霆标枪",
+      "description": "雷霆标枪是一件可升级武器，拥有独特攻击方式。"
+    },
+    "tempest_lance": {
+      "name": "风暴长枪",
+      "description": "风暴长枪是一件可升级武器，拥有独特攻击方式。"
+    },
+    "shield_disc": {
+      "name": "守卫圆盾",
+      "description": "守卫圆盾是一件可升级武器，拥有独特攻击方式。"
+    },
+    "aegis_maelstrom": {
+      "name": "神盾漩涡",
+      "description": "神盾漩涡是一件可升级武器，拥有独特攻击方式。"
+    }
+  },
+  "passive": {
+    "spinach": {
+      "name": "菠菜",
+      "description": "所有武器伤害 +10%。"
+    },
+    "empty_tome": {
+      "name": "空白魔典",
+      "description": "所有武器冷却 -8%。"
+    },
+    "bracer": {
+      "name": "护腕",
+      "description": "投射物速度 +15%。"
+    },
+    "clover": {
+      "name": "四叶草",
+      "description": "宝箱掉落概率 +1%。"
+    },
+    "pummarola": {
+      "name": "红心",
+      "description": "每 5 秒恢复 1 点生命。"
+    },
+    "focus_lens": {
+      "name": "聚焦透镜",
+      "description": "奥术和魔法武器造成更多伤害。"
+    },
+    "hunter_quiver": {
+      "name": "猎手箭袋",
+      "description": "投射类武器飞行速度更快。"
+    },
+    "cogwheel": {
+      "name": "齿轮",
+      "description": "机械和弧线武器冷却更快。"
+    },
+    "grave_charm": {
+      "name": "墓地护符",
+      "description": "穿透和死灵武器伤害更高。"
+    },
+    "prayer_beads": {
+      "name": "祈祷珠",
+      "description": "光环和防御武器获得更强击退。"
+    },
+    "glass_flask": {
+      "name": "玻璃药瓶",
+      "description": "爆炸和毒素武器冷却更快。"
+    },
+    "duelist_glove": {
+      "name": "决斗手套",
+      "description": "物理投射武器造成更多伤害。"
+    },
+    "granite_core": {
+      "name": "花岗核心",
+      "description": "范围类武器获得伤害提升。"
+    },
+    "storm_battery": {
+      "name": "风暴电池",
+      "description": "闪电和魔法武器飞行更快。"
+    },
+    "iron_sigil": {
+      "name": "铁之纹章",
+      "description": "防御类武器冷却更快。"
+    }
+  },
+  "upgrade": {
+    "speed_up": {
+      "name": "移动速度",
+      "description": "移动速度提高 10%。"
+    },
+    "pickup_range_up": {
+      "name": "拾取范围",
+      "description": "拾取范围提高 10%。"
+    },
+    "max_hp_up": {
+      "name": "最大生命",
+      "description": "最大生命提高 10%。"
+    },
+    "add_garlic": {
+      "name": "解锁大蒜",
+      "description": "解锁大蒜作为新武器。"
+    },
+    "knife_damage_up": {
+      "name": "飞刀强化",
+      "description": "飞刀伤害提高 10%。"
+    },
+    "knife_cooldown_up": {
+      "name": "飞刀强化",
+      "description": "飞刀伤害提高 10%。"
+    },
+    "garlic_damage_up": {
+      "name": "大蒜强化",
+      "description": "大蒜伤害提高 10%。"
+    },
+    "garlic_radius_up": {
+      "name": "大蒜强化",
+      "description": "大蒜伤害提高 10%。"
+    },
+    "add_bible": {
+      "name": "解锁圣典",
+      "description": "解锁圣典作为新武器。"
+    },
+    "bible_damage_up": {
+      "name": "圣典强化",
+      "description": "圣典伤害提高 10%。"
+    },
+    "bible_orbit_count_up": {
+      "name": "圣典强化",
+      "description": "圣典伤害提高 10%。"
+    },
+    "bible_orbit_speed_up": {
+      "name": "圣典强化",
+      "description": "圣典伤害提高 10%。"
+    },
+    "add_magic_wand": {
+      "name": "解锁魔杖",
+      "description": "解锁魔杖作为新武器。"
+    },
+    "magic_wand_damage_up": {
+      "name": "魔杖强化",
+      "description": "魔杖伤害提高 10%。"
+    },
+    "magic_wand_cooldown_up": {
+      "name": "魔杖强化",
+      "description": "魔杖伤害提高 10%。"
+    },
+    "magic_wand_projectile_count_up": {
+      "name": "魔杖强化",
+      "description": "魔杖伤害提高 10%。"
+    },
+    "add_axe": {
+      "name": "解锁战斧",
+      "description": "解锁战斧作为新武器。"
+    },
+    "axe_damage_up": {
+      "name": "战斧强化",
+      "description": "战斧伤害提高 10%。"
+    },
+    "axe_cooldown_up": {
+      "name": "战斧强化",
+      "description": "战斧伤害提高 10%。"
+    },
+    "axe_projectile_count_up": {
+      "name": "战斧强化",
+      "description": "战斧伤害提高 10%。"
+    },
+    "add_runic_orb": {
+      "name": "解锁符文法球",
+      "description": "解锁符文法球作为新武器。"
+    },
+    "runic_orb_damage_up": {
+      "name": "符文法球伤害强化",
+      "description": "符文法球伤害提高 10%。"
+    },
+    "runic_orb_cooldown_up": {
+      "name": "符文法球冷却强化",
+      "description": "符文法球冷却缩短 10%。"
+    },
+    "add_moon_bow": {
+      "name": "解锁月影弓",
+      "description": "解锁月影弓作为新武器。"
+    },
+    "moon_bow_damage_up": {
+      "name": "月影弓伤害强化",
+      "description": "月影弓伤害提高 10%。"
+    },
+    "moon_bow_cooldown_up": {
+      "name": "月影弓冷却强化",
+      "description": "月影弓冷却缩短 10%。"
+    },
+    "moon_bow_projectile_count_up": {
+      "name": "月影弓投射数量强化",
+      "description": "月影弓的投射或作用数量增加。"
+    },
+    "add_clockwork_saw": {
+      "name": "解锁发条锯刃",
+      "description": "解锁发条锯刃作为新武器。"
+    },
+    "clockwork_saw_damage_up": {
+      "name": "发条锯刃伤害强化",
+      "description": "发条锯刃伤害提高 10%。"
+    },
+    "clockwork_saw_cooldown_up": {
+      "name": "发条锯刃冷却强化",
+      "description": "发条锯刃冷却缩短 10%。"
+    },
+    "clockwork_saw_projectile_count_up": {
+      "name": "发条锯刃投射数量强化",
+      "description": "发条锯刃的投射或作用数量增加。"
+    },
+    "add_bone_spear": {
+      "name": "解锁白骨长矛",
+      "description": "解锁白骨长矛作为新武器。"
+    },
+    "bone_spear_damage_up": {
+      "name": "白骨长矛伤害强化",
+      "description": "白骨长矛伤害提高 10%。"
+    },
+    "bone_spear_cooldown_up": {
+      "name": "白骨长矛冷却强化",
+      "description": "白骨长矛冷却缩短 10%。"
+    },
+    "bone_spear_projectile_count_up": {
+      "name": "白骨长矛投射数量强化",
+      "description": "白骨长矛的投射或作用数量增加。"
+    },
+    "add_spirit_fist": {
+      "name": "解锁灵魂拳",
+      "description": "解锁灵魂拳作为新武器。"
+    },
+    "spirit_fist_damage_up": {
+      "name": "灵魂拳伤害强化",
+      "description": "灵魂拳伤害提高 10%。"
+    },
+    "spirit_fist_cooldown_up": {
+      "name": "灵魂拳冷却强化",
+      "description": "灵魂拳冷却缩短 10%。"
+    },
+    "add_acid_vial": {
+      "name": "解锁酸蚀药瓶",
+      "description": "解锁酸蚀药瓶作为新武器。"
+    },
+    "acid_vial_damage_up": {
+      "name": "酸蚀药瓶伤害强化",
+      "description": "酸蚀药瓶伤害提高 10%。"
+    },
+    "acid_vial_cooldown_up": {
+      "name": "酸蚀药瓶冷却强化",
+      "description": "酸蚀药瓶冷却缩短 10%。"
+    },
+    "acid_vial_projectile_count_up": {
+      "name": "酸蚀药瓶投射数量强化",
+      "description": "酸蚀药瓶的投射或作用数量增加。"
+    },
+    "add_rapier_flurry": {
+      "name": "解锁迅剑连刺",
+      "description": "解锁迅剑连刺作为新武器。"
+    },
+    "rapier_flurry_damage_up": {
+      "name": "迅剑连刺伤害强化",
+      "description": "迅剑连刺伤害提高 10%。"
+    },
+    "rapier_flurry_cooldown_up": {
+      "name": "迅剑连刺冷却强化",
+      "description": "迅剑连刺冷却缩短 10%。"
+    },
+    "rapier_flurry_projectile_count_up": {
+      "name": "迅剑连刺投射数量强化",
+      "description": "迅剑连刺的投射或作用数量增加。"
+    },
+    "add_stone_ring": {
+      "name": "解锁石环",
+      "description": "解锁石环作为新武器。"
+    },
+    "stone_ring_damage_up": {
+      "name": "石环伤害强化",
+      "description": "石环伤害提高 10%。"
+    },
+    "stone_ring_cooldown_up": {
+      "name": "石环冷却强化",
+      "description": "石环冷却缩短 10%。"
+    },
+    "add_thunder_javelin": {
+      "name": "解锁雷霆标枪",
+      "description": "解锁雷霆标枪作为新武器。"
+    },
+    "thunder_javelin_damage_up": {
+      "name": "雷霆标枪伤害强化",
+      "description": "雷霆标枪伤害提高 10%。"
+    },
+    "thunder_javelin_cooldown_up": {
+      "name": "雷霆标枪冷却强化",
+      "description": "雷霆标枪冷却缩短 10%。"
+    },
+    "thunder_javelin_projectile_count_up": {
+      "name": "雷霆标枪投射数量强化",
+      "description": "雷霆标枪的投射或作用数量增加。"
+    },
+    "add_shield_disc": {
+      "name": "解锁守卫圆盾",
+      "description": "解锁守卫圆盾作为新武器。"
+    },
+    "shield_disc_damage_up": {
+      "name": "守卫圆盾伤害强化",
+      "description": "守卫圆盾伤害提高 10%。"
+    },
+    "shield_disc_cooldown_up": {
+      "name": "守卫圆盾冷却强化",
+      "description": "守卫圆盾冷却缩短 10%。"
+    },
+    "runic_orb_orbit_count_up": {
+      "name": "符文法球环绕数量强化",
+      "description": "符文法球的环绕数量增加。"
+    },
+    "runic_orb_orbit_speed_up": {
+      "name": "符文法球环绕速度强化",
+      "description": "符文法球环绕速度提高 10%。"
+    },
+    "spirit_fist_radius_up": {
+      "name": "灵魂拳范围强化",
+      "description": "灵魂拳作用范围提高 10%。"
+    },
+    "stone_ring_orbit_count_up": {
+      "name": "石环环绕数量强化",
+      "description": "石环的环绕数量增加。"
+    },
+    "stone_ring_orbit_speed_up": {
+      "name": "石环环绕速度强化",
+      "description": "石环环绕速度提高 10%。"
+    },
+    "shield_disc_orbit_count_up": {
+      "name": "守卫圆盾环绕数量强化",
+      "description": "守卫圆盾的环绕数量增加。"
+    },
+    "shield_disc_orbit_speed_up": {
+      "name": "守卫圆盾环绕速度强化",
+      "description": "守卫圆盾环绕速度提高 10%。"
+    },
+    "endless_heal": {
+      "name": "紧急治疗",
+      "description": "恢复 {amount} 点生命"
+    },
+    "endless_overdrive": {
+      "name": "超载",
+      "description": "武器伤害 +40%\n持续：{duration}秒\n冷却：{cooldown}秒"
+    },
+    "endless_enemy_slow": {
+      "name": "时间缓滞",
+      "description": "敌人移动速度 -50%\n持续：{duration}秒\n冷却：{cooldown}秒"
+    },
+    "endless_shield": {
+      "name": "护盾",
+      "description": "获得 1 层护盾\n抵挡下一次受击\n仍会触发击退爆发\n最多叠加 {maxStacks} 层"
+    },
+    "endless_growth_damage": {
+      "name": "微量成长",
+      "description": "永久武器伤害 +0.5%"
+    },
+    "vacuum_all_pickups": {
+      "name": "全图吸取",
+      "description": "吸取全图拾取物\n拾取范围 x{multiplier}\n持续：{duration}秒"
+    }
+  }
 }

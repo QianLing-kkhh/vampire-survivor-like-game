@@ -1,16 +1,14 @@
 import charactersData from '../../data/characters.json';
 import passivesData from '../../data/passives.json';
 import relicsData from '../../data/relics.json';
-import weaponsData from '../../data/weapons.json';
+import {
+  getPassiveDescription,
+  getPassiveDisplayName,
+  getWeaponDescription,
+  getWeaponDisplayName,
+} from '../../i18n/ContentText';
 import { I18n } from '../../i18n/I18n';
 import { IconTooltipData, ResolvedIconTooltip } from './IconTooltipTypes';
-
-type WeaponRecord = {
-  type?: string;
-  behavior?: {
-    type?: string;
-  };
-};
 
 type PassiveRecord = {
   id: string;
@@ -29,15 +27,6 @@ type CharacterRecord = {
   id: string;
   nameKey?: string;
   descriptionKey?: string;
-};
-
-const WEAPON_BEHAVIOR_KEYS: Record<string, string> = {
-  aura: 'help.weapon.behavior.aura',
-  orbit: 'help.weapon.behavior.orbit',
-  homing: 'help.weapon.behavior.homing',
-  arcing: 'help.weapon.behavior.arcing',
-  axe: 'help.weapon.behavior.axe',
-  projectile: 'help.weapon.behavior.projectile',
 };
 
 const MAP_MECHANIC_DESCRIPTION_KEYS: Record<string, string> = {
@@ -88,15 +77,14 @@ export class IconTooltipContentResolver {
   }
 
   private static resolveWeapon(data: IconTooltipData): ResolvedIconTooltip {
-    const weapon = (weaponsData as Record<string, WeaponRecord>)[data.id];
-    const behavior = weapon?.behavior?.type ?? weapon?.type;
-    const descriptionKey = data.descriptionKey
-      ?? (behavior ? WEAPON_BEHAVIOR_KEYS[behavior] : undefined)
-      ?? 'help.weapon.behavior.default';
+    const descriptionKey = data.descriptionKey ?? `weapon.${data.id}.description`;
 
     return {
-      title: data.title ?? IconTooltipContentResolver.labelFromId(data.id),
-      description: IconTooltipContentResolver.translateOrFallback(descriptionKey, data.description ?? I18n.t('tooltip.weapon.default')),
+      title: data.title ?? getWeaponDisplayName(data.id),
+      description: IconTooltipContentResolver.translateOrFallback(
+        descriptionKey,
+        data.description ?? getWeaponDescription(data.id, I18n.t('tooltip.weapon.default')),
+      ),
     };
   }
 
@@ -105,8 +93,11 @@ export class IconTooltipContentResolver {
     const descriptionKey = data.descriptionKey ?? `tooltip.passive.${data.id}`;
 
     return {
-      title: data.title ?? passive?.name ?? IconTooltipContentResolver.labelFromId(data.id),
-      description: IconTooltipContentResolver.translateOrFallback(descriptionKey, data.description ?? I18n.t('tooltip.passive.default')),
+      title: data.title ?? getPassiveDisplayName(data.id, passive?.name),
+      description: IconTooltipContentResolver.translateOrFallback(
+        descriptionKey,
+        data.description ?? getPassiveDescription(data.id, I18n.t('tooltip.passive.default')),
+      ),
     };
   }
 

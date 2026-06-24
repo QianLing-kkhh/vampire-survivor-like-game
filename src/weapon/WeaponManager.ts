@@ -8,6 +8,7 @@ import type { WeaponTarget } from './WeaponTarget';
 
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EvolutionRule } from '../evolution/EvolutionRule';
+import { getWeaponDisplayName } from '../i18n/ContentText';
 import { PassiveWeaponModifier } from '../passive/PassiveItem';
 import { Weapon, WeaponConfig, WeaponCooldownStatus, WeaponUpdateContext } from './Weapon';
 import { WeaponFactory } from './WeaponFactory';
@@ -769,10 +770,7 @@ export class WeaponManager {
   }
 
   private formatWeaponName(weaponId: string): string {
-    return weaponId
-      .split('_')
-      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-      .join(' ');
+    return getWeaponDisplayName(weaponId);
   }
 
   private getWeaponIconKey(weaponId: string): string {
@@ -995,18 +993,18 @@ export class WeaponManager {
     };
     const stats: Record<string, number> = {};
 
-    this.addDetailStat(stats, 'Damage', detailWeapon.damage);
-    this.addDetailStat(stats, 'Cooldown', detailWeapon.cooldownSeconds);
-    this.addDetailStat(stats, 'Projectile Speed', detailWeapon.projectileSpeed);
-    this.addDetailStat(stats, 'Projectile Count', this.hasProjectileCount(weapon)
+    this.addDetailStat(stats, 'damage', detailWeapon.damage);
+    this.addDetailStat(stats, 'cooldown', detailWeapon.cooldownSeconds);
+    this.addDetailStat(stats, 'projectileSpeed', detailWeapon.projectileSpeed);
+    this.addDetailStat(stats, 'projectileCount', this.hasProjectileCount(weapon)
       ? weapon.getProjectileCount()
       : detailWeapon.config?.projectileCount);
-    this.addDetailStat(stats, 'Pierce', detailWeapon.config?.pierce);
-    this.addDetailStat(stats, 'Radius', detailWeapon.radius);
-    this.addDetailStat(stats, 'Orbit Count', this.hasOrbitCount(weapon)
+    this.addDetailStat(stats, 'pierce', detailWeapon.config?.pierce);
+    this.addDetailStat(stats, 'radius', detailWeapon.radius);
+    this.addDetailStat(stats, 'orbitCount', this.hasOrbitCount(weapon)
       ? weapon.getOrbitCount()
       : undefined);
-    this.addDetailStat(stats, 'Orbit Speed', this.hasOrbitSpeed(weapon)
+    this.addDetailStat(stats, 'orbitSpeed', this.hasOrbitSpeed(weapon)
       ? weapon.getOrbitSpeed()
       : undefined);
 

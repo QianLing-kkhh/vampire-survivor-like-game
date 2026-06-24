@@ -117,13 +117,24 @@
     "debugPanelCompact": "Compact Debug Panel",
     "debugPanelOpacity": "Debug Panel Opacity",
     "language": "Language",
-    "uiStyle": "UI Style",
+    "uiStyle": {
+      "classic": "Classic",
+      "arcaneSlate": "Arcane Slate",
+      "minimal": "Minimal",
+      "_label": "UI Style"
+    },
     "uiStyleReopenNotice": "Some UI style changes apply after reopening this menu.",
     "scrollHint": "Scroll",
     "page": "Page",
     "previousPage": "Prev",
     "nextPage": "Next",
-    "back": "Back"
+    "back": "Back",
+    "autoOpenTreasure": "Auto Open Treasure",
+    "strategyControlType": "Auto Strategy Control",
+    "strategyControl": {
+      "fixed": "Fixed",
+      "live": "Live"
+    }
   },
   "strategyPanel": {
     "title": "Strategy / Tactics",
@@ -265,6 +276,46 @@
     "warrior": {
       "name": "Warrior",
       "description": "A melee-oriented character with high health and low mobility."
+    },
+    "arcanist": {
+      "name": "Arcanist",
+      "description": "Starts with a distinctive arcanist weapon route."
+    },
+    "ranger": {
+      "name": "Ranger",
+      "description": "Starts with a distinctive ranger weapon route."
+    },
+    "engineer": {
+      "name": "Engineer",
+      "description": "Starts with a distinctive engineer weapon route."
+    },
+    "necromancer": {
+      "name": "Necromancer",
+      "description": "Starts with a distinctive necromancer weapon route."
+    },
+    "monk": {
+      "name": "Monk",
+      "description": "Starts with a distinctive monk weapon route."
+    },
+    "alchemist": {
+      "name": "Alchemist",
+      "description": "Starts with a distinctive alchemist weapon route."
+    },
+    "duelist": {
+      "name": "Duelist",
+      "description": "Starts with a distinctive duelist weapon route."
+    },
+    "geomancer": {
+      "name": "Geomancer",
+      "description": "Starts with a distinctive geomancer weapon route."
+    },
+    "stormcaller": {
+      "name": "Stormcaller",
+      "description": "Starts with a distinctive stormcaller weapon route."
+    },
+    "sentinel": {
+      "name": "Sentinel",
+      "description": "Starts with a distinctive sentinel weapon route."
     }
   },
   "characterSelection": {
@@ -299,6 +350,46 @@
     "sunkenLibrary": {
       "name": "Sunken Library",
       "description": "A flooded archive stage with dense shelves, ink pools, arcane lamps, portals, and a healing catalogue altar."
+    },
+    "crystalCaverns": {
+      "name": "Crystal Caverns",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "ashFoundry": {
+      "name": "Ash Foundry",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "moonlitRooftops": {
+      "name": "Moonlit Rooftops",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "frostMonastery": {
+      "name": "Frost Monastery",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "bloodGarden": {
+      "name": "Blood Garden",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "desertObelisk": {
+      "name": "Desert Obelisk",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "stormCoast": {
+      "name": "Storm Coast",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "clockworkBastion": {
+      "name": "Clockwork Bastion",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "fungalDepths": {
+      "name": "Fungal Depths",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
+    },
+    "mirrorLabyrinth": {
+      "name": "Mirror Labyrinth",
+      "description": "A new advanced content-proof stage with distinct terrain and map mechanics."
     }
   },
   "map": {
@@ -316,6 +407,36 @@
     },
     "sunkenLibrary": {
       "name": "Sunken Library"
+    },
+    "crystalCaverns": {
+      "name": "Crystal Caverns"
+    },
+    "ashFoundry": {
+      "name": "Ash Foundry"
+    },
+    "moonlitRooftops": {
+      "name": "Moonlit Rooftops"
+    },
+    "frostMonastery": {
+      "name": "Frost Monastery"
+    },
+    "bloodGarden": {
+      "name": "Blood Garden"
+    },
+    "desertObelisk": {
+      "name": "Desert Obelisk"
+    },
+    "stormCoast": {
+      "name": "Storm Coast"
+    },
+    "clockworkBastion": {
+      "name": "Clockwork Bastion"
+    },
+    "fungalDepths": {
+      "name": "Fungal Depths"
+    },
+    "mirrorLabyrinth": {
+      "name": "Mirror Labyrinth"
     }
   },
   "stageSelection": {
@@ -545,11 +666,23 @@
         "assassin": "A fast knife user who escapes danger by blinking forward after taking damage.",
         "witch": "Leaves slowing zones after taking damage to control enemy movement.",
         "priest": "Creates a sanctuary, heals, gains shield, and knocks back enemies.",
-        "warrior": "Counters damage with a shockwave and temporary damage reduction."
+        "warrior": "Counters damage with a shockwave and temporary damage reduction.",
+        "arcanist": "Starts with a distinctive arcanist weapon route.",
+        "ranger": "Starts with a distinctive ranger weapon route.",
+        "engineer": "Starts with a distinctive engineer weapon route.",
+        "necromancer": "Starts with a distinctive necromancer weapon route.",
+        "monk": "Starts with a distinctive monk weapon route.",
+        "alchemist": "Starts with a distinctive alchemist weapon route.",
+        "duelist": "Starts with a distinctive duelist weapon route.",
+        "geomancer": "Starts with a distinctive geomancer weapon route.",
+        "stormcaller": "Starts with a distinctive stormcaller weapon route.",
+        "sentinel": "Starts with a distinctive sentinel weapon route."
       },
       "levelUp": {
         "default": "Special growth effect",
-        "unknown": "Unknown growth effect"
+        "unknown": "Unknown growth effect",
+        "none": "No special level-up effect.",
+        "healLostHpPercent": "Restores a portion of missing HP on level-up."
       },
       "reaction": {
         "none": "None",
@@ -722,7 +855,9 @@
         "aura": "Aura weapon",
         "orbit": "Orbit weapon",
         "arcing": "Arcing weapon",
-        "homing": "Homing weapon"
+        "homing": "Homing weapon",
+        "axe": "Arcing weapon",
+        "magic_wand": "Homing magic weapon"
       },
       "tag": {
         "base": "Base",
@@ -738,7 +873,18 @@
         "knockback": "Knockback",
         "homing": "Homing",
         "arcing": "Arcing",
-        "defensive": "Defensive"
+        "defensive": "Defensive",
+        "arcane": "Arcane",
+        "duelist": "Duelist",
+        "earth": "Earth",
+        "lightning": "Lightning",
+        "mechanical": "Mechanical",
+        "necrotic": "Necrotic",
+        "orbit": "Orbit",
+        "pierce": "Pierce",
+        "poison": "Poison",
+        "ranged": "Ranged",
+        "sustain": "Sustain"
       },
       "stat": {
         "damage": "Damage",
@@ -774,7 +920,8 @@
     "emptyMessage": "No upgrades available",
     "newWeapon": "New Weapon",
     "noUpgrades": "No upgrades available",
-    "upgrade": "Upgrade"
+    "upgrade": "Upgrade",
+    "noMatchingWeaponOwned": "No matching weapon owned"
   },
   "hud": {
     "weapons": "Weapons",
@@ -931,6 +1078,46 @@
       "rare": "Rare",
       "epic": "Epic",
       "legendary": "Legendary"
+    },
+    "bloodPact": {
+      "name": "Blood Pact",
+      "description": "Improves damage while surviving at low health."
+    },
+    "voidCompass": {
+      "name": "Void Compass",
+      "description": "Improves pickup reach."
+    },
+    "goldenScarab": {
+      "name": "Golden Scarab",
+      "description": "Improves treasure score rewards."
+    },
+    "thornCrown": {
+      "name": "Thorn Crown",
+      "description": "Retaliates after taking damage."
+    },
+    "frozenHourglass": {
+      "name": "Frozen Hourglass",
+      "description": "Periodically slows nearby enemies."
+    },
+    "berserkerCharm": {
+      "name": "Berserker Charm",
+      "description": "Grants a burst of power after boss kills."
+    },
+    "magnetPearl": {
+      "name": "Magnet Pearl",
+      "description": "Improves pickup reach after treasure opens."
+    },
+    "ironShell": {
+      "name": "Iron Shell",
+      "description": "Reduces incoming damage after being hit."
+    },
+    "scholarCandle": {
+      "name": "Scholar Candle",
+      "description": "Restores health when leveling up."
+    },
+    "riftCoin": {
+      "name": "Rift Coin",
+      "description": "Adds extra treasure score after repeated treasure opens."
     }
   },
   "tooltip": {
@@ -943,7 +1130,17 @@
       "empty_tome": "Helps weapons recover faster between attacks.",
       "bracer": "Improves projectile travel speed.",
       "clover": "Improves treasure-related luck.",
-      "pummarola": "Provides steady health recovery."
+      "pummarola": "Provides steady health recovery.",
+      "focus_lens": "Arcane and magic weapons deal more damage.",
+      "hunter_quiver": "Projectile weapons fly faster.",
+      "cogwheel": "Mechanical and arcing weapons cool down faster.",
+      "grave_charm": "Piercing and necrotic weapons hit harder.",
+      "prayer_beads": "Aura and defensive weapons gain knockback.",
+      "glass_flask": "Explosive and poison weapons cool down faster.",
+      "duelist_glove": "Physical projectile weapons deal more damage.",
+      "granite_core": "Area weapons gain damage.",
+      "storm_battery": "Lightning and magic weapons fly faster.",
+      "iron_sigil": "Defensive weapons cool down faster."
     },
     "relic": {
       "default": "Relic effect. Detailed numbers are listed in Stats / Build.",
@@ -981,6 +1178,102 @@
     "message": {
       "character": "Unlocked character: {name}",
       "stage": "Unlocked stage: {name}"
+    },
+    "character": {
+      "arcanist": {
+        "name": "Arcanist"
+      },
+      "ranger": {
+        "name": "Ranger"
+      },
+      "engineer": {
+        "name": "Engineer"
+      },
+      "necromancer": {
+        "name": "Necromancer"
+      },
+      "monk": {
+        "name": "Monk"
+      },
+      "alchemist": {
+        "name": "Alchemist"
+      },
+      "duelist": {
+        "name": "Duelist"
+      },
+      "geomancer": {
+        "name": "Geomancer"
+      },
+      "stormcaller": {
+        "name": "Stormcaller"
+      },
+      "sentinel": {
+        "name": "Sentinel"
+      }
+    },
+    "stage": {
+      "crystal_caverns_stage": {
+        "name": "Crystal Caverns"
+      },
+      "ash_foundry_stage": {
+        "name": "Ash Foundry"
+      },
+      "moonlit_rooftops_stage": {
+        "name": "Moonlit Rooftops"
+      },
+      "frost_monastery_stage": {
+        "name": "Frost Monastery"
+      },
+      "blood_garden_stage": {
+        "name": "Blood Garden"
+      },
+      "desert_obelisk_stage": {
+        "name": "Desert Obelisk"
+      },
+      "storm_coast_stage": {
+        "name": "Storm Coast"
+      },
+      "clockwork_bastion_stage": {
+        "name": "Clockwork Bastion"
+      },
+      "fungal_depths_stage": {
+        "name": "Fungal Depths"
+      },
+      "mirror_labyrinth_stage": {
+        "name": "Mirror Labyrinth"
+      }
+    },
+    "map": {
+      "crystal_caverns_map": {
+        "name": "Crystal Caverns"
+      },
+      "ash_foundry_map": {
+        "name": "Ash Foundry"
+      },
+      "moonlit_rooftops_map": {
+        "name": "Moonlit Rooftops"
+      },
+      "frost_monastery_map": {
+        "name": "Frost Monastery"
+      },
+      "blood_garden_map": {
+        "name": "Blood Garden"
+      },
+      "desert_obelisk_map": {
+        "name": "Desert Obelisk"
+      },
+      "storm_coast_map": {
+        "name": "Storm Coast"
+      },
+      "clockwork_bastion_map": {
+        "name": "Clockwork Bastion"
+      },
+      "fungal_depths_map": {
+        "name": "Fungal Depths"
+      },
+      "mirror_labyrinth_map": {
+        "name": "Mirror Labyrinth"
+      }
     }
   },
   "loading": {
@@ -1015,84 +1308,466 @@
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."
   },
-  "character.arcanist.name": "Arcanist",
-  "character.arcanist.description": "Starts with a distinctive arcanist weapon route.",
-  "unlock.character.arcanist.name": "Arcanist",
-  "character.ranger.name": "Ranger",
-  "character.ranger.description": "Starts with a distinctive ranger weapon route.",
-  "unlock.character.ranger.name": "Ranger",
-  "character.engineer.name": "Engineer",
-  "character.engineer.description": "Starts with a distinctive engineer weapon route.",
-  "unlock.character.engineer.name": "Engineer",
-  "character.necromancer.name": "Necromancer",
-  "character.necromancer.description": "Starts with a distinctive necromancer weapon route.",
-  "unlock.character.necromancer.name": "Necromancer",
-  "character.monk.name": "Monk",
-  "character.monk.description": "Starts with a distinctive monk weapon route.",
-  "unlock.character.monk.name": "Monk",
-  "character.alchemist.name": "Alchemist",
-  "character.alchemist.description": "Starts with a distinctive alchemist weapon route.",
-  "unlock.character.alchemist.name": "Alchemist",
-  "character.duelist.name": "Duelist",
-  "character.duelist.description": "Starts with a distinctive duelist weapon route.",
-  "unlock.character.duelist.name": "Duelist",
-  "character.geomancer.name": "Geomancer",
-  "character.geomancer.description": "Starts with a distinctive geomancer weapon route.",
-  "unlock.character.geomancer.name": "Geomancer",
-  "character.stormcaller.name": "Stormcaller",
-  "character.stormcaller.description": "Starts with a distinctive stormcaller weapon route.",
-  "unlock.character.stormcaller.name": "Stormcaller",
-  "character.sentinel.name": "Sentinel",
-  "character.sentinel.description": "Starts with a distinctive sentinel weapon route.",
-  "unlock.character.sentinel.name": "Sentinel",
-  "stage.crystalCaverns.name": "Crystal Caverns",
-  "stage.crystalCaverns.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.crystal_caverns_stage.name": "Crystal Caverns",
-  "stage.ashFoundry.name": "Ash Foundry",
-  "stage.ashFoundry.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.ash_foundry_stage.name": "Ash Foundry",
-  "stage.moonlitRooftops.name": "Moonlit Rooftops",
-  "stage.moonlitRooftops.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.moonlit_rooftops_stage.name": "Moonlit Rooftops",
-  "stage.frostMonastery.name": "Frost Monastery",
-  "stage.frostMonastery.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.frost_monastery_stage.name": "Frost Monastery",
-  "stage.bloodGarden.name": "Blood Garden",
-  "stage.bloodGarden.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.blood_garden_stage.name": "Blood Garden",
-  "stage.desertObelisk.name": "Desert Obelisk",
-  "stage.desertObelisk.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.desert_obelisk_stage.name": "Desert Obelisk",
-  "stage.stormCoast.name": "Storm Coast",
-  "stage.stormCoast.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.storm_coast_stage.name": "Storm Coast",
-  "stage.clockworkBastion.name": "Clockwork Bastion",
-  "stage.clockworkBastion.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.clockwork_bastion_stage.name": "Clockwork Bastion",
-  "stage.fungalDepths.name": "Fungal Depths",
-  "stage.fungalDepths.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.fungal_depths_stage.name": "Fungal Depths",
-  "stage.mirrorLabyrinth.name": "Mirror Labyrinth",
-  "stage.mirrorLabyrinth.description": "A new advanced content-proof stage with distinct terrain and map mechanics.",
-  "unlock.stage.mirror_labyrinth_stage.name": "Mirror Labyrinth",
-  "map.crystalCaverns.name": "Crystal Caverns",
-  "unlock.map.crystal_caverns_map.name": "Crystal Caverns",
-  "map.ashFoundry.name": "Ash Foundry",
-  "unlock.map.ash_foundry_map.name": "Ash Foundry",
-  "map.moonlitRooftops.name": "Moonlit Rooftops",
-  "unlock.map.moonlit_rooftops_map.name": "Moonlit Rooftops",
-  "map.frostMonastery.name": "Frost Monastery",
-  "unlock.map.frost_monastery_map.name": "Frost Monastery",
-  "map.bloodGarden.name": "Blood Garden",
-  "unlock.map.blood_garden_map.name": "Blood Garden",
-  "map.desertObelisk.name": "Desert Obelisk",
-  "unlock.map.desert_obelisk_map.name": "Desert Obelisk",
-  "map.stormCoast.name": "Storm Coast",
-  "unlock.map.storm_coast_map.name": "Storm Coast",
-  "map.clockworkBastion.name": "Clockwork Bastion",
-  "unlock.map.clockwork_bastion_map.name": "Clockwork Bastion",
-  "map.fungalDepths.name": "Fungal Depths",
-  "unlock.map.fungal_depths_map.name": "Fungal Depths",
-  "map.mirrorLabyrinth.name": "Mirror Labyrinth",
-  "unlock.map.mirror_labyrinth_map.name": "Mirror Labyrinth"
+  "weapon": {
+    "knife": {
+      "name": "Knife",
+      "description": "Knife is a projectile weapon."
+    },
+    "garlic": {
+      "name": "Garlic",
+      "description": "Garlic is a aura weapon."
+    },
+    "bible": {
+      "name": "Bible",
+      "description": "Bible is a orbit weapon."
+    },
+    "magic_wand": {
+      "name": "Magic Wand",
+      "description": "Magic Wand is a homing weapon."
+    },
+    "axe": {
+      "name": "Axe",
+      "description": "Axe is a arcing weapon."
+    },
+    "thousand_edge": {
+      "name": "Thousand Edge",
+      "description": "Thousand Edge is a projectile weapon."
+    },
+    "unholy_vespers": {
+      "name": "Unholy Vespers",
+      "description": "Unholy Vespers is a orbit weapon."
+    },
+    "holy_wand": {
+      "name": "Holy Wand",
+      "description": "Holy Wand is a homing weapon."
+    },
+    "death_spiral": {
+      "name": "Death Spiral",
+      "description": "Death Spiral is a arcing weapon."
+    },
+    "soul_eater": {
+      "name": "Soul Eater",
+      "description": "Soul Eater is a aura weapon."
+    },
+    "runic_orb": {
+      "name": "Runic Orb",
+      "description": "Runic Orb is a orbit weapon."
+    },
+    "astral_core": {
+      "name": "Astral Core",
+      "description": "Astral Core is a orbit weapon."
+    },
+    "moon_bow": {
+      "name": "Moon Bow",
+      "description": "Moon Bow is a projectile weapon."
+    },
+    "eclipse_barrage": {
+      "name": "Eclipse Barrage",
+      "description": "Eclipse Barrage is a projectile weapon."
+    },
+    "clockwork_saw": {
+      "name": "Clockwork Saw",
+      "description": "Clockwork Saw is a arcing weapon."
+    },
+    "gearstorm": {
+      "name": "Gearstorm",
+      "description": "Gearstorm is a arcing weapon."
+    },
+    "bone_spear": {
+      "name": "Bone Spear",
+      "description": "Bone Spear is a projectile weapon."
+    },
+    "ossuary_lance": {
+      "name": "Ossuary Lance",
+      "description": "Ossuary Lance is a projectile weapon."
+    },
+    "spirit_fist": {
+      "name": "Spirit Fist",
+      "description": "Spirit Fist is a aura weapon."
+    },
+    "enlightened_palm": {
+      "name": "Enlightened Palm",
+      "description": "Enlightened Palm is a aura weapon."
+    },
+    "acid_vial": {
+      "name": "Acid Vial",
+      "description": "Acid Vial is a homing weapon."
+    },
+    "plague_crucible": {
+      "name": "Plague Crucible",
+      "description": "Plague Crucible is a homing weapon."
+    },
+    "rapier_flurry": {
+      "name": "Rapier Flurry",
+      "description": "Rapier Flurry is a projectile weapon."
+    },
+    "crimson_flurry": {
+      "name": "Crimson Flurry",
+      "description": "Crimson Flurry is a projectile weapon."
+    },
+    "stone_ring": {
+      "name": "Stone Ring",
+      "description": "Stone Ring is a orbit weapon."
+    },
+    "tectonic_crown": {
+      "name": "Tectonic Crown",
+      "description": "Tectonic Crown is a orbit weapon."
+    },
+    "thunder_javelin": {
+      "name": "Thunder Javelin",
+      "description": "Thunder Javelin is a homing weapon."
+    },
+    "tempest_lance": {
+      "name": "Tempest Lance",
+      "description": "Tempest Lance is a homing weapon."
+    },
+    "shield_disc": {
+      "name": "Shield Disc",
+      "description": "Shield Disc is a orbit weapon."
+    },
+    "aegis_maelstrom": {
+      "name": "Aegis Maelstrom",
+      "description": "Aegis Maelstrom is a orbit weapon."
+    }
+  },
+  "passive": {
+    "spinach": {
+      "name": "Spinach",
+      "description": "All weapon damage +10%"
+    },
+    "empty_tome": {
+      "name": "Empty Tome",
+      "description": "All weapon cooldown -8%"
+    },
+    "bracer": {
+      "name": "Bracer",
+      "description": "Projectile speed +15%"
+    },
+    "clover": {
+      "name": "Clover",
+      "description": "Treasure chest drop chance +1%"
+    },
+    "pummarola": {
+      "name": "Pummarola",
+      "description": "Recover 1 HP every 5 seconds"
+    },
+    "focus_lens": {
+      "name": "Focus Lens",
+      "description": "Arcane and magic weapons deal more damage."
+    },
+    "hunter_quiver": {
+      "name": "Hunter Quiver",
+      "description": "Projectile weapons fly faster."
+    },
+    "cogwheel": {
+      "name": "Cogwheel",
+      "description": "Mechanical and arcing weapons cool down faster."
+    },
+    "grave_charm": {
+      "name": "Grave Charm",
+      "description": "Piercing and necrotic weapons hit harder."
+    },
+    "prayer_beads": {
+      "name": "Prayer Beads",
+      "description": "Aura and defensive weapons gain knockback."
+    },
+    "glass_flask": {
+      "name": "Glass Flask",
+      "description": "Explosive and poison weapons cool down faster."
+    },
+    "duelist_glove": {
+      "name": "Duelist Glove",
+      "description": "Physical projectile weapons deal more damage."
+    },
+    "granite_core": {
+      "name": "Granite Core",
+      "description": "Area weapons gain damage."
+    },
+    "storm_battery": {
+      "name": "Storm Battery",
+      "description": "Lightning and magic weapons fly faster."
+    },
+    "iron_sigil": {
+      "name": "Iron Sigil",
+      "description": "Defensive weapons cool down faster."
+    }
+  },
+  "upgrade": {
+    "speed_up": {
+      "name": "Move Speed",
+      "description": "+10% move speed"
+    },
+    "pickup_range_up": {
+      "name": "Pickup Range",
+      "description": "+10% pickup range"
+    },
+    "max_hp_up": {
+      "name": "Max HP",
+      "description": "+10% max HP"
+    },
+    "add_garlic": {
+      "name": "Add Garlic",
+      "description": "Add a damaging aura around the player"
+    },
+    "knife_damage_up": {
+      "name": "Knife Damage Up",
+      "description": "+10% knife damage"
+    },
+    "knife_cooldown_up": {
+      "name": "Knife Cooldown Up",
+      "description": "-10% knife cooldown"
+    },
+    "garlic_damage_up": {
+      "name": "Garlic Damage Up",
+      "description": "+10% garlic damage"
+    },
+    "garlic_radius_up": {
+      "name": "Garlic Radius Up",
+      "description": "+10% garlic radius"
+    },
+    "add_bible": {
+      "name": "Add Bible",
+      "description": "Add an orbiting weapon around the player"
+    },
+    "bible_damage_up": {
+      "name": "Bible Damage Up",
+      "description": "+10% bible damage"
+    },
+    "bible_orbit_count_up": {
+      "name": "Bible Count Up",
+      "description": "Add one more orbiting Bible projectile"
+    },
+    "bible_orbit_speed_up": {
+      "name": "Bible Orbit Speed Up",
+      "description": "+10% bible orbit speed"
+    },
+    "add_magic_wand": {
+      "name": "Add Magic Wand",
+      "description": "Add a homing magic projectile weapon"
+    },
+    "magic_wand_damage_up": {
+      "name": "Magic Wand Damage Up",
+      "description": "+10% magic wand damage"
+    },
+    "magic_wand_cooldown_up": {
+      "name": "Magic Wand Cooldown Up",
+      "description": "-10% magic wand cooldown"
+    },
+    "magic_wand_projectile_count_up": {
+      "name": "Magic Wand Projectile Count Up",
+      "description": "Increase the number of Magic Wand projectiles fired each attack"
+    },
+    "add_axe": {
+      "name": "Add Axe",
+      "description": "Add a slow high-damage arcing area weapon"
+    },
+    "axe_damage_up": {
+      "name": "Axe Damage Up",
+      "description": "+10% axe damage"
+    },
+    "axe_cooldown_up": {
+      "name": "Axe Cooldown Up",
+      "description": "-10% axe cooldown"
+    },
+    "axe_projectile_count_up": {
+      "name": "Axe Projectile Count Up",
+      "description": "Add one more axe projectile per attack"
+    },
+    "add_runic_orb": {
+      "name": "Add Runic Orb",
+      "description": "Unlock Runic Orb as a new weapon."
+    },
+    "runic_orb_damage_up": {
+      "name": "Runic Orb Damage",
+      "description": "Increase Runic Orb damage by 10%."
+    },
+    "runic_orb_cooldown_up": {
+      "name": "Runic Orb Cooldown",
+      "description": "Reduce Runic Orb cooldown by 10%."
+    },
+    "add_moon_bow": {
+      "name": "Add Moon Bow",
+      "description": "Unlock Moon Bow as a new weapon."
+    },
+    "moon_bow_damage_up": {
+      "name": "Moon Bow Damage",
+      "description": "Increase Moon Bow damage by 10%."
+    },
+    "moon_bow_cooldown_up": {
+      "name": "Moon Bow Cooldown",
+      "description": "Reduce Moon Bow cooldown by 10%."
+    },
+    "moon_bow_projectile_count_up": {
+      "name": "Moon Bow Projectile Count",
+      "description": "Add one projectile or active hit object to Moon Bow."
+    },
+    "add_clockwork_saw": {
+      "name": "Add Clockwork Saw",
+      "description": "Unlock Clockwork Saw as a new weapon."
+    },
+    "clockwork_saw_damage_up": {
+      "name": "Clockwork Saw Damage",
+      "description": "Increase Clockwork Saw damage by 10%."
+    },
+    "clockwork_saw_cooldown_up": {
+      "name": "Clockwork Saw Cooldown",
+      "description": "Reduce Clockwork Saw cooldown by 10%."
+    },
+    "clockwork_saw_projectile_count_up": {
+      "name": "Clockwork Saw Projectile Count",
+      "description": "Add one projectile or active hit object to Clockwork Saw."
+    },
+    "add_bone_spear": {
+      "name": "Add Bone Spear",
+      "description": "Unlock Bone Spear as a new weapon."
+    },
+    "bone_spear_damage_up": {
+      "name": "Bone Spear Damage",
+      "description": "Increase Bone Spear damage by 10%."
+    },
+    "bone_spear_cooldown_up": {
+      "name": "Bone Spear Cooldown",
+      "description": "Reduce Bone Spear cooldown by 10%."
+    },
+    "bone_spear_projectile_count_up": {
+      "name": "Bone Spear Projectile Count",
+      "description": "Add one projectile or active hit object to Bone Spear."
+    },
+    "add_spirit_fist": {
+      "name": "Add Spirit Fist",
+      "description": "Unlock Spirit Fist as a new weapon."
+    },
+    "spirit_fist_damage_up": {
+      "name": "Spirit Fist Damage",
+      "description": "Increase Spirit Fist damage by 10%."
+    },
+    "spirit_fist_cooldown_up": {
+      "name": "Spirit Fist Cooldown",
+      "description": "Reduce Spirit Fist cooldown by 10%."
+    },
+    "add_acid_vial": {
+      "name": "Add Acid Vial",
+      "description": "Unlock Acid Vial as a new weapon."
+    },
+    "acid_vial_damage_up": {
+      "name": "Acid Vial Damage",
+      "description": "Increase Acid Vial damage by 10%."
+    },
+    "acid_vial_cooldown_up": {
+      "name": "Acid Vial Cooldown",
+      "description": "Reduce Acid Vial cooldown by 10%."
+    },
+    "acid_vial_projectile_count_up": {
+      "name": "Acid Vial Projectile Count",
+      "description": "Add one projectile or active hit object to Acid Vial."
+    },
+    "add_rapier_flurry": {
+      "name": "Add Rapier Flurry",
+      "description": "Unlock Rapier Flurry as a new weapon."
+    },
+    "rapier_flurry_damage_up": {
+      "name": "Rapier Flurry Damage",
+      "description": "Increase Rapier Flurry damage by 10%."
+    },
+    "rapier_flurry_cooldown_up": {
+      "name": "Rapier Flurry Cooldown",
+      "description": "Reduce Rapier Flurry cooldown by 10%."
+    },
+    "rapier_flurry_projectile_count_up": {
+      "name": "Rapier Flurry Projectile Count",
+      "description": "Add one projectile or active hit object to Rapier Flurry."
+    },
+    "add_stone_ring": {
+      "name": "Add Stone Ring",
+      "description": "Unlock Stone Ring as a new weapon."
+    },
+    "stone_ring_damage_up": {
+      "name": "Stone Ring Damage",
+      "description": "Increase Stone Ring damage by 10%."
+    },
+    "stone_ring_cooldown_up": {
+      "name": "Stone Ring Cooldown",
+      "description": "Reduce Stone Ring cooldown by 10%."
+    },
+    "add_thunder_javelin": {
+      "name": "Add Thunder Javelin",
+      "description": "Unlock Thunder Javelin as a new weapon."
+    },
+    "thunder_javelin_damage_up": {
+      "name": "Thunder Javelin Damage",
+      "description": "Increase Thunder Javelin damage by 10%."
+    },
+    "thunder_javelin_cooldown_up": {
+      "name": "Thunder Javelin Cooldown",
+      "description": "Reduce Thunder Javelin cooldown by 10%."
+    },
+    "thunder_javelin_projectile_count_up": {
+      "name": "Thunder Javelin Projectile Count",
+      "description": "Add one projectile or active hit object to Thunder Javelin."
+    },
+    "add_shield_disc": {
+      "name": "Add Shield Disc",
+      "description": "Unlock Shield Disc as a new weapon."
+    },
+    "shield_disc_damage_up": {
+      "name": "Shield Disc Damage",
+      "description": "Increase Shield Disc damage by 10%."
+    },
+    "shield_disc_cooldown_up": {
+      "name": "Shield Disc Cooldown",
+      "description": "Reduce Shield Disc cooldown by 10%."
+    },
+    "runic_orb_orbit_count_up": {
+      "name": "Runic Orb Orbit Count",
+      "description": "Add one orbiting hit object to Runic Orb."
+    },
+    "runic_orb_orbit_speed_up": {
+      "name": "Runic Orb Orbit Speed",
+      "description": "Increase Runic Orb orbit speed by 10%."
+    },
+    "spirit_fist_radius_up": {
+      "name": "Spirit Fist Radius",
+      "description": "Increase Spirit Fist radius by 10%."
+    },
+    "stone_ring_orbit_count_up": {
+      "name": "Stone Ring Orbit Count",
+      "description": "Add one orbiting hit object to Stone Ring."
+    },
+    "stone_ring_orbit_speed_up": {
+      "name": "Stone Ring Orbit Speed",
+      "description": "Increase Stone Ring orbit speed by 10%."
+    },
+    "shield_disc_orbit_count_up": {
+      "name": "Shield Disc Orbit Count",
+      "description": "Add one orbiting hit object to Shield Disc."
+    },
+    "shield_disc_orbit_speed_up": {
+      "name": "Shield Disc Orbit Speed",
+      "description": "Increase Shield Disc orbit speed by 10%."
+    },
+    "endless_heal": {
+      "name": "Emergency Heal",
+      "description": "Restore {amount} HP"
+    },
+    "endless_overdrive": {
+      "name": "Overdrive",
+      "description": "Weapon Damage +40%\nDuration: {duration}s\nCooldown: {cooldown}s"
+    },
+    "endless_enemy_slow": {
+      "name": "Time Slow",
+      "description": "Enemy Move Speed -50%\nDuration: {duration}s\nCooldown: {cooldown}s"
+    },
+    "endless_shield": {
+      "name": "Shield",
+      "description": "Gain 1 shield stack\nBlocks the next hit\nStill triggers knockback burst\nStacks up to {maxStacks}"
+    },
+    "endless_growth_damage": {
+      "name": "Minor Growth",
+      "description": "Permanent Weapon Damage +0.5%"
+    },
+    "vacuum_all_pickups": {
+      "name": "Vacuum All Pickups",
+      "description": "Vacuum all pickups\nPickup Range x{multiplier}\nDuration: {duration}s"
+    }
+  }
 }

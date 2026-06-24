@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { AssetFallbacks } from '../assets/AssetFallbacks';
 import { AudioManager } from '../audio/AudioManager';
+import { getUpgradeDescription, getUpgradeDisplayName } from '../i18n/ContentText';
 import { I18n } from '../i18n/I18n';
 import { UpgradeDisplayInfo } from '../progression/UpgradeApplier';
 import { UpgradeOption } from '../progression/UpgradeOption';
@@ -203,7 +204,7 @@ export class LevelUpPanel {
       ? new UITextBlock(scene, {
         x: x - layout.cardWidth / 2 + (tiny ? 14 : 18),
         y: previewY,
-        text: option.preview ?? option.description,
+        text: option.preview ?? getUpgradeDescription(option),
         tone: 'muted',
         fontSize: layout.descriptionFontSize,
         align: 'left',
@@ -302,10 +303,10 @@ export class LevelUpPanel {
 
   private getOptionLabel(option: UpgradeOptionView): string {
     const identityName = option.displayInfo?.rows[0]?.text.replace(/\s+Lv\..*$/, '').trim();
-    let label = option.name;
+    let label = getUpgradeDisplayName(option);
 
     if (identityName) {
-      label = label.replace(new RegExp(`^${this.escapeRegExp(identityName)}\\s+`, 'i'), '');
+      label = label.replace(new RegExp(`^${this.escapeRegExp(identityName)}\\s*`, 'i'), '');
     }
 
     label = label
@@ -395,7 +396,7 @@ export class LevelUpPanel {
 
   private parseDeltaRow(text: string): { label: string; value: string } {
     const clean = text.replace(/\u2192/g, '->').replace(/\s+/g, ' ').trim();
-    if (/no matching weapon owned/i.test(clean)) {
+    if (/no matching weapon owned/i.test(clean) || clean === I18n.t('levelUp.noMatchingWeaponOwned')) {
       return { label: I18n.t('ui.weapon'), value: '-' };
     }
 
@@ -430,6 +431,11 @@ export class LevelUpPanel {
   }
 
   private getDeltaLabel(text: string): string {
+    const levelLabel = text.replace(/\s+Lv\..*$/i, '').trim();
+    if (levelLabel) {
+      return levelLabel;
+    }
+
     if (/\b(Knife|Axe|Magic Wand|Garlic|Bible|Thousand Edge|Holy Wand|Death Spiral|Unholy Vespers|Soul Eater)\b/i.test(text)) {
       return I18n.t('ui.weapon');
     }

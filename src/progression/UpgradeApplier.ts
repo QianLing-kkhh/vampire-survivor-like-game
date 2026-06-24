@@ -5,6 +5,13 @@ import { WeaponFactory } from '../weapon/WeaponFactory';
 import { WeaponManager } from '../weapon/WeaponManager';
 import { RunStats } from '../stats/RunStats';
 import { EvolutionManager } from '../evolution/EvolutionManager';
+import {
+  formatContentId,
+  getPassiveDisplayName,
+  getStatDisplayName,
+  getWeaponDisplayName,
+} from '../i18n/ContentText';
+import { I18n } from '../i18n/I18n';
 import { UpgradeOption } from './UpgradeOption';
 
 export interface UpgradeDisplayRow {
@@ -106,13 +113,13 @@ export class UpgradeApplier {
     switch (option.id) {
       case 'speed_up':
         return this.formatChange(
-          'Move Speed',
+          getStatDisplayName('moveSpeed', 'Move Speed'),
           this.playerStats.moveSpeed,
           Math.min(this.playerStats.maxMoveSpeed, this.playerStats.moveSpeed * 1.1),
         );
       case 'pickup_range_up':
         return this.formatChange(
-          'Pickup Range',
+          getStatDisplayName('pickupRange', 'Pickup Range'),
           this.playerStats.pickupRange,
           Math.min(this.playerStats.maxPickupRange, this.playerStats.pickupRange * 1.1),
         );
@@ -125,33 +132,33 @@ export class UpgradeApplier {
       case 'pummarola':
         return this.getPassiveUpgradePreview(option.id);
       case 'knife_damage_up':
-        return this.formatWeaponChange('knife', 'damage', 'Damage', 1.1);
+        return this.formatWeaponChange('knife', 'damage', getStatDisplayName('damage', 'Damage'), 1.1);
       case 'knife_cooldown_up':
         return this.formatWeaponChange(
           'knife',
           'cooldown',
-          'Cooldown',
+          getStatDisplayName('cooldown', 'Cooldown'),
           0.9,
           0.3,
           true,
         );
       case 'garlic_damage_up':
-        return this.formatWeaponChange('garlic', 'damage', 'Damage', 1.1);
+        return this.formatWeaponChange('garlic', 'damage', getStatDisplayName('damage', 'Damage'), 1.1);
       case 'garlic_radius_up':
-        return this.formatWeaponChange('garlic', 'radius', 'Radius', 1.1, 4.0);
+        return this.formatWeaponChange('garlic', 'radius', getStatDisplayName('radius', 'Radius'), 1.1, 4.0);
       case 'bible_damage_up':
-        return this.formatWeaponChange('bible', 'damage', 'Damage', 1.1);
+        return this.formatWeaponChange('bible', 'damage', getStatDisplayName('damage', 'Damage'), 1.1);
       case 'bible_orbit_speed_up':
-        return this.formatWeaponChange('bible', 'orbitSpeed', 'Orbit Speed', 1.1, 360);
+        return this.formatWeaponChange('bible', 'orbitSpeed', getStatDisplayName('orbitSpeed', 'Orbit Speed'), 1.1, 360);
       case 'bible_orbit_count_up':
-        return this.formatWeaponChange('bible', 'orbitCount', 'Count', 1, 6, false, true);
+        return this.formatWeaponChange('bible', 'orbitCount', getStatDisplayName('orbitCount', 'Count'), 1, 6, false, true);
       case 'magic_wand_damage_up':
-        return this.formatWeaponChange('magic_wand', 'damage', 'Damage', 1.1);
+        return this.formatWeaponChange('magic_wand', 'damage', getStatDisplayName('damage', 'Damage'), 1.1);
       case 'magic_wand_cooldown_up':
         return this.formatWeaponChange(
           'magic_wand',
           'cooldown',
-          'Cooldown',
+          getStatDisplayName('cooldown', 'Cooldown'),
           0.9,
           0.35,
           true,
@@ -160,19 +167,19 @@ export class UpgradeApplier {
         return this.formatWeaponChange(
           'magic_wand',
           'projectileCount',
-          'Count',
+          getStatDisplayName('projectileCount', 'Count'),
           1,
           4,
           false,
           true,
         );
       case 'axe_damage_up':
-        return this.formatWeaponChange('axe', 'damage', 'Damage', 1.1);
+        return this.formatWeaponChange('axe', 'damage', getStatDisplayName('damage', 'Damage'), 1.1);
       case 'axe_cooldown_up':
         return this.formatWeaponChange(
           'axe',
           'cooldown',
-          'Cooldown',
+          getStatDisplayName('cooldown', 'Cooldown'),
           0.9,
           0.6,
           true,
@@ -181,7 +188,7 @@ export class UpgradeApplier {
         return this.formatWeaponChange(
           'axe',
           'projectileCount',
-          'Count',
+          getStatDisplayName('projectileCount', 'Count'),
           1,
           4,
           false,
@@ -280,8 +287,8 @@ export class UpgradeApplier {
     const nextHp = Math.min(currentHp + maxHpIncrease, nextMaxHp);
 
     return [
-      this.formatChange('Max HP', this.playerStats.maxHp, nextMaxHp),
-      this.formatChange('HP', currentHp, nextHp),
+      this.formatChange(getStatDisplayName('maxHp', 'Max HP'), this.playerStats.maxHp, nextMaxHp),
+      this.formatChange(I18n.t('statsBuild.hp'), currentHp, nextHp),
     ].join('\n');
   }
 
@@ -398,7 +405,7 @@ export class UpgradeApplier {
     }
 
     if (option.kind === 'addWeapon') {
-      return `Add ${this.formatName(option.weaponId ?? option.id)}`;
+      return `${I18n.t('ui.new')} ${getWeaponDisplayName(option.weaponId ?? option.id)}`;
     }
 
     if (option.kind !== 'weaponStat' || !option.weaponId || !this.isWeaponStat(option.stat)) {
@@ -438,7 +445,7 @@ export class UpgradeApplier {
         iconKey: this.getTieredWeaponIconKey(displayWeaponId, displayLevel, maxLevel),
         iconFallbackKeys: [this.getWeaponIconKey(displayWeaponId)],
         fallback: this.getInitials(displayWeaponId),
-        text: `${this.formatName(displayWeaponId)} Lv.${displayLevel} / ${maxLevel}`,
+        text: `${getWeaponDisplayName(displayWeaponId)} Lv.${displayLevel} / ${maxLevel}`,
       },
     ];
     const rule = evolutionManager?.getRequiredPassiveForWeapon(weaponId);
@@ -452,7 +459,7 @@ export class UpgradeApplier {
         ),
         iconFallbackKeys: [this.getPassiveIconKey(rule.requiredPassiveId)],
         fallback: this.getInitials(rule.requiredPassiveId),
-        text: `${this.passiveManager?.getPassiveName(rule.requiredPassiveId) ?? this.formatName(rule.requiredPassiveId)} Lv.${this.passiveManager?.getPassiveLevel(rule.requiredPassiveId) ?? 0} / ${this.passiveManager?.getPassiveMaxLevel(rule.requiredPassiveId) ?? rule.requiredPassiveLevel}`,
+        text: `${this.passiveManager?.getPassiveName(rule.requiredPassiveId) ?? getPassiveDisplayName(rule.requiredPassiveId)} Lv.${this.passiveManager?.getPassiveLevel(rule.requiredPassiveId) ?? 0} / ${this.passiveManager?.getPassiveMaxLevel(rule.requiredPassiveId) ?? rule.requiredPassiveLevel}`,
       });
     }
 
@@ -471,7 +478,7 @@ export class UpgradeApplier {
         iconKey: this.getTieredPassiveIconKey(passiveId, displayLevel, maxLevel),
         iconFallbackKeys: [this.getPassiveIconKey(passiveId)],
         fallback: this.getInitials(passiveId),
-        text: `${this.passiveManager?.getPassiveName(passiveId) ?? this.formatName(passiveId)} Lv.${displayLevel} / ${maxLevel}`,
+        text: `${this.passiveManager?.getPassiveName(passiveId) ?? getPassiveDisplayName(passiveId)} Lv.${displayLevel} / ${maxLevel}`,
       },
     ];
     const ownedWeaponRules = evolutionManager
@@ -481,7 +488,7 @@ export class UpgradeApplier {
     if (ownedWeaponRules.length === 0) {
       rows.push({
         fallback: '-',
-        text: 'No matching weapon owned',
+        text: I18n.t('levelUp.noMatchingWeaponOwned'),
       });
       return { rows };
     }
@@ -497,7 +504,7 @@ export class UpgradeApplier {
         ),
         iconFallbackKeys: [this.getWeaponIconKey(displayWeaponId)],
         fallback: this.getInitials(displayWeaponId),
-        text: `${this.formatName(displayWeaponId)} Lv.${this.weaponManager?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0} / ${this.weaponManager?.getWeaponUpgradeLimit(rule.baseWeaponId) ?? rule.requiredWeaponUpgradeTotal}`,
+        text: `${getWeaponDisplayName(displayWeaponId)} Lv.${this.weaponManager?.getWeaponUpgradeTotal(rule.baseWeaponId) ?? 0} / ${this.weaponManager?.getWeaponUpgradeLimit(rule.baseWeaponId) ?? rule.requiredWeaponUpgradeTotal}`,
       });
     }
 
@@ -596,20 +603,20 @@ export class UpgradeApplier {
   private formatStatLabel(stat: NonNullable<UpgradeOption['stat']>): string {
     switch (stat) {
       case 'moveSpeed':
-        return 'Move Speed';
+        return getStatDisplayName('moveSpeed', 'Move Speed');
       case 'pickupRange':
-        return 'Pickup Range';
+        return getStatDisplayName('pickupRange', 'Pickup Range');
       case 'maxHp':
-        return 'Max HP';
+        return getStatDisplayName('maxHp', 'Max HP');
       case 'orbitCount':
       case 'projectileCount':
-        return 'Count';
+        return getStatDisplayName(stat, 'Count');
       case 'orbitSpeed':
-        return 'Orbit Speed';
+        return getStatDisplayName('orbitSpeed', 'Orbit Speed');
       case 'projectileSpeed':
-        return 'Projectile Speed';
+        return getStatDisplayName('projectileSpeed', 'Projectile Speed');
       default:
-        return `${stat.charAt(0).toUpperCase()}${stat.slice(1)}`;
+        return getStatDisplayName(stat, formatContentId(stat));
     }
   }
 
@@ -709,12 +716,5 @@ export class UpgradeApplier {
       .map((part) => part.charAt(0).toUpperCase())
       .join('')
       .slice(0, 2);
-  }
-
-  private formatName(value: string): string {
-    return value
-      .split('_')
-      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-      .join(' ');
   }
 }

@@ -1,3 +1,4 @@
+import { I18n } from '../i18n/I18n';
 import { UpgradeApplier } from '../progression/UpgradeApplier';
 import { UpgradeOption } from '../progression/UpgradeOption';
 import { RunState } from '../run/RunState';
@@ -115,52 +116,45 @@ export class EndlessRewardManager {
     const options: UpgradeOption[] = [
       {
         id: 'endless_heal',
-        name: 'Emergency Heal',
-        description: `Restore ${EndlessRewardManager.HEAL_AMOUNT} HP`,
+        name: I18n.t('upgrade.endless_heal.name'),
+        description: I18n.t('upgrade.endless_heal.description', { amount: EndlessRewardManager.HEAL_AMOUNT }),
       },
     ];
 
     if (this.isOverdriveAvailable()) {
       options.push({
         id: 'endless_overdrive',
-        name: 'Overdrive',
-        description: [
-          'Weapon Damage +40%',
-          'Duration: 8s',
-          'Cooldown: 25s',
-        ].join('\n'),
+        name: I18n.t('upgrade.endless_overdrive.name'),
+        description: I18n.t('upgrade.endless_overdrive.description', {
+          duration: EndlessRewardManager.OVERDRIVE_DURATION_SECONDS,
+          cooldown: EndlessRewardManager.OVERDRIVE_COOLDOWN_SECONDS,
+        }),
       });
     }
 
     if (this.isEnemySlowAvailable()) {
       options.push({
         id: 'endless_enemy_slow',
-        name: 'Time Slow',
-        description: [
-          'Enemy Move Speed -50%',
-          'Duration: 6s',
-          'Cooldown: 20s',
-        ].join('\n'),
+        name: I18n.t('upgrade.endless_enemy_slow.name'),
+        description: I18n.t('upgrade.endless_enemy_slow.description', {
+          duration: EndlessRewardManager.ENEMY_SLOW_DURATION_SECONDS,
+          cooldown: EndlessRewardManager.ENEMY_SLOW_COOLDOWN_SECONDS,
+        }),
       });
     }
 
     if (this.shieldStacks < EndlessRewardManager.MAX_SHIELD_STACKS) {
       options.push({
         id: 'endless_shield',
-        name: 'Shield',
-        description: [
-          'Gain 1 shield stack',
-          'Blocks the next hit',
-          'Still triggers knockback burst',
-          `Stacks up to ${EndlessRewardManager.MAX_SHIELD_STACKS}`,
-        ].join('\n'),
+        name: I18n.t('upgrade.endless_shield.name'),
+        description: I18n.t('upgrade.endless_shield.description', { maxStacks: EndlessRewardManager.MAX_SHIELD_STACKS }),
       });
     }
 
     options.push({
       id: 'endless_growth_damage',
-      name: 'Minor Growth',
-      description: 'Permanent Weapon Damage +0.5%',
+      name: I18n.t('upgrade.endless_growth_damage.name'),
+      description: I18n.t('upgrade.endless_growth_damage.description'),
     });
 
     return options.slice(0, 3);
@@ -172,12 +166,11 @@ export class EndlessRewardManager {
     if (this.isVacuumAvailable()) {
       options.push({
         id: 'vacuum_all_pickups',
-        name: '全图吸取',
-        description: [
-          'Vacuum All Pickups',
-          `Pickup Range x${EndlessRewardManager.VACUUM_PICKUP_RANGE_MULTIPLIER}`,
-          'Duration: 2.5s',
-        ].join('\n'),
+        name: I18n.t('upgrade.vacuum_all_pickups.name'),
+        description: I18n.t('upgrade.vacuum_all_pickups.description', {
+          multiplier: EndlessRewardManager.VACUUM_PICKUP_RANGE_MULTIPLIER,
+          duration: EndlessRewardManager.VACUUM_DURATION_MS / 1000,
+        }),
       });
     }
 

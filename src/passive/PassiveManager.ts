@@ -1,6 +1,8 @@
 import { PlayerHealth } from '../player/PlayerHealth';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
+import { getPassiveDisplayName, getStatDisplayName } from '../i18n/ContentText';
+import { I18n } from '../i18n/I18n';
 
 import {
   PassiveEffectDefinition,
@@ -78,7 +80,7 @@ export class PassiveManager {
   }
 
   getPassiveName(passiveId: string): string {
-    return this.getPassive(passiveId)?.name ?? this.formatName(passiveId);
+    return getPassiveDisplayName(passiveId, this.getPassive(passiveId)?.name);
   }
 
   getPassiveMaxLevel(passiveId: string): number {
@@ -105,7 +107,7 @@ export class PassiveManager {
     return this.passives
       .map((passive) => ({
         id: passive.id,
-        name: passive.name,
+        name: this.getPassiveName(passive.id),
         level: this.getLevel(passive.id),
       }))
       .filter((passive) => passive.level > 0);
@@ -126,7 +128,7 @@ export class PassiveManager {
       .filter(({ level }) => level > 0)
       .map(({ passive, level }) => ({
         passiveId: passive.id,
-        displayName: passive.name,
+        displayName: this.getPassiveName(passive.id),
         iconKey: this.getPassiveIconKey(passive.id),
         level,
         maxLevel: this.getMaxLevel(passive),
@@ -171,7 +173,7 @@ export class PassiveManager {
     const nextLevel = Math.min(currentLevel + 1, this.getMaxLevel(passive));
 
     return [
-      `${passive.name} Lv.${currentLevel} \u2192 Lv.${nextLevel}`,
+      `${this.getPassiveName(passiveId)} Lv.${currentLevel} \u2192 Lv.${nextLevel}`,
       this.getEffectPreview(passiveId, currentLevel, nextLevel),
     ].join('\n');
   }
@@ -183,23 +185,23 @@ export class PassiveManager {
   ): string {
     switch (passiveId) {
       case 'spinach':
-        return `Damage Multiplier ${this.formatMultiplier(
+        return `${this.formatEffectStat('damageMultiplier')} ${this.formatMultiplier(
           this.getDamageMultiplier(currentLevel),
         )} \u2192 ${this.formatMultiplier(this.getDamageMultiplier(nextLevel))}`;
       case 'empty_tome':
-        return `Cooldown Multiplier ${this.formatMultiplier(
+        return `${this.formatEffectStat('cooldownMultiplier')} ${this.formatMultiplier(
           this.getCooldownMultiplier(currentLevel),
         )} \u2192 ${this.formatMultiplier(this.getCooldownMultiplier(nextLevel))}`;
       case 'bracer':
-        return `Projectile Speed ${this.formatMultiplier(
+        return `${this.formatEffectStat('projectileSpeedMultiplier')} ${this.formatMultiplier(
           this.getProjectileSpeedMultiplier(currentLevel),
         )} \u2192 ${this.formatMultiplier(this.getProjectileSpeedMultiplier(nextLevel))}`;
       case 'clover':
-        return `Chest Drop Bonus ${this.formatPercent(
+        return `${this.formatEffectStat('treasureDropBonus')} ${this.formatPercent(
           this.getTreasureDropBonus(currentLevel),
         )} \u2192 ${this.formatPercent(this.getTreasureDropBonus(nextLevel))}`;
       case 'pummarola':
-        return `Heal ${currentLevel} \u2192 ${nextLevel} HP / 5s`;
+        return `${I18n.t('statsBuild.passiveEffect.heal')} ${currentLevel} \u2192 ${nextLevel} HP / 5s`;
       default:
         return this.getDataDrivenEffectPreview(passiveId, currentLevel, nextLevel);
     }
@@ -212,27 +214,27 @@ export class PassiveManager {
     switch (passiveId) {
       case 'spinach':
         return {
-          effectLabel: 'Damage Multiplier',
+          effectLabel: this.formatEffectStat('damageMultiplier'),
           effectValue: this.formatMultiplier(this.getDamageMultiplier(level)),
         };
       case 'empty_tome':
         return {
-          effectLabel: 'Cooldown Multiplier',
+          effectLabel: this.formatEffectStat('cooldownMultiplier'),
           effectValue: this.formatMultiplier(this.getCooldownMultiplier(level)),
         };
       case 'bracer':
         return {
-          effectLabel: 'Projectile Speed',
+          effectLabel: this.formatEffectStat('projectileSpeedMultiplier'),
           effectValue: this.formatMultiplier(this.getProjectileSpeedMultiplier(level)),
         };
       case 'clover':
         return {
-          effectLabel: 'Chest Drop Bonus',
+          effectLabel: this.formatEffectStat('treasureDropBonus'),
           effectValue: this.formatPercent(this.getTreasureDropBonus(level)),
         };
       case 'pummarola':
         return {
-          effectLabel: 'Heal',
+          effectLabel: I18n.t('statsBuild.passiveEffect.heal'),
           effectValue: `${level} HP / 5s`,
         };
       default:
@@ -334,7 +336,7 @@ export class PassiveManager {
 
     if (!effect) {
       return {
-        effectLabel: 'Effect',
+        effectLabel: I18n.t('statsBuild.effect'),
         effectValue: '',
       };
     }
@@ -348,17 +350,17 @@ export class PassiveManager {
   private formatEffectStat(stat: PassiveEffectDefinition['stat']): string {
     switch (stat) {
       case 'damageMultiplier':
-        return 'Damage Multiplier';
+        return getStatDisplayName('damageMultiplier', 'Damage Multiplier');
       case 'cooldownMultiplier':
-        return 'Cooldown Multiplier';
+        return getStatDisplayName('cooldownMultiplier', 'Cooldown Multiplier');
       case 'projectileSpeedMultiplier':
-        return 'Projectile Speed';
+        return getStatDisplayName('projectileSpeedMultiplier', 'Projectile Speed');
       case 'knockbackPowerMultiplier':
-        return 'Knockback Power';
+        return getStatDisplayName('knockbackPowerMultiplier', 'Knockback Power');
       case 'treasureDropBonus':
-        return 'Chest Drop Bonus';
+        return getStatDisplayName('treasureDrop', 'Chest Drop Bonus');
       default:
-        return 'Effect';
+        return I18n.t('statsBuild.effect');
     }
   }
 
@@ -417,12 +419,5 @@ export class PassiveManager {
 
   private getMaxLevel(passive: PassiveItem): number {
     return passive.maxLevel ?? PassiveManager.DEFAULT_MAX_LEVEL;
-  }
-
-  private formatName(passiveId: string): string {
-    return passiveId
-      .split('_')
-      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-      .join(' ');
   }
 }

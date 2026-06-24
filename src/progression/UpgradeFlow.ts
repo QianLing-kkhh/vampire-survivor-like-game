@@ -8,6 +8,7 @@ import { EvolutionManager } from '../evolution/EvolutionManager';
 import { RunState } from '../run/RunState';
 import { PassiveManager } from '../passive/PassiveManager';
 import { RandomSource } from '../random/RandomSource';
+import { getUpgradeDisplayName, getWeaponDisplayName } from '../i18n/ContentText';
 import { WeaponManager } from '../weapon/WeaponManager';
 
 import { UpgradeApplier } from './UpgradeApplier';
@@ -190,7 +191,7 @@ export class UpgradeFlow {
           kind: 'endlessReward',
           targetType: 'endlessReward',
           targetId: upgrade.id,
-          targetName: upgrade.name,
+          targetName: getUpgradeDisplayName(upgrade),
           iconFallback: this.getInitials(upgrade.id),
         },
       };
@@ -256,8 +257,8 @@ export class UpgradeFlow {
     return {
       baseWeaponId: evolutionResult.baseWeaponId,
       evolvedWeaponId: evolutionResult.evolvedWeaponId,
-      baseName: this.formatName(evolutionResult.baseWeaponId),
-      evolvedName: this.formatName(evolutionResult.evolvedWeaponId),
+      baseName: getWeaponDisplayName(evolutionResult.baseWeaponId),
+      evolvedName: getWeaponDisplayName(evolutionResult.evolvedWeaponId),
       iconFallback: this.getInitials(evolutionResult.baseWeaponId),
     };
   }
@@ -330,7 +331,7 @@ export class UpgradeFlow {
         kind: 'acquired',
         targetType: 'weapon',
         targetId: newWeaponId,
-        targetName: upgrade.name,
+        targetName: getWeaponDisplayName(newWeaponId, getUpgradeDisplayName(upgrade)),
         beforeLevel: 0,
         afterLevel: 1,
         maxLevel: this.params.weaponManager.getWeaponUpgradeLimit(newWeaponId),
@@ -349,7 +350,7 @@ export class UpgradeFlow {
         kind: 'levelUp',
         targetType: 'weapon',
         targetId: targetWeaponId,
-        targetName: this.formatName(targetWeaponId),
+        targetName: getWeaponDisplayName(targetWeaponId),
         beforeLevel: this.params.weaponManager.getWeaponUpgradeTotal(weaponId),
         maxLevel: this.params.weaponManager.getWeaponUpgradeLimit(weaponId),
         iconFallback: this.getInitials(targetWeaponId),
@@ -372,7 +373,7 @@ export class UpgradeFlow {
       kind: 'stat',
       targetType: 'stat',
       targetId: upgrade.id,
-      targetName: upgrade.name,
+      targetName: getUpgradeDisplayName(upgrade),
       iconFallback: this.getInitials(upgrade.id),
     };
   }
@@ -412,7 +413,7 @@ export class UpgradeFlow {
 
     return {
       ...snapshot,
-      targetName: snapshot.targetName || upgrade.name,
+      targetName: snapshot.targetName || getUpgradeDisplayName(upgrade),
     };
   }
 
@@ -442,14 +443,6 @@ export class UpgradeFlow {
       .join('')
       .slice(0, 2);
   }
-
-  private formatName(value: string): string {
-    return value
-      .split('_')
-      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-      .join(' ');
-  }
-
   private emitUpgradeApplied(
     upgradeId: string,
     source: 'levelUp' | 'treasure' | 'endlessReward',

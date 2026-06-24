@@ -1,5 +1,11 @@
 import { CharacterDefinition } from '../../character/CharacterDefinition';
 import { I18n } from '../../i18n/I18n';
+import {
+  getPassiveDescription,
+  getPassiveDisplayName,
+  getWeaponDescription,
+  getWeaponDisplayName,
+} from '../../i18n/ContentText';
 import { EVOLUTION_RULES } from '../../evolution/EvolutionRule';
 import { MapMechanicType } from '../../map/mechanics/MapMechanicDefinition';
 import charactersData from '../../data/characters.json';
@@ -247,7 +253,7 @@ export class HelpContentBuilder {
             `help.weapon.type.${weapon.type ?? 'default'}`,
             this.weaponIcon(weaponId, weaponName),
           ),
-          this.stat('help.weapons.description', this.characterizeWeapons(weapon)),
+          this.stat('help.weapons.description', getWeaponDescription(weaponId, this.characterizeWeapons(weapon))),
           this.stat('help.weapons.tags', weaponRows.tags),
           this.stat('help.weapons.behavior', weaponRows.behavior),
           ...(weaponRows.coreStats ? [this.stat('help.weapons.coreStats', weaponRows.coreStats)] : []),
@@ -281,10 +287,10 @@ export class HelpContentBuilder {
         .map((rule) => this.evolutionRouteIconChain(rule));
 
       return {
-        title: passive.name ?? HelpFormatter.labelFromId(passive.id),
+        title: getPassiveDisplayName(passive.id, passive.name),
         lines: [
-          this.iconRow('help.passives.maxLevel', this.passiveIcon(passive.id, passive.name ?? passive.id)),
-          this.stat('help.passives.effect', passive.description ?? ''),
+          this.iconRow('help.passives.maxLevel', this.passiveIcon(passive.id, getPassiveDisplayName(passive.id, passive.name))),
+          this.stat('help.passives.effect', getPassiveDescription(passive.id, passive.description ?? '')),
           ...routeLines,
           this.stat('help.passives.maxLevel', this.getPassiveMaxLevel(passive.id).toString()),
         ],
@@ -431,14 +437,14 @@ export class HelpContentBuilder {
       ? (weaponsData as unknown as Record<string, WeaponRecord>)[weaponId]
       : undefined;
 
-    return weapon?.id ? this.formatIdName(weapon.id) : HelpFormatter.labelFromId(weaponId);
+    return weapon?.id ? getWeaponDisplayName(weapon.id) : HelpFormatter.labelFromId(weaponId);
   }
 
   private passiveName(passiveId: string | undefined): string {
     const passive = (passivesData as PassiveRecord[])
       .find((entry) => entry.id === passiveId);
 
-    return passive?.name ?? HelpFormatter.labelFromId(passiveId);
+    return getPassiveDisplayName(passiveId, passive?.name ?? HelpFormatter.labelFromId(passiveId));
   }
 
   private weaponIcon(weaponId: string | undefined, fallbackSource: string | undefined): HelpIconRef {
@@ -712,14 +718,6 @@ export class HelpContentBuilder {
   private getPassiveMaxLevel(_passiveId: string): number {
     return 5;
   }
-
-  private formatIdName(id: string): string {
-    return id
-      .split('_')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
-  }
-
   private divider(): HelpLine {
     return { type: 'divider' };
   }

@@ -118,6 +118,46 @@
     "warrior": {
       "name": "戦士",
       "description": "高い体力と低い機動力を持つ近接型キャラクター。"
+    },
+    "arcanist": {
+      "name": "アーケニスト",
+      "description": "固有の秘術武器ルートで開始します。"
+    },
+    "ranger": {
+      "name": "レンジャー",
+      "description": "固有のレンジャー武器ルートで開始します。"
+    },
+    "engineer": {
+      "name": "エンジニア",
+      "description": "固有の工学武器ルートで開始します。"
+    },
+    "necromancer": {
+      "name": "ネクロマンサー",
+      "description": "固有の死霊武器ルートで開始します。"
+    },
+    "monk": {
+      "name": "モンク",
+      "description": "固有の武僧武器ルートで開始します。"
+    },
+    "alchemist": {
+      "name": "アルケミスト",
+      "description": "固有の錬金武器ルートで開始します。"
+    },
+    "duelist": {
+      "name": "デュエリスト",
+      "description": "固有の決闘武器ルートで開始します。"
+    },
+    "geomancer": {
+      "name": "ジオマンサー",
+      "description": "固有の地脈武器ルートで開始します。"
+    },
+    "stormcaller": {
+      "name": "ストームコーラー",
+      "description": "固有の嵐武器ルートで開始します。"
+    },
+    "sentinel": {
+      "name": "センチネル",
+      "description": "固有の守護武器ルートで開始します。"
     }
   },
   "characterSelection": {
@@ -152,6 +192,46 @@
     "sunkenLibrary": {
       "name": "沈んだ図書館",
       "description": "水没した書庫のステージ。書架、インク溜まり、魔法灯、ポータル、回復の祭壇があります。"
+    },
+    "crystalCaverns": {
+      "name": "水晶洞窟",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "ashFoundry": {
+      "name": "灰の鋳造所",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "moonlitRooftops": {
+      "name": "月明かりの屋根",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "frostMonastery": {
+      "name": "霜の修道院",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "bloodGarden": {
+      "name": "血の庭園",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "desertObelisk": {
+      "name": "砂漠のオベリスク",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "stormCoast": {
+      "name": "嵐の海岸",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "clockworkBastion": {
+      "name": "機械仕掛けの砦",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "fungalDepths": {
+      "name": "菌糸の深層",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
+    },
+    "mirrorLabyrinth": {
+      "name": "鏡の迷宮",
+      "description": "固有の地形とマップ機構を持つ上級ステージです。"
     }
   },
   "map": {
@@ -169,6 +249,36 @@
     },
     "sunkenLibrary": {
       "name": "沈んだ図書館"
+    },
+    "crystalCaverns": {
+      "name": "水晶洞窟"
+    },
+    "ashFoundry": {
+      "name": "灰の鋳造所"
+    },
+    "moonlitRooftops": {
+      "name": "月明かりの屋根"
+    },
+    "frostMonastery": {
+      "name": "霜の修道院"
+    },
+    "bloodGarden": {
+      "name": "血の庭園"
+    },
+    "desertObelisk": {
+      "name": "砂漠のオベリスク"
+    },
+    "stormCoast": {
+      "name": "嵐の海岸"
+    },
+    "clockworkBastion": {
+      "name": "機械仕掛けの砦"
+    },
+    "fungalDepths": {
+      "name": "菌糸の深層"
+    },
+    "mirrorLabyrinth": {
+      "name": "鏡の迷宮"
     }
   },
   "stageSelection": {
@@ -340,11 +450,23 @@
         "assassin": "素早いナイフ使い。被弾後に前方へブリンクして危険を離れます。",
         "witch": "被弾後に鈍足エリアを残し、敵の移動を制御します。",
         "priest": "聖域を作り、回復、シールド、ノックバックを行います。",
-        "warrior": "衝撃波で反撃し、一時的に被ダメージを軽減します。"
+        "warrior": "衝撃波で反撃し、一時的に被ダメージを軽減します。",
+        "arcanist": "固有の秘術武器ルートで開始します。",
+        "ranger": "固有のレンジャー武器ルートで開始します。",
+        "engineer": "固有の工学武器ルートで開始します。",
+        "necromancer": "固有の死霊武器ルートで開始します。",
+        "monk": "固有の武僧武器ルートで開始します。",
+        "alchemist": "固有の錬金武器ルートで開始します。",
+        "duelist": "固有の決闘武器ルートで開始します。",
+        "geomancer": "固有の地脈武器ルートで開始します。",
+        "stormcaller": "固有の嵐武器ルートで開始します。",
+        "sentinel": "固有の守護武器ルートで開始します。"
       },
       "levelUp": {
         "default": "特殊成長効果",
-        "unknown": "不明な成長効果"
+        "unknown": "不明な成長効果",
+        "none": "特別なレベルアップ効果はありません。",
+        "healLostHpPercent": "レベルアップ時に失ったHPの一部を回復する。"
       },
       "reaction": {
         "none": "なし",
@@ -517,7 +639,9 @@
         "aura": "オーラ武器",
         "orbit": "周回武器",
         "arcing": "放物線武器",
-        "homing": "追尾武器"
+        "homing": "追尾武器",
+        "axe": "弧状武器",
+        "magic_wand": "追尾魔法武器"
       },
       "tag": {
         "base": "基本",
@@ -533,7 +657,18 @@
         "knockback": "ノックバック",
         "homing": "追尾",
         "arcing": "放物線",
-        "defensive": "防御"
+        "defensive": "防御",
+        "arcane": "秘術",
+        "duelist": "決闘",
+        "earth": "大地",
+        "lightning": "雷",
+        "mechanical": "機械",
+        "necrotic": "死霊",
+        "orbit": "軌道",
+        "pierce": "貫通",
+        "poison": "毒",
+        "ranged": "遠距離",
+        "sustain": "持久"
       },
       "stat": {
         "damage": "ダメージ",
@@ -569,7 +704,8 @@
     "emptyMessage": "No upgrades available",
     "newWeapon": "New Weapon",
     "noUpgrades": "No upgrades available",
-    "upgrade": "Upgrade"
+    "upgrade": "Upgrade",
+    "noMatchingWeaponOwned": "対応する武器を未所持"
   },
   "hud": {
     "weapons": "武器",
@@ -640,7 +776,12 @@
     "debugPanelCompact": "コンパクトデバッグパネル",
     "debugPanelOpacity": "デバッグパネル透明度",
     "language": "言語",
-    "uiStyle": "UI Style",
+    "uiStyle": {
+      "classic": "クラシック",
+      "arcaneSlate": "秘術スレート",
+      "minimal": "ミニマル",
+      "_label": "UIスタイル"
+    },
     "uiStyleReopenNotice": "一部のUIスタイル変更はメニューを開き直すと反映されます。",
     "scrollHint": "スクロール",
     "page": "ページ",
@@ -652,7 +793,14 @@
     "pauseWhenStrategyPanelOpen": "戦術パネル展開中に一時停止",
     "manualHidesStrategyPanel": "手動モードではこのパネルは常に非表示になります。",
     "strategyTacticsPanelNextRunNotice": "戦略 / 戦術パネルは次のランで読み込まれます。",
-    "minimapScale": "ミニマップサイズ"
+    "minimapScale": "ミニマップサイズ",
+    "assetStyleArt001": "Art001",
+    "autoOpenTreasure": "宝箱自動開封",
+    "strategyControlType": "自動戦略制御",
+    "strategyControl": {
+      "fixed": "固定",
+      "live": "ライブ"
+    }
   },
   "strategyPanel": {
     "title": "戦略 / 戦術",
@@ -930,7 +1078,47 @@
       "epic": "エピック",
       "legendary": "レジェンド"
     },
-    "acquiredTitle": "レリック獲得"
+    "acquiredTitle": "レリック獲得",
+    "bloodPact": {
+      "name": "血の契約",
+      "description": "低い生命力で耐えている間、ダメージ能力を高めます。"
+    },
+    "voidCompass": {
+      "name": "虚空の羅針盤",
+      "description": "拾得範囲を広げます。"
+    },
+    "goldenScarab": {
+      "name": "黄金のスカラベ",
+      "description": "宝箱スコア報酬を高めます。"
+    },
+    "thornCrown": {
+      "name": "茨の冠",
+      "description": "ダメージを受けた後に反撃します。"
+    },
+    "frozenHourglass": {
+      "name": "凍てつく砂時計",
+      "description": "周期的に近くの敵を遅くします。"
+    },
+    "berserkerCharm": {
+      "name": "狂戦士の護符",
+      "description": "Boss を倒した後、短時間のパワーを得ます。"
+    },
+    "magnetPearl": {
+      "name": "磁力の真珠",
+      "description": "宝箱を開けた後、拾得範囲を広げます。"
+    },
+    "ironShell": {
+      "name": "鉄の殻",
+      "description": "被弾後の被ダメージを抑えます。"
+    },
+    "scholarCandle": {
+      "name": "学者の蝋燭",
+      "description": "レベルアップ時に生命力を回復します。"
+    },
+    "riftCoin": {
+      "name": "裂け目の硬貨",
+      "description": "宝箱を繰り返し開けると追加スコアを得ます。"
+    }
   },
   "tooltip": {
     "weapon": {
@@ -942,7 +1130,17 @@
       "empty_tome": "武器が次の攻撃へ移りやすくなります。",
       "bracer": "投射物の飛行速度を高めます。",
       "clover": "宝箱に関わる運を高めます。",
-      "pummarola": "生命力を安定して回復します。"
+      "pummarola": "生命力を安定して回復します。",
+      "focus_lens": "秘術と魔法武器のダメージを高める。",
+      "hunter_quiver": "投射武器の飛行速度を高める。",
+      "cogwheel": "機械と弧状武器のクールダウンを短縮する。",
+      "grave_charm": "貫通と死霊武器のダメージを高める。",
+      "prayer_beads": "オーラと防御武器のノックバックを高める。",
+      "glass_flask": "爆発と毒武器のクールダウンを短縮する。",
+      "duelist_glove": "物理投射武器のダメージを高める。",
+      "granite_core": "範囲武器のダメージを高める。",
+      "storm_battery": "雷と魔法武器の飛行速度を高める。",
+      "iron_sigil": "防御武器のクールダウンを短縮する。"
     },
     "relic": {
       "default": "レリック効果。詳細な数値は Stats / Build で確認できます。",
@@ -980,6 +1178,102 @@
     "message": {
       "character": "キャラクター解放：{name}",
       "stage": "ステージ解放：{name}"
+    },
+    "character": {
+      "arcanist": {
+        "name": "アーケニスト"
+      },
+      "ranger": {
+        "name": "レンジャー"
+      },
+      "engineer": {
+        "name": "エンジニア"
+      },
+      "necromancer": {
+        "name": "ネクロマンサー"
+      },
+      "monk": {
+        "name": "モンク"
+      },
+      "alchemist": {
+        "name": "アルケミスト"
+      },
+      "duelist": {
+        "name": "デュエリスト"
+      },
+      "geomancer": {
+        "name": "ジオマンサー"
+      },
+      "stormcaller": {
+        "name": "ストームコーラー"
+      },
+      "sentinel": {
+        "name": "センチネル"
+      }
+    },
+    "stage": {
+      "crystal_caverns_stage": {
+        "name": "水晶洞窟"
+      },
+      "ash_foundry_stage": {
+        "name": "灰の鋳造所"
+      },
+      "moonlit_rooftops_stage": {
+        "name": "月明かりの屋根"
+      },
+      "frost_monastery_stage": {
+        "name": "霜の修道院"
+      },
+      "blood_garden_stage": {
+        "name": "血の庭園"
+      },
+      "desert_obelisk_stage": {
+        "name": "砂漠のオベリスク"
+      },
+      "storm_coast_stage": {
+        "name": "嵐の海岸"
+      },
+      "clockwork_bastion_stage": {
+        "name": "機械仕掛けの砦"
+      },
+      "fungal_depths_stage": {
+        "name": "菌糸の深層"
+      },
+      "mirror_labyrinth_stage": {
+        "name": "鏡の迷宮"
+      }
+    },
+    "map": {
+      "crystal_caverns_map": {
+        "name": "水晶洞窟"
+      },
+      "ash_foundry_map": {
+        "name": "灰の鋳造所"
+      },
+      "moonlit_rooftops_map": {
+        "name": "月明かりの屋根"
+      },
+      "frost_monastery_map": {
+        "name": "霜の修道院"
+      },
+      "blood_garden_map": {
+        "name": "血の庭園"
+      },
+      "desert_obelisk_map": {
+        "name": "砂漠のオベリスク"
+      },
+      "storm_coast_map": {
+        "name": "嵐の海岸"
+      },
+      "clockwork_bastion_map": {
+        "name": "機械仕掛けの砦"
+      },
+      "fungal_depths_map": {
+        "name": "菌糸の深層"
+      },
+      "mirror_labyrinth_map": {
+        "name": "鏡の迷宮"
+      }
     }
   },
   "loading": {
@@ -1014,84 +1308,466 @@
     "bossAppears": "Boss Appears",
     "rotateForBetterPlay": "Please rotate your device for a better view."
   },
-  "character.arcanist.name": "アーケニスト",
-  "character.arcanist.description": "固有の秘術武器ルートで開始します。",
-  "unlock.character.arcanist.name": "アーケニスト",
-  "character.ranger.name": "レンジャー",
-  "character.ranger.description": "固有のレンジャー武器ルートで開始します。",
-  "unlock.character.ranger.name": "レンジャー",
-  "character.engineer.name": "エンジニア",
-  "character.engineer.description": "固有の工学武器ルートで開始します。",
-  "unlock.character.engineer.name": "エンジニア",
-  "character.necromancer.name": "ネクロマンサー",
-  "character.necromancer.description": "固有の死霊武器ルートで開始します。",
-  "unlock.character.necromancer.name": "ネクロマンサー",
-  "character.monk.name": "モンク",
-  "character.monk.description": "固有の武僧武器ルートで開始します。",
-  "unlock.character.monk.name": "モンク",
-  "character.alchemist.name": "アルケミスト",
-  "character.alchemist.description": "固有の錬金武器ルートで開始します。",
-  "unlock.character.alchemist.name": "アルケミスト",
-  "character.duelist.name": "デュエリスト",
-  "character.duelist.description": "固有の決闘武器ルートで開始します。",
-  "unlock.character.duelist.name": "デュエリスト",
-  "character.geomancer.name": "ジオマンサー",
-  "character.geomancer.description": "固有の地脈武器ルートで開始します。",
-  "unlock.character.geomancer.name": "ジオマンサー",
-  "character.stormcaller.name": "ストームコーラー",
-  "character.stormcaller.description": "固有の嵐武器ルートで開始します。",
-  "unlock.character.stormcaller.name": "ストームコーラー",
-  "character.sentinel.name": "センチネル",
-  "character.sentinel.description": "固有の守護武器ルートで開始します。",
-  "unlock.character.sentinel.name": "センチネル",
-  "stage.crystalCaverns.name": "水晶洞窟",
-  "stage.crystalCaverns.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.crystal_caverns_stage.name": "水晶洞窟",
-  "stage.ashFoundry.name": "灰の鋳造所",
-  "stage.ashFoundry.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.ash_foundry_stage.name": "灰の鋳造所",
-  "stage.moonlitRooftops.name": "月明かりの屋根",
-  "stage.moonlitRooftops.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.moonlit_rooftops_stage.name": "月明かりの屋根",
-  "stage.frostMonastery.name": "霜の修道院",
-  "stage.frostMonastery.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.frost_monastery_stage.name": "霜の修道院",
-  "stage.bloodGarden.name": "血の庭園",
-  "stage.bloodGarden.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.blood_garden_stage.name": "血の庭園",
-  "stage.desertObelisk.name": "砂漠のオベリスク",
-  "stage.desertObelisk.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.desert_obelisk_stage.name": "砂漠のオベリスク",
-  "stage.stormCoast.name": "嵐の海岸",
-  "stage.stormCoast.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.storm_coast_stage.name": "嵐の海岸",
-  "stage.clockworkBastion.name": "機械仕掛けの砦",
-  "stage.clockworkBastion.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.clockwork_bastion_stage.name": "機械仕掛けの砦",
-  "stage.fungalDepths.name": "菌糸の深層",
-  "stage.fungalDepths.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.fungal_depths_stage.name": "菌糸の深層",
-  "stage.mirrorLabyrinth.name": "鏡の迷宮",
-  "stage.mirrorLabyrinth.description": "固有の地形とマップ機構を持つ上級ステージです。",
-  "unlock.stage.mirror_labyrinth_stage.name": "鏡の迷宮",
-  "map.crystalCaverns.name": "水晶洞窟",
-  "unlock.map.crystal_caverns_map.name": "水晶洞窟",
-  "map.ashFoundry.name": "灰の鋳造所",
-  "unlock.map.ash_foundry_map.name": "灰の鋳造所",
-  "map.moonlitRooftops.name": "月明かりの屋根",
-  "unlock.map.moonlit_rooftops_map.name": "月明かりの屋根",
-  "map.frostMonastery.name": "霜の修道院",
-  "unlock.map.frost_monastery_map.name": "霜の修道院",
-  "map.bloodGarden.name": "血の庭園",
-  "unlock.map.blood_garden_map.name": "血の庭園",
-  "map.desertObelisk.name": "砂漠のオベリスク",
-  "unlock.map.desert_obelisk_map.name": "砂漠のオベリスク",
-  "map.stormCoast.name": "嵐の海岸",
-  "unlock.map.storm_coast_map.name": "嵐の海岸",
-  "map.clockworkBastion.name": "機械仕掛けの砦",
-  "unlock.map.clockwork_bastion_map.name": "機械仕掛けの砦",
-  "map.fungalDepths.name": "菌糸の深層",
-  "unlock.map.fungal_depths_map.name": "菌糸の深層",
-  "map.mirrorLabyrinth.name": "鏡の迷宮",
-  "unlock.map.mirror_labyrinth_map.name": "鏡の迷宮"
+  "weapon": {
+    "knife": {
+      "name": "ナイフ",
+      "description": "ナイフは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "garlic": {
+      "name": "ニンニク",
+      "description": "ニンニクは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "bible": {
+      "name": "聖典",
+      "description": "聖典は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "magic_wand": {
+      "name": "魔法の杖",
+      "description": "魔法の杖は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "axe": {
+      "name": "斧",
+      "description": "斧は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "thousand_edge": {
+      "name": "千刃",
+      "description": "千刃は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "unholy_vespers": {
+      "name": "不浄の晩祷",
+      "description": "不浄の晩祷は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "holy_wand": {
+      "name": "聖なる杖",
+      "description": "聖なる杖は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "death_spiral": {
+      "name": "死の螺旋",
+      "description": "死の螺旋は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "soul_eater": {
+      "name": "ソウルイーター",
+      "description": "ソウルイーターは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "runic_orb": {
+      "name": "ルーンオーブ",
+      "description": "ルーンオーブは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "astral_core": {
+      "name": "星界核",
+      "description": "星界核は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "moon_bow": {
+      "name": "月影の弓",
+      "description": "月影の弓は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "eclipse_barrage": {
+      "name": "蝕月斉射",
+      "description": "蝕月斉射は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "clockwork_saw": {
+      "name": "クロックワークソー",
+      "description": "クロックワークソーは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "gearstorm": {
+      "name": "ギアストーム",
+      "description": "ギアストームは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "bone_spear": {
+      "name": "骨の槍",
+      "description": "骨の槍は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "ossuary_lance": {
+      "name": "納骨堂の槍",
+      "description": "納骨堂の槍は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "spirit_fist": {
+      "name": "霊拳",
+      "description": "霊拳は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "enlightened_palm": {
+      "name": "悟りの掌",
+      "description": "悟りの掌は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "acid_vial": {
+      "name": "酸の小瓶",
+      "description": "酸の小瓶は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "plague_crucible": {
+      "name": "疫病のるつぼ",
+      "description": "疫病のるつぼは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "rapier_flurry": {
+      "name": "レイピア連撃",
+      "description": "レイピア連撃は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "crimson_flurry": {
+      "name": "真紅の連撃",
+      "description": "真紅の連撃は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "stone_ring": {
+      "name": "石の輪",
+      "description": "石の輪は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "tectonic_crown": {
+      "name": "地殻の冠",
+      "description": "地殻の冠は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "thunder_javelin": {
+      "name": "雷の投槍",
+      "description": "雷の投槍は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "tempest_lance": {
+      "name": "テンペストランス",
+      "description": "テンペストランスは独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "shield_disc": {
+      "name": "盾円盤",
+      "description": "盾円盤は独自の攻撃方式を持つ強化可能な武器です。"
+    },
+    "aegis_maelstrom": {
+      "name": "イージスの渦",
+      "description": "イージスの渦は独自の攻撃方式を持つ強化可能な武器です。"
+    }
+  },
+  "passive": {
+    "spinach": {
+      "name": "ホウレンソウ",
+      "description": "すべての武器ダメージ +10%。"
+    },
+    "empty_tome": {
+      "name": "空白の書",
+      "description": "すべての武器クールダウン -8%。"
+    },
+    "bracer": {
+      "name": "腕輪",
+      "description": "投射物速度 +15%。"
+    },
+    "clover": {
+      "name": "クローバー",
+      "description": "宝箱ドロップ率 +1%。"
+    },
+    "pummarola": {
+      "name": "プマローラ",
+      "description": "5秒ごとにHPを1回復する。"
+    },
+    "focus_lens": {
+      "name": "焦点レンズ",
+      "description": "秘術と魔法武器のダメージを高める。"
+    },
+    "hunter_quiver": {
+      "name": "狩人の矢筒",
+      "description": "投射武器の飛行速度を高める。"
+    },
+    "cogwheel": {
+      "name": "歯車",
+      "description": "機械と弧状武器のクールダウンを短縮する。"
+    },
+    "grave_charm": {
+      "name": "墓守りの護符",
+      "description": "貫通と死霊武器のダメージを高める。"
+    },
+    "prayer_beads": {
+      "name": "祈りの数珠",
+      "description": "オーラと防御武器のノックバックを高める。"
+    },
+    "glass_flask": {
+      "name": "ガラス瓶",
+      "description": "爆発と毒武器のクールダウンを短縮する。"
+    },
+    "duelist_glove": {
+      "name": "決闘者の手袋",
+      "description": "物理投射武器のダメージを高める。"
+    },
+    "granite_core": {
+      "name": "花崗岩コア",
+      "description": "範囲武器のダメージを高める。"
+    },
+    "storm_battery": {
+      "name": "嵐の電池",
+      "description": "雷と魔法武器の飛行速度を高める。"
+    },
+    "iron_sigil": {
+      "name": "鉄の印章",
+      "description": "防御武器のクールダウンを短縮する。"
+    }
+  },
+  "upgrade": {
+    "speed_up": {
+      "name": "移動速度",
+      "description": "移動速度を10%増加。"
+    },
+    "pickup_range_up": {
+      "name": "拾得範囲",
+      "description": "拾得範囲を10%増加。"
+    },
+    "max_hp_up": {
+      "name": "最大HP",
+      "description": "最大HPを10%増加。"
+    },
+    "add_garlic": {
+      "name": "ニンニク解放",
+      "description": "ニンニクを新しい武器として解放する。"
+    },
+    "knife_damage_up": {
+      "name": "ナイフ強化",
+      "description": "ナイフのダメージを10%増加。"
+    },
+    "knife_cooldown_up": {
+      "name": "ナイフ強化",
+      "description": "ナイフのダメージを10%増加。"
+    },
+    "garlic_damage_up": {
+      "name": "ニンニク強化",
+      "description": "ニンニクのダメージを10%増加。"
+    },
+    "garlic_radius_up": {
+      "name": "ニンニク強化",
+      "description": "ニンニクのダメージを10%増加。"
+    },
+    "add_bible": {
+      "name": "聖典解放",
+      "description": "聖典を新しい武器として解放する。"
+    },
+    "bible_damage_up": {
+      "name": "聖典強化",
+      "description": "聖典のダメージを10%増加。"
+    },
+    "bible_orbit_count_up": {
+      "name": "聖典強化",
+      "description": "聖典のダメージを10%増加。"
+    },
+    "bible_orbit_speed_up": {
+      "name": "聖典強化",
+      "description": "聖典のダメージを10%増加。"
+    },
+    "add_magic_wand": {
+      "name": "魔法の杖解放",
+      "description": "魔法の杖を新しい武器として解放する。"
+    },
+    "magic_wand_damage_up": {
+      "name": "魔法の杖強化",
+      "description": "魔法の杖のダメージを10%増加。"
+    },
+    "magic_wand_cooldown_up": {
+      "name": "魔法の杖強化",
+      "description": "魔法の杖のダメージを10%増加。"
+    },
+    "magic_wand_projectile_count_up": {
+      "name": "魔法の杖強化",
+      "description": "魔法の杖のダメージを10%増加。"
+    },
+    "add_axe": {
+      "name": "斧解放",
+      "description": "斧を新しい武器として解放する。"
+    },
+    "axe_damage_up": {
+      "name": "斧強化",
+      "description": "斧のダメージを10%増加。"
+    },
+    "axe_cooldown_up": {
+      "name": "斧強化",
+      "description": "斧のダメージを10%増加。"
+    },
+    "axe_projectile_count_up": {
+      "name": "斧強化",
+      "description": "斧のダメージを10%増加。"
+    },
+    "add_runic_orb": {
+      "name": "ルーンオーブ解放",
+      "description": "ルーンオーブを新しい武器として解放する。"
+    },
+    "runic_orb_damage_up": {
+      "name": "ルーンオーブダメージ強化",
+      "description": "ルーンオーブのダメージを10%増加。"
+    },
+    "runic_orb_cooldown_up": {
+      "name": "ルーンオーブクールダウン強化",
+      "description": "ルーンオーブのクールダウンを10%短縮。"
+    },
+    "add_moon_bow": {
+      "name": "月影の弓解放",
+      "description": "月影の弓を新しい武器として解放する。"
+    },
+    "moon_bow_damage_up": {
+      "name": "月影の弓ダメージ強化",
+      "description": "月影の弓のダメージを10%増加。"
+    },
+    "moon_bow_cooldown_up": {
+      "name": "月影の弓クールダウン強化",
+      "description": "月影の弓のクールダウンを10%短縮。"
+    },
+    "moon_bow_projectile_count_up": {
+      "name": "月影の弓投射数強化",
+      "description": "月影の弓の投射数または有効数を増やす。"
+    },
+    "add_clockwork_saw": {
+      "name": "クロックワークソー解放",
+      "description": "クロックワークソーを新しい武器として解放する。"
+    },
+    "clockwork_saw_damage_up": {
+      "name": "クロックワークソーダメージ強化",
+      "description": "クロックワークソーのダメージを10%増加。"
+    },
+    "clockwork_saw_cooldown_up": {
+      "name": "クロックワークソークールダウン強化",
+      "description": "クロックワークソーのクールダウンを10%短縮。"
+    },
+    "clockwork_saw_projectile_count_up": {
+      "name": "クロックワークソー投射数強化",
+      "description": "クロックワークソーの投射数または有効数を増やす。"
+    },
+    "add_bone_spear": {
+      "name": "骨の槍解放",
+      "description": "骨の槍を新しい武器として解放する。"
+    },
+    "bone_spear_damage_up": {
+      "name": "骨の槍ダメージ強化",
+      "description": "骨の槍のダメージを10%増加。"
+    },
+    "bone_spear_cooldown_up": {
+      "name": "骨の槍クールダウン強化",
+      "description": "骨の槍のクールダウンを10%短縮。"
+    },
+    "bone_spear_projectile_count_up": {
+      "name": "骨の槍投射数強化",
+      "description": "骨の槍の投射数または有効数を増やす。"
+    },
+    "add_spirit_fist": {
+      "name": "霊拳解放",
+      "description": "霊拳を新しい武器として解放する。"
+    },
+    "spirit_fist_damage_up": {
+      "name": "霊拳ダメージ強化",
+      "description": "霊拳のダメージを10%増加。"
+    },
+    "spirit_fist_cooldown_up": {
+      "name": "霊拳クールダウン強化",
+      "description": "霊拳のクールダウンを10%短縮。"
+    },
+    "add_acid_vial": {
+      "name": "酸の小瓶解放",
+      "description": "酸の小瓶を新しい武器として解放する。"
+    },
+    "acid_vial_damage_up": {
+      "name": "酸の小瓶ダメージ強化",
+      "description": "酸の小瓶のダメージを10%増加。"
+    },
+    "acid_vial_cooldown_up": {
+      "name": "酸の小瓶クールダウン強化",
+      "description": "酸の小瓶のクールダウンを10%短縮。"
+    },
+    "acid_vial_projectile_count_up": {
+      "name": "酸の小瓶投射数強化",
+      "description": "酸の小瓶の投射数または有効数を増やす。"
+    },
+    "add_rapier_flurry": {
+      "name": "レイピア連撃解放",
+      "description": "レイピア連撃を新しい武器として解放する。"
+    },
+    "rapier_flurry_damage_up": {
+      "name": "レイピア連撃ダメージ強化",
+      "description": "レイピア連撃のダメージを10%増加。"
+    },
+    "rapier_flurry_cooldown_up": {
+      "name": "レイピア連撃クールダウン強化",
+      "description": "レイピア連撃のクールダウンを10%短縮。"
+    },
+    "rapier_flurry_projectile_count_up": {
+      "name": "レイピア連撃投射数強化",
+      "description": "レイピア連撃の投射数または有効数を増やす。"
+    },
+    "add_stone_ring": {
+      "name": "石の輪解放",
+      "description": "石の輪を新しい武器として解放する。"
+    },
+    "stone_ring_damage_up": {
+      "name": "石の輪ダメージ強化",
+      "description": "石の輪のダメージを10%増加。"
+    },
+    "stone_ring_cooldown_up": {
+      "name": "石の輪クールダウン強化",
+      "description": "石の輪のクールダウンを10%短縮。"
+    },
+    "add_thunder_javelin": {
+      "name": "雷の投槍解放",
+      "description": "雷の投槍を新しい武器として解放する。"
+    },
+    "thunder_javelin_damage_up": {
+      "name": "雷の投槍ダメージ強化",
+      "description": "雷の投槍のダメージを10%増加。"
+    },
+    "thunder_javelin_cooldown_up": {
+      "name": "雷の投槍クールダウン強化",
+      "description": "雷の投槍のクールダウンを10%短縮。"
+    },
+    "thunder_javelin_projectile_count_up": {
+      "name": "雷の投槍投射数強化",
+      "description": "雷の投槍の投射数または有効数を増やす。"
+    },
+    "add_shield_disc": {
+      "name": "盾円盤解放",
+      "description": "盾円盤を新しい武器として解放する。"
+    },
+    "shield_disc_damage_up": {
+      "name": "盾円盤ダメージ強化",
+      "description": "盾円盤のダメージを10%増加。"
+    },
+    "shield_disc_cooldown_up": {
+      "name": "盾円盤クールダウン強化",
+      "description": "盾円盤のクールダウンを10%短縮。"
+    },
+    "runic_orb_orbit_count_up": {
+      "name": "ルーンオーブ軌道数強化",
+      "description": "ルーンオーブの軌道数を増やす。"
+    },
+    "runic_orb_orbit_speed_up": {
+      "name": "ルーンオーブ軌道速度強化",
+      "description": "ルーンオーブの軌道速度を10%増加。"
+    },
+    "spirit_fist_radius_up": {
+      "name": "霊拳範囲強化",
+      "description": "霊拳の効果範囲を10%増加。"
+    },
+    "stone_ring_orbit_count_up": {
+      "name": "石の輪軌道数強化",
+      "description": "石の輪の軌道数を増やす。"
+    },
+    "stone_ring_orbit_speed_up": {
+      "name": "石の輪軌道速度強化",
+      "description": "石の輪の軌道速度を10%増加。"
+    },
+    "shield_disc_orbit_count_up": {
+      "name": "盾円盤軌道数強化",
+      "description": "盾円盤の軌道数を増やす。"
+    },
+    "shield_disc_orbit_speed_up": {
+      "name": "盾円盤軌道速度強化",
+      "description": "盾円盤の軌道速度を10%増加。"
+    },
+    "endless_heal": {
+      "name": "緊急回復",
+      "description": "HPを{amount}回復"
+    },
+    "endless_overdrive": {
+      "name": "オーバードライブ",
+      "description": "武器ダメージ +40%\n持続：{duration}秒\nクールダウン：{cooldown}秒"
+    },
+    "endless_enemy_slow": {
+      "name": "時間減速",
+      "description": "敵の移動速度 -50%\n持続：{duration}秒\nクールダウン：{cooldown}秒"
+    },
+    "endless_shield": {
+      "name": "シールド",
+      "description": "シールドを1スタック獲得\n次の被弾を防ぐ\nノックバック爆発は発動\n最大{maxStacks}スタック"
+    },
+    "endless_growth_damage": {
+      "name": "小さな成長",
+      "description": "永続的に武器ダメージ +0.5%"
+    },
+    "vacuum_all_pickups": {
+      "name": "全体吸引",
+      "description": "すべての拾得物を吸引\n拾得範囲 x{multiplier}\n持続：{duration}秒"
+    }
+  }
 }
