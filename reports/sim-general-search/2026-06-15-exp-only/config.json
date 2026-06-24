@@ -1,0 +1,38 @@
+{
+  "candidates": 160,
+  "characterId": "random",
+  "difficultyId": "random",
+  "durationSeconds": 120,
+  "generatedAt": "2026-06-15T06:19:49.769Z",
+  "initialMutationRadius": 15,
+  "mapId": "random",
+  "mutationDecay": 0.65,
+  "mutationMode": "gaussian",
+  "outputDir": "reports\\sim-general-search\\2026-06-15-exp-only",
+  "phases": [
+    {
+      "endSeconds": 30,
+      "phaseId": "0-30",
+      "startSeconds": 0
+    },
+    {
+      "endSeconds": 60,
+      "phaseId": "30-60",
+      "startSeconds": 30
+    },
+    {
+      "endSeconds": 120,
+      "phaseId": "60-120",
+      "startSeconds": 60
+    }
+  ],
+  "randomSeed": "exp-only-general-20260615",
+  "rounds": 3,
+  "scenarioCount": 30,
+  "schemaVersion": 1,
+  "seedCount": 3,
+  "stageId": "random",
+  "strategyMode": "phased",
+  "tickMs": 50,
+  "topN": 10
+}

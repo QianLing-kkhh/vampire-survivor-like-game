@@ -1,0 +1,722 @@
+[
+  {
+    "characterId": "necromancer",
+    "difficultyId": "normal",
+    "mapId": "ash_foundry_map",
+    "scenarioId": "scenario_001",
+    "seed": "exp-only-general-20260615-general-001-001",
+    "stageId": "ash_foundry_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "normal",
+    "mapId": "ash_foundry_map",
+    "scenarioId": "scenario_002",
+    "seed": "exp-only-general-20260615-general-001-002",
+    "stageId": "ash_foundry_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "normal",
+    "mapId": "ash_foundry_map",
+    "scenarioId": "scenario_003",
+    "seed": "exp-only-general-20260615-general-001-003",
+    "stageId": "ash_foundry_stage"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_004",
+    "seed": "exp-only-general-20260615-general-002-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_005",
+    "seed": "exp-only-general-20260615-general-002-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_006",
+    "seed": "exp-only-general-20260615-general-002-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "hard",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_007",
+    "seed": "exp-only-general-20260615-general-003-001",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "hard",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_008",
+    "seed": "exp-only-general-20260615-general-003-002",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "hard",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_009",
+    "seed": "exp-only-general-20260615-general-003-003",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_010",
+    "seed": "exp-only-general-20260615-general-004-001",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_011",
+    "seed": "exp-only-general-20260615-general-004-002",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_012",
+    "seed": "exp-only-general-20260615-general-004-003",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "ash_foundry_map",
+    "scenarioId": "scenario_013",
+    "seed": "exp-only-general-20260615-general-005-001",
+    "stageId": "ash_foundry_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "ash_foundry_map",
+    "scenarioId": "scenario_014",
+    "seed": "exp-only-general-20260615-general-005-002",
+    "stageId": "ash_foundry_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "ash_foundry_map",
+    "scenarioId": "scenario_015",
+    "seed": "exp-only-general-20260615-general-005-003",
+    "stageId": "ash_foundry_stage"
+  },
+  {
+    "characterId": "duelist",
+    "difficultyId": "easy",
+    "mapId": "cursed_cathedral_map",
+    "scenarioId": "scenario_016",
+    "seed": "exp-only-general-20260615-general-006-001",
+    "stageId": "cursed_cathedral_stage"
+  },
+  {
+    "characterId": "duelist",
+    "difficultyId": "easy",
+    "mapId": "cursed_cathedral_map",
+    "scenarioId": "scenario_017",
+    "seed": "exp-only-general-20260615-general-006-002",
+    "stageId": "cursed_cathedral_stage"
+  },
+  {
+    "characterId": "duelist",
+    "difficultyId": "easy",
+    "mapId": "cursed_cathedral_map",
+    "scenarioId": "scenario_018",
+    "seed": "exp-only-general-20260615-general-006-003",
+    "stageId": "cursed_cathedral_stage"
+  },
+  {
+    "characterId": "arcanist",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_019",
+    "seed": "exp-only-general-20260615-general-007-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "arcanist",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_020",
+    "seed": "exp-only-general-20260615-general-007-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "arcanist",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_021",
+    "seed": "exp-only-general-20260615-general-007-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_022",
+    "seed": "exp-only-general-20260615-general-008-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_023",
+    "seed": "exp-only-general-20260615-general-008-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_024",
+    "seed": "exp-only-general-20260615-general-008-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "normal",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_025",
+    "seed": "exp-only-general-20260615-general-009-001",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "normal",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_026",
+    "seed": "exp-only-general-20260615-general-009-002",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "normal",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_027",
+    "seed": "exp-only-general-20260615-general-009-003",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "cursed_cathedral_map",
+    "scenarioId": "scenario_028",
+    "seed": "exp-only-general-20260615-general-010-001",
+    "stageId": "cursed_cathedral_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "cursed_cathedral_map",
+    "scenarioId": "scenario_029",
+    "seed": "exp-only-general-20260615-general-010-002",
+    "stageId": "cursed_cathedral_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "cursed_cathedral_map",
+    "scenarioId": "scenario_030",
+    "seed": "exp-only-general-20260615-general-010-003",
+    "stageId": "cursed_cathedral_stage"
+  },
+  {
+    "characterId": "arcanist",
+    "difficultyId": "easy",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_031",
+    "seed": "exp-only-general-20260615-general-011-001",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "arcanist",
+    "difficultyId": "easy",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_032",
+    "seed": "exp-only-general-20260615-general-011-002",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "arcanist",
+    "difficultyId": "easy",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_033",
+    "seed": "exp-only-general-20260615-general-011-003",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_034",
+    "seed": "exp-only-general-20260615-general-012-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_035",
+    "seed": "exp-only-general-20260615-general-012-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_036",
+    "seed": "exp-only-general-20260615-general-012-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "frost_monastery_map",
+    "scenarioId": "scenario_037",
+    "seed": "exp-only-general-20260615-general-013-001",
+    "stageId": "frost_monastery_stage"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "frost_monastery_map",
+    "scenarioId": "scenario_038",
+    "seed": "exp-only-general-20260615-general-013-002",
+    "stageId": "frost_monastery_stage"
+  },
+  {
+    "characterId": "geomancer",
+    "difficultyId": "hard",
+    "mapId": "frost_monastery_map",
+    "scenarioId": "scenario_039",
+    "seed": "exp-only-general-20260615-general-013-003",
+    "stageId": "frost_monastery_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "mirror_labyrinth_map",
+    "scenarioId": "scenario_040",
+    "seed": "exp-only-general-20260615-general-014-001",
+    "stageId": "mirror_labyrinth_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "mirror_labyrinth_map",
+    "scenarioId": "scenario_041",
+    "seed": "exp-only-general-20260615-general-014-002",
+    "stageId": "mirror_labyrinth_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "mirror_labyrinth_map",
+    "scenarioId": "scenario_042",
+    "seed": "exp-only-general-20260615-general-014-003",
+    "stageId": "mirror_labyrinth_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_043",
+    "seed": "exp-only-general-20260615-general-015-001",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_044",
+    "seed": "exp-only-general-20260615-general-015-002",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_045",
+    "seed": "exp-only-general-20260615-general-015-003",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "easy",
+    "mapId": "sunken_library_map",
+    "scenarioId": "scenario_046",
+    "seed": "exp-only-general-20260615-general-016-001",
+    "stageId": "sunken_library_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "easy",
+    "mapId": "sunken_library_map",
+    "scenarioId": "scenario_047",
+    "seed": "exp-only-general-20260615-general-016-002",
+    "stageId": "sunken_library_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "easy",
+    "mapId": "sunken_library_map",
+    "scenarioId": "scenario_048",
+    "seed": "exp-only-general-20260615-general-016-003",
+    "stageId": "sunken_library_stage"
+  },
+  {
+    "characterId": "sentinel",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_049",
+    "seed": "exp-only-general-20260615-general-017-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "sentinel",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_050",
+    "seed": "exp-only-general-20260615-general-017-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "sentinel",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_051",
+    "seed": "exp-only-general-20260615-general-017-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "moonlit_rooftops_map",
+    "scenarioId": "scenario_052",
+    "seed": "exp-only-general-20260615-general-018-001",
+    "stageId": "moonlit_rooftops_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "moonlit_rooftops_map",
+    "scenarioId": "scenario_053",
+    "seed": "exp-only-general-20260615-general-018-002",
+    "stageId": "moonlit_rooftops_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "moonlit_rooftops_map",
+    "scenarioId": "scenario_054",
+    "seed": "exp-only-general-20260615-general-018-003",
+    "stageId": "moonlit_rooftops_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "hard",
+    "mapId": "moonlit_rooftops_map",
+    "scenarioId": "scenario_055",
+    "seed": "exp-only-general-20260615-general-019-001",
+    "stageId": "moonlit_rooftops_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "hard",
+    "mapId": "moonlit_rooftops_map",
+    "scenarioId": "scenario_056",
+    "seed": "exp-only-general-20260615-general-019-002",
+    "stageId": "moonlit_rooftops_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "hard",
+    "mapId": "moonlit_rooftops_map",
+    "scenarioId": "scenario_057",
+    "seed": "exp-only-general-20260615-general-019-003",
+    "stageId": "moonlit_rooftops_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_058",
+    "seed": "exp-only-general-20260615-general-020-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_059",
+    "seed": "exp-only-general-20260615-general-020-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_060",
+    "seed": "exp-only-general-20260615-general-020-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "sentinel",
+    "difficultyId": "hard",
+    "mapId": "crystal_caverns_map",
+    "scenarioId": "scenario_061",
+    "seed": "exp-only-general-20260615-general-021-001",
+    "stageId": "crystal_caverns_stage"
+  },
+  {
+    "characterId": "sentinel",
+    "difficultyId": "hard",
+    "mapId": "crystal_caverns_map",
+    "scenarioId": "scenario_062",
+    "seed": "exp-only-general-20260615-general-021-002",
+    "stageId": "crystal_caverns_stage"
+  },
+  {
+    "characterId": "sentinel",
+    "difficultyId": "hard",
+    "mapId": "crystal_caverns_map",
+    "scenarioId": "scenario_063",
+    "seed": "exp-only-general-20260615-general-021-003",
+    "stageId": "crystal_caverns_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_064",
+    "seed": "exp-only-general-20260615-general-022-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_065",
+    "seed": "exp-only-general-20260615-general-022-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_066",
+    "seed": "exp-only-general-20260615-general-022-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_067",
+    "seed": "exp-only-general-20260615-general-023-001",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_068",
+    "seed": "exp-only-general-20260615-general-023-002",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "alchemist",
+    "difficultyId": "hard",
+    "mapId": "fungal_depths_map",
+    "scenarioId": "scenario_069",
+    "seed": "exp-only-general-20260615-general-023-003",
+    "stageId": "fungal_depths_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_070",
+    "seed": "exp-only-general-20260615-general-024-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_071",
+    "seed": "exp-only-general-20260615-general-024-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "necromancer",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_072",
+    "seed": "exp-only-general-20260615-general-024-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "engineer",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_073",
+    "seed": "exp-only-general-20260615-general-025-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "engineer",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_074",
+    "seed": "exp-only-general-20260615-general-025-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "engineer",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_075",
+    "seed": "exp-only-general-20260615-general-025-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "monk",
+    "difficultyId": "hard",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_076",
+    "seed": "exp-only-general-20260615-general-026-001",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "monk",
+    "difficultyId": "hard",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_077",
+    "seed": "exp-only-general-20260615-general-026-002",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "monk",
+    "difficultyId": "hard",
+    "mapId": "desert_obelisk_map",
+    "scenarioId": "scenario_078",
+    "seed": "exp-only-general-20260615-general-026-003",
+    "stageId": "desert_obelisk_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_079",
+    "seed": "exp-only-general-20260615-general-027-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_080",
+    "seed": "exp-only-general-20260615-general-027-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_081",
+    "seed": "exp-only-general-20260615-general-027-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "monk",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_082",
+    "seed": "exp-only-general-20260615-general-028-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "monk",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_083",
+    "seed": "exp-only-general-20260615-general-028-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "monk",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_084",
+    "seed": "exp-only-general-20260615-general-028-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "blood_garden_map",
+    "scenarioId": "scenario_085",
+    "seed": "exp-only-general-20260615-general-029-001",
+    "stageId": "blood_garden_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "blood_garden_map",
+    "scenarioId": "scenario_086",
+    "seed": "exp-only-general-20260615-general-029-002",
+    "stageId": "blood_garden_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "blood_garden_map",
+    "scenarioId": "scenario_087",
+    "seed": "exp-only-general-20260615-general-029-003",
+    "stageId": "blood_garden_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_088",
+    "seed": "exp-only-general-20260615-general-030-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_089",
+    "seed": "exp-only-general-20260615-general-030-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "ranger",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_090",
+    "seed": "exp-only-general-20260615-general-030-003",
+    "stageId": "graveyard_stage"
+  }
+]

@@ -1,0 +1,962 @@
+[
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_001",
+    "seed": "damage-dealt-general-20260610-general-001-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_002",
+    "seed": "damage-dealt-general-20260610-general-001-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_003",
+    "seed": "damage-dealt-general-20260610-general-001-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_004",
+    "seed": "damage-dealt-general-20260610-general-002-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_005",
+    "seed": "damage-dealt-general-20260610-general-002-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_006",
+    "seed": "damage-dealt-general-20260610-general-002-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_007",
+    "seed": "damage-dealt-general-20260610-general-003-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_008",
+    "seed": "damage-dealt-general-20260610-general-003-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_009",
+    "seed": "damage-dealt-general-20260610-general-003-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_010",
+    "seed": "damage-dealt-general-20260610-general-004-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_011",
+    "seed": "damage-dealt-general-20260610-general-004-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_012",
+    "seed": "damage-dealt-general-20260610-general-004-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_013",
+    "seed": "damage-dealt-general-20260610-general-005-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_014",
+    "seed": "damage-dealt-general-20260610-general-005-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_015",
+    "seed": "damage-dealt-general-20260610-general-005-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_016",
+    "seed": "damage-dealt-general-20260610-general-006-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_017",
+    "seed": "damage-dealt-general-20260610-general-006-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_018",
+    "seed": "damage-dealt-general-20260610-general-006-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_019",
+    "seed": "damage-dealt-general-20260610-general-007-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_020",
+    "seed": "damage-dealt-general-20260610-general-007-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_021",
+    "seed": "damage-dealt-general-20260610-general-007-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_022",
+    "seed": "damage-dealt-general-20260610-general-008-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_023",
+    "seed": "damage-dealt-general-20260610-general-008-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_024",
+    "seed": "damage-dealt-general-20260610-general-008-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_025",
+    "seed": "damage-dealt-general-20260610-general-009-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_026",
+    "seed": "damage-dealt-general-20260610-general-009-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_027",
+    "seed": "damage-dealt-general-20260610-general-009-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_028",
+    "seed": "damage-dealt-general-20260610-general-010-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_029",
+    "seed": "damage-dealt-general-20260610-general-010-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_030",
+    "seed": "damage-dealt-general-20260610-general-010-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_031",
+    "seed": "damage-dealt-general-20260610-general-011-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_032",
+    "seed": "damage-dealt-general-20260610-general-011-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_033",
+    "seed": "damage-dealt-general-20260610-general-011-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_034",
+    "seed": "damage-dealt-general-20260610-general-012-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_035",
+    "seed": "damage-dealt-general-20260610-general-012-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_036",
+    "seed": "damage-dealt-general-20260610-general-012-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_037",
+    "seed": "damage-dealt-general-20260610-general-013-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_038",
+    "seed": "damage-dealt-general-20260610-general-013-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_039",
+    "seed": "damage-dealt-general-20260610-general-013-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_040",
+    "seed": "damage-dealt-general-20260610-general-014-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_041",
+    "seed": "damage-dealt-general-20260610-general-014-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_042",
+    "seed": "damage-dealt-general-20260610-general-014-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_043",
+    "seed": "damage-dealt-general-20260610-general-015-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_044",
+    "seed": "damage-dealt-general-20260610-general-015-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_045",
+    "seed": "damage-dealt-general-20260610-general-015-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_046",
+    "seed": "damage-dealt-general-20260610-general-016-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_047",
+    "seed": "damage-dealt-general-20260610-general-016-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_048",
+    "seed": "damage-dealt-general-20260610-general-016-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_049",
+    "seed": "damage-dealt-general-20260610-general-017-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_050",
+    "seed": "damage-dealt-general-20260610-general-017-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_051",
+    "seed": "damage-dealt-general-20260610-general-017-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_052",
+    "seed": "damage-dealt-general-20260610-general-018-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_053",
+    "seed": "damage-dealt-general-20260610-general-018-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_054",
+    "seed": "damage-dealt-general-20260610-general-018-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_055",
+    "seed": "damage-dealt-general-20260610-general-019-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_056",
+    "seed": "damage-dealt-general-20260610-general-019-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_057",
+    "seed": "damage-dealt-general-20260610-general-019-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_058",
+    "seed": "damage-dealt-general-20260610-general-020-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_059",
+    "seed": "damage-dealt-general-20260610-general-020-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_060",
+    "seed": "damage-dealt-general-20260610-general-020-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_061",
+    "seed": "damage-dealt-general-20260610-general-021-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_062",
+    "seed": "damage-dealt-general-20260610-general-021-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_063",
+    "seed": "damage-dealt-general-20260610-general-021-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_064",
+    "seed": "damage-dealt-general-20260610-general-022-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_065",
+    "seed": "damage-dealt-general-20260610-general-022-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_066",
+    "seed": "damage-dealt-general-20260610-general-022-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_067",
+    "seed": "damage-dealt-general-20260610-general-023-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_068",
+    "seed": "damage-dealt-general-20260610-general-023-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_069",
+    "seed": "damage-dealt-general-20260610-general-023-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_070",
+    "seed": "damage-dealt-general-20260610-general-024-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_071",
+    "seed": "damage-dealt-general-20260610-general-024-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_072",
+    "seed": "damage-dealt-general-20260610-general-024-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_073",
+    "seed": "damage-dealt-general-20260610-general-025-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_074",
+    "seed": "damage-dealt-general-20260610-general-025-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "witch",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_075",
+    "seed": "damage-dealt-general-20260610-general-025-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_076",
+    "seed": "damage-dealt-general-20260610-general-026-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_077",
+    "seed": "damage-dealt-general-20260610-general-026-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_078",
+    "seed": "damage-dealt-general-20260610-general-026-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_079",
+    "seed": "damage-dealt-general-20260610-general-027-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_080",
+    "seed": "damage-dealt-general-20260610-general-027-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_081",
+    "seed": "damage-dealt-general-20260610-general-027-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_082",
+    "seed": "damage-dealt-general-20260610-general-028-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_083",
+    "seed": "damage-dealt-general-20260610-general-028-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_084",
+    "seed": "damage-dealt-general-20260610-general-028-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_085",
+    "seed": "damage-dealt-general-20260610-general-029-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_086",
+    "seed": "damage-dealt-general-20260610-general-029-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_087",
+    "seed": "damage-dealt-general-20260610-general-029-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_088",
+    "seed": "damage-dealt-general-20260610-general-030-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_089",
+    "seed": "damage-dealt-general-20260610-general-030-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "hard",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_090",
+    "seed": "damage-dealt-general-20260610-general-030-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_091",
+    "seed": "damage-dealt-general-20260610-general-031-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_092",
+    "seed": "damage-dealt-general-20260610-general-031-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_093",
+    "seed": "damage-dealt-general-20260610-general-031-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_094",
+    "seed": "damage-dealt-general-20260610-general-032-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_095",
+    "seed": "damage-dealt-general-20260610-general-032-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_096",
+    "seed": "damage-dealt-general-20260610-general-032-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_097",
+    "seed": "damage-dealt-general-20260610-general-033-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_098",
+    "seed": "damage-dealt-general-20260610-general-033-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_099",
+    "seed": "damage-dealt-general-20260610-general-033-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_100",
+    "seed": "damage-dealt-general-20260610-general-034-001",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_101",
+    "seed": "damage-dealt-general-20260610-general-034-002",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "graveyard_map",
+    "scenarioId": "scenario_102",
+    "seed": "damage-dealt-general-20260610-general-034-003",
+    "stageId": "graveyard_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_103",
+    "seed": "damage-dealt-general-20260610-general-035-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_104",
+    "seed": "damage-dealt-general-20260610-general-035-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "warrior",
+    "difficultyId": "hard",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_105",
+    "seed": "damage-dealt-general-20260610-general-035-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_106",
+    "seed": "damage-dealt-general-20260610-general-036-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_107",
+    "seed": "damage-dealt-general-20260610-general-036-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_108",
+    "seed": "damage-dealt-general-20260610-general-036-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_109",
+    "seed": "damage-dealt-general-20260610-general-037-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_110",
+    "seed": "damage-dealt-general-20260610-general-037-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_111",
+    "seed": "damage-dealt-general-20260610-general-037-003",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_112",
+    "seed": "damage-dealt-general-20260610-general-038-001",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_113",
+    "seed": "damage-dealt-general-20260610-general-038-002",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "easy",
+    "mapId": "swamp_marsh_map",
+    "scenarioId": "scenario_114",
+    "seed": "damage-dealt-general-20260610-general-038-003",
+    "stageId": "swamp_marsh_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_115",
+    "seed": "damage-dealt-general-20260610-general-039-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_116",
+    "seed": "damage-dealt-general-20260610-general-039-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_117",
+    "seed": "damage-dealt-general-20260610-general-039-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_118",
+    "seed": "damage-dealt-general-20260610-general-040-001",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_119",
+    "seed": "damage-dealt-general-20260610-general-040-002",
+    "stageId": "ruined_gate_stage"
+  },
+  {
+    "characterId": "default",
+    "difficultyId": "easy",
+    "mapId": "ruined_gate_map",
+    "scenarioId": "scenario_120",
+    "seed": "damage-dealt-general-20260610-general-040-003",
+    "stageId": "ruined_gate_stage"
+  }
+]

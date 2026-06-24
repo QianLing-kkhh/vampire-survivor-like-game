@@ -1,0 +1,42 @@
+[
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_001",
+    "seed": "boss-kill-gate-priest-stage001-5seed-20260615-general-001-001",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_002",
+    "seed": "boss-kill-gate-priest-stage001-5seed-20260615-general-001-002",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_003",
+    "seed": "boss-kill-gate-priest-stage001-5seed-20260615-general-001-003",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_004",
+    "seed": "boss-kill-gate-priest-stage001-5seed-20260615-general-001-004",
+    "stageId": "stage_001"
+  },
+  {
+    "characterId": "priest",
+    "difficultyId": "normal",
+    "mapId": "prototype_field",
+    "scenarioId": "scenario_005",
+    "seed": "boss-kill-gate-priest-stage001-5seed-20260615-general-001-005",
+    "stageId": "stage_001"
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "avgDamageTaken": 43.4458,
+    "avgScore": 1041.6667,
+    "avgSurvivalTimeSeconds": 119.3144,
+    "completionRate": 0.9792,
+    "damageSafetyPenalty": 6070.5833,
+    "damageWindowPassRate": 0.325,
+    "deltaPctVsBalancedDefault": 0.6805,
+    "deltaVsBalancedDefault": 6545.6641,
+    "generalFitnessScore": -3073.6244,
+    "medianScore": 1041.5,
+    "p10Score": 649.8,
+    "strategyId": "best_general_strategy"
+  },
+  {
+    "avgDamageTaken": 81.9833,
+    "avgScore": 1023.9625,
+    "avgSurvivalTimeSeconds": 112.9056,
+    "completionRate": 0.6625,
+    "damageSafetyPenalty": 12171.0458,
+    "damageWindowPassRate": 0.0833,
+    "deltaPctVsBalancedDefault": 0,
+    "deltaVsBalancedDefault": 0,
+    "generalFitnessScore": -9619.2885,
+    "medianScore": 939,
+    "p10Score": 593.9,
+    "strategyId": "balanced_default"
+  },
+  {
+    "avgDamageTaken": 81.9833,
+    "avgScore": 1023.9625,
+    "avgSurvivalTimeSeconds": 112.9056,
+    "completionRate": 0.6625,
+    "damageSafetyPenalty": 12171.0458,
+    "damageWindowPassRate": 0.0833,
+    "deltaPctVsBalancedDefault": 0,
+    "deltaVsBalancedDefault": 0,
+    "generalFitnessScore": -9619.2885,
+    "medianScore": 939,
+    "p10Score": 593.9,
+    "strategyId": "playtest_baseline"
+  }
+]

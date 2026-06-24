@@ -11,7 +11,7 @@ export type LandmarkVisualType =
   | 'archivePillar';
 
 export const VisualScale = {
-  playerDisplaySize: 72,
+  playerDisplaySize: 88,
   pickupDisplaySize: 36,
   treasureDisplayWidth: 72,
   treasureDisplayHeight: 64,

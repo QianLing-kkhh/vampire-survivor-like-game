@@ -310,11 +310,29 @@ export class PreloadScene extends Phaser.Scene {
         continue;
       }
 
+      const requestedEndFrame = (asset.frameCount ?? 1) - 1;
+      const availableEndFrame = this.getAvailableAnimationEndFrame(
+        asset.textureKey,
+        0,
+        requestedEndFrame,
+      );
+
+      if (availableEndFrame === null) {
+        console.warn(`[external-art] Skipping animation without usable frames: ${asset.animationKey}`);
+        continue;
+      }
+
+      if (availableEndFrame < requestedEndFrame) {
+        console.warn(
+          `[external-art] Clamped animation ${asset.animationKey} to frame ${availableEndFrame} from requested ${requestedEndFrame}.`,
+        );
+      }
+
       this.anims.create({
         key: asset.animationKey,
         frames: this.anims.generateFrameNumbers(asset.textureKey, {
           start: 0,
-          end: (asset.frameCount ?? 1) - 1,
+          end: availableEndFrame,
         }),
         frameRate: asset.frameRate ?? 8,
         repeat: asset.repeat ?? -1,
@@ -430,12 +448,41 @@ export class PreloadScene extends Phaser.Scene {
       this.anims.remove(animationKey);
     }
 
+    const availableEndFrame = this.getAvailableAnimationEndFrame(textureKey, start, end);
+
+    if (availableEndFrame === null) {
+      console.warn(`[preload] Missing frames for ${textureKey}: ${start}..${end}`);
+      return;
+    }
+
     this.anims.create({
       key: animationKey,
-      frames: this.anims.generateFrameNumbers(textureKey, { start, end }),
+      frames: this.anims.generateFrameNumbers(textureKey, { start, end: availableEndFrame }),
       frameRate: 8,
       repeat,
     });
+  }
+
+  private getAvailableAnimationEndFrame(
+    textureKey: string,
+    start: number,
+    requestedEnd: number,
+  ): number | null {
+    const frameCount = this.getTextureFrameCount(textureKey);
+
+    if (frameCount <= start) {
+      return null;
+    }
+
+    return Math.min(requestedEnd, frameCount - 1);
+  }
+
+  private getTextureFrameCount(textureKey: string): number {
+    if (!this.textures.exists(textureKey)) {
+      return 0;
+    }
+
+    return this.textures.get(textureKey).getFrameNames(false).length;
   }
 
   private logTextureStatus(): void {

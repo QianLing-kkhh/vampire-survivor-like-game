@@ -623,28 +623,23 @@ export class RunPreloadScene extends Phaser.Scene {
         0,
         0,
       );
-    }
 
-    const activeSkinId = resolvePlayerSkinId(
-      this.context?.skinId,
-      this.context?.characterId,
-    );
-
-    for (const direction of PLAYER_ART_DIRECTIONS) {
-      this.createAnimationAlias(
-        `art_player_${activeSkinId}_walk_${direction}`,
-        `art_player_${activeSkinId}_walk_${direction}`,
-        0,
-        3,
-        -1,
-      );
-      this.createAnimationAlias(
-        `art_player_${activeSkinId}_idle_${direction}`,
-        `art_player_${activeSkinId}_idle_${direction}`,
-        0,
-        3,
-        -1,
-      );
+      for (const direction of PLAYER_ART_DIRECTIONS) {
+        this.createAnimationAlias(
+          `art_player_${skinId}_walk_${direction}`,
+          `art_player_${skinId}_walk_${direction}`,
+          0,
+          3,
+          -1,
+        );
+        this.createAnimationAlias(
+          `art_player_${skinId}_idle_${direction}`,
+          `art_player_${skinId}_idle_${direction}`,
+          0,
+          3,
+          -1,
+        );
+      }
     }
   }
 
@@ -673,11 +668,29 @@ export class RunPreloadScene extends Phaser.Scene {
         continue;
       }
 
+      const requestedEndFrame = (asset.frameCount ?? 1) - 1;
+      const availableEndFrame = this.getAvailableAnimationEndFrame(
+        asset.textureKey,
+        0,
+        requestedEndFrame,
+      );
+
+      if (availableEndFrame === null) {
+        console.warn(`[external-art] Skipping animation without usable frames: ${asset.animationKey}`);
+        continue;
+      }
+
+      if (availableEndFrame < requestedEndFrame) {
+        console.warn(
+          `[external-art] Clamped animation ${asset.animationKey} to frame ${availableEndFrame} from requested ${requestedEndFrame}.`,
+        );
+      }
+
       this.anims.create({
         key: asset.animationKey,
         frames: this.anims.generateFrameNumbers(asset.textureKey, {
           start: 0,
-          end: (asset.frameCount ?? 1) - 1,
+          end: availableEndFrame,
         }),
         frameRate: asset.frameRate ?? 8,
         repeat: asset.repeat ?? -1,
@@ -696,26 +709,40 @@ export class RunPreloadScene extends Phaser.Scene {
       return;
     }
 
-    if (!this.hasTextureFrames(textureKey, start, end)) {
+    const availableEndFrame = this.getAvailableAnimationEndFrame(textureKey, start, end);
+
+    if (availableEndFrame === null) {
       console.warn(`[run-preload] Missing frames for ${textureKey}: ${start}..${end}`);
       return;
     }
 
     this.anims.create({
       key: animationKey,
-      frames: this.anims.generateFrameNumbers(textureKey, { start, end }),
+      frames: this.anims.generateFrameNumbers(textureKey, { start, end: availableEndFrame }),
       frameRate: 8,
       repeat,
     });
   }
 
-  private hasTextureFrames(textureKey: string, start: number, end: number): boolean {
-    for (let frame = start; frame <= end; frame += 1) {
-      if (!this.textures.getFrame(textureKey, frame)) {
-        return false;
-      }
+  private getAvailableAnimationEndFrame(
+    textureKey: string,
+    start: number,
+    requestedEnd: number,
+  ): number | null {
+    const frameCount = this.getTextureFrameCount(textureKey);
+
+    if (frameCount <= start) {
+      return null;
     }
 
-    return true;
+    return Math.min(requestedEnd, frameCount - 1);
+  }
+
+  private getTextureFrameCount(textureKey: string): number {
+    if (!this.textures.exists(textureKey)) {
+      return 0;
+    }
+
+    return this.textures.get(textureKey).getFrameNames(false).length;
   }
 }

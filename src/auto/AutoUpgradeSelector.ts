@@ -418,7 +418,7 @@ export class AutoUpgradeSelector {
   private isPassiveUpgrade(upgradeId: string): boolean {
     const option = this.getUpgradeOption(upgradeId);
 
-    return option?.kind === 'passive' || (
+    return option?.kind === 'passive' || Boolean(option?.passiveId) || (
       upgradeId === 'spinach'
       || upgradeId === 'empty_tome'
       || upgradeId === 'bracer'
@@ -428,15 +428,27 @@ export class AutoUpgradeSelector {
   }
 
   private isDamageUpgrade(upgradeId: string): boolean {
-    return upgradeId.endsWith('_damage_up') || upgradeId === 'spinach';
+    const option = this.getUpgradeOption(upgradeId);
+
+    return option?.stat === 'damage'
+      || upgradeId.endsWith('_damage_up')
+      || upgradeId === 'spinach';
   }
 
   private isCooldownUpgrade(upgradeId: string): boolean {
-    return upgradeId.endsWith('_cooldown_up') || upgradeId === 'empty_tome';
+    const option = this.getUpgradeOption(upgradeId);
+
+    return option?.stat === 'cooldown'
+      || upgradeId.endsWith('_cooldown_up')
+      || upgradeId === 'empty_tome';
   }
 
   private isProjectileCountUpgrade(upgradeId: string): boolean {
-    return upgradeId.endsWith('_projectile_count_up')
+    const option = this.getUpgradeOption(upgradeId);
+
+    return option?.stat === 'projectileCount'
+      || option?.stat === 'orbitCount'
+      || upgradeId.endsWith('_projectile_count_up')
       || upgradeId === 'bible_orbit_count_up';
   }
 

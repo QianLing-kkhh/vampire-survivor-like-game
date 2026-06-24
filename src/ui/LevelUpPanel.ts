@@ -491,11 +491,12 @@ export class LevelUpPanel {
     onSelected: UpgradeSelectedHandler,
     config: LevelUpPanelConfig,
   ): void {
-    if (!config.autoSelectOptionId || config.autoSelectDelayMs === undefined) {
+    if (config.autoSelectDelayMs === undefined) {
       return;
     }
 
-    const selectedOption = options.find((option) => option.id === config.autoSelectOptionId);
+    const selectedOption = options.find((option) => option.id === config.autoSelectOptionId)
+      ?? options[0];
 
     if (!selectedOption) {
       return;
