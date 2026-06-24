@@ -1423,13 +1423,17 @@ export class AutoPlayer {
     const currentContactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
     const currentFutureRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
     const bossWarningRisk = this.getTotalBossWarningRisk(context, endpoint);
+    const nonFinalBossWarningRisk = this.getNonFinalBossWarningRisk(context, endpoint);
     const obstaclePenalty = this.getObstaclePenalty(context, endpoint);
     const hardContactRisk = endpointContactRisk + endpointFutureRisk + pathContactRisk;
+    const hardBossWarningRisk = usefulPortalEndpoint
+      ? nonFinalBossWarningRisk > 1.2
+      : bossWarningRisk > 1.2;
     const localContactWarning = danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
       || currentContactRisk > 45
       || currentFutureRisk > 55;
 
-    if (hardContactRisk > 220 || bossWarningRisk > 1.2) {
+    if (hardContactRisk > 220 || hardBossWarningRisk) {
       return -100000 - hardContactRisk - bossWarningRisk * 1000;
     }
 
