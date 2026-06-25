@@ -155,6 +155,10 @@ export class GameplayInitializer {
         autoMovement: config.playtestSettings.autoMovement,
         autoUpgrade: config.playtestSettings.autoUpgrade,
         autoOpenTreasure: config.playtestSettings.autoOpenTreasure,
+        characterId: selectedCharacter.id,
+        stageId: selectedStage.id,
+        mapId: selectedMap.id,
+        difficultyId: selectedDifficulty.id,
       })
       : undefined;
     const strategyProfile = browserAutoTestStrategy?.profile

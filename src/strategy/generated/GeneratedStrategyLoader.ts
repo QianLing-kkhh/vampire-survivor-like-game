@@ -28,6 +28,7 @@ export interface GeneratedTestStrategy {
   simulationKind?: string;
   createdAt?: string;
   metadata?: Record<string, unknown>;
+  searchConfig?: GeneratedStrategySearchConfig;
   phases: GeneratedStrategyPhase[];
 }
 
@@ -37,6 +38,10 @@ export interface BrowserAutoTestStrategyContext {
   autoMovement: boolean;
   autoUpgrade: boolean;
   autoOpenTreasure: boolean;
+  characterId?: string;
+  stageId?: string;
+  mapId?: string;
+  difficultyId?: string;
 }
 
 export interface BrowserAutoTestDefaultStrategy {
@@ -44,6 +49,13 @@ export interface BrowserAutoTestDefaultStrategy {
   phasedStrategy?: GeneratedTestStrategy;
   source: typeof GENERATED_TEST_STRATEGY_ID | 'balanced_default';
   fallbackReason?: string;
+}
+
+export interface GeneratedStrategySearchConfig {
+  characterId?: string;
+  stageId?: string;
+  mapId?: string;
+  difficultyId?: string;
 }
 
 type GeneratedStrategyModule = {
@@ -94,6 +106,21 @@ export function getBrowserAutoTestDefaultStrategy(
     };
   }
 
+  if (!doesGeneratedStrategyMatchRun(generated, context)) {
+    const fallbackReason = 'generated-test-strategy.json search scenario does not match the current browser auto test run';
+
+    warnOnce(
+      fallbackReason,
+      '[generated-strategy] generated_test is scenario-specific; falling back to balanced_default for this browser auto test run.',
+    );
+
+    return {
+      profile: StrategyProfileValidator.normalize(DEFAULT_AUTO_STRATEGY_PROFILE),
+      source: 'balanced_default',
+      fallbackReason,
+    };
+  }
+
   return {
     profile: getGeneratedStrategyProfileAtSeconds(generated, 0),
     phasedStrategy: generated,
@@ -129,6 +156,22 @@ function isBrowserAutoTestRun(context: BrowserAutoTestStrategyContext): boolean 
     && (context.autoMovement || context.autoUpgrade || context.autoOpenTreasure);
 }
 
+function doesGeneratedStrategyMatchRun(
+  strategy: GeneratedTestStrategy,
+  context: BrowserAutoTestStrategyContext,
+): boolean {
+  const searchConfig = strategy.searchConfig;
+
+  if (!searchConfig) {
+    return true;
+  }
+
+  return matchesOptionalId(searchConfig.characterId, context.characterId)
+    && matchesOptionalId(searchConfig.stageId, context.stageId)
+    && matchesOptionalId(searchConfig.mapId, context.mapId)
+    && matchesOptionalId(searchConfig.difficultyId, context.difficultyId);
+}
+
 function parseGeneratedTestStrategy(raw: unknown): GeneratedTestStrategy | undefined {
   if (!isObject(raw)) {
     return undefined;
@@ -155,6 +198,7 @@ function parseGeneratedTestStrategy(raw: unknown): GeneratedTestStrategy | undef
     simulationKind: readOptionalString(raw.simulationKind),
     createdAt: readOptionalString(raw.createdAt),
     metadata: isObject(raw.metadata) ? { ...raw.metadata } : undefined,
+    searchConfig: parseGeneratedSearchConfig(raw.searchConfig),
     phases,
   };
 }
@@ -179,6 +223,19 @@ function parseGeneratedPhase(raw: unknown, strategyName: string): GeneratedStrat
   };
 }
 
+function parseGeneratedSearchConfig(raw: unknown): GeneratedStrategySearchConfig | undefined {
+  if (!isObject(raw)) {
+    return undefined;
+  }
+
+  return {
+    characterId: readOptionalString(raw.characterId),
+    stageId: readOptionalString(raw.stageId),
+    mapId: readOptionalString(raw.mapId),
+    difficultyId: readOptionalString(raw.difficultyId),
+  };
+}
+
 function normalizeGeneratedProfile(rawProfile: unknown, strategyName: string): AutoStrategyProfile {
   const profile = StrategyProfileValidator.normalize(rawProfile);
 
@@ -199,6 +256,10 @@ function readOptionalString(value: unknown): string | undefined {
 
 function readNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function matchesOptionalId(expected: string | undefined, actual: string | undefined): boolean {
+  return expected === undefined || actual === expected;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
