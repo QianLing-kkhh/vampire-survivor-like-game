@@ -1286,14 +1286,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.syncRuntimeStrategyProfile(this.gameplayContext?.runtimeStrategyState?.getProfile());
-    const hpRatio = this.playerHealth && this.playerHealth.maxHp > 0
-      ? this.playerHealth.currentHp / this.playerHealth.maxHp
-      : 1;
-    const autoOpenTreasure = this.playtestSettings.autoOpenTreasure
-      && this.autoTreasurePolicy.shouldAutoOpenTreasure(
-        hpRatio,
-        this.getEvolutionCandidateStats().length > 0,
-      );
+    const autoOpenTreasure = this.playtestSettings.autoOpenTreasure;
     const result = this.upgradeFlow.applyTreasureReward(autoOpenTreasure);
 
     if (result.type !== 'pending' || !result.options?.length) {

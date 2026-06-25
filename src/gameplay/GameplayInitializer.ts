@@ -275,8 +275,15 @@ export class GameplayInitializer {
     config.autoPlayer.setStrategyProfile(strategyProfile);
     config.autoUpgradeSelector.setStrategyProfile(strategyProfile);
     config.autoUpgradeSelector.setRandomSource(randomManager.getUpgradeRandom());
+    const passiveUpgradeOptions = passiveItems.map((passive) => ({
+      id: passive.id,
+      name: passive.name,
+      description: passive.description,
+      kind: 'passive' as const,
+      passiveId: passive.id,
+    }));
     const upgradeSelector = new UpgradeSelector(
-      [...upgradeOptions, ...passiveItems],
+      [...upgradeOptions, ...passiveUpgradeOptions],
       randomManager.getUpgradeRandom(),
     );
     const evolutionManager = new EvolutionManager(evolutionRules);

@@ -852,7 +852,7 @@ export class AutoPlayer {
       return [];
     }
 
-    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+    const combatCenter = this.getCombatOutputCenter(context, player, danger);
     const toCenter = combatCenter.clone().subtract(player);
 
     if (toCenter.lengthSq() === 0) {
@@ -1289,7 +1289,7 @@ export class AutoPlayer {
       score += enemiesInBand * 1.9 - enemiesTooClose * 4.2;
     }
 
-    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+    const combatCenter = this.getCombatOutputCenter(context, player, danger);
 
     if (combatCenter.lengthSq() > 0 && waypoints.length >= 2) {
       const firstWaypoint = waypoints[Math.min(1, waypoints.length - 1)];
@@ -1326,7 +1326,7 @@ export class AutoPlayer {
     }
 
     const endpoint = waypoints[waypoints.length - 1] ?? player;
-    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+    const combatCenter = this.getCombatOutputCenter(context, player, danger);
 
     if (combatCenter.lengthSq() === 0) {
       return 0;
@@ -1337,15 +1337,18 @@ export class AutoPlayer {
     const range = this.getWeaponEffectiveRange(context);
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
 
-    if (endpointDistance <= range.max || endpointDistance <= currentDistance) {
+    if (endpointDistance <= range.max) {
       return 0;
     }
 
     const tooFar = endpointDistance - range.max;
-    const movingAway = endpointDistance - currentDistance;
+    const movingAway = Math.max(0, endpointDistance - currentDistance);
+    const stillFar = endpointDistance > range.max * 1.12
+      ? tooFar * (endpointDistance < currentDistance ? 0.035 : 0.055)
+      : 0;
     const priestMultiplier = context.player?.characterId === 'priest' ? 1.5 : 1;
 
-    return (tooFar * 0.035 + movingAway * 0.045)
+    return (tooFar * 0.035 + movingAway * 0.065 + stillFar)
       * (1 + growthUrgency)
       * priestMultiplier;
   }
@@ -2019,9 +2022,9 @@ export class AutoPlayer {
 
     return {
       hpFloor: 0.45,
-      contactRiskLimit: Math.min(76, 55 + urgency * 12),
-      futureContactRiskLimit: Math.min(69, 65 + urgency * 5),
-      pressureLimit: Math.min(6.25, 4.8 + urgency * 0.95),
+      contactRiskLimit: Math.min(79, 55 + urgency * 14),
+      futureContactRiskLimit: Math.min(69.5, 65 + urgency * 5),
+      pressureLimit: Math.min(7, 5.1 + urgency * 1.25),
     };
   }
 
@@ -2078,23 +2081,32 @@ export class AutoPlayer {
 
     const range = this.getWeaponEffectiveRange(context);
     const endpointScore = this.evaluateWeaponEffectivePosition(context, endpoint, danger);
-    const combatCenter = this.getCombatFocusCenter(context, player, danger);
+    const combatCenter = this.getCombatOutputCenter(context, player, danger);
     const currentDistance = combatCenter.lengthSq() > 0
       ? Math2D.distanceBetween(player.x, player.y, combatCenter.x, combatCenter.y)
       : Number.POSITIVE_INFINITY;
     const endpointDistance = combatCenter.lengthSq() > 0
       ? Math2D.distanceBetween(endpoint.x, endpoint.y, combatCenter.x, combatCenter.y)
       : Number.POSITIVE_INFINITY;
-    const tooFarCorrection = currentDistance > range.max && endpointDistance < currentDistance ? 8 : 0;
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const farDistance = Math.max(0, currentDistance - range.max);
+    const distanceRecovered = Math.max(0, currentDistance - endpointDistance);
+    const tooFarCorrection = farDistance > 0 && distanceRecovered > 0
+      ? Math.min(34, distanceRecovered * 0.11 + farDistance * 0.035) * (1 + growthUrgency * 0.65)
+      : 0;
+    const stillTooFarPenalty = endpointDistance > range.max * 1.12
+      ? Math.min(30, (endpointDistance - range.max) * 0.065)
+      : 0;
     const overFleePenalty = endpointDistance > range.max && endpointDistance > currentDistance
-      ? Math.min(18, (endpointDistance - Math.max(range.max, currentDistance)) * 0.04)
+      ? Math.min(30, (endpointDistance - Math.max(range.max, currentDistance)) * 0.075)
       : 0;
     const lateralScore = combatCenter.lengthSq() > 0 && direction.lengthSq() > 0
       ? this.getStrategicLateralCombatScore(player, direction, combatCenter)
       : 0;
     const combatFarmMultiplier = this.getCharacterCombatFarmMultiplier(context);
 
-    return (endpointScore + tooFarCorrection + lateralScore - overFleePenalty) * combatFarmMultiplier;
+    return (endpointScore + tooFarCorrection + lateralScore - stillTooFarPenalty - overFleePenalty)
+      * combatFarmMultiplier;
   }
 
   private evaluateStrategicXpAccessScore(
@@ -4354,6 +4366,48 @@ export class AutoPlayer {
     return center;
   }
 
+  private getCombatOutputCenter(
+    context: AutoPlayerContext,
+    player: Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+  ): Vector2 {
+    const range = this.getWeaponEffectiveRange(context);
+    const focusRadius = Math.max(AUTO_PLAYER_CONSTANTS.DANGER_RADIUS, range.max * 1.55);
+    const center = new Vector2(0, 0);
+    let totalWeight = 0;
+
+    for (const enemy of context.enemyPositions) {
+      const distance = this.getEnemyEffectiveDistance(context, player, enemy);
+
+      if (
+        distance > focusRadius
+        || this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)
+      ) {
+        continue;
+      }
+
+      const bandWeight = distance >= range.min && distance <= range.max
+        ? 1.45
+        : distance > range.max
+          ? Math.max(0.15, 1 - (distance - range.max) / Math.max(1, focusRadius - range.max))
+          : 0.5;
+      const growthReachWeight = distance > range.max
+        ? 1.2
+        : 1;
+      const proximityWeight = Math.max(0.18, (focusRadius - Math.max(0, distance)) / focusRadius);
+      const weight = this.getEnemyThreatWeight(enemy) * bandWeight * growthReachWeight * proximityWeight;
+
+      center.add(new Vector2(enemy.x, enemy.y).scale(weight));
+      totalWeight += weight;
+    }
+
+    if (totalWeight > 0) {
+      return center.scale(1 / totalWeight);
+    }
+
+    return this.getCombatFocusCenter(context, player, danger);
+  }
+
   private updateMovementMemory(
     context: AutoPlayerContext,
     player: Vector2,
@@ -5033,7 +5087,7 @@ export class AutoPlayer {
     }
 
     let score = 0;
-    const combatCenter = this.getCombatFocusCenter(context, position, danger);
+    const combatCenter = this.getCombatOutputCenter(context, position, danger);
 
     for (const weapon of weapons) {
       const weight = this.getWeaponLevelWeight(weapon);
