@@ -17,7 +17,7 @@ type GameSceneRunEventGameplayContext = Pick<
   'runSeed' | 'gameEventBus'
 >;
 
-type GameSceneRunEventBus = Pick<GameSceneRunEventGameplayContext['gameEventBus'], 'emit'>;
+export type GameSceneRunEventBus = Pick<GameSceneRunEventGameplayContext['gameEventBus'], 'emit'>;
 
 type GameSceneRunEventStage = Readonly<{
   id: GameSceneRunStartedPayload['stageId'];
