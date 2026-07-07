@@ -20,11 +20,11 @@ type GameSceneRunEventGameplayContext = Pick<
 
 export type GameSceneRunEventBus = Pick<GameSceneRunEventGameplayContext['gameEventBus'], 'emit'>;
 
-type GameSceneRunEventStage = Readonly<{
+export type GameSceneRunEventStage = Readonly<{
   id: GameSceneRunStartedPayload['stageId'];
 }>;
 
-type GameSceneRunEventMap = Readonly<{
+export type GameSceneRunEventMap = Readonly<{
   id: GameSceneRunStartedPayload['mapId'];
 }>;
 
