@@ -1,4 +1,5 @@
 import type { GameplayContext } from '../gameplay/GameplayContext';
+import type { GameEvent } from '../events/GameEvent';
 import type { GameEventMeta } from '../events/GameEventBus';
 import type { GameEventPayload, GameEventPayloadMap } from '../events/GameEventPayloads';
 
@@ -36,6 +37,11 @@ export type GameSceneRunStartedContext = Readonly<{
   mapId: GameSceneRunStartedPayload['mapId'];
   gameTimeSeconds: GameSceneRunStartedGameTimeSeconds;
 }>;
+
+export type GameSceneRunStartedEvent = GameEvent<
+  RunStartedEventName,
+  GameSceneRunStartedPayload
+>;
 
 type GameSceneRunStartedMeta = Required<Pick<GameEventMeta, 'gameTimeSeconds' | 'runId'>>;
 
@@ -111,10 +117,10 @@ export class GameSceneRunEventEmitter {
     return normalized || undefined;
   }
 
-  emitRunStarted(context: GameSceneRunStartedContext): void {
+  emitRunStarted(context: GameSceneRunStartedContext): GameSceneRunStartedEvent {
     const { payload, meta } = this.createRunStartedEventData(context);
 
-    context.gameEventBus.emit(
+    return context.gameEventBus.emit(
       RUN_STARTED_EVENT_NAME,
       payload,
       meta,
