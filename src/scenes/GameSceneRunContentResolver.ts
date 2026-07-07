@@ -34,12 +34,27 @@ export interface GameSceneRunContentSelectionProviderPort {
   getSelection(): SelectionState;
 }
 
+export interface GameSceneRunContentRandomSourceProviderPort {
+  getStageRandomSource(selection: SelectionState): RandomSource;
+}
+
 const DEFAULT_SELECTION_PROVIDER: GameSceneRunContentSelectionProviderPort = SelectionManager;
+
+const DEFAULT_RANDOM_SOURCE_PROVIDER: GameSceneRunContentRandomSourceProviderPort = {
+  getStageRandomSource(selection) {
+    const runSeed = RunSeed.createSeedFromSelection(selection);
+    const randomManager = new RandomManager(runSeed);
+
+    return randomManager.getSource('stage');
+  },
+};
 
 export class GameSceneRunContentResolver {
   constructor(
     private readonly selectionProvider: GameSceneRunContentSelectionProviderPort =
       DEFAULT_SELECTION_PROVIDER,
+    private readonly randomSourceProvider: GameSceneRunContentRandomSourceProviderPort =
+      DEFAULT_RANDOM_SOURCE_PROVIDER,
   ) {}
 
   resolve(
@@ -56,12 +71,13 @@ export class GameSceneRunContentResolver {
     mapManager: GameSceneRunContentMapManagerPort,
     selection: SelectionState,
   ): GameSceneRunContent {
-    const runSeed = RunSeed.createSeedFromSelection(selection);
-    const randomManager = new RandomManager(runSeed);
     const selectedStageRuntime = stageManager.getSelectedStageRuntimeDefinition();
     const stage = selectedStageRuntime.source === 'custom'
       ? selectedStageRuntime.stage
-      : stageManager.resolveStageForRun(selection.stageId, randomManager.getSource('stage'));
+      : stageManager.resolveStageForRun(
+        selection.stageId,
+        this.randomSourceProvider.getStageRandomSource(selection),
+      );
     const map = selectedStageRuntime.source === 'custom'
       ? mapManager.getSelectedMap()
       : mapManager.resolveMapForStage(stage);
