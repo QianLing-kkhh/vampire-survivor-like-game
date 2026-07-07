@@ -31,11 +31,22 @@ writeGeneralSearchArtifacts(outputDir, report);
 
 console.log(`General strategy search complete: ${outputDir}`);
 console.log(`best strategy: ${report.bestGeneralStrategy.id}`);
-console.log(`exp fitness: ${report.bestGeneralStrategy.generalFitnessScore}`);
+console.log(`fitness: ${report.bestGeneralStrategy.generalFitnessScore}`);
 console.log(`boss kill rate: ${report.bestGeneralStrategy.stats.bossKillRate}`);
+if (report.bestGeneralStrategy.stats.bossKillRate < report.config.minBossKillRate) {
+  console.log(`boss kill target not met: ${report.bestGeneralStrategy.stats.bossKillRate} < ${report.config.minBossKillRate}`);
+}
+if (report.bestGeneralStrategy.stats.p10Exp < report.config.minP10Exp) {
+  console.log(`p10 exp target not met: ${report.bestGeneralStrategy.stats.p10Exp} < ${report.config.minP10Exp}`);
+}
+if (report.bestGeneralStrategy.stats.earlyGrowthCollapseRate > report.config.maxEarlyCollapseRate) {
+  console.log(`early collapse target not met: ${report.bestGeneralStrategy.stats.earlyGrowthCollapseRate} > ${report.config.maxEarlyCollapseRate}`);
+}
 
 function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   const warnings = [...scenarioSampleInput.warnings];
+  const controlScope = createControlScope(searchConfig);
+  warnings.push(...controlScope.warnings);
   const allRuns = [];
   const allAggregates = [];
   const roundSummary = [];
@@ -46,11 +57,14 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
 
   for (let round = 1; round <= searchConfig.rounds; round += 1) {
     const searchMode = centerStrategy ? 'centered' : 'random';
-    const strategies = createRoundStrategies(searchConfig, round, centerStrategy, mutationRadius);
+    const strategies = createRoundStrategies(searchConfig, round, centerStrategy, mutationRadius, controlScope);
     const candidateRuns = evaluateStrategies(strategies, scenarioSampleInput.scenarios, round);
     const candidateAggregate = rankStrategyStats(
       runtime.aggregateGeneralStrategyRuns(candidateRuns),
       searchConfig.minBossKillRate,
+      searchConfig.objective,
+      searchConfig.minP10Exp,
+      searchConfig.maxEarlyCollapseRate,
     );
     const rankedStrategies = candidateAggregate
       .map((stats) => strategyById.get(stats.candidateId) ?? strategies.find((strategy) => strategy.candidateId === stats.candidateId))
@@ -58,12 +72,15 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
     const variants = runtime.createGeneralStrategyVariants({
       config: searchConfig,
       rankedCandidates: rankedStrategies,
-    });
+    }).map((strategy) => applyControlVariableScope(strategy, controlScope));
     const variantRuns = evaluateStrategies(variants, scenarioSampleInput.scenarios, round);
     const variantAggregate = runtime.aggregateGeneralStrategyRuns(variantRuns);
     const roundAggregates = rankStrategyStats(
       [...candidateAggregate, ...variantAggregate],
       searchConfig.minBossKillRate,
+      searchConfig.objective,
+      searchConfig.minP10Exp,
+      searchConfig.maxEarlyCollapseRate,
     );
     const bestRoundStats = roundAggregates[0];
     const bestRoundStrategy = [...strategies, ...variants].find((strategy) => strategy.candidateId === bestRoundStats.candidateId);
@@ -87,8 +104,8 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
     });
 
     if (
-      bestRoundStats.bossKillRate >= searchConfig.minBossKillRate
-      && (!bestOverall || compareEligibleStrategyStats(bestRoundStats, bestOverall.stats) < 0)
+      meetsObjectiveGate(bestRoundStats, searchConfig)
+      && (!bestOverall || compareEligibleStrategyStats(bestRoundStats, bestOverall.stats, searchConfig.objective) < 0)
     ) {
       bestOverall = {
         stats: bestRoundStats,
@@ -104,8 +121,21 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   }
 
   if (!bestOverall?.strategy) {
-    const bestAttempt = rankStrategyStats(allAggregates, searchConfig.minBossKillRate)[0];
-    throw new Error(`No candidate met minBossKillRate=${searchConfig.minBossKillRate}. Best observed bossKillRate=${bestAttempt?.bossKillRate ?? 0}, avgExp=${bestAttempt?.avgExp ?? 0}.`);
+    const bestAttempt = rankStrategyStats(allAggregates, searchConfig.minBossKillRate, searchConfig.objective, searchConfig.minP10Exp, searchConfig.maxEarlyCollapseRate)[0];
+    const bestAttemptStrategy = bestAttempt ? strategyById.get(bestAttempt.candidateId) : undefined;
+
+    if (searchConfig.strictBossKillGate || !bestAttempt || !bestAttemptStrategy) {
+      throw new Error(`No candidate met minBossKillRate=${searchConfig.minBossKillRate}, minP10Exp=${searchConfig.minP10Exp}, and maxEarlyCollapseRate=${searchConfig.maxEarlyCollapseRate}. Best observed bossKillRate=${bestAttempt?.bossKillRate ?? 0}, p10Exp=${bestAttempt?.p10Exp ?? 0}, earlyGrowthCollapseRate=${bestAttempt?.earlyGrowthCollapseRate ?? 0}, avgExp=${bestAttempt?.avgExp ?? 0}, avgLevel=${bestAttempt?.avgLevel ?? 0}, avgBossDamageDealt=${bestAttempt?.avgBossDamageDealt ?? 0}.`);
+    }
+
+    warnings.push(
+      `No candidate met minBossKillRate=${searchConfig.minBossKillRate}, minP10Exp=${searchConfig.minP10Exp}, and maxEarlyCollapseRate=${searchConfig.maxEarlyCollapseRate}; using best fallback candidate ${bestAttempt.candidateId} with bossKillRate=${bestAttempt.bossKillRate}, p10Exp=${bestAttempt.p10Exp}, earlyGrowthCollapseRate=${bestAttempt.earlyGrowthCollapseRate}, avgLevel=${bestAttempt.avgLevel}, avgBossDamageDealt=${bestAttempt.avgBossDamageDealt}, avgSurvivalTimeSeconds=${bestAttempt.avgSurvivalTimeSeconds}.`,
+    );
+
+    bestOverall = {
+      stats: bestAttempt,
+      strategy: bestAttemptStrategy,
+    };
   }
 
   const bestGeneralStrategy = runtime.createGeneratedGeneralStrategy({
@@ -116,13 +146,19 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   const baselineRuns = evaluateBaselineStrategies(searchConfig, scenarioSampleInput.scenarios, bestOverall.strategy);
   const baselineStats = runtime.aggregateGeneralStrategyRuns(baselineRuns);
   const baselineComparison = runtime.createBaselineComparison(baselineStats);
+  const phaseRuns = allRuns.flatMap((run) => run.phaseMetrics ?? []);
+  const phaseAggregate = runtime.aggregateStrategyPhaseMetrics(phaseRuns);
+  const topByPhase = runtime.selectTopStrategyPhaseAggregates(phaseAggregate, searchConfig.topN);
 
   return {
     schemaVersion: 1,
     config: searchConfig,
     scenarios: scenarioSampleInput.scenarios,
     candidateRuns: allRuns,
-    candidateAggregate: rankStrategyStats(allAggregates, searchConfig.minBossKillRate),
+    candidateAggregate: rankStrategyStats(allAggregates, searchConfig.minBossKillRate, searchConfig.objective, searchConfig.minP10Exp, searchConfig.maxEarlyCollapseRate),
+    phaseRuns,
+    phaseAggregate,
+    topByPhase,
     roundSummary,
     bestGeneralStrategy,
     baselineComparison,
@@ -130,7 +166,7 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   };
 }
 
-function createRoundStrategies(searchConfig, round, centerStrategy, mutationRadius) {
+function createRoundStrategies(searchConfig, round, centerStrategy, mutationRadius, controlScope) {
   if (centerStrategy) {
     return runtime.generateCenteredStrategyWeightCandidates({
       count: searchConfig.candidates,
@@ -138,19 +174,23 @@ function createRoundStrategies(searchConfig, round, centerStrategy, mutationRadi
       centerStrategy,
       mutationRadius,
       mutationMode: searchConfig.mutationMode,
-    }).map((candidate) => strategyDefinitionFromCandidate(searchConfig, candidate, 'centered-phased'));
+    })
+      .map((candidate) => strategyDefinitionFromCandidate(searchConfig, candidate, 'centered-phased'))
+      .map((strategy) => applyControlVariableScope(strategy, controlScope));
   }
 
   return runtime.generateStrategyWeightCandidates({
     count: searchConfig.candidates,
     randomSeed: `${searchConfig.randomSeed}-round-${round}`,
     baseProfile: runtime.profiles.balanced_default,
-  }).map((candidate) => runtime.createGeneralStrategyFromProfile({
-    candidateId: candidate.candidateId,
-    strategyVariantId: 'random-phased',
-    profile: candidate.profile,
-    config: searchConfig,
-  }));
+  })
+    .map((candidate) => runtime.createGeneralStrategyFromProfile({
+      candidateId: candidate.candidateId,
+      strategyVariantId: 'random-phased',
+      profile: candidate.profile,
+      config: searchConfig,
+    }))
+    .map((strategy) => applyControlVariableScope(strategy, controlScope));
 }
 
 function strategyDefinitionFromCandidate(searchConfig, candidate, fallbackVariantId) {
@@ -236,11 +276,18 @@ function evaluateStrategies(strategies, scenarios, round) {
           exp: result.exp,
           damageTaken: result.damageTaken,
           damageDealt: result.damageDealt,
+          bossDamageDealt: result.bossDamageDealt,
           pickupsCollected: result.pickupsCollected,
           enemiesSpawned: result.enemiesSpawned,
           bossKilled: result.bossKilled,
         },
         damageWindow,
+        phaseMetrics: runtime.computeStrategyPhaseMetrics({
+          candidateId: strategy.candidateId,
+          strategyProfileHash: strategy.strategyProfileHash,
+          result,
+          phases: config.phases,
+        }),
       });
       runIndex += 1;
     }
@@ -279,7 +326,13 @@ function evaluateBaselineStrategies(searchConfig, scenarios, bestStrategy) {
 }
 
 function loadExistingGeneratedTestStrategy(searchConfig) {
-  const generated = runtime.loadGeneratedTestStrategyIfRequested?.();
+  const generatedPath = path.join(rootDir, 'src', 'strategy', 'generated', 'generated-test-strategy.json');
+
+  if (!fs.existsSync(generatedPath)) {
+    return undefined;
+  }
+
+  const generated = JSON.parse(fs.readFileSync(generatedPath, 'utf8'));
 
   if (!generated) {
     return undefined;
@@ -309,6 +362,10 @@ function writeGeneralSearchArtifacts(outputDir, report) {
   fs.writeFileSync(path.join(outputDir, 'candidate-runs.jsonl'), `${report.candidateRuns.map((run) => stableStringify(run)).join('\n')}\n`);
   fs.writeFileSync(path.join(outputDir, 'candidate-aggregate.json'), `${stablePrettyJson(report.candidateAggregate)}\n`);
   fs.writeFileSync(path.join(outputDir, 'candidate-aggregate.csv'), `${runtime.generalStrategyAggregateCsv(report.candidateAggregate)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'phase-runs.json'), `${stablePrettyJson(report.phaseRuns)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'phase-aggregate.json'), `${stablePrettyJson(report.phaseAggregate)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'phase-aggregate.csv'), `${runtime.phaseAggregateCsv(report.phaseAggregate)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'top-by-phase.csv'), `${runtime.topByPhaseCsv(report.topByPhase)}\n`);
   fs.writeFileSync(path.join(outputDir, 'round-summary.json'), `${stablePrettyJson(report.roundSummary)}\n`);
   fs.writeFileSync(path.join(outputDir, 'round-summary.md'), runtime.roundSummaryMarkdown(report.roundSummary));
   fs.writeFileSync(path.join(outputDir, 'best-general-strategy.json'), `${stablePrettyJson(report.bestGeneralStrategy)}\n`);
@@ -331,6 +388,14 @@ function createSearchConfig(parsedArgs) {
   ));
   const mutationMode = String(getArg(parsedArgs, ['mutationMode'], 'gaussian')).toLowerCase();
   const explicitSeeds = splitCsv(String(getArg(parsedArgs, ['seeds'], '')));
+  const objective = parseSearchObjective(String(getArg(parsedArgs, ['objective'], 'growth')));
+  const defaultScenarioCount = usesFixedScenario(parsedArgs) ? 1 : 30;
+  const defaultDurationSeconds = objective === 'growth' ? 300 : 600;
+  const defaultPhase = objective === 'growth'
+    ? '0-300'
+    : objective === 'boss'
+      ? '300-600'
+      : '0-300,300-600';
 
   if (mutationMode !== 'uniform' && mutationMode !== 'gaussian') {
     throw new Error('--mutationMode must be uniform or gaussian.');
@@ -341,18 +406,23 @@ function createSearchConfig(parsedArgs) {
     generatedAt,
     scenarioCount: explicitSeeds.length > 0
       ? explicitSeeds.length
-      : positiveIntegerArg(parsedArgs, 'scenarioCount', 30),
+      : positiveIntegerArg(parsedArgs, 'scenarioCount', defaultScenarioCount),
     candidates: positiveIntegerArg(parsedArgs, 'candidates', 200),
     rounds: positiveIntegerArg(parsedArgs, 'rounds', 3),
     seedCount: explicitSeeds.length > 0
       ? 1
       : positiveIntegerArg(parsedArgs, 'seedCount', 5),
-    durationSeconds: positiveNumberArg(parsedArgs, 'durationSeconds', 120),
+    durationSeconds: positiveNumberArg(parsedArgs, 'durationSeconds', defaultDurationSeconds),
     tickMs: positiveIntegerArg(parsedArgs, 'tickMs', 50),
+    objective,
     minBossKillRate: rateArg(parsedArgs, 'minBossKillRate', 0),
+    minP10Exp: nonNegativeNumberArg(parsedArgs, 'minP10Exp', 0),
+    maxEarlyCollapseRate: rateArg(parsedArgs, 'maxEarlyCollapseRate', 1),
+    strictBossKillGate: booleanArg(parsedArgs, 'strictBossKillGate', false),
+    fallbackBelowBossKillRate: true,
     topN: positiveIntegerArg(parsedArgs, 'topN', 10),
     randomSeed: String(getArg(parsedArgs, ['randomSeed'], 'general-strategy-001')),
-    phases: runtime.parseStrategyPhases(String(getArg(parsedArgs, ['phase'], '0-30,30-60,60-120'))),
+    phases: runtime.parseStrategyPhases(String(getArg(parsedArgs, ['phase'], defaultPhase))),
     characterId: String(getArg(parsedArgs, ['characterId'], 'random')),
     stageId: String(getArg(parsedArgs, ['stageId'], 'random')),
     mapId: String(getArg(parsedArgs, ['mapId'], 'random')),
@@ -361,8 +431,198 @@ function createSearchConfig(parsedArgs) {
     initialMutationRadius: nonNegativeNumberArg(parsedArgs, 'initialMutationRadius', 15),
     mutationDecay: positiveNumberArg(parsedArgs, 'mutationDecay', 0.65),
     mutationMode,
+    optimizeLayer: String(getArg(parsedArgs, ['optimizeLayer'], 'all')).toLowerCase(),
+    optimizeWeights: splitCsv(String(getArg(parsedArgs, ['optimizeWeights'], ''))),
+    optimizePhases: splitCsv(String(getArg(parsedArgs, ['optimizePhase', 'optimizePhases'], ''))),
+    controlBaseStrategy: String(getArg(parsedArgs, ['controlBaseStrategy', 'baseStrategy'], 'balanced_default')),
     outputDir,
   };
+}
+
+function usesFixedScenario(parsedArgs) {
+  return ['characterId', 'stageId', 'mapId', 'difficultyId']
+    .every((name) => {
+      const raw = getArg(parsedArgs, [name], 'random');
+
+      return String(raw).trim().toLowerCase() !== 'random';
+    });
+}
+
+function createControlScope(searchConfig) {
+  const allPaths = runtime.listNumericWeightPaths(runtime.profiles.balanced_default);
+  const optimizedPaths = resolveOptimizedWeightPaths(searchConfig, allPaths);
+  const optimizedPhaseIds = new Set(searchConfig.optimizePhases ?? []);
+  const enabled = optimizedPaths.size > 0
+    && (optimizedPaths.size < allPaths.length || optimizedPhaseIds.size > 0);
+  const warnings = [];
+
+  if (!enabled) {
+    return {
+      enabled: false,
+      optimizedPaths,
+      optimizedPhaseIds,
+      baselineStrategy: undefined,
+      warnings,
+    };
+  }
+
+  const baselineStrategy = resolveControlBaselineStrategy(searchConfig, warnings);
+
+  warnings.push(
+    `Control-variable search enabled: optimizing ${[...optimizedPaths].sort().join(', ')}${optimizedPhaseIds.size > 0 ? ` in phases ${[...optimizedPhaseIds].sort().join(', ')}` : ''}; non-optimized weights fixed to ${baselineStrategy.candidateId}.`,
+  );
+
+  return {
+    enabled,
+    optimizedPaths,
+    optimizedPhaseIds,
+    baselineStrategy,
+    warnings,
+  };
+}
+
+function resolveOptimizedWeightPaths(searchConfig, allPaths) {
+  if (searchConfig.optimizeWeights.length > 0) {
+    const requested = new Set(searchConfig.optimizeWeights);
+    const known = new Set(allPaths);
+
+    for (const pathName of requested) {
+      if (!known.has(pathName)) {
+        throw new Error(`Unknown --optimizeWeights entry "${pathName}".`);
+      }
+    }
+
+    return requested;
+  }
+
+  const layer = searchConfig.optimizeLayer;
+
+  if (layer === 'all') {
+    return new Set(allPaths);
+  }
+
+  const sectionLayers = new Set(['movement', 'upgrade', 'treasure', 'relic']);
+
+  if (sectionLayers.has(layer)) {
+    return new Set(allPaths.filter((pathName) => pathName.startsWith(`${layer}.`)));
+  }
+
+  const layerAliases = {
+    strategic: [
+      'movement.bossBias',
+      'movement.farmBias',
+      'movement.loopBias',
+      'movement.survivalBias',
+      'movement.treasureBias',
+    ],
+    tactical: [
+      'movement.combatBias',
+      'movement.loopBias',
+      'movement.overKitePenalty',
+      'movement.treasureBias',
+    ],
+    micro: [
+      'movement.bossBias',
+      'movement.overKitePenalty',
+      'movement.riskTolerance',
+      'movement.survivalBias',
+    ],
+  };
+
+  if (layerAliases[layer]) {
+    const known = new Set(allPaths);
+
+    return new Set(layerAliases[layer].filter((pathName) => known.has(pathName)));
+  }
+
+  throw new Error('--optimizeLayer must be all, movement, upgrade, treasure, relic, strategic, tactical, or micro.');
+}
+
+function resolveControlBaselineStrategy(searchConfig, warnings) {
+  const requested = String(searchConfig.controlBaseStrategy).toLowerCase();
+
+  if (requested === 'generated_test') {
+    const generated = loadExistingGeneratedTestStrategy(searchConfig);
+
+    if (generated) {
+      return generated;
+    }
+
+    warnings.push('Requested controlBaseStrategy=generated_test, but no generated strategy was available; falling back to balanced_default.');
+  }
+
+  if (requested === 'playtest_baseline') {
+    return runtime.createGeneralStrategyFromProfile({
+      candidateId: 'playtest_baseline_control_base',
+      strategyVariantId: 'control-base',
+      profile: runtime.profiles.playtest_baseline,
+      config: searchConfig,
+    });
+  }
+
+  return runtime.createGeneralStrategyFromProfile({
+    candidateId: 'balanced_default_control_base',
+    strategyVariantId: 'control-base',
+    profile: runtime.profiles.balanced_default,
+    config: searchConfig,
+  });
+}
+
+function applyControlVariableScope(strategy, controlScope) {
+  if (!controlScope.enabled) {
+    return strategy;
+  }
+
+  const scoped = JSON.parse(JSON.stringify(strategy));
+  const phases = scoped.phasedStrategy?.phases ?? [];
+
+  for (const phase of phases) {
+    const baselineProfile = findBaselineProfileForPhase(controlScope.baselineStrategy, phase)
+      ?? controlScope.baselineStrategy.profile;
+    const phaseId = `${phase.startSeconds}-${phase.endSeconds}`;
+    const phaseOptimized = controlScope.optimizedPhaseIds.size === 0
+      || controlScope.optimizedPhaseIds.has(phaseId)
+      || controlScope.optimizedPhaseIds.has(String(phase.phaseId ?? ''));
+
+    if (!phaseOptimized) {
+      phase.profile = JSON.parse(JSON.stringify(baselineProfile));
+      continue;
+    }
+
+    for (const pathName of runtime.listNumericWeightPaths(phase.profile)) {
+      if (controlScope.optimizedPaths.has(pathName)) {
+        continue;
+      }
+
+      setProfileWeight(phase.profile, pathName, getProfileWeight(baselineProfile, pathName));
+    }
+  }
+
+  scoped.profile = JSON.parse(JSON.stringify(phases[0]?.profile ?? scoped.profile));
+  scoped.strategyProfileHash = runtime.hashStableValue('fnv1a', scoped.phasedStrategy ?? scoped.profile);
+
+  return scoped;
+}
+
+function findBaselineProfileForPhase(baselineStrategy, phase) {
+  const baselinePhases = baselineStrategy.phasedStrategy?.phases ?? [];
+  const exact = baselinePhases.find((baselinePhase) => (
+    baselinePhase.startSeconds === phase.startSeconds
+    && baselinePhase.endSeconds === phase.endSeconds
+  ));
+
+  if (exact) {
+    return exact.profile;
+  }
+
+  return baselinePhases
+    .map((baselinePhase) => ({
+      phase: baselinePhase,
+      overlap: Math.min(baselinePhase.endSeconds, phase.endSeconds) - Math.max(baselinePhase.startSeconds, phase.startSeconds),
+    }))
+    .filter((candidate) => candidate.overlap > 0)
+    .sort((a, b) => b.overlap - a.overlap || a.phase.startSeconds - b.phase.startSeconds)[0]
+    ?.phase.profile;
 }
 
 function createScenarioSample(searchConfig, contentBundle, parsedArgs) {
@@ -483,30 +743,125 @@ function rateArg(parsedArgs, name, fallback) {
   return value;
 }
 
-function rankStrategyStats(stats, minBossKillRate) {
-  return [...stats].sort((a, b) => compareStrategyStats(a, b, minBossKillRate));
+function booleanArg(parsedArgs, name, fallback) {
+  const value = getArg(parsedArgs, [name], fallback ? 'true' : 'false');
+
+  if (value === true || value === false) {
+    return value;
+  }
+
+  const normalized = String(value).toLowerCase();
+
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'y') {
+    return true;
+  }
+
+  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'n') {
+    return false;
+  }
+
+  throw new Error(`--${name} must be true or false.`);
 }
 
-function compareStrategyStats(a, b, minBossKillRate) {
-  const aEligible = a.bossKillRate >= minBossKillRate;
-  const bEligible = b.bossKillRate >= minBossKillRate;
+function parseSearchObjective(value) {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized === 'growth' || normalized === 'boss' || normalized === 'full') {
+    return normalized;
+  }
+
+  throw new Error('--objective must be growth, boss, or full.');
+}
+
+function rankStrategyStats(stats, minBossKillRate, objective, minP10Exp = 0, maxEarlyCollapseRate = 1) {
+  return [...stats].sort((a, b) => compareStrategyStats(a, b, minBossKillRate, objective, minP10Exp, maxEarlyCollapseRate));
+}
+
+function compareStrategyStats(a, b, minBossKillRate, objective, minP10Exp, maxEarlyCollapseRate) {
+  const requiresBossKillGate = objective !== 'growth' && minBossKillRate > 0;
+  const aBossEligible = !requiresBossKillGate || a.bossKillRate >= minBossKillRate;
+  const bBossEligible = !requiresBossKillGate || b.bossKillRate >= minBossKillRate;
+  const aStabilityEligible = minP10Exp <= 0 || a.p10Exp >= minP10Exp;
+  const bStabilityEligible = minP10Exp <= 0 || b.p10Exp >= minP10Exp;
+  const aCollapseEligible = a.earlyGrowthCollapseRate <= maxEarlyCollapseRate;
+  const bCollapseEligible = b.earlyGrowthCollapseRate <= maxEarlyCollapseRate;
+  const aEligible = aBossEligible && aStabilityEligible && aCollapseEligible;
+  const bEligible = bBossEligible && bStabilityEligible && bCollapseEligible;
 
   if (aEligible !== bEligible) {
     return aEligible ? -1 : 1;
   }
 
   if (aEligible && bEligible) {
-    return compareEligibleStrategyStats(a, b);
+    return compareEligibleStrategyStats(a, b, objective);
   }
 
   return b.bossKillRate - a.bossKillRate
+    || a.earlyGrowthCollapseRate - b.earlyGrowthCollapseRate
+    || b.p10Exp - a.p10Exp
+    || b.avgBossDamageDealt - a.avgBossDamageDealt
+    || b.avgLevel - a.avgLevel
+    || b.avgSurvivalTimeSeconds - a.avgSurvivalTimeSeconds
     || b.generalFitnessScore - a.generalFitnessScore
     || a.candidateId.localeCompare(b.candidateId);
 }
 
-function compareEligibleStrategyStats(a, b) {
+function compareEligibleStrategyStats(a, b, objective = 'full') {
+  if (objective === 'growth') {
+    return b.completionRate - a.completionRate
+      || b.avgSurvivalTimeSeconds - a.avgSurvivalTimeSeconds
+      || a.avgDamageTaken - b.avgDamageTaken
+      || b.avgLevel - a.avgLevel
+      || b.avgExp - a.avgExp
+      || b.avgKills - a.avgKills
+      || b.generalFitnessScore - a.generalFitnessScore
+      || a.candidateId.localeCompare(b.candidateId);
+  }
+
+  if (objective === 'boss') {
+    return b.bossKillRate - a.bossKillRate
+      || b.avgBossDamageDealt - a.avgBossDamageDealt
+      || b.avgSurvivalTimeSeconds - a.avgSurvivalTimeSeconds
+      || b.avgLevel - a.avgLevel
+      || a.avgDamageTaken - b.avgDamageTaken
+      || b.generalFitnessScore - a.generalFitnessScore
+      || a.candidateId.localeCompare(b.candidateId);
+  }
+
   return b.generalFitnessScore - a.generalFitnessScore
     || a.candidateId.localeCompare(b.candidateId);
+}
+
+function meetsObjectiveGate(stats, searchConfig) {
+  if (searchConfig.minP10Exp > 0 && stats.p10Exp < searchConfig.minP10Exp) {
+    return false;
+  }
+
+  if (stats.earlyGrowthCollapseRate > searchConfig.maxEarlyCollapseRate) {
+    return false;
+  }
+
+  if (searchConfig.objective === 'growth') {
+    return true;
+  }
+
+  return stats.bossKillRate >= searchConfig.minBossKillRate;
+}
+
+function getProfileWeight(profile, pathName) {
+  const [section, key] = pathName.split('.');
+
+  return profile[section]?.[key];
+}
+
+function setProfileWeight(profile, pathName, value) {
+  const [section, key] = pathName.split('.');
+
+  if (!profile[section] || typeof profile[section][key] !== 'number') {
+    throw new Error(`Unknown strategy weight "${pathName}".`);
+  }
+
+  profile[section][key] = value;
 }
 
 function stablePrettyJson(value) {
@@ -528,11 +883,15 @@ Options:
   --seedCount              Seeds per sampled coordinate
   --durationSeconds        Simulation duration
   --tickMs                 Fixed tick size
+  --objective              growth, boss, or full. Defaults to growth; growth defaults to 0-300s, boss/full to 600s windows
   --minBossKillRate        Required boss kill rate, 0-1
+  --minP10Exp              Required p10 exp across sampled runs; default 0 disables this stability gate
+  --maxEarlyCollapseRate   Maximum rate of runs ending before 180s at level <= 6; default 1 disables this gate
+  --strictBossKillGate     true to fail when no candidate meets minBossKillRate; default false keeps best fallback
   --topN                   Top candidate count for topN-median variant
   --randomSeed             Deterministic random seed
   --seeds                  Comma-separated explicit scenario seeds; overrides generated scenario seeds
-  --phase                  Phase ranges, e.g. 0-30,30-60,60-120
+  --phase                  Phase ranges, e.g. 0-300,300-600
   --characterId            random or comma-separated ids
   --stageId                random or comma-separated ids
   --mapId                  random or comma-separated ids
@@ -541,6 +900,9 @@ Options:
   --initialMutationRadius  Local search initial mutation radius
   --mutationDecay          Radius decay per centered round
   --mutationMode           uniform or gaussian
+  --optimizeLayer          all, movement, upgrade, treasure, relic, strategic, tactical, or micro
+  --optimizeWeights        Comma-separated exact weight paths, e.g. movement.farmBias,movement.combatBias
+  --controlBaseStrategy    balanced_default, playtest_baseline, or generated_test
   --outputDir              Artifact output directory
   --help                   Show this help
 `);

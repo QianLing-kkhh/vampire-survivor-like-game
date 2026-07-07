@@ -6,6 +6,7 @@ export interface KeyValueStat {
 export interface RunStatsSummary {
   damageTaken: number;
   lowestHp: number;
+  bossDamageDealt: number;
   weaponDamageStats: KeyValueStat[];
   weaponHitStats: KeyValueStat[];
   weaponKillStats: KeyValueStat[];
@@ -14,6 +15,7 @@ export interface RunStatsSummary {
 
 export class RunStats {
   private damageTakenTotal = 0;
+  private bossDamageDealtTotal = 0;
   private lowestHpValue: number;
   private readonly weaponDamage = new Map<string, number>();
   private readonly weaponHits = new Map<string, number>();
@@ -39,6 +41,10 @@ export class RunStats {
     this.increment(this.weaponDamage, weaponId, Math.max(0, damage));
   }
 
+  recordBossDamageDealt(damage: number): void {
+    this.bossDamageDealtTotal += Math.max(0, damage);
+  }
+
   recordWeaponHit(weaponId: string): void {
     this.increment(this.weaponHits, weaponId, 1);
   }
@@ -55,6 +61,7 @@ export class RunStats {
     return {
       damageTaken: this.damageTakenTotal,
       lowestHp: Number.isFinite(this.lowestHpValue) ? this.lowestHpValue : 0,
+      bossDamageDealt: this.bossDamageDealtTotal,
       weaponDamageStats: this.toStats(this.weaponDamage),
       weaponHitStats: this.toStats(this.weaponHits),
       weaponKillStats: this.toStats(this.weaponKills),

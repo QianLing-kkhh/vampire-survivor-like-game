@@ -1,5 +1,6 @@
-import bossesData from '../data/bosses.json';
 import { BossSkillConfig } from '../boss/skills/BossSkillConfig';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
 
 export type EndlessBossId =
   | 'endless_berserker'
@@ -19,14 +20,17 @@ export interface EndlessBossConfig {
   description: string;
 }
 
-const typedBossesData = bossesData as {
-  endlessBosses: Record<EndlessBossId, EndlessBossConfig>;
-};
+ContentBootstrap.ensureInitialized();
 
-export const ENDLESS_BOSS_CONFIGS: readonly EndlessBossConfig[] = Object.values(
-  typedBossesData.endlessBosses,
-);
+export const ENDLESS_BOSS_CONFIGS: readonly EndlessBossConfig[] =
+  ContentRegistry.listEndlessBossConfigs();
 
 export function getEndlessBossConfig(id: EndlessBossId): EndlessBossConfig {
-  return typedBossesData.endlessBosses[id];
+  const config = ContentRegistry.getEndlessBossConfig(id);
+
+  if (!config) {
+    throw new Error(`Endless boss config not found: ${id}`);
+  }
+
+  return config;
 }

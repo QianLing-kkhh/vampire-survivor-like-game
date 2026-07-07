@@ -151,6 +151,7 @@ export class CoreSimulation {
       exp: this.state.runStats.expCollected,
       score: this.calculateScore(survivalMs),
       damageDealt: Math.round(this.state.runStats.damageDealt),
+      bossDamageDealt: Math.round(this.state.runStats.bossDamageDealt),
       damageTaken: Math.round(this.state.runStats.damageTaken),
       pickupsCollected: this.state.runStats.pickupsCollected,
       enemiesSpawned: this.state.runStats.enemiesSpawned,
@@ -266,6 +267,7 @@ export class CoreSimulation {
         kills: 0,
         bossKills: 0,
         damageDealt: 0,
+        bossDamageDealt: 0,
         damageTaken: 0,
         expCollected: 0,
         levelsGained: 0,
@@ -463,6 +465,10 @@ export class CoreSimulation {
     for (const enemy of targets) {
       enemy.currentHp -= weapon.damage;
       this.state.runStats.damageDealt += weapon.damage;
+
+      if (enemy.bossLike) {
+        this.state.runStats.bossDamageDealt += weapon.damage;
+      }
     }
 
     this.killDeadEnemies();
@@ -648,6 +654,7 @@ export class CoreSimulation {
       kills: this.state.runStats.kills,
       exp: this.state.runStats.expCollected,
       damageDealt: Number(this.state.runStats.damageDealt.toFixed(3)),
+      bossDamageDealt: Number(this.state.runStats.bossDamageDealt.toFixed(3)),
       damageTaken: Number(this.state.runStats.damageTaken.toFixed(3)),
       pickupsCollected: this.state.runStats.pickupsCollected,
       enemiesSpawned: this.state.runStats.enemiesSpawned,

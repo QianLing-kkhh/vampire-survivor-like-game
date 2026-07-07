@@ -57,6 +57,7 @@ export interface SimRunStats {
   kills: number;
   bossKills: number;
   damageDealt: number;
+  bossDamageDealt: number;
   damageTaken: number;
   expCollected: number;
   levelsGained: number;
@@ -78,6 +79,7 @@ export interface SimTracePoint {
   kills: number;
   exp: number;
   damageDealt: number;
+  bossDamageDealt: number;
   damageTaken: number;
   pickupsCollected: number;
   enemiesSpawned: number;

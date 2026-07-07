@@ -300,6 +300,7 @@ export function writeHeadlessArtifacts(outPath, input) {
   const outDirPath = path.resolve(rootDir, outPath);
   const aggregate = input.aggregate ?? createAggregate(input.results);
   const manifest = createManifest(input.matrix, input.results, input.commandArgs ?? []);
+  const diagnostics = createHeadlessDiagnostics(input.results);
 
   fs.mkdirSync(outDirPath, { recursive: true });
   fs.writeFileSync(path.join(outDirPath, 'manifest.json'), `${stablePrettyJson(manifest)}\n`);
@@ -307,8 +308,207 @@ export function writeHeadlessArtifacts(outPath, input) {
   fs.writeFileSync(path.join(outDirPath, 'run-results.csv'), `${batchCsvHeader}\n${input.results.map(resultToCsvRow).join('\n')}\n`);
   fs.writeFileSync(path.join(outDirPath, 'aggregate.json'), `${stablePrettyJson(aggregate)}\n`);
   fs.writeFileSync(path.join(outDirPath, 'aggregate.md'), loadHeadlessSimulationRuntime().aggregateToMarkdown(aggregate));
+  fs.writeFileSync(path.join(outDirPath, 'diagnostics.json'), `${stablePrettyJson(diagnostics)}\n`);
+  fs.writeFileSync(path.join(outDirPath, 'diagnostics.md'), diagnosticsToMarkdown(diagnostics));
 
   return { outDir: outDirPath, manifest, aggregate };
+}
+
+export function createHeadlessDiagnostics(results) {
+  const runs = results.map((result) => createRunDiagnostics(result));
+  const failureBuckets = {};
+
+  for (const run of runs) {
+    failureBuckets[run.failureBucket] = (failureBuckets[run.failureBucket] ?? 0) + 1;
+  }
+
+  return {
+    schemaVersion: 1,
+    runCount: runs.length,
+    failureBuckets,
+    runs,
+  };
+}
+
+function createRunDiagnostics(result) {
+  const trace = Array.isArray(result.trace) ? result.trace : [];
+  const phaseSummaries = createPhaseSummaries(trace);
+  const finalTrace = trace[trace.length - 1];
+  const lowGrowthPhase = phaseSummaries.find((phase) => (
+    phase.endSeconds <= 180
+    && phase.levelEnd <= 6
+    && phase.damageTakenDelta >= 45
+  ));
+
+  return {
+    seed: result.seed,
+    strategyProfileId: result.strategyProfileId,
+    result: result.result,
+    survivalTimeSeconds: result.survivalTimeSeconds,
+    level: result.level,
+    exp: result.exp,
+    damageTaken: result.damageTaken,
+    damageDealt: result.damageDealt,
+    bossDamageDealt: result.bossDamageDealt,
+    bossKilled: result.bossKilled,
+    failureBucket: classifyRunFailure(result, phaseSummaries),
+    firstCriticalPhaseId: lowGrowthPhase?.phaseId,
+    finalSnapshot: finalTrace ? createTraceSnapshot(finalTrace) : undefined,
+    phaseSummaries,
+  };
+}
+
+function createPhaseSummaries(trace) {
+  const phases = [
+    { phaseId: '0-90', startSeconds: 0, endSeconds: 90 },
+    { phaseId: '90-180', startSeconds: 90, endSeconds: 180 },
+    { phaseId: '180-300', startSeconds: 180, endSeconds: 300 },
+    { phaseId: '300+', startSeconds: 300, endSeconds: Number.POSITIVE_INFINITY },
+  ];
+
+  return phases.map((phase) => createPhaseSummary(trace, phase));
+}
+
+function createPhaseSummary(trace, phase) {
+  const start = findTraceAtOrAfter(trace, phase.startSeconds * 1000) ?? trace[0];
+  const end = findTraceAtOrBefore(trace, phase.endSeconds * 1000) ?? trace[trace.length - 1];
+
+  if (!start || !end || end.timeMs < phase.startSeconds * 1000) {
+    return {
+      phaseId: phase.phaseId,
+      startSeconds: phase.startSeconds,
+      endSeconds: Number.isFinite(phase.endSeconds) ? phase.endSeconds : undefined,
+      observed: false,
+      levelStart: 0,
+      levelEnd: 0,
+      expDelta: 0,
+      killsDelta: 0,
+      damageTakenDelta: 0,
+      damageDealtDelta: 0,
+      bossDamageDelta: 0,
+      pickupsDelta: 0,
+      enemyCountEnd: 0,
+      pickupCountEnd: 0,
+    };
+  }
+
+  return {
+    phaseId: phase.phaseId,
+    startSeconds: phase.startSeconds,
+    endSeconds: Number.isFinite(phase.endSeconds) ? phase.endSeconds : undefined,
+    observed: true,
+    levelStart: start.level,
+    levelEnd: end.level,
+    expDelta: Math.max(0, end.exp - start.exp),
+    killsDelta: Math.max(0, end.kills - start.kills),
+    damageTakenDelta: roundMetric(end.damageTaken - start.damageTaken),
+    damageDealtDelta: Math.max(0, end.damageDealt - start.damageDealt),
+    bossDamageDelta: Math.max(0, end.bossDamageDealt - start.bossDamageDealt),
+    pickupsDelta: Math.max(0, end.pickupsCollected - start.pickupsCollected),
+    enemyCountEnd: end.enemyCount,
+    pickupCountEnd: end.pickupCount,
+  };
+}
+
+function classifyRunFailure(result, phaseSummaries) {
+  if (result.bossKilled || result.result === 'victory') {
+    return 'victory';
+  }
+
+  if (result.result === 'completed') {
+    return result.bossDamageDealt > 0 ? 'boss-timeout' : 'completed-no-boss-output';
+  }
+
+  if (result.survivalTimeSeconds < 180 && result.level <= 6) {
+    return 'early-growth-collapse';
+  }
+
+  if (result.survivalTimeSeconds < 300) {
+    return 'midgame-pressure-death';
+  }
+
+  const bossPhase = phaseSummaries.find((phase) => phase.phaseId === '300+');
+
+  if (bossPhase?.observed && bossPhase.damageTakenDelta > 0) {
+    return 'boss-phase-death';
+  }
+
+  return 'late-run-death';
+}
+
+function createTraceSnapshot(point) {
+  return {
+    timeSeconds: roundMetric(point.timeMs / 1000),
+    level: point.level,
+    exp: point.exp,
+    playerHp: roundMetric(point.playerHp),
+    playerMaxHp: roundMetric(point.playerMaxHp),
+    enemyCount: point.enemyCount,
+    pickupCount: point.pickupCount,
+    kills: point.kills,
+    damageTaken: roundMetric(point.damageTaken),
+    damageDealt: point.damageDealt,
+    bossDamageDealt: point.bossDamageDealt,
+  };
+}
+
+function diagnosticsToMarkdown(diagnostics) {
+  const lines = [
+    '# Headless Diagnostics',
+    '',
+    `Run count: ${diagnostics.runCount}`,
+    '',
+    '## Failure Buckets',
+    '',
+    '| Bucket | Runs |',
+    '| --- | ---: |',
+  ];
+
+  for (const [bucket, count] of Object.entries(diagnostics.failureBuckets)) {
+    lines.push(`| ${bucket} | ${count} |`);
+  }
+
+  lines.push('', '## Runs', '', '| Seed | Result | Survival | Level | Damage | Boss Damage | Bucket | Critical Phase |');
+  lines.push('| --- | --- | ---: | ---: | ---: | ---: | --- | --- |');
+
+  for (const run of diagnostics.runs) {
+    lines.push([
+      run.seed,
+      run.result,
+      run.survivalTimeSeconds,
+      run.level,
+      run.damageTaken,
+      run.bossDamageDealt,
+      run.failureBucket,
+      run.firstCriticalPhaseId ?? '',
+    ].join(' | ').replace(/^/, '| ').replace(/$/, ' |'));
+  }
+
+  lines.push('');
+
+  return `${lines.join('\n')}\n`;
+}
+
+function findTraceAtOrAfter(trace, timeMs) {
+  return trace.find((point) => point.timeMs >= timeMs);
+}
+
+function findTraceAtOrBefore(trace, timeMs) {
+  if (!Number.isFinite(timeMs)) {
+    return trace[trace.length - 1];
+  }
+
+  for (let index = trace.length - 1; index >= 0; index -= 1) {
+    if (trace[index].timeMs <= timeMs) {
+      return trace[index];
+    }
+  }
+
+  return undefined;
+}
+
+function roundMetric(value) {
+  return Number((Number(value) || 0).toFixed(2));
 }
 
 export function readAggregateFromPath(inputPath) {
@@ -349,6 +549,7 @@ export function resultToCsvRow(result) {
     result.exp,
     result.score,
     result.damageDealt,
+    result.bossDamageDealt ?? 0,
     result.damageTaken,
     result.pickupsCollected,
     result.enemiesSpawned,
@@ -380,6 +581,7 @@ export const batchCsvHeader = [
   'exp',
   'score',
   'damageDealt',
+  'bossDamageDealt',
   'damageTaken',
   'pickupsCollected',
   'enemiesSpawned',

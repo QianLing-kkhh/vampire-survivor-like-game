@@ -9,6 +9,14 @@ const DAMAGE_WINDOW_SECONDS = 30;
 const DAMAGE_WINDOW_MAX_RATIO = 0.15;
 const DAMAGE_WINDOW_VIOLATION_PENALTY = 5000;
 const DAMAGE_WINDOW_EXCESS_RATIO_PENALTY = 10000;
+const FITNESS_EXP_WEIGHT = 1;
+const FITNESS_DAMAGE_DEALT_WEIGHT = 0.08;
+const FITNESS_BOSS_DAMAGE_DEALT_WEIGHT = 0.18;
+const FITNESS_LEVEL_WEIGHT = 80;
+const FITNESS_SURVIVAL_WEIGHT = 2;
+const FITNESS_BOSS_KILL_RATE_WEIGHT = 2200;
+const FITNESS_COMPLETION_RATE_WEIGHT = 800;
+const FITNESS_DAMAGE_SAFETY_PENALTY_WEIGHT = 0.08;
 
 export function aggregateGeneralStrategyRuns(
   runs: readonly GeneralStrategyRunRecord[],
@@ -31,7 +39,7 @@ export function aggregateGeneralStrategyRuns(
 
 export function generalStrategyAggregateCsv(stats: readonly GeneralStrategyCandidateStats[]): string {
   return [
-    'candidateId,strategyVariantId,runs,scenarioCount,bossKillRate,avgExp,medianExp,p10Exp,p90Exp,expStdDev,avgScore,medianScore,p10Score,p90Score,completionRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageDealt,medianDamageDealt,p10DamageDealt,p90DamageDealt,avgDamageTaken,damageWindowPassRate,avgDamageWindowViolationCount,avgMaxDamageWindowRatio,damageSafetyPenalty,damageDealtStdDev,scoreStdDev,consistencyScore,generalFitnessScore',
+    'candidateId,strategyVariantId,runs,scenarioCount,bossKillRate,avgExp,medianExp,p10Exp,p90Exp,expStdDev,avgScore,medianScore,p10Score,p90Score,completionRate,earlyGrowthCollapseRate,avgSurvivalTimeSeconds,avgLevel,avgKills,avgDamageDealt,medianDamageDealt,p10DamageDealt,p90DamageDealt,avgBossDamageDealt,medianBossDamageDealt,p10BossDamageDealt,p90BossDamageDealt,avgDamageTaken,damageWindowPassRate,avgDamageWindowViolationCount,avgMaxDamageWindowRatio,damageSafetyPenalty,damageDealtStdDev,scoreStdDev,consistencyScore,generalFitnessScore',
     ...stats.map((row) => [
       row.candidateId,
       row.strategyVariantId,
@@ -48,6 +56,7 @@ export function generalStrategyAggregateCsv(stats: readonly GeneralStrategyCandi
       row.p10Score,
       row.p90Score,
       row.completionRate,
+      row.earlyGrowthCollapseRate,
       row.avgSurvivalTimeSeconds,
       row.avgLevel,
       row.avgKills,
@@ -55,6 +64,10 @@ export function generalStrategyAggregateCsv(stats: readonly GeneralStrategyCandi
       row.medianDamageDealt,
       row.p10DamageDealt,
       row.p90DamageDealt,
+      row.avgBossDamageDealt,
+      row.medianBossDamageDealt,
+      row.p10BossDamageDealt,
+      row.p90BossDamageDealt,
       row.avgDamageTaken,
       row.damageWindowPassRate,
       row.avgDamageWindowViolationCount,
@@ -84,6 +97,7 @@ export function createBaselineComparison(
       p10Score: stats.p10Score,
       completionRate: stats.completionRate,
       avgSurvivalTimeSeconds: stats.avgSurvivalTimeSeconds,
+      earlyGrowthCollapseRate: stats.earlyGrowthCollapseRate,
       bossKillRate: stats.bossKillRate,
       avgExp: stats.avgExp,
       medianExp: stats.medianExp,
@@ -91,6 +105,9 @@ export function createBaselineComparison(
       avgDamageDealt: stats.avgDamageDealt,
       medianDamageDealt: stats.medianDamageDealt,
       p10DamageDealt: stats.p10DamageDealt,
+      avgBossDamageDealt: stats.avgBossDamageDealt,
+      medianBossDamageDealt: stats.medianBossDamageDealt,
+      p10BossDamageDealt: stats.p10BossDamageDealt,
       avgDamageTaken: stats.avgDamageTaken,
       damageWindowPassRate: stats.damageWindowPassRate,
       damageSafetyPenalty: stats.damageSafetyPenalty,
@@ -107,12 +124,12 @@ export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselin
   const lines = [
     '# General Strategy Baseline Comparison',
     '',
-    '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Score | Completion | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
-    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
+    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
   ];
 
   for (const row of rows) {
-    lines.push(`| ${row.strategyId} | ${row.bossKillRate} | ${row.avgExp} | ${row.medianExp} | ${row.p10Exp} | ${row.avgDamageDealt} | ${row.avgScore} | ${row.completionRate} | ${row.damageWindowPassRate} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
+    lines.push(`| ${row.strategyId} | ${row.bossKillRate} | ${row.avgExp} | ${row.medianExp} | ${row.p10Exp} | ${row.avgDamageDealt} | ${row.avgBossDamageDealt} | ${row.avgScore} | ${row.completionRate} | ${row.earlyGrowthCollapseRate} | ${row.damageWindowPassRate} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
   }
 
   return `${lines.join('\n')}\n`;
@@ -122,12 +139,14 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
   const scores = runs.map((run) => run.result.score);
   const expValues = runs.map((run) => run.result.exp);
   const damageDealtValues = runs.map((run) => run.result.damageDealt);
+  const bossDamageDealtValues = runs.map((run) => run.result.bossDamageDealt ?? 0);
   const scoreStdDev = stdDev(scores);
   const expStdDev = stdDev(expValues);
   const damageDealtStdDev = stdDev(damageDealtValues);
   const avgDamageTaken = average(runs.map((run) => run.result.damageTaken));
   const damageSafetyPenalty = average(runs.map((run) => calculateDamageSafetyPenalty(run.damageWindow)));
   const completionRate = runs.filter((run) => run.result.result === 'completed' || run.result.result === 'victory').length / Math.max(1, runs.length);
+  const earlyGrowthCollapseRate = runs.filter(isEarlyGrowthCollapse).length / Math.max(1, runs.length);
   const bossKillRate = runs.filter((run) => run.result.bossKilled).length / Math.max(1, runs.length);
   const avgScore = average(scores);
   const medianScore = percentile(scores, 0.5);
@@ -140,7 +159,20 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
   const medianDamageDealt = percentile(damageDealtValues, 0.5);
   const p10DamageDealt = percentile(damageDealtValues, 0.1);
   const p90DamageDealt = percentile(damageDealtValues, 0.9);
-  const generalFitnessScore = avgExp;
+  const avgBossDamageDealt = average(bossDamageDealtValues);
+  const medianBossDamageDealt = percentile(bossDamageDealtValues, 0.5);
+  const p10BossDamageDealt = percentile(bossDamageDealtValues, 0.1);
+  const p90BossDamageDealt = percentile(bossDamageDealtValues, 0.9);
+  const generalFitnessScore = calculateGeneralFitnessScore({
+    avgExp,
+    avgDamageDealt,
+    avgBossDamageDealt,
+    avgLevel: average(runs.map((run) => run.result.level)),
+    avgSurvivalTimeSeconds: average(runs.map((run) => run.result.survivalTimeSeconds)),
+    bossKillRate,
+    completionRate,
+    damageSafetyPenalty,
+  });
 
   return {
     candidateId: runs[0]?.candidateId ?? '',
@@ -155,6 +187,7 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     minScore: roundMetric(scores.length > 0 ? Math.min(...scores) : 0),
     maxScore: roundMetric(scores.length > 0 ? Math.max(...scores) : 0),
     avgSurvivalTimeSeconds: roundMetric(average(runs.map((run) => run.result.survivalTimeSeconds))),
+    earlyGrowthCollapseRate: roundMetric(earlyGrowthCollapseRate),
     completionRate: roundMetric(completionRate),
     avgLevel: roundMetric(average(runs.map((run) => run.result.level))),
     avgKills: roundMetric(average(runs.map((run) => run.result.kills))),
@@ -168,6 +201,10 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     medianDamageDealt: roundMetric(medianDamageDealt),
     p10DamageDealt: roundMetric(p10DamageDealt),
     p90DamageDealt: roundMetric(p90DamageDealt),
+    avgBossDamageDealt: roundMetric(avgBossDamageDealt),
+    medianBossDamageDealt: roundMetric(medianBossDamageDealt),
+    p10BossDamageDealt: roundMetric(p10BossDamageDealt),
+    p90BossDamageDealt: roundMetric(p90BossDamageDealt),
     avgDamageTaken: roundMetric(avgDamageTaken),
     damageWindowPassRate: roundMetric(runs.filter((run) => run.damageWindow.passed).length / Math.max(1, runs.length)),
     avgDamageWindowViolationCount: roundMetric(average(runs.map((run) => run.damageWindow.violationCount))),
@@ -178,6 +215,30 @@ function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): Gene
     consistencyScore: roundMetric(p10Exp - expStdDev * 0.5),
     generalFitnessScore: roundMetric(generalFitnessScore),
   };
+}
+
+function isEarlyGrowthCollapse(run: GeneralStrategyRunRecord): boolean {
+  return run.result.survivalTimeSeconds < 180 && run.result.level <= 6;
+}
+
+function calculateGeneralFitnessScore(input: {
+  avgExp: number;
+  avgDamageDealt: number;
+  avgBossDamageDealt: number;
+  avgLevel: number;
+  avgSurvivalTimeSeconds: number;
+  bossKillRate: number;
+  completionRate: number;
+  damageSafetyPenalty: number;
+}): number {
+  return input.avgExp * FITNESS_EXP_WEIGHT
+    + input.avgDamageDealt * FITNESS_DAMAGE_DEALT_WEIGHT
+    + input.avgBossDamageDealt * FITNESS_BOSS_DAMAGE_DEALT_WEIGHT
+    + input.avgLevel * FITNESS_LEVEL_WEIGHT
+    + input.avgSurvivalTimeSeconds * FITNESS_SURVIVAL_WEIGHT
+    + input.bossKillRate * FITNESS_BOSS_KILL_RATE_WEIGHT
+    + input.completionRate * FITNESS_COMPLETION_RATE_WEIGHT
+    - input.damageSafetyPenalty * FITNESS_DAMAGE_SAFETY_PENALTY_WEIGHT;
 }
 
 export function calculateDamageWindowMetrics(result: {

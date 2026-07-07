@@ -13,6 +13,12 @@ interface Position {
   y: number;
 }
 
+export interface PickupSnapshot {
+  x: number;
+  y: number;
+  exp: number;
+}
+
 export class PickupManager {
   private static readonly SOFT_PICKUP_CAP = 650;
   private static readonly HARD_PICKUP_CAP = 900;
@@ -51,6 +57,14 @@ export class PickupManager {
 
   getActiveCount(): number {
     return this.pickups.filter((pickup) => !pickup.isCollected).length;
+  }
+
+  getPickupSnapshots(): PickupSnapshot[] {
+    return this.pickups.map((pickup) => ({
+      x: pickup.body.x,
+      y: pickup.body.y,
+      exp: pickup.exp,
+    }));
   }
 
   getDebugStats(): {

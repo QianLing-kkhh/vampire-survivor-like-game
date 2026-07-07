@@ -138,18 +138,24 @@ export function phaseAggregateCsv(aggregates: readonly StrategyPhaseAggregate[])
       aggregate.avgScoreGain,
       aggregate.avgExpGain,
       aggregate.avgLevelGain,
+      aggregate.avgEndLevel,
+      aggregate.avgEndExp,
+      aggregate.avgEndPlayerHp,
+      aggregate.avgEndPlayerHpRatio,
       aggregate.avgKills,
       aggregate.avgDamageDealt,
+      aggregate.avgBossDamageDealt,
       aggregate.avgDamageTaken,
       aggregate.avgPickupsCollected,
       aggregate.avgEnemiesSpawned,
+      aggregate.bossKillRate,
       aggregate.phaseFitnessScore,
     ].map(escapeCsv).join(',')),
   ].join('\n');
 }
 
 export function topByPhaseCsv(topByPhase: Record<string, StrategyPhaseAggregate[]>): string {
-  const rows = ['phaseId,rank,candidateId,strategyProfileHash,phaseFitnessScore,survivalRate,avgScoreGain,avgExpGain,avgLevelGain,avgKills,avgDamageDealt,avgDamageTaken,avgPickupsCollected,avgEnemiesSpawned'];
+  const rows = ['phaseId,rank,candidateId,strategyProfileHash,phaseFitnessScore,survivalRate,avgScoreGain,avgExpGain,avgLevelGain,avgEndLevel,avgEndPlayerHpRatio,avgKills,avgDamageDealt,avgBossDamageDealt,avgDamageTaken,avgPickupsCollected,avgEnemiesSpawned,bossKillRate'];
 
   for (const phaseId of Object.keys(topByPhase).sort()) {
     topByPhase[phaseId].forEach((aggregate, index) => {
@@ -163,11 +169,15 @@ export function topByPhaseCsv(topByPhase: Record<string, StrategyPhaseAggregate[
         aggregate.avgScoreGain,
         aggregate.avgExpGain,
         aggregate.avgLevelGain,
+        aggregate.avgEndLevel,
+        aggregate.avgEndPlayerHpRatio,
         aggregate.avgKills,
         aggregate.avgDamageDealt,
+        aggregate.avgBossDamageDealt,
         aggregate.avgDamageTaken,
         aggregate.avgPickupsCollected,
         aggregate.avgEnemiesSpawned,
+        aggregate.bossKillRate,
       ].map(escapeCsv).join(','));
     });
   }
@@ -414,11 +424,11 @@ export function strategyWeightSearchSummaryMarkdown(report: StrategyWeightSearch
   for (const phase of report.config.phases) {
     const top = report.topByPhase[phase.phaseId] ?? [];
     lines.push(`### ${phase.phaseId}`, '');
-    lines.push('| Rank | Candidate | Fitness | Survival | Score | Exp | Level | Kills | Damage Dealt | Damage Taken | Pickups | Spawns |');
+    lines.push('| Rank | Candidate | Fitness | Survival | End Level | End HP Ratio | Exp Gain | Kills | Boss Damage | Boss Kill Rate | Damage Taken | Pickups |');
     lines.push('| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
 
     top.forEach((aggregate, index) => {
-      lines.push(`| ${index + 1} | ${aggregate.candidateId} | ${aggregate.phaseFitnessScore} | ${aggregate.survivalRate} | ${aggregate.avgScoreGain} | ${aggregate.avgExpGain} | ${aggregate.avgLevelGain} | ${aggregate.avgKills} | ${aggregate.avgDamageDealt} | ${aggregate.avgDamageTaken} | ${aggregate.avgPickupsCollected} | ${aggregate.avgEnemiesSpawned} |`);
+      lines.push(`| ${index + 1} | ${aggregate.candidateId} | ${aggregate.phaseFitnessScore} | ${aggregate.survivalRate} | ${aggregate.avgEndLevel} | ${aggregate.avgEndPlayerHpRatio} | ${aggregate.avgExpGain} | ${aggregate.avgKills} | ${aggregate.avgBossDamageDealt} | ${aggregate.bossKillRate} | ${aggregate.avgDamageTaken} | ${aggregate.avgPickupsCollected} |`);
     });
 
     lines.push('');
@@ -522,11 +532,17 @@ const phaseAggregateCsvHeader = [
   'avgScoreGain',
   'avgExpGain',
   'avgLevelGain',
+  'avgEndLevel',
+  'avgEndExp',
+  'avgEndPlayerHp',
+  'avgEndPlayerHpRatio',
   'avgKills',
   'avgDamageDealt',
+  'avgBossDamageDealt',
   'avgDamageTaken',
   'avgPickupsCollected',
   'avgEnemiesSpawned',
+  'bossKillRate',
   'phaseFitnessScore',
 ].join(',');
 

@@ -16,11 +16,17 @@ export interface StrategyPhaseRunMetrics extends StrategySearchPhase {
   scoreGain: number;
   expGain: number;
   levelGain: number;
+  endLevel: number;
+  endExp: number;
+  endPlayerHp: number;
+  endPlayerHpRatio: number;
   kills: number;
   damageDealt: number;
+  bossDamageDealt: number;
   damageTaken: number;
   pickupsCollected: number;
   enemiesSpawned: number;
+  bossKilled: boolean;
 }
 
 export interface StrategyPhaseAggregate extends StrategySearchPhase {
@@ -31,11 +37,17 @@ export interface StrategyPhaseAggregate extends StrategySearchPhase {
   avgScoreGain: number;
   avgExpGain: number;
   avgLevelGain: number;
+  avgEndLevel: number;
+  avgEndExp: number;
+  avgEndPlayerHp: number;
+  avgEndPlayerHpRatio: number;
   avgKills: number;
   avgDamageDealt: number;
+  avgBossDamageDealt: number;
   avgDamageTaken: number;
   avgPickupsCollected: number;
   avgEnemiesSpawned: number;
+  bossKillRate: number;
   phaseFitnessScore: number;
 }
 
@@ -47,11 +59,17 @@ type MetricAccumulator = StrategySearchPhase & {
   scoreGain: number;
   expGain: number;
   levelGain: number;
+  endLevel: number;
+  endExp: number;
+  endPlayerHp: number;
+  endPlayerHpRatio: number;
   kills: number;
   damageDealt: number;
+  bossDamageDealt: number;
   damageTaken: number;
   pickupsCollected: number;
   enemiesSpawned: number;
+  bossKilled: number;
 };
 
 export function parseStrategyPhases(text: string): StrategySearchPhase[] {
@@ -108,11 +126,17 @@ export function computeStrategyPhaseMetrics(input: {
       scoreGain: Math.max(0, end.score - start.score),
       expGain: Math.max(0, end.exp - start.exp),
       levelGain: Math.max(0, end.level - start.level),
+      endLevel: end.level,
+      endExp: end.exp,
+      endPlayerHp: roundMetric(end.playerHp),
+      endPlayerHpRatio: roundMetric(end.playerMaxHp > 0 ? end.playerHp / end.playerMaxHp : 0),
       kills: Math.max(0, end.kills - start.kills),
       damageDealt: roundMetric(Math.max(0, end.damageDealt - start.damageDealt)),
+      bossDamageDealt: roundMetric(Math.max(0, end.bossDamageDealt - start.bossDamageDealt)),
       damageTaken: roundMetric(Math.max(0, end.damageTaken - start.damageTaken)),
       pickupsCollected: Math.max(0, end.pickupsCollected - start.pickupsCollected),
       enemiesSpawned: Math.max(0, end.enemiesSpawned - start.enemiesSpawned),
+      bossKilled: end.bossKilled,
     };
   });
 }
@@ -135,11 +159,17 @@ export function aggregateStrategyPhaseMetrics(
       scoreGain: 0,
       expGain: 0,
       levelGain: 0,
+      endLevel: 0,
+      endExp: 0,
+      endPlayerHp: 0,
+      endPlayerHpRatio: 0,
       kills: 0,
       damageDealt: 0,
+      bossDamageDealt: 0,
       damageTaken: 0,
       pickupsCollected: 0,
       enemiesSpawned: 0,
+      bossKilled: 0,
     };
 
     accumulator.runs += 1;
@@ -147,11 +177,17 @@ export function aggregateStrategyPhaseMetrics(
     accumulator.scoreGain += metric.scoreGain;
     accumulator.expGain += metric.expGain;
     accumulator.levelGain += metric.levelGain;
+    accumulator.endLevel += metric.endLevel;
+    accumulator.endExp += metric.endExp;
+    accumulator.endPlayerHp += metric.endPlayerHp;
+    accumulator.endPlayerHpRatio += metric.endPlayerHpRatio;
     accumulator.kills += metric.kills;
     accumulator.damageDealt += metric.damageDealt;
+    accumulator.bossDamageDealt += metric.bossDamageDealt;
     accumulator.damageTaken += metric.damageTaken;
     accumulator.pickupsCollected += metric.pickupsCollected;
     accumulator.enemiesSpawned += metric.enemiesSpawned;
+    accumulator.bossKilled += metric.bossKilled ? 1 : 0;
 
     groups.set(key, accumulator);
   }
@@ -188,6 +224,29 @@ export function selectTopStrategyPhaseAggregates(
 }
 
 export function calculatePhaseFitnessScore(aggregate: Omit<StrategyPhaseAggregate, 'phaseFitnessScore'>): number {
+  if (aggregate.endSeconds <= 300) {
+    return roundMetric(
+      aggregate.survivalRate * 700
+      + aggregate.avgEndLevel * 150
+      + aggregate.avgEndPlayerHpRatio * 360
+      + aggregate.avgExpGain * 0.75
+      + aggregate.avgKills * 0.65
+      + aggregate.avgPickupsCollected * 2.2
+      - aggregate.avgDamageTaken * 1.45,
+    );
+  }
+
+  if (aggregate.startSeconds >= 300) {
+    return roundMetric(
+      aggregate.bossKillRate * 1800
+      + aggregate.survivalRate * 520
+      + aggregate.avgBossDamageDealt * 0.085
+      + aggregate.avgDamageDealt * 0.012
+      + aggregate.avgEndPlayerHpRatio * 180
+      - aggregate.avgDamageTaken * 1.25,
+    );
+  }
+
   if (aggregate.startSeconds === 0 && aggregate.endSeconds <= 30) {
     return roundMetric(
       aggregate.avgExpGain * 1.2
@@ -228,11 +287,17 @@ function toAggregate(accumulator: MetricAccumulator): StrategyPhaseAggregate {
     avgScoreGain: roundMetric(accumulator.scoreGain / runs),
     avgExpGain: roundMetric(accumulator.expGain / runs),
     avgLevelGain: roundMetric(accumulator.levelGain / runs),
+    avgEndLevel: roundMetric(accumulator.endLevel / runs),
+    avgEndExp: roundMetric(accumulator.endExp / runs),
+    avgEndPlayerHp: roundMetric(accumulator.endPlayerHp / runs),
+    avgEndPlayerHpRatio: roundMetric(accumulator.endPlayerHpRatio / runs),
     avgKills: roundMetric(accumulator.kills / runs),
     avgDamageDealt: roundMetric(accumulator.damageDealt / runs),
+    avgBossDamageDealt: roundMetric(accumulator.bossDamageDealt / runs),
     avgDamageTaken: roundMetric(accumulator.damageTaken / runs),
     avgPickupsCollected: roundMetric(accumulator.pickupsCollected / runs),
     avgEnemiesSpawned: roundMetric(accumulator.enemiesSpawned / runs),
+    bossKillRate: roundMetric(accumulator.bossKilled / runs),
   };
 
   return {
@@ -270,6 +335,7 @@ function createZeroTracePoint(): SimTracePoint {
     kills: 0,
     exp: 0,
     damageDealt: 0,
+    bossDamageDealt: 0,
     damageTaken: 0,
     pickupsCollected: 0,
     enemiesSpawned: 0,

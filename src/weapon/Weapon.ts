@@ -208,6 +208,10 @@ export abstract class Weapon {
     this.recordDamageDealt(damage);
     this.runStats?.recordWeaponHit(this.id);
 
+    if (enemy.isBoss()) {
+      this.runStats?.recordBossDamageDealt(damage);
+    }
+
     if (enemy.isDead) {
       this.runStats?.recordWeaponKill(this.id);
     }

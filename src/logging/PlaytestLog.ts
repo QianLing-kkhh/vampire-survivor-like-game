@@ -76,6 +76,7 @@ export interface PlaytestLogData {
   bossPhaseDamageTaken: number;
   bossPhaseLowestHp: number;
   bossPhaseKills: number;
+  bossDamageDealt: number;
   bossDashCount: number;
   bossDashHitCount: number;
   totalUpgradeCount: number;
@@ -154,6 +155,8 @@ export interface PlaytestLogData {
 }
 
 export class PlaytestLog {
+  private static runIdSequence = 0;
+
   private static readonly HEADER = [
     'runId',
     'runSeed',
@@ -219,6 +222,7 @@ export class PlaytestLog {
     'bossPhaseDamageTaken',
     'bossPhaseLowestHp',
     'bossPhaseKills',
+    'bossDamageDealt',
     'bossDashCount',
     'bossDashHitCount',
     'totalUpgradeCount',
@@ -297,7 +301,9 @@ export class PlaytestLog {
   ].join(',');
 
   static createRunId(): string {
-    return `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    PlaytestLog.runIdSequence = (PlaytestLog.runIdSequence + 1) % 100000;
+
+    return `${Date.now()}-${PlaytestLog.runIdSequence.toString().padStart(5, '0')}`;
   }
 
   static getHeader(): string {
@@ -376,6 +382,7 @@ export class PlaytestLog {
       Math.floor(data.bossPhaseDamageTaken).toString(),
       Math.floor(data.bossPhaseLowestHp).toString(),
       data.bossPhaseKills.toString(),
+      Math.floor(data.bossDamageDealt).toString(),
       data.bossDashCount.toString(),
       data.bossDashHitCount.toString(),
       data.totalUpgradeCount.toString(),

@@ -259,7 +259,7 @@ function readNumber(value: unknown, fallback: number): number {
 }
 
 function matchesOptionalId(expected: string | undefined, actual: string | undefined): boolean {
-  return expected === undefined || actual === expected;
+  return expected === undefined || expected === 'random' || actual === expected;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

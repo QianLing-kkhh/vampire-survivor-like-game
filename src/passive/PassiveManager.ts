@@ -1,3 +1,4 @@
+import { getUpgradeDisplayPassiveIconKey } from '../assets/AssetKeyMap';
 import { PlayerHealth } from '../player/PlayerHealth';
 import { ContentBootstrap } from '../content/ContentBootstrap';
 import { ContentRegistry } from '../content/ContentRegistry';
@@ -373,20 +374,7 @@ export class PassiveManager {
   }
 
   private getPassiveIconKey(passiveId: string): string {
-    switch (passiveId) {
-      case 'spinach':
-        return 'art_passives_spinach_icon';
-      case 'empty_tome':
-        return 'art_passives_empty_tome_icon';
-      case 'bracer':
-        return 'art_passives_bracer_icon';
-      case 'clover':
-        return 'art_passives_clover_icon';
-      case 'pummarola':
-        return 'art_passives_pummarola_icon';
-      default:
-        return passiveId;
-    }
+    return getUpgradeDisplayPassiveIconKey(passiveId);
   }
 
   private getDamageMultiplier(level: number): number {

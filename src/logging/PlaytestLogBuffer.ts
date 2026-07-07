@@ -17,6 +17,7 @@ export class PlaytestLogBuffer {
   private static readonly MAX_ROWS = 1000;
   private static readonly STORAGE_KEY = 'vampire_survivor_like_playtest_logs';
   private static readonly storage = new LocalStorageAdapter();
+  private static sessionSequence = 0;
   private static sessionId = PlaytestLogBuffer.createSessionId();
   private static rows: BufferedPlaytestLog[] = PlaytestLogBuffer.loadStoredRows();
 
@@ -274,6 +275,8 @@ export class PlaytestLogBuffer {
   }
 
   private static createSessionId(): string {
-    return `session-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+    PlaytestLogBuffer.sessionSequence = (PlaytestLogBuffer.sessionSequence + 1) % 100000;
+
+    return `session-${Date.now()}-${PlaytestLogBuffer.sessionSequence.toString().padStart(5, '0')}`;
   }
 }

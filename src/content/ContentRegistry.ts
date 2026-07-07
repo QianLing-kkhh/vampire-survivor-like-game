@@ -1,6 +1,7 @@
 import { CharacterDefinition } from '../character/CharacterDefinition';
 import type { EnemyStats } from '../core/domain/EnemyTypes';
 import type { WeaponConfig } from '../core/domain/WeaponTypes';
+import type { EndlessBossConfig, EndlessBossId } from '../endless/EndlessBossConfig';
 import { EvolutionRule } from '../evolution/EvolutionRule';
 import { MapDefinition } from '../map/MapDefinition';
 import { PassiveItem } from '../passive/PassiveItem';
@@ -14,6 +15,7 @@ export class ContentRegistry {
   private static readonly packs = new Map<string, ContentPack>();
   private static readonly weapons = new Map<string, WeaponConfig>();
   private static readonly enemies = new Map<string, EnemyStats>();
+  private static readonly endlessBosses = new Map<string, EndlessBossConfig>();
   private static readonly passives = new Map<string, PassiveItem>();
   private static readonly upgrades: UpgradeOption[] = [];
   private static readonly waves = new Map<string, readonly SpawnWave[]>();
@@ -30,6 +32,7 @@ export class ContentRegistry {
 
     this.registerMap('weapon', this.weapons, pack.weapons, pack);
     this.registerMap('enemy', this.enemies, pack.enemies, pack);
+    this.registerMap('endlessBoss', this.endlessBosses, pack.endlessBosses, pack);
     this.registerMap('passive', this.passives, pack.passives, pack);
     this.registerMap('waveSet', this.waves, pack.waves, pack);
     this.registerMap('character', this.characters, pack.characters, pack);
@@ -51,6 +54,7 @@ export class ContentRegistry {
     this.packs.clear();
     this.weapons.clear();
     this.enemies.clear();
+    this.endlessBosses.clear();
     this.passives.clear();
     this.upgrades.splice(0, this.upgrades.length);
     this.waves.clear();
@@ -66,6 +70,10 @@ export class ContentRegistry {
 
   static getEnemy(id: string): EnemyStats | undefined {
     return this.clone(this.enemies.get(id));
+  }
+
+  static getEndlessBossConfig(id: EndlessBossId): EndlessBossConfig | undefined {
+    return this.clone(this.endlessBosses.get(id));
   }
 
   static getPassive(id: string): PassiveItem | undefined {
@@ -98,6 +106,10 @@ export class ContentRegistry {
 
   static listEnemies(): Record<string, EnemyStats> {
     return this.toRecord(this.enemies);
+  }
+
+  static listEndlessBossConfigs(): EndlessBossConfig[] {
+    return Array.from(this.endlessBosses.values()).map((config) => this.clone(config));
   }
 
   static listPassives(): PassiveItem[] {

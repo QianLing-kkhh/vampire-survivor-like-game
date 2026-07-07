@@ -527,3 +527,62 @@ export const TEXTURE_STATUS_KEYS: readonly string[] = [
   ...Object.values(DEFAULT_ASSET_KEY_MAP.mapMechanics.visuals).map((entry) => entry.primary),
   ...Object.values(DEFAULT_ASSET_KEY_MAP.mapMechanics.minimapIcons).map((entry) => entry.primary),
 ];
+
+export const HELP_ICON_KEYS = {
+  time: 'time_icon',
+  health: 'hp_icon',
+  experience: 'exp_icon',
+  panel: 'art_ui_panel_bg',
+  treasureChest: DEFAULT_ASSET_KEY_MAP.pickups.treasure_chest.fallbacks?.[0]
+    ?? DEFAULT_ASSET_KEY_MAP.pickups.treasure_chest.primary,
+  boss: DEFAULT_ASSET_KEY_MAP.enemies.boss.texture.fallbacks?.[0]
+    ?? DEFAULT_ASSET_KEY_MAP.enemies.boss.texture.primary,
+} as const;
+
+export const UPGRADE_DISPLAY_ICON_KEYS = {
+  weapons: {
+    knife: 'knife_icon',
+    garlic: DEFAULT_ASSET_KEY_MAP.weapons.garlic.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.garlic.icon.primary,
+    bible: DEFAULT_ASSET_KEY_MAP.weapons.bible.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.bible.icon.primary,
+    axe: DEFAULT_ASSET_KEY_MAP.weapons.axe.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.axe.icon.primary,
+    magic_wand: DEFAULT_ASSET_KEY_MAP.weapons.magic_wand.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.magic_wand.icon.primary,
+    thousand_edge: DEFAULT_ASSET_KEY_MAP.weapons.thousand_edge.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.thousand_edge.icon.primary,
+    holy_wand: DEFAULT_ASSET_KEY_MAP.weapons.holy_wand.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.holy_wand.icon.primary,
+    death_spiral: DEFAULT_ASSET_KEY_MAP.weapons.death_spiral.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.death_spiral.icon.primary,
+    unholy_vespers: DEFAULT_ASSET_KEY_MAP.weapons.unholy_vespers.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.unholy_vespers.icon.primary,
+    soul_eater: DEFAULT_ASSET_KEY_MAP.weapons.soul_eater.icon.fallbacks?.[0]
+      ?? DEFAULT_ASSET_KEY_MAP.weapons.soul_eater.icon.primary,
+  },
+  passives: Object.fromEntries(
+    Object.entries(DEFAULT_ASSET_KEY_MAP.passives).map(([passiveId, entry]) => [
+      passiveId,
+      entry.fallbacks?.[0] ?? entry.primary,
+    ]),
+  ) as Record<string, string>,
+} as const;
+
+export const getUpgradeDisplayWeaponIconKey = (weaponId: string): string => (
+  (UPGRADE_DISPLAY_ICON_KEYS.weapons as Record<string, string>)[weaponId] ?? weaponId
+);
+
+export const getUpgradeDisplayPassiveIconKey = (passiveId: string): string => (
+  UPGRADE_DISPLAY_ICON_KEYS.passives[passiveId] ?? passiveId
+);
+
+export const getTieredUpgradeDisplayWeaponIconKey = (
+  weaponId: string,
+  visualTier: 1 | 2 | 3,
+): string => `art_weapons_${weaponId}_icon_tier${visualTier}`;
+
+export const getTieredUpgradeDisplayPassiveIconKey = (
+  passiveId: string,
+  visualTier: 1 | 2 | 3,
+): string => `art_passives_${passiveId}_icon_tier${visualTier}`;

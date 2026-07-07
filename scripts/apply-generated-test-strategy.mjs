@@ -26,11 +26,15 @@ const runtime = loadHeadlessSimulationRuntime();
 const sourcePath = path.resolve(rootDir, String(source));
 const sourceDoc = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
 const outputPath = path.join(rootDir, 'src', 'strategy', 'generated', 'generated-test-strategy.json');
-const document = runtime.createGeneratedTestStrategyDocument({
+const existingDocument = fs.existsSync(outputPath)
+  ? JSON.parse(fs.readFileSync(outputPath, 'utf8'))
+  : undefined;
+let document = runtime.createGeneratedTestStrategyDocument({
   source: sourceDoc,
   sourceReportDir: path.dirname(sourcePath),
   appliedAt: new Date().toISOString(),
 });
+document = mergePreservedPhases(document, existingDocument, sourceDoc);
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${stablePrettyJson(document)}\n`);
@@ -40,6 +44,46 @@ console.log('generated_test is for headless auto testing only.');
 
 function stablePrettyJson(value) {
   return JSON.stringify(JSON.parse(stableStringify(value)), null, 2);
+}
+
+function mergePreservedPhases(document, existingDocument, sourceDoc) {
+  const optimizedPhaseIds = new Set(sourceDoc?.searchConfig?.optimizePhases ?? []);
+
+  if (
+    optimizedPhaseIds.size === 0
+    || !Array.isArray(document?.phases)
+    || !Array.isArray(existingDocument?.phases)
+  ) {
+    return document;
+  }
+
+  const optimizedPhases = document.phases.filter((phase) => (
+    optimizedPhaseIds.has(phase.phaseId)
+    || optimizedPhaseIds.has(`${phase.startSeconds}-${phase.endSeconds}`)
+  ));
+
+  if (optimizedPhases.length === 0) {
+    return document;
+  }
+
+  const preservedPhases = existingDocument.phases.filter((phase) => (
+    !optimizedPhases.some((optimizedPhase) => phasesOverlap(phase, optimizedPhase))
+  ));
+  const phases = [...optimizedPhases, ...preservedPhases]
+    .sort((a, b) => a.startSeconds - b.startSeconds || a.endSeconds - b.endSeconds);
+
+  return {
+    ...document,
+    phases,
+    metadata: {
+      ...document.metadata,
+      preservedPhaseIds: preservedPhases.map((phase) => phase.phaseId),
+    },
+  };
+}
+
+function phasesOverlap(left, right) {
+  return left.startSeconds < right.endSeconds && right.startSeconds < left.endSeconds;
 }
 
 function printHelp() {

@@ -90,7 +90,7 @@ export class EndlessLeaderboard {
     const leaderboardKey = serializeLeaderboardKey(key);
 
     return {
-      id: metadata?.runId ?? `${timestamp}-${Math.random().toString(36).slice(2, 10)}`,
+      id: metadata?.runId ?? EndlessLeaderboard.createFallbackRecordId(entry, leaderboardKey, timestamp),
       runId: metadata?.runId,
       runSeed: metadata?.runSeed,
       gameVersion: metadata?.gameVersion,
@@ -146,6 +146,40 @@ export class EndlessLeaderboard {
 
       return `${passive.name} Lv.${passive.level}`;
     });
+  }
+
+  private static createFallbackRecordId(
+    entry: EndlessLeaderboardEntry,
+    leaderboardKey: string,
+    timestamp: string,
+  ): string {
+    const signature = JSON.stringify({
+      leaderboardKey,
+      timestamp,
+      endlessSurvivalTime: entry.endlessSurvivalTime ?? 0,
+      totalSurvivalTime: entry.totalSurvivalTime ?? 0,
+      finalLevel: entry.finalLevel ?? 1,
+      killCount: entry.killCount ?? 0,
+      weaponIds: entry.weaponIds ?? [],
+      passiveItems: EndlessLeaderboard.formatPassiveItems(entry.passiveItems ?? []),
+      evolutionPath: entry.evolutionPath ?? [],
+      characterId: entry.characterId,
+      stageId: entry.stageId,
+      mapId: entry.mapId,
+    });
+
+    return `${timestamp}-${EndlessLeaderboard.hashString(signature)}`;
+  }
+
+  private static hashString(value: string): string {
+    let hash = 2166136261;
+
+    for (let index = 0; index < value.length; index += 1) {
+      hash ^= value.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+
+    return (hash >>> 0).toString(36).padStart(7, '0');
   }
 
   private static migrateLegacyEntries(): void {

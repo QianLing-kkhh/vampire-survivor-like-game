@@ -24,6 +24,7 @@ const args = {
   tickMs: '100',
   ...parseArgs(process.argv.slice(2)),
 };
+const verbose = process.argv.includes('--verbose');
 const results = [
   runSimulationFromArgs(args),
   runSimulationFromArgs(args),
@@ -82,4 +83,9 @@ if (compare.status === 'fail') {
 
 console.info('[validate:sim] Headless simulation determinism passed.');
 console.info(`[validate:sim] Smoke preset produced ${smoke.results.length} runs at ${path.join(rootDir, smokeOut)}.`);
-console.info(JSON.stringify(results[0], null, 2));
+console.info(
+  `[validate:sim] Deterministic sample: seed=${results[0].seed}, result=${results[0].result}, survival=${results[0].survivalTimeSeconds}s, level=${results[0].level}, kills=${results[0].kills}, score=${results[0].score}, damageDealt=${results[0].damageDealt}, damageTaken=${results[0].damageTaken}, pickups=${results[0].pickupsCollected}, enemiesSpawned=${results[0].enemiesSpawned}.`,
+);
+if (verbose) {
+  console.info(JSON.stringify(results[0], null, 2));
+}

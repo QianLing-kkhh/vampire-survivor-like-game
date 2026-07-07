@@ -8,6 +8,10 @@ import type { WeaponTarget } from './WeaponTarget';
 
 import { DamageCalculator } from '../combat/DamageCalculator';
 import { EvolutionRule } from '../evolution/EvolutionRule';
+import {
+  getUpgradeDisplayPassiveIconKey,
+  getUpgradeDisplayWeaponIconKey,
+} from '../assets/AssetKeyMap';
 import { getWeaponDisplayName } from '../i18n/ContentText';
 import { PassiveWeaponModifier } from '../passive/PassiveItem';
 import { Weapon, WeaponConfig, WeaponCooldownStatus, WeaponUpdateContext } from './Weapon';
@@ -774,47 +778,11 @@ export class WeaponManager {
   }
 
   private getWeaponIconKey(weaponId: string): string {
-    switch (weaponId) {
-      case 'knife':
-        return 'knife_icon';
-      case 'garlic':
-        return 'art_weapons_garlic_core_sheet';
-      case 'bible':
-        return 'art_weapons_bible_orbit_book_sheet';
-      case 'axe':
-        return 'art_weapons_axe_icon';
-      case 'magic_wand':
-        return 'art_weapons_magic_wand_icon';
-      case 'thousand_edge':
-        return 'art_weapons_thousand_edge_icon';
-      case 'holy_wand':
-        return 'art_weapons_holy_wand_icon';
-      case 'death_spiral':
-        return 'art_weapons_death_spiral_icon';
-      case 'unholy_vespers':
-        return 'art_weapons_unholy_vespers_icon';
-      case 'soul_eater':
-        return 'art_weapons_soul_eater_icon';
-      default:
-        return weaponId;
-    }
+    return getUpgradeDisplayWeaponIconKey(weaponId);
   }
 
   private getPassiveIconKey(passiveId: string): string {
-    switch (passiveId) {
-      case 'spinach':
-        return 'art_passives_spinach_icon';
-      case 'empty_tome':
-        return 'art_passives_empty_tome_icon';
-      case 'bracer':
-        return 'art_passives_bracer_icon';
-      case 'clover':
-        return 'art_passives_clover_icon';
-      case 'pummarola':
-        return 'art_passives_pummarola_icon';
-      default:
-        return passiveId;
-    }
+    return getUpgradeDisplayPassiveIconKey(passiveId);
   }
 
   getBaseWeaponIdForUpgrade(upgradeId: string): string | undefined {

@@ -183,6 +183,7 @@ function calculateBossMetrics(rows) {
     bossKillRate: spawned.length === 0 ? null : killed.length / spawned.length,
     bossDashHitRate: dashUses === 0 ? null : dashHits / dashUses,
     averageBossPhaseDamage: averageField(rows, 'bossPhaseDamageTaken'),
+    averageBossDamageDealt: averageField(rows, 'bossDamageDealt'),
   };
 }
 
@@ -276,6 +277,15 @@ function buildSuggestedChecks(victory, boss, endless) {
     checks.push('Boss dash hit rate is above target range; verify dash pressure before increasing it.');
   }
 
+  if (
+    boss.bossSpawnRate !== null
+    && boss.bossSpawnRate > 0
+    && boss.averageBossDamageDealt !== null
+    && boss.averageBossDamageDealt < 500
+  ) {
+    checks.push('Boss appears but average boss damage dealt is low; inspect output positioning before more survival tuning.');
+  }
+
   if (endless.averageEndlessRewardCount !== null && endless.averageEndlessRewardCount > 100) {
     checks.push('Endless reward count is high; inspect EXP requirement scaling and treasure pacing.');
   }
@@ -356,6 +366,7 @@ function formatReport(report) {
     `- Boss kill rate: ${percent(report.boss.bossKillRate)}`,
     `- Boss dash hit rate: ${percent(report.boss.bossDashHitRate)}`,
     `- Average boss phase damage: ${number(report.boss.averageBossPhaseDamage)}`,
+    `- Average boss damage dealt: ${number(report.boss.averageBossDamageDealt)}`,
     '',
     '## Endless Mode',
     `- Endless entry rate: ${percent(report.endless.endlessStartedRate)}`,

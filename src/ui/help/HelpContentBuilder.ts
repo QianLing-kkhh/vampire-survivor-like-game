@@ -1,4 +1,5 @@
-import { CharacterDefinition } from '../../character/CharacterDefinition';
+import { ContentBootstrap } from '../../content/ContentBootstrap';
+import { ContentRegistry } from '../../content/ContentRegistry';
 import { I18n } from '../../i18n/I18n';
 import {
   getPassiveDescription,
@@ -6,14 +7,7 @@ import {
   getWeaponDescription,
   getWeaponDisplayName,
 } from '../../i18n/ContentText';
-import { EVOLUTION_RULES } from '../../evolution/EvolutionRule';
 import { MapMechanicType } from '../../map/mechanics/MapMechanicDefinition';
-import charactersData from '../../data/characters.json';
-import mapsData from '../../data/maps.json';
-import passivesData from '../../data/passives.json';
-import stagesData from '../../data/stages.json';
-import upgradesData from '../../data/upgrades.json';
-import weaponsData from '../../data/weapons.json';
 import {
   RANDOM_UNLOCKED_CHARACTER_ID,
   RANDOM_UNLOCKED_STAGE_ID,
@@ -159,6 +153,8 @@ const MECHANIC_TYPE_ORDER: MapMechanicType[] = ['obstacle', 'slowZone', 'portal'
 
 export class HelpContentBuilder {
   buildTabs(): HelpTabDefinition[] {
+    ContentBootstrap.ensureInitialized();
+
     return [
       this.buildBasicsTab(),
       this.buildCharactersTab(),
@@ -190,8 +186,7 @@ export class HelpContentBuilder {
   }
 
   private buildCharactersTab(): HelpTabDefinition {
-    const characters = Object.entries(charactersData as unknown as Record<string, CharacterRecord>)
-      .map(([id, character]) => ({ ...character, id }));
+    const characters = ContentRegistry.listCharacters() as unknown as CharacterRecord[];
 
     const sections: HelpSection[] = [
       {
@@ -237,7 +232,7 @@ export class HelpContentBuilder {
   }
 
   private buildWeaponsTab(): HelpTabDefinition {
-    const weapons = Object.entries(weaponsData as unknown as Record<string, WeaponRecord>)
+    const weapons = Object.entries(ContentRegistry.listWeapons() as Record<string, WeaponRecord>)
       .map(([id, weapon]) => ({ ...weapon, id }));
 
     return this.tab('weapons', 'help.tab.weapons', 'Weapons', 'W', weapons.map((weapon) => {
@@ -264,12 +259,14 @@ export class HelpContentBuilder {
   }
 
   private buildEvolutionsTab(): HelpTabDefinition {
+    const evolutionRules = ContentRegistry.listEvolutionRules();
+
     return this.tab('evolutions', 'help.tab.evolutions', 'Evolutions', 'E', [
       {
         title: HelpFormatter.t('help.evolutions.title', 'Evolutions'),
         lines: [
           this.paragraph('help.evolutions.description'),
-          ...EVOLUTION_RULES.flatMap((rule) => [
+          ...evolutionRules.flatMap((rule) => [
             this.evolutionRouteIconChain(rule),
             this.stat('help.evolution.requirements', `${this.formatEvolutionRequirement(rule)}`),
           ]),
@@ -279,10 +276,10 @@ export class HelpContentBuilder {
   }
 
   private buildPassivesTab(): HelpTabDefinition {
-    const passives = Object.values(passivesData as PassiveRecord[]);
+    const passives = ContentRegistry.listPassives() as PassiveRecord[];
 
     return this.tab('passives', 'help.tab.passives', 'Passives', 'P', passives.map((passive) => {
-      const routeLines = EVOLUTION_RULES
+      const routeLines = ContentRegistry.listEvolutionRules()
         .filter((rule) => rule.requiredPassiveId === passive.id)
         .map((rule) => this.evolutionRouteIconChain(rule));
 
@@ -299,8 +296,8 @@ export class HelpContentBuilder {
   }
 
   private buildMapsTab(): HelpTabDefinition {
-    const maps = mapsData as Record<string, MapRecord>;
-    const stages = Object.values(stagesData as Record<string, StageRecord>);
+    const maps = this.mapRecordsById(ContentRegistry.listMaps() as MapRecord[]);
+    const stages = ContentRegistry.listStages() as StageRecord[];
 
     return this.tab('maps', 'help.tab.maps', 'Maps', 'M', [
       {
@@ -433,16 +430,13 @@ export class HelpContentBuilder {
   }
 
   private weaponName(weaponId: string | undefined): string {
-    const weapon = weaponId
-      ? (weaponsData as unknown as Record<string, WeaponRecord>)[weaponId]
-      : undefined;
+    const weapon = weaponId ? ContentRegistry.getWeapon(weaponId) as WeaponRecord | undefined : undefined;
 
-    return weapon?.id ? getWeaponDisplayName(weapon.id) : HelpFormatter.labelFromId(weaponId);
+    return weaponId ? getWeaponDisplayName(weaponId) : HelpFormatter.labelFromId(weapon?.id ?? weaponId);
   }
 
   private passiveName(passiveId: string | undefined): string {
-    const passive = (passivesData as PassiveRecord[])
-      .find((entry) => entry.id === passiveId);
+    const passive = passiveId ? ContentRegistry.getPassive(passiveId) as PassiveRecord | undefined : undefined;
 
     return getPassiveDisplayName(passiveId, passive?.name ?? HelpFormatter.labelFromId(passiveId));
   }
@@ -703,6 +697,13 @@ export class HelpContentBuilder {
     }, {});
   }
 
+  private mapRecordsById(maps: MapRecord[]): Record<string, MapRecord> {
+    return maps.reduce<Record<string, MapRecord>>((record, map) => {
+      record[map.id] = map;
+      return record;
+    }, {});
+  }
+
   private formatEvolutionRequirement(rule: {
     requiredWeaponUpgradeTotal: number;
     requiredPassiveId: string;
@@ -715,8 +716,8 @@ export class HelpContentBuilder {
     });
   }
 
-  private getPassiveMaxLevel(_passiveId: string): number {
-    return 5;
+  private getPassiveMaxLevel(passiveId: string): number {
+    return ContentRegistry.getPassive(passiveId)?.maxLevel ?? 5;
   }
   private divider(): HelpLine {
     return { type: 'divider' };

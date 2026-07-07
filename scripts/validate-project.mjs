@@ -11,6 +11,7 @@ const steps = [
   { label: 'Asset audit', args: ['run', 'validate:assets'] },
   { label: 'External art audit', args: ['run', 'validate:external-art'] },
   { label: 'Architecture boundaries', args: ['run', 'check:architecture'] },
+  { label: 'Headless simulation determinism', args: ['run', 'validate:sim'] },
   { label: 'Documentation links', args: ['run', 'validate:docs'] },
 ];
 

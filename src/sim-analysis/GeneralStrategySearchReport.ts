@@ -20,6 +20,7 @@ export interface GeneralStrategyRunRecord {
     | 'exp'
     | 'damageTaken'
     | 'damageDealt'
+    | 'bossDamageDealt'
     | 'pickupsCollected'
     | 'enemiesSpawned'
     | 'bossKilled'
@@ -51,6 +52,7 @@ export interface GeneralStrategyCandidateStats {
   minScore: number;
   maxScore: number;
   avgSurvivalTimeSeconds: number;
+  earlyGrowthCollapseRate: number;
   completionRate: number;
   avgLevel: number;
   avgKills: number;
@@ -64,6 +66,10 @@ export interface GeneralStrategyCandidateStats {
   medianDamageDealt: number;
   p10DamageDealt: number;
   p90DamageDealt: number;
+  avgBossDamageDealt: number;
+  medianBossDamageDealt: number;
+  p10BossDamageDealt: number;
+  p90BossDamageDealt: number;
   avgDamageTaken: number;
   damageWindowPassRate: number;
   avgDamageWindowViolationCount: number;
@@ -113,6 +119,7 @@ export interface GeneralStrategyBaselineComparisonEntry {
   p10Score: number;
   completionRate: number;
   avgSurvivalTimeSeconds: number;
+  earlyGrowthCollapseRate: number;
   bossKillRate: number;
   avgExp: number;
   medianExp: number;
@@ -120,6 +127,9 @@ export interface GeneralStrategyBaselineComparisonEntry {
   avgDamageDealt: number;
   medianDamageDealt: number;
   p10DamageDealt: number;
+  avgBossDamageDealt: number;
+  medianBossDamageDealt: number;
+  p10BossDamageDealt: number;
   avgDamageTaken: number;
   damageWindowPassRate: number;
   damageSafetyPenalty: number;

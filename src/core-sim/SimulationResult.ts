@@ -24,6 +24,7 @@ export interface SimulationResult extends RunSummary {
   };
   durationSeconds: number;
   tickMs: number;
+  bossDamageDealt: number;
   bossKilled: boolean;
   endlessStarted: boolean;
   endlessScalingLevel: number;

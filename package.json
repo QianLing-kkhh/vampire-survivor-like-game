@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build --configLoader runner",
     "preview": "vite preview",
     "art001:render-players": "node scripts/art001/run_player_blender_render.mjs",
     "art001:build-pack": "node scripts/art001/run_player_blender_render.mjs && node scripts/art001/build_art001_pack.mjs",

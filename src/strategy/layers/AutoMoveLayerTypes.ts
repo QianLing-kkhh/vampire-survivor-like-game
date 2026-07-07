@@ -99,6 +99,7 @@ export interface MicroControlLayerOps {
   getFinalBossWarningCandidates(context: AutoPlayerContext, player: Vector2): Candidate[];
   getFinalBossDistanceFallbackDirection(context: AutoPlayerContext, player: Vector2): Vector2;
   getNearestEnemyEscapeCandidates(context: AutoPlayerContext, player: Vector2): Candidate[];
+  getEmergencyMicroCandidates(context: AutoPlayerContext, player: Vector2): Candidate[];
   getCandidateEndpoint(
     context: AutoPlayerContext,
     player: Vector2,
@@ -109,6 +110,11 @@ export interface MicroControlLayerOps {
     player: Vector2,
     endpoint: Vector2,
   ): FinalBossDistanceConstraintResult;
+  getFinalBossWarningConstraint(
+    context: AutoPlayerContext,
+    player: Vector2,
+    endpoint: Vector2,
+  ): FinalBossWarningConstraintResult;
   scoreMicroDirection(
     input: MicroControlLayerInput,
     endpoint: Vector2,
@@ -125,6 +131,14 @@ export interface FinalBossDistanceConstraintResult {
   forbidden: boolean;
   emergencyAllowed: boolean;
   distance: number;
+  reason: string;
+}
+
+export interface FinalBossWarningConstraintResult {
+  active: boolean;
+  forbidden: boolean;
+  currentRisk: number;
+  endpointRisk: number;
   reason: string;
 }
 

@@ -1,3 +1,4 @@
+import bosses from '../data/bosses.json';
 import characters from '../data/characters.json';
 import enemies from '../data/enemies.json';
 import evolutions from '../data/evolutions.json';
@@ -11,6 +12,7 @@ import weapons from '../data/weapons.json';
 
 import { CharacterDefinition } from '../character/CharacterDefinition';
 import type { WeaponConfig } from '../core/domain/WeaponTypes';
+import type { EndlessBossConfig, EndlessBossId } from '../endless/EndlessBossConfig';
 import { EvolutionRule } from '../evolution/EvolutionRule';
 import { MapDefinition } from '../map/MapDefinition';
 import { PassiveItem } from '../passive/PassiveItem';
@@ -62,6 +64,7 @@ export class ContentBootstrap {
       source: 'builtin',
       weapons: weapons as Record<string, WeaponConfig>,
       enemies,
+      endlessBosses: (bosses as { endlessBosses: Record<EndlessBossId, EndlessBossConfig> }).endlessBosses,
       passives: this.passivesToRecord(passives as readonly PassiveItem[]),
       upgrades: upgrades as UpgradeOption[],
       waves: this.toWaveSetRecord(waves),

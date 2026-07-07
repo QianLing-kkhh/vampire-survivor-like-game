@@ -1,6 +1,5 @@
-import charactersData from '../../data/characters.json';
-import passivesData from '../../data/passives.json';
-import relicsData from '../../data/relics.json';
+import { ContentBootstrap } from '../../content/ContentBootstrap';
+import { ContentRegistry } from '../../content/ContentRegistry';
 import {
   getPassiveDescription,
   getPassiveDisplayName,
@@ -8,6 +7,7 @@ import {
   getWeaponDisplayName,
 } from '../../i18n/ContentText';
 import { I18n } from '../../i18n/I18n';
+import { RelicRegistry } from '../../relic/RelicRegistry';
 import { IconTooltipData, ResolvedIconTooltip } from './IconTooltipTypes';
 
 type PassiveRecord = {
@@ -48,6 +48,8 @@ const MAP_MECHANIC_DESCRIPTION_KEYS: Record<string, string> = {
 
 export class IconTooltipContentResolver {
   static resolve(data: IconTooltipData): ResolvedIconTooltip {
+    ContentBootstrap.ensureInitialized();
+
     switch (data.kind) {
       case 'weapon':
         return IconTooltipContentResolver.resolveWeapon(data);
@@ -89,7 +91,7 @@ export class IconTooltipContentResolver {
   }
 
   private static resolvePassive(data: IconTooltipData): ResolvedIconTooltip {
-    const passive = (passivesData as PassiveRecord[]).find((entry) => entry.id === data.id);
+    const passive = ContentRegistry.getPassive(data.id) as PassiveRecord | undefined;
     const descriptionKey = data.descriptionKey ?? `tooltip.passive.${data.id}`;
 
     return {
@@ -102,7 +104,7 @@ export class IconTooltipContentResolver {
   }
 
   private static resolveRelic(data: IconTooltipData): ResolvedIconTooltip {
-    const relic = (relicsData as Record<string, RelicRecord>)[data.id];
+    const relic = RelicRegistry.get(data.id) as RelicRecord | undefined;
     const titleKey = relic?.nameKey;
     const descriptionKey = data.descriptionKey ?? `tooltip.relic.${data.id}`;
 
@@ -116,7 +118,7 @@ export class IconTooltipContentResolver {
   }
 
   private static resolveCharacter(data: IconTooltipData): ResolvedIconTooltip {
-    const character = IconTooltipContentResolver.findRecord<CharacterRecord>(charactersData, data.id);
+    const character = ContentRegistry.getCharacter(data.id) as CharacterRecord | undefined;
 
     return {
       title: data.title ?? IconTooltipContentResolver.translateOrFallback(character?.nameKey, IconTooltipContentResolver.labelFromId(data.id)),
@@ -146,25 +148,6 @@ export class IconTooltipContentResolver {
 
     const translated = I18n.t(key);
     return translated === key ? fallback : translated;
-  }
-
-  private static findRecord<T extends { id?: string }>(source: unknown, id: string): T | undefined {
-    if (Array.isArray(source)) {
-      return (source as T[]).find((entry) => entry.id === id);
-    }
-
-    if (source && typeof source === 'object') {
-      const byKey = (source as Record<string, T>)[id];
-      if (byKey) {
-        return { ...byKey, id: byKey.id ?? id };
-      }
-
-      return Object.entries(source as Record<string, T>)
-        .map(([entryId, entry]) => ({ ...entry, id: entry.id ?? entryId }))
-        .find((entry) => entry.id === id);
-    }
-
-    return undefined;
   }
 
   private static normalizeStatusId(id: string): string {

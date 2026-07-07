@@ -19,14 +19,21 @@ interface WorldSize {
   height: number;
 }
 
+const BOSS_ID_SUFFIX = '_boss';
+const BOSS_IDS = {
+  slime: `slime${BOSS_ID_SUFFIX}`,
+  bat: `bat${BOSS_ID_SUFFIX}`,
+  golem: `golem${BOSS_ID_SUFFIX}`,
+} as const;
+
 export class BossSpawnDirector {
   private static readonly EDGE_PADDING = 80;
 
   private readonly bossSpawns: BossSpawnConfig[] = [
-    { time: 60, bossId: 'slime_boss', spawned: false },
-    { time: 120, bossId: 'bat_boss', spawned: false },
-    { time: 180, bossId: 'golem_boss', spawned: false },
-    { time: 240, bossId: 'golem_boss', spawned: false },
+    { time: 60, bossId: BOSS_IDS.slime, spawned: false },
+    { time: 120, bossId: BOSS_IDS.bat, spawned: false },
+    { time: 180, bossId: BOSS_IDS.golem, spawned: false },
+    { time: 240, bossId: BOSS_IDS.golem, spawned: false },
   ];
 
   constructor(

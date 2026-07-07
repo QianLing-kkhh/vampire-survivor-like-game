@@ -6,6 +6,7 @@ import { AutoStrategyEngine } from '../strategy/engine/AutoStrategyEngine';
 import type {
   FinalBossDistanceConstraintDebugUpdate,
   FinalBossDistanceConstraintResult,
+  FinalBossWarningConstraintResult,
   TacticalRouteLayerInput,
 } from '../strategy/layers/AutoMoveLayerTypes';
 import type { AutoStrategyProfile } from '../strategy/profile/AutoStrategyProfile';
@@ -236,7 +237,7 @@ export class AutoPlayer {
         currentRoute: this.tacticalRoute,
         routeRemainingMs: this.tacticalRouteRemainingMs,
         elapsedMs: this.autoMoveElapsedMs,
-        weights: this.strategyEngine.getMovementWeights(),
+        weights: this.getMovementWeightsForContext(context),
         ops: {
           shouldForceRefresh: (input) => this.shouldForceTacticalRouteRefresh(input),
           evaluateRoute: (input) => this.evaluateTacticalRoute(
@@ -282,9 +283,13 @@ export class AutoPlayer {
             this.getFinalBossDistanceFallbackDirection(warningContext, warningPlayer)
           ),
           getNearestEnemyEscapeCandidates: (enemyContext, enemyPlayer) => this.getNearestEnemyEscapeCandidates(enemyContext, enemyPlayer),
+          getEmergencyMicroCandidates: (enemyContext, enemyPlayer) => this.getEmergencyMicroCandidates(enemyContext, enemyPlayer),
           getCandidateEndpoint: (endpointContext, endpointPlayer, direction) => this.getCandidateEndpoint(endpointContext, endpointPlayer, direction),
           getFinalBossDistanceConstraint: (constraintContext, constraintPlayer, endpoint) => (
             this.getFinalBossDistanceConstraint(constraintContext, constraintPlayer, endpoint)
+          ),
+          getFinalBossWarningConstraint: (constraintContext, constraintPlayer, endpoint) => (
+            this.getFinalBossWarningConstraint(constraintContext, constraintPlayer, endpoint)
           ),
           scoreMicroDirection: (input, endpoint, direction, routeDirection) => this.scoreMicroDirection(
             input.context,
@@ -390,15 +395,51 @@ export class AutoPlayer {
       const stabilityScore = this.tacticalRoute && this.areRoutesSimilar(this.tacticalRoute.waypoints, route.waypoints)
         ? this.tacticalRoute.commitment
         : 0;
-      const weights = this.strategyEngine.getMovementWeights();
+      const weights = this.getMovementWeightsForContext(context);
+      const growthRecoveryMultiplier = this.isGrowthRecoveryWindow(context, player)
+        ? 1.25 + Math.min(0.45, this.evaluateFarmGrowthUrgency(context) * 0.45)
+        : 1;
+      const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+      const earlyBootstrap = this.autoMoveElapsedMs < 90000 && Math.max(1, context.player?.level ?? 1) < 3;
+      const combatBandRouteBonus = route.id.startsWith('combatBand')
+        && intent.mode === 'COMBAT_FARM'
+        && route.threatRank <= this.getGrowthRouteThreatRankLimit(context, intent)
+        ? (
+          (earlyBootstrap ? 14 : 30)
+          + route.combatFitScore * (earlyBootstrap ? 0.5 : 0.82)
+          + killRouteScore * (earlyBootstrap ? 0.42 : 0.68)
+          + xpRouteScore * 0.1
+        ) * (1 + growthUrgency * (earlyBootstrap ? 1.1 : 1.9))
+        : 0;
+      const harvestWithoutCombatPenalty = route.id.startsWith('growthHarvest')
+        && intent.mode === 'COMBAT_FARM'
+        && growthUrgency > 0.12
+        && route.combatFitScore + killRouteScore < 4
+        ? (22 + xpRouteScore * 0.18) * (1 + growthUrgency)
+        : 0;
+      const growthObjectiveScore = this.evaluateGrowthObjectiveRouteScore(
+        context,
+        player,
+        route.id,
+        route.rawThreat,
+        route.threatRank,
+        intent,
+        route.combatFitScore,
+        xpRouteScore,
+        killRouteScore,
+        overKitePenalty,
+      );
       const routeScore = -this.getRouteThreatRankPenalty(context, intent, route.threatRank)
         - route.rawThreat * 0.16 * weights.riskMultiplier
         + rewardScore
-        + route.combatFitScore * weights.combatMultiplier
-        + xpRouteScore * weights.farmMultiplier
-        + killRouteScore * weights.combatMultiplier
+        + route.combatFitScore * weights.combatMultiplier * growthRecoveryMultiplier
+        + xpRouteScore * weights.farmMultiplier * growthRecoveryMultiplier
+        + killRouteScore * weights.combatMultiplier * growthRecoveryMultiplier
+        + combatBandRouteBonus
+        + growthObjectiveScore
         + stabilityScore
-        - overKitePenalty * weights.overKitePenaltyMultiplier
+        - harvestWithoutCombatPenalty
+        - overKitePenalty * weights.overKitePenaltyMultiplier * growthRecoveryMultiplier
         - (intent.avoidLinearEscape && route.id === 'direct' ? 34 : 0)
         - (route.hardInvalid ? 180 : 0);
       const scoredRoute = { ...route, rewardScore, xpRouteScore, killRouteScore, overKitePenalty, routeScore };
@@ -541,7 +582,7 @@ export class AutoPlayer {
       input.intent,
       input.danger as ReturnType<AutoPlayer['getDangerInfo']>,
     );
-    const weights = this.strategyEngine.getMovementWeights();
+    const weights = this.getMovementWeightsForContext(input.context);
     const refreshedRouteScore = -this.getRouteThreatRankPenalty(input.context, input.intent, threatRank)
       - rawThreat * 0.16 * weights.riskMultiplier
       + rewardScore
@@ -793,7 +834,24 @@ export class AutoPlayer {
       midDistance,
     ));
 
-    routes.push(directRoute);
+    routes.push(...this.generateGrowthHarvestRoutes(
+      context,
+      player,
+      danger,
+      intent,
+      midDistance,
+    ));
+
+    const shouldKeepDirectFallback = (
+      intent.preferredPathStyle === 'DIRECT'
+      || intent.mode === 'SURVIVE'
+      || intent.mode === 'REPOSITION'
+      || (intent.mode === 'KITE' && danger.nearestDistance < AUTO_PLAYER_CONSTANTS.PANIC_DISTANCE)
+    );
+
+    if (shouldKeepDirectFallback && !routes.some((route) => route.id === directRoute.id)) {
+      routes.push(directRoute);
+    }
 
     if (kite.direction.lengthSq() > 0) {
       routes.push({
@@ -842,12 +900,27 @@ export class AutoPlayer {
     const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
     const pressure = this.getEnemyPressureAt(context, player, hpRatio);
     const safety = this.getGrowthSafetyThresholds(context);
+    const growthRecoveryWindow = this.isGrowthRecoveryWindow(context, player);
+    const earlyBootstrap = this.autoMoveElapsedMs < 90000 && Math.max(1, context.player?.level ?? 1) < 3;
 
     if (
-      hpRatio <= safety.hpFloor
-      || contactRisk > safety.contactRiskLimit
-      || futureContactRisk > safety.futureContactRiskLimit
-      || pressure > Math.max(5.2, safety.pressureLimit)
+      earlyBootstrap
+      && (
+        (!this.isFarmSafeForGrowth(context, player) && !growthRecoveryWindow)
+        || danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS * 1.18
+      )
+    ) {
+      return [];
+    }
+
+    if (
+      !growthRecoveryWindow
+      && (
+        hpRatio <= safety.hpFloor
+        || contactRisk > safety.contactRiskLimit
+        || futureContactRisk > safety.futureContactRiskLimit
+        || pressure > Math.max(5.2, safety.pressureLimit)
+      )
     ) {
       return [];
     }
@@ -898,7 +971,9 @@ export class AutoPlayer {
       },
     );
 
-    if (currentDistance > range.max * 1.08) {
+    const cutInThreshold = Math.min(range.max * 1.08, range.ideal * 1.35);
+
+    if (currentDistance > cutInThreshold) {
       const cutInDistance = Math.max(100, midDistance * 0.45);
       const cutInLateral = Math.max(70, lateralDistance * 0.45);
 
@@ -939,6 +1014,137 @@ export class AutoPlayer {
             player.clone(),
             player.clone().add(awayFromCenter.clone().scale(backOffDistance)).add(tangentRight.clone().scale(backOffLateral)),
             player.clone().add(awayFromCenter.clone().scale(backOffDistance * 0.82)).add(tangentRight.clone().scale(backOffLateral * 1.45)),
+          ],
+        },
+      );
+    }
+
+    return routes;
+  }
+
+  private generateGrowthHarvestRoutes(
+    context: AutoPlayerContext,
+    player: Vector2,
+    danger: ReturnType<AutoPlayer['getDangerInfo']>,
+    intent: StrategicMoveIntent,
+    midDistance: number,
+  ): Array<Pick<CandidateRoute, 'id' | 'waypoints'>> {
+    if (
+      (intent.mode !== 'COMBAT_FARM' && intent.mode !== 'COLLECT' && intent.mode !== 'KITE')
+      || context.pickupPositions.length === 0
+      || this.getTotalBossWarningRisk(context, player) > 0
+    ) {
+      return [];
+    }
+
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const level = Math.max(1, context.player?.level ?? 1);
+    const earlyBootstrap = this.autoMoveElapsedMs < 90000 && level < 3;
+
+    if (
+      intent.mode === 'KITE'
+      && growthUrgency < 0.38
+      && !this.isGrowthRecoveryWindow(context, player)
+    ) {
+      return [];
+    }
+
+    if (
+      earlyBootstrap
+      && !this.isFarmSafeForGrowth(context, player)
+    ) {
+      return [];
+    }
+
+    if (!this.isFarmSafeForGrowth(context, player) && !this.isGrowthRecoveryWindow(context, player)) {
+      return [];
+    }
+
+    const safety = this.getGrowthSafetyThresholds(context);
+    const hpRatio = this.getHpRatio(context);
+    const pickupPressureLimit = earlyBootstrap
+      ? Math.min(safety.pressureLimit + 0.2, 5.25)
+      : safety.pressureLimit + (this.isGrowthRecoveryWindow(context, player) ? 1.55 : 0.75);
+    const routeRadius = earlyBootstrap
+      ? 420
+      : AUTO_PLAYER_CONSTANTS.GROWTH_HARVEST_ROUTE_RADIUS * (1 + Math.min(0.35, growthUrgency * 0.28));
+    const combatCenter = this.getCombatOutputCenter(context, player, danger);
+    const candidates = context.pickupPositions
+      .map((pickup, index) => {
+        const point = new Vector2(pickup.x, pickup.y);
+        const distance = Math2D.distanceBetween(player.x, player.y, point.x, point.y);
+
+        if (distance > routeRadius) {
+          return undefined;
+        }
+
+        if (earlyBootstrap && distance > Math.max(330, (context.player?.pickupRangePx ?? 0) * 1.35)) {
+          return undefined;
+        }
+
+        const pressure = this.getEnemyPressureAt(context, point, hpRatio);
+        const warningRisk = this.getTotalBossWarningRisk(context, point);
+
+        if (pressure > pickupPressureLimit || warningRisk > 0) {
+          return undefined;
+        }
+
+        const expValue = this.getPickupExpValue(pickup);
+        const clusterValue = this.getPickupClusterScore(context, pickup);
+        const combatPositionScore = this.evaluateWeaponEffectivePosition(context, point, danger);
+
+        if (intent.mode === 'COMBAT_FARM' && growthUrgency > 0.12 && combatPositionScore < -1.5) {
+          return undefined;
+        }
+
+        const distancePenalty = Math.max(1, distance - (context.player?.pickupRangePx ?? 0));
+        const value = (expValue * 1.45 + clusterValue * 0.56 + Math.max(0, combatPositionScore) * 1.4)
+          / Math.sqrt(distancePenalty / 100);
+
+        return { index, point, distance, value };
+      })
+      .filter((candidate): candidate is { index: number; point: Vector2; distance: number; value: number } => !!candidate)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, AUTO_PLAYER_CONSTANTS.GROWTH_HARVEST_ROUTE_LIMIT);
+
+    const routes: Array<Pick<CandidateRoute, 'id' | 'waypoints'>> = [];
+
+    for (const candidate of candidates) {
+      const toPickup = candidate.point.clone().subtract(player);
+
+      if (toPickup.lengthSq() === 0) {
+        continue;
+      }
+
+      const forward = toPickup.normalize();
+      const combatReference = combatCenter.lengthSq() > 0
+        ? combatCenter.clone().subtract(player)
+        : toPickup.clone();
+      const enemyDirection = combatReference.lengthSq() > 0
+        ? combatReference.normalize()
+        : forward.clone();
+      const left = new Vector2(-enemyDirection.y, enemyDirection.x);
+      const right = new Vector2(enemyDirection.y, -enemyDirection.x);
+      const lateral = Math2D.clamp(midDistance * 0.42, 70, 140);
+      const forwardDistance = Math.min(candidate.distance, Math.max(120, midDistance * 0.62));
+      const firstStepBase = player.clone().add(forward.clone().scale(forwardDistance));
+      const routeIdSuffix = `${candidate.index}`;
+
+      routes.push(
+        {
+          id: `growthHarvestLeft${routeIdSuffix}`,
+          waypoints: [
+            player.clone(),
+            firstStepBase.clone().add(left.clone().scale(lateral)),
+            candidate.point.clone(),
+          ],
+        },
+        {
+          id: `growthHarvestRight${routeIdSuffix}`,
+          waypoints: [
+            player.clone(),
+            firstStepBase.clone().add(right.clone().scale(lateral)),
+            candidate.point.clone(),
           ],
         },
       );
@@ -1122,6 +1328,7 @@ export class AutoPlayer {
     return (context.bossWarnings ?? []).reduce((total, warning) => {
       if (
         this.isFinalBossDashWarning(context, warning)
+        || this.isFinalBossDashImpactWarning(context, warning)
         || this.isFinalBossRingBulletWarning(context, warning)
       ) {
         return total;
@@ -1211,20 +1418,27 @@ export class AutoPlayer {
   ): number {
     const threatRankLimit = this.getGrowthRouteThreatRankLimit(context, intent);
 
-    if (threatRank > threatRankLimit || !this.isFarmSafeForGrowth(context, player)) {
+    if (
+      threatRank > threatRankLimit
+      || (
+        !this.isFarmSafeForGrowth(context, player)
+        && !this.isGrowthRecoveryWindow(context, player)
+      )
+    ) {
       return 0;
     }
 
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
     const routeSamples = this.getRouteSamplePoints(player, waypoints);
     const pickupPressureLimit = Math.max(5.2, this.getGrowthSafetyThresholds(context).pressureLimit);
+    const routePickupRadius = AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * (1.25 + Math.min(0.45, growthUrgency * 0.3));
     let score = 0;
 
     for (const pickup of context.pickupPositions) {
       const pickupPoint = new Vector2(pickup.x, pickup.y);
       const routeDistance = this.getDistanceToRoute(pickupPoint, waypoints);
 
-      if (routeDistance > AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.25) {
+      if (routeDistance > routePickupRadius) {
         continue;
       }
 
@@ -1237,14 +1451,13 @@ export class AutoPlayer {
 
       const expValue = this.getPickupExpValue(pickup);
       const clusterValue = this.getPickupClusterScore(context, pickup);
-      const distanceBonus = Math.max(0, AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.25 - routeDistance)
-        / (AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.25);
+      const distanceBonus = Math.max(0, routePickupRadius - routeDistance) / routePickupRadius;
       score += (expValue * 1.2 + clusterValue * 0.42) * distanceBonus;
     }
 
     if (intent.target?.type === 'pickup') {
       const routeDistance = this.getDistanceToRoute(intent.target.approachPosition, waypoints);
-      score += Math.max(0, 180 - routeDistance) * 0.055;
+      score += Math.max(0, 220 - routeDistance) * (0.065 + growthUrgency * 0.025);
     }
 
     const rankMultiplier = threatRank > 1 ? 0.58 : 1;
@@ -1267,6 +1480,7 @@ export class AutoPlayer {
     const routeSamples = this.getRouteSamplePoints(player, waypoints);
     const range = this.getWeaponEffectiveRange(context);
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const contactPenaltyDistance = this.getCombatContactPenaltyDistance(context);
     let score = 0;
 
     for (const sample of routeSamples) {
@@ -1274,19 +1488,21 @@ export class AutoPlayer {
       let enemiesTooClose = 0;
 
       for (const enemy of context.enemyPositions) {
-        const distance = this.getEnemyEffectiveDistance(context, sample, enemy);
+        const effectiveDistance = this.getEnemyEffectiveDistance(context, sample, enemy);
+        const centerDistance = Math2D.distanceBetween(sample.x, sample.y, enemy.x, enemy.y);
 
-        if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
+        if (effectiveDistance < contactPenaltyDistance) {
           enemiesTooClose += 1;
           continue;
         }
 
-        if (distance >= range.min && distance <= range.max) {
+        if (centerDistance >= range.min && centerDistance <= range.max) {
           enemiesInBand += this.getEnemyThreatWeight(enemy);
         }
       }
 
-      score += enemiesInBand * 1.9 - enemiesTooClose * 4.2;
+      score += enemiesInBand * (intent.mode === 'COMBAT_FARM' ? 2.75 : 1.9)
+        - enemiesTooClose * 4.2;
     }
 
     const combatCenter = this.getCombatOutputCenter(context, player, danger);
@@ -1301,8 +1517,8 @@ export class AutoPlayer {
         const enemyDir = toEnemyCenter.normalize();
         const lateral = Math.abs(route.x * enemyDir.y - route.y * enemyDir.x);
         const away = Math.max(0, route.dot(danger.fleeDirection));
-        score += lateral * (intent.mode === 'COMBAT_FARM' ? 9 : 5);
-        score -= away > 0.72 ? (away - 0.72) * 8 : 0;
+        score += lateral * (intent.mode === 'COMBAT_FARM' ? 12 : 5);
+        score -= away > 0.6 ? (away - 0.6) * (intent.mode === 'COMBAT_FARM' ? 16 : 8) : 0;
       }
     }
 
@@ -1320,7 +1536,10 @@ export class AutoPlayer {
     if (
       intent.mode === 'SURVIVE'
       || intent.mode === 'REPOSITION'
-      || !this.isFarmSafeForGrowth(context, player)
+      || (
+        !this.isFarmSafeForGrowth(context, player)
+        && !this.isGrowthRecoveryWindow(context, player)
+      )
     ) {
       return 0;
     }
@@ -1337,20 +1556,87 @@ export class AutoPlayer {
     const range = this.getWeaponEffectiveRange(context);
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
 
-    if (endpointDistance <= range.max) {
+    const growthPhaseCombatMax = this.isBossPhase(context)
+      ? range.max
+      : Math.min(range.max, range.ideal * 1.28);
+
+    if (endpointDistance <= growthPhaseCombatMax) {
       return 0;
     }
 
-    const tooFar = endpointDistance - range.max;
+    const tooFar = endpointDistance - growthPhaseCombatMax;
     const movingAway = Math.max(0, endpointDistance - currentDistance);
-    const stillFar = endpointDistance > range.max * 1.12
-      ? tooFar * (endpointDistance < currentDistance ? 0.035 : 0.055)
+    const stillFar = endpointDistance > growthPhaseCombatMax * 1.12
+      ? tooFar * (endpointDistance < currentDistance ? 0.04 : 0.075)
       : 0;
     const priestMultiplier = context.player?.characterId === 'priest' ? 1.5 : 1;
+    const growthPhaseMultiplier = this.isBossPhase(context) ? 1 : 1.35;
 
-    return (tooFar * 0.035 + movingAway * 0.065 + stillFar)
+    return (tooFar * 0.052 + movingAway * 0.095 + stillFar)
       * (1 + growthUrgency)
-      * priestMultiplier;
+      * priestMultiplier
+      * growthPhaseMultiplier;
+  }
+
+  private evaluateGrowthObjectiveRouteScore(
+    context: AutoPlayerContext,
+    player: Vector2,
+    routeId: string,
+    rawThreat: number,
+    threatRank: number,
+    intent: StrategicMoveIntent,
+    combatFitScore: number,
+    xpRouteScore: number,
+    killRouteScore: number,
+    overKitePenalty: number,
+  ): number {
+    if (intent.mode === 'SURVIVE' || intent.mode === 'REPOSITION' || context.enemyPositions.length === 0) {
+      return 0;
+    }
+
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const safeGrowthWindow = this.isFarmSafeForGrowth(context, player) || this.isGrowthRecoveryWindow(context, player);
+
+    if (!safeGrowthWindow && growthUrgency < 0.35) {
+      return 0;
+    }
+
+    const threatRankLimit = this.getGrowthRouteThreatRankLimit(context, intent);
+
+    if (threatRank > threatRankLimit + 1) {
+      return 0;
+    }
+
+    const threatSoftCap = AUTO_PLAYER_CONSTANTS.GROWTH_OBJECTIVE_THREAT_SOFT_CAP
+      + growthUrgency * 1.8
+      + (intent.mode === 'COMBAT_FARM' ? 1.4 : 0);
+    const threatOverBudget = Math.max(0, rawThreat - threatSoftCap);
+    const threatUnderBudget = Math.max(0, threatSoftCap - rawThreat);
+    const threatEfficiency = Math2D.clamp(
+      1 + threatUnderBudget * 0.025 - threatOverBudget * 0.075,
+      0.18,
+      1.22,
+    );
+    const routeKindBonus = routeId.startsWith('growthHarvest')
+      ? 18 + xpRouteScore * 0.22
+      : routeId.startsWith('combatBand')
+        ? 14 + killRouteScore * 0.18
+        : 0;
+    const modeMultiplier = intent.mode === 'COMBAT_FARM'
+      ? 1.35
+      : intent.mode === 'COLLECT'
+        ? 1.1
+        : 0.78;
+    const growthMultiplier = 1 + growthUrgency * 1.65;
+    const benefit = combatFitScore * 0.42
+      + xpRouteScore * 0.72
+      + killRouteScore * 0.86
+      + routeKindBonus;
+    const riskTax = threatRank * 7.5
+      + rawThreat * 0.045
+      + overKitePenalty * 0.62;
+
+    return (benefit - riskTax) * threatEfficiency * modeMultiplier * growthMultiplier;
   }
 
   private getGrowthRouteThreatRankLimit(
@@ -1364,6 +1650,18 @@ export class AutoPlayer {
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
 
     if (intent.mode === 'COMBAT_FARM') {
+      if (this.autoMoveElapsedMs < 90000 && Math.max(1, context.player?.level ?? 1) < 3) {
+        return 1;
+      }
+
+      if (this.autoMoveElapsedMs > 120000 && growthUrgency >= 0.25) {
+        return 3;
+      }
+
+      if (this.autoMoveElapsedMs > 150000 && growthUrgency >= 0.08) {
+        return 2;
+      }
+
       return growthUrgency >= 0.2 ? 2 : 1;
     }
 
@@ -1386,7 +1684,9 @@ export class AutoPlayer {
     }
 
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
-    const multiplier = Math2D.clamp(1 - growthUrgency * 0.26, 0.66, 1);
+    const multiplier = intent.mode === 'COMBAT_FARM' && this.autoMoveElapsedMs > 120000
+      ? Math2D.clamp(1 - growthUrgency * 0.72, 0.46, 1)
+      : Math2D.clamp(1 - growthUrgency * 0.26, 0.66, 1);
 
     return basePenalty * multiplier;
   }
@@ -1716,6 +2016,20 @@ export class AutoPlayer {
     ];
   }
 
+  private getEmergencyMicroCandidates(
+    context: AutoPlayerContext,
+    player: Vector2,
+  ): Candidate[] {
+    if (context.enemyPositions.length === 0) {
+      return [];
+    }
+
+    return [
+      ...this.getBaseDirections(),
+      ...this.getDiagonalMidDirections(),
+    ].map((direction) => ({ direction, reason: 'contactGap' }));
+  }
+
   private updateStrategicDetourState(
     context: AutoPlayerContext,
     intent: StrategicMoveIntent,
@@ -1939,9 +2253,18 @@ export class AutoPlayer {
     const currentSurvivalWarningRisk = this.getNonFinalBossWarningRisk(context, player);
     const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
     const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
+    const growthPhaseLowHealthPressure = !this.isBossPhase(context)
+      && hpRatio < 0.56
+      && (
+        currentPressure > 2.6
+        || danger.nearestDistance < AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE
+        || contactRisk > 48
+        || futureContactRisk > 54
+      );
 
     if (
       hpRatio < 0.35
+      || growthPhaseLowHealthPressure
       || currentSurvivalWarningRisk > 0
       || danger.nearestDistance < AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS
       || contactRisk > 80
@@ -1962,14 +2285,29 @@ export class AutoPlayer {
       return 'REPOSITION';
     }
 
-    if (this.hasBossPressure(context) || warningEscapeDirection.lengthSq() > 0) {
+    if (
+      warningEscapeDirection.lengthSq() > 0
+      || (this.isBossPhase(context) && this.hasBossPressure(context))
+    ) {
       return 'BOSS_POSITIONING';
     }
 
+    const farmGrowthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const farmSafeForGrowth = this.isFarmSafeForGrowth(context, player);
+    const growthRecoveryWindow = this.isGrowthRecoveryWindow(context, player);
+
     if (
-      this.isFarmSafeForGrowth(context, player)
+      (danger.pressureCount >= 5 || currentPressure > 4.8)
+      && (!farmSafeForGrowth || farmGrowthUrgency < 0.35)
+      && !growthRecoveryWindow
+    ) {
+      return 'KITE';
+    }
+
+    if (
+      (farmSafeForGrowth || growthRecoveryWindow)
       && (
-        (this.evaluateFarmGrowthUrgency(context) > 0.05 && (context.enemyPositions.length > 0 || context.pickupPositions.length > 0))
+        (farmGrowthUrgency > 0.05 && (context.enemyPositions.length > 0 || context.pickupPositions.length > 0))
         || context.enemyPositions.length > 0
         || target?.type === 'pickup'
       )
@@ -1995,7 +2333,10 @@ export class AutoPlayer {
   private isFarmSafeForGrowth(context: AutoPlayerContext, player: Vector2): boolean {
     const hpRatio = this.getHpRatio(context);
 
-    if (this.getTotalBossWarningRisk(context, player) > 0) {
+    if (
+      hpRatio <= 0.52
+      || this.getTotalBossWarningRisk(context, player) > 0
+    ) {
       return false;
     }
 
@@ -2010,6 +2351,59 @@ export class AutoPlayer {
       && pressure < safety.pressureLimit;
   }
 
+  private isGrowthRecoveryWindow(context: AutoPlayerContext, player: Vector2): boolean {
+    const hpRatio = this.getHpRatio(context);
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const level = Math.max(1, context.player?.level ?? 1);
+    const earlyLevelBehind = this.autoMoveElapsedMs < 90000 && level < 3;
+    const earlyRun = this.autoMoveElapsedMs < 70000;
+
+    if (
+      growthUrgency < 0.22
+      && !earlyLevelBehind
+    ) {
+      return false;
+    }
+
+    if (this.getTotalBossWarningRisk(context, player) > 0) {
+      return false;
+    }
+
+    const contactRisk = this.getEnemyContactRiskAt(context, player, hpRatio);
+    const futureContactRisk = this.getEnemyFutureContactRiskAt(context, player, hpRatio);
+    let nearestEnemyDistance = Number.POSITIVE_INFINITY;
+
+    for (const enemy of context.enemyPositions) {
+      const distance = this.getEnemyEffectiveDistance(context, player, enemy);
+
+      if (this.shouldUseFinalBossCloseContactSemantics(context, enemy, distance)) {
+        continue;
+      }
+
+      nearestEnemyDistance = Math.min(nearestEnemyDistance, distance);
+    }
+
+    if (
+      contactRisk >= 76
+      || futureContactRisk >= 72
+    ) {
+      return false;
+    }
+
+    const pressure = this.getEnemyPressureAt(context, player, hpRatio);
+    const safety = this.getGrowthSafetyThresholds(context);
+
+    if (earlyRun) {
+      return hpRatio > 0.58
+        && nearestEnemyDistance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS * 1.08
+        && contactRisk < Math.min(70, safety.contactRiskLimit + 6)
+        && futureContactRisk < Math.min(70, safety.futureContactRiskLimit + 6)
+        && pressure < safety.pressureLimit + 0.75;
+    }
+
+    return pressure < safety.pressureLimit + 1.35 + Math.min(0.9, growthUrgency * 0.8);
+  }
+
   private getGrowthSafetyThresholds(context: AutoPlayerContext): {
     hpFloor: number;
     contactRiskLimit: number;
@@ -2022,9 +2416,9 @@ export class AutoPlayer {
 
     return {
       hpFloor: 0.45,
-      contactRiskLimit: Math.min(79, 55 + urgency * 14),
-      futureContactRiskLimit: Math.min(69.5, 65 + urgency * 5),
-      pressureLimit: Math.min(7, 5.1 + urgency * 1.25),
+      contactRiskLimit: Math.min(86, 60 + urgency * 16),
+      futureContactRiskLimit: Math.min(76, 68 + urgency * 7),
+      pressureLimit: Math.min(7.6, 5.4 + urgency * 1.45),
     };
   }
 
@@ -2043,22 +2437,37 @@ export class AutoPlayer {
     danger: ReturnType<AutoPlayer['getDangerInfo']>,
     mode: MoveMode,
   ): boolean {
-    if (mode === 'SURVIVE' || mode === 'REPOSITION' || !this.isFarmSafeForGrowth(context, player)) {
+    if (
+      mode === 'SURVIVE'
+      || mode === 'REPOSITION'
+      || (
+        !this.isFarmSafeForGrowth(context, player)
+        && !this.isGrowthRecoveryWindow(context, player)
+      )
+    ) {
       return false;
     }
 
     const range = this.getWeaponEffectiveRange(context);
 
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const reachMultiplier = growthUrgency > 0.22 ? 1.75 : 1.35;
+
     return danger.nearestDistance > AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS
-      && danger.nearestDistance < range.max * 1.35
+      && danger.nearestDistance < range.max * reachMultiplier
       && context.enemyPositions.length > 0;
   }
 
   private evaluateFarmGrowthUrgency(context: AutoPlayerContext): number {
     const level = Math.max(1, context.player?.level ?? 1);
-    const minute = Math2D.clamp(Math.floor(this.autoMoveElapsedMs / 60000), 0, 5);
+    const elapsedMinutes = Math2D.clamp(this.autoMoveElapsedMs / 60000, 0, 5);
+    const minute = Math.floor(elapsedMinutes);
+    const nextMinute = Math.min(minute + 1, 5);
+    const minuteProgress = elapsedMinutes - minute;
     const expectedLevelByMinute = [1, 3, 5, 7, 9, 11];
-    const expectedLevel = expectedLevelByMinute[minute] ?? 11;
+    const currentExpectedLevel = expectedLevelByMinute[minute] ?? 11;
+    const nextExpectedLevel = expectedLevelByMinute[nextMinute] ?? currentExpectedLevel;
+    const expectedLevel = currentExpectedLevel + (nextExpectedLevel - currentExpectedLevel) * minuteProgress;
     const baseUrgency = level < expectedLevel
       ? Math2D.clamp((expectedLevel - level) / Math.max(1, expectedLevel), 0, 1)
       : 0;
@@ -2116,26 +2525,35 @@ export class AutoPlayer {
     direction: Vector2,
     mode: MoveMode,
   ): number {
-    if (mode === 'SURVIVE' || mode === 'REPOSITION' || !this.isFarmSafeForGrowth(context, player)) {
+    if (
+      mode === 'SURVIVE'
+      || mode === 'REPOSITION'
+      || (
+        !this.isFarmSafeForGrowth(context, player)
+        && !this.isGrowthRecoveryWindow(context, player)
+      )
+    ) {
       return 0;
     }
 
     const growthUrgency = this.evaluateFarmGrowthUrgency(context);
     const combatFarmMultiplier = this.getCharacterCombatFarmMultiplier(context);
     const pickupPressureLimit = Math.max(5, this.getGrowthSafetyThresholds(context).pressureLimit);
+    const endpointPickupRadius = AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * (1.6 + Math.min(0.55, growthUrgency * 0.36));
+    const forwardDotLimit = growthUrgency > 0.45 ? 0.05 : 0.2;
     let score = 0;
 
     for (const pickup of context.pickupPositions) {
       const pickupPoint = new Vector2(pickup.x, pickup.y);
       const distanceToEndpoint = Math2D.distanceBetween(endpoint.x, endpoint.y, pickupPoint.x, pickupPoint.y);
 
-      if (distanceToEndpoint > AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.6) {
+      if (distanceToEndpoint > endpointPickupRadius) {
         continue;
       }
 
       const toPickup = pickupPoint.clone().subtract(player);
 
-      if (toPickup.lengthSq() === 0 || toPickup.normalize().dot(direction) < 0.2) {
+      if (toPickup.lengthSq() === 0 || toPickup.normalize().dot(direction) < forwardDotLimit) {
         continue;
       }
 
@@ -2148,7 +2566,7 @@ export class AutoPlayer {
 
       const expValue = this.getPickupExpValue(pickup);
       const clusterScore = this.getPickupClusterScore(context, pickup);
-      const distanceFactor = 1 - distanceToEndpoint / (AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * 1.6);
+      const distanceFactor = 1 - distanceToEndpoint / endpointPickupRadius;
       score += (expValue * 0.8 + clusterScore * 0.32) * distanceFactor;
     }
 
@@ -2191,15 +2609,17 @@ export class AutoPlayer {
     }
 
     const range = this.getWeaponEffectiveRange(context);
+    const contactPenaltyDistance = this.getCombatContactPenaltyDistance(context);
     let enemiesInBand = 0;
     let tooClose = 0;
 
     for (const enemy of context.enemyPositions) {
-      const distance = this.getEnemyEffectiveDistance(context, endpoint, enemy);
+      const effectiveDistance = this.getEnemyEffectiveDistance(context, endpoint, enemy);
+      const centerDistance = Math2D.distanceBetween(endpoint.x, endpoint.y, enemy.x, enemy.y);
 
-      if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
+      if (effectiveDistance < contactPenaltyDistance) {
         tooClose += this.getEnemyThreatWeight(enemy);
-      } else if (distance >= range.min && distance <= range.max) {
+      } else if (centerDistance >= range.min && centerDistance <= range.max) {
         enemiesInBand += this.getEnemyThreatWeight(enemy);
       }
     }
@@ -2210,6 +2630,54 @@ export class AutoPlayer {
       : 0;
 
     return enemiesInBand * 2.4 + lateralScore - tooClose * 5;
+  }
+
+  private evaluateStrategicGrowthObjectiveScore(
+    context: AutoPlayerContext,
+    player: Vector2,
+    endpoint: Vector2,
+    mode: MoveMode,
+    lookahead: StrategicLookaheadResult,
+    combatOpportunityScore: number,
+    xpAccessScore: number,
+    killZoneScore: number,
+  ): number {
+    if (mode === 'SURVIVE' || mode === 'REPOSITION') {
+      return 0;
+    }
+
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const safeGrowthWindow = this.isFarmSafeForGrowth(context, player) || this.isGrowthRecoveryWindow(context, player);
+
+    if (!safeGrowthWindow && growthUrgency < 0.3) {
+      return 0;
+    }
+
+    const hpRatio = this.getHpRatio(context);
+    const endpointPressure = this.getEnemyPressureAt(context, endpoint, hpRatio);
+    const pressureBudget = this.getGrowthSafetyThresholds(context).pressureLimit
+      + (mode === 'COMBAT_FARM' ? 1.35 : 0.65)
+      + Math.min(0.9, growthUrgency * 0.75);
+    const pressureOverBudget = Math.max(0, endpointPressure - pressureBudget);
+    const futureTrapRisk = lookahead.futureTargetZoneDensityRisk * 0.18
+      + lookahead.futurePathInterceptionRisk * 0.22
+      + lookahead.deadEndAfterArrivalRisk * 0.32
+      + lookahead.futureBoundaryRisk * 0.14;
+    const sustainBonus = Math.max(0, lookahead.continuationScore) * 0.18
+      + Math.max(0, lookahead.loopSustainability) * 0.16
+      + Math.max(0, lookahead.escapeCorridorScore) * 0.14;
+    const benefit = combatOpportunityScore * 0.78
+      + xpAccessScore * 0.95
+      + killZoneScore * 1.05
+      + sustainBonus;
+    const riskTax = pressureOverBudget * 8.5 + futureTrapRisk;
+    const modeMultiplier = mode === 'COMBAT_FARM'
+      ? 1.22
+      : mode === 'COLLECT'
+        ? 0.86
+        : 0.62;
+
+    return (benefit - riskTax) * modeMultiplier * (1 + growthUrgency * 1.35);
   }
 
   private getStrategicLateralCombatScore(
@@ -2412,15 +2880,25 @@ export class AutoPlayer {
       currentPressure,
       density,
     );
-    const highPressureOrLate = this.isStrategicHighPressureOrLate(currentPressure, density);
-    const firstStepWeight = highPressureOrLate ? 0.5 : 0.7;
-    const continuationWeight = highPressureOrLate ? 1.8 : 1.3;
-    const deadEndWeight = highPressureOrLate ? 1.8 : 1.3;
+    const highPressureOrBossPhase = this.isStrategicHighPressureOrBossPhase(context, currentPressure, density);
+    const firstStepWeight = highPressureOrBossPhase ? 0.5 : 0.7;
+    const continuationWeight = highPressureOrBossPhase ? 1.8 : 1.3;
+    const deadEndWeight = highPressureOrBossPhase ? 1.8 : 1.3;
     const farmGrowthUrgency = this.evaluateFarmGrowthUrgency(context);
     const combatWindow = this.isCombatWindowForMode(context, player, danger, mode);
     const combatOpportunityScore = this.evaluateCombatOpportunityScore(context, player, endpoint, direction, danger, mode);
     const xpAccessScore = this.evaluateStrategicXpAccessScore(context, player, endpoint, direction, mode);
     const killZoneScore = this.evaluateStrategicKillZoneScore(context, endpoint, direction, danger, mode);
+    const growthObjectiveScore = this.evaluateStrategicGrowthObjectiveScore(
+      context,
+      player,
+      endpoint,
+      mode,
+      lookahead,
+      combatOpportunityScore,
+      xpAccessScore,
+      killZoneScore,
+    );
     const growthMultiplier = 1 + farmGrowthUrgency * this.getCharacterCombatFarmMultiplier(context) * 0.9;
     const growthSuppressed = mode === 'SURVIVE'
       || mode === 'REPOSITION'
@@ -2430,20 +2908,21 @@ export class AutoPlayer {
     score = score * firstStepWeight
       + lookahead.continuationScore * continuationWeight
       - lookahead.deadEndAfterArrivalRisk * deadEndWeight
-      + lookahead.futureZoneSafety * (highPressureOrLate ? 1.82 : 1.4)
-      + lookahead.escapeCorridorScore * (highPressureOrLate ? 1.95 : 1.5)
+      + lookahead.futureZoneSafety * (highPressureOrBossPhase ? 1.82 : 1.4)
+      + lookahead.escapeCorridorScore * (highPressureOrBossPhase ? 1.95 : 1.5)
       + lookahead.lureQuality * 1.2
-      + lookahead.loopSustainability * (highPressureOrLate ? 2.4 : 1.6)
+      + lookahead.loopSustainability * (highPressureOrBossPhase ? 2.4 : 1.6)
       - lookahead.futurePlayerDensityRisk * 1.2
       - lookahead.futureTargetZoneDensityRisk * 1.4
       - lookahead.futurePathInterceptionRisk * 1.5
       - lookahead.futureBoundaryRisk * (hpRatio < 0.35 ? 2.4 : 1.6)
-      - lookahead.linearEscapePenalty * (highPressureOrLate ? 1.5 : 1);
+      - lookahead.linearEscapePenalty * (highPressureOrBossPhase ? 1.5 : 1);
 
     if (!growthSuppressed) {
       score += combatOpportunityScore * (mode === 'COMBAT_FARM' ? 1.45 : 0.85) * growthMultiplier;
       score += xpAccessScore * (mode === 'COMBAT_FARM' ? 1.35 : 0.7) * growthMultiplier;
       score += killZoneScore * (mode === 'COMBAT_FARM' ? 1.25 : 0.65) * growthMultiplier;
+      score += growthObjectiveScore;
     }
 
     return {
@@ -2539,8 +3018,8 @@ export class AutoPlayer {
       futureEnemiesByTime[1],
       mode,
     );
-    const highPressureOrLate = this.isStrategicHighPressureOrLate(currentPressure, currentDensity);
-    const resourceSuppressed = highPressureOrLate || this.getHpRatio(context) < 0.35 || mode === 'SURVIVE' || mode === 'REPOSITION';
+    const highPressureOrBossPhase = this.isStrategicHighPressureOrBossPhase(context, currentPressure, currentDensity);
+    const resourceSuppressed = highPressureOrBossPhase || this.getHpRatio(context) < 0.35 || mode === 'SURVIVE' || mode === 'REPOSITION';
     const targetDirection = target?.approachPosition.clone().subtract(player);
     const resourceBias = resourceSuppressed
       || !target
@@ -2551,7 +3030,7 @@ export class AutoPlayer {
       : Math.max(0, normalized.dot(targetDirection.normalize())) * 2.5;
     const futureZoneSafety = Math.max(0, 36 - futureTargetZoneDensityRisk * 0.45 - futureBoundaryRisk * 0.25)
       + resourceBias;
-    const avoidLinearEscape = highPressureOrLate
+    const avoidLinearEscape = highPressureOrBossPhase
       || futureBoundaryRisk > 45
       || futurePathInterceptionRisk > 55
       || loopSustainability > 24;
@@ -2864,7 +3343,7 @@ export class AutoPlayer {
     continuationScore: number,
     mode: MoveMode,
   ): StrategicPathStyle {
-    const highPressureOrLate = this.autoMoveElapsedMs > AUTO_PLAYER_CONSTANTS.LATE_GAME_MS
+    const highPressureOrBossPhase = this.isBossPhase(context)
       || context.enemyPositions.length >= 18
       || mode === 'SURVIVE'
       || mode === 'REPOSITION'
@@ -2876,7 +3355,7 @@ export class AutoPlayer {
     const clockwise = rightScore >= leftScore;
 
     if (
-      highPressureOrLate
+      highPressureOrBossPhase
       && loopSustainability > 18
       && (continuationScore > 6 || futureBoundaryRisk > 28 || linearEscapePenalty > 8)
     ) {
@@ -2948,9 +3427,13 @@ export class AutoPlayer {
       + Math.min(8, context.enemyPositions.length * 0.08);
   }
 
-  private isStrategicHighPressureOrLate(currentPressure: number, currentDensity: number): boolean {
+  private isStrategicHighPressureOrBossPhase(
+    context: AutoPlayerContext,
+    currentPressure: number,
+    currentDensity: number,
+  ): boolean {
     return this.getStrategicPressureLevelFromValues(currentPressure, currentDensity) > AUTO_PLAYER_CONSTANTS.HIGH_PRESSURE_THRESHOLD
-      || this.autoMoveElapsedMs > AUTO_PLAYER_CONSTANTS.LATE_GAME_MS;
+      || this.isBossPhase(context);
   }
 
   private getStrategicPressureLevelFromValues(currentPressure: number, currentDensity: number): number {
@@ -3115,19 +3598,43 @@ export class AutoPlayer {
     target: AutoTarget | undefined,
     mode: MoveMode,
   ): target is AutoTarget {
-    if (!target || (mode !== 'COLLECT' && mode !== 'CHEST_APPROACH')) {
+    if (!target) {
       return false;
     }
 
     const hpRatio = this.getHpRatio(context);
     const playerPressure = this.getEnemyPressureAt(context, player, hpRatio);
     const targetPressure = this.getEnemyPressureAt(context, target.approachPosition, hpRatio);
+    const playerWarningSafe = this.getTotalBossWarningRisk(context, player) <= 0;
+    const targetWarningSafe = this.getTotalBossWarningRisk(context, target.approachPosition) <= 0;
+
+    if (mode === 'COMBAT_FARM') {
+      const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+      const safety = this.getGrowthSafetyThresholds(context);
+      const pickupReachScale = 1.45 + Math.min(0.85, growthUrgency * 0.55);
+      const nearPickup = target.effectiveDistance <= AUTO_PLAYER_CONSTANTS.PICKUP_CLUSTER_RADIUS * pickupReachScale;
+      const hpFloor = Math.max(0.5, safety.hpFloor + 0.05);
+
+      return target.type === 'pickup'
+        && !target.blocked
+        && hpRatio >= hpFloor
+        && growthUrgency > 0.08
+        && nearPickup
+        && playerPressure < Math.max(2.6, safety.pressureLimit * 0.52)
+        && targetPressure < Math.max(4.2, safety.pressureLimit * 0.74)
+        && playerWarningSafe
+        && targetWarningSafe;
+    }
+
+    if (mode !== 'COLLECT' && mode !== 'CHEST_APPROACH') {
+      return false;
+    }
 
     return hpRatio >= 0.5
       && playerPressure < 2.6
       && targetPressure < 5
-      && this.getTotalBossWarningRisk(context, player) <= 0
-      && this.getTotalBossWarningRisk(context, target.approachPosition) <= 0;
+      && playerWarningSafe
+      && targetWarningSafe;
   }
 
   private isTacticalTargetAllowed(
@@ -3146,7 +3653,74 @@ export class AutoPlayer {
   }
 
   private isResourceMode(mode: MoveMode): boolean {
-    return mode === 'COLLECT' || mode === 'CHEST_APPROACH';
+    return mode === 'COLLECT' || mode === 'CHEST_APPROACH' || mode === 'COMBAT_FARM';
+  }
+
+  private isBossPhase(context: AutoPlayerContext): boolean {
+    return this.autoMoveElapsedMs >= AUTO_PLAYER_CONSTANTS.BOSS_PHASE_START_MS
+      || this.isFinalBossCloseCombatActive(context);
+  }
+
+  private getMovementWeightsForContext(context: AutoPlayerContext): ReturnType<AutoStrategyEngine['getMovementWeights']> {
+    const weights = this.strategyEngine.getMovementWeights();
+
+    if (this.isBossPhase(context)) {
+      return weights;
+    }
+
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const earlyBootstrap = this.autoMoveElapsedMs < 90000 && Math.max(1, context.player?.level ?? 1) < 3;
+    const shortRangeWeapon = this.hasShortRangeGrowthWeapon(context);
+    const priestGrowth = context.player?.characterId === 'priest';
+    const riskFloor = earlyBootstrap
+      ? 1.32
+      : (shortRangeWeapon ? 1.2 : 1.12) + Math.min(0.28, growthUrgency * 0.18);
+    const treasureCap = growthUrgency > 0.08 || earlyBootstrap
+      ? (earlyBootstrap ? 0.58 : 0.82)
+      : 1.05;
+    const combatFloor = shortRangeWeapon
+      ? 1.38 + Math.min(0.2, growthUrgency * 0.16)
+      : 1.16;
+    const overKiteFloor = shortRangeWeapon
+      ? 1.42 + Math.min(0.25, growthUrgency * 0.18)
+      : 1.18;
+    const farmFloor = earlyBootstrap
+      ? 1.62 + (priestGrowth ? 0.18 : 0)
+      : 1.36 + Math.min(0.34, growthUrgency * 0.28) + (priestGrowth ? 0.12 : 0);
+    const loopCeiling = earlyBootstrap
+      ? 1.2
+      : growthUrgency > 0.12
+        ? 1.34
+        : 1.42;
+    const survivalFloor = earlyBootstrap
+      ? 1.2
+      : 1.08 + Math.min(0.22, growthUrgency * 0.18);
+
+    return {
+      ...weights,
+      riskMultiplier: Math.max(weights.riskMultiplier, riskFloor),
+      survivalMultiplier: Math.max(weights.survivalMultiplier, survivalFloor),
+      combatMultiplier: Math.max(weights.combatMultiplier, combatFloor),
+      farmMultiplier: Math.max(weights.farmMultiplier, farmFloor),
+      treasureMultiplier: Math.min(weights.treasureMultiplier, treasureCap),
+      loopMultiplier: Math.min(weights.loopMultiplier, loopCeiling),
+      overKitePenaltyMultiplier: Math.max(weights.overKitePenaltyMultiplier, overKiteFloor),
+    };
+  }
+
+  private hasShortRangeGrowthWeapon(context: AutoPlayerContext): boolean {
+    const weapons = this.getWeaponSnapshots(context);
+
+    if (weapons.length === 0) {
+      return false;
+    }
+
+    return weapons.some((weapon) => (
+      weapon.tags.includes('aura')
+      || weapon.tags.includes('orbit')
+      || weapon.tags.includes('duelist')
+      || this.getSingleWeaponEffectiveRange(weapon).max <= 260
+    ));
   }
 
   private hasBossPressure(context: AutoPlayerContext): boolean {
@@ -3301,6 +3875,7 @@ export class AutoPlayer {
   private hasFinalBossCombatWarning(context: AutoPlayerContext): boolean {
     return (context.bossWarnings ?? []).some((warning) => (
       this.isFinalBossDashWarning(context, warning)
+      || this.isFinalBossDashImpactWarning(context, warning)
       || this.isFinalBossRingBulletWarning(context, warning)
     ));
   }
@@ -3337,6 +3912,7 @@ export class AutoPlayer {
     return !!this.getFinalBossEnemy(context)
       || (context.bossWarnings ?? []).some((warning) => (
         this.isFinalBossDashWarning(context, warning)
+        || this.isFinalBossDashImpactWarning(context, warning)
         || this.isFinalBossRingBulletWarning(context, warning)
       ));
   }
@@ -3444,6 +4020,64 @@ export class AutoPlayer {
     };
   }
 
+  private getFinalBossWarningConstraint(
+    context: AutoPlayerContext,
+    player: Vector2,
+    endpoint: Vector2,
+  ): FinalBossWarningConstraintResult {
+    let currentRisk = 0;
+    let endpointRisk = 0;
+    let hasFinalBossDashThreat = false;
+
+    for (const warning of context.bossWarnings ?? []) {
+      if (this.isFinalBossDashWarning(context, warning)) {
+        hasFinalBossDashThreat = true;
+        currentRisk = Math.max(currentRisk, this.getFinalBossDashRisk(context, player, warning));
+        endpointRisk = Math.max(endpointRisk, this.getFinalBossDashRisk(context, endpoint, warning));
+      } else if (this.isFinalBossDashImpactWarning(context, warning)) {
+        hasFinalBossDashThreat = true;
+        currentRisk = Math.max(currentRisk, this.getFinalBossDashImpactRisk(context, player, warning));
+        endpointRisk = Math.max(endpointRisk, this.getFinalBossDashImpactRisk(context, endpoint, warning));
+      }
+    }
+
+    if (!hasFinalBossDashThreat) {
+      return {
+        active: false,
+        forbidden: false,
+        currentRisk: 0,
+        endpointRisk: 0,
+        reason: '',
+      };
+    }
+
+    const entersDashLane = currentRisk < 0.35 && endpointRisk > 0.42;
+    const failsToEscapeDashLane = currentRisk >= 0.45
+      && endpointRisk > Math.max(0.32, currentRisk * 0.52);
+    const remainsSevereDashLane = endpointRisk > 0.82
+      && endpointRisk > currentRisk - 0.58;
+    const staysInModerateDashThreat = endpointRisk > 0.58
+      && endpointRisk >= currentRisk * 0.82;
+
+    if (entersDashLane || failsToEscapeDashLane || remainsSevereDashLane || staysInModerateDashThreat) {
+      return {
+        active: true,
+        forbidden: true,
+        currentRisk,
+        endpointRisk,
+        reason: 'finalBossDashHardAvoid',
+      };
+    }
+
+    return {
+      active: true,
+      forbidden: false,
+      currentRisk,
+      endpointRisk,
+      reason: endpointRisk < currentRisk ? 'finalBossDashRiskReduced' : '',
+    };
+  }
+
   private isFinalBossImmediateWarningEscape(
     context: AutoPlayerContext,
     player: Vector2,
@@ -3477,9 +4111,9 @@ export class AutoPlayer {
     }
 
     const normalizedRadial = radial.clone().normalize();
-    const orbitClockwise = new Vector2(normalizedRadial.y, -normalizedRadial.x);
-    const orbitCounterClockwise = new Vector2(-normalizedRadial.y, normalizedRadial.x);
     const distance = this.getFinalBossEffectiveDistance(context, player);
+    const orbitClockwise = this.getFinalBossOrbitDirection(normalizedRadial, distance, true);
+    const orbitCounterClockwise = this.getFinalBossOrbitDirection(normalizedRadial, distance, false);
     let closeCutInAdded = false;
 
     for (const warning of context.bossWarnings ?? []) {
@@ -3488,8 +4122,22 @@ export class AutoPlayer {
 
         if (line.lengthSq() > 0) {
           const lineDirection = line.normalize();
-          candidates.push({ direction: new Vector2(-lineDirection.y, lineDirection.x), reason: 'finalBossDashSideStep' });
-          candidates.push({ direction: new Vector2(lineDirection.y, -lineDirection.x), reason: 'finalBossDashSideStep' });
+          candidates.push({
+            direction: this.getFinalBossDashSideStepDirection(
+              context,
+              player,
+              new Vector2(-lineDirection.y, lineDirection.x),
+            ),
+            reason: 'finalBossDashSideStep',
+          });
+          candidates.push({
+            direction: this.getFinalBossDashSideStepDirection(
+              context,
+              player,
+              new Vector2(lineDirection.y, -lineDirection.x),
+            ),
+            reason: 'finalBossDashSideStep',
+          });
         }
 
         candidates.push({ direction: orbitClockwise, reason: 'finalBossOrbitClockwise' });
@@ -3510,6 +4158,27 @@ export class AutoPlayer {
         candidates.push({ direction: orbitClockwise, reason: 'finalBossCloseOrbit' });
         candidates.push({ direction: orbitCounterClockwise, reason: 'finalBossCloseOrbit' });
         candidates.push(...this.getFinalBossRingGapCandidates(player, warning));
+      } else if (this.isFinalBossDashImpactWarning(context, warning) && warning.shape === 'circle') {
+        const impactEscape = this.getFinalBossDashImpactEscapeDirection(context, warning, player);
+
+        if (impactEscape.lengthSq() > 0) {
+          candidates.push({ direction: impactEscape, reason: 'finalBossDashImpactOrbit' });
+        }
+
+        candidates.push({ direction: orbitClockwise, reason: 'finalBossDashImpactOrbit' });
+        candidates.push({ direction: orbitCounterClockwise, reason: 'finalBossDashImpactOrbit' });
+
+        if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
+          const cutIn = new Vector2(boss.x - player.x, boss.y - player.y);
+
+          if (cutIn.lengthSq() > 0) {
+            const normalizedCutIn = cutIn.normalize();
+
+            candidates.push({ direction: normalizedCutIn.clone().add(orbitClockwise.clone().scale(0.7)), reason: 'finalBossCloseCutIn' });
+            candidates.push({ direction: normalizedCutIn.clone().add(orbitCounterClockwise.clone().scale(0.7)), reason: 'finalBossCloseCutIn' });
+            closeCutInAdded = true;
+          }
+        }
       }
     }
 
@@ -3525,6 +4194,77 @@ export class AutoPlayer {
     }
 
     return candidates;
+  }
+
+  private getFinalBossOrbitDirection(
+    outwardRadial: Vector2,
+    distance: number,
+    clockwise: boolean,
+  ): Vector2 {
+    const tangent = clockwise
+      ? new Vector2(outwardRadial.y, -outwardRadial.x)
+      : new Vector2(-outwardRadial.y, outwardRadial.x);
+    const radialBias = distance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
+      ? -0.28
+      : Math2D.clamp(
+        (distance - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE)
+          / Math.max(1, AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE)
+          * 0.32 + 0.10,
+        0.10,
+        0.42,
+      );
+
+    return tangent.add(outwardRadial.clone().scale(-radialBias)).normalize();
+  }
+
+  private getFinalBossDashSideStepDirection(
+    context: AutoPlayerContext,
+    player: Vector2,
+    sideDirection: Vector2,
+  ): Vector2 {
+    if (sideDirection.lengthSq() === 0) {
+      return new Vector2(0, 0);
+    }
+
+    const boss = this.getFinalBossAnchor(context);
+
+    if (!boss) {
+      return sideDirection.clone().normalize();
+    }
+
+    const distance = this.getFinalBossEffectiveDistance(context, player);
+    const toBoss = new Vector2(boss.x - player.x, boss.y - player.y);
+    const awayFromBoss = new Vector2(player.x - boss.x, player.y - boss.y);
+
+    if (toBoss.lengthSq() === 0 || awayFromBoss.lengthSq() === 0) {
+      return sideDirection.clone().normalize();
+    }
+
+    const normalizedSide = sideDirection.clone().normalize();
+    const normalizedToBoss = toBoss.normalize();
+    const normalizedAway = awayFromBoss.normalize();
+    const endpoint = this.getCandidateEndpoint(context, player, normalizedSide);
+    const endpointDistance = this.getFinalBossEffectiveDistance(context, endpoint);
+    const sideMovesOutward = normalizedSide.dot(normalizedAway) > 0.08;
+
+    if (distance < AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE) {
+      return normalizedSide.add(normalizedAway.scale(0.32)).normalize();
+    }
+
+    if (
+      sideMovesOutward
+      || endpointDistance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
+      || (
+        distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
+        && endpointDistance > distance - 6
+      )
+    ) {
+      const cutInWeight = distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT ? 0.78 : 0.46;
+
+      return normalizedSide.scale(0.86).add(normalizedToBoss.scale(cutInWeight)).normalize();
+    }
+
+    return normalizedSide;
   }
 
   private getFinalBossDistanceFallbackDirection(
@@ -3549,7 +4289,8 @@ export class AutoPlayer {
 
     const distance = this.getFinalBossEffectiveDistance(context, player);
     const cutIn = toBoss.clone().normalize();
-    const orbit = new Vector2(cutIn.y, -cutIn.x);
+    const outwardRadial = cutIn.clone().scale(-1);
+    const orbit = this.getFinalBossOrbitDirection(outwardRadial, distance, true);
 
     if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) {
       return cutIn;
@@ -3639,6 +4380,15 @@ export class AutoPlayer {
       );
   }
 
+  private isFinalBossDashImpactWarning(context: AutoPlayerContext, warning: AutoBossWarningSnapshot): boolean {
+    return warning.shape === 'circle'
+      && warning.kind === 'impact'
+      && (
+        warning.skillId === 'final_boss_dash_impact'
+        || this.isFinalBossWarning(context, warning)
+      );
+  }
+
   private getFinalBossWarningCombatScore(
     context: AutoPlayerContext,
     player: Vector2,
@@ -3654,8 +4404,10 @@ export class AutoPlayer {
     for (const warning of context.bossWarnings ?? []) {
       if (this.isFinalBossDashWarning(context, warning)) {
         const risk = this.getFinalBossDashRisk(context, endpoint, warning);
+        const currentRisk = this.getFinalBossDashRisk(context, player, warning);
 
-        score -= risk * 96;
+        score -= risk * 210;
+        score += Math.max(0, currentRisk - risk) * 112;
 
         if (warning.shape === 'line' && direction.lengthSq() > 0) {
           const lineDirection = new Vector2(
@@ -3669,9 +4421,15 @@ export class AutoPlayer {
             const sidestep = Math.abs(normalizedDirection.x * normalizedLine.y - normalizedDirection.y * normalizedLine.x);
             const alongLine = Math.abs(normalizedDirection.dot(normalizedLine));
 
-            score += sidestep * 32 - alongLine * 8;
+            score += sidestep * 72 - alongLine * 26;
           }
         }
+      } else if (this.isFinalBossDashImpactWarning(context, warning)) {
+        const risk = this.getFinalBossDashImpactRisk(context, endpoint, warning);
+        const currentRisk = this.getFinalBossDashImpactRisk(context, player, warning);
+
+        score -= risk * 190;
+        score += Math.max(0, currentRisk - risk) * 92;
       } else if (this.isFinalBossRingBulletWarning(context, warning)) {
         const risk = this.getFinalBossRingBulletLaneRisk(context, endpoint, warning);
         const gapScore = this.getFinalBossRingBulletGapScore(context, endpoint, warning);
@@ -3744,6 +4502,29 @@ export class AutoPlayer {
 
     return laneRisk * laneRisk * farAmplifier
       + Math.max(0, distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_DISTANCE_HARD_LIMIT) / 320;
+  }
+
+  private getFinalBossDashImpactRisk(
+    context: AutoPlayerContext,
+    point: Vector2,
+    warning: AutoBossWarningSnapshot,
+  ): number {
+    if (warning.shape !== 'circle') {
+      return 0;
+    }
+
+    const center = new Vector2(warning.x, warning.y);
+    const impactDistance = Math2D.distanceBetween(point.x, point.y, center.x, center.y);
+    const riskRadius = warning.radius + 24;
+    const impactRisk = impactDistance >= riskRadius
+      ? 0
+      : 1 + (riskRadius - impactDistance) / Math.max(1, riskRadius);
+    const distanceToBoss = this.getFinalBossEffectiveDistance(context, point);
+    const distancePenalty = distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE
+      ? Math.min(0.9, (distanceToBoss - AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) / 170)
+      : 0;
+
+    return impactRisk + distancePenalty;
   }
 
   private getFinalBossRingBulletGapScore(
@@ -4049,13 +4830,24 @@ export class AutoPlayer {
         continue;
       }
 
-      const weights = this.strategyEngine.getMovementWeights();
+      const weights = this.getMovementWeightsForContext(context);
       const targetMultiplier = target.type === 'treasure'
         ? weights.treasureMultiplier
         : weights.farmMultiplier;
+      const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+      const growthRiskMultiplier = 1 + growthUrgency * 2.4;
+      const targetRiskScale = target.type === 'treasure' ? 3.8 : 2.1;
       let score = target.value * targetMultiplier
-        - targetPressure * weights.riskMultiplier
+        - targetPressure * weights.riskMultiplier * targetRiskScale * growthRiskMultiplier
         - targetWarningRisk * 18;
+
+      if (growthUrgency > 0.08) {
+        if (target.type === 'treasure') {
+          score -= (24 + target.effectiveDistance * 0.05) * growthUrgency;
+        } else {
+          score += (14 + 230 / (target.effectiveDistance + 70)) * growthUrgency;
+        }
+      }
 
       if (target.id === this.stickyTargetId) {
         score += AUTO_PLAYER_CONSTANTS.TARGET_STICKY_BONUS;
@@ -4081,6 +4873,10 @@ export class AutoPlayer {
   ): AutoTarget[] {
     const targets: AutoTarget[] = [];
     const pickupRange = this.getPickupRange(context);
+    const growthUrgency = this.evaluateFarmGrowthUrgency(context);
+    const earlyGrowthBehind = growthUrgency > 0.2
+      || (this.autoMoveElapsedMs < 90000 && Math.max(1, context.player?.level ?? 1) < 3);
+    const growthBehind = earlyGrowthBehind || growthUrgency > 0.08;
 
     for (const pickup of context.pickupPositions) {
       const position = new Vector2(pickup.x, pickup.y);
@@ -4100,9 +4896,13 @@ export class AutoPlayer {
         ? pickup.dangerScore
         : this.getEnemyPressureAt(context, position, this.getHpRatio(context));
       const nearBonus = effectiveDistance <= 80 ? 8 : effectiveDistance <= 160 ? 4 : 0;
-      const weights = this.strategyEngine.getMovementWeights();
-      const value = (6 + clusterScore * 1.45 + nearBonus + 420 / (effectiveDistance + 80)) * weights.farmMultiplier
-        - dangerScore * 0.35 * weights.riskMultiplier;
+      const weights = this.getMovementWeightsForContext(context);
+      const growthPickupBonus = earlyGrowthBehind
+        ? growthUrgency * (8 + 260 / (effectiveDistance + 90))
+        : 0;
+      const pickupRiskScale = earlyGrowthBehind ? 0.85 + growthUrgency * 0.9 : 0.35;
+      const value = (6 + clusterScore * 1.45 + nearBonus + 420 / (effectiveDistance + 80) + growthPickupBonus) * weights.farmMultiplier
+        - dangerScore * pickupRiskScale * weights.riskMultiplier;
       const id = `pickup:${Math.round(pickup.x)}:${Math.round(pickup.y)}`;
       const approachPosition = this.getApproachPosition(context, player, position, pickupRange);
       const waypoint = this.getNavigationWaypoint(context, player, approachPosition, id);
@@ -4132,9 +4932,29 @@ export class AutoPlayer {
       const dangerScore = 'dangerScore' in treasure && treasure.dangerScore !== undefined
         ? treasure.dangerScore
         : this.getEnemyPressureAt(context, position, this.getHpRatio(context));
-      const weights = this.strategyEngine.getMovementWeights();
-      const value = (18 + 900 / (effectiveDistance + 120)) * weights.treasureMultiplier
-        - dangerScore * 0.55 * weights.riskMultiplier;
+      const weights = this.getMovementWeightsForContext(context);
+      const treasureUnsafeForGrowth = earlyGrowthBehind
+        ? (
+          effectiveDistance > 110
+          || dangerScore > 1.4
+          || nearestEnemyDistance < AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE
+        )
+        : growthBehind && (
+          (effectiveDistance > 240 && nearestEnemyDistance < AUTO_PLAYER_CONSTANTS.SAFE_DISTANCE * 1.25)
+          || dangerScore > 2.35
+        );
+
+      if (treasureUnsafeForGrowth) {
+        continue;
+      }
+
+      const growthTreasureMultiplier = earlyGrowthBehind
+        ? 0.32
+        : growthBehind
+          ? Math2D.clamp(0.75 - growthUrgency * 1.8, 0.28, 0.75)
+          : 1;
+      const value = (18 + 900 / (effectiveDistance + 120)) * weights.treasureMultiplier * growthTreasureMultiplier
+        - dangerScore * (earlyGrowthBehind ? 1.9 : 0.55) * weights.riskMultiplier;
       const id = `treasure:${Math.round(treasure.x)}:${Math.round(treasure.y)}`;
       const approachPosition = this.getApproachPosition(context, player, position, pickupRange);
       const waypoint = this.getNavigationWaypoint(context, player, approachPosition, id);
@@ -5092,18 +5912,20 @@ export class AutoPlayer {
     for (const weapon of weapons) {
       const weight = this.getWeaponLevelWeight(weapon);
       const range = this.getSingleWeaponEffectiveRange(weapon);
+      const contactPenaltyDistance = this.getWeaponContactPenaltyDistance(weapon);
       let enemiesInBand = 0;
       let closePenalty = 0;
 
       for (const enemy of context.enemyPositions) {
-        const distance = this.getEnemyEffectiveDistance(context, position, enemy);
+        const effectiveDistance = this.getEnemyEffectiveDistance(context, position, enemy);
+        const centerDistance = Math2D.distanceBetween(position.x, position.y, enemy.x, enemy.y);
 
-        if (distance < AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS) {
+        if (effectiveDistance < contactPenaltyDistance) {
           closePenalty += this.getEnemyThreatWeight(enemy);
           continue;
         }
 
-        if (distance >= range.min && distance <= range.max) {
+        if (centerDistance >= range.min && centerDistance <= range.max) {
           enemiesInBand += this.getEnemyThreatWeight(enemy);
         }
       }
@@ -5165,24 +5987,73 @@ export class AutoPlayer {
     if (weapon.tags.includes('orbit')) {
       const radius = weapon.radiusPx ?? 155;
 
-      return { min: radius * 0.72, ideal: radius * 1.08, max: radius * 1.55 };
+      return { min: radius * 0.82, ideal: radius * 1.34, max: radius * 1.9 };
     }
 
     if (weapon.tags.includes('arcing')) {
-      const range = weapon.rangePx ?? 260;
+      const range = this.getTacticalWeaponRangePx(weapon, 260, 220, 520);
 
-      return { min: 145, ideal: Math.max(220, range * 0.9), max: Math.max(330, range * 1.35) };
+      return {
+        min: 145,
+        ideal: Math2D.clamp(range * 0.82, 220, 390),
+        max: Math2D.clamp(range * 1.18, 330, 610),
+      };
     }
 
     if (weapon.tags.includes('homing') || weapon.tags.includes('magic')) {
-      const range = weapon.rangePx ?? 320;
+      const range = this.getTacticalWeaponRangePx(weapon, 320, 260, 500);
 
-      return { min: 150, ideal: Math.max(240, range * 0.82), max: Math.max(380, range * 1.45) };
+      return {
+        min: 150,
+        ideal: Math2D.clamp(range * 0.68, 230, 380),
+        max: Math2D.clamp(range * 1.12, 340, 560),
+      };
     }
 
-    const range = weapon.rangePx ?? 360;
+    const range = this.getTacticalWeaponRangePx(weapon, 360, 280, 620);
 
-    return { min: 160, ideal: Math.max(260, range * 0.75), max: Math.max(420, range * 1.25) };
+    return {
+      min: 160,
+      ideal: Math2D.clamp(range * 0.72, 250, 430),
+      max: Math2D.clamp(range * 1.18, 380, 680),
+    };
+  }
+
+  private getTacticalWeaponRangePx(
+    weapon: AutoWeaponSnapshot,
+    fallback: number,
+    min: number,
+    max: number,
+  ): number {
+    const rawRange = weapon.rangePx ?? fallback;
+
+    return Math2D.clamp(rawRange, min, max);
+  }
+
+  private getCombatContactPenaltyDistance(context: AutoPlayerContext): number {
+    const weapons = this.getWeaponSnapshots(context);
+
+    if (weapons.some((weapon) => weapon.tags.includes('aura'))) {
+      return AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS * 1.1;
+    }
+
+    if (weapons.some((weapon) => weapon.tags.includes('orbit'))) {
+      return AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS * 1.15;
+    }
+
+    return AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
+  }
+
+  private getWeaponContactPenaltyDistance(weapon: AutoWeaponSnapshot): number {
+    if (weapon.tags.includes('aura')) {
+      return AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS * 1.1;
+    }
+
+    if (weapon.tags.includes('orbit')) {
+      return AUTO_PLAYER_CONSTANTS.CONTACT_DANGER_RADIUS * 1.15;
+    }
+
+    return AUTO_PLAYER_CONSTANTS.CONTACT_WARNING_RADIUS;
   }
 
   private getDistanceBandDirection(
@@ -6178,6 +7049,10 @@ export class AutoPlayer {
       return this.getFinalBossRingBulletLaneRisk(context, point, warning);
     }
 
+    if (this.isFinalBossDashImpactWarning(context, warning)) {
+      return this.getFinalBossDashImpactRisk(context, point, warning);
+    }
+
     return this.getBossWarningRisk(warning, point);
   }
 
@@ -6194,7 +7069,49 @@ export class AutoPlayer {
       return this.getFinalBossRingBulletEscapeDirection(context, warning, point);
     }
 
+    if (this.isFinalBossDashImpactWarning(context, warning)) {
+      return this.getFinalBossDashImpactEscapeDirection(context, warning, point);
+    }
+
     return this.getSingleWarningEscapeDirection(warning, point);
+  }
+
+  private getFinalBossDashImpactEscapeDirection(
+    context: AutoPlayerContext,
+    warning: AutoBossWarningSnapshot,
+    point: Vector2,
+  ): Vector2 {
+    const boss = this.getFinalBossAnchor(context);
+
+    if (!boss || warning.shape !== 'circle') {
+      return new Vector2(0, 0);
+    }
+
+    const fromBoss = new Vector2(point.x - boss.x, point.y - boss.y);
+
+    if (fromBoss.lengthSq() === 0) {
+      fromBoss.set(1, 0);
+    }
+
+    const distance = this.getFinalBossEffectiveDistance(context, point);
+    const radial = fromBoss.normalize();
+    const orbitClockwise = this.getFinalBossOrbitDirection(radial, distance, true);
+    const orbitCounterClockwise = this.getFinalBossOrbitDirection(radial, distance, false);
+    const endpointClockwise = this.getCandidateEndpoint(context, point, orbitClockwise);
+    const endpointCounterClockwise = this.getCandidateEndpoint(context, point, orbitCounterClockwise);
+    const clockwiseRisk = this.getFinalBossDashImpactRisk(context, endpointClockwise, warning);
+    const counterClockwiseRisk = this.getFinalBossDashImpactRisk(context, endpointCounterClockwise, warning);
+    const orbit = clockwiseRisk <= counterClockwiseRisk ? orbitClockwise : orbitCounterClockwise;
+
+    if (distance > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
+      const towardBoss = new Vector2(boss.x - point.x, boss.y - point.y);
+
+      if (towardBoss.lengthSq() > 0) {
+        return towardBoss.normalize().scale(0.58).add(orbit.clone().scale(0.72)).normalize();
+      }
+    }
+
+    return orbit;
   }
 
   private getFinalBossDashEscapeDirection(
@@ -6220,14 +7137,14 @@ export class AutoPlayer {
     const sideA = new Vector2(-lineDirection.y, lineDirection.x);
     const sideB = new Vector2(lineDirection.y, -lineDirection.x);
     const currentSide = Math.sign((point.x - warning.start.x) * lineDirection.y - (point.y - warning.start.y) * lineDirection.x);
-    const side = currentSide >= 0 ? sideA : sideB;
+    const side = this.getFinalBossDashSideStepDirection(context, point, currentSide >= 0 ? sideB : sideA);
     const distanceToBoss = this.getFinalBossEffectiveDistance(context, point);
 
     if (distanceToBoss > AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) {
       const towardBoss = new Vector2(boss.x - point.x, boss.y - point.y);
 
       if (towardBoss.lengthSq() > 0) {
-        return side.scale(0.75).add(towardBoss.normalize().scale(0.55));
+        return side.scale(0.82).add(towardBoss.normalize().scale(0.62)).normalize();
       }
     }
 
@@ -6937,7 +7854,31 @@ export class AutoPlayer {
     direction: Vector2,
   ): Vector2 {
     const moveSpeed = Math.max(80, context.player?.moveSpeed ?? 120);
-    const stepDistance = Math.min(AUTO_PLAYER_CONSTANTS.STEP_DISTANCE, Math.max(70, moveSpeed * 0.65));
+    const baseStepDistance = Math.min(AUTO_PLAYER_CONSTANTS.STEP_DISTANCE, Math.max(70, moveSpeed * 0.65));
+    let stepDistance = baseStepDistance;
+
+    if (this.isFinalBossCloseCombatActive(context) && direction.lengthSq() > 0) {
+      const boss = this.getFinalBossAnchor(context);
+
+      if (boss) {
+        const outward = new Vector2(player.x - boss.x, player.y - boss.y);
+
+        if (outward.lengthSq() > 0) {
+          const normalizedDirection = direction.clone().normalize();
+          const inwardAlignment = -normalizedDirection.dot(outward.normalize());
+          const currentDistance = this.getFinalBossEffectiveDistance(context, player);
+          const idealDistance = (AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MIN_DISTANCE
+            + AUTO_PLAYER_CONSTANTS.FINAL_BOSS_CLOSE_MAX_DISTANCE) * 0.5;
+
+          if (inwardAlignment > 0.35 && currentDistance > idealDistance) {
+            stepDistance = Math.min(
+              stepDistance,
+              Math.max(12, (currentDistance - idealDistance) / inwardAlignment),
+            );
+          }
+        }
+      }
+    }
 
     return this.clampToWorld(context, player.clone().add(direction.clone().normalize().scale(stepDistance)));
   }

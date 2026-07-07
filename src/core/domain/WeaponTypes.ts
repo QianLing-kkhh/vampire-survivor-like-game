@@ -16,7 +16,15 @@ export type BuiltInWeaponTag =
   | 'evolved'
   | 'base'
   | 'defensive'
-  | 'sustain';
+  | 'sustain'
+  | 'arcane'
+  | 'duelist'
+  | 'earth'
+  | 'lightning'
+  | 'mechanical'
+  | 'necrotic'
+  | 'poison'
+  | 'ranged';
 
 export type WeaponTag = BuiltInWeaponTag | string;
 
@@ -39,6 +47,14 @@ export const BUILT_IN_WEAPON_TAGS: readonly BuiltInWeaponTag[] = [
   'base',
   'defensive',
   'sustain',
+  'arcane',
+  'duelist',
+  'earth',
+  'lightning',
+  'mechanical',
+  'necrotic',
+  'poison',
+  'ranged',
 ];
 
 export type WeaponBehaviorType =

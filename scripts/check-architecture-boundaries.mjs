@@ -22,11 +22,14 @@ const localStorageWhitelist = new Set([
   'src/replay/ReplayStorage.ts',
   'src/logging/PlaytestLogBuffer.ts',
   'src/content/providers/LocalContentPackProvider.ts',
+  'src/save/storage/LocalStorageAdapter.ts',
 ]);
 
 const textureKeyWhitelist = new Set([
+  'src/assets/AssetManifest.ts',
   'src/assets/AssetKeyMap.ts',
   'src/assets/AssetKeyResolver.ts',
+  'src/assets/RunRequiredAssetKeys.ts',
   'src/scenes/PreloadScene.ts',
 ]);
 
@@ -77,6 +80,25 @@ function lineNumberForIndex(content, index) {
   return content.slice(0, index).split(/\r?\n/).length;
 }
 
+function isLikelyTextureKeyLiteral(value) {
+  if (
+    value.includes('_icon')
+    || value.includes('boss_lava_beast')
+    || value.includes('slime_boss')
+  ) {
+    return true;
+  }
+
+  if (!value.includes('_projectile')) {
+    return false;
+  }
+
+  return value.startsWith('art_')
+    || value.endsWith('_projectile')
+    || value.includes('_projectile_sheet')
+    || value.includes('_projectile_tier');
+}
+
 function scanFile(filePath) {
   const relativePath = normalize(filePath);
   const content = fs.readFileSync(filePath, 'utf8');
@@ -120,8 +142,12 @@ function scanFile(filePath) {
     || textureKeyWhitelistPrefixes.some((prefix) => relativePath.startsWith(prefix));
 
   if (!isTextureKeyWhitelisted) {
-    const textureKeyPattern = /['"`][^'"`]*(?:_icon|_projectile|boss_lava_beast|slime_boss)[^'"`]*['"`]/g;
+    const textureKeyPattern = /(['"`])([^'"`]*(?:_icon|_projectile|boss_lava_beast|slime_boss)[^'"`]*)\1/g;
     for (const match of content.matchAll(textureKeyPattern)) {
+      if (!isLikelyTextureKeyLiteral(match[2])) {
+        continue;
+      }
+
       addWarning(
         filePath,
         lineNumberForIndex(content, match.index ?? 0),

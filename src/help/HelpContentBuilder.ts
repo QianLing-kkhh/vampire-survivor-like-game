@@ -1,39 +1,24 @@
+import {
+  DEFAULT_ASSET_KEY_MAP,
+  HELP_ICON_KEYS,
+  type AssetKeyEntry,
+  type WeaponAssetEntry,
+} from '../assets/AssetKeyMap';
 import { EndlessRewardManager } from '../endless/EndlessRewardManager';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
+import { WeaponConfig } from '../core/domain/WeaponTypes';
 import { I18n } from '../i18n/I18n';
 import { TreasureManager } from '../pickup/TreasureManager';
-import evolutionsData from '../data/evolutions.json';
-import passivesData from '../data/passives.json';
-import upgradesData from '../data/upgrades.json';
-import weaponsData from '../data/weapons.json';
 
 import { HelpLine, HelpSection, HelpTabId } from './HelpTab';
-
-type WeaponConfig = Record<string, string | number | boolean | string[] | object | undefined> & {
-  tags?: string[];
-};
-type PassiveConfig = {
-  id: string;
-  name: string;
-  description: string;
-  maxLevel?: number;
-};
-type UpgradeConfig = {
-  id: string;
-  name: string;
-  description: string;
-};
-type EvolutionConfig = {
-  baseWeaponId: string;
-  requiredPassiveId: string;
-  requiredPassiveLevel: number;
-  requiredWeaponUpgradeTotal: number;
-  evolvedWeaponId: string;
-};
 
 const BASE_WEAPON_IDS = ['knife', 'garlic', 'bible', 'magic_wand', 'axe'];
 
 export class HelpContentBuilder {
   buildSections(): HelpSection[] {
+    ContentBootstrap.ensureInitialized();
+
     return [
       this.buildControlsHelp(),
       this.buildWeaponsHelp(),
@@ -48,19 +33,20 @@ export class HelpContentBuilder {
   }
 
   buildControlsHelp(): HelpSection {
-    return this.section('controls', 'Controls', 'time_icon', 'C', [
-      this.line('WASD / Arrow Keys: Move', 'time_icon', 'M'),
-      this.line('Hold Left Mouse: Move toward cursor', 'time_icon', 'M'),
-      this.line('ESC: Pause', 'time_icon', 'P'),
-      this.line('Collect EXP gems to level up', 'exp_icon', 'XP'),
-      this.line('Open treasure chests for bonus rewards', 'treasure_chest', 'T'),
-      this.line('Defeat the Boss to win; Endless continues after Boss', 'boss_lava_beast', 'B'),
+    return this.section('controls', 'Controls', HELP_ICON_KEYS.time, 'C', [
+      this.line('WASD / Arrow Keys: Move', HELP_ICON_KEYS.time, 'M'),
+      this.line('Hold Left Mouse: Move toward cursor', HELP_ICON_KEYS.time, 'M'),
+      this.line('ESC: Pause', HELP_ICON_KEYS.time, 'P'),
+      this.line('Collect EXP gems to level up', HELP_ICON_KEYS.experience, 'XP'),
+      this.line('Open treasure chests for bonus rewards', HELP_ICON_KEYS.treasureChest, 'T'),
+      this.line('Defeat the Boss to win; Endless continues after Boss', HELP_ICON_KEYS.boss, 'B'),
     ]);
   }
 
   buildWeaponsHelp(): HelpSection {
+    const weapons = ContentRegistry.listWeapons();
     const lines = BASE_WEAPON_IDS.map((weaponId) => {
-      const config = (weaponsData as Record<string, WeaponConfig>)[weaponId];
+      const config = weapons[weaponId];
       return this.line(
         `${this.formatName(weaponId)}: ${this.formatConfig(config)}`,
         this.getWeaponIconKey(weaponId),
@@ -68,21 +54,21 @@ export class HelpContentBuilder {
       );
     });
 
-    return this.section('weapons', 'Weapons', 'knife_icon', 'W', lines);
+    return this.section('weapons', 'Weapons', this.getWeaponIconKey('knife'), 'W', lines);
   }
 
   buildUiHelp(): HelpSection {
-    return this.section('ui', 'UI', 'hp_icon', 'UI', [
-      this.line('HUD pairs each weapon with its matching passive.', 'hp_icon', 'H'),
-      this.line('Pause opens Resume, Restart, Settings, Help, and Stats / Build.', 'time_icon', 'P'),
-      this.line('Stats / Build shows character, weapon, and passive details.', 'exp_icon', 'S'),
-      this.line('Settings controls language, audio, Auto, Fast, and Endless.', 'art_ui_panel_bg', 'S'),
-      this.line('Result can download current or buffered CSV logs.', 'art_ui_panel_bg', 'CSV'),
+    return this.section('ui', 'UI', HELP_ICON_KEYS.health, 'UI', [
+      this.line('HUD pairs each weapon with its matching passive.', HELP_ICON_KEYS.health, 'H'),
+      this.line('Pause opens Resume, Restart, Settings, Help, and Stats / Build.', HELP_ICON_KEYS.time, 'P'),
+      this.line('Stats / Build shows character, weapon, and passive details.', HELP_ICON_KEYS.experience, 'S'),
+      this.line('Settings controls language, audio, Auto, Fast, and Endless.', HELP_ICON_KEYS.panel, 'S'),
+      this.line('Result can download current or buffered CSV logs.', HELP_ICON_KEYS.panel, 'CSV'),
     ]);
   }
 
   buildEvolutionHelp(): HelpSection {
-    const lines = (evolutionsData as EvolutionConfig[]).map((rule) => this.line(
+    const lines = ContentRegistry.listEvolutionRules().map((rule) => this.line(
       `${this.formatName(rule.baseWeaponId)} Lv.${rule.requiredWeaponUpgradeTotal}`
         + ` + ${this.formatName(rule.requiredPassiveId)} Lv.${rule.requiredPassiveLevel}`
         + ` -> ${this.formatName(rule.evolvedWeaponId)} via treasure`,
@@ -90,19 +76,19 @@ export class HelpContentBuilder {
       this.getInitials(rule.evolvedWeaponId),
     ));
 
-    return this.section('evolution', 'Evolution', 'art_weapons_thousand_edge_icon', 'E', lines);
+    return this.section('evolution', 'Evolution', this.getWeaponIconKey('thousand_edge'), 'E', lines);
   }
 
   buildPassivesHelp(): HelpSection {
     const relatedWeaponsByPassive = new Map<string, string[]>();
 
-    for (const rule of evolutionsData as EvolutionConfig[]) {
+    for (const rule of ContentRegistry.listEvolutionRules()) {
       const related = relatedWeaponsByPassive.get(rule.requiredPassiveId) ?? [];
       related.push(rule.baseWeaponId);
       relatedWeaponsByPassive.set(rule.requiredPassiveId, related);
     }
 
-    const lines = (passivesData as PassiveConfig[]).map((passive) => {
+    const lines = ContentRegistry.listPassives().map((passive) => {
       const maxLevel = passive.maxLevel ?? 5;
       const related = relatedWeaponsByPassive.get(passive.id) ?? [];
       const relatedText = related.length > 0
@@ -116,57 +102,57 @@ export class HelpContentBuilder {
       );
     });
 
-    return this.section('passives', 'Passives', 'art_passives_spinach_icon', 'P', lines);
+    return this.section('passives', 'Passives', this.getPassiveIconKey('spinach'), 'P', lines);
   }
 
   buildUpgradesHelp(): HelpSection {
-    const lines = (upgradesData as UpgradeConfig[]).map((upgrade) => this.line(
+    const lines = ContentRegistry.getUpgradeOptions().map((upgrade) => this.line(
       `${upgrade.name}: ${upgrade.description}`,
       this.getUpgradeIconKey(upgrade.id),
       this.getInitials(upgrade.id),
     ));
 
-    return this.section('upgrades', 'Upgrades', 'exp_icon', 'U', lines);
+    return this.section('upgrades', 'Upgrades', HELP_ICON_KEYS.experience, 'U', lines);
   }
 
   buildTreasuresHelp(): HelpSection {
     const config = TreasureManager.getTreasureConfig();
     const dropRate = Math.round(config.normalDropChance * 100);
 
-    return this.section('treasures', 'Treasure', 'treasure_chest', 'T', [
-      this.line(`Normal enemies can drop chests at ${dropRate}% before bonuses.`, 'treasure_chest', 'T'),
-      this.line('Eligible weapon evolution is resolved before normal chest upgrades.', 'art_weapons_thousand_edge_icon', 'E'),
-      this.line('When no normal rewards remain in Endless, chests use Endless rewards.', 'time_icon', '∞'),
-      this.line(`Endless chest drops are capped at ${config.endlessMaxDropsPerWindow} per ${config.endlessDropWindowSeconds}s window.`, 'treasure_chest', 'T'),
+    return this.section('treasures', 'Treasure', HELP_ICON_KEYS.treasureChest, 'T', [
+      this.line(`Normal enemies can drop chests at ${dropRate}% before bonuses.`, HELP_ICON_KEYS.treasureChest, 'T'),
+      this.line('Eligible weapon evolution is resolved before normal chest upgrades.', this.getWeaponIconKey('thousand_edge'), 'E'),
+      this.line('When no normal rewards remain in Endless, chests use Endless rewards.', HELP_ICON_KEYS.time, '∞'),
+      this.line(`Endless chest drops are capped at ${config.endlessMaxDropsPerWindow} per ${config.endlessDropWindowSeconds}s window.`, HELP_ICON_KEYS.treasureChest, 'T'),
     ]);
   }
 
   buildEndlessHelp(): HelpSection {
     const rewardConfig = EndlessRewardManager.getRewardConfig();
 
-    return this.section('endless', 'Endless', 'time_icon', '∞', [
-      this.line('After the final Boss, enemies keep spawning and scaling over time.', 'boss_lava_beast', 'B'),
-      this.line(`Emergency Heal restores ${rewardConfig.heal.amount} HP.`, 'hp_icon', 'H'),
-      this.line(`Overdrive: +${Math.round((rewardConfig.overdrive.multiplier - 1) * 100)}% damage for ${rewardConfig.overdrive.durationSeconds}s; cooldown ${rewardConfig.overdrive.cooldownSeconds}s.`, 'art_weapons_death_spiral_icon', 'O'),
-      this.line(`Time Slow: enemy speed x${rewardConfig.enemySlow.multiplier} for ${rewardConfig.enemySlow.durationSeconds}s; cooldown ${rewardConfig.enemySlow.cooldownSeconds}s.`, 'time_icon', 'S'),
-      this.line(`Shield blocks one hit per stack; max ${rewardConfig.shield.maxStacks}.`, 'hp_icon', 'S'),
-      this.line(`Minor Growth permanently adds +${(rewardConfig.minorGrowth.damageBonus * 100).toFixed(1)}% weapon damage.`, 'exp_icon', 'G'),
+    return this.section('endless', 'Endless', HELP_ICON_KEYS.time, '∞', [
+      this.line('After the final Boss, enemies keep spawning and scaling over time.', HELP_ICON_KEYS.boss, 'B'),
+      this.line(`Emergency Heal restores ${rewardConfig.heal.amount} HP.`, HELP_ICON_KEYS.health, 'H'),
+      this.line(`Overdrive: +${Math.round((rewardConfig.overdrive.multiplier - 1) * 100)}% damage for ${rewardConfig.overdrive.durationSeconds}s; cooldown ${rewardConfig.overdrive.cooldownSeconds}s.`, this.getWeaponIconKey('death_spiral'), 'O'),
+      this.line(`Time Slow: enemy speed x${rewardConfig.enemySlow.multiplier} for ${rewardConfig.enemySlow.durationSeconds}s; cooldown ${rewardConfig.enemySlow.cooldownSeconds}s.`, HELP_ICON_KEYS.time, 'S'),
+      this.line(`Shield blocks one hit per stack; max ${rewardConfig.shield.maxStacks}.`, HELP_ICON_KEYS.health, 'S'),
+      this.line(`Minor Growth permanently adds +${(rewardConfig.minorGrowth.damageBonus * 100).toFixed(1)}% weapon damage.`, HELP_ICON_KEYS.experience, 'G'),
     ]);
   }
 
   buildGuideHelp(): HelpSection {
-    return this.section('guide', 'Guide', 'time_icon', 'G', [
-      this.line('Tutorial hints are event-driven and should stay lightweight.', 'time_icon', 'T'),
-      this.line('Hints can point players toward Help tabs without pausing combat.', 'art_ui_panel_bg', 'H'),
-      this.line('Seen tutorial steps are saved so one-time hints do not repeat.', 'exp_icon', 'S'),
-      this.line('Future mobile, Boss, endless, and reward tips should use TutorialManager.', 'hp_icon', 'G'),
+    return this.section('guide', 'Guide', HELP_ICON_KEYS.time, 'G', [
+      this.line('Tutorial hints are event-driven and should stay lightweight.', HELP_ICON_KEYS.time, 'T'),
+      this.line('Hints can point players toward Help tabs without pausing combat.', HELP_ICON_KEYS.panel, 'H'),
+      this.line('Seen tutorial steps are saved so one-time hints do not repeat.', HELP_ICON_KEYS.experience, 'S'),
+      this.line('Future mobile, Boss, endless, and reward tips should use TutorialManager.', HELP_ICON_KEYS.health, 'G'),
     ]);
   }
 
   private section(
     id: HelpTabId,
     title: string,
-    iconKey: string,
+    iconKey: string | undefined,
     fallback: string,
     lines: HelpLine[],
   ): HelpSection {
@@ -203,7 +189,7 @@ export class HelpContentBuilder {
 
   private getUpgradeIconKey(upgradeId: string): string | undefined {
     if (upgradeId === 'speed_up' || upgradeId === 'max_hp_up' || upgradeId === 'pickup_range_up') {
-      return upgradeId === 'max_hp_up' ? 'hp_icon' : 'exp_icon';
+      return upgradeId === 'max_hp_up' ? HELP_ICON_KEYS.health : HELP_ICON_KEYS.experience;
     }
 
     if (upgradeId.startsWith('add_')) {
@@ -221,47 +207,17 @@ export class HelpContentBuilder {
   }
 
   private getWeaponIconKey(weaponId: string): string | undefined {
-    switch (weaponId) {
-      case 'knife':
-        return 'knife_icon';
-      case 'garlic':
-        return 'art_weapons_garlic_core_sheet';
-      case 'bible':
-        return 'art_weapons_bible_orbit_book_sheet';
-      case 'axe':
-        return 'art_weapons_axe_icon';
-      case 'magic_wand':
-        return 'art_weapons_magic_wand_icon';
-      case 'thousand_edge':
-        return 'art_weapons_thousand_edge_icon';
-      case 'holy_wand':
-        return 'art_weapons_holy_wand_icon';
-      case 'death_spiral':
-        return 'art_weapons_death_spiral_icon';
-      case 'unholy_vespers':
-        return 'art_weapons_unholy_vespers_icon';
-      case 'soul_eater':
-        return 'art_weapons_soul_eater_icon';
-      default:
-        return undefined;
-    }
+    const weaponAssets = DEFAULT_ASSET_KEY_MAP.weapons as Record<string, WeaponAssetEntry>;
+    const entry = weaponAssets[weaponId]?.icon;
+
+    return entry?.fallbacks?.[0] ?? entry?.primary;
   }
 
   private getPassiveIconKey(passiveId: string): string | undefined {
-    switch (passiveId) {
-      case 'spinach':
-        return 'art_passives_spinach_icon';
-      case 'empty_tome':
-        return 'art_passives_empty_tome_icon';
-      case 'bracer':
-        return 'art_passives_bracer_icon';
-      case 'clover':
-        return 'art_passives_clover_icon';
-      case 'pummarola':
-        return 'art_passives_pummarola_icon';
-      default:
-        return undefined;
-    }
+    const passiveAssets = DEFAULT_ASSET_KEY_MAP.passives as Record<string, AssetKeyEntry>;
+    const entry = passiveAssets[passiveId];
+
+    return entry?.fallbacks?.[0] ?? entry?.primary;
   }
 
   private getInitials(value: string): string {

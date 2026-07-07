@@ -1,7 +1,8 @@
-import { parseArgs, runSimulationBatchFromArgs, writeHeadlessArtifacts, stableStringify, resultToCsvRow, batchCsvHeader } from './headless-sim-runtime.mjs';
+import { parseArgs, runSimulationBatchFromArgs, writeHeadlessArtifacts, stableStringify, resultToCsvRow, batchCsvHeader, getArg } from './headless-sim-runtime.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const format = String(args.format ?? 'jsonl').toLowerCase();
+const artifactOut = getArg(args, ['out', 'outputDir'], undefined);
 const { matrix, results } = runSimulationBatchFromArgs(args);
 
 if (format === 'csv') {
@@ -16,8 +17,8 @@ if (format === 'csv') {
   }
 }
 
-if (args.out) {
-  writeHeadlessArtifacts(args.out, {
+if (artifactOut) {
+  writeHeadlessArtifacts(artifactOut, {
     matrix,
     results,
     commandArgs: process.argv.slice(2),

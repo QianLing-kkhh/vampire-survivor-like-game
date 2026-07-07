@@ -610,11 +610,6 @@ export class Enemy implements EnemyQuery {
       return [];
     }
 
-    const lineEnd = new Phaser.Math.Vector2(
-      this.body.x + this.dashDirection.x * 620,
-      this.body.y + this.dashDirection.y * 620,
-    );
-
     return [
       {
         shape: 'line',
@@ -623,8 +618,8 @@ export class Enemy implements EnemyQuery {
         bossId: 'final_boss',
         skillId: 'final_boss_dash',
         start: { x: this.body.x, y: this.body.y },
-        end: { x: lineEnd.x, y: lineEnd.y },
-        width: 18,
+        end: { x: this.dashImpactPosition.x, y: this.dashImpactPosition.y },
+        width: 220,
         remainingMs: Math.max(0, this.dashTimerMs),
       },
       {

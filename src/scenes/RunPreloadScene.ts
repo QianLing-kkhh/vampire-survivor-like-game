@@ -18,6 +18,8 @@ import { logAssetLoadPlan } from '../assets/AssetLoadPlanInspector';
 import { ExternalArtRegistry } from '../assets/ExternalArtRegistry';
 import { queueLoadPlan } from '../assets/AssetLoadRegistry';
 import { CharacterManager } from '../character/CharacterManager';
+import { ContentBootstrap } from '../content/ContentBootstrap';
+import { ContentRegistry } from '../content/ContentRegistry';
 import { I18n } from '../i18n/I18n';
 import { MapManager } from '../map/MapManager';
 import { RandomManager } from '../random/RandomManager';
@@ -27,8 +29,6 @@ import { PlaytestSettings } from '../settings/PlaytestSettings';
 import { SettingsManager } from '../settings/SettingsManager';
 import { StageManager } from '../stage/StageManager';
 import { LoadingOverlay, LoadingOverlayRunInfo } from '../ui/LoadingOverlay';
-import weaponsData from '../data/weapons.json';
-import wavesData from '../data/waves.json';
 
 type RunPreloadSceneData = Record<string, unknown>;
 type WaveRecord = {
@@ -66,6 +66,7 @@ export class RunPreloadScene extends Phaser.Scene {
   }
 
   preload(): void {
+    ContentBootstrap.ensureInitialized();
     this.context = this.resolveRunPreloadContext();
     this.createLoadingOverlay(I18n.t('loading.runAssets'), this.buildLoadingRunInfo(this.context));
     ExternalArtRegistry.loadManifest(this);
@@ -203,7 +204,7 @@ export class RunPreloadScene extends Phaser.Scene {
     customWaves: readonly unknown[] | undefined,
   ): string[] {
     const waves = (customWaves as readonly WaveRecord[] | undefined)
-      ?? (wavesData as Record<string, readonly WaveRecord[]>)[waveSetId ?? 'default']
+      ?? (ContentRegistry.getWaveSet(waveSetId ?? 'default') as readonly WaveRecord[] | undefined)
       ?? [];
 
     return Array.from(new Set(
@@ -404,7 +405,7 @@ export class RunPreloadScene extends Phaser.Scene {
     const character = characterManager.getCharacter(context.characterId);
     const map = mapManager.getMap(context.mapId);
     const startingWeaponId = character.startingWeaponId;
-    const weapon = (weaponsData as Record<string, WeaponRecord>)[startingWeaponId] ?? {};
+    const weapon = ContentRegistry.getWeapon(startingWeaponId) as WeaponRecord | undefined ?? {};
 
     return {
       map: {
