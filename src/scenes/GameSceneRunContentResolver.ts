@@ -38,6 +38,11 @@ export interface GameSceneRunContentRandomSourceProviderPort {
   getStageRandomSource(selection: SelectionState): RandomSource;
 }
 
+export interface GameSceneRunContentResolverOptions {
+  selectionProvider?: GameSceneRunContentSelectionProviderPort;
+  randomSourceProvider?: GameSceneRunContentRandomSourceProviderPort;
+}
+
 const DEFAULT_SELECTION_PROVIDER: GameSceneRunContentSelectionProviderPort = SelectionManager;
 
 const DEFAULT_RANDOM_SOURCE_PROVIDER: GameSceneRunContentRandomSourceProviderPort = {
@@ -50,12 +55,32 @@ const DEFAULT_RANDOM_SOURCE_PROVIDER: GameSceneRunContentRandomSourceProviderPor
 };
 
 export class GameSceneRunContentResolver {
+  private readonly selectionProvider: GameSceneRunContentSelectionProviderPort;
+  private readonly randomSourceProvider: GameSceneRunContentRandomSourceProviderPort;
+
+  constructor();
+  constructor(options: GameSceneRunContentResolverOptions);
   constructor(
-    private readonly selectionProvider: GameSceneRunContentSelectionProviderPort =
-      DEFAULT_SELECTION_PROVIDER,
-    private readonly randomSourceProvider: GameSceneRunContentRandomSourceProviderPort =
-      DEFAULT_RANDOM_SOURCE_PROVIDER,
-  ) {}
+    selectionProvider: GameSceneRunContentSelectionProviderPort,
+    randomSourceProvider?: GameSceneRunContentRandomSourceProviderPort,
+  );
+  constructor(
+    optionsOrSelectionProvider:
+      | GameSceneRunContentResolverOptions
+      | GameSceneRunContentSelectionProviderPort = {},
+    randomSourceProvider?: GameSceneRunContentRandomSourceProviderPort,
+  ) {
+    if (this.isResolverOptions(optionsOrSelectionProvider)) {
+      this.selectionProvider =
+        optionsOrSelectionProvider.selectionProvider ?? DEFAULT_SELECTION_PROVIDER;
+      this.randomSourceProvider =
+        optionsOrSelectionProvider.randomSourceProvider ?? DEFAULT_RANDOM_SOURCE_PROVIDER;
+      return;
+    }
+
+    this.selectionProvider = optionsOrSelectionProvider;
+    this.randomSourceProvider = randomSourceProvider ?? DEFAULT_RANDOM_SOURCE_PROVIDER;
+  }
 
   resolve(
     stageManager: GameSceneRunContentStageManagerPort,
@@ -83,5 +108,11 @@ export class GameSceneRunContentResolver {
       : mapManager.resolveMapForStage(stage);
 
     return { stage, map, characterId: selection.characterId };
+  }
+
+  private isResolverOptions(
+    value: GameSceneRunContentResolverOptions | GameSceneRunContentSelectionProviderPort,
+  ): value is GameSceneRunContentResolverOptions {
+    return !('getSelection' in value);
   }
 }
