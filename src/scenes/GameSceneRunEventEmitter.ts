@@ -27,7 +27,7 @@ type GameSceneRunEventMap = Readonly<{
   id: GameSceneRunStartedPayload['mapId'];
 }>;
 
-type GameSceneRunStartedContext = Readonly<{
+export type GameSceneRunStartedContext = Readonly<{
   gameEventBus: GameSceneRunEventBus;
   runId: GameSceneRunStartedRunId;
   runSeed: GameSceneRunStartedPayload['runSeed'];
