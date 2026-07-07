@@ -62,14 +62,16 @@ export type GameSceneRunEventEmitterScenePort = Readonly<{
 }>;
 
 export class GameSceneRunEventEmitter {
-  emitRunStartedFromScene(scene: GameSceneRunEventEmitterScenePort): void {
+  emitRunStartedFromScene(
+    scene: GameSceneRunEventEmitterScenePort,
+  ): GameSceneRunStartedEvent | undefined {
     const context = this.createRunStartedContext(scene);
 
     if (!context) {
-      return;
+      return undefined;
     }
 
-    this.emitRunStarted(context);
+    return this.emitRunStarted(context);
   }
 
   private createRunStartedContext(
