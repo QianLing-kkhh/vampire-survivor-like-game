@@ -17,6 +17,8 @@ type GameSceneRunEventGameplayContext = Pick<
   'runSeed' | 'gameEventBus'
 >;
 
+type GameSceneRunEventBus = Pick<GameSceneRunEventGameplayContext['gameEventBus'], 'emit'>;
+
 type GameSceneRunEventStage = Readonly<{
   id: GameSceneRunStartedPayload['stageId'];
 }>;
@@ -26,7 +28,7 @@ type GameSceneRunEventMap = Readonly<{
 }>;
 
 type GameSceneRunStartedContext = Readonly<{
-  gameEventBus: GameSceneRunEventGameplayContext['gameEventBus'];
+  gameEventBus: GameSceneRunEventBus;
   runId: GameSceneRunStartedRunId;
   runSeed: GameSceneRunStartedPayload['runSeed'];
   characterId: GameSceneRunStartedPayload['characterId'];
@@ -109,7 +111,7 @@ export class GameSceneRunEventEmitter {
     return normalized || undefined;
   }
 
-  private emitRunStarted(context: GameSceneRunStartedContext): void {
+  emitRunStarted(context: GameSceneRunStartedContext): void {
     const { payload, meta } = this.createRunStartedEventData(context);
 
     context.gameEventBus.emit(
