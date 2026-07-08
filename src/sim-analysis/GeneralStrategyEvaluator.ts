@@ -86,9 +86,19 @@ export function createBaselineComparison(
 ): GeneralStrategyBaselineComparisonEntry[] {
   const balanced = baselineStats.find((stats) => stats.candidateId === 'balanced_default');
   const balancedFitness = balanced?.generalFitnessScore ?? 0;
+  const strategyFile = baselineStats.find((stats) => stats.candidateId === 'strategy_file');
+  const strategyFileFitness = strategyFile?.generalFitnessScore;
 
   return baselineStats.map((stats) => {
     const delta = roundMetric(stats.generalFitnessScore - balancedFitness);
+    const deltaVsStrategyFile = strategyFileFitness === undefined
+      ? undefined
+      : roundMetric(stats.generalFitnessScore - strategyFileFitness);
+    const deltaPctVsStrategyFile = strategyFileFitness === undefined || deltaVsStrategyFile === undefined
+      ? undefined
+      : strategyFileFitness === 0
+        ? 0
+        : roundMetric(deltaVsStrategyFile / Math.abs(strategyFileFitness));
 
     return {
       strategyId: stats.candidateId,
@@ -116,20 +126,51 @@ export function createBaselineComparison(
       deltaPctVsBalancedDefault: balancedFitness === 0
         ? 0
         : roundMetric(delta / Math.abs(balancedFitness)),
+      deltaVsStrategyFile,
+      deltaPctVsStrategyFile,
     };
   }).sort((a, b) => b.generalFitnessScore - a.generalFitnessScore || a.strategyId.localeCompare(b.strategyId));
 }
 
 export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselineComparisonEntry[]): string {
+  const includeStrategyFileDelta = rows.some((row) => row.deltaVsStrategyFile !== undefined);
+  const header = includeStrategyFileDelta
+    ? '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct | Delta vs Strategy File | Delta Pct vs Strategy File |'
+    : '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |';
+  const separator = includeStrategyFileDelta
+    ? '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'
+    : '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |';
   const lines = [
     '# General Strategy Baseline Comparison',
     '',
-    '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |',
-    '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+    header,
+    separator,
   ];
 
   for (const row of rows) {
-    lines.push(`| ${row.strategyId} | ${row.bossKillRate} | ${row.avgExp} | ${row.medianExp} | ${row.p10Exp} | ${row.avgDamageDealt} | ${row.avgBossDamageDealt} | ${row.avgScore} | ${row.completionRate} | ${row.earlyGrowthCollapseRate} | ${row.damageWindowPassRate} | ${row.avgDamageTaken} | ${row.generalFitnessScore} | ${row.deltaVsBalancedDefault} | ${row.deltaPctVsBalancedDefault} |`);
+    const cells = [
+      row.strategyId,
+      row.bossKillRate,
+      row.avgExp,
+      row.medianExp,
+      row.p10Exp,
+      row.avgDamageDealt,
+      row.avgBossDamageDealt,
+      row.avgScore,
+      row.completionRate,
+      row.earlyGrowthCollapseRate,
+      row.damageWindowPassRate,
+      row.avgDamageTaken,
+      row.generalFitnessScore,
+      row.deltaVsBalancedDefault,
+      row.deltaPctVsBalancedDefault,
+    ];
+
+    if (includeStrategyFileDelta) {
+      cells.push(row.deltaVsStrategyFile ?? 0, row.deltaPctVsStrategyFile ?? 0);
+    }
+
+    lines.push(`| ${cells.join(' | ')} |`);
   }
 
   return `${lines.join('\n')}\n`;

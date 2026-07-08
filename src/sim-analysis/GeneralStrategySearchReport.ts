@@ -136,6 +136,8 @@ export interface GeneralStrategyBaselineComparisonEntry {
   generalFitnessScore: number;
   deltaVsBalancedDefault: number;
   deltaPctVsBalancedDefault: number;
+  deltaVsStrategyFile?: number;
+  deltaPctVsStrategyFile?: number;
 }
 
 export interface GeneralStrategySearchReport {
