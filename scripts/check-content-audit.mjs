@@ -3,7 +3,6 @@ import path from 'node:path';
 
 const root = process.cwd();
 const dataDir = path.join(root, 'src', 'data');
-const contentAuditPath = path.join(root, 'src', 'tools', 'ContentAudit.ts');
 const requiredFiles = [
   'weapons.json',
   'enemies.json',
@@ -17,14 +16,9 @@ const requiredFiles = [
 ];
 
 const errors = [];
-const warnings = [];
 
 function addError(message) {
   errors.push(message);
-}
-
-function addWarning(message) {
-  warnings.push(message);
 }
 
 function readJson(name) {
@@ -114,10 +108,6 @@ const stages = toRecord(readJson('stages.json'));
 const maps = toRecord(readJson('maps.json'));
 const bosses = readJson('bosses.json');
 
-if (!fs.existsSync(contentAuditPath)) {
-  addWarning('src/tools/ContentAudit.ts not found; using JSON reference checks.');
-}
-
 for (const [stageId, stage] of Object.entries(stages)) {
   if (!stage || typeof stage !== 'object') {
     addError(`Stage ${stageId} must be an object.`);
@@ -180,10 +170,6 @@ for (const [weaponId, weapon] of Object.entries(weapons)) {
   if (evolvesTo && !hasId(weapons, evolvesTo)) {
     addError(`Weapon ${weaponId} references missing evolved weapon: ${evolvesTo}`);
   }
-}
-
-for (const warning of warnings) {
-  console.warn(`[content] Warning: ${warning}`);
 }
 
 if (errors.length > 0) {

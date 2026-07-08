@@ -15,7 +15,7 @@
     "validate:i18n": "node scripts/check-i18n.mjs",
     "validate:ui": "node scripts/validate-ui.mjs",
     "validate:docs": "node scripts/check-doc-links.mjs",
-    "validate:content": "node scripts/check-content-audit.mjs",
+    "validate:content": "node scripts/check-content-audit.mjs && node scripts/check-content-audit.test.mjs",
     "validate:assets": "node scripts/check-assets.mjs",
     "validate:external-art": "node scripts/validate-external-art.mjs",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
