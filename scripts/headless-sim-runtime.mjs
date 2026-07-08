@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const rootDir = path.resolve(__dirname, '..');
-export const outDir = path.join(rootDir, '.tmp', 'headless-sim');
+export const outDir = path.join(rootDir, '.tmp', 'headless-sim', `process-${process.pid}`);
 
 let loadedRuntime;
 let loadedContent;
@@ -723,7 +723,7 @@ function compileCoreSimulation() {
   fs.mkdirSync(outDir, { recursive: true });
 
   const compiler = getTypeScriptCompilerCommand();
-  const compile = spawnSync(compiler.command, [...compiler.args, '-p', 'tsconfig.core-sim.json'], {
+  const compile = spawnSync(compiler.command, [...compiler.args, '-p', 'tsconfig.core-sim.json', '--outDir', outDir], {
     cwd: rootDir,
     encoding: 'utf8',
     shell: false,
