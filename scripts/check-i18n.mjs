@@ -238,16 +238,16 @@ function collectDataDrivenKeys() {
   return keys;
 }
 
-function collectDuplicateUpgradeFields(translation, field) {
+function collectDuplicateDataDrivenFields(translation, group, field) {
   const values = new Map();
   const duplicates = [];
 
-  for (const [id, upgrade] of Object.entries(translation.upgrade ?? {})) {
-    if (!upgrade || typeof upgrade !== 'object' || typeof upgrade[field] !== 'string') {
+  for (const [id, item] of Object.entries(translation[group] ?? {})) {
+    if (!item || typeof item !== 'object' || typeof item[field] !== 'string') {
       continue;
     }
 
-    const value = upgrade[field].trim();
+    const value = item[field].trim();
     if (!value) {
       continue;
     }
@@ -360,12 +360,12 @@ function main() {
       errors.push(`${locale}: missing translation for ${key}`);
     }
 
-    for (const duplicate of collectDuplicateUpgradeFields(translations[locale], 'name')) {
-      errors.push(`${locale}: duplicate upgrade name ${duplicate}`);
-    }
-
-    for (const duplicate of collectDuplicateUpgradeFields(translations[locale], 'description')) {
-      errors.push(`${locale}: duplicate upgrade description ${duplicate}`);
+    for (const group of DATA_DRIVEN_TEXT_GROUPS) {
+      for (const field of DATA_DRIVEN_TEXT_FIELDS) {
+        for (const duplicate of collectDuplicateDataDrivenFields(translations[locale], group, field)) {
+          errors.push(`${locale}: duplicate data-driven ${field} ${group}.${duplicate}`);
+        }
+      }
     }
 
     for (const untranslated of collectUntranslatedDataDrivenText(translations, locale)) {
