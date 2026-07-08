@@ -311,6 +311,10 @@ function main() {
       if (!value.trim()) {
         errors.push(`${locale}: empty translation for ${key}`);
       }
+
+      if (value !== value.trim()) {
+        errors.push(`${locale}: untrimmed translation for ${key}`);
+      }
     }
 
     const missing = [...requiredKeys]
