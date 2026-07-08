@@ -343,6 +343,13 @@ function evaluateBaselineStrategies(searchConfig, scenarios, bestStrategy) {
     baselines.push(generated);
   }
 
+  if (searchConfig.strategyFile) {
+    baselines.push({
+      ...loadStrategyFileDefinition(searchConfig, 'strategy-file-baseline'),
+      candidateId: 'strategy_file',
+    });
+  }
+
   return evaluateStrategies(baselines, scenarios, 0);
 }
 
