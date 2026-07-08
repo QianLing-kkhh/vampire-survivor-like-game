@@ -128,7 +128,7 @@ export function bestGeneralStrategyMarkdown(input: {
     '',
     '## Overall Performance',
     '',
-    `- Evaluated random scenarios: ${input.scenarioCount}`,
+    `- Evaluated scenarios: ${input.scenarioCount}`,
     `- Exp fitness score: ${input.strategy.generalFitnessScore}`,
     `- Fitness target: average gained experience among candidates with boss kill rate at or above the configured minimum.`,
     `- Boss kill rate: ${input.strategy.stats.bossKillRate}`,
