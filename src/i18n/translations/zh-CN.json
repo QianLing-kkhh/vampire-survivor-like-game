@@ -701,10 +701,10 @@
   "levelUp": {
     "title": "升级",
     "chooseUpgrade": "选择一个升级",
-    "emptyMessage": "No upgrades available",
-    "newWeapon": "New Weapon",
-    "noUpgrades": "No upgrades available",
-    "upgrade": "Upgrade",
+    "emptyMessage": "暂无可选升级",
+    "newWeapon": "新武器",
+    "noUpgrades": "暂无可选升级",
+    "upgrade": "升级",
     "noMatchingWeaponOwned": "尚未拥有匹配武器"
   },
   "hud": {

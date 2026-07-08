@@ -701,10 +701,10 @@
   "levelUp": {
     "title": "レベルアップ",
     "chooseUpgrade": "アップグレードを1つ選択",
-    "emptyMessage": "No upgrades available",
-    "newWeapon": "New Weapon",
-    "noUpgrades": "No upgrades available",
-    "upgrade": "Upgrade",
+    "emptyMessage": "選択できる強化はありません",
+    "newWeapon": "新武器",
+    "noUpgrades": "選択できる強化はありません",
+    "upgrade": "強化",
     "noMatchingWeaponOwned": "対応する武器を未所持"
   },
   "hud": {
