@@ -86,7 +86,19 @@ export function createModalBlocker(
   blocker.setOrigin(0, 0);
   blocker.setScrollFactor(0);
   blocker.setDepth(depth);
-  setRectangleHitArea(blocker, scene.scale.width, scene.scale.height);
+
+  const syncBlockerBounds = (gameSize?: Phaser.Structs.Size): void => {
+    const width = gameSize?.width ?? scene.scale.width;
+    const height = gameSize?.height ?? scene.scale.height;
+    blocker.setPosition(0, 0);
+    setRectangleHitArea(blocker, width, height);
+  };
+
+  syncBlockerBounds();
+  scene.scale.on(Phaser.Scale.Events.RESIZE, syncBlockerBounds);
+  blocker.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.scale.off(Phaser.Scale.Events.RESIZE, syncBlockerBounds);
+  });
   blocker.on('pointerdown', (
     _pointer: Phaser.Input.Pointer,
     _localX: number,

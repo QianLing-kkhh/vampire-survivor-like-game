@@ -10,12 +10,20 @@ if (modalBlockerStart < 0 || attachDebugStart < modalBlockerStart) {
 
 const modalBlockerSource = source.slice(modalBlockerStart, attachDebugStart);
 
-if (!/setRectangleHitArea\(\s*blocker,\s*scene\.scale\.width,\s*scene\.scale\.height\s*\)/.test(modalBlockerSource)) {
+if (!/setRectangleHitArea\(\s*blocker,/.test(modalBlockerSource)) {
   throw new Error('createModalBlocker should use setRectangleHitArea() for its full-screen blocker.');
 }
 
 if (/blocker\.setInteractive\(/.test(modalBlockerSource)) {
   throw new Error('createModalBlocker should not hand-roll blocker.setInteractive().');
+}
+
+if (!/scene\.scale\.on\(\s*Phaser\.Scale\.Events\.RESIZE/.test(modalBlockerSource)) {
+  throw new Error('createModalBlocker should refresh its full-screen blocker on scale resize.');
+}
+
+if (!/scene\.scale\.off\(\s*Phaser\.Scale\.Events\.RESIZE/.test(modalBlockerSource)) {
+  throw new Error('createModalBlocker should remove its scale resize listener when destroyed.');
 }
 
 console.log('UI interaction contract check passed.');
