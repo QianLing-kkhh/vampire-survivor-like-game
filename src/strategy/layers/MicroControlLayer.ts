@@ -48,6 +48,10 @@ export class MicroControlLayer {
     candidates.push(...ops.getFinalBossWarningCandidates(context, player));
 
     if (danger.nearestDistance < AUTO_PLAYER_CONSTANTS.MICRO_THREAT_RADIUS) {
+      if (danger.fleeDirection.lengthSq() > 0) {
+        candidates.push({ direction: danger.fleeDirection, reason: 'AVOID_CLOSE_ENEMY' });
+      }
+
       candidates.push(...ops.getNearestEnemyEscapeCandidates(context, player).map((candidate) => ({
         ...candidate,
         reason: 'AVOID_CLOSE_ENEMY',
