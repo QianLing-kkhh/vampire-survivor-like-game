@@ -18,6 +18,7 @@ if (args.help) {
 
 const source = getArg(args, ['source'], undefined);
 const allowLowerFidelity = String(getArg(args, ['allowLowerFidelity'], 'false')).toLowerCase() === 'true';
+const dryRun = String(getArg(args, ['dryRun'], 'false')).toLowerCase() === 'true';
 
 if (!source) {
   throw new Error('--source is required.');
@@ -37,6 +38,13 @@ let document = runtime.createGeneratedTestStrategyDocument({
   appliedAt: new Date().toISOString(),
 });
 document = mergePreservedPhases(document, existingDocument, sourceDoc);
+
+if (dryRun) {
+  console.log(`Dry run: generated test strategy source is valid for ${outputPath}`);
+  console.log(`Dry run source: ${sourcePath}`);
+  console.log('No files were written.');
+  process.exit(0);
+}
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${stablePrettyJson(document)}\n`);
@@ -178,6 +186,7 @@ function printHelp() {
 Options:
   --source               Path to best-general-strategy.json
   --allowLowerFidelity   Set true to intentionally apply a lower-fidelity source than the existing generated_test
+  --dryRun               Set true to validate and preview without writing generated-test-strategy.json
   --help                 Show this help
 `);
 }
