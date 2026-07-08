@@ -724,7 +724,7 @@
     "endless": "エンドレス",
     "relics": "レリック",
     "shield": "シールド",
-    "moreRelics": "+{count}"
+    "moreRelics": "+{count}件"
   },
   "settings": {
     "title": "設定",

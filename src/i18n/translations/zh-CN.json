@@ -724,7 +724,7 @@
     "endless": "无尽",
     "relics": "遗物",
     "shield": "护盾",
-    "moreRelics": "+{count}"
+    "moreRelics": "+{count}项"
   },
   "settings": {
     "title": "设置",
