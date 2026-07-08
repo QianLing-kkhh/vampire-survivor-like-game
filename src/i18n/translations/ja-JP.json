@@ -466,7 +466,7 @@
         "default": "特殊成長効果",
         "unknown": "不明な成長効果",
         "none": "特別なレベルアップ効果はありません。",
-        "healLostHpPercent": "レベルアップ時に失ったHPの一部を回復する。"
+        "healLostHpPercent": "レベルアップ時に失った HP の一部を回復する。"
       },
       "reaction": {
         "none": "なし",
@@ -1449,7 +1449,7 @@
     },
     "pummarola": {
       "name": "プマローラ",
-      "description": "5秒ごとにHPを1回復する。"
+      "description": "5秒ごとに HP を1回復する。"
     },
     "focus_lens": {
       "name": "焦点レンズ",
@@ -1747,7 +1747,7 @@
     },
     "endless_heal": {
       "name": "緊急回復",
-      "description": "HPを{amount}回復"
+      "description": "HP を{amount}回復"
     },
     "endless_overdrive": {
       "name": "オーバードライブ",
