@@ -64,6 +64,13 @@ runUnsafeFixture('ImplicitTypedVariableDimmer', [
   '  dimmer.setInteractive();',
 ]);
 
+runUnsafeFixture('ImplicitPropertyDimmer', [
+  '  const panel = {',
+  '    backdrop: scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5),',
+  '  };',
+  '  panel.backdrop.setInteractive();',
+]);
+
 runUnsafeFixture('ImplicitChainedDimmer', [
   '  scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5).setInteractive();',
 ]);

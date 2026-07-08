@@ -46,8 +46,13 @@ function lineForIndex(content, index) {
 function collectRectangleVariables(content) {
   const rectangleVariables = [];
   const rectanglePattern = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=;]+)?=\s*[^;\n]*\.add\.rectangle\(/g;
+  const rectanglePropertyPattern = /\b([A-Za-z_$][\w$]*)\s*:\s*[^;\n]*\.add\.rectangle\(/g;
 
   for (const match of content.matchAll(rectanglePattern)) {
+    rectangleVariables.push(match[1]);
+  }
+
+  for (const match of content.matchAll(rectanglePropertyPattern)) {
     rectangleVariables.push(match[1]);
   }
 
