@@ -40,6 +40,8 @@ const KEY_PREFIXES = new Set([
   'upgrade',
   'weapon',
 ]);
+const DATA_DRIVEN_TEXT_GROUPS = ['character', 'passive', 'upgrade', 'weapon'];
+const DATA_DRIVEN_TEXT_FIELDS = ['name', 'description'];
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -247,6 +249,39 @@ function collectDuplicateUpgradeFields(translation, field) {
   return duplicates;
 }
 
+function collectUntranslatedDataDrivenText(translations, locale) {
+  if (locale === 'en-US') {
+    return [];
+  }
+
+  const untranslated = [];
+  const source = translations['en-US'];
+  const target = translations[locale];
+
+  for (const group of DATA_DRIVEN_TEXT_GROUPS) {
+    for (const [id, sourceItem] of Object.entries(source[group] ?? {})) {
+      const targetItem = target[group]?.[id];
+      if (!targetItem || typeof targetItem !== 'object') {
+        continue;
+      }
+
+      for (const field of DATA_DRIVEN_TEXT_FIELDS) {
+        const sourceValue = sourceItem?.[field];
+        const targetValue = targetItem[field];
+        if (typeof sourceValue !== 'string' || typeof targetValue !== 'string') {
+          continue;
+        }
+
+        if (sourceValue.trim() && sourceValue.trim() === targetValue.trim()) {
+          untranslated.push(`${group}.${id}.${field}: ${targetValue.trim()}`);
+        }
+      }
+    }
+  }
+
+  return untranslated;
+}
+
 function main() {
   const translations = Object.fromEntries(
     LOCALES.map((locale) => [locale, readJson(path.join(TRANSLATION_DIR, `${locale}.json`))]),
@@ -283,6 +318,10 @@ function main() {
 
     for (const duplicate of collectDuplicateUpgradeFields(translations[locale], 'description')) {
       errors.push(`${locale}: duplicate upgrade description ${duplicate}`);
+    }
+
+    for (const untranslated of collectUntranslatedDataDrivenText(translations, locale)) {
+      errors.push(`${locale}: untranslated data-driven text ${untranslated}`);
     }
   }
 
