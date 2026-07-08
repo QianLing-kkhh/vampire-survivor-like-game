@@ -63,16 +63,24 @@ for (const scanRoot of scanRoots) {
     const relativePath = normalize(filePath);
     const content = fs.readFileSync(filePath, 'utf8');
     const patterns = [
-      /new Phaser\.Geom\.Rectangle\(\s*-/g,
-      /\.setTo\(\s*-/g,
+      {
+        pattern: /new Phaser\.Geom\.Rectangle\(\s*-/g,
+      },
+      {
+        pattern: /\.setTo\(\s*-/g,
+      },
+      {
+        pattern: /\.add\.rectangle\([\s\S]*?\)\.setInteractive\(\s*\)/g,
+        call: 'implicit rectangle setInteractive()',
+      },
     ];
 
-    for (const pattern of patterns) {
+    for (const { pattern, call } of patterns) {
       for (const match of content.matchAll(pattern)) {
         findings.push({
           file: relativePath,
           line: lineForIndex(content, match.index ?? 0),
-          call: match[0],
+          call: call ?? match[0],
         });
       }
     }
