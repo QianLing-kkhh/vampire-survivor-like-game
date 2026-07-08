@@ -37,26 +37,26 @@
     "pause": "一時停止",
     "pauseIcon": "II",
     "role": {
-      "default": "Specialist",
+      "default": "専門家",
       "assassin": {
-        "m1": "Mobility",
-        "m2": "Crit",
-        "m3": "Axe"
+        "m1": "機動",
+        "m2": "会心",
+        "m3": "斧"
       },
       "witch": {
-        "m1": "Magic",
-        "m2": "Slow",
-        "m3": "Explosion"
+        "m1": "魔法",
+        "m2": "鈍化",
+        "m3": "爆発"
       },
       "priest": {
-        "m1": "Shield",
-        "m2": "Heal",
-        "m3": "Orbit"
+        "m1": "シールド",
+        "m2": "回復",
+        "m3": "旋回"
       },
       "warrior": {
-        "m1": "Armor",
-        "m2": "Counter",
-        "m3": "Axe"
+        "m1": "防具",
+        "m2": "反撃",
+        "m3": "斧"
       }
     }
   },
