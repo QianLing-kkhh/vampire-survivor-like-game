@@ -1122,7 +1122,7 @@
   },
   "tooltip": {
     "weapon": {
-      "default": "武器效果。详细数值请在 Stats / Build 中查看。"
+      "default": "武器效果。详细数值请在 属性 / 构筑 中查看。"
     },
     "passive": {
       "default": "改变构筑的被动道具。",
@@ -1143,7 +1143,7 @@
       "iron_sigil": "防御类武器冷却更快。"
     },
     "relic": {
-      "default": "遗物效果。详细数值请在 Stats / Build 中查看。",
+      "default": "遗物效果。详细数值请在 属性 / 构筑 中查看。",
       "blood_pact": "在低生命时提升伤害能力。",
       "void_compass": "提升拾取范围。",
       "golden_scarab": "提升宝箱分数奖励。",
@@ -1171,7 +1171,7 @@
       "mapSlow": "地形正在减慢移动。"
     },
     "generic": {
-      "upgradeIcon": "奖励或条件图标。详细数值请在 Stats / Build 中查看。"
+      "upgradeIcon": "奖励或条件图标。详细数值请在 属性 / 构筑 中查看。"
     }
   },
   "unlock": {
