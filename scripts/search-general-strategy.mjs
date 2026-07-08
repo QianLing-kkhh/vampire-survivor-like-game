@@ -51,7 +51,7 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
   const allAggregates = [];
   const roundSummary = [];
   const strategyById = new Map();
-  let centerStrategy;
+  let centerStrategy = resolveCenterBaseStrategy(searchConfig, controlScope, warnings);
   let mutationRadius = searchConfig.initialMutationRadius;
   let bestOverall;
 
@@ -168,7 +168,7 @@ function executeGeneralSearch(searchConfig, scenarioSampleInput) {
 
 function createRoundStrategies(searchConfig, round, centerStrategy, mutationRadius, controlScope) {
   if (centerStrategy) {
-    return runtime.generateCenteredStrategyWeightCandidates({
+    const centeredCandidates = runtime.generateCenteredStrategyWeightCandidates({
       count: searchConfig.candidates,
       randomSeed: `${searchConfig.randomSeed}-round-${round}`,
       centerStrategy,
@@ -177,6 +177,15 @@ function createRoundStrategies(searchConfig, round, centerStrategy, mutationRadi
     })
       .map((candidate) => strategyDefinitionFromCandidate(searchConfig, candidate, 'centered-phased'))
       .map((strategy) => applyControlVariableScope(strategy, controlScope));
+
+    if (round === 1 && searchConfig.centerBaseStrategy !== 'none') {
+      return [
+        createCenterBaseStrategyDefinition(searchConfig, centerStrategy),
+        ...centeredCandidates,
+      ];
+    }
+
+    return centeredCandidates;
   }
 
   return runtime.generateStrategyWeightCandidates({
@@ -191,6 +200,18 @@ function createRoundStrategies(searchConfig, round, centerStrategy, mutationRadi
       config: searchConfig,
     }))
     .map((strategy) => applyControlVariableScope(strategy, controlScope));
+}
+
+function createCenterBaseStrategyDefinition(searchConfig, centerStrategy) {
+  const candidateId = `${searchConfig.centerBaseStrategy}_center_base`;
+
+  return {
+    candidateId,
+    strategyVariantId: 'center-base',
+    strategyProfileHash: runtime.hashStableValue('fnv1a', centerStrategy),
+    profile: JSON.parse(JSON.stringify(centerStrategy.phases[0]?.profile ?? runtime.profiles.balanced_default)),
+    phasedStrategy: JSON.parse(JSON.stringify(centerStrategy)),
+  };
 }
 
 function strategyDefinitionFromCandidate(searchConfig, candidate, fallbackVariantId) {
@@ -435,6 +456,7 @@ function createSearchConfig(parsedArgs) {
     optimizeWeights: splitCsv(String(getArg(parsedArgs, ['optimizeWeights'], ''))),
     optimizePhases: splitCsv(String(getArg(parsedArgs, ['optimizePhase', 'optimizePhases'], ''))),
     controlBaseStrategy: String(getArg(parsedArgs, ['controlBaseStrategy', 'baseStrategy'], 'balanced_default')),
+    centerBaseStrategy: String(getArg(parsedArgs, ['centerBaseStrategy', 'centerStrategy'], 'none')).toLowerCase(),
     outputDir,
   };
 }
@@ -566,6 +588,50 @@ function resolveControlBaselineStrategy(searchConfig, warnings) {
     profile: runtime.profiles.balanced_default,
     config: searchConfig,
   });
+}
+
+function resolveCenterBaseStrategy(searchConfig, controlScope, warnings) {
+  const requested = searchConfig.centerBaseStrategy;
+
+  if (requested === 'none' || requested === '') {
+    return undefined;
+  }
+
+  if (requested === 'generated_test') {
+    const generated = loadExistingGeneratedTestStrategy(searchConfig);
+
+    if (generated) {
+      warnings.push('Centered search initialized from generated_test.');
+
+      return applyControlVariableScope(generated, controlScope).phasedStrategy;
+    }
+
+    throw new Error('Requested centerBaseStrategy=generated_test, but no generated strategy was available.');
+  }
+
+  if (requested === 'playtest_baseline') {
+    warnings.push('Centered search initialized from playtest_baseline.');
+
+    return applyControlVariableScope(runtime.createGeneralStrategyFromProfile({
+      candidateId: 'playtest_baseline_center_base',
+      strategyVariantId: 'center-base',
+      profile: runtime.profiles.playtest_baseline,
+      config: searchConfig,
+    }), controlScope).phasedStrategy;
+  }
+
+  if (requested === 'balanced_default') {
+    warnings.push('Centered search initialized from balanced_default.');
+
+    return applyControlVariableScope(runtime.createGeneralStrategyFromProfile({
+      candidateId: 'balanced_default_center_base',
+      strategyVariantId: 'center-base',
+      profile: runtime.profiles.balanced_default,
+      config: searchConfig,
+    }), controlScope).phasedStrategy;
+  }
+
+  throw new Error('--centerBaseStrategy must be none, generated_test, playtest_baseline, or balanced_default.');
 }
 
 function applyControlVariableScope(strategy, controlScope) {
@@ -903,6 +969,7 @@ Options:
   --optimizeLayer          all, movement, upgrade, treasure, relic, strategic, tactical, or micro
   --optimizeWeights        Comma-separated exact weight paths, e.g. movement.farmBias,movement.combatBias
   --controlBaseStrategy    balanced_default, playtest_baseline, or generated_test
+  --centerBaseStrategy     none, balanced_default, playtest_baseline, or generated_test; starts round 1 as a centered local search
   --outputDir              Artifact output directory
   --help                   Show this help
 `);
