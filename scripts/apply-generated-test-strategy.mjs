@@ -42,6 +42,12 @@ document = mergePreservedPhases(document, existingDocument, sourceDoc);
 if (dryRun) {
   console.log(`Dry run: generated test strategy source is valid for ${outputPath}`);
   console.log(`Dry run source: ${sourcePath}`);
+  printDryRunSummary({
+    document,
+    outputPath,
+    sourceDoc,
+    allowLowerFidelity,
+  });
   console.log('No files were written.');
   process.exit(0);
 }
@@ -54,6 +60,15 @@ console.log('generated_test is for headless auto testing only.');
 
 function stablePrettyJson(value) {
   return JSON.stringify(JSON.parse(stableStringify(value)), null, 2);
+}
+
+function printDryRunSummary(input) {
+  console.log('Candidate summary:');
+  console.log(`- Source objective: ${input.sourceDoc?.searchConfig?.objective ?? 'unknown'}`);
+  console.log(`- Source general fitness: ${input.sourceDoc?.generalFitnessScore ?? 'n/a'}`);
+  console.log(`- Output path: ${input.outputPath}`);
+  console.log(`- Preserved phases: ${input.document?.metadata?.preservedPhaseIds?.join(', ') || 'none'}`);
+  console.log(`- Lower fidelity override: ${input.allowLowerFidelity}`);
 }
 
 function assertSourceFidelityAllowed(sourceDoc, existingDocument, allowLowerFidelity) {
