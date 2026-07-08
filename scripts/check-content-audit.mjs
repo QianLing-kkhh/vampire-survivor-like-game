@@ -67,6 +67,11 @@ function toRecord(value, sourceName) {
         continue;
       }
 
+      if (entry.id.trim() !== entry.id) {
+        addError(`Padded id in ${sourceName} array entry at index ${index}: ${entry.id}`);
+        continue;
+      }
+
       if (hasId(record, entry.id)) {
         addError(`Duplicate id in ${sourceName}: ${entry.id}`);
         continue;
