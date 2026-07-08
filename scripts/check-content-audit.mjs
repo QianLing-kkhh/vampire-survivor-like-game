@@ -83,6 +83,10 @@ function toRecord(value, sourceName) {
   }
 
   for (const [key, entry] of Object.entries(value)) {
+    if (key.trim() !== key) {
+      addError(`Padded key in ${sourceName}: ${key}`);
+    }
+
     if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id !== key) {
       addError(`Mismatched id in ${sourceName}: key ${key} has id ${entry.id}`);
     }
