@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { I18n } from '../../i18n/I18n';
+import { setRectangleHitArea } from '../input/UIInteraction';
 import { UITheme } from '../UITheme';
 import { PanelFrame } from './PanelFrame';
 
@@ -23,7 +24,6 @@ export class UIBlockingNotice {
     this.backdrop = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, UITheme.colors.backgroundOverlay, 0.86);
     this.backdrop.setOrigin(0, 0);
     this.backdrop.setScrollFactor(0);
-    this.backdrop.setInteractive();
 
     this.messageText = scene.add.text(0, 0, config.message, {
       color: UITheme.textColor,
@@ -48,7 +48,7 @@ export class UIBlockingNotice {
   }
 
   resize(width: number, height: number): void {
-    this.backdrop.setSize(width, height);
+    setRectangleHitArea(this.backdrop, width, height);
     this.frame?.destroy(true);
     const compact = width <= 640 || height <= 420;
     const frameWidth = Math.min(width - 32, compact ? 360 : 460);
