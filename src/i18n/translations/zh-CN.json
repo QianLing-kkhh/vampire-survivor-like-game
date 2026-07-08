@@ -13,7 +13,7 @@
     "language": "语言",
     "timeScale": "时间倍率",
     "none": "无",
-    "back": "Back"
+    "back": "返回"
   },
   "ui": {
     "chooseReward": "选择一个奖励",
@@ -34,7 +34,7 @@
     "build": "构筑",
     "leaderboard": "排行榜",
     "max": "Max",
-    "pause": "Pause",
+    "pause": "暂停",
     "pauseIcon": "II",
     "role": {
       "default": "Specialist",
@@ -76,7 +76,7 @@
     "records": "记录",
     "replayTool": "回放工具",
     "dailyChallenge": "每日挑战",
-    "settings": "Settings"
+    "settings": "设置"
   },
   "selection": {
     "character": "角色",
@@ -163,7 +163,7 @@
   "characterSelection": {
     "randomUnlocked": "随机已解锁角色",
     "fixed": "固定",
-    "locked": "Locked"
+    "locked": "已锁定"
   },
   "stage": {
     "random": {

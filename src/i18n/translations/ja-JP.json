@@ -13,7 +13,7 @@
     "language": "言語",
     "timeScale": "時間倍率",
     "none": "なし",
-    "back": "Back"
+    "back": "戻る"
   },
   "ui": {
     "chooseReward": "報酬を1つ選択",
@@ -34,7 +34,7 @@
     "build": "ビルド",
     "leaderboard": "ランキング",
     "max": "Max",
-    "pause": "Pause",
+    "pause": "一時停止",
     "pauseIcon": "II",
     "role": {
       "default": "Specialist",
@@ -76,7 +76,7 @@
     "records": "記録",
     "replayTool": "リプレイツール",
     "dailyChallenge": "デイリーチャレンジ",
-    "settings": "Settings"
+    "settings": "設定"
   },
   "selection": {
     "character": "キャラクター",
@@ -163,7 +163,7 @@
   "characterSelection": {
     "randomUnlocked": "ランダム選択",
     "fixed": "固定",
-    "locked": "Locked"
+    "locked": "ロック中"
   },
   "stage": {
     "random": {
