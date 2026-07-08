@@ -1515,7 +1515,7 @@
     },
     "knife_cooldown_up": {
       "name": "ナイフ強化",
-      "description": "ナイフのダメージを10%増加。"
+      "description": "ナイフのクールダウンを10%短縮。"
     },
     "garlic_damage_up": {
       "name": "ニンニク強化",
@@ -1523,7 +1523,7 @@
     },
     "garlic_radius_up": {
       "name": "ニンニク強化",
-      "description": "ニンニクのダメージを10%増加。"
+      "description": "ニンニクの効果範囲を10%増加。"
     },
     "add_bible": {
       "name": "聖典解放",
@@ -1535,11 +1535,11 @@
     },
     "bible_orbit_count_up": {
       "name": "聖典強化",
-      "description": "聖典のダメージを10%増加。"
+      "description": "聖典の軌道弾を1つ追加。"
     },
     "bible_orbit_speed_up": {
       "name": "聖典強化",
-      "description": "聖典のダメージを10%増加。"
+      "description": "聖典の軌道速度を10%増加。"
     },
     "add_magic_wand": {
       "name": "魔法の杖解放",
@@ -1551,11 +1551,11 @@
     },
     "magic_wand_cooldown_up": {
       "name": "魔法の杖強化",
-      "description": "魔法の杖のダメージを10%増加。"
+      "description": "魔法の杖のクールダウンを10%短縮。"
     },
     "magic_wand_projectile_count_up": {
       "name": "魔法の杖強化",
-      "description": "魔法の杖のダメージを10%増加。"
+      "description": "魔法の杖の発射数を増加。"
     },
     "add_axe": {
       "name": "斧解放",
@@ -1567,11 +1567,11 @@
     },
     "axe_cooldown_up": {
       "name": "斧強化",
-      "description": "斧のダメージを10%増加。"
+      "description": "斧のクールダウンを10%短縮。"
     },
     "axe_projectile_count_up": {
       "name": "斧強化",
-      "description": "斧のダメージを10%増加。"
+      "description": "斧の発射数を1つ追加。"
     },
     "add_runic_orb": {
       "name": "ルーンオーブ解放",

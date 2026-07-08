@@ -1515,7 +1515,7 @@
     },
     "knife_cooldown_up": {
       "name": "飞刀强化",
-      "description": "飞刀伤害提高 10%。"
+      "description": "飞刀冷却缩短 10%。"
     },
     "garlic_damage_up": {
       "name": "大蒜强化",
@@ -1523,7 +1523,7 @@
     },
     "garlic_radius_up": {
       "name": "大蒜强化",
-      "description": "大蒜伤害提高 10%。"
+      "description": "大蒜范围扩大 10%。"
     },
     "add_bible": {
       "name": "解锁圣典",
@@ -1535,11 +1535,11 @@
     },
     "bible_orbit_count_up": {
       "name": "圣典强化",
-      "description": "圣典伤害提高 10%。"
+      "description": "额外增加 1 个环绕圣典投射物。"
     },
     "bible_orbit_speed_up": {
       "name": "圣典强化",
-      "description": "圣典伤害提高 10%。"
+      "description": "圣典环绕速度提高 10%。"
     },
     "add_magic_wand": {
       "name": "解锁魔杖",
@@ -1551,11 +1551,11 @@
     },
     "magic_wand_cooldown_up": {
       "name": "魔杖强化",
-      "description": "魔杖伤害提高 10%。"
+      "description": "魔杖冷却缩短 10%。"
     },
     "magic_wand_projectile_count_up": {
       "name": "魔杖强化",
-      "description": "魔杖伤害提高 10%。"
+      "description": "提高魔杖每次攻击发射的投射物数量。"
     },
     "add_axe": {
       "name": "解锁战斧",
@@ -1567,11 +1567,11 @@
     },
     "axe_cooldown_up": {
       "name": "战斧强化",
-      "description": "战斧伤害提高 10%。"
+      "description": "战斧冷却缩短 10%。"
     },
     "axe_projectile_count_up": {
       "name": "战斧强化",
-      "description": "战斧伤害提高 10%。"
+      "description": "每次攻击额外增加 1 个战斧投射物。"
     },
     "add_runic_orb": {
       "name": "解锁符文法球",
