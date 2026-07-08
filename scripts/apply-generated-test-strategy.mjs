@@ -31,7 +31,7 @@ const outputPath = path.join(rootDir, 'src', 'strategy', 'generated', 'generated
 const existingDocument = fs.existsSync(outputPath)
   ? JSON.parse(fs.readFileSync(outputPath, 'utf8'))
   : undefined;
-assertSourceFidelityAllowed(sourceDoc, existingDocument, allowLowerFidelity);
+const fidelityReasons = collectLowerFidelityReasons(sourceDoc, existingDocument);
 let document = runtime.createGeneratedTestStrategyDocument({
   source: sourceDoc,
   sourceReportDir: path.dirname(sourcePath),
@@ -40,18 +40,26 @@ let document = runtime.createGeneratedTestStrategyDocument({
 document = mergePreservedPhases(document, existingDocument, sourceDoc);
 
 if (dryRun) {
-  console.log(`Dry run: generated test strategy source is valid for ${outputPath}`);
+  const accepted = allowLowerFidelity || fidelityReasons.length === 0;
+
+  console.log(
+    accepted
+      ? `Dry run: generated test strategy source is valid for ${outputPath}`
+      : `Dry run: generated test strategy source would be rejected for ${outputPath}`,
+  );
   console.log(`Dry run source: ${sourcePath}`);
   printDryRunSummary({
     document,
     outputPath,
     sourceDoc,
     allowLowerFidelity,
+    fidelityReasons,
   });
   console.log('No files were written.');
-  process.exit(0);
+  process.exit(accepted ? 0 : 1);
 }
 
+assertSourceFidelityAllowed(fidelityReasons, allowLowerFidelity);
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${stablePrettyJson(document)}\n`);
 
@@ -69,16 +77,23 @@ function printDryRunSummary(input) {
   console.log(`- Output path: ${input.outputPath}`);
   console.log(`- Preserved phases: ${input.document?.metadata?.preservedPhaseIds?.join(', ') || 'none'}`);
   console.log(`- Lower fidelity override: ${input.allowLowerFidelity}`);
+  if (input.fidelityReasons?.length > 0) {
+    console.log('Fidelity guard reasons:');
+    for (const reason of input.fidelityReasons) {
+      console.log(`- ${reason}`);
+    }
+  }
 }
 
-function assertSourceFidelityAllowed(sourceDoc, existingDocument, allowLowerFidelity) {
-  if (allowLowerFidelity || !existingDocument?.searchConfig || !sourceDoc?.searchConfig) {
-    return;
+function collectLowerFidelityReasons(sourceDoc, existingDocument) {
+  const reasons = [];
+
+  if (!existingDocument?.searchConfig || !sourceDoc?.searchConfig) {
+    return reasons;
   }
 
   const sourceConfig = sourceDoc.searchConfig;
   const existingConfig = existingDocument.searchConfig;
-  const reasons = [];
   const sourceObjectiveRank = objectiveRank(sourceConfig.objective);
   const existingObjectiveRank = objectiveRank(existingConfig.objective);
   const sourceSampleCount = sampleCount(sourceConfig);
@@ -112,11 +127,15 @@ function assertSourceFidelityAllowed(sourceDoc, existingDocument, allowLowerFide
     reasons.push('boss gate strictness was weakened');
   }
 
-  if (reasons.length === 0) {
+  return reasons;
+}
+
+function assertSourceFidelityAllowed(fidelityReasons, allowLowerFidelity) {
+  if (allowLowerFidelity || fidelityReasons.length === 0) {
     return;
   }
 
-  throw new Error(`Refusing to apply lower-fidelity generated strategy source: ${reasons.join('; ')}. Re-run with --allowLowerFidelity true to override intentionally.`);
+  throw new Error(`Refusing to apply lower-fidelity generated strategy source: ${fidelityReasons.join('; ')}. Re-run with --allowLowerFidelity true to override intentionally.`);
 }
 
 function mergePreservedPhases(document, existingDocument, sourceDoc) {
