@@ -85,15 +85,15 @@
     "confirm": "确认",
     "back": "返回",
     "current": "当前",
-    "damageReaction": "Damage Reaction",
-    "damageReactionKeyed": "Damage Reaction: {id}",
-    "damageReactionUnknown": "Damage Reaction: Unknown",
-    "iconShown": "icon",
-    "more": "+{count} more",
-    "role": "Role",
-    "shortLabelAvailable": "Avail",
-    "startingWeapon": "Starting Weapon",
-    "startingWeaponLabel": "Starting Weapon: {item}"
+    "damageReaction": "受击反应",
+    "damageReactionKeyed": "受击反应：{id}",
+    "damageReactionUnknown": "受击反应：未知",
+    "iconShown": "图标",
+    "more": "+{count} 项",
+    "role": "定位",
+    "shortLabelAvailable": "可用",
+    "startingWeapon": "初始武器",
+    "startingWeaponLabel": "初始武器：{item}"
   },
   "characterSelect": {
     "title": "角色选择"

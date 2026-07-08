@@ -85,15 +85,15 @@
     "confirm": "決定",
     "back": "戻る",
     "current": "現在",
-    "damageReaction": "Damage Reaction",
-    "damageReactionKeyed": "Damage Reaction: {id}",
-    "damageReactionUnknown": "Damage Reaction: Unknown",
-    "iconShown": "icon",
-    "more": "+{count} more",
-    "role": "Role",
-    "shortLabelAvailable": "Avail",
-    "startingWeapon": "Starting Weapon",
-    "startingWeaponLabel": "Starting Weapon: {item}"
+    "damageReaction": "被弾リアクション",
+    "damageReactionKeyed": "被弾リアクション：{id}",
+    "damageReactionUnknown": "被弾リアクション：不明",
+    "iconShown": "アイコン",
+    "more": "+{count} 件",
+    "role": "役割",
+    "shortLabelAvailable": "使用可",
+    "startingWeapon": "初期武器",
+    "startingWeaponLabel": "初期武器：{item}"
   },
   "characterSelect": {
     "title": "キャラクター選択"
