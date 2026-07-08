@@ -58,6 +58,12 @@ runUnsafeFixture('ImplicitMultilineVariableDimmer', [
   '  dimmer.setInteractive();',
 ]);
 
+runUnsafeFixture('ImplicitTypedVariableDimmer', [
+  '  const dimmer: Phaser.GameObjects.Rectangle =',
+  '    scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
+  '  dimmer.setInteractive();',
+]);
+
 runUnsafeFixture('ImplicitChainedDimmer', [
   '  scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5).setInteractive();',
 ]);
