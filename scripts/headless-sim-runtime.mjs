@@ -345,6 +345,7 @@ function createBucketExamples(runs) {
         damageTaken: run.damageTaken,
         bossDamageDealt: run.bossDamageDealt,
         firstCriticalPhaseId: run.firstCriticalPhaseId,
+        phaseSummaries: run.phaseSummaries,
       };
     }
   }
@@ -511,6 +512,30 @@ function diagnosticsToMarkdown(diagnostics) {
       example.bossDamageDealt,
       example.firstCriticalPhaseId ?? '',
     ].join(' | ').replace(/^/, '| ').replace(/$/, ' |'));
+  }
+
+  lines.push('', '## Bucket Example Phases', '', '| Bucket | Seed | Phase | Level Start | Level End | Exp | Kills | Damage | Enemy Count | Pickups |');
+  lines.push('| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |');
+
+  for (const [bucket, example] of Object.entries(diagnostics.bucketExamples ?? {})) {
+    for (const phase of example.phaseSummaries ?? []) {
+      if (!phase.observed) {
+        continue;
+      }
+
+      lines.push([
+        bucket,
+        example.seed,
+        phase.phaseId,
+        phase.levelStart,
+        phase.levelEnd,
+        phase.expDelta,
+        phase.killsDelta,
+        phase.damageTakenDelta,
+        phase.enemyCountEnd,
+        phase.pickupCountEnd,
+      ].join(' | ').replace(/^/, '| ').replace(/$/, ' |'));
+    }
   }
 
   lines.push('', '## Runs', '', '| Seed | Result | Survival | Level | Damage | Boss Damage | Bucket | Critical Phase |');
