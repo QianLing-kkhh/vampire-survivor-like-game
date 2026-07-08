@@ -49,7 +49,10 @@ export function aggregateSimulationResults(results: readonly SimulationResult[])
   };
 }
 
-export function aggregateToMarkdown(report: SimulationAggregateReport): string {
+export function aggregateToMarkdown(
+  report: SimulationAggregateReport,
+  results: readonly SimulationResult[] = [],
+): string {
   const lines = [
     '# Headless Simulation Aggregate',
     '',
@@ -74,7 +77,47 @@ export function aggregateToMarkdown(report: SimulationAggregateReport): string {
     ].join(' | ').replace(/^/, '| ').replace(/$/, ' |'));
   }
 
+  appendNotableRuns(lines, results);
+
   return `${lines.join('\n')}\n`;
+}
+
+function appendNotableRuns(lines: string[], results: readonly SimulationResult[]): void {
+  const notableRuns = results
+    .filter((result) => result.result !== 'completed' && result.result !== 'victory')
+    .slice()
+    .sort(compareNotableRuns)
+    .slice(0, 10);
+
+  if (notableRuns.length === 0) {
+    return;
+  }
+
+  lines.push(
+    '',
+    '## Notable Runs',
+    '',
+    '| Seed | Result | Survival | Level | Score | Damage | Boss Damage |',
+    '|---|---|---:|---:|---:|---:|---:|',
+  );
+
+  for (const run of notableRuns) {
+    lines.push([
+      run.seed,
+      run.result,
+      run.survivalTimeSeconds.toFixed(1),
+      run.level,
+      run.score,
+      run.damageTaken,
+      run.bossDamageDealt,
+    ].join(' | ').replace(/^/, '| ').replace(/$/, ' |'));
+  }
+}
+
+function compareNotableRuns(left: SimulationResult, right: SimulationResult): number {
+  return left.survivalTimeSeconds - right.survivalTimeSeconds
+    || left.score - right.score
+    || left.seed.localeCompare(right.seed);
 }
 
 function createGroup(key: string, results: readonly SimulationResult[]): SimulationAggregateGroup {

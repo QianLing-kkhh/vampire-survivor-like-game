@@ -308,7 +308,7 @@ export function writeHeadlessArtifacts(outPath, input) {
   fs.writeFileSync(path.join(outDirPath, 'run-results.jsonl'), `${input.results.map((result) => stableStringify(result)).join('\n')}\n`);
   fs.writeFileSync(path.join(outDirPath, 'run-results.csv'), `${batchCsvHeader}\n${input.results.map(resultToCsvRow).join('\n')}\n`);
   fs.writeFileSync(path.join(outDirPath, 'aggregate.json'), `${stablePrettyJson(aggregate)}\n`);
-  fs.writeFileSync(path.join(outDirPath, 'aggregate.md'), loadHeadlessSimulationRuntime().aggregateToMarkdown(aggregate));
+  fs.writeFileSync(path.join(outDirPath, 'aggregate.md'), loadHeadlessSimulationRuntime().aggregateToMarkdown(aggregate, input.results));
   fs.writeFileSync(path.join(outDirPath, 'diagnostics.json'), `${stablePrettyJson(diagnostics)}\n`);
   fs.writeFileSync(path.join(outDirPath, 'diagnostics.md'), diagnosticsToMarkdown(diagnostics));
 
