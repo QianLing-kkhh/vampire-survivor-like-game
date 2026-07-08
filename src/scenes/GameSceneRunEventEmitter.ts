@@ -7,7 +7,7 @@ const RUN_STARTED_EVENT_NAME = 'run.started' satisfies keyof GameEventPayloadMap
 
 type RunStartedEventName = typeof RUN_STARTED_EVENT_NAME;
 
-type GameSceneRunStartedPayload = GameEventPayload<RunStartedEventName>;
+export type GameSceneRunStartedPayload = GameEventPayload<RunStartedEventName>;
 
 type GameSceneRunStartedRunId = GameSceneRunStartedPayload['runId'];
 
