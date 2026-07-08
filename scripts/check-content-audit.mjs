@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const dataDir = path.join(root, 'src', 'data');
+const dataDir = process.env.CONTENT_AUDIT_DATA_DIR ?? path.join(root, 'src', 'data');
 const requiredFiles = [
   'weapons.json',
   'enemies.json',
@@ -21,23 +21,31 @@ function addError(message) {
   errors.push(message);
 }
 
+function displayDataPath(name) {
+  if (dataDir === path.join(root, 'src', 'data')) {
+    return `src/data/${name}`;
+  }
+
+  return path.join(dataDir, name);
+}
+
 function readJson(name) {
   const filePath = path.join(dataDir, name);
 
   if (!fs.existsSync(filePath)) {
-    addError(`Missing data file: src/data/${name}`);
+    addError(`Missing data file: ${displayDataPath(name)}`);
     return undefined;
   }
 
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (error) {
-    addError(`Invalid JSON in src/data/${name}: ${error instanceof Error ? error.message : String(error)}`);
+    addError(`Invalid JSON in ${displayDataPath(name)}: ${error instanceof Error ? error.message : String(error)}`);
     return undefined;
   }
 }
 
-function toRecord(value) {
+function toRecord(value, sourceName) {
   if (!value || typeof value !== 'object') {
     return {};
   }
@@ -46,6 +54,10 @@ function toRecord(value) {
     const record = {};
     for (const entry of value) {
       if (entry && typeof entry === 'object' && typeof entry.id === 'string') {
+        if (hasId(record, entry.id)) {
+          addError(`Duplicate id in ${sourceName}: ${entry.id}`);
+          continue;
+        }
         record[entry.id] = entry;
       }
     }
@@ -99,13 +111,13 @@ for (const fileName of requiredFiles) {
   readJson(fileName);
 }
 
-const weapons = toRecord(readJson('weapons.json'));
-const enemies = toRecord(readJson('enemies.json'));
-const passives = toRecord(readJson('passives.json'));
+const weapons = toRecord(readJson('weapons.json'), 'weapons.json');
+const enemies = toRecord(readJson('enemies.json'), 'enemies.json');
+const passives = toRecord(readJson('passives.json'), 'passives.json');
 const waves = readJson('waves.json');
-const characters = toRecord(readJson('characters.json'));
-const stages = toRecord(readJson('stages.json'));
-const maps = toRecord(readJson('maps.json'));
+const characters = toRecord(readJson('characters.json'), 'characters.json');
+const stages = toRecord(readJson('stages.json'), 'stages.json');
+const maps = toRecord(readJson('maps.json'), 'maps.json');
 const bosses = readJson('bosses.json');
 
 for (const [stageId, stage] of Object.entries(stages)) {
