@@ -46,6 +46,19 @@ function runUnsafeFixture(name, bodyLines) {
   }
 }
 
+function runUnsafeSingleFindingFixture(name, bodyLines) {
+  const result = runFixture(name, bodyLines);
+  if (result.status === 0) {
+    throw new Error(`Expected ${name} fixture to fail the UI hit area audit.`);
+  }
+
+  const output = `${result.stdout}\n${result.stderr}`;
+  const findingCount = output.match(/implicit rectangle setInteractive/g)?.length ?? 0;
+  if (findingCount !== 1) {
+    throw new Error(`Expected ${name} to report one implicit rectangle setInteractive finding, got ${findingCount}.\n${output}`);
+  }
+}
+
 function runSafeFixture(name, bodyLines) {
   const result = runFixture(name, bodyLines);
   if (result.status !== 0) {
@@ -85,6 +98,14 @@ runUnsafeFixture('ImplicitPropertyDimmer', [
 
 runUnsafeFixture('ImplicitInstancePropertyDimmer', [
   '  const panel = { backdrop: undefined as Phaser.GameObjects.Rectangle | undefined };',
+  '  panel.backdrop = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
+  '  panel.backdrop.setInteractive();',
+]);
+
+runUnsafeSingleFindingFixture('ImplicitRepeatedPropertyDimmer', [
+  '  const panel = {',
+  '    backdrop: scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5),',
+  '  };',
   '  panel.backdrop = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
   '  panel.backdrop.setInteractive();',
 ]);
