@@ -3,7 +3,10 @@ import path from 'node:path';
 
 const root = process.cwd();
 const findings = [];
-const scanRoots = [
+const configuredScanRoots = process.env.UI_HITAREA_SCAN_ROOTS
+  ? process.env.UI_HITAREA_SCAN_ROOTS.split(path.delimiter).filter(Boolean)
+  : undefined;
+const scanRoots = configuredScanRoots ?? [
   path.join(root, 'src', 'ui'),
   path.join(root, 'src', 'scenes'),
 ];
@@ -40,6 +43,21 @@ function lineForIndex(content, index) {
   return content.slice(0, index).split(/\r?\n/).length;
 }
 
+function collectRectangleVariables(content) {
+  const rectangleVariables = [];
+  const rectanglePattern = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*[^;\n]*\.add\.rectangle\(/g;
+
+  for (const match of content.matchAll(rectanglePattern)) {
+    rectangleVariables.push(match[1]);
+  }
+
+  return rectangleVariables;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 for (const scanRoot of scanRoots) {
   for (const filePath of collectTsFiles(scanRoot)) {
     const relativePath = normalize(filePath);
@@ -58,12 +76,24 @@ for (const scanRoot of scanRoots) {
         });
       }
     }
+
+    for (const rectangleVariable of collectRectangleVariables(content)) {
+      const pattern = new RegExp(`\\b${escapeRegExp(rectangleVariable)}\\.setInteractive\\(\\s*\\)`, 'g');
+      for (const match of content.matchAll(pattern)) {
+        findings.push({
+          file: relativePath,
+          line: lineForIndex(content, match.index ?? 0),
+          call: 'implicit rectangle setInteractive()',
+        });
+      }
+    }
   }
 }
 
 if (findings.length > 0) {
-  console.error('[ui-hitareas] Found negative-origin hitArea definitions.');
+  console.error('[ui-hitareas] Found unsafe UI hitArea definitions.');
   console.error('[ui-hitareas] Phaser normalizes input by displayOrigin, so centered Container visuals should still use 0..width / 0..height hit areas.');
+  console.error('[ui-hitareas] Rectangle UI blockers should use setRectangleHitArea() or an explicit hitArea instead of implicit setInteractive().');
   for (const finding of findings) {
     console.error(`[ui-hitareas] ${finding.file}:${finding.line} ${finding.call}`);
   }
