@@ -788,7 +788,7 @@
     "previousPage": "前へ",
     "nextPage": "次へ",
     "back": "戻る",
-    "showDetailedCooldownTime": "詳細CD時間",
+    "showDetailedCooldownTime": "詳細クールダウン時間",
     "strategyTacticsPanel": "戦略 / 戦術パネル",
     "pauseWhenStrategyPanelOpen": "戦術パネル展開中に一時停止",
     "manualHidesStrategyPanel": "手動モードではこのパネルは常に非表示になります。",

@@ -788,7 +788,7 @@
     "previousPage": "上一页",
     "nextPage": "下一页",
     "back": "返回",
-    "showDetailedCooldownTime": "显示详细CD时间",
+    "showDetailedCooldownTime": "显示详细冷却时间",
     "strategyTacticsPanel": "战略 / 战术面板",
     "pauseWhenStrategyPanelOpen": "打开战术面板时暂停",
     "manualHidesStrategyPanel": "手动模式下该面板始终关闭。",
