@@ -11,6 +11,7 @@ export const outDir = path.join(rootDir, '.tmp', 'headless-sim', `process-${proc
 let loadedRuntime;
 let loadedContent;
 let loadedVersionInfo;
+let compileCleanupRegistered = false;
 
 export function parseArgs(argv) {
   const parsed = {};
@@ -721,6 +722,7 @@ export function requireGeneratedTestStrategy() {
 function compileCoreSimulation() {
   fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });
+  registerCompileCleanup();
 
   const compiler = getTypeScriptCompilerCommand();
   const compile = spawnSync(compiler.command, [...compiler.args, '-p', 'tsconfig.core-sim.json', '--outDir', outDir], {
@@ -736,6 +738,17 @@ function compileCoreSimulation() {
   }
 
   fs.writeFileSync(path.join(outDir, 'package.json'), JSON.stringify({ type: 'commonjs' }, null, 2));
+}
+
+function registerCompileCleanup() {
+  if (compileCleanupRegistered) {
+    return;
+  }
+
+  compileCleanupRegistered = true;
+  process.once('exit', () => {
+    fs.rmSync(outDir, { recursive: true, force: true });
+  });
 }
 
 function getTypeScriptCompilerCommand() {
