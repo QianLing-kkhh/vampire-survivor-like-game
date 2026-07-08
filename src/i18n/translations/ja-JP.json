@@ -572,7 +572,7 @@
     "moveKeyboard": "WASD / 矢印キー：移動",
     "moveMouse": "左クリック長押し：カーソル方向へ移動",
     "pause": "ESC：一時停止",
-    "collectExp": "EXPジェムを集めてレベルアップ",
+    "collectExp": "EXP ジェムを集めてレベルアップ",
     "chooseUpgrade": "アップグレードで武器とパッシブを強化",
     "openTreasure": "宝箱に近づくと追加強化または進化",
     "evolution": {
