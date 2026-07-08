@@ -1599,7 +1599,7 @@
     },
     "moon_bow_projectile_count_up": {
       "name": "月影の弓投射数強化",
-      "description": "月影の弓の投射数または有効数を増やす。"
+      "description": "月影の弓の投射物または有効ヒットを1つ追加。"
     },
     "add_clockwork_saw": {
       "name": "クロックワークソー解放",
@@ -1615,7 +1615,7 @@
     },
     "clockwork_saw_projectile_count_up": {
       "name": "クロックワークソー投射数強化",
-      "description": "クロックワークソーの投射数または有効数を増やす。"
+      "description": "クロックワークソーの投射物または有効ヒットを1つ追加。"
     },
     "add_bone_spear": {
       "name": "骨の槍解放",
@@ -1631,7 +1631,7 @@
     },
     "bone_spear_projectile_count_up": {
       "name": "骨の槍投射数強化",
-      "description": "骨の槍の投射数または有効数を増やす。"
+      "description": "骨の槍の投射物または有効ヒットを1つ追加。"
     },
     "add_spirit_fist": {
       "name": "霊拳解放",
@@ -1659,7 +1659,7 @@
     },
     "acid_vial_projectile_count_up": {
       "name": "酸の小瓶投射数強化",
-      "description": "酸の小瓶の投射数または有効数を増やす。"
+      "description": "酸の小瓶の投射物または有効ヒットを1つ追加。"
     },
     "add_rapier_flurry": {
       "name": "レイピア連撃解放",
@@ -1675,7 +1675,7 @@
     },
     "rapier_flurry_projectile_count_up": {
       "name": "レイピア連撃投射数強化",
-      "description": "レイピア連撃の投射数または有効数を増やす。"
+      "description": "レイピア連撃の投射物または有効ヒットを1つ追加。"
     },
     "add_stone_ring": {
       "name": "石の輪解放",
@@ -1703,7 +1703,7 @@
     },
     "thunder_javelin_projectile_count_up": {
       "name": "雷の投槍投射数強化",
-      "description": "雷の投槍の投射数または有効数を増やす。"
+      "description": "雷の投槍の投射物または有効ヒットを1つ追加。"
     },
     "add_shield_disc": {
       "name": "盾円盤解放",

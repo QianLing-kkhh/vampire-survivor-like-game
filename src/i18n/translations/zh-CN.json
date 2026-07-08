@@ -1599,7 +1599,7 @@
     },
     "moon_bow_projectile_count_up": {
       "name": "月影弓投射数量强化",
-      "description": "月影弓的投射或作用数量增加。"
+      "description": "月影弓额外增加 1 个投射物或有效命中对象。"
     },
     "add_clockwork_saw": {
       "name": "解锁发条锯刃",
@@ -1615,7 +1615,7 @@
     },
     "clockwork_saw_projectile_count_up": {
       "name": "发条锯刃投射数量强化",
-      "description": "发条锯刃的投射或作用数量增加。"
+      "description": "发条锯刃额外增加 1 个投射物或有效命中对象。"
     },
     "add_bone_spear": {
       "name": "解锁白骨长矛",
@@ -1631,7 +1631,7 @@
     },
     "bone_spear_projectile_count_up": {
       "name": "白骨长矛投射数量强化",
-      "description": "白骨长矛的投射或作用数量增加。"
+      "description": "白骨长矛额外增加 1 个投射物或有效命中对象。"
     },
     "add_spirit_fist": {
       "name": "解锁灵魂拳",
@@ -1659,7 +1659,7 @@
     },
     "acid_vial_projectile_count_up": {
       "name": "酸蚀药瓶投射数量强化",
-      "description": "酸蚀药瓶的投射或作用数量增加。"
+      "description": "酸蚀药瓶额外增加 1 个投射物或有效命中对象。"
     },
     "add_rapier_flurry": {
       "name": "解锁迅剑连刺",
@@ -1675,7 +1675,7 @@
     },
     "rapier_flurry_projectile_count_up": {
       "name": "迅剑连刺投射数量强化",
-      "description": "迅剑连刺的投射或作用数量增加。"
+      "description": "迅剑连刺额外增加 1 个投射物或有效命中对象。"
     },
     "add_stone_ring": {
       "name": "解锁石环",
@@ -1703,7 +1703,7 @@
     },
     "thunder_javelin_projectile_count_up": {
       "name": "雷霆标枪投射数量强化",
-      "description": "雷霆标枪的投射或作用数量增加。"
+      "description": "雷霆标枪额外增加 1 个投射物或有效命中对象。"
     },
     "add_shield_disc": {
       "name": "解锁守卫圆盾",
