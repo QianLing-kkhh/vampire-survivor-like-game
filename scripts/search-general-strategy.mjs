@@ -400,6 +400,8 @@ function writeGeneralSearchArtifacts(outputDir, report) {
   fs.writeFileSync(path.join(outputDir, 'best-general-strategy.md'), runtime.bestGeneralStrategyMarkdown({
     strategy: report.bestGeneralStrategy,
     balancedStats: report.baselineComparison.find((stats) => stats.strategyId === 'balanced_default'),
+    bestBaselineStats: report.baselineComparison.find((stats) => stats.strategyId === 'best_general_strategy'),
+    baselineComparisonCount: report.baselineComparison.length,
     scenarioCount: report.scenarios.length,
   }));
   fs.writeFileSync(path.join(outputDir, 'baseline-comparison.json'), `${stablePrettyJson(report.baselineComparison)}\n`);

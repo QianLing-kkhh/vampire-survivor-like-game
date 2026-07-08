@@ -4,6 +4,7 @@ import { hashStableValue } from '../core-sim/StableJson';
 import type { GeneralStrategySearchConfig } from './GeneralStrategySearchConfig';
 import type {
   GeneratedGeneralStrategy,
+  GeneralStrategyBaselineComparisonEntry,
   GeneralStrategyCandidateStats,
   GeneralStrategyPhase,
 } from './GeneralStrategySearchReport';
@@ -108,6 +109,8 @@ export function createGeneratedGeneralStrategy(input: {
 export function bestGeneralStrategyMarkdown(input: {
   strategy: GeneratedGeneralStrategy;
   balancedStats?: GeneralStrategyCandidateStats;
+  bestBaselineStats?: GeneralStrategyBaselineComparisonEntry;
+  baselineComparisonCount?: number;
   scenarioCount: number;
 }): string {
   const lines = [
@@ -159,6 +162,13 @@ export function bestGeneralStrategyMarkdown(input: {
     '',
     `- Balanced exp fitness: ${input.balancedStats?.generalFitnessScore ?? 'n/a'}`,
     `- Delta: ${input.balancedStats ? Number((input.strategy.generalFitnessScore - input.balancedStats.generalFitnessScore).toFixed(4)) : 'n/a'}`,
+    '',
+    '## Baseline Comparison Summary',
+    '',
+    `- Baseline rank: ${input.bestBaselineStats && input.baselineComparisonCount ? `${input.bestBaselineStats.rank} of ${input.baselineComparisonCount}` : 'n/a'}`,
+    `- Delta vs balanced default: ${input.bestBaselineStats?.deltaVsBalancedDefault ?? 'n/a'}`,
+    `- Delta pct vs balanced default: ${input.bestBaselineStats?.deltaPctVsBalancedDefault ?? 'n/a'}`,
+    `- Damage window pass rate: ${input.bestBaselineStats?.damageWindowPassRate ?? 'n/a'}`,
     '',
     '## Phase Weight Tables',
     '',
