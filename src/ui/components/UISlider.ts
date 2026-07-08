@@ -83,7 +83,6 @@ export class UISlider {
     });
     this.hitArea = scene.add.rectangle(0, 0, this.trackWidth, this.compact ? 18 : 22, 0xffffff, 0.001);
     this.knob = scene.add.circle(0, 0, this.compact ? 6 : 7, UITheme.colors.borderBright, 1);
-    this.hitArea.setInteractive({ useHandCursor: true });
     this.knob.setInteractive({ useHandCursor: true });
     scene.input.setDraggable(this.knob);
     this.hitArea.on('pointerdown', (

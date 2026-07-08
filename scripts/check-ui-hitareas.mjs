@@ -101,7 +101,7 @@ for (const scanRoot of scanRoots) {
     }
 
     for (const rectangleVariable of collectRectangleVariables(content)) {
-      const pattern = new RegExp(`\\b${escapeRegExp(rectangleVariable)}\\.setInteractive\\(\\s*\\)`, 'g');
+      const pattern = new RegExp(`\\b${escapeRegExp(rectangleVariable)}\\.setInteractive\\(\\s*(?:\\)|\\{)`, 'g');
       for (const match of content.matchAll(pattern)) {
         findings.push({
           file: relativePath,

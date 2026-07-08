@@ -71,6 +71,11 @@ runUnsafeFixture('ImplicitVariableDimmer', [
   '  dimmer.setInteractive();',
 ]);
 
+runUnsafeFixture('ImplicitConfigVariableDimmer', [
+  '  const dimmer = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
+  '  dimmer.setInteractive({ useHandCursor: true });',
+]);
+
 runUnsafeFixture('ImplicitMultilineVariableDimmer', [
   '  const dimmer = scene.add.rectangle(',
   '    0,',
