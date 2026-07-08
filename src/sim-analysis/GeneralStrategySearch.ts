@@ -132,8 +132,8 @@ export function bestGeneralStrategyMarkdown(input: {
     '## Overall Performance',
     '',
     `- Evaluated scenarios: ${input.scenarioCount}`,
-    `- Exp fitness score: ${input.strategy.generalFitnessScore}`,
-    `- Fitness target: average gained experience among candidates with boss kill rate at or above the configured minimum.`,
+    `- General fitness score: ${input.strategy.generalFitnessScore}`,
+    '- Fitness target: weighted survival, growth, damage output, boss pressure, completion, and damage safety.',
     `- Boss kill rate: ${input.strategy.stats.bossKillRate}`,
     `- Avg exp: ${input.strategy.stats.avgExp}`,
     `- Median exp: ${input.strategy.stats.medianExp}`,
@@ -160,7 +160,7 @@ export function bestGeneralStrategyMarkdown(input: {
     '',
     '## Balanced Default Comparison',
     '',
-    `- Balanced exp fitness: ${input.balancedStats?.generalFitnessScore ?? 'n/a'}`,
+    `- Balanced general fitness: ${input.balancedStats?.generalFitnessScore ?? 'n/a'}`,
     `- Delta: ${input.balancedStats ? Number((input.strategy.generalFitnessScore - input.balancedStats.generalFitnessScore).toFixed(4)) : 'n/a'}`,
     '',
     '## Baseline Comparison Summary',
@@ -207,7 +207,7 @@ export function roundSummaryMarkdown(rows: readonly {
   const lines = [
     '# General Strategy Search Rounds',
     '',
-    '| Round | Mode | Mutation Radius | Candidates | Evaluated Strategies | Best Candidate | Variant | Exp Fitness |',
+    '| Round | Mode | Mutation Radius | Candidates | Evaluated Strategies | Best Candidate | Variant | General Fitness |',
     '| ---: | --- | ---: | ---: | ---: | --- | --- | ---: |',
   ];
 
