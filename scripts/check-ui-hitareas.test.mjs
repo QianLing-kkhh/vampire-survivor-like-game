@@ -71,6 +71,12 @@ runUnsafeFixture('ImplicitPropertyDimmer', [
   '  panel.backdrop.setInteractive();',
 ]);
 
+runUnsafeFixture('ImplicitInstancePropertyDimmer', [
+  '  const panel = { backdrop: undefined as Phaser.GameObjects.Rectangle | undefined };',
+  '  panel.backdrop = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
+  '  panel.backdrop.setInteractive();',
+]);
+
 runUnsafeFixture('ImplicitChainedDimmer', [
   '  scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5).setInteractive();',
 ]);
