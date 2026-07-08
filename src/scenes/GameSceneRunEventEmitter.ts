@@ -13,7 +13,7 @@ type GameSceneRunStartedRunId = GameSceneRunStartedPayload['runId'];
 
 type GameSceneRunStartedGameTimeSeconds = GameSceneRunStartedPayload['gameTimeSeconds'];
 
-type GameSceneRunEventGameplayContext = Pick<
+export type GameSceneRunEventGameplayContext = Pick<
   GameplayContext,
   'runSeed' | 'gameEventBus'
 >;
