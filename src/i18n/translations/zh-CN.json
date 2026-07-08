@@ -721,9 +721,9 @@
     "bossIn": "Boss 倒计时 {time}",
     "goalDefeatBoss": "目标 击败 Boss",
     "evolved": "进化",
-    "endless": "Endless",
-    "relics": "Relics",
-    "shield": "Shield",
+    "endless": "无尽",
+    "relics": "遗物",
+    "shield": "护盾",
     "moreRelics": "+{count}"
   },
   "settings": {

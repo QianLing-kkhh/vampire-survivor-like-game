@@ -721,9 +721,9 @@
     "bossIn": "Bossまで {time}",
     "goalDefeatBoss": "目標 Bossを倒す",
     "evolved": "進化",
-    "endless": "Endless",
-    "relics": "Relics",
-    "shield": "Shield",
+    "endless": "エンドレス",
+    "relics": "レリック",
+    "shield": "シールド",
     "moreRelics": "+{count}"
   },
   "settings": {
