@@ -327,8 +327,36 @@ export function createHeadlessDiagnostics(results) {
     schemaVersion: 1,
     runCount: runs.length,
     failureBuckets,
+    bucketExamples: createBucketExamples(runs),
     runs,
   };
+}
+
+function createBucketExamples(runs) {
+  const examples = {};
+
+  for (const run of [...runs].sort(compareDiagnosticRuns)) {
+    if (!examples[run.failureBucket]) {
+      examples[run.failureBucket] = {
+        seed: run.seed,
+        result: run.result,
+        survivalTimeSeconds: run.survivalTimeSeconds,
+        level: run.level,
+        damageTaken: run.damageTaken,
+        bossDamageDealt: run.bossDamageDealt,
+        firstCriticalPhaseId: run.firstCriticalPhaseId,
+      };
+    }
+  }
+
+  return examples;
+}
+
+function compareDiagnosticRuns(left, right) {
+  return left.survivalTimeSeconds - right.survivalTimeSeconds
+    || left.level - right.level
+    || left.damageTaken - right.damageTaken
+    || left.seed.localeCompare(right.seed);
 }
 
 function createRunDiagnostics(result) {
@@ -467,6 +495,22 @@ function diagnosticsToMarkdown(diagnostics) {
 
   for (const [bucket, count] of Object.entries(diagnostics.failureBuckets)) {
     lines.push(`| ${bucket} | ${count} |`);
+  }
+
+  lines.push('', '## Bucket Examples', '', '| Bucket | Seed | Result | Survival | Level | Damage | Boss Damage | Critical Phase |');
+  lines.push('| --- | --- | --- | ---: | ---: | ---: | ---: | --- |');
+
+  for (const [bucket, example] of Object.entries(diagnostics.bucketExamples ?? {})) {
+    lines.push([
+      bucket,
+      example.seed,
+      example.result,
+      example.survivalTimeSeconds,
+      example.level,
+      example.damageTaken,
+      example.bossDamageDealt,
+      example.firstCriticalPhaseId ?? '',
+    ].join(' | ').replace(/^/, '| ').replace(/$/, ' |'));
   }
 
   lines.push('', '## Runs', '', '| Seed | Result | Survival | Level | Damage | Boss Damage | Bucket | Critical Phase |');
