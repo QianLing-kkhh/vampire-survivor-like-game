@@ -780,9 +780,9 @@
       "classic": "クラシック",
       "arcaneSlate": "秘術スレート",
       "minimal": "ミニマル",
-      "_label": "UIスタイル"
+      "_label": "UI スタイル"
     },
-    "uiStyleReopenNotice": "一部のUIスタイル変更はメニューを開き直すと反映されます。",
+    "uiStyleReopenNotice": "一部の UI スタイル変更はメニューを開き直すと反映されます。",
     "scrollHint": "スクロール",
     "page": "ページ",
     "previousPage": "前へ",
