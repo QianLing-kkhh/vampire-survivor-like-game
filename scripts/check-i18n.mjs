@@ -221,27 +221,27 @@ function collectDataDrivenKeys() {
   return keys;
 }
 
-function collectDuplicateUpgradeNames(translation) {
-  const names = new Map();
+function collectDuplicateUpgradeFields(translation, field) {
+  const values = new Map();
   const duplicates = [];
 
   for (const [id, upgrade] of Object.entries(translation.upgrade ?? {})) {
-    if (!upgrade || typeof upgrade !== 'object' || typeof upgrade.name !== 'string') {
+    if (!upgrade || typeof upgrade !== 'object' || typeof upgrade[field] !== 'string') {
       continue;
     }
 
-    const name = upgrade.name.trim();
-    if (!name) {
+    const value = upgrade[field].trim();
+    if (!value) {
       continue;
     }
 
-    const existingId = names.get(name);
+    const existingId = values.get(value);
     if (existingId) {
-      duplicates.push(`${name} (${existingId}, ${id})`);
+      duplicates.push(`${value} (${existingId}, ${id})`);
       continue;
     }
 
-    names.set(name, id);
+    values.set(value, id);
   }
 
   return duplicates;
@@ -277,8 +277,12 @@ function main() {
       errors.push(`${locale}: missing translation for ${key}`);
     }
 
-    for (const duplicate of collectDuplicateUpgradeNames(translations[locale])) {
+    for (const duplicate of collectDuplicateUpgradeFields(translations[locale], 'name')) {
       errors.push(`${locale}: duplicate upgrade name ${duplicate}`);
+    }
+
+    for (const duplicate of collectDuplicateUpgradeFields(translations[locale], 'description')) {
+      errors.push(`${locale}: duplicate upgrade description ${duplicate}`);
     }
   }
 
