@@ -17,6 +17,7 @@ if (args.help) {
 }
 
 const source = getArg(args, ['source'], undefined);
+const allowLowerFidelity = String(getArg(args, ['allowLowerFidelity'], 'false')).toLowerCase() === 'true';
 
 if (!source) {
   throw new Error('--source is required.');
@@ -29,6 +30,7 @@ const outputPath = path.join(rootDir, 'src', 'strategy', 'generated', 'generated
 const existingDocument = fs.existsSync(outputPath)
   ? JSON.parse(fs.readFileSync(outputPath, 'utf8'))
   : undefined;
+assertSourceFidelityAllowed(sourceDoc, existingDocument, allowLowerFidelity);
 let document = runtime.createGeneratedTestStrategyDocument({
   source: sourceDoc,
   sourceReportDir: path.dirname(sourcePath),
@@ -44,6 +46,42 @@ console.log('generated_test is for headless auto testing only.');
 
 function stablePrettyJson(value) {
   return JSON.stringify(JSON.parse(stableStringify(value)), null, 2);
+}
+
+function assertSourceFidelityAllowed(sourceDoc, existingDocument, allowLowerFidelity) {
+  if (allowLowerFidelity || !existingDocument?.searchConfig || !sourceDoc?.searchConfig) {
+    return;
+  }
+
+  const sourceConfig = sourceDoc.searchConfig;
+  const existingConfig = existingDocument.searchConfig;
+  const reasons = [];
+  const sourceObjectiveRank = objectiveRank(sourceConfig.objective);
+  const existingObjectiveRank = objectiveRank(existingConfig.objective);
+  const sourceSampleCount = sampleCount(sourceConfig);
+  const existingSampleCount = sampleCount(existingConfig);
+
+  if (sourceObjectiveRank < existingObjectiveRank) {
+    reasons.push(`objective ${sourceConfig.objective ?? 'unknown'} < ${existingConfig.objective ?? 'unknown'}`);
+  }
+
+  if (numberValue(sourceConfig.durationSeconds) < numberValue(existingConfig.durationSeconds)) {
+    reasons.push(`durationSeconds ${sourceConfig.durationSeconds} < ${existingConfig.durationSeconds}`);
+  }
+
+  if (sourceSampleCount < existingSampleCount) {
+    reasons.push(`sampleCount ${sourceSampleCount} < ${existingSampleCount}`);
+  }
+
+  if (numberValue(sourceConfig.minBossKillRate) < numberValue(existingConfig.minBossKillRate)) {
+    reasons.push(`minBossKillRate ${sourceConfig.minBossKillRate ?? 0} < ${existingConfig.minBossKillRate ?? 0}`);
+  }
+
+  if (reasons.length === 0) {
+    return;
+  }
+
+  throw new Error(`Refusing to apply lower-fidelity generated strategy source: ${reasons.join('; ')}. Re-run with --allowLowerFidelity true to override intentionally.`);
 }
 
 function mergePreservedPhases(document, existingDocument, sourceDoc) {
@@ -86,12 +124,36 @@ function phasesOverlap(left, right) {
   return left.startSeconds < right.endSeconds && right.startSeconds < left.endSeconds;
 }
 
+function objectiveRank(objective) {
+  switch (objective) {
+    case 'full':
+      return 3;
+    case 'boss':
+      return 2;
+    case 'growth':
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function sampleCount(config) {
+  return numberValue(config?.scenarioCount) * Math.max(1, numberValue(config?.seedCount));
+}
+
+function numberValue(value) {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function printHelp() {
   console.log(`Usage:
   npm.cmd run simulate:apply-generated-strategy -- --source reports/sim-general-search/<timestamp>/best-general-strategy.json
 
 Options:
-  --source  Path to best-general-strategy.json
-  --help    Show this help
+  --source               Path to best-general-strategy.json
+  --allowLowerFidelity   Set true to intentionally apply a lower-fidelity source than the existing generated_test
+  --help                 Show this help
 `);
 }
