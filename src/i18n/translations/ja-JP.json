@@ -186,9 +186,9 @@
       "name": "呪われた大聖堂",
       "description": "壁、ろうそく、ポータル、回復の祭壇を備えた高精細な大聖堂ステージ。"
     },
-    "builtIn": "Built-In",
-    "custom": "Custom",
-    "warningsCount": "{count} warnings",
+    "builtIn": "内蔵",
+    "custom": "カスタム",
+    "warningsCount": "警告 {count} 件",
     "sunkenLibrary": {
       "name": "沈んだ図書館",
       "description": "水没した書庫のステージ。書架、インク溜まり、魔法灯、ポータル、回復の祭壇があります。"

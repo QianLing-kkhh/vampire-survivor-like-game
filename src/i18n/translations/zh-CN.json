@@ -186,9 +186,9 @@
       "name": "诅咒大教堂",
       "description": "拥有墙体、烛光、传送门和回血祭坛的高精细大教堂关卡。"
     },
-    "builtIn": "Built-In",
-    "custom": "Custom",
-    "warningsCount": "{count} warnings",
+    "builtIn": "内置",
+    "custom": "自定义",
+    "warningsCount": "{count} 条警告",
     "sunkenLibrary": {
       "name": "沉没图书馆",
       "description": "被水淹没的档案馆关卡，包含书架、墨池、奥术灯、传送门和治疗祭坛。"
