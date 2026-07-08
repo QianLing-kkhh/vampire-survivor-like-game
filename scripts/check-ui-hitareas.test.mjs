@@ -127,6 +127,15 @@ runSafeFixture('ExplicitPropertyDimmerWithUnrelatedBackdrop', [
   '  unrelated.backdrop.setInteractive();',
 ]);
 
+runSafeFixture('ExplicitConfigVariableDimmer', [
+  '  const dimmer = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
+  '  dimmer.setInteractive({',
+  '    hitArea: new Phaser.Geom.Rectangle(0, 0, scene.scale.width, scene.scale.height),',
+  '    hitAreaCallback: Phaser.Geom.Rectangle.Contains,',
+  '    useHandCursor: true,',
+  '  });',
+]);
+
 runUnsafeFixture('ImplicitChainedDimmer', [
   '  scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5).setInteractive();',
 ]);

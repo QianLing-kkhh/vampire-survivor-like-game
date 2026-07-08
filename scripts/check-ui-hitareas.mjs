@@ -73,6 +73,30 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function hasExplicitHitAreaConfig(content, openBraceIndex) {
+  let depth = 0;
+
+  for (let index = openBraceIndex; index < content.length; index += 1) {
+    const char = content[index];
+
+    if (char === '{') {
+      depth += 1;
+      continue;
+    }
+
+    if (char !== '}') {
+      continue;
+    }
+
+    depth -= 1;
+    if (depth === 0) {
+      return /\bhitArea\s*:/.test(content.slice(openBraceIndex, index + 1));
+    }
+  }
+
+  return false;
+}
+
 for (const scanRoot of scanRoots) {
   for (const filePath of collectTsFiles(scanRoot)) {
     const relativePath = normalize(filePath);
@@ -85,13 +109,21 @@ for (const scanRoot of scanRoots) {
         pattern: /\.setTo\(\s*-/g,
       },
       {
-        pattern: /\.add\.rectangle\([\s\S]*?\)\s*\.setInteractive\(\s*(?:\)|\{)/g,
+        pattern: /\.add\.rectangle\([\s\S]*?\)\s*\.setInteractive\(\s*(\)|\{)/g,
         call: 'implicit rectangle setInteractive()',
+        allowExplicitHitAreaConfig: true,
       },
     ];
 
-    for (const { pattern, call } of patterns) {
+    for (const { pattern, call, allowExplicitHitAreaConfig } of patterns) {
       for (const match of content.matchAll(pattern)) {
+        if (allowExplicitHitAreaConfig && match[1] === '{') {
+          const openBraceIndex = (match.index ?? 0) + match[0].lastIndexOf('{');
+          if (hasExplicitHitAreaConfig(content, openBraceIndex)) {
+            continue;
+          }
+        }
+
         findings.push({
           file: relativePath,
           line: lineForIndex(content, match.index ?? 0),
@@ -101,8 +133,15 @@ for (const scanRoot of scanRoots) {
     }
 
     for (const rectangleVariable of collectRectangleVariables(content)) {
-      const pattern = new RegExp(`\\b${escapeRegExp(rectangleVariable)}\\.setInteractive\\(\\s*(?:\\)|\\{)`, 'g');
+      const pattern = new RegExp(`\\b${escapeRegExp(rectangleVariable)}\\.setInteractive\\(\\s*(\\)|\\{)`, 'g');
       for (const match of content.matchAll(pattern)) {
+        if (match[1] === '{') {
+          const openBraceIndex = (match.index ?? 0) + match[0].lastIndexOf('{');
+          if (hasExplicitHitAreaConfig(content, openBraceIndex)) {
+            continue;
+          }
+        }
+
         findings.push({
           file: relativePath,
           line: lineForIndex(content, match.index ?? 0),
