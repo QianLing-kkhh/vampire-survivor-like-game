@@ -580,8 +580,8 @@
       "route": "進化ルート",
       "requirements": "条件"
     },
-    "surviveBoss": "Boss出現まで生き残る",
-    "defeatBoss": "Bossを倒して勝利",
+    "surviveBoss": "Boss 出現まで生き残る",
+    "defeatBoss": "Boss を倒して勝利",
     "map": {
       "mechanic": {
         "item": "項目",
@@ -710,8 +710,8 @@
   "hud": {
     "weapons": "武器",
     "passives": "パッシブ",
-    "bossComing": "Boss接近中",
-    "bossActive": "Boss戦",
+    "bossComing": "Boss 接近中",
+    "bossActive": "Boss 戦",
     "evolutionDebug": "進化デバッグ",
     "time": "時間",
     "score": "スコア",
@@ -719,7 +719,7 @@
     "exp": "EXP",
     "level": "Lv",
     "bossIn": "Bossまで {time}",
-    "goalDefeatBoss": "目標 Bossを倒す",
+    "goalDefeatBoss": "目標 Boss を倒す",
     "evolved": "進化",
     "endless": "エンドレス",
     "relics": "レリック",
@@ -1305,7 +1305,7 @@
     "expMultiplier": "経験値倍率"
   },
   "game": {
-    "bossAppears": "Boss出現",
+    "bossAppears": "Boss 出現",
     "rotateForBetterPlay": "見やすくするため端末を回転してください。"
   },
   "weapon": {
