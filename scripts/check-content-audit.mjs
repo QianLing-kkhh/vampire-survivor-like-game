@@ -16,6 +16,7 @@ const requiredFiles = [
 ];
 
 const errors = [];
+const jsonCache = new Map();
 
 function addError(message) {
   errors.push(message);
@@ -30,17 +31,25 @@ function displayDataPath(name) {
 }
 
 function readJson(name) {
+  if (jsonCache.has(name)) {
+    return jsonCache.get(name);
+  }
+
   const filePath = path.join(dataDir, name);
 
   if (!fs.existsSync(filePath)) {
     addError(`Missing data file: ${displayDataPath(name)}`);
+    jsonCache.set(name, undefined);
     return undefined;
   }
 
   try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const value = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    jsonCache.set(name, value);
+    return value;
   } catch (error) {
     addError(`Invalid JSON in ${displayDataPath(name)}: ${error instanceof Error ? error.message : String(error)}`);
+    jsonCache.set(name, undefined);
     return undefined;
   }
 }

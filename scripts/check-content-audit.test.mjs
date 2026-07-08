@@ -27,7 +27,7 @@ function writeJson(name, value) {
   fs.writeFileSync(path.join(fixtureRoot, name), JSON.stringify(value, null, 2));
 }
 
-function runFixture(overrides) {
+function runFixture(overrides, options = {}) {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
   try {
     fs.mkdirSync(fixtureRoot, { recursive: true });
@@ -45,6 +45,9 @@ function runFixture(overrides) {
     };
 
     for (const [name, value] of Object.entries(files)) {
+      if (options.missingFiles?.includes(name)) {
+        continue;
+      }
       writeJson(name, value);
     }
 
@@ -88,6 +91,17 @@ if (mismatchedIdResult.status === 0) {
 
 if (!mismatchedIdOutput.includes('Mismatched id in weapons.json: key knife has id dagger')) {
   throw new Error(`Expected mismatched id output to identify weapons.json knife/dagger.\n${mismatchedIdOutput}`);
+}
+
+const missingFileResult = runFixture({}, { missingFiles: ['weapons.json'] });
+const missingFileOutput = `${missingFileResult.stdout}\n${missingFileResult.stderr}`;
+if (missingFileResult.status === 0) {
+  throw new Error(`Expected content audit to reject missing files.\n${missingFileOutput}`);
+}
+
+const missingWeaponsCount = missingFileOutput.match(/Missing data file: .*weapons\.json/g)?.length ?? 0;
+if (missingWeaponsCount !== 1) {
+  throw new Error(`Expected missing weapons.json to be reported once, got ${missingWeaponsCount}.\n${missingFileOutput}`);
 }
 
 console.log('Content audit output regression tests passed.');
