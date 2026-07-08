@@ -41,6 +41,37 @@ function runUnsafeFixture(name, bodyLines) {
   }
 }
 
+function runSafeFixture(name, bodyLines) {
+  fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  fs.mkdirSync(fixtureRoot, { recursive: true });
+  fs.writeFileSync(
+    path.join(fixtureRoot, `${name}.ts`),
+    [
+      "import Phaser from 'phaser';",
+      '',
+      'export function createDimmer(scene: Phaser.Scene): void {',
+      ...bodyLines,
+      '}',
+      '',
+    ].join('\n'),
+  );
+
+  const result = spawnSync(process.execPath, ['scripts/check-ui-hitareas.mjs'], {
+    cwd: root,
+    env: {
+      ...process.env,
+      UI_HITAREA_SCAN_ROOTS: fixtureRoot,
+    },
+    encoding: 'utf8',
+  });
+
+  fs.rmSync(fixtureRoot, { recursive: true, force: true });
+
+  if (result.status !== 0) {
+    throw new Error(`Expected ${name} fixture to pass the UI hit area audit.\n${result.stdout}\n${result.stderr}`);
+  }
+}
+
 runUnsafeFixture('ImplicitVariableDimmer', [
   '  const dimmer = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
   '  dimmer.setInteractive();',
@@ -75,6 +106,18 @@ runUnsafeFixture('ImplicitInstancePropertyDimmer', [
   '  const panel = { backdrop: undefined as Phaser.GameObjects.Rectangle | undefined };',
   '  panel.backdrop = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5);',
   '  panel.backdrop.setInteractive();',
+]);
+
+runSafeFixture('ExplicitPropertyDimmerWithUnrelatedBackdrop', [
+  '  const panel = {',
+  '    backdrop: scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5),',
+  '  };',
+  '  panel.backdrop.setInteractive(',
+  '    new Phaser.Geom.Rectangle(0, 0, scene.scale.width, scene.scale.height),',
+  '    Phaser.Geom.Rectangle.Contains,',
+  '  );',
+  '  const unrelated = { backdrop: scene.add.text(0, 0, "safe") };',
+  '  unrelated.backdrop.setInteractive();',
 ]);
 
 runUnsafeFixture('ImplicitChainedDimmer', [

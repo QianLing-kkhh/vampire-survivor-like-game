@@ -46,19 +46,24 @@ function lineForIndex(content, index) {
 function collectRectangleVariables(content) {
   const rectangleVariables = [];
   const rectanglePattern = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=;]+)?=\s*[^;\n]*\.add\.rectangle\(/g;
+  const objectLiteralPattern = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=;]+)?=\s*{([\s\S]*?)}\s*;/g;
   const rectanglePropertyPattern = /\b([A-Za-z_$][\w$]*)\s*:\s*[^;\n]*\.add\.rectangle\(/g;
-  const rectanglePropertyAssignmentPattern = /\b[A-Za-z_$][\w$]*\.([A-Za-z_$][\w$]*)\s*=\s*[^;\n]*\.add\.rectangle\(/g;
+  const rectanglePropertyAssignmentPattern = /\b([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*=\s*[^;\n]*\.add\.rectangle\(/g;
 
   for (const match of content.matchAll(rectanglePattern)) {
     rectangleVariables.push(match[1]);
   }
 
-  for (const match of content.matchAll(rectanglePropertyPattern)) {
-    rectangleVariables.push(match[1]);
+  for (const objectMatch of content.matchAll(objectLiteralPattern)) {
+    const ownerName = objectMatch[1];
+    const objectBody = objectMatch[2];
+    for (const propertyMatch of objectBody.matchAll(rectanglePropertyPattern)) {
+      rectangleVariables.push(`${ownerName}.${propertyMatch[1]}`);
+    }
   }
 
   for (const match of content.matchAll(rectanglePropertyAssignmentPattern)) {
-    rectangleVariables.push(match[1]);
+    rectangleVariables.push(`${match[1]}.${match[2]}`);
   }
 
   return rectangleVariables;
