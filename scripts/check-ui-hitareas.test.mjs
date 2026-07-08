@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 const root = process.cwd();
 const fixtureRoot = path.join(root, '.tmp', `ui-hitarea-fixture-${process.pid}`);
 
-function runUnsafeFixture(name, bodyLines) {
+function runFixture(name, bodyLines) {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
   fs.mkdirSync(fixtureRoot, { recursive: true });
   fs.writeFileSync(
@@ -31,6 +31,11 @@ function runUnsafeFixture(name, bodyLines) {
 
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
 
+  return result;
+}
+
+function runUnsafeFixture(name, bodyLines) {
+  const result = runFixture(name, bodyLines);
   if (result.status === 0) {
     throw new Error(`Expected ${name} fixture to fail the UI hit area audit.`);
   }
@@ -42,31 +47,7 @@ function runUnsafeFixture(name, bodyLines) {
 }
 
 function runSafeFixture(name, bodyLines) {
-  fs.rmSync(fixtureRoot, { recursive: true, force: true });
-  fs.mkdirSync(fixtureRoot, { recursive: true });
-  fs.writeFileSync(
-    path.join(fixtureRoot, `${name}.ts`),
-    [
-      "import Phaser from 'phaser';",
-      '',
-      'export function createDimmer(scene: Phaser.Scene): void {',
-      ...bodyLines,
-      '}',
-      '',
-    ].join('\n'),
-  );
-
-  const result = spawnSync(process.execPath, ['scripts/check-ui-hitareas.mjs'], {
-    cwd: root,
-    env: {
-      ...process.env,
-      UI_HITAREA_SCAN_ROOTS: fixtureRoot,
-    },
-    encoding: 'utf8',
-  });
-
-  fs.rmSync(fixtureRoot, { recursive: true, force: true });
-
+  const result = runFixture(name, bodyLines);
   if (result.status !== 0) {
     throw new Error(`Expected ${name} fixture to pass the UI hit area audit.\n${result.stdout}\n${result.stderr}`);
   }
