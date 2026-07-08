@@ -395,6 +395,7 @@ function writeGeneralSearchArtifacts(outputDir, report) {
   fs.writeFileSync(path.join(outputDir, 'phase-aggregate.csv'), `${runtime.phaseAggregateCsv(report.phaseAggregate)}\n`);
   fs.writeFileSync(path.join(outputDir, 'top-by-phase.csv'), `${runtime.topByPhaseCsv(report.topByPhase)}\n`);
   fs.writeFileSync(path.join(outputDir, 'round-summary.json'), `${stablePrettyJson(report.roundSummary)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'round-summary.csv'), `${runtime.roundSummaryCsv(report.roundSummary)}\n`);
   fs.writeFileSync(path.join(outputDir, 'round-summary.md'), runtime.roundSummaryMarkdown(report.roundSummary));
   fs.writeFileSync(path.join(outputDir, 'best-general-strategy.json'), `${stablePrettyJson(report.bestGeneralStrategy)}\n`);
   fs.writeFileSync(path.join(outputDir, 'best-general-strategy.md'), runtime.bestGeneralStrategyMarkdown({

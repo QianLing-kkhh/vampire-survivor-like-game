@@ -218,6 +218,31 @@ export function roundSummaryMarkdown(rows: readonly {
   return `${lines.join('\n')}\n`;
 }
 
+export function roundSummaryCsv(rows: readonly {
+  round: number;
+  searchMode: string;
+  mutationRadius?: number;
+  candidateCount: number;
+  evaluatedStrategyCount: number;
+  bestCandidateId: string;
+  bestVariantId: string;
+  bestGeneralFitnessScore: number;
+}[]): string {
+  return [
+    'round,searchMode,mutationRadius,candidateCount,evaluatedStrategyCount,bestCandidateId,bestVariantId,bestGeneralFitnessScore',
+    ...rows.map((row) => [
+      row.round,
+      row.searchMode,
+      row.mutationRadius ?? '',
+      row.candidateCount,
+      row.evaluatedStrategyCount,
+      row.bestCandidateId,
+      row.bestVariantId,
+      row.bestGeneralFitnessScore,
+    ].map(escapeCsv).join(',')),
+  ].join('\n');
+}
+
 function createMergedVariant(
   config: GeneralStrategySearchConfig,
   ranked: readonly GeneralStrategyDefinition[],
@@ -313,4 +338,14 @@ function median(values: readonly number[]): number {
 
 function cloneProfile(profile: AutoStrategyProfile): AutoStrategyProfile {
   return JSON.parse(JSON.stringify(profile)) as AutoStrategyProfile;
+}
+
+function escapeCsv(value: unknown): string {
+  const text = String(value);
+
+  if (!/[",\n\r]/.test(text)) {
+    return text;
+  }
+
+  return `"${text.replace(/"/g, '""')}"`;
 }
