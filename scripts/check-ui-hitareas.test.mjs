@@ -7,31 +7,31 @@ const fixtureRoot = path.join(root, '.tmp', `ui-hitarea-fixture-${process.pid}`)
 
 function runFixture(name, bodyLines) {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
-  fs.mkdirSync(fixtureRoot, { recursive: true });
-  fs.writeFileSync(
-    path.join(fixtureRoot, `${name}.ts`),
-    [
-      "import Phaser from 'phaser';",
-      '',
-      'export function createDimmer(scene: Phaser.Scene): void {',
-      ...bodyLines,
-      '}',
-      '',
-    ].join('\n'),
-  );
+  try {
+    fs.mkdirSync(fixtureRoot, { recursive: true });
+    fs.writeFileSync(
+      path.join(fixtureRoot, `${name}.ts`),
+      [
+        "import Phaser from 'phaser';",
+        '',
+        'export function createDimmer(scene: Phaser.Scene): void {',
+        ...bodyLines,
+        '}',
+        '',
+      ].join('\n'),
+    );
 
-  const result = spawnSync(process.execPath, ['scripts/check-ui-hitareas.mjs'], {
-    cwd: root,
-    env: {
-      ...process.env,
-      UI_HITAREA_SCAN_ROOTS: fixtureRoot,
-    },
-    encoding: 'utf8',
-  });
-
-  fs.rmSync(fixtureRoot, { recursive: true, force: true });
-
-  return result;
+    return spawnSync(process.execPath, ['scripts/check-ui-hitareas.mjs'], {
+      cwd: root,
+      env: {
+        ...process.env,
+        UI_HITAREA_SCAN_ROOTS: fixtureRoot,
+      },
+      encoding: 'utf8',
+    });
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
 }
 
 function runUnsafeFixture(name, bodyLines) {
