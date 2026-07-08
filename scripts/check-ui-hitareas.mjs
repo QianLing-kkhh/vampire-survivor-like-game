@@ -85,7 +85,7 @@ for (const scanRoot of scanRoots) {
         pattern: /\.setTo\(\s*-/g,
       },
       {
-        pattern: /\.add\.rectangle\([\s\S]*?\)\s*\.setInteractive\(\s*\)/g,
+        pattern: /\.add\.rectangle\([\s\S]*?\)\s*\.setInteractive\(\s*(?:\)|\{)/g,
         call: 'implicit rectangle setInteractive()',
       },
     ];
