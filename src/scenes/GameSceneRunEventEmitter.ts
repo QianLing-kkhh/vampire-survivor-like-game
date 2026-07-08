@@ -3,7 +3,7 @@ import type { GameEvent } from '../events/GameEvent';
 import type { GameEventMeta } from '../events/GameEventBus';
 import type { GameEventPayload, GameEventPayloadMap } from '../events/GameEventPayloads';
 
-const RUN_STARTED_EVENT_NAME = 'run.started' satisfies keyof GameEventPayloadMap;
+export const RUN_STARTED_EVENT_NAME = 'run.started' satisfies keyof GameEventPayloadMap;
 
 type RunStartedEventName = typeof RUN_STARTED_EVENT_NAME;
 
