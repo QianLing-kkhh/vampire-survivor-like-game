@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const root = process.cwd();
-const fixtureRoot = path.join(root, '.tmp', 'ui-hitarea-fixture');
+const fixtureRoot = path.join(root, '.tmp', `ui-hitarea-fixture-${process.pid}`);
 
 function runUnsafeFixture(name, bodyLines) {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
@@ -46,8 +46,25 @@ runUnsafeFixture('ImplicitVariableDimmer', [
   '  dimmer.setInteractive();',
 ]);
 
+runUnsafeFixture('ImplicitMultilineVariableDimmer', [
+  '  const dimmer = scene.add.rectangle(',
+  '    0,',
+  '    0,',
+  '    scene.scale.width,',
+  '    scene.scale.height,',
+  '    0x000000,',
+  '    0.5,',
+  '  );',
+  '  dimmer.setInteractive();',
+]);
+
 runUnsafeFixture('ImplicitChainedDimmer', [
   '  scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5).setInteractive();',
+]);
+
+runUnsafeFixture('ImplicitMultilineChainedDimmer', [
+  '  scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, 0x000000, 0.5)',
+  '    .setInteractive();',
 ]);
 
 console.log('UI hit area checker regression tests passed.');
