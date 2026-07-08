@@ -1510,19 +1510,19 @@
       "description": "ニンニクを新しい武器として解放する。"
     },
     "knife_damage_up": {
-      "name": "ナイフ強化",
+      "name": "ナイフダメージ強化",
       "description": "ナイフのダメージを10%増加。"
     },
     "knife_cooldown_up": {
-      "name": "ナイフ強化",
+      "name": "ナイフクールダウン強化",
       "description": "ナイフのクールダウンを10%短縮。"
     },
     "garlic_damage_up": {
-      "name": "ニンニク強化",
+      "name": "ニンニクダメージ強化",
       "description": "ニンニクのダメージを10%増加。"
     },
     "garlic_radius_up": {
-      "name": "ニンニク強化",
+      "name": "ニンニク範囲強化",
       "description": "ニンニクの効果範囲を10%増加。"
     },
     "add_bible": {
@@ -1530,15 +1530,15 @@
       "description": "聖典を新しい武器として解放する。"
     },
     "bible_damage_up": {
-      "name": "聖典強化",
+      "name": "聖典ダメージ強化",
       "description": "聖典のダメージを10%増加。"
     },
     "bible_orbit_count_up": {
-      "name": "聖典強化",
+      "name": "聖典数強化",
       "description": "聖典の軌道弾を1つ追加。"
     },
     "bible_orbit_speed_up": {
-      "name": "聖典強化",
+      "name": "聖典軌道速度強化",
       "description": "聖典の軌道速度を10%増加。"
     },
     "add_magic_wand": {
@@ -1546,15 +1546,15 @@
       "description": "魔法の杖を新しい武器として解放する。"
     },
     "magic_wand_damage_up": {
-      "name": "魔法の杖強化",
+      "name": "魔法の杖ダメージ強化",
       "description": "魔法の杖のダメージを10%増加。"
     },
     "magic_wand_cooldown_up": {
-      "name": "魔法の杖強化",
+      "name": "魔法の杖クールダウン強化",
       "description": "魔法の杖のクールダウンを10%短縮。"
     },
     "magic_wand_projectile_count_up": {
-      "name": "魔法の杖強化",
+      "name": "魔法の杖発射数強化",
       "description": "魔法の杖の発射数を増加。"
     },
     "add_axe": {
@@ -1562,15 +1562,15 @@
       "description": "斧を新しい武器として解放する。"
     },
     "axe_damage_up": {
-      "name": "斧強化",
+      "name": "斧ダメージ強化",
       "description": "斧のダメージを10%増加。"
     },
     "axe_cooldown_up": {
-      "name": "斧強化",
+      "name": "斧クールダウン強化",
       "description": "斧のクールダウンを10%短縮。"
     },
     "axe_projectile_count_up": {
-      "name": "斧強化",
+      "name": "斧発射数強化",
       "description": "斧の発射数を1つ追加。"
     },
     "add_runic_orb": {
