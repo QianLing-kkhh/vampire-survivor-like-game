@@ -71,6 +71,20 @@ function flattenTranslations(node, prefix = '') {
   return entries;
 }
 
+function collectTranslationShapes(node, prefix = '', shapes = new Map()) {
+  for (const [key, value] of Object.entries(node)) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    const shape = typeof value === 'string' ? 'string' : 'object';
+    shapes.set(fullKey, shape);
+
+    if (value && typeof value === 'object') {
+      collectTranslationShapes(value, fullKey, shapes);
+    }
+  }
+
+  return shapes;
+}
+
 function hasTranslation(data, key) {
   if (typeof data[key] === 'string') {
     return data[key].trim().length > 0;
@@ -302,7 +316,11 @@ function main() {
   const flattened = Object.fromEntries(
     LOCALES.map((locale) => [locale, new Map(flattenTranslations(translations[locale]))]),
   );
+  const shapes = Object.fromEntries(
+    LOCALES.map((locale) => [locale, collectTranslationShapes(translations[locale])]),
+  );
   const allLocaleKeys = new Set(LOCALES.flatMap((locale) => [...flattened[locale].keys()]));
+  const allShapeKeys = new Set(LOCALES.flatMap((locale) => [...shapes[locale].keys()]));
   const requiredKeys = new Set([
     ...allLocaleKeys,
     ...collectSourceLiteralKeys(),
@@ -311,6 +329,15 @@ function main() {
   const errors = [];
 
   for (const locale of LOCALES) {
+    for (const key of allShapeKeys) {
+      const sourceShape = shapes['en-US'].get(key);
+      const localeShape = shapes[locale].get(key);
+
+      if (sourceShape && localeShape && sourceShape !== localeShape) {
+        errors.push(`${locale}: translation shape mismatch for ${key}: expected ${sourceShape}, got ${localeShape}`);
+      }
+    }
+
     for (const [key, value] of flattened[locale]) {
       if (!value.trim()) {
         errors.push(`${locale}: empty translation for ${key}`);
