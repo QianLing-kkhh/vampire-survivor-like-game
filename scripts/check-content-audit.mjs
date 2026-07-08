@@ -83,7 +83,9 @@ function toRecord(value, sourceName) {
   }
 
   for (const [key, entry] of Object.entries(value)) {
-    if (key.trim() !== key) {
+    if (key.trim().length === 0) {
+      addError(`Missing key in ${sourceName} object entry`);
+    } else if (key.trim() !== key) {
       addError(`Padded key in ${sourceName}: ${key}`);
     }
 

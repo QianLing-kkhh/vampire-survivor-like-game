@@ -160,4 +160,18 @@ if (!paddedMapKeyOutput.includes('Padded key in weapons.json:  knife ')) {
   throw new Error(`Expected padded object-map key output to identify weapons.json knife.\n${paddedMapKeyOutput}`);
 }
 
+const blankMapKeyResult = runFixture({
+  'weapons.json': {
+    '   ': { id: '   ', requiredPassiveId: 'bracer' },
+  },
+});
+const blankMapKeyOutput = `${blankMapKeyResult.stdout}\n${blankMapKeyResult.stderr}`;
+if (blankMapKeyResult.status === 0) {
+  throw new Error(`Expected content audit to reject blank object-map keys.\n${blankMapKeyOutput}`);
+}
+
+if (!blankMapKeyOutput.includes('Missing key in weapons.json object entry')) {
+  throw new Error(`Expected blank object-map key output to identify weapons.json.\n${blankMapKeyOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
