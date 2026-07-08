@@ -89,7 +89,11 @@ function toRecord(value, sourceName) {
       addError(`Padded key in ${sourceName}: ${key}`);
     }
 
-    if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id !== key) {
+    if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id.trim().length === 0) {
+      addError(`Missing id in ${sourceName} object entry ${key}`);
+    } else if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id.trim() !== entry.id) {
+      addError(`Padded id in ${sourceName} object entry ${key}: ${entry.id}`);
+    } else if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id !== key) {
       addError(`Mismatched id in ${sourceName}: key ${key} has id ${entry.id}`);
     }
   }
