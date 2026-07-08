@@ -86,10 +86,7 @@ export function createModalBlocker(
   blocker.setOrigin(0, 0);
   blocker.setScrollFactor(0);
   blocker.setDepth(depth);
-  blocker.setInteractive(
-    new Phaser.Geom.Rectangle(0, 0, scene.scale.width, scene.scale.height),
-    Phaser.Geom.Rectangle.Contains,
-  );
+  setRectangleHitArea(blocker, scene.scale.width, scene.scale.height);
   blocker.on('pointerdown', (
     _pointer: Phaser.Input.Pointer,
     _localX: number,
