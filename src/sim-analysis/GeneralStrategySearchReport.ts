@@ -113,6 +113,7 @@ export interface GeneralStrategyRoundSummary {
 }
 
 export interface GeneralStrategyBaselineComparisonEntry {
+  rank: number;
   strategyId: string;
   avgScore: number;
   medianScore: number;

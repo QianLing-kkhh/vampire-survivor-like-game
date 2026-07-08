@@ -129,17 +129,22 @@ export function createBaselineComparison(
       deltaVsStrategyFile,
       deltaPctVsStrategyFile,
     };
-  }).sort((a, b) => b.generalFitnessScore - a.generalFitnessScore || a.strategyId.localeCompare(b.strategyId));
+  })
+    .sort((a, b) => b.generalFitnessScore - a.generalFitnessScore || a.strategyId.localeCompare(b.strategyId))
+    .map((row, index) => ({
+      rank: index + 1,
+      ...row,
+    }));
 }
 
 export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselineComparisonEntry[]): string {
   const includeStrategyFileDelta = rows.some((row) => row.deltaVsStrategyFile !== undefined);
   const header = includeStrategyFileDelta
-    ? '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct | Delta vs Strategy File | Delta Pct vs Strategy File |'
-    : '| Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |';
+    ? '| Rank | Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct | Delta vs Strategy File | Delta Pct vs Strategy File |'
+    : '| Rank | Strategy | Boss Kill | Avg Exp | Median Exp | P10 Exp | Avg Damage Dealt | Avg Boss Damage | Avg Score | Completion | Early Collapse | Damage Window Pass | Damage Taken | Fitness | Delta vs Balanced | Delta Pct |';
   const separator = includeStrategyFileDelta
-    ? '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'
-    : '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |';
+    ? '| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'
+    : '| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |';
   const lines = [
     '# General Strategy Baseline Comparison',
     '',
@@ -149,6 +154,7 @@ export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselin
 
   for (const row of rows) {
     const cells = [
+      row.rank,
       row.strategyId,
       row.bossKillRate,
       row.avgExp,
