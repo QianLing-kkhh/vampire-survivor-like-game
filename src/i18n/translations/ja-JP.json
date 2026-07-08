@@ -1759,7 +1759,7 @@
     },
     "endless_shield": {
       "name": "シールド",
-      "description": "シールドを1スタック獲得\n次の被弾を防ぐ\nノックバック爆発は発動\n最大{maxStacks}スタック"
+      "description": "シールドを1 スタック獲得\n次の被弾を防ぐ\nノックバック爆発は発動\n最大{maxStacks} スタック"
     },
     "endless_growth_damage": {
       "name": "小さな成長",
