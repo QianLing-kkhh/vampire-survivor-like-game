@@ -403,6 +403,7 @@ function writeGeneralSearchArtifacts(outputDir, report) {
     scenarioCount: report.scenarios.length,
   }));
   fs.writeFileSync(path.join(outputDir, 'baseline-comparison.json'), `${stablePrettyJson(report.baselineComparison)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'baseline-comparison.csv'), `${runtime.baselineComparisonCsv(report.baselineComparison)}\n`);
   fs.writeFileSync(path.join(outputDir, 'baseline-comparison.md'), runtime.baselineComparisonMarkdown(report.baselineComparison));
   fs.writeFileSync(path.join(outputDir, 'warnings.json'), `${stablePrettyJson(report.warnings)}\n`);
 }

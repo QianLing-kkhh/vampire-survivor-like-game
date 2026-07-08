@@ -182,6 +182,32 @@ export function baselineComparisonMarkdown(rows: readonly GeneralStrategyBaselin
   return `${lines.join('\n')}\n`;
 }
 
+export function baselineComparisonCsv(rows: readonly GeneralStrategyBaselineComparisonEntry[]): string {
+  return [
+    'rank,strategyId,bossKillRate,avgExp,medianExp,p10Exp,avgDamageDealt,avgBossDamageDealt,avgScore,completionRate,earlyGrowthCollapseRate,damageWindowPassRate,avgDamageTaken,generalFitnessScore,deltaVsBalancedDefault,deltaPctVsBalancedDefault,deltaVsStrategyFile,deltaPctVsStrategyFile',
+    ...rows.map((row) => [
+      row.rank,
+      row.strategyId,
+      row.bossKillRate,
+      row.avgExp,
+      row.medianExp,
+      row.p10Exp,
+      row.avgDamageDealt,
+      row.avgBossDamageDealt,
+      row.avgScore,
+      row.completionRate,
+      row.earlyGrowthCollapseRate,
+      row.damageWindowPassRate,
+      row.avgDamageTaken,
+      row.generalFitnessScore,
+      row.deltaVsBalancedDefault,
+      row.deltaPctVsBalancedDefault,
+      row.deltaVsStrategyFile ?? '',
+      row.deltaPctVsStrategyFile ?? '',
+    ].map(escapeCsv).join(',')),
+  ].join('\n');
+}
+
 function summarizeCandidateRuns(runs: readonly GeneralStrategyRunRecord[]): GeneralStrategyCandidateStats {
   const scores = runs.map((run) => run.result.score);
   const expValues = runs.map((run) => run.result.exp);
