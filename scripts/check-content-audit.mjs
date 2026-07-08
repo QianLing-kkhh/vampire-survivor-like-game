@@ -89,13 +89,18 @@ function toRecord(value, sourceName) {
       addError(`Padded key in ${sourceName}: ${key}`);
     }
 
-    if (entry && typeof entry === 'object' && Object.prototype.hasOwnProperty.call(entry, 'id') && typeof entry.id !== 'string') {
+    if (!entry || typeof entry !== 'object') {
+      addError(`Invalid entry in ${sourceName} object entry ${key}: expected object`);
+      continue;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(entry, 'id') && typeof entry.id !== 'string') {
       addError(`Invalid id in ${sourceName} object entry ${key}: expected string`);
-    } else if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id.trim().length === 0) {
+    } else if (typeof entry.id === 'string' && entry.id.trim().length === 0) {
       addError(`Missing id in ${sourceName} object entry ${key}`);
-    } else if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id.trim() !== entry.id) {
+    } else if (typeof entry.id === 'string' && entry.id.trim() !== entry.id) {
       addError(`Padded id in ${sourceName} object entry ${key}: ${entry.id}`);
-    } else if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id !== key) {
+    } else if (typeof entry.id === 'string' && entry.id !== key) {
       addError(`Mismatched id in ${sourceName}: key ${key} has id ${entry.id}`);
     }
   }
