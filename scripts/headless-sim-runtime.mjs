@@ -205,6 +205,7 @@ export function createMatrixFromArgs(args, options = {}) {
   const runtime = loadHeadlessSimulationRuntime();
   const content = loadSimulationContent();
   const preset = options.preset ?? getArg(args, ['preset'], undefined);
+  const strategyFile = getArg(args, ['strategyFile'], undefined);
 
   if (preset) {
     return applyMatrixArgOverrides(
@@ -221,11 +222,14 @@ export function createMatrixFromArgs(args, options = {}) {
     : [String(getArg(args, ['seed'], 'headless-test-001'))];
   const stageId = String(getArg(args, ['stageId', 'stage'], 'stage_001'));
   const mapId = String(getArg(args, ['mapId', 'map'], content.stages[stageId]?.mapId ?? 'prototype_field'));
+  const defaultStrategyId = strategyFile
+    ? (loadGeneratedStrategyFromPath(strategyFile).id || 'strategy_file')
+    : 'balanced_default';
 
   return {
     presetId: getArg(args, ['presetId'], undefined),
     seeds: getListArg(args, ['seeds'], seedFallback),
-    strategyProfileIds: getListArg(args, ['strategyProfileId', 'strategy'], ['balanced_default']),
+    strategyProfileIds: getListArg(args, ['strategyProfileId', 'strategy'], [defaultStrategyId]),
     characters: getListArg(args, ['characters', 'characterId', 'character'], ['priest']),
     stageMaps: [{ stageId, mapId }],
     difficulties: getListArg(args, ['difficulties', 'difficultyId', 'difficulty'], ['normal']),
@@ -238,10 +242,10 @@ export function createSimulationInputFromArgs(args, overrides = {}) {
   const runtime = loadHeadlessSimulationRuntime();
   const content = loadSimulationContent();
   const matrix = createMatrixFromArgs(args);
-  if (matrix.strategyProfileIds.includes('generated_test')) {
+  if (matrix.strategyProfileIds.includes('generated_test') && !getArg(args, ['strategyFile'], undefined)) {
     requireGeneratedTestStrategy();
   }
-  const catalog = loadHeadlessStrategyCatalog(runtime);
+  const catalog = loadHeadlessStrategyCatalog(runtime, args);
   const runs = runtime.expandSimulationMatrix(matrix, catalog.profiles, content, catalog.phasedStrategies);
   const run = {
     ...runs[0],
@@ -259,10 +263,10 @@ export function expandRunsFromArgs(args) {
   const runtime = loadHeadlessSimulationRuntime();
   const content = loadSimulationContent();
   const matrix = createMatrixFromArgs(args);
-  if (matrix.strategyProfileIds.includes('generated_test')) {
+  if (matrix.strategyProfileIds.includes('generated_test') && !getArg(args, ['strategyFile'], undefined)) {
     requireGeneratedTestStrategy();
   }
-  const catalog = loadHeadlessStrategyCatalog(runtime);
+  const catalog = loadHeadlessStrategyCatalog(runtime, args);
   const runs = runtime.expandSimulationMatrix(matrix, catalog.profiles, content, catalog.phasedStrategies);
 
   return {
@@ -734,7 +738,7 @@ function splitList(value) {
     .filter(Boolean);
 }
 
-export function loadHeadlessStrategyCatalog(runtime = loadHeadlessSimulationRuntime()) {
+export function loadHeadlessStrategyCatalog(runtime = loadHeadlessSimulationRuntime(), args = {}) {
   const catalog = {
     profiles: { ...runtime.profiles },
     phasedStrategies: {},
@@ -742,18 +746,46 @@ export function loadHeadlessStrategyCatalog(runtime = loadHeadlessSimulationRunt
   const generated = loadGeneratedTestStrategyIfRequested();
 
   if (generated) {
-    const firstPhase = generated.phases[0];
-    catalog.profiles.generated_test = firstPhase.profile;
-    catalog.phasedStrategies.generated_test = {
-      phases: generated.phases.map((phase) => ({
-        startSeconds: phase.startSeconds,
-        endSeconds: phase.endSeconds,
-        profile: phase.profile,
-      })),
-    };
+    addGeneratedStrategyToCatalog(catalog, generated, 'generated_test');
+  }
+
+  const strategyFile = getArg(args, ['strategyFile'], undefined);
+
+  if (strategyFile) {
+    addGeneratedStrategyToCatalog(catalog, loadGeneratedStrategyFromPath(strategyFile), undefined);
   }
 
   return catalog;
+}
+
+function addGeneratedStrategyToCatalog(catalog, strategy, fallbackId) {
+  const profileId = strategy.id || fallbackId || 'strategy_file';
+  const firstPhase = strategy.phases[0];
+
+  catalog.profiles[profileId] = firstPhase.profile;
+  catalog.phasedStrategies[profileId] = {
+    phases: strategy.phases.map((phase) => ({
+      startSeconds: phase.startSeconds,
+      endSeconds: phase.endSeconds,
+      profile: phase.profile,
+    })),
+  };
+}
+
+function loadGeneratedStrategyFromPath(inputPath) {
+  const strategyPath = path.resolve(rootDir, inputPath);
+
+  if (!fs.existsSync(strategyPath)) {
+    throw new Error(`Strategy file not found: ${inputPath}`);
+  }
+
+  const raw = JSON.parse(fs.readFileSync(strategyPath, 'utf8'));
+
+  if (!Array.isArray(raw.phases) || raw.phases.length === 0) {
+    throw new Error(`Strategy file is invalid or has no phases: ${inputPath}`);
+  }
+
+  return raw;
 }
 
 export function loadGeneratedTestStrategyIfRequested() {
