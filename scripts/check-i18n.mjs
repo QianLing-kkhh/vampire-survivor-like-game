@@ -291,6 +291,10 @@ function formatPlaceholderList(placeholders) {
   return placeholders.length > 0 ? placeholders.join(', ') : '<none>';
 }
 
+function hasMalformedPlaceholder(value) {
+  return /[{}]/.test(value.replace(PLACEHOLDER_PATTERN, ''));
+}
+
 function main() {
   const translations = Object.fromEntries(
     LOCALES.map((locale) => [locale, readJson(path.join(TRANSLATION_DIR, `${locale}.json`))]),
@@ -314,6 +318,10 @@ function main() {
 
       if (value !== value.trim()) {
         errors.push(`${locale}: untrimmed translation for ${key}`);
+      }
+
+      if (hasMalformedPlaceholder(value)) {
+        errors.push(`${locale}: malformed placeholder for ${key}`);
       }
     }
 
