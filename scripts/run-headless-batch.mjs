@@ -2,16 +2,17 @@ import { parseArgs, runSimulationBatchFromArgs, writeHeadlessArtifacts, stableSt
 
 const args = parseArgs(process.argv.slice(2));
 const format = String(args.format ?? 'jsonl').toLowerCase();
+const quiet = String(args.quiet ?? 'false').toLowerCase() === 'true';
 const artifactOut = getArg(args, ['out', 'outputDir'], undefined);
 const { matrix, results } = runSimulationBatchFromArgs(args);
 
-if (format === 'csv') {
+if (!quiet && format === 'csv') {
   console.log(batchCsvHeader);
 
   for (const result of results) {
     console.log(resultToCsvRow(result));
   }
-} else {
+} else if (!quiet) {
   for (const result of results) {
     console.log(stableStringify(result));
   }
