@@ -358,7 +358,7 @@
     "finalLevel": "最終レベル",
     "score": "スコア",
     "unlock": "解放",
-    "finalExp": "最終EXP",
+    "finalExp": "最終 EXP",
     "killCount": "撃破数",
     "weapons": "武器",
     "passives": "パッシブ",
@@ -1299,7 +1299,7 @@
     "tags": "タグ",
     "coreStats": "主要能力",
     "currentFile": "現在のファイル",
-    "maxHp": "最大HP",
+    "maxHp": "最大 HP",
     "moveSpeed": "移動速度",
     "pickupRange": "取得範囲",
     "expMultiplier": "経験値倍率"
@@ -1502,8 +1502,8 @@
       "description": "拾得範囲を10%増加。"
     },
     "max_hp_up": {
-      "name": "最大HP",
-      "description": "最大HPを10%増加。"
+      "name": "最大 HP",
+      "description": "最大 HP を10%増加。"
     },
     "add_garlic": {
       "name": "ニンニク解放",
