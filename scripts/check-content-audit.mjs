@@ -61,14 +61,18 @@ function toRecord(value, sourceName) {
 
   if (Array.isArray(value)) {
     const record = {};
-    for (const entry of value) {
-      if (entry && typeof entry === 'object' && typeof entry.id === 'string') {
-        if (hasId(record, entry.id)) {
-          addError(`Duplicate id in ${sourceName}: ${entry.id}`);
-          continue;
-        }
-        record[entry.id] = entry;
+    for (const [index, entry] of value.entries()) {
+      if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string' || entry.id.length === 0) {
+        addError(`Missing id in ${sourceName} array entry at index ${index}`);
+        continue;
       }
+
+      if (hasId(record, entry.id)) {
+        addError(`Duplicate id in ${sourceName}: ${entry.id}`);
+        continue;
+      }
+
+      record[entry.id] = entry;
     }
     return record;
   }
