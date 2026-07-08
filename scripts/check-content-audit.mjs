@@ -64,6 +64,12 @@ function toRecord(value, sourceName) {
     return record;
   }
 
+  for (const [key, entry] of Object.entries(value)) {
+    if (entry && typeof entry === 'object' && typeof entry.id === 'string' && entry.id !== key) {
+      addError(`Mismatched id in ${sourceName}: key ${key} has id ${entry.id}`);
+    }
+  }
+
   return value;
 }
 

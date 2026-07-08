@@ -27,22 +27,26 @@ function writeJson(name, value) {
   fs.writeFileSync(path.join(fixtureRoot, name), JSON.stringify(value, null, 2));
 }
 
-function runFixture() {
+function runFixture(overrides) {
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
   try {
     fs.mkdirSync(fixtureRoot, { recursive: true });
-    writeJson('weapons.json', [
-      { id: 'knife', requiredPassiveId: 'bracer' },
-      { id: 'knife', requiredPassiveId: 'bracer' },
-    ]);
-    writeJson('enemies.json', { slime: { id: 'slime' } });
-    writeJson('passives.json', { bracer: { id: 'bracer' } });
-    writeJson('upgrades.json', {});
-    writeJson('waves.json', []);
-    writeJson('characters.json', {});
-    writeJson('stages.json', {});
-    writeJson('maps.json', {});
-    writeJson('bosses.json', []);
+    const files = {
+      'weapons.json': { knife: { id: 'knife', requiredPassiveId: 'bracer' } },
+      'enemies.json': { slime: { id: 'slime' } },
+      'passives.json': { bracer: { id: 'bracer' } },
+      'upgrades.json': {},
+      'waves.json': [],
+      'characters.json': {},
+      'stages.json': {},
+      'maps.json': {},
+      'bosses.json': [],
+      ...overrides,
+    };
+
+    for (const [name, value] of Object.entries(files)) {
+      writeJson(name, value);
+    }
 
     return spawnSync(process.execPath, ['scripts/check-content-audit.mjs'], {
       cwd: process.cwd(),
@@ -57,7 +61,12 @@ function runFixture() {
   }
 }
 
-const duplicateIdResult = runFixture();
+const duplicateIdResult = runFixture({
+  'weapons.json': [
+    { id: 'knife', requiredPassiveId: 'bracer' },
+    { id: 'knife', requiredPassiveId: 'bracer' },
+  ],
+});
 const duplicateIdOutput = `${duplicateIdResult.stdout}\n${duplicateIdResult.stderr}`;
 if (duplicateIdResult.status === 0) {
   throw new Error(`Expected content audit to reject duplicate ids.\n${duplicateIdOutput}`);
@@ -65,6 +74,20 @@ if (duplicateIdResult.status === 0) {
 
 if (!duplicateIdOutput.includes('Duplicate id in weapons.json: knife')) {
   throw new Error(`Expected duplicate id output to identify weapons.json knife.\n${duplicateIdOutput}`);
+}
+
+const mismatchedIdResult = runFixture({
+  'weapons.json': {
+    knife: { id: 'dagger', requiredPassiveId: 'bracer' },
+  },
+});
+const mismatchedIdOutput = `${mismatchedIdResult.stdout}\n${mismatchedIdResult.stderr}`;
+if (mismatchedIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject mismatched object-map ids.\n${mismatchedIdOutput}`);
+}
+
+if (!mismatchedIdOutput.includes('Mismatched id in weapons.json: key knife has id dagger')) {
+  throw new Error(`Expected mismatched id output to identify weapons.json knife/dagger.\n${mismatchedIdOutput}`);
 }
 
 console.log('Content audit output regression tests passed.');
