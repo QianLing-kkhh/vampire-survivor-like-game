@@ -42,6 +42,7 @@ const KEY_PREFIXES = new Set([
 ]);
 const DATA_DRIVEN_TEXT_GROUPS = ['character', 'passive', 'upgrade', 'weapon'];
 const DATA_DRIVEN_TEXT_FIELDS = ['name', 'description'];
+const PLACEHOLDER_PATTERN = /\{[A-Za-z0-9_]+\}/g;
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -282,6 +283,14 @@ function collectUntranslatedDataDrivenText(translations, locale) {
   return untranslated;
 }
 
+function collectPlaceholders(value) {
+  return [...value.matchAll(PLACEHOLDER_PATTERN)].map((match) => match[0]).sort();
+}
+
+function formatPlaceholderList(placeholders) {
+  return placeholders.length > 0 ? placeholders.join(', ') : '<none>';
+}
+
 function main() {
   const translations = Object.fromEntries(
     LOCALES.map((locale) => [locale, readJson(path.join(TRANSLATION_DIR, `${locale}.json`))]),
@@ -322,6 +331,24 @@ function main() {
 
     for (const untranslated of collectUntranslatedDataDrivenText(translations, locale)) {
       errors.push(`${locale}: untranslated data-driven text ${untranslated}`);
+    }
+
+    if (locale !== 'en-US') {
+      for (const [key, sourceValue] of flattened['en-US']) {
+        const targetValue = flattened[locale].get(key);
+        if (typeof targetValue !== 'string') {
+          continue;
+        }
+
+        const sourcePlaceholders = collectPlaceholders(sourceValue);
+        const targetPlaceholders = collectPlaceholders(targetValue);
+
+        if (sourcePlaceholders.join('|') !== targetPlaceholders.join('|')) {
+          errors.push(
+            `${locale}: placeholder mismatch for ${key}: expected ${formatPlaceholderList(sourcePlaceholders)}, got ${formatPlaceholderList(targetPlaceholders)}`,
+          );
+        }
+      }
     }
   }
 
