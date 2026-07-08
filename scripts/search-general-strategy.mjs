@@ -832,11 +832,11 @@ function booleanArg(parsedArgs, name, fallback) {
 function parseSearchObjective(value) {
   const normalized = value.trim().toLowerCase();
 
-  if (normalized === 'growth' || normalized === 'boss' || normalized === 'full') {
+  if (normalized === 'growth' || normalized === 'boss' || normalized === 'full' || normalized === 'stability') {
     return normalized;
   }
 
-  throw new Error('--objective must be growth, boss, or full.');
+  throw new Error('--objective must be growth, boss, full, or stability.');
 }
 
 function rankStrategyStats(stats, minBossKillRate, objective, minP10Exp = 0, maxEarlyCollapseRate = 1) {
@@ -889,6 +889,18 @@ function compareEligibleStrategyStats(a, b, objective = 'full') {
       || b.avgBossDamageDealt - a.avgBossDamageDealt
       || b.avgSurvivalTimeSeconds - a.avgSurvivalTimeSeconds
       || b.avgLevel - a.avgLevel
+      || a.avgDamageTaken - b.avgDamageTaken
+      || b.generalFitnessScore - a.generalFitnessScore
+      || a.candidateId.localeCompare(b.candidateId);
+  }
+
+  if (objective === 'stability') {
+    return b.completionRate - a.completionRate
+      || a.earlyGrowthCollapseRate - b.earlyGrowthCollapseRate
+      || b.avgSurvivalTimeSeconds - a.avgSurvivalTimeSeconds
+      || b.p10Exp - a.p10Exp
+      || b.avgLevel - a.avgLevel
+      || b.avgExp - a.avgExp
       || a.avgDamageTaken - b.avgDamageTaken
       || b.generalFitnessScore - a.generalFitnessScore
       || a.candidateId.localeCompare(b.candidateId);
@@ -949,7 +961,7 @@ Options:
   --seedCount              Seeds per sampled coordinate
   --durationSeconds        Simulation duration
   --tickMs                 Fixed tick size
-  --objective              growth, boss, or full. Defaults to growth; growth defaults to 0-300s, boss/full to 600s windows
+  --objective              growth, boss, full, or stability. Defaults to growth; growth defaults to 0-300s, boss/full/stability to 600s windows
   --minBossKillRate        Required boss kill rate, 0-1
   --minP10Exp              Required p10 exp across sampled runs; default 0 disables this stability gate
   --maxEarlyCollapseRate   Maximum rate of runs ending before 180s at level <= 6; default 1 disables this gate
