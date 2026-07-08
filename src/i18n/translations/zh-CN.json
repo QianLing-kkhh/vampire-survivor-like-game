@@ -782,7 +782,7 @@
       "minimal": "极简",
       "_label": "UI 风格"
     },
-    "uiStyleReopenNotice": "部分UI风格变化将在重新打开菜单后生效。",
+    "uiStyleReopenNotice": "部分 UI 风格变化将在重新打开菜单后生效。",
     "scrollHint": "滚动",
     "page": "页",
     "previousPage": "上一页",
