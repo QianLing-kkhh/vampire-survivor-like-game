@@ -188,4 +188,18 @@ if (!paddedMapIdOutput.includes('Padded id in weapons.json object entry knife:  
   throw new Error(`Expected padded object-map id output to identify weapons.json knife.\n${paddedMapIdOutput}`);
 }
 
+const nonStringMapIdResult = runFixture({
+  'weapons.json': {
+    knife: { id: 123, requiredPassiveId: 'bracer' },
+  },
+});
+const nonStringMapIdOutput = `${nonStringMapIdResult.stdout}\n${nonStringMapIdResult.stderr}`;
+if (nonStringMapIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject non-string object-map ids.\n${nonStringMapIdOutput}`);
+}
+
+if (!nonStringMapIdOutput.includes('Invalid id in weapons.json object entry knife: expected string')) {
+  throw new Error(`Expected non-string object-map id output to identify weapons.json knife.\n${nonStringMapIdOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
