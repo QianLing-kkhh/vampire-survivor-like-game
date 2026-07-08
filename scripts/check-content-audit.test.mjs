@@ -118,4 +118,18 @@ if (!missingArrayIdOutput.includes('Missing id in weapons.json array entry at in
   throw new Error(`Expected missing array id output to identify weapons.json index 0.\n${missingArrayIdOutput}`);
 }
 
+const blankArrayIdResult = runFixture({
+  'weapons.json': [
+    { id: '   ', requiredPassiveId: 'bracer' },
+  ],
+});
+const blankArrayIdOutput = `${blankArrayIdResult.stdout}\n${blankArrayIdResult.stderr}`;
+if (blankArrayIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject blank array ids.\n${blankArrayIdOutput}`);
+}
+
+if (!blankArrayIdOutput.includes('Missing id in weapons.json array entry at index 0')) {
+  throw new Error(`Expected blank array id output to identify weapons.json index 0.\n${blankArrayIdOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');

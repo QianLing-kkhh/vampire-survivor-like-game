@@ -62,7 +62,7 @@ function toRecord(value, sourceName) {
   if (Array.isArray(value)) {
     const record = {};
     for (const [index, entry] of value.entries()) {
-      if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string' || entry.id.length === 0) {
+      if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string' || entry.id.trim().length === 0) {
         addError(`Missing id in ${sourceName} array entry at index ${index}`);
         continue;
       }
