@@ -457,6 +457,7 @@ function createSearchConfig(parsedArgs) {
     optimizePhases: splitCsv(String(getArg(parsedArgs, ['optimizePhase', 'optimizePhases'], ''))),
     controlBaseStrategy: String(getArg(parsedArgs, ['controlBaseStrategy', 'baseStrategy'], 'balanced_default')),
     centerBaseStrategy: String(getArg(parsedArgs, ['centerBaseStrategy', 'centerStrategy'], 'none')).toLowerCase(),
+    strategyFile: getArg(parsedArgs, ['strategyFile'], undefined),
     outputDir,
   };
 }
@@ -563,6 +564,14 @@ function resolveOptimizedWeightPaths(searchConfig, allPaths) {
 function resolveControlBaselineStrategy(searchConfig, warnings) {
   const requested = String(searchConfig.controlBaseStrategy).toLowerCase();
 
+  if (requested === 'strategy_file') {
+    const external = loadStrategyFileDefinition(searchConfig, 'strategy-file-control-base');
+
+    warnings.push(`Control baseline initialized from strategy_file: ${searchConfig.strategyFile}`);
+
+    return external;
+  }
+
   if (requested === 'generated_test') {
     const generated = loadExistingGeneratedTestStrategy(searchConfig);
 
@@ -609,6 +618,14 @@ function resolveCenterBaseStrategy(searchConfig, controlScope, warnings) {
     throw new Error('Requested centerBaseStrategy=generated_test, but no generated strategy was available.');
   }
 
+  if (requested === 'strategy_file') {
+    const external = loadStrategyFileDefinition(searchConfig, 'strategy-file-center-base');
+
+    warnings.push(`Centered search initialized from strategy_file: ${searchConfig.strategyFile}`);
+
+    return applyControlVariableScope(external, controlScope).phasedStrategy;
+  }
+
   if (requested === 'playtest_baseline') {
     warnings.push('Centered search initialized from playtest_baseline.');
 
@@ -631,7 +648,39 @@ function resolveCenterBaseStrategy(searchConfig, controlScope, warnings) {
     }), controlScope).phasedStrategy;
   }
 
-  throw new Error('--centerBaseStrategy must be none, generated_test, playtest_baseline, or balanced_default.');
+  throw new Error('--centerBaseStrategy must be none, generated_test, strategy_file, playtest_baseline, or balanced_default.');
+}
+
+function loadStrategyFileDefinition(searchConfig, variantId) {
+  if (!searchConfig.strategyFile) {
+    throw new Error('Requested strategy_file, but --strategyFile was not provided.');
+  }
+
+  const strategyPath = path.resolve(rootDir, searchConfig.strategyFile);
+
+  if (!fs.existsSync(strategyPath)) {
+    throw new Error(`Strategy file not found: ${searchConfig.strategyFile}`);
+  }
+
+  const strategy = JSON.parse(fs.readFileSync(strategyPath, 'utf8'));
+
+  if (!Array.isArray(strategy.phases) || strategy.phases.length === 0) {
+    throw new Error(`Strategy file is invalid or has no phases: ${searchConfig.strategyFile}`);
+  }
+
+  return {
+    candidateId: strategy.id ?? 'strategy_file',
+    strategyVariantId: variantId,
+    strategyProfileHash: runtime.hashStableValue('fnv1a', strategy),
+    profile: JSON.parse(JSON.stringify(strategy.phases[0].profile)),
+    phasedStrategy: {
+      version: 1,
+      id: strategy.id ?? 'strategy_file',
+      name: strategy.name ?? 'Strategy File',
+      generationMethod: variantId,
+      phases: strategy.phases,
+    },
+  };
 }
 
 function applyControlVariableScope(strategy, controlScope) {
@@ -980,8 +1029,9 @@ Options:
   --mutationMode           uniform or gaussian
   --optimizeLayer          all, movement, upgrade, treasure, relic, strategic, tactical, or micro
   --optimizeWeights        Comma-separated exact weight paths, e.g. movement.farmBias,movement.combatBias
-  --controlBaseStrategy    balanced_default, playtest_baseline, or generated_test
-  --centerBaseStrategy     none, balanced_default, playtest_baseline, or generated_test; starts round 1 as a centered local search
+  --controlBaseStrategy    balanced_default, playtest_baseline, generated_test, or strategy_file
+  --centerBaseStrategy     none, balanced_default, playtest_baseline, generated_test, or strategy_file; starts round 1 as a centered local search
+  --strategyFile           External generated strategy JSON used when a base strategy is strategy_file
   --outputDir              Artifact output directory
   --help                   Show this help
 `);
