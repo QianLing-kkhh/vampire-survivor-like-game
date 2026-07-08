@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const LOCALES = ['en-US', 'zh-CN', 'ja-JP'];
-const TRANSLATION_DIR = path.join('src', 'i18n', 'translations');
+const TRANSLATION_DIR = process.env.I18N_TRANSLATION_DIR ?? path.join('src', 'i18n', 'translations');
 const SOURCE_DIR = 'src';
 const DATA_DIR = path.join('src', 'data');
 const KEY_PREFIXES = new Set([
@@ -221,6 +221,32 @@ function collectDataDrivenKeys() {
   return keys;
 }
 
+function collectDuplicateUpgradeNames(translation) {
+  const names = new Map();
+  const duplicates = [];
+
+  for (const [id, upgrade] of Object.entries(translation.upgrade ?? {})) {
+    if (!upgrade || typeof upgrade !== 'object' || typeof upgrade.name !== 'string') {
+      continue;
+    }
+
+    const name = upgrade.name.trim();
+    if (!name) {
+      continue;
+    }
+
+    const existingId = names.get(name);
+    if (existingId) {
+      duplicates.push(`${name} (${existingId}, ${id})`);
+      continue;
+    }
+
+    names.set(name, id);
+  }
+
+  return duplicates;
+}
+
 function main() {
   const translations = Object.fromEntries(
     LOCALES.map((locale) => [locale, readJson(path.join(TRANSLATION_DIR, `${locale}.json`))]),
@@ -249,6 +275,10 @@ function main() {
 
     for (const key of missing) {
       errors.push(`${locale}: missing translation for ${key}`);
+    }
+
+    for (const duplicate of collectDuplicateUpgradeNames(translations[locale])) {
+      errors.push(`${locale}: duplicate upgrade name ${duplicate}`);
     }
   }
 
