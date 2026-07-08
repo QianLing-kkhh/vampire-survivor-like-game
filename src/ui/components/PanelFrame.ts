@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 
+import { setRectangleHitArea } from '../input/UIInteraction';
 import { UITheme } from '../UITheme';
 
 export type PanelFrameVariant = 'modal' | 'hud' | 'card' | 'tooltip';
@@ -24,7 +25,7 @@ export class PanelFrame {
     if (config.dim) {
       const dimmer = scene.add.rectangle(0, 0, scene.scale.width, scene.scale.height, UITheme.colors.backgroundOverlay, UITheme.alpha.overlay);
       dimmer.setOrigin(0.5);
-      dimmer.setInteractive();
+      setRectangleHitArea(dimmer, scene.scale.width, scene.scale.height);
       container.add(dimmer);
     }
 
