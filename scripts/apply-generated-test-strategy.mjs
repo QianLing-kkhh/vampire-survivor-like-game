@@ -77,6 +77,18 @@ function assertSourceFidelityAllowed(sourceDoc, existingDocument, allowLowerFide
     reasons.push(`minBossKillRate ${sourceConfig.minBossKillRate ?? 0} < ${existingConfig.minBossKillRate ?? 0}`);
   }
 
+  if (numberValue(sourceConfig.minP10Exp) < numberValue(existingConfig.minP10Exp)) {
+    reasons.push(`minP10Exp ${sourceConfig.minP10Exp ?? 0} < ${existingConfig.minP10Exp ?? 0}`);
+  }
+
+  if (numberValue(sourceConfig.maxEarlyCollapseRate) > numberValue(existingConfig.maxEarlyCollapseRate)) {
+    reasons.push(`maxEarlyCollapseRate ${sourceConfig.maxEarlyCollapseRate ?? 1} > ${existingConfig.maxEarlyCollapseRate ?? 1}`);
+  }
+
+  if (bossGateRank(sourceConfig) < bossGateRank(existingConfig)) {
+    reasons.push('boss gate strictness was weakened');
+  }
+
   if (reasons.length === 0) {
     return;
   }
@@ -139,6 +151,18 @@ function objectiveRank(objective) {
 
 function sampleCount(config) {
   return numberValue(config?.scenarioCount) * Math.max(1, numberValue(config?.seedCount));
+}
+
+function bossGateRank(config) {
+  if (config?.strictBossKillGate) {
+    return 2;
+  }
+
+  if (config?.fallbackBelowBossKillRate === false) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function numberValue(value) {
