@@ -290,6 +290,16 @@ for (const boss of collectBossEntries(bosses)) {
       continue;
     }
 
+    if (!Object.prototype.hasOwnProperty.call(skill, 'type')) {
+      addError(`Missing type in Boss config ${bossId} skill ${skillIndex}`);
+      continue;
+    }
+
+    if (typeof skill.type !== 'string' || skill.type.trim().length === 0) {
+      addError(`Invalid type in Boss config ${bossId} skill ${skillIndex}: expected non-empty string`);
+      continue;
+    }
+
     if (Object.prototype.hasOwnProperty.call(skill, 'summons') && !Array.isArray(skill.summons)) {
       addError(`Invalid summons in Boss config ${bossId} skill ${skillIndex}: expected array`);
       continue;

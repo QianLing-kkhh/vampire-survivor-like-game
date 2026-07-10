@@ -378,7 +378,7 @@ const invalidBossSummonEnemyIdResult = runFixture({
     finalBoss: {
       id: 'finalBoss',
       enemyId: 'slime',
-      skills: [{ summons: [{ enemyId: 123 }] }],
+      skills: [{ type: 'summon', summons: [{ enemyId: 123 }] }],
     },
   },
 });
@@ -414,7 +414,7 @@ const invalidBossSummonsResult = runFixture({
     finalBoss: {
       id: 'finalBoss',
       enemyId: 'slime',
-      skills: [{ summons: {} }],
+      skills: [{ type: 'summon', summons: {} }],
     },
   },
 });
@@ -445,12 +445,30 @@ if (!invalidBossSkillEntryOutput.includes('Invalid skill in Boss config finalBos
   throw new Error(`Expected invalid boss skill output to identify finalBoss index 0.\n${invalidBossSkillEntryOutput}`);
 }
 
+const missingBossSkillTypeResult = runFixture({
+  'bosses.json': {
+    finalBoss: {
+      id: 'finalBoss',
+      enemyId: 'slime',
+      skills: [{}],
+    },
+  },
+});
+const missingBossSkillTypeOutput = `${missingBossSkillTypeResult.stdout}\n${missingBossSkillTypeResult.stderr}`;
+if (missingBossSkillTypeResult.status === 0) {
+  throw new Error(`Expected content audit to reject a boss skill without type.\n${missingBossSkillTypeOutput}`);
+}
+
+if (!missingBossSkillTypeOutput.includes('Missing type in Boss config finalBoss skill 0')) {
+  throw new Error(`Expected missing boss skill type output to identify finalBoss skill 0.\n${missingBossSkillTypeOutput}`);
+}
+
 const invalidBossSummonEntryResult = runFixture({
   'bosses.json': {
     finalBoss: {
       id: 'finalBoss',
       enemyId: 'slime',
-      skills: [{ summons: ['invalid'] }],
+      skills: [{ type: 'summon', summons: ['invalid'] }],
     },
   },
 });
@@ -468,7 +486,7 @@ const invalidBossSummonCountResult = runFixture({
     finalBoss: {
       id: 'finalBoss',
       enemyId: 'slime',
-      skills: [{ summons: [{ enemyId: 'slime', count: 'many' }] }],
+      skills: [{ type: 'summon', summons: [{ enemyId: 'slime', count: 'many' }] }],
     },
   },
 });
@@ -486,7 +504,7 @@ const missingBossSummonEnemyIdResult = runFixture({
     finalBoss: {
       id: 'finalBoss',
       enemyId: 'slime',
-      skills: [{ summons: [{ count: 1 }] }],
+      skills: [{ type: 'summon', summons: [{ count: 1 }] }],
     },
   },
 });
