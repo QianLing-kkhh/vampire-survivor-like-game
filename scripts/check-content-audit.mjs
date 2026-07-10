@@ -175,7 +175,14 @@ function collectBossEntries(value, isRoot = true) {
     return [value];
   }
 
-  return Object.values(value).flatMap((entry) => collectBossEntries(entry, false));
+  return Object.entries(value).flatMap(([key, entry]) => {
+    if (!entry || typeof entry !== 'object') {
+      addError(`Invalid boss entry in bosses.json object entry ${key}: expected object`);
+      return [];
+    }
+
+    return collectBossEntries(entry, false);
+  });
 }
 
 for (const fileName of requiredFiles) {

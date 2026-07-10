@@ -282,4 +282,18 @@ if (!invalidBossEntryOutput.includes('Invalid boss entry in bosses.json array at
   throw new Error(`Expected invalid boss entry output to identify bosses.json index 0.\n${invalidBossEntryOutput}`);
 }
 
+const invalidBossMapEntryResult = runFixture({
+  'bosses.json': {
+    finalBoss: 'invalid',
+  },
+});
+const invalidBossMapEntryOutput = `${invalidBossMapEntryResult.stdout}\n${invalidBossMapEntryResult.stderr}`;
+if (invalidBossMapEntryResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid boss map entry.\n${invalidBossMapEntryOutput}`);
+}
+
+if (!invalidBossMapEntryOutput.includes('Invalid boss entry in bosses.json object entry finalBoss: expected object')) {
+  throw new Error(`Expected invalid boss map entry output to identify bosses.json finalBoss.\n${invalidBossMapEntryOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
