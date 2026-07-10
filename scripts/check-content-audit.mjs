@@ -259,6 +259,10 @@ for (const [stageId, stage] of Object.entries(stages)) {
     addError(`Stage ${stageId} references missing mapId: ${stage.mapId}`);
   }
 
+  if (!hasId(waves ?? {}, stage.waveSetId)) {
+    addError(`Stage ${stageId} references missing waveSetId: ${stage.waveSetId}`);
+  }
+
   const finalBossId = stage.finalBossId ?? stage.bossId;
   if (finalBossId && !hasId(enemies, finalBossId)) {
     addError(`Stage ${stageId} references missing finalBossId: ${finalBossId}`);

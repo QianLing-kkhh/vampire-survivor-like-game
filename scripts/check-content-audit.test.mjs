@@ -106,6 +106,26 @@ if (!invalidCharacterWeaponOutput.includes('Invalid startingWeaponId in characte
   throw new Error(`Expected invalid character weapon output to identify default.\n${invalidCharacterWeaponOutput}`);
 }
 
+const missingStageWaveSetResult = runFixture({
+  'stages.json': {
+    stage: { mapId: 'map', waveSetId: 'missing', finalBossId: 'slime' },
+  },
+  'maps.json': {
+    map: { id: 'map' },
+  },
+  'waves.json': {
+    default: [],
+  },
+});
+const missingStageWaveSetOutput = `${missingStageWaveSetResult.stdout}\n${missingStageWaveSetResult.stderr}`;
+if (missingStageWaveSetResult.status === 0) {
+  throw new Error(`Expected content audit to reject a missing stage wave set.\n${missingStageWaveSetOutput}`);
+}
+
+if (!missingStageWaveSetOutput.includes('Stage stage references missing waveSetId: missing')) {
+  throw new Error(`Expected missing stage wave set output to identify stage.\n${missingStageWaveSetOutput}`);
+}
+
 const duplicateIdResult = runFixture({
   'weapons.json': [
     { id: 'knife', requiredPassiveId: 'bracer' },
