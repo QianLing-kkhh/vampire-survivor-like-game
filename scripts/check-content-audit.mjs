@@ -284,8 +284,17 @@ for (const boss of collectBossEntries(bosses)) {
     continue;
   }
 
-  for (const skill of boss.skills ?? []) {
-    if (!skill || typeof skill !== 'object' || !Array.isArray(skill.summons)) {
+  for (const [skillIndex, skill] of (boss.skills ?? []).entries()) {
+    if (!skill || typeof skill !== 'object') {
+      continue;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(skill, 'summons') && !Array.isArray(skill.summons)) {
+      addError(`Invalid summons in Boss config ${bossId} skill ${skillIndex}: expected array`);
+      continue;
+    }
+
+    if (!Array.isArray(skill.summons)) {
       continue;
     }
 
