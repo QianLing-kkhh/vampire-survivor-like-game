@@ -495,7 +495,7 @@ if (invalidBossSummonCountResult.status === 0) {
   throw new Error(`Expected content audit to reject an invalid boss summon count.\n${invalidBossSummonCountOutput}`);
 }
 
-if (!invalidBossSummonCountOutput.includes('Invalid count in Boss config finalBoss summon: expected positive number')) {
+if (!invalidBossSummonCountOutput.includes('Invalid count in Boss config finalBoss summon: expected positive integer')) {
   throw new Error(`Expected invalid boss summon count output to identify finalBoss.\n${invalidBossSummonCountOutput}`);
 }
 

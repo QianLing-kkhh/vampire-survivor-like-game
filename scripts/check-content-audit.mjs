@@ -328,8 +328,8 @@ for (const boss of collectBossEntries(bosses)) {
         addError(`Boss config ${bossId} summon references missing enemyId: ${summon.enemyId}`);
       }
 
-      if (typeof summon.count !== 'number' || !Number.isFinite(summon.count) || summon.count <= 0) {
-        addError(`Invalid count in Boss config ${bossId} summon: expected positive number`);
+      if (!Number.isInteger(summon.count) || summon.count <= 0) {
+        addError(`Invalid count in Boss config ${bossId} summon: expected positive integer`);
       }
     }
   }
