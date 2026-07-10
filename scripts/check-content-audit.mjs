@@ -255,16 +255,28 @@ for (const [stageId, stage] of Object.entries(stages)) {
     continue;
   }
 
-  if (!hasId(maps, stage.mapId)) {
+  if (typeof stage.mapId !== 'string') {
+    addError(`Invalid mapId in stage ${stageId}: expected string`);
+  } else if (stage.mapId.trim().length === 0) {
+    addError(`Missing mapId in stage ${stageId}`);
+  } else if (!hasId(maps, stage.mapId)) {
     addError(`Stage ${stageId} references missing mapId: ${stage.mapId}`);
   }
 
-  if (!hasId(waves ?? {}, stage.waveSetId)) {
+  if (typeof stage.waveSetId !== 'string') {
+    addError(`Invalid waveSetId in stage ${stageId}: expected string`);
+  } else if (stage.waveSetId.trim().length === 0) {
+    addError(`Missing waveSetId in stage ${stageId}`);
+  } else if (!hasId(waves ?? {}, stage.waveSetId)) {
     addError(`Stage ${stageId} references missing waveSetId: ${stage.waveSetId}`);
   }
 
   const finalBossId = stage.finalBossId ?? stage.bossId;
-  if (finalBossId && !hasId(enemies, finalBossId)) {
+  if (finalBossId !== undefined && typeof finalBossId !== 'string') {
+    addError(`Invalid finalBossId in stage ${stageId}: expected string`);
+  } else if (finalBossId !== undefined && finalBossId.trim().length === 0) {
+    addError(`Missing finalBossId in stage ${stageId}`);
+  } else if (finalBossId && !hasId(enemies, finalBossId)) {
     addError(`Stage ${stageId} references missing finalBossId: ${finalBossId}`);
   }
 }

@@ -126,6 +126,23 @@ if (!missingStageWaveSetOutput.includes('Stage stage references missing waveSetI
   throw new Error(`Expected missing stage wave set output to identify stage.\n${missingStageWaveSetOutput}`);
 }
 
+const invalidStageMapIdResult = runFixture({
+  'stages.json': {
+    stage: { mapId: 123, waveSetId: 'default', finalBossId: 'slime' },
+  },
+  'maps.json': {
+    map: { id: 'map' },
+  },
+});
+const invalidStageMapIdOutput = `${invalidStageMapIdResult.stdout}\n${invalidStageMapIdResult.stderr}`;
+if (invalidStageMapIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid stage mapId.\n${invalidStageMapIdOutput}`);
+}
+
+if (!invalidStageMapIdOutput.includes('Invalid mapId in stage stage: expected string')) {
+  throw new Error(`Expected invalid stage mapId output to identify stage.\n${invalidStageMapIdOutput}`);
+}
+
 const duplicateIdResult = runFixture({
   'weapons.json': [
     { id: 'knife', requiredPassiveId: 'bracer' },
