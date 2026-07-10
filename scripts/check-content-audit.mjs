@@ -279,6 +279,11 @@ for (const boss of collectBossEntries(bosses)) {
     addError(`Boss config ${bossId} references missing enemyId: ${enemyId}`);
   }
 
+  if (boss.skills !== undefined && !Array.isArray(boss.skills)) {
+    addError(`Invalid skills in Boss config ${bossId}: expected array`);
+    continue;
+  }
+
   for (const skill of boss.skills ?? []) {
     if (!skill || typeof skill !== 'object' || !Array.isArray(skill.summons)) {
       continue;
