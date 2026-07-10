@@ -171,6 +171,16 @@ function collectBossEntries(value, isRoot = true) {
     return [];
   }
 
+  if (Object.prototype.hasOwnProperty.call(value, 'id')) {
+    if (typeof value.enemyId !== 'string') {
+      addError(`Invalid enemyId in bosses.json entry ${value.id}: expected string`);
+    } else if (value.enemyId.trim().length === 0) {
+      addError(`Missing enemyId in bosses.json entry ${value.id}`);
+    }
+
+    return [value];
+  }
+
   if (typeof value.enemyId === 'string') {
     return [value];
   }

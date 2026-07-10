@@ -313,4 +313,21 @@ if (!mismatchedBossIdOutput.includes('Mismatched id in bosses.json: key finalBos
   throw new Error(`Expected mismatched boss id output to identify bosses.json finalBoss.\n${mismatchedBossIdOutput}`);
 }
 
+const invalidBossEnemyIdResult = runFixture({
+  'bosses.json': {
+    finalBoss: {
+      id: 'finalBoss',
+      enemyId: 123,
+    },
+  },
+});
+const invalidBossEnemyIdOutput = `${invalidBossEnemyIdResult.stdout}\n${invalidBossEnemyIdResult.stderr}`;
+if (invalidBossEnemyIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid boss enemyId.\n${invalidBossEnemyIdOutput}`);
+}
+
+if (!invalidBossEnemyIdOutput.includes('Invalid enemyId in bosses.json entry finalBoss: expected string')) {
+  throw new Error(`Expected invalid boss enemyId output to identify finalBoss.\n${invalidBossEnemyIdOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
