@@ -266,8 +266,17 @@ for (const [stageId, stage] of Object.entries(stages)) {
 }
 
 for (const [characterId, character] of Object.entries(characters)) {
-  const startingWeaponId = character?.startingWeaponId ?? character?.weaponId;
-  if (startingWeaponId && !hasId(weapons, startingWeaponId)) {
+  const startingWeaponKey = Object.prototype.hasOwnProperty.call(character, 'startingWeaponId')
+    ? 'startingWeaponId'
+    : Object.prototype.hasOwnProperty.call(character, 'weaponId')
+      ? 'weaponId'
+      : undefined;
+  const startingWeaponId = startingWeaponKey ? character[startingWeaponKey] : undefined;
+  if (startingWeaponKey && typeof startingWeaponId !== 'string') {
+    addError(`Invalid startingWeaponId in character ${characterId}: expected string`);
+  } else if (startingWeaponKey && startingWeaponId.trim().length === 0) {
+    addError(`Missing startingWeaponId in character ${characterId}`);
+  } else if (startingWeaponId && !hasId(weapons, startingWeaponId)) {
     addError(`Character ${characterId} references missing startingWeaponId: ${startingWeaponId}`);
   }
 }
