@@ -112,6 +112,15 @@ function hasId(record, id) {
   return typeof id === 'string' && Object.prototype.hasOwnProperty.call(record, id);
 }
 
+function validateWaveNumber(wave, field, sourceName, index, allowZero) {
+  const value = wave[field];
+  const expectation = allowZero ? 'non-negative number' : 'positive number';
+  const belowMinimum = allowZero ? value < 0 : value <= 0;
+  if (typeof value !== 'number' || !Number.isFinite(value) || belowMinimum) {
+    addError(`Invalid ${field} in ${sourceName} at index ${index}: expected ${expectation}`);
+  }
+}
+
 function appendWaveEntries(entries, sourceName, waves) {
   for (const [index, wave] of waves.entries()) {
     if (!wave || typeof wave !== 'object') {
@@ -126,6 +135,10 @@ function appendWaveEntries(entries, sourceName, waves) {
     } else if (enemyId.trim().length === 0) {
       addError(`Missing enemy id in ${sourceName} at index ${index}`);
     }
+
+    validateWaveNumber(wave, 'time', sourceName, index, true);
+    validateWaveNumber(wave, 'count', sourceName, index, false);
+    validateWaveNumber(wave, 'interval', sourceName, index, false);
 
     entries.push(wave);
   }

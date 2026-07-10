@@ -270,6 +270,20 @@ if (!invalidWaveEnemyOutput.includes('Invalid enemy id in waves at index 0: expe
   throw new Error(`Expected invalid wave enemy output to identify waves index 0.\n${invalidWaveEnemyOutput}`);
 }
 
+const invalidWaveCountResult = runFixture({
+  'waves.json': [
+    { enemy: 'slime', time: 0, count: 'many', interval: 1 },
+  ],
+});
+const invalidWaveCountOutput = `${invalidWaveCountResult.stdout}\n${invalidWaveCountResult.stderr}`;
+if (invalidWaveCountResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid wave count.\n${invalidWaveCountOutput}`);
+}
+
+if (!invalidWaveCountOutput.includes('Invalid count in waves at index 0: expected positive number')) {
+  throw new Error(`Expected invalid wave count output to identify waves index 0.\n${invalidWaveCountOutput}`);
+}
+
 const invalidBossRootResult = runFixture({
   'bosses.json': null,
 });
