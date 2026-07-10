@@ -216,4 +216,18 @@ if (!nonObjectMapEntryOutput.includes('Invalid entry in weapons.json object entr
   throw new Error(`Expected non-object map entry output to identify weapons.json knife.\n${nonObjectMapEntryOutput}`);
 }
 
+const invalidWaveEntryResult = runFixture({
+  'waves.json': [
+    'invalid',
+  ],
+});
+const invalidWaveEntryOutput = `${invalidWaveEntryResult.stdout}\n${invalidWaveEntryResult.stderr}`;
+if (invalidWaveEntryResult.status === 0) {
+  throw new Error(`Expected content audit to reject non-object wave entries.\n${invalidWaveEntryOutput}`);
+}
+
+if (!invalidWaveEntryOutput.includes('Invalid wave entry in waves at index 0: expected object')) {
+  throw new Error(`Expected invalid wave entry output to identify waves index 0.\n${invalidWaveEntryOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');

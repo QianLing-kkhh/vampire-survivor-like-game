@@ -112,9 +112,22 @@ function hasId(record, id) {
   return typeof id === 'string' && Object.prototype.hasOwnProperty.call(record, id);
 }
 
+function appendWaveEntries(entries, sourceName, waves) {
+  for (const [index, wave] of waves.entries()) {
+    if (!wave || typeof wave !== 'object') {
+      addError(`Invalid wave entry in ${sourceName} at index ${index}: expected object`);
+      continue;
+    }
+
+    entries.push(wave);
+  }
+}
+
 function collectWaveEntries(value) {
   if (Array.isArray(value)) {
-    return value;
+    const entries = [];
+    appendWaveEntries(entries, 'waves', value);
+    return entries;
   }
 
   if (!value || typeof value !== 'object') {
@@ -124,9 +137,13 @@ function collectWaveEntries(value) {
   const entries = [];
   for (const [waveSetId, waveSet] of Object.entries(value)) {
     if (Array.isArray(waveSet)) {
-      entries.push(...waveSet.map((wave) => ({ ...wave, __waveSetId: waveSetId })));
+      const waveSetEntries = [];
+      appendWaveEntries(waveSetEntries, `wave set ${waveSetId}`, waveSet);
+      entries.push(...waveSetEntries.map((wave) => ({ ...wave, __waveSetId: waveSetId })));
     } else if (waveSet && typeof waveSet === 'object' && Array.isArray(waveSet.waves)) {
-      entries.push(...waveSet.waves.map((wave) => ({ ...wave, __waveSetId: waveSetId })));
+      const waveSetEntries = [];
+      appendWaveEntries(waveSetEntries, `wave set ${waveSetId}`, waveSet.waves);
+      entries.push(...waveSetEntries.map((wave) => ({ ...wave, __waveSetId: waveSetId })));
     }
   }
   return entries;
