@@ -154,7 +154,14 @@ function collectWaveEntries(value) {
 
 function collectBossEntries(value, isRoot = true) {
   if (Array.isArray(value)) {
-    return value.flatMap((entry) => collectBossEntries(entry, false));
+    return value.flatMap((entry, index) => {
+      if (!entry || typeof entry !== 'object') {
+        addError(`Invalid boss entry in bosses.json array at index ${index}: expected object`);
+        return [];
+      }
+
+      return collectBossEntries(entry, false);
+    });
   }
 
   if (!value || typeof value !== 'object') {

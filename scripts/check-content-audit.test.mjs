@@ -268,4 +268,18 @@ if (!invalidBossRootOutput.includes('Invalid bosses.json: expected array or obje
   throw new Error(`Expected invalid bosses root output to identify bosses.json.\n${invalidBossRootOutput}`);
 }
 
+const invalidBossEntryResult = runFixture({
+  'bosses.json': [
+    'invalid',
+  ],
+});
+const invalidBossEntryOutput = `${invalidBossEntryResult.stdout}\n${invalidBossEntryResult.stderr}`;
+if (invalidBossEntryResult.status === 0) {
+  throw new Error(`Expected content audit to reject a non-object boss entry.\n${invalidBossEntryOutput}`);
+}
+
+if (!invalidBossEntryOutput.includes('Invalid boss entry in bosses.json array at index 0: expected object')) {
+  throw new Error(`Expected invalid boss entry output to identify bosses.json index 0.\n${invalidBossEntryOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
