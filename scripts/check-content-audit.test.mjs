@@ -244,4 +244,16 @@ if (!invalidWaveSetOutput.includes('Invalid wave set early in waves.json: expect
   throw new Error(`Expected invalid wave-set output to identify waves.json early.\n${invalidWaveSetOutput}`);
 }
 
+const invalidWaveRootResult = runFixture({
+  'waves.json': null,
+});
+const invalidWaveRootOutput = `${invalidWaveRootResult.stdout}\n${invalidWaveRootResult.stderr}`;
+if (invalidWaveRootResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid waves root.\n${invalidWaveRootOutput}`);
+}
+
+if (!invalidWaveRootOutput.includes('Invalid waves.json: expected array or object')) {
+  throw new Error(`Expected invalid waves root output to identify waves.json.\n${invalidWaveRootOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');

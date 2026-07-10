@@ -131,6 +131,7 @@ function collectWaveEntries(value) {
   }
 
   if (!value || typeof value !== 'object') {
+    addError('Invalid waves.json: expected array or object');
     return [];
   }
 
