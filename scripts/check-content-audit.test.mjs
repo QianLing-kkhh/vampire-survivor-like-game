@@ -182,6 +182,28 @@ if (!invalidStageBossTimingOutput.includes('Invalid finalBossSpawnTimeSeconds in
   throw new Error(`Expected invalid stage boss timing output to identify stage.\n${invalidStageBossTimingOutput}`);
 }
 
+const invalidStageEndlessFlagResult = runFixture({
+  'stages.json': {
+    stage: {
+      mapId: 'map',
+      waveSetId: 'default',
+      finalBossId: 'slime',
+      allowEndless: 'true',
+    },
+  },
+  'maps.json': {
+    map: { id: 'map' },
+  },
+});
+const invalidStageEndlessFlagOutput = `${invalidStageEndlessFlagResult.stdout}\n${invalidStageEndlessFlagResult.stderr}`;
+if (invalidStageEndlessFlagResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid allowEndless flag.\n${invalidStageEndlessFlagOutput}`);
+}
+
+if (!invalidStageEndlessFlagOutput.includes('Invalid allowEndless in stage stage: expected boolean')) {
+  throw new Error(`Expected invalid allowEndless output to identify stage.\n${invalidStageEndlessFlagOutput}`);
+}
+
 const duplicateIdResult = runFixture({
   'weapons.json': [
     { id: 'knife', requiredPassiveId: 'bracer' },

@@ -295,6 +295,10 @@ for (const [stageId, stage] of Object.entries(stages)) {
       addError(`Invalid ${field} in stage ${stageId}: expected non-negative number`);
     }
   }
+
+  if (Object.prototype.hasOwnProperty.call(stage, 'allowEndless') && typeof stage.allowEndless !== 'boolean') {
+    addError(`Invalid allowEndless in stage ${stageId}: expected boolean`);
+  }
 }
 
 for (const [characterId, character] of Object.entries(characters)) {
