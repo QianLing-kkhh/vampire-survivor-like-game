@@ -344,17 +344,31 @@ for (const wave of collectWaveEntries(waves)) {
 }
 
 for (const [weaponId, weapon] of Object.entries(weapons)) {
-  const requiredPassiveId = weapon?.requiredPassiveId ?? weapon?.evolutionPassiveId;
-  const evolvesTo = weapon?.evolvesTo ?? weapon?.evolvedWeaponId;
+  const requiredPassiveKey = Object.prototype.hasOwnProperty.call(weapon, 'requiredPassiveId')
+    ? 'requiredPassiveId'
+    : Object.prototype.hasOwnProperty.call(weapon, 'evolutionPassiveId')
+      ? 'evolutionPassiveId'
+      : undefined;
+  const evolvesToKey = Object.prototype.hasOwnProperty.call(weapon, 'evolvesTo')
+    ? 'evolvesTo'
+    : Object.prototype.hasOwnProperty.call(weapon, 'evolvedWeaponId')
+      ? 'evolvedWeaponId'
+      : undefined;
+  const requiredPassiveId = requiredPassiveKey ? weapon[requiredPassiveKey] : undefined;
+  const evolvesTo = evolvesToKey ? weapon[evolvesToKey] : undefined;
 
-  if (requiredPassiveId !== undefined && typeof requiredPassiveId !== 'string') {
+  if (requiredPassiveKey && typeof requiredPassiveId !== 'string') {
     addError(`Invalid requiredPassiveId in weapon ${weaponId}: expected string`);
+  } else if (requiredPassiveKey && requiredPassiveId.trim().length === 0) {
+    addError(`Missing requiredPassiveId in weapon ${weaponId}`);
   } else if (requiredPassiveId && !hasId(passives, requiredPassiveId)) {
     addError(`Weapon ${weaponId} references missing passive: ${requiredPassiveId}`);
   }
 
-  if (evolvesTo !== undefined && typeof evolvesTo !== 'string') {
+  if (evolvesToKey && typeof evolvesTo !== 'string') {
     addError(`Invalid evolvesTo in weapon ${weaponId}: expected string`);
+  } else if (evolvesToKey && evolvesTo.trim().length === 0) {
+    addError(`Missing evolvesTo in weapon ${weaponId}`);
   } else if (evolvesTo && !hasId(weapons, evolvesTo)) {
     addError(`Weapon ${weaponId} references missing evolved weapon: ${evolvesTo}`);
   }

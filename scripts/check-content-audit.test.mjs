@@ -78,6 +78,20 @@ if (!invalidWeaponReferenceOutput.includes('Invalid requiredPassiveId in weapon 
   throw new Error(`Expected invalid weapon passive reference output to identify knife.\n${invalidWeaponReferenceOutput}`);
 }
 
+const emptyWeaponReferenceResult = runFixture({
+  'weapons.json': {
+    knife: { requiredPassiveId: '' },
+  },
+});
+const emptyWeaponReferenceOutput = `${emptyWeaponReferenceResult.stdout}\n${emptyWeaponReferenceResult.stderr}`;
+if (emptyWeaponReferenceResult.status === 0) {
+  throw new Error(`Expected content audit to reject an empty weapon passive reference.\n${emptyWeaponReferenceOutput}`);
+}
+
+if (!emptyWeaponReferenceOutput.includes('Missing requiredPassiveId in weapon knife')) {
+  throw new Error(`Expected empty weapon passive reference output to identify knife.\n${emptyWeaponReferenceOutput}`);
+}
+
 const duplicateIdResult = runFixture({
   'weapons.json': [
     { id: 'knife', requiredPassiveId: 'bracer' },
