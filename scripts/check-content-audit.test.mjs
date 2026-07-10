@@ -296,4 +296,21 @@ if (!invalidBossMapEntryOutput.includes('Invalid boss entry in bosses.json objec
   throw new Error(`Expected invalid boss map entry output to identify bosses.json finalBoss.\n${invalidBossMapEntryOutput}`);
 }
 
+const mismatchedBossIdResult = runFixture({
+  'bosses.json': {
+    finalBoss: {
+      id: 'otherBoss',
+      enemyId: 'slime',
+    },
+  },
+});
+const mismatchedBossIdOutput = `${mismatchedBossIdResult.stdout}\n${mismatchedBossIdResult.stderr}`;
+if (mismatchedBossIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject a mismatched boss id.\n${mismatchedBossIdOutput}`);
+}
+
+if (!mismatchedBossIdOutput.includes('Mismatched id in bosses.json: key finalBoss has id otherBoss')) {
+  throw new Error(`Expected mismatched boss id output to identify bosses.json finalBoss.\n${mismatchedBossIdOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
