@@ -160,6 +160,28 @@ if (!invalidStageBossIdOutput.includes('Invalid finalBossId in stage stage: expe
   throw new Error(`Expected invalid stage finalBossId output to identify stage.\n${invalidStageBossIdOutput}`);
 }
 
+const invalidStageBossTimingResult = runFixture({
+  'stages.json': {
+    stage: {
+      mapId: 'map',
+      waveSetId: 'default',
+      finalBossId: 'slime',
+      finalBossSpawnTimeSeconds: '300',
+    },
+  },
+  'maps.json': {
+    map: { id: 'map' },
+  },
+});
+const invalidStageBossTimingOutput = `${invalidStageBossTimingResult.stdout}\n${invalidStageBossTimingResult.stderr}`;
+if (invalidStageBossTimingResult.status === 0) {
+  throw new Error(`Expected content audit to reject invalid stage boss timing.\n${invalidStageBossTimingOutput}`);
+}
+
+if (!invalidStageBossTimingOutput.includes('Invalid finalBossSpawnTimeSeconds in stage stage: expected non-negative number')) {
+  throw new Error(`Expected invalid stage boss timing output to identify stage.\n${invalidStageBossTimingOutput}`);
+}
+
 const duplicateIdResult = runFixture({
   'weapons.json': [
     { id: 'knife', requiredPassiveId: 'bracer' },

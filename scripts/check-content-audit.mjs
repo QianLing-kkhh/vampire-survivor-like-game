@@ -284,6 +284,17 @@ for (const [stageId, stage] of Object.entries(stages)) {
   } else if (finalBossId && !hasId(enemies, finalBossId)) {
     addError(`Stage ${stageId} references missing finalBossId: ${finalBossId}`);
   }
+
+  for (const field of ['finalBossSpawnTimeSeconds', 'warningBeforeSpawnSeconds']) {
+    if (!Object.prototype.hasOwnProperty.call(stage, field)) {
+      continue;
+    }
+
+    const value = stage[field];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      addError(`Invalid ${field} in stage ${stageId}: expected non-negative number`);
+    }
+  }
 }
 
 for (const [characterId, character] of Object.entries(characters)) {
