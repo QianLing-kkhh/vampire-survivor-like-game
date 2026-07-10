@@ -152,12 +152,15 @@ function collectWaveEntries(value) {
   return entries;
 }
 
-function collectBossEntries(value) {
+function collectBossEntries(value, isRoot = true) {
   if (Array.isArray(value)) {
-    return value.flatMap(collectBossEntries);
+    return value.flatMap((entry) => collectBossEntries(entry, false));
   }
 
   if (!value || typeof value !== 'object') {
+    if (isRoot) {
+      addError('Invalid bosses.json: expected array or object');
+    }
     return [];
   }
 
@@ -165,7 +168,7 @@ function collectBossEntries(value) {
     return [value];
   }
 
-  return Object.values(value).flatMap(collectBossEntries);
+  return Object.values(value).flatMap((entry) => collectBossEntries(entry, false));
 }
 
 for (const fileName of requiredFiles) {

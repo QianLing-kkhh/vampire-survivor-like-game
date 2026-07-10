@@ -256,4 +256,16 @@ if (!invalidWaveRootOutput.includes('Invalid waves.json: expected array or objec
   throw new Error(`Expected invalid waves root output to identify waves.json.\n${invalidWaveRootOutput}`);
 }
 
+const invalidBossRootResult = runFixture({
+  'bosses.json': null,
+});
+const invalidBossRootOutput = `${invalidBossRootResult.stdout}\n${invalidBossRootResult.stderr}`;
+if (invalidBossRootResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid bosses root.\n${invalidBossRootOutput}`);
+}
+
+if (!invalidBossRootOutput.includes('Invalid bosses.json: expected array or object')) {
+  throw new Error(`Expected invalid bosses root output to identify bosses.json.\n${invalidBossRootOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
