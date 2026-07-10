@@ -144,6 +144,8 @@ function collectWaveEntries(value) {
       const waveSetEntries = [];
       appendWaveEntries(waveSetEntries, `wave set ${waveSetId}`, waveSet.waves);
       entries.push(...waveSetEntries.map((wave) => ({ ...wave, __waveSetId: waveSetId })));
+    } else {
+      addError(`Invalid wave set ${waveSetId} in waves.json: expected array or object with waves`);
     }
   }
   return entries;

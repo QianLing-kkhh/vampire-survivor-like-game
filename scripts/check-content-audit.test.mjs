@@ -230,4 +230,18 @@ if (!invalidWaveEntryOutput.includes('Invalid wave entry in waves at index 0: ex
   throw new Error(`Expected invalid wave entry output to identify waves index 0.\n${invalidWaveEntryOutput}`);
 }
 
+const invalidWaveSetResult = runFixture({
+  'waves.json': {
+    early: 'invalid',
+  },
+});
+const invalidWaveSetOutput = `${invalidWaveSetResult.stdout}\n${invalidWaveSetResult.stderr}`;
+if (invalidWaveSetResult.status === 0) {
+  throw new Error(`Expected content audit to reject invalid wave-set containers.\n${invalidWaveSetOutput}`);
+}
+
+if (!invalidWaveSetOutput.includes('Invalid wave set early in waves.json: expected array or object with waves')) {
+  throw new Error(`Expected invalid wave-set output to identify waves.json early.\n${invalidWaveSetOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
