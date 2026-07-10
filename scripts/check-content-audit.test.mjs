@@ -64,6 +64,20 @@ function runFixture(overrides, options = {}) {
   }
 }
 
+const invalidWeaponReferenceResult = runFixture({
+  'weapons.json': {
+    knife: { requiredPassiveId: 123 },
+  },
+});
+const invalidWeaponReferenceOutput = `${invalidWeaponReferenceResult.stdout}\n${invalidWeaponReferenceResult.stderr}`;
+if (invalidWeaponReferenceResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid weapon passive reference.\n${invalidWeaponReferenceOutput}`);
+}
+
+if (!invalidWeaponReferenceOutput.includes('Invalid requiredPassiveId in weapon knife: expected string')) {
+  throw new Error(`Expected invalid weapon passive reference output to identify knife.\n${invalidWeaponReferenceOutput}`);
+}
+
 const duplicateIdResult = runFixture({
   'weapons.json': [
     { id: 'knife', requiredPassiveId: 'bracer' },

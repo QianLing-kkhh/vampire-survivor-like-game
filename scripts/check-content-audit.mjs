@@ -347,11 +347,15 @@ for (const [weaponId, weapon] of Object.entries(weapons)) {
   const requiredPassiveId = weapon?.requiredPassiveId ?? weapon?.evolutionPassiveId;
   const evolvesTo = weapon?.evolvesTo ?? weapon?.evolvedWeaponId;
 
-  if (requiredPassiveId && !hasId(passives, requiredPassiveId)) {
+  if (requiredPassiveId !== undefined && typeof requiredPassiveId !== 'string') {
+    addError(`Invalid requiredPassiveId in weapon ${weaponId}: expected string`);
+  } else if (requiredPassiveId && !hasId(passives, requiredPassiveId)) {
     addError(`Weapon ${weaponId} references missing passive: ${requiredPassiveId}`);
   }
 
-  if (evolvesTo && !hasId(weapons, evolvesTo)) {
+  if (evolvesTo !== undefined && typeof evolvesTo !== 'string') {
+    addError(`Invalid evolvesTo in weapon ${weaponId}: expected string`);
+  } else if (evolvesTo && !hasId(weapons, evolvesTo)) {
     addError(`Weapon ${weaponId} references missing evolved weapon: ${evolvesTo}`);
   }
 }
