@@ -316,6 +316,10 @@ for (const boss of collectBossEntries(bosses)) {
       } else if (!hasId(enemies, summon.enemyId)) {
         addError(`Boss config ${bossId} summon references missing enemyId: ${summon.enemyId}`);
       }
+
+      if (typeof summon.count !== 'number' || !Number.isFinite(summon.count) || summon.count <= 0) {
+        addError(`Invalid count in Boss config ${bossId} summon: expected positive number`);
+      }
     }
   }
 }

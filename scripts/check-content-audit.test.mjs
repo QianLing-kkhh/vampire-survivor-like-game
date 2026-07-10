@@ -463,4 +463,22 @@ if (!invalidBossSummonEntryOutput.includes('Invalid summon in Boss config finalB
   throw new Error(`Expected invalid boss summon output to identify finalBoss skill 0 index 0.\n${invalidBossSummonEntryOutput}`);
 }
 
+const invalidBossSummonCountResult = runFixture({
+  'bosses.json': {
+    finalBoss: {
+      id: 'finalBoss',
+      enemyId: 'slime',
+      skills: [{ summons: [{ enemyId: 'slime', count: 'many' }] }],
+    },
+  },
+});
+const invalidBossSummonCountOutput = `${invalidBossSummonCountResult.stdout}\n${invalidBossSummonCountResult.stderr}`;
+if (invalidBossSummonCountResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid boss summon count.\n${invalidBossSummonCountOutput}`);
+}
+
+if (!invalidBossSummonCountOutput.includes('Invalid count in Boss config finalBoss summon: expected positive number')) {
+  throw new Error(`Expected invalid boss summon count output to identify finalBoss.\n${invalidBossSummonCountOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
