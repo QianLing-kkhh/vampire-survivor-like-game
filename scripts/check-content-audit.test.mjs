@@ -284,6 +284,21 @@ if (!invalidWaveCountOutput.includes('Invalid count in waves at index 0: expecte
   throw new Error(`Expected invalid wave count output to identify waves index 0.\n${invalidWaveCountOutput}`);
 }
 
+const outOfOrderWaveResult = runFixture({
+  'waves.json': [
+    { enemy: 'slime', time: 10, count: 1, interval: 1 },
+    { enemy: 'bat', time: 5, count: 1, interval: 1 },
+  ],
+});
+const outOfOrderWaveOutput = `${outOfOrderWaveResult.stdout}\n${outOfOrderWaveResult.stderr}`;
+if (outOfOrderWaveResult.status === 0) {
+  throw new Error(`Expected content audit to reject out-of-order wave times.\n${outOfOrderWaveOutput}`);
+}
+
+if (!outOfOrderWaveOutput.includes('Wave time decreased in waves at index 1: 5 < 10')) {
+  throw new Error(`Expected out-of-order wave output to identify waves index 1.\n${outOfOrderWaveOutput}`);
+}
+
 const invalidBossRootResult = runFixture({
   'bosses.json': null,
 });

@@ -122,6 +122,7 @@ function validateWaveNumber(wave, field, sourceName, index, allowZero) {
 }
 
 function appendWaveEntries(entries, sourceName, waves) {
+  let previousTime;
   for (const [index, wave] of waves.entries()) {
     if (!wave || typeof wave !== 'object') {
       addError(`Invalid wave entry in ${sourceName} at index ${index}: expected object`);
@@ -139,6 +140,13 @@ function appendWaveEntries(entries, sourceName, waves) {
     validateWaveNumber(wave, 'time', sourceName, index, true);
     validateWaveNumber(wave, 'count', sourceName, index, false);
     validateWaveNumber(wave, 'interval', sourceName, index, false);
+
+    if (typeof wave.time === 'number' && Number.isFinite(wave.time) && wave.time >= 0) {
+      if (previousTime !== undefined && wave.time < previousTime) {
+        addError(`Wave time decreased in ${sourceName} at index ${index}: ${wave.time} < ${previousTime}`);
+      }
+      previousTime = wave.time;
+    }
 
     entries.push(wave);
   }
