@@ -119,6 +119,14 @@ function appendWaveEntries(entries, sourceName, waves) {
       continue;
     }
 
+    const enemyKey = Object.prototype.hasOwnProperty.call(wave, 'enemyId') ? 'enemyId' : 'enemy';
+    const enemyId = wave[enemyKey];
+    if (!Object.prototype.hasOwnProperty.call(wave, enemyKey) || typeof enemyId !== 'string') {
+      addError(`Invalid enemy id in ${sourceName} at index ${index}: expected string`);
+    } else if (enemyId.trim().length === 0) {
+      addError(`Missing enemy id in ${sourceName} at index ${index}`);
+    }
+
     entries.push(wave);
   }
 }
@@ -264,9 +272,9 @@ for (const boss of collectBossEntries(bosses)) {
 }
 
 for (const wave of collectWaveEntries(waves)) {
-  const enemyId = wave?.enemyId ?? wave?.enemy;
+  const enemyId = Object.prototype.hasOwnProperty.call(wave, 'enemyId') ? wave.enemyId : wave.enemy;
   const waveSetId = wave?.__waveSetId ?? 'waves';
-  if (enemyId && !hasId(enemies, enemyId)) {
+  if (typeof enemyId === 'string' && enemyId.trim().length > 0 && !hasId(enemies, enemyId)) {
     addError(`Wave set ${waveSetId} references missing enemyId: ${enemyId}`);
   }
 }

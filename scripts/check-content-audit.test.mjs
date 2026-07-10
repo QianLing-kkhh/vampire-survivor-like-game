@@ -256,6 +256,20 @@ if (!invalidWaveRootOutput.includes('Invalid waves.json: expected array or objec
   throw new Error(`Expected invalid waves root output to identify waves.json.\n${invalidWaveRootOutput}`);
 }
 
+const invalidWaveEnemyResult = runFixture({
+  'waves.json': [
+    { enemy: 123 },
+  ],
+});
+const invalidWaveEnemyOutput = `${invalidWaveEnemyResult.stdout}\n${invalidWaveEnemyResult.stderr}`;
+if (invalidWaveEnemyResult.status === 0) {
+  throw new Error(`Expected content audit to reject an invalid wave enemy id.\n${invalidWaveEnemyOutput}`);
+}
+
+if (!invalidWaveEnemyOutput.includes('Invalid enemy id in waves at index 0: expected string')) {
+  throw new Error(`Expected invalid wave enemy output to identify waves index 0.\n${invalidWaveEnemyOutput}`);
+}
+
 const invalidBossRootResult = runFixture({
   'bosses.json': null,
 });
