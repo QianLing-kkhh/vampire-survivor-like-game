@@ -299,8 +299,13 @@ for (const boss of collectBossEntries(bosses)) {
       continue;
     }
 
-    for (const summon of skill.summons) {
-      if (!summon || typeof summon !== 'object' || !Object.prototype.hasOwnProperty.call(summon, 'enemyId')) {
+    for (const [summonIndex, summon] of skill.summons.entries()) {
+      if (!summon || typeof summon !== 'object') {
+        addError(`Invalid summon in Boss config ${bossId} skill ${skillIndex} at index ${summonIndex}: expected object`);
+        continue;
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(summon, 'enemyId')) {
         continue;
       }
 
