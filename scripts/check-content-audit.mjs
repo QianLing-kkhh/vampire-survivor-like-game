@@ -286,6 +286,7 @@ for (const boss of collectBossEntries(bosses)) {
 
   for (const [skillIndex, skill] of (boss.skills ?? []).entries()) {
     if (!skill || typeof skill !== 'object') {
+      addError(`Invalid skill in Boss config ${bossId} at index ${skillIndex}: expected object`);
       continue;
     }
 
