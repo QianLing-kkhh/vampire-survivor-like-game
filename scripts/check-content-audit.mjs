@@ -306,6 +306,7 @@ for (const boss of collectBossEntries(bosses)) {
       }
 
       if (!Object.prototype.hasOwnProperty.call(summon, 'enemyId')) {
+        addError(`Missing enemyId in Boss config ${bossId} summon`);
         continue;
       }
 

@@ -481,4 +481,22 @@ if (!invalidBossSummonCountOutput.includes('Invalid count in Boss config finalBo
   throw new Error(`Expected invalid boss summon count output to identify finalBoss.\n${invalidBossSummonCountOutput}`);
 }
 
+const missingBossSummonEnemyIdResult = runFixture({
+  'bosses.json': {
+    finalBoss: {
+      id: 'finalBoss',
+      enemyId: 'slime',
+      skills: [{ summons: [{ count: 1 }] }],
+    },
+  },
+});
+const missingBossSummonEnemyIdOutput = `${missingBossSummonEnemyIdResult.stdout}\n${missingBossSummonEnemyIdResult.stderr}`;
+if (missingBossSummonEnemyIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject a boss summon without enemyId.\n${missingBossSummonEnemyIdOutput}`);
+}
+
+if (!missingBossSummonEnemyIdOutput.includes('Missing enemyId in Boss config finalBoss summon')) {
+  throw new Error(`Expected missing boss summon enemyId output to identify finalBoss.\n${missingBossSummonEnemyIdOutput}`);
+}
+
 console.log('Content audit output regression tests passed.');
