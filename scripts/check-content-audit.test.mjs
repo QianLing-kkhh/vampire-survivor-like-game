@@ -143,6 +143,23 @@ if (!invalidStageMapIdOutput.includes('Invalid mapId in stage stage: expected st
   throw new Error(`Expected invalid stage mapId output to identify stage.\n${invalidStageMapIdOutput}`);
 }
 
+const invalidStageBossIdResult = runFixture({
+  'stages.json': {
+    stage: { mapId: 'map', waveSetId: 'default', finalBossId: null },
+  },
+  'maps.json': {
+    map: { id: 'map' },
+  },
+});
+const invalidStageBossIdOutput = `${invalidStageBossIdResult.stdout}\n${invalidStageBossIdResult.stderr}`;
+if (invalidStageBossIdResult.status === 0) {
+  throw new Error(`Expected content audit to reject a null stage finalBossId.\n${invalidStageBossIdOutput}`);
+}
+
+if (!invalidStageBossIdOutput.includes('Invalid finalBossId in stage stage: expected string')) {
+  throw new Error(`Expected invalid stage finalBossId output to identify stage.\n${invalidStageBossIdOutput}`);
+}
+
 const duplicateIdResult = runFixture({
   'weapons.json': [
     { id: 'knife', requiredPassiveId: 'bracer' },

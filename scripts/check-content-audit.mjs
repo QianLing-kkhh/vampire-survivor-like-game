@@ -271,10 +271,15 @@ for (const [stageId, stage] of Object.entries(stages)) {
     addError(`Stage ${stageId} references missing waveSetId: ${stage.waveSetId}`);
   }
 
-  const finalBossId = stage.finalBossId ?? stage.bossId;
-  if (finalBossId !== undefined && typeof finalBossId !== 'string') {
+  const finalBossKey = Object.prototype.hasOwnProperty.call(stage, 'finalBossId')
+    ? 'finalBossId'
+    : Object.prototype.hasOwnProperty.call(stage, 'bossId')
+      ? 'bossId'
+      : undefined;
+  const finalBossId = finalBossKey ? stage[finalBossKey] : undefined;
+  if (finalBossKey && typeof finalBossId !== 'string') {
     addError(`Invalid finalBossId in stage ${stageId}: expected string`);
-  } else if (finalBossId !== undefined && finalBossId.trim().length === 0) {
+  } else if (finalBossKey && finalBossId.trim().length === 0) {
     addError(`Missing finalBossId in stage ${stageId}`);
   } else if (finalBossId && !hasId(enemies, finalBossId)) {
     addError(`Stage ${stageId} references missing finalBossId: ${finalBossId}`);
