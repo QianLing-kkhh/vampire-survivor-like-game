@@ -285,7 +285,15 @@ for (const boss of collectBossEntries(bosses)) {
     }
 
     for (const summon of skill.summons) {
-      if (summon?.enemyId && !hasId(enemies, summon.enemyId)) {
+      if (!summon || typeof summon !== 'object' || !Object.prototype.hasOwnProperty.call(summon, 'enemyId')) {
+        continue;
+      }
+
+      if (typeof summon.enemyId !== 'string') {
+        addError(`Invalid enemyId in Boss config ${bossId} summon: expected string`);
+      } else if (summon.enemyId.trim().length === 0) {
+        addError(`Missing enemyId in Boss config ${bossId} summon`);
+      } else if (!hasId(enemies, summon.enemyId)) {
         addError(`Boss config ${bossId} summon references missing enemyId: ${summon.enemyId}`);
       }
     }
